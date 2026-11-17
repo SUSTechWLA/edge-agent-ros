@@ -1,0 +1,1011 @@
+{
+  "specifications": [
+    "SDD-007",
+    "SDD-008"
+  ],
+  "verified_revision": "e79e8a60fc88c5db235930db33119b1f48990182",
+  "run_id": "20261117T135752Z-50be245c",
+  "full_suite": {
+    "status": "passed",
+    "clean_tree": true,
+    "started_at": "2026-11-17T13:57:52.678906+00:00",
+    "finished_at": "2026-11-17T14:08:50.343876+00:00",
+    "image_id": "sha256:78b8c7f94c60cc981819b87f579fb0d96013e3b0fa42959c6282fba5ea2b0fa3",
+    "docker": "29.9.3",
+    "compose": "5.7.0",
+    "test_stages": [
+      "repository",
+      "planner",
+      "agent-contracts",
+      "observations",
+      "scene-contracts",
+      "core",
+      "motion-sensors",
+      "motion-world",
+      "agent-faults",
+      "resilience",
+      "console-missions",
+      "places",
+      "scene-binding",
+      "scene-outage",
+      "clock-reset",
+      "ui",
+      "model",
+      "board"
+    ],
+    "stages": [
+      {
+        "name": "repository",
+        "status": "passed",
+        "duration_s": 6.59
+      },
+      {
+        "name": "planner",
+        "status": "passed",
+        "duration_s": 18.02
+      },
+      {
+        "name": "board-build",
+        "status": "passed",
+        "duration_s": 2.89
+      },
+      {
+        "name": "board",
+        "status": "passed",
+        "duration_s": 3.72
+      },
+      {
+        "name": "build",
+        "status": "passed",
+        "duration_s": 4.5
+      },
+      {
+        "name": "agent-contracts",
+        "status": "passed",
+        "duration_s": 6.28
+      },
+      {
+        "name": "observations",
+        "status": "passed",
+        "duration_s": 66.7
+      },
+      {
+        "name": "scene-contracts",
+        "status": "passed",
+        "duration_s": 1.34
+      },
+      {
+        "name": "core",
+        "status": "passed",
+        "duration_s": 88.58
+      },
+      {
+        "name": "motion-sensors",
+        "status": "passed",
+        "duration_s": 18.8
+      },
+      {
+        "name": "agent-faults",
+        "status": "passed",
+        "duration_s": 252.86
+      },
+      {
+        "name": "resilience",
+        "status": "passed",
+        "duration_s": 48.0
+      },
+      {
+        "name": "motion-world",
+        "status": "passed",
+        "duration_s": 6.8
+      },
+      {
+        "name": "motion-cleanup",
+        "status": "passed",
+        "duration_s": 1.23
+      },
+      {
+        "name": "model-cache",
+        "status": "passed",
+        "duration_s": 2.66
+      },
+      {
+        "name": "simulation-start",
+        "status": "passed",
+        "duration_s": 7.41
+      },
+      {
+        "name": "model-ready",
+        "status": "passed",
+        "duration_s": 0.72
+      },
+      {
+        "name": "console-missions",
+        "status": "passed",
+        "duration_s": 24.0
+      },
+      {
+        "name": "places",
+        "status": "passed",
+        "duration_s": 60.27
+      },
+      {
+        "name": "scene-binding",
+        "status": "passed",
+        "duration_s": 2.78
+      },
+      {
+        "name": "scene-outage",
+        "status": "passed",
+        "duration_s": 14.94
+      },
+      {
+        "name": "clock-reset",
+        "status": "passed",
+        "duration_s": 2.47
+      },
+      {
+        "name": "ui",
+        "status": "passed",
+        "duration_s": 3.53
+      },
+      {
+        "name": "model",
+        "status": "passed",
+        "duration_s": 5.84
+      },
+      {
+        "name": "simulation-cleanup",
+        "status": "passed",
+        "duration_s": 4.09
+      },
+      {
+        "name": "image-cleanup",
+        "status": "passed",
+        "duration_s": 0.11
+      },
+      {
+        "name": "board-cleanup",
+        "status": "passed",
+        "duration_s": 0.16
+      }
+    ]
+  },
+  "module_bus": {
+    "catalog": {
+      "first_event_id": "23815cf5e18b4ef5b19b309ea6fcc9b8",
+      "control_calls": 1
+    },
+    "offline_changes": [
+      {
+        "status": "ready",
+        "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+        "version": "1"
+      },
+      {
+        "status": "draining",
+        "code": "plugin.draining",
+        "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+        "version": "1"
+      },
+      {
+        "status": "ready",
+        "binding": "2baecfb5eac31fb9675d44345697c3e0c08d6e28e401a5df8743731b30d47a04",
+        "version": "2"
+      },
+      {
+        "status": "invalid",
+        "code": "plugin.manifest_invalid"
+      },
+      {
+        "status": "ready",
+        "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+        "version": "1"
+      },
+      null
+    ],
+    "recovery": [
+      {
+        "event_id": "23815cf5e18b4ef5b19b309ea6fcc9b8",
+        "trace_id": "registry.142045dea87c9151fc5fff397e195a24.image-check",
+        "parent_event_id": null,
+        "kind": "plugin.registry_observed",
+        "code": "plugin.registry_observed",
+        "module": "runtime.registry",
+        "source": "journal:runtime.registry",
+        "utc": "2026-11-17T13:59:00.031501+00:00",
+        "source_seq": 1,
+        "level": "info",
+        "data": {
+          "after": {
+            "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+            "code": null,
+            "status": "ready",
+            "version": "1"
+          },
+          "baseline": false,
+          "before": null,
+          "plugin_id": "image-check"
+        }
+      },
+      {
+        "event_id": "63629f2b48d64f2095479d29073402a2",
+        "trace_id": "registry.142045dea87c9151fc5fff397e195a24.image-check",
+        "parent_event_id": "23815cf5e18b4ef5b19b309ea6fcc9b8",
+        "kind": "plugin.registry_observed",
+        "code": "plugin.registry_observed",
+        "module": "runtime.registry",
+        "source": "journal:runtime.registry",
+        "utc": "2026-11-17T13:59:03.618870+00:00",
+        "source_seq": 2,
+        "level": "info",
+        "data": {
+          "after": {
+            "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+            "code": "plugin.draining",
+            "status": "draining",
+            "version": "1"
+          },
+          "baseline": false,
+          "before": {
+            "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+            "code": null,
+            "status": "ready",
+            "version": "1"
+          },
+          "plugin_id": "image-check"
+        }
+      },
+      {
+        "event_id": "b9357f0d29c545d881868cc2d7a437b9",
+        "trace_id": "registry.142045dea87c9151fc5fff397e195a24.image-check",
+        "parent_event_id": "63629f2b48d64f2095479d29073402a2",
+        "kind": "plugin.registry_observed",
+        "code": "plugin.registry_observed",
+        "module": "runtime.registry",
+        "source": "journal:runtime.registry",
+        "utc": "2026-11-17T13:59:03.657455+00:00",
+        "source_seq": 3,
+        "level": "info",
+        "data": {
+          "after": {
+            "binding": "2baecfb5eac31fb9675d44345697c3e0c08d6e28e401a5df8743731b30d47a04",
+            "code": null,
+            "status": "ready",
+            "version": "2"
+          },
+          "baseline": false,
+          "before": {
+            "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+            "code": "plugin.draining",
+            "status": "draining",
+            "version": "1"
+          },
+          "plugin_id": "image-check"
+        }
+      },
+      {
+        "event_id": "303bfb3bd5b54f3daeaab46ace3c6d8c",
+        "trace_id": "registry.142045dea87c9151fc5fff397e195a24.image-check",
+        "parent_event_id": "b9357f0d29c545d881868cc2d7a437b9",
+        "kind": "plugin.registry_observed",
+        "code": "plugin.registry_observed",
+        "module": "runtime.registry",
+        "source": "journal:runtime.registry",
+        "utc": "2026-11-17T13:59:03.787510+00:00",
+        "source_seq": 4,
+        "level": "warn",
+        "data": {
+          "after": {
+            "binding": null,
+            "code": "plugin.manifest_invalid",
+            "status": "invalid",
+            "version": null
+          },
+          "baseline": false,
+          "before": {
+            "binding": "2baecfb5eac31fb9675d44345697c3e0c08d6e28e401a5df8743731b30d47a04",
+            "code": null,
+            "status": "ready",
+            "version": "2"
+          },
+          "plugin_id": "image-check"
+        }
+      },
+      {
+        "event_id": "6f329f3abe304c4f9306aa898c4eb4b9",
+        "trace_id": "registry.142045dea87c9151fc5fff397e195a24.image-check",
+        "parent_event_id": "303bfb3bd5b54f3daeaab46ace3c6d8c",
+        "kind": "plugin.registry_observed",
+        "code": "plugin.registry_observed",
+        "module": "runtime.registry",
+        "source": "journal:runtime.registry",
+        "utc": "2026-11-17T13:59:03.834504+00:00",
+        "source_seq": 5,
+        "level": "info",
+        "data": {
+          "after": {
+            "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+            "code": null,
+            "status": "ready",
+            "version": "1"
+          },
+          "baseline": false,
+          "before": {
+            "binding": null,
+            "code": "plugin.manifest_invalid",
+            "status": "invalid",
+            "version": null
+          },
+          "plugin_id": "image-check"
+        }
+      },
+      {
+        "event_id": "cfc01ed956fa4f5b9d86f50df01df4f8",
+        "trace_id": "registry.142045dea87c9151fc5fff397e195a24.image-check",
+        "parent_event_id": "6f329f3abe304c4f9306aa898c4eb4b9",
+        "kind": "plugin.registry_observed",
+        "code": "plugin.registry_observed",
+        "module": "runtime.registry",
+        "source": "journal:runtime.registry",
+        "utc": "2026-11-17T13:59:03.893395+00:00",
+        "source_seq": 6,
+        "level": "info",
+        "data": {
+          "after": null,
+          "baseline": false,
+          "before": {
+            "binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+            "code": null,
+            "status": "ready",
+            "version": "1"
+          },
+          "plugin_id": "image-check"
+        }
+      }
+    ],
+    "consumer_restart": {
+      "events": 6,
+      "archive": "4c59e60362d2a152286f04baa949b31c"
+    },
+    "archive_rebuild": {
+      "new_archive": "8476686d72d98e0d3c6b0718a73553ee",
+      "preserved_events": 6
+    },
+    "publisher": [
+      {
+        "event_id": "eca3f131c5b440faa5b11d836c5871e6",
+        "trace_id": "module-bus-acceptance",
+        "parent_event_id": null,
+        "kind": "plugin.release.requested",
+        "code": "release.requested",
+        "module": "plugin.publisher",
+        "source": "journal:plugin.publisher",
+        "utc": "2026-11-17T13:59:17.755499+00:00",
+        "source_seq": 1,
+        "level": "info",
+        "data": {
+          "action": "publish",
+          "case_count": 3,
+          "cases_sha256": "94c17844fa445fddd6b2445eccb649f4de16b4821930378db991feb2a4189b08",
+          "change_id": "9521194db25f4e4ab412d525bbb85905",
+          "expected_version": "absent",
+          "previous_version": "absent",
+          "target_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "tool_id": "derived.speed_kmh"
+        }
+      },
+      {
+        "event_id": "ade3c0abb14a4a838283bf717cbd05d7",
+        "trace_id": "module-bus-acceptance",
+        "parent_event_id": "eca3f131c5b440faa5b11d836c5871e6",
+        "kind": "plugin.release.applied",
+        "code": "release.applied",
+        "module": "plugin.publisher",
+        "source": "journal:plugin.publisher",
+        "utc": "2026-11-17T13:59:17.876363+00:00",
+        "source_seq": 2,
+        "level": "info",
+        "data": {
+          "action": "publish",
+          "case_count": 3,
+          "cases_sha256": "94c17844fa445fddd6b2445eccb649f4de16b4821930378db991feb2a4189b08",
+          "change_id": "9521194db25f4e4ab412d525bbb85905",
+          "expected_version": "absent",
+          "observed_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "previous_version": "absent",
+          "target_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "tool_id": "derived.speed_kmh"
+        }
+      },
+      {
+        "event_id": "f3cfefee3da24df097671f3f4e6d54d5",
+        "trace_id": "module-bus-acceptance",
+        "parent_event_id": "ade3c0abb14a4a838283bf717cbd05d7",
+        "kind": "plugin.release.requested",
+        "code": "release.requested",
+        "module": "plugin.publisher",
+        "source": "journal:plugin.publisher",
+        "utc": "2026-11-17T13:59:19.281532+00:00",
+        "source_seq": 3,
+        "level": "info",
+        "data": {
+          "action": "publish",
+          "case_count": 3,
+          "cases_sha256": "94c17844fa445fddd6b2445eccb649f4de16b4821930378db991feb2a4189b08",
+          "change_id": "7dd48390e82746e0826c17b2f99b55bf",
+          "expected_version": "absent",
+          "previous_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "target_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "tool_id": "derived.speed_kmh"
+        }
+      },
+      {
+        "event_id": "33dac9e98ea5444cbfd4f4e9bab0f3fb",
+        "trace_id": "module-bus-acceptance",
+        "parent_event_id": "f3cfefee3da24df097671f3f4e6d54d5",
+        "kind": "plugin.release.rejected",
+        "code": "release.version_conflict",
+        "module": "plugin.publisher",
+        "source": "journal:plugin.publisher",
+        "utc": "2026-11-17T13:59:19.291027+00:00",
+        "source_seq": 4,
+        "level": "warn",
+        "data": {
+          "action": "publish",
+          "case_count": 3,
+          "cases_sha256": "94c17844fa445fddd6b2445eccb649f4de16b4821930378db991feb2a4189b08",
+          "change_id": "7dd48390e82746e0826c17b2f99b55bf",
+          "expected_version": "absent",
+          "observed_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "previous_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "target_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "tool_id": "derived.speed_kmh"
+        }
+      },
+      {
+        "event_id": "936ac52465d24f3ebde1a500bf6a55b3",
+        "trace_id": "module-bus-acceptance",
+        "parent_event_id": "ade3c0abb14a4a838283bf717cbd05d7",
+        "kind": "plugin.release.requested",
+        "code": "release.requested",
+        "module": "plugin.publisher",
+        "source": "journal:plugin.publisher",
+        "utc": "2026-11-17T13:59:20.311055+00:00",
+        "source_seq": 5,
+        "level": "info",
+        "data": {
+          "action": "remove",
+          "change_id": "3f05164079f84595b839fe82bf7d43d5",
+          "expected_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "previous_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "target_version": "absent",
+          "tool_id": "derived.speed_kmh"
+        }
+      },
+      {
+        "event_id": "5655897f0de248bca7c9c56a5d9edbe5",
+        "trace_id": "module-bus-acceptance",
+        "parent_event_id": "936ac52465d24f3ebde1a500bf6a55b3",
+        "kind": "plugin.release.applied",
+        "code": "release.applied",
+        "module": "plugin.publisher",
+        "source": "journal:plugin.publisher",
+        "utc": "2026-11-17T13:59:20.362277+00:00",
+        "source_seq": 6,
+        "level": "info",
+        "data": {
+          "action": "remove",
+          "change_id": "3f05164079f84595b839fe82bf7d43d5",
+          "expected_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "observed_version": "absent",
+          "previous_version": "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+          "target_version": "absent",
+          "tool_id": "derived.speed_kmh"
+        }
+      }
+    ],
+    "watchdog": [
+      {
+        "event_id": "14fc9b703ba145a587bab6c465186943",
+        "trace_id": "journal:demo.watch:63e415c0443cc6b82f89cfedcb5be2f4",
+        "parent_event_id": null,
+        "kind": "module.heartbeat_overdue",
+        "code": "module.heartbeat_overdue",
+        "module": "journal.watchdog",
+        "source": "edge_console",
+        "utc": "2026-11-17T13:59:23.671+00:00",
+        "source_seq": null,
+        "level": "warn",
+        "data": {
+          "journal": "demo.watch",
+          "pulse": "d81f8db436b1415f815b9501a576e847",
+          "ttl_s": 2
+        }
+      },
+      {
+        "event_id": "1bb19cb646a2410e9715541e2dc61bef",
+        "trace_id": "journal:demo.watch:63e415c0443cc6b82f89cfedcb5be2f4",
+        "parent_event_id": "14fc9b703ba145a587bab6c465186943",
+        "kind": "module.heartbeat_restored",
+        "code": "module.heartbeat_restored",
+        "module": "journal.watchdog",
+        "source": "edge_console",
+        "utc": "2026-11-17T13:59:26.414+00:00",
+        "source_seq": null,
+        "level": "info",
+        "data": {
+          "journal": "demo.watch",
+          "pulse": "7c0758faf2f549aa865fffaad0655b35",
+          "ttl_s": 60
+        }
+      }
+    ],
+    "late_parent": {
+      "child_event_id": "later-child",
+      "child_seq": 29,
+      "initial_cause": null,
+      "recovered_cause_seq": 34
+    },
+    "side_effects": {
+      "provider_calls": [
+        {
+          "path": "/heartbeat",
+          "operation_id": "bus-control-sample/step/1"
+        }
+      ],
+      "control_task": "SUCCEEDED",
+      "task_rows": 9
+    },
+    "cleanup": "isolated Compose services and named volumes removed"
+  },
+  "author_to_release": {
+    "case_count": 3,
+    "model_calls": 1,
+    "events": [
+      {
+        "seq": 6,
+        "event_id": "b717529e25734c9ab98b54b8b5122ef2",
+        "kind": "agent.blocked",
+        "source": "mission_agent/tasks",
+        "parent_event_id": "c89d159eefd7456f9e0d831b43236c40",
+        "cause_seq": 5
+      },
+      {
+        "seq": 7,
+        "event_id": "c6bb8450a1004f979e0b36730b5fd968",
+        "kind": "plugin.author.proposed",
+        "source": "journal:plugin.author",
+        "parent_event_id": "b717529e25734c9ab98b54b8b5122ef2",
+        "cause_seq": 6
+      },
+      {
+        "seq": 8,
+        "event_id": "ecae47c2f58341febfb5853b07ef4aa0",
+        "kind": "plugin.release.requested",
+        "source": "journal:plugin.publisher",
+        "parent_event_id": "c6bb8450a1004f979e0b36730b5fd968",
+        "cause_seq": 7
+      },
+      {
+        "seq": 9,
+        "event_id": "13124b3b2edc45a9a083e8a50b253504",
+        "kind": "plugin.release.applied",
+        "source": "journal:plugin.publisher",
+        "parent_event_id": "ecae47c2f58341febfb5853b07ef4aa0",
+        "cause_seq": 8
+      },
+      {
+        "seq": 10,
+        "event_id": "e14a6edb18ed43db9781dc1f65423adb",
+        "kind": "agent.accepted",
+        "source": "mission_agent/tasks",
+        "parent_event_id": "13124b3b2edc45a9a083e8a50b253504",
+        "cause_seq": 9
+      }
+    ],
+    "receipt": {
+      "source": "/fixture/odom",
+      "frame": "odom",
+      "stamp_ns": 1794923978803929109,
+      "field": "speed",
+      "raw_value": -0.5,
+      "raw_unit": "m/s",
+      "value": -1.8,
+      "unit": "km/h",
+      "definition_version": "a58b9d6806ab969fa8e36fe927f00d0bce783683ec5ebd073fccbc7823636482"
+    }
+  },
+  "autonomous_fixture": {
+    "autonomous_recovery": {
+      "source_task": "speed-request",
+      "followup_task": "recover-750da646a13f0fb93c1e766b540918e614d43c58",
+      "events": [
+        {
+          "seq": 8,
+          "event_id": "c30c32717d1e4c80a38431c99f1fd4d4",
+          "parent_event_id": "97e945ed95bd47bba3f472751c669dc8",
+          "cause_seq": 7,
+          "trace_id": "speed-request",
+          "kind": "agent.blocked",
+          "module": "agent",
+          "code": "planner.not_configured"
+        },
+        {
+          "seq": 9,
+          "event_id": "27decd44ddd349bcb0fc8f08570c071f",
+          "parent_event_id": "c30c32717d1e4c80a38431c99f1fd4d4",
+          "cause_seq": 8,
+          "trace_id": "speed-request",
+          "kind": "plugin.author.proposed",
+          "module": "plugin.author",
+          "code": "author.proposed"
+        },
+        {
+          "seq": 10,
+          "event_id": "d98eb04519f64935bcbf0d42d048f8c9",
+          "parent_event_id": "27decd44ddd349bcb0fc8f08570c071f",
+          "cause_seq": 9,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.approved",
+          "module": "plugin.supervisor",
+          "code": "supervisor.approved"
+        },
+        {
+          "seq": 14,
+          "event_id": "76d5935094d24dc98035603535254221",
+          "parent_event_id": "76cbead50dc1495ba0f42f85686cad43",
+          "cause_seq": 13,
+          "trace_id": "speed-request",
+          "kind": "plugin.release.applied",
+          "module": "plugin.publisher",
+          "code": "release.applied"
+        },
+        {
+          "seq": 15,
+          "event_id": "af35ae15b9d545c29b1089a256d964bf",
+          "parent_event_id": "76d5935094d24dc98035603535254221",
+          "cause_seq": 14,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.published",
+          "module": "plugin.supervisor",
+          "code": "supervisor.published"
+        },
+        {
+          "seq": 16,
+          "event_id": "138b14109cb94e5b95eea62efef2b6af",
+          "parent_event_id": "76d5935094d24dc98035603535254221",
+          "cause_seq": 14,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.submitted",
+          "module": "plugin.supervisor",
+          "code": "supervisor.submitted"
+        },
+        {
+          "seq": 20,
+          "event_id": "1a7518b8f2ca4f7290bd853446a101be",
+          "parent_event_id": "7d253e9f6bd5429c99cf8c538b7386b9",
+          "cause_seq": 19,
+          "trace_id": "speed-request",
+          "kind": "agent.verified",
+          "module": "agent",
+          "code": "agent.verified"
+        },
+        {
+          "seq": 21,
+          "event_id": "69c5958bdfa849d995c8a95a80335579",
+          "parent_event_id": "1a7518b8f2ca4f7290bd853446a101be",
+          "cause_seq": 20,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.verified",
+          "module": "plugin.supervisor",
+          "code": "supervisor.verified"
+        }
+      ],
+      "policy_path": "policies/plugin-recovery.json",
+      "native_verified_event_id": "1a7518b8f2ca4f7290bd853446a101be",
+      "tool": "derived.task_9ab5e2d128495bdb7760cefb266a3eca",
+      "version": "8c741bcdca963b6a4b665cf87c79d2431e40001723e8d042f3751030028e4556",
+      "receipt": {
+        "source": "/fixture/odom",
+        "frame": "odom",
+        "stamp_ns": 1794924150363183014,
+        "field": "speed",
+        "raw_value": -0.5,
+        "raw_unit": "m/s",
+        "value": -1.8,
+        "unit": "km/h",
+        "definition_version": "8c741bcdca963b6a4b665cf87c79d2431e40001723e8d042f3751030028e4556"
+      },
+      "cases": 3,
+      "user_mutating_calls": 1,
+      "model_reply": {
+        "field": "speed",
+        "op": "read",
+        "threshold": 0,
+        "unit": "km/h"
+      },
+      "response_sha256": "be7b7d59e45d5cbade74f2f6908ad9ba7ec6e91fcac82c87502c081be067109b"
+    },
+    "manual_review": {
+      "seq": 26,
+      "event_id": "96b2313b0cfc4785a88cb828c8d3a725",
+      "parent_event_id": "468e1aa23d8c4196896d3ad203b9bf50",
+      "cause_seq": 25,
+      "trace_id": "requires-owner",
+      "kind": "plugin.supervisor.review",
+      "module": "plugin.supervisor",
+      "code": "supervisor.policy_denied",
+      "required_action": "Review the requested intent and the deployment allowlist."
+    },
+    "restart": {
+      "accepted_tasks": [
+        "speed-request",
+        "recover-750da646a13f0fb93c1e766b540918e614d43c58"
+      ],
+      "positive_verifications": 1
+    },
+    "sensor_outage": {
+      "seq": 48,
+      "event_id": "ce1063398914432ab7923077f30f54ed",
+      "parent_event_id": "fabe99f730c1455bb122ca7a1b977d80",
+      "cause_seq": 30,
+      "trace_id": "sensor-unavailable",
+      "kind": "plugin.supervisor.review",
+      "module": "plugin.supervisor",
+      "code": "supervisor.followup_failed",
+      "diagnosis": "tool.odom_stale",
+      "required_action": "Inspect the follow-up task diagnosis and restore its required sensor or binding.",
+      "followup_task": "recover-2cb74a78d2428392b9840f501ad4b07c391f9bed"
+    },
+    "manager_detached": {
+      "task": "manager-detached",
+      "version": "8c741bcdca963b6a4b665cf87c79d2431e40001723e8d042f3751030028e4556",
+      "value": -1.8
+    },
+    "managed_runtime": {
+      "revisions": [
+        "a98e8a3d4f5203cacc2a0c8de31906fa17b5e2901022226653481b0abc888f33",
+        "20ac3c699dd49a4aa8d171be6ec146cf65178e6152303c9c82540d2e17c9c6fb"
+      ],
+      "old_binding": "1f859c7cec6b043361ad72bbf5251824d58d97988ce7aabc02b367b9545d61b6",
+      "outcomes": [
+        {
+          "seq": 61,
+          "event_id": "0fb330ac819a4908aa60e4dc0dba1ce9",
+          "parent_event_id": "98500ba261f146fe801b01b97a77469c",
+          "cause_seq": 60,
+          "trace_id": "runtime-maintenance",
+          "kind": "plugin.release.applied",
+          "module": "plugin.manager",
+          "code": "release.applied"
+        },
+        {
+          "seq": 63,
+          "event_id": "4a5ea6577a974490ab35fb98beb716c5",
+          "parent_event_id": "07c95b26e0b4487db0e3f7342a63f13f",
+          "cause_seq": 62,
+          "trace_id": "runtime-maintenance",
+          "kind": "plugin.release.rejected",
+          "module": "plugin.manager",
+          "code": "release.service_conflict"
+        },
+        {
+          "seq": 65,
+          "event_id": "656a42c926d04ffd9294ca724e6c2d1f",
+          "parent_event_id": "c92f088edb2547bd8b09a9bdf4ba64e8",
+          "cause_seq": 64,
+          "trace_id": "runtime-maintenance",
+          "kind": "plugin.release.rejected",
+          "module": "plugin.manager",
+          "code": "release.dependency_unavailable"
+        },
+        {
+          "seq": 67,
+          "event_id": "3f62f002092c4c3ba154825dc182e614",
+          "parent_event_id": "a2fc7b9fe96745e5b9cf8f7f954f9d0f",
+          "cause_seq": 66,
+          "trace_id": "runtime-maintenance",
+          "kind": "plugin.release.applied",
+          "module": "plugin.manager",
+          "code": "release.applied"
+        },
+        {
+          "seq": 70,
+          "event_id": "acc14fa87d834a5c980b71d9fe3c2d87",
+          "parent_event_id": "3f7fbf7d86f04536b72c67bd00b7004f",
+          "cause_seq": 69,
+          "trace_id": "runtime-maintenance",
+          "kind": "plugin.release.rejected",
+          "module": "plugin.manager",
+          "code": "release.version_conflict"
+        },
+        {
+          "seq": 72,
+          "event_id": "751670c9e1da4ef99fb3320791c75ed2",
+          "parent_event_id": "2587fbe8ee1e4481b15726cd3dc6f7d2",
+          "cause_seq": 71,
+          "trace_id": "runtime-maintenance",
+          "kind": "plugin.release.applied",
+          "module": "plugin.manager",
+          "code": "release.applied"
+        }
+      ]
+    },
+    "managed_derived": {
+      "revisions": [
+        "fdad2c071a6df18c8be56a4a18a176bb7b7facb79b5910fb5fee2bc61f42a6c9",
+        "798e338cb1859cd1f1106fda21acd02f1e919287549e558d53c1523998dcc695"
+      ],
+      "removed": "baaa8cf710ef48fa816f566202c7413e"
+    }
+  },
+  "autonomous_model": {
+    "model": "qwen2.5:1.5b",
+    "started_at": "2026-11-17T14:05:19.413599+00:00",
+    "finished_at": "2026-11-17T14:05:43.967321+00:00",
+    "autonomous_recovery": {
+      "source_task": "speed-request",
+      "followup_task": "recover-14161ecea540771fa9e2ce27addf5f6ac309cf70",
+      "events": [
+        {
+          "seq": 6,
+          "event_id": "99fcd3e1f48b42fd84603dcf3317efd5",
+          "parent_event_id": "0122e95027cb4852a0fea755f4e4b96f",
+          "cause_seq": 5,
+          "trace_id": "speed-request",
+          "kind": "agent.blocked",
+          "module": "agent",
+          "code": "planner.not_configured"
+        },
+        {
+          "seq": 7,
+          "event_id": "7c8b8bacdd54451f91a00eb9fe1c71b5",
+          "parent_event_id": "99fcd3e1f48b42fd84603dcf3317efd5",
+          "cause_seq": 6,
+          "trace_id": "speed-request",
+          "kind": "plugin.author.proposed",
+          "module": "plugin.author",
+          "code": "author.proposed"
+        },
+        {
+          "seq": 8,
+          "event_id": "41256743c39a4684bdcb59a7568d8ff6",
+          "parent_event_id": "7c8b8bacdd54451f91a00eb9fe1c71b5",
+          "cause_seq": 7,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.approved",
+          "module": "plugin.supervisor",
+          "code": "supervisor.approved"
+        },
+        {
+          "seq": 16,
+          "event_id": "5e4d0719eb204bb9a61000420c6521ef",
+          "parent_event_id": "181c9bc7b46b4f3a972ed934de106261",
+          "cause_seq": 15,
+          "trace_id": "speed-request",
+          "kind": "plugin.release.applied",
+          "module": "plugin.publisher",
+          "code": "release.applied"
+        },
+        {
+          "seq": 17,
+          "event_id": "9e0d343c71454c5fbc545c3ab8717a9b",
+          "parent_event_id": "5e4d0719eb204bb9a61000420c6521ef",
+          "cause_seq": 16,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.published",
+          "module": "plugin.supervisor",
+          "code": "supervisor.published"
+        },
+        {
+          "seq": 18,
+          "event_id": "439098bb73f74f51b9f7ee076e620eae",
+          "parent_event_id": "5e4d0719eb204bb9a61000420c6521ef",
+          "cause_seq": 16,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.submitted",
+          "module": "plugin.supervisor",
+          "code": "supervisor.submitted"
+        },
+        {
+          "seq": 14,
+          "event_id": "e3eb72cf896a4f47bef5e50e78ee348a",
+          "parent_event_id": "054674fa4bc543f080a27c0b8f60a0f0",
+          "cause_seq": 13,
+          "trace_id": "speed-request",
+          "kind": "agent.verified",
+          "module": "agent",
+          "code": "agent.verified"
+        },
+        {
+          "seq": 19,
+          "event_id": "07f7e7be71e3491eafbd020474224df5",
+          "parent_event_id": "e3eb72cf896a4f47bef5e50e78ee348a",
+          "cause_seq": 14,
+          "trace_id": "speed-request",
+          "kind": "plugin.supervisor.verified",
+          "module": "plugin.supervisor",
+          "code": "supervisor.verified"
+        }
+      ],
+      "policy_path": "policies/plugin-recovery.json",
+      "native_verified_event_id": "e3eb72cf896a4f47bef5e50e78ee348a",
+      "tool": "derived.task_3c343f0921f607bc6671649305f76915",
+      "version": "b6f76ec2f379fe10a5ffdade714cc899af1206c581fc80ec03cf1fa4189585ce",
+      "receipt": {
+        "source": "/fixture/odom",
+        "frame": "odom",
+        "stamp_ns": 1794924330530569501,
+        "field": "speed",
+        "raw_value": -0.5,
+        "raw_unit": "m/s",
+        "value": -1.8,
+        "unit": "km/h",
+        "definition_version": "b6f76ec2f379fe10a5ffdade714cc899af1206c581fc80ec03cf1fa4189585ce"
+      },
+      "cases": 3,
+      "user_mutating_calls": 1,
+      "model_reply": {
+        "field": "speed",
+        "op": "read",
+        "threshold": 0,
+        "unit": "km/h"
+      },
+      "response_sha256": "4d45efd727d4a7404048f844aa6a8e2d6834ca57415a7a21d042ebeb67d0f147"
+    },
+    "restart": {
+      "accepted_tasks": [
+        "speed-request",
+        "recover-14161ecea540771fa9e2ce27addf5f6ac309cf70"
+      ],
+      "positive_verifications": 1
+    }
+  },
+  "board_fixtures": [
+    {
+      "architecture": "x86_64",
+      "revision": "e79e8a60fc88c5db235930db33119b1f48990182",
+      "image_id": "sha256:f28cfc6db8a7093f10f109f811b903ba97365bf7191140f6516ff8f50a29116f",
+      "host_machine": "AMD64",
+      "passed": true,
+      "without_odom": "RECOVERY_REQUIRED",
+      "with_odom": "SUCCEEDED",
+      "diagnostic": "tool.odom_stale",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator"
+    },
+    {
+      "architecture": "aarch64",
+      "revision": "e79e8a60fc88c5db235930db33119b1f48990182",
+      "image_id": "sha256:3d9ea526882a37bb2e710718845175ed7864dd28d273617d5124999df4ce329c",
+      "host_machine": "AMD64",
+      "passed": true,
+      "without_odom": "RECOVERY_REQUIRED",
+      "with_odom": "SUCCEEDED",
+      "diagnostic": "tool.odom_stale",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator"
+    }
+  ],
+  "raw_sha256": {
+    "summary.json": "c1a093a770951bef5385edbdc7b5fc220a4a9b70876e757506c81c5696f684e1",
+    "module-bus.json": "99dde699f113b3e3be47a2856b510029d44c5aa4be9ce52510293bc12f801c5a",
+    "author-bus.json": "632826b30a6575adf45f125a6ceedaab105ca066793c3132f181ce32cc84592f",
+    "plugin-manager.json": "1c4a110330edb92b181dcb8d48c3adc8c34aa95af22ad8f6ae421f4a3cac5cab",
+    "plugin-manager-model.json": "37e78943a2b327968024612c02cb58aa0c66edeb2ad368259fe7a4d12da10954",
+    "board.json": "ba71727a7a2c3d0b9cdd72b932c8c4eb4b37757418d12855a256cb525db20af1"
+  },
+  "daily_simulation": {
+    "revision": "e79e8a60fc88c5db235930db33119b1f48990182",
+    "services_running": 12,
+    "plugin_supervisor_heartbeat_ttl_s": 180,
+    "odom_and_scan_fresh": true,
+    "before_and_after": {
+      "tasks": 52,
+      "succeeded": 42,
+      "blocked": 10,
+      "task_ids_and_states_sha256": "5d4e2875eb2c37ec89751f816005267366f0f3b73d3179db70c00380db69546a",
+      "task_journal_id": "91edb10e0e488c891319817f80ee9b06",
+      "archive_id": "ef3fe498869e5ea74539429eddb5c4cd"
+    }
+  }
+}
