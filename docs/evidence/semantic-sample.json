@@ -1,6 +1,6 @@
 {
-  "utc": "2026-11-17T03:44:31.195776+00:00",
-  "run_id": "campus-54a805051b",
+  "utc": "2026-11-17T04:00:41.889674+00:00",
+  "run_id": "campus-bf7c1687bd",
   "passed": true,
   "method": "Public console HTTP → local natural-language planner → scene adapter/ROS gateway. Measurements sampled independently from Gazebo world truth.",
   "tolerances": {
@@ -14,54 +14,97 @@
   },
   "tasks": [
     {
-      "id": "campus-54a805051b-garden",
+      "id": "campus-bf7c1687bd-origin",
+      "text": "报告当前位置",
+      "state": "SUCCEEDED",
+      "terminal_code": "agent.verified",
+      "provider": "local",
+      "trace_id": "campus-bf7c1687bd-origin",
+      "truth_samples": 4,
+      "start_xy_m": [
+        0.05398352334757418,
+        0.0024741894782492825
+      ],
+      "end_xy_m": [
+        0.05398352334757418,
+        0.0024741894782492825
+      ],
+      "max_displacement_m": 0.0
+    },
+    {
+      "id": "campus-bf7c1687bd-garden",
       "text": "去庭院巡检",
       "state": "SUCCEEDED",
       "terminal_code": "agent.verified",
       "provider": "local",
-      "trace_id": "campus-54a805051b-garden",
-      "truth_samples": 132,
+      "trace_id": "campus-bf7c1687bd-origin",
+      "truth_samples": 142,
       "start_xy_m": [
-        1.29156281137024e-08,
-        7.1961958258103e-19
+        0.05398352334757418,
+        0.0024741894782492825
       ],
       "end_xy_m": [
-        3.2630222541350076,
-        1.2970524682406104
+        3.2696754286863334,
+        1.2872911481229008
       ],
-      "max_displacement_m": 3.5113614527788792,
+      "max_displacement_m": 3.462864283693791,
       "gate_samples": 9,
-      "gate_max_abs_y": 4.1014783143181444e-12,
-      "world_error_m": 0.06458169097095193,
+      "gate_max_abs_y": 0.0058292245531667,
+      "world_error_m": 0.06965615356234953,
+      "decision": {
+        "seq": 1012,
+        "utc": "2026-11-17T04:00:42.660753+00:00",
+        "event_id": "scene-c9e4c15b025a40ef87855d33cf97ccf9",
+        "parent_event_id": "5957d98bd0604a3cb5743bb848351348",
+        "trace_id": "campus-bf7c1687bd-origin",
+        "code": "scene.route_planned",
+        "kind": "scene.route_planned",
+        "source": "ros:/edge/events",
+        "module": "scene.navigation",
+        "revision": "1.0",
+        "map_digest": "f3d2d4a6a1774dc92195096c2fe1535b1f7512bb050461bef2a3ea99772ef67a"
+      },
       "route": [
-        "desk",
         "door_in",
         "door_out",
         "garden"
       ],
       "map_revision": "1.0",
-      "waypoints_verified": 4
+      "waypoints_verified": 3
     },
     {
-      "id": "campus-54a805051b-desk",
+      "id": "campus-bf7c1687bd-desk",
       "text": "回到工位",
       "state": "SUCCEEDED",
       "terminal_code": "agent.verified",
       "provider": "local",
-      "trace_id": "campus-54a805051b-desk",
-      "truth_samples": 145,
+      "trace_id": "campus-bf7c1687bd-desk",
+      "truth_samples": 148,
       "start_xy_m": [
-        3.2630222541350076,
-        1.2970524682406104
+        3.2696757061572628,
+        1.2872915568836725
       ],
       "end_xy_m": [
-        0.046355685352908606,
-        0.012654622248114766
+        0.047673028362302465,
+        0.008372738364917403
       ],
-      "max_displacement_m": 3.4636139567669146,
-      "gate_samples": 8,
-      "gate_max_abs_y": 0.0026305458104438446,
-      "world_error_m": 0.048051940947066295,
+      "max_displacement_m": 3.466545052365439,
+      "gate_samples": 9,
+      "gate_max_abs_y": 0.006375184382438452,
+      "world_error_m": 0.04840268981121044,
+      "decision": {
+        "seq": 1195,
+        "utc": "2026-11-17T04:01:02.215179+00:00",
+        "event_id": "scene-8955f06842264d5f91ca337b40de2a2c",
+        "parent_event_id": "964858bc0da845c4ade2e13d99e09d04",
+        "trace_id": "campus-bf7c1687bd-desk",
+        "code": "scene.route_planned",
+        "kind": "scene.route_planned",
+        "source": "ros:/edge/events",
+        "module": "scene.navigation",
+        "revision": "1.0",
+        "map_digest": "f3d2d4a6a1774dc92195096c2fe1535b1f7512bb050461bef2a3ea99772ef67a"
+      },
       "route": [
         "door_out",
         "door_in",
@@ -71,88 +114,141 @@
       "waypoints_verified": 3
     },
     {
-      "id": "campus-54a805051b-unknown",
+      "id": "campus-bf7c1687bd-unknown",
       "text": "去火星巡检",
       "state": "BLOCKED",
       "terminal_code": "scene.place_unknown",
       "provider": "local",
-      "trace_id": "campus-54a805051b-unknown",
+      "trace_id": "campus-bf7c1687bd-unknown",
       "truth_samples": 9,
       "start_xy_m": [
-        0.046355685352908606,
-        0.012654622248114766
+        0.047673028362302465,
+        0.008372738364917403
       ],
       "end_xy_m": [
-        0.04635548402584351,
-        0.01265462296020975
+        0.047673028362302465,
+        0.008372738364917403
       ],
-      "max_displacement_m": 2.01328324433595e-07,
+      "max_displacement_m": 0.0,
+      "decision": {
+        "seq": 1389,
+        "utc": "2026-11-17T04:01:22.121732+00:00",
+        "event_id": "scene-e4efaccb94a2430e8b871fa66e51c75c",
+        "parent_event_id": "6aceabafa109458491d688240fefcf01",
+        "trace_id": "campus-bf7c1687bd-unknown",
+        "code": "scene.place_unknown",
+        "kind": "scene.route_refused",
+        "source": "ros:/edge/events",
+        "module": "scene.navigation",
+        "revision": "1.0",
+        "map_digest": "f3d2d4a6a1774dc92195096c2fe1535b1f7512bb050461bef2a3ea99772ef67a"
+      },
       "last_three_max_speed_mps": 0.0,
       "last_three_max_yaw_rate_radps": 0.0
     },
     {
-      "id": "campus-54a805051b-closed",
+      "id": "campus-bf7c1687bd-closed",
       "text": "去维修区巡检",
       "state": "BLOCKED",
       "terminal_code": "scene.place_inaccessible",
       "provider": "local",
-      "trace_id": "campus-54a805051b-closed",
-      "truth_samples": 11,
+      "trace_id": "campus-bf7c1687bd-closed",
+      "truth_samples": 9,
       "start_xy_m": [
-        0.04635548402584351,
-        0.01265462296020975
+        0.047673028362302465,
+        0.008372738364917403
       ],
       "end_xy_m": [
-        0.04635548402584351,
-        0.01265462296020975
+        0.047673028362302465,
+        0.008372738364917403
       ],
       "max_displacement_m": 0.0,
+      "decision": {
+        "seq": 1392,
+        "utc": "2026-11-17T04:01:23.145857+00:00",
+        "event_id": "scene-cd8dd2c8622a454297899055758d916f",
+        "parent_event_id": "44d29577a7434bb08cb86b377d7adccb",
+        "trace_id": "campus-bf7c1687bd-closed",
+        "code": "scene.place_inaccessible",
+        "kind": "scene.route_refused",
+        "source": "ros:/edge/events",
+        "module": "scene.navigation",
+        "revision": "1.0",
+        "map_digest": "f3d2d4a6a1774dc92195096c2fe1535b1f7512bb050461bef2a3ea99772ef67a"
+      },
       "last_three_max_speed_mps": 0.0,
       "last_three_max_yaw_rate_radps": 0.0
     },
     {
-      "id": "campus-54a805051b-wall",
+      "id": "campus-bf7c1687bd-wall",
       "text": "巡检 (2.2,2.1)",
       "state": "BLOCKED",
       "terminal_code": "navigation.path_blocked",
       "provider": "local",
-      "trace_id": "campus-54a805051b-wall",
+      "trace_id": "campus-bf7c1687bd-wall",
       "truth_samples": 66,
       "start_xy_m": [
-        0.04635548402584351,
-        0.01265462296020975
+        0.047673028362302465,
+        0.008372738364917403
       ],
       "end_xy_m": [
-        1.2864599322454642,
-        1.2520941339063862
+        1.281784169328003,
+        1.2358285904055517
       ],
-      "max_displacement_m": 1.7543333308441744,
-      "last_three_max_speed_mps": 5.3488827307193604e-05,
-      "last_three_max_yaw_rate_radps": 9.203473686108177e-14
+      "max_displacement_m": 1.7457243758593228,
+      "last_three_max_speed_mps": 2.5145477213545736e-05,
+      "last_three_max_yaw_rate_radps": 4.376657239189941e-14
     },
     {
-      "id": "campus-54a805051b-recover",
+      "id": "campus-bf7c1687bd-recover",
       "text": "回到工位",
       "state": "SUCCEEDED",
       "terminal_code": "agent.verified",
       "provider": "local",
-      "trace_id": "campus-54a805051b-recover",
-      "truth_samples": 75,
+      "trace_id": "campus-bf7c1687bd-recover",
+      "truth_samples": 71,
       "start_xy_m": [
-        1.2864609066431185,
-        1.2520950674653155
+        1.2817846525219803,
+        1.2358290513805965
       ],
       "end_xy_m": [
-        0.038904977769394354,
-        0.042222850195316054
+        0.03892751075746853,
+        0.04003034840012402
       ],
-      "max_displacement_m": 1.7378684005959155,
-      "world_error_m": 0.05741399109845239,
+      "max_displacement_m": 1.724711109978953,
+      "world_error_m": 0.055837083437516144,
+      "decision": {
+        "seq": 1489,
+        "utc": "2026-11-17T04:01:33.170337+00:00",
+        "event_id": "scene-b57b55d258c1426b89d9b43f673059fd",
+        "parent_event_id": "945fd67e0bb64974b4fa2b151555df12",
+        "trace_id": "campus-bf7c1687bd-recover",
+        "code": "scene.route_planned",
+        "kind": "scene.route_planned",
+        "source": "ros:/edge/events",
+        "module": "scene.navigation",
+        "revision": "1.0",
+        "map_digest": "f3d2d4a6a1774dc92195096c2fe1535b1f7512bb050461bef2a3ea99772ef67a"
+      },
       "route": [
         "desk"
       ],
       "map_revision": "1.0",
       "waypoints_verified": 1
     }
-  ]
+  ],
+  "outage_recovery": {
+    "operation_id": "outage-93338d8240ad4c07b5a18e1bace9779c",
+    "event_id": "scene-1bf52d4166ec4ed1b3009b6c2c800237",
+    "trace_id": "parent-outage-93338d8240ad4c07b5a18e1bace9779c",
+    "module": "scene.navigation",
+    "code": "scene.place_unknown",
+    "source": "ros:/edge/events",
+    "utc": "2026-11-17T04:03:24.134946+00:00",
+    "pending_before_and_after_restart": true,
+    "same_receipt_on_retry": true,
+    "source_payload_unchanged": true,
+    "archive_rows_after_reconnect": 1,
+    "delivery_acknowledged": true
+  }
 }

@@ -68,6 +68,7 @@ jobs:
           trap 'docker compose down --volumes --remove-orphans --timeout 3' EXIT
           sh scripts/deploy.sh sim start
           python3 tests/semantic_acceptance.py --out .ci-results/semantic.json
+          python3 tests/scene_recovery_acceptance.py --project "$COMPOSE_PROJECT_NAME" --out .ci-results/scene-recovery.json
       - name: Preserve this run's new evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

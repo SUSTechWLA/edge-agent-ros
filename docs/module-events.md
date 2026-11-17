@@ -40,6 +40,8 @@ ros2 topic pub --once /edge/events std_msgs/msg/String "{data: '{\"schema_versio
 
 运行 `python tests/semantic_acceptance.py --url http://127.0.0.1:8765` 可从空闲的工位出发，核对具名导航每一项决策、因果引用、路线拒绝时没有底盘委托，以及终点真实轨迹。[场景决策实现](../scene/provider.py) · [验收脚本](../tests/semantic_acceptance.py)
 
+可在单独的仿真 Compose 实例中执行 `python tests/scene_recovery_acceptance.py --project <项目名>`，验证断线恢复。脚本从 Compose 获取观测台端口，停掉观测台后请求一个未知地点，再重启场景进程、重投同一请求。恢复观测台后，检查相同事件 ID、发生时间、原始数据以及唯一一条 ROS 归档，并确认没有运动委托。[断线恢复验收](../tests/scene_recovery_acceptance.py)
+
 ## 可随时接入的日志消费者
 
 在默认仿真 Compose 运行期间，另开终端执行以下命令。示例消费者单独运行、只挂载自己的目标卷，通过只读的事件查询接口复制告警。它可以由日志平台或离线分析 Agent 替换。
