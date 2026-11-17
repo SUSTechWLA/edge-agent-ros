@@ -1,3 +1,4 @@
+import json
 import sys
 import tempfile
 import unittest
@@ -39,3 +40,17 @@ class SceneContract(unittest.TestCase):
                 self.assertEqual(xyz[:2],feature["xy"])
                 size=list(map(float,model.findtext("link/collision/geometry/box/size").split()))
                 self.assertEqual(size,feature["size"])
+
+    def test_renamed_transition_and_ambiguous_place(self):
+        data = self.site.data
+        next(z for z in data["zones"] if z["kind"]=="transition")["id"]="lobby"
+        data["nodes"][0]["aliases"].append("共享地点")
+        data["nodes"][-1]["aliases"]=["共享地点"]
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"alternate.json"
+            path.write_text(json.dumps(data),encoding="utf-8")
+            other=Layout(path)
+            self.assertEqual(other.plan((1.8,0),"庭院")["start_zone"],"lobby")
+            with self.assertRaises(RouteError) as caught:
+                other.plan((0,0),"共享地点")
+            self.assertEqual(caught.exception.code,"scene.place_ambiguous")

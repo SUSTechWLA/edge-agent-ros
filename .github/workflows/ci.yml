@@ -44,31 +44,17 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - name: Build ROS image and exercise motion, cancellation and crash recovery
-        shell: pwsh
+      - name: Run affected single-robot suites on PRs, full simulation on main and release
         env:
-          EDGE_VERIFY_ROOT: .ci-results/verification
-        run: ./scripts/verify.ps1
-      - name: Run console, replay and ROS observation contracts
-        run: docker run --rm --network none edge-agent-ros:v0.1 python3 -m unittest discover -v -s /opt/edge/console/server
-      - name: Run application event and tool contracts
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          docker run --rm --network none edge-agent-ros:v0.1 python3 /opt/edge/tests/agent_trace_contract.py -v
-          docker run --rm --network none edge-agent-ros:v0.1 python3 -m unittest discover -v -s /opt/edge/tests -p 'test_*.py'
-      - name: Verify restart, contention and plugin recovery in isolated Compose
-        env:
-          EDGE_RESILIENCE_REPORT: .ci-results/resilience.json
-        run: python3 tests/console_resilience.py
-      - name: Verify semantic missions through the public console
-        env:
-          COMPOSE_PROJECT_NAME: edge-ci-scene
-          EDGE_CONSOLE_PORT: 8765
-        run: |
-          trap 'docker compose down --volumes --remove-orphans --timeout 3' EXIT
-          sh scripts/deploy.sh sim start
-          python3 tests/semantic_acceptance.py --out .ci-results/semantic.json
-          python3 tests/scene_recovery_acceptance.py --project "$COMPOSE_PROJECT_NAME" --out .ci-results/scene-recovery.json
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            python3 tests/system_suite.py --changed-since "$BASE_SHA"
+          else
+            python3 tests/system_suite.py
+          fi
       - name: Preserve this run's new evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

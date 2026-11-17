@@ -1,0 +1,7 @@
+{
+  "id": "preview_route", "version": "1", "effect": "read",
+  "description": "只根据当前融合定位与语义地图规划到命名地点的路线和预计路径长度，不执行运动。",
+  "parameters": {"place": "string"},
+  "utterances": ["只规划到{place}的路线", "查询到{place}的路线"],
+  "endpoint": "http://scene:8092/preview"
+}

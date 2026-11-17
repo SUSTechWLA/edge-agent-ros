@@ -74,6 +74,11 @@ class PlannerContract(unittest.TestCase):
         with self.assertRaises(planning.Refused):
             self.proposal("请扫描相纸", [status])
         self.assertEqual(self.proposal("请拍一张照片",[{"tool":"camera","args":{}}])[1][0]["tool"],"camera")
+        with self.assertRaises(planning.Refused):
+            self.proposal("请去 (1,0) 拍一张照片",[{"tool":"camera","args":{}}])
+        _,steps=self.proposal("请去 (1,0) 拍一张照片",[
+            {"tool":"inspect","args":{"points":[[1,0]]}},{"tool":"camera","args":{}}])
+        self.assertEqual([s["tool"] for s in steps],["inspect","camera"])
 
 
 if __name__ == "__main__":

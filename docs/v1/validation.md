@@ -1,5 +1,7 @@
 # v0.1 Docker / ROS 2 / Gazebo 发布验收
 
+本页对应下述历史运行号。当前候选版本的运动、感知与 Agent 故障证据见[单机系统测试报告](../testing/single-edge.md)。
+
 **通过。** 2026 年 11 月 17 日（北京时间），以公开 ROS 镜像构建的应用在 Docker Desktop 的 Linux x86-64 环境完成验收。正式验收运行号为 `20261116-161215-c0298b`（UTC）。在清空的临时世界中验收后，另在默认部署 `edge-agent-ros` 中从普通命令行提交 `demo-v1`，查询结果为 `SUCCEEDED`，两条到达证据保存在该部署的卷内。[运行结果](../../artifacts/releases/v0.1/result.json) · [环境版本](../../artifacts/releases/v0.1/environment.txt) · [源文件哈希](../../artifacts/releases/v0.1/source-sha256.txt)
 
 ## 一次完整巡检

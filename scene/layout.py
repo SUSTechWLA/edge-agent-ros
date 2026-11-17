@@ -57,16 +57,20 @@ class Layout:
         return True
 
     def route(self, start, label):
-        target = next((n for n in self.nodes.values() if label in
-                       [n["id"],n["label"],*n.get("aliases",[])]),None)
-        if not target:
+        matches = [n for n in self.nodes.values() if label in
+                   [n["id"],n["label"],*n.get("aliases",[])]]
+        if not matches:
             raise RouteError("scene.place_unknown","场景中没有这个地点")
+        if len(matches) > 1:
+            names = "、".join(n["id"] for n in matches)
+            raise RouteError("scene.place_ambiguous",f"地点名称有多个匹配，请明确目标地点 ID：{names}")
+        target = matches[0]
         if not target.get("accessible",True):
             raise RouteError("scene.place_inaccessible","目的地处于限制通行区")
         zone = self.zone(start)
         entries = [n for n in self.nodes.values() if n["zone"]==zone and n.get("accessible",True)
                    and self.clear(start,n["xy"])]
-        if zone=="threshold":
+        if any(z["id"] == zone and z["kind"] == "transition" for z in self.data["zones"]):
             entries = [n for n in self.nodes.values() if self.clear(start,n["xy"])
                        and n.get("accessible",True)]
         queue = [(math.dist(start,n["xy"]),[n["id"]]) for n in entries]
@@ -85,3 +89,12 @@ class Layout:
                     distance=math.dist(self.nodes[tail]["xy"],self.nodes[neighbor]["xy"])
                     heapq.heappush(queue,(cost+distance,[*path,neighbor]))
         raise RouteError("scene.no_route","当前位置和目标之间没有经过验证的连接")
+
+    def plan(self, start, label):
+        path = self.route(start, label)
+        waypoints = [self.nodes[key]["xy"] for key in path]
+        distance = sum(math.dist(a, b) for a, b in zip([start, *waypoints], waypoints))
+        return {"scene":self.data["id"], "revision":self.data["revision"], "digest":self.digest,
+                "frame":self.data["frame"], "path":path, "waypoints":waypoints,
+                "start_xy":start, "start_zone":self.zone(start), "destination_id":path[-1],
+                "distance_m":distance}

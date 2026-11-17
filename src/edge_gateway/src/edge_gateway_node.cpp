@@ -94,6 +94,13 @@ private:
     if(last_event_op_==op)field("parent_event_id",last_event_id_);
     auto *data=json_object_new_object();
     if(require_scan_ && std::isfinite(front_))json_object_object_add(data,"front_range_m",json_object_new_double(front_));
+    if (require_scan_ && scan_stamp_ >= 0) {
+      json_object_object_add(data,"scan_stamp_ns",json_object_new_int64(scan_stamp_));
+      json_object_object_add(data,"scan_geometry_valid",json_object_new_boolean(std::isfinite(forward_gap_)));
+      if (std::isfinite(forward_gap_))
+        json_object_object_add(data,"forward_gap_rad",json_object_new_double(forward_gap_));
+    }
+    if (pose_) json_object_object_add(data,"odom_stamp_ns",json_object_new_int64(pose_->stamp));
     json_object_object_add(body,"data",data);
     std_msgs::msg::String msg;msg.data=json_object_to_json_string_ext(body,JSON_C_TO_STRING_PLAIN);
     json_object_put(body);
@@ -102,17 +109,32 @@ private:
   }
   void observe_scan(const sensor_msgs::msg::LaserScan &s) {
     const auto stamp=std::int64_t(s.header.stamp.sec)*1000000000LL+s.header.stamp.nanosec;
-    if(s.header.frame_id!="laser_link" || stamp<=scan_stamp_ || !(s.angle_increment>0) ||
-       !(s.range_max>0.42) || !std::isfinite(s.range_min))return;
-    double nearest=std::numeric_limits<double>::infinity();
-    unsigned valid=0;
+    if (s.header.frame_id != "laser_link" || stamp <= scan_stamp_) return;
+    scan_stamp_ = stamp;
+    scan_received_ = Clock::now();
+    front_ = std::numeric_limits<double>::infinity();
+    forward_gap_ = std::numeric_limits<double>::infinity();
+    if (s.ranges.empty() || !std::isfinite(s.angle_min) || !std::isfinite(s.angle_max) ||
+        !std::isfinite(s.angle_increment) || s.angle_increment <= 0 ||
+        !std::isfinite(s.range_min) || !std::isfinite(s.range_max) ||
+        s.range_min < 0 || s.range_min >= clearance_m || s.range_max <= clearance_m) return;
+    const double last_angle = s.angle_min + (s.ranges.size()-1) * double(s.angle_increment);
+    if (std::abs(last_angle - s.angle_max) > .5 * s.angle_increment) return;
+
+    double previous = -front_half_angle;
+    double largest_gap = 0;
     for(std::size_t i=0;i<s.ranges.size();++i){
-      double angle=s.angle_min+i*double(s.angle_increment);
-      double distance=s.ranges[i];
-      if(std::abs(angle)>0.42 || std::isnan(distance) || distance<s.range_min)continue;
-      ++valid;nearest=std::min(nearest,distance);
+      const double angle = s.angle_min + i * double(s.angle_increment);
+      if (std::abs(angle) > front_half_angle) continue;
+      const double distance = s.ranges[i];
+      // REP-117: +Inf is no return, -Inf means too close, NaN means unknown.
+      if (std::isnan(distance) ||
+          (std::isfinite(distance) && (distance < s.range_min || distance > s.range_max))) continue;
+      front_ = std::min(front_, std::max(0., distance));
+      largest_gap = std::max(largest_gap, angle - previous);
+      previous = angle;
     }
-    if(valid>=3){scan_received_=Clock::now();scan_stamp_=stamp;front_=nearest;}
+    forward_gap_ = std::max(largest_gap, front_half_angle - previous);
   }
   enum class Outcome { reached, canceled, failed };
   struct Pose {
@@ -121,6 +143,9 @@ private:
     Clock::time_point arrived;
   };
   static constexpr double target_tolerance = 0.055;
+  static constexpr double clearance_m = .42;
+  static constexpr double front_half_angle = .42;
+  static constexpr double max_ray_gap = .12;
   static constexpr auto heartbeat_timeout = 1500ms;
   static constexpr auto settle_window = 300ms;
 
@@ -254,8 +279,16 @@ private:
     if(require_scan_ && (scan_stamp_<0 || now-scan_received_>1s)){
       begin_stop(Outcome::failed,"laser scan unavailable","navigation.scan_stale");return;
     }
-    if(require_scan_ && linear>0 && front_<0.42){
+    if (require_scan_ && std::abs(scan_stamp_ - pose_->stamp) > 1'000'000'000LL) {
+      begin_stop(Outcome::failed,"laser and odometry acquisition times differ by over one second",
+                 "navigation.scan_time_mismatch");return;
+    }
+    if(require_scan_ && linear>0 && front_<clearance_m){
       begin_stop(Outcome::failed,"forward clearance below 0.42 m","navigation.path_blocked");return;
+    }
+    if (require_scan_ && forward_gap_ > max_ray_gap) {
+      begin_stop(Outcome::failed,"invalid scan geometry or insufficient forward coverage",
+                 "navigation.scan_invalid");return;
     }
     drive(linear, angular);
   }
@@ -266,6 +299,7 @@ private:
   std::uint64_t seq_=0;
   std::int64_t scan_stamp_=-1;
   double front_=std::numeric_limits<double>::infinity();
+  double forward_gap_=std::numeric_limits<double>::infinity();
   Clock::time_point scan_received_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr events_;

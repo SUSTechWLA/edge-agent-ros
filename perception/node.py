@@ -88,6 +88,7 @@ class Grid:
         for index in occupied:
             self.score[index] = min(4, self.score[index]+3)
             self.data[index] = 100 if self.score[index] > 0 else 0
+        return bool(cleared or occupied)
 
 
 class Perception(Node):
@@ -139,12 +140,17 @@ class Perception(Node):
         now = seconds(msg.clock)
         if self.last_clock is not None and now < self.last_clock:
             self.reset("simulation clock rewound; map and sensor history cleared")
+            self.publish_grid(msg.clock)
         self.last_clock = now
+
+    def future_stamp(self, t):
+        # Allow normal DDS delivery skew between /clock and sensor writers.
+        return self.last_clock is not None and t > self.last_clock + 1.0
 
     def on_imu(self, msg):
         t = seconds(msg.header.stamp)
         wz = msg.angular_velocity.z
-        if msg.header.frame_id != self.imu_frame or not math.isfinite(wz):
+        if msg.header.frame_id != self.imu_frame or not math.isfinite(wz) or self.future_stamp(t):
             return
         if msg.angular_velocity_covariance[0] < 0 or (self.gyros and t <= self.gyros[-1][0]):
             return
@@ -175,7 +181,7 @@ class Perception(Node):
         p = msg.pose.pose.position
         wy = wheel_yaw(msg.pose.pose.orientation)
         if (msg.header.frame_id != self.odom_frame or msg.child_frame_id != self.base_frame or
-                wy is None or not math.isfinite(p.x) or not math.isfinite(p.y) or
+                wy is None or not math.isfinite(p.x) or not math.isfinite(p.y) or self.future_stamp(t) or
                 (self.last_odom and t <= self.last_odom.t)):
             return
         new = Pose(t, p.x, p.y, wy)
@@ -198,6 +204,7 @@ class Perception(Node):
         else:
             if old:
                 self.reset("odometry sampling gap; reanchored on wheel pose")
+                self.publish_grid(msg.header.stamp)
             self.mode = "wheel_only"
             fused = new
         self.last_odom = new
@@ -214,6 +221,10 @@ class Perception(Node):
 
     def on_scan(self, msg):
         t = seconds(msg.header.stamp)
+        if self.future_stamp(t):
+            self.dropped += 1
+            self.scan_reason = "scan ahead of simulation clock"
+            return
         if (msg.header.frame_id != self.laser_frame or not msg.ranges or
                 not all(math.isfinite(v) for v in [msg.angle_min, msg.angle_increment,
                                                     msg.range_min, msg.range_max]) or
@@ -251,10 +262,24 @@ class Perception(Node):
             ratio = (t-a.t)/(b.t-a.t) if a.t != b.t else 0.0
             pose = Pose(t, a.x+ratio*(b.x-a.x), a.y+ratio*(b.y-a.y),
                         wrap(a.yaw+ratio*wrap(b.yaw-a.yaw)))
-            self.grid.integrate(msg, pose, self.mount, self.clear_infinite)
+            if not self.grid.integrate(msg, pose, self.mount, self.clear_infinite):
+                self.dropped += 1
+                self.scan_reason = "no grid evidence from scan"
+                continue
             self.matched += 1
             self.scan_reason = "scan integrated"
             self.mapped_stamp = msg.header.stamp
+
+    def publish_grid(self, stamp):
+        m = OccupancyGrid()
+        m.header.frame_id = self.odom_frame
+        m.header.stamp = stamp
+        m.info.width = m.info.height = self.size
+        m.info.resolution = self.res
+        m.info.origin.position.x = m.info.origin.position.y = self.grid.origin
+        m.info.origin.orientation.w = 1.0
+        m.data = self.grid.data
+        self.map_pub.publish(m)
 
     def publish_summary(self):
         mode = self.mode
@@ -263,15 +288,7 @@ class Perception(Node):
             mode, reason = "stale_odom", "wheel odometry timed out"
         # A delayed/stopped scan stream must not advertise a freshly updated map.
         if self.mapped_stamp and self.mapped_stamp != self.published_map_stamp:
-            m = OccupancyGrid()
-            m.header.frame_id = self.odom_frame
-            m.header.stamp = self.mapped_stamp
-            m.info.width = m.info.height = self.size
-            m.info.resolution = self.res
-            m.info.origin.position.x = m.info.origin.position.y = self.grid.origin
-            m.info.origin.orientation.w = 1.0
-            m.data = self.grid.data
-            self.map_pub.publish(m)
+            self.publish_grid(self.mapped_stamp)
             self.published_map_stamp = self.mapped_stamp
         occupied = self.grid.data.count(100)
         free = self.grid.data.count(0)

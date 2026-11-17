@@ -5,6 +5,7 @@ import math
 import os
 import re
 import unicodedata
+from http.client import IncompleteRead
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -77,6 +78,13 @@ def remote_failure(cls, reply, fallback):
     return failure(cls,error.get("message") or reply.get("detail") or fallback,code,"provider",error.get("details"))
 
 
+def finite_number(token):
+    value = float(token)
+    if not math.isfinite(value):
+        raise ValueError("non-finite number in provider JSON")
+    return value
+
+
 def http_json(url, data, timeout=6):
     body = json.dumps(data, allow_nan=False).encode()
     request = Request(url, data=body, headers={"Content-Type":"application/json"})
@@ -85,13 +93,22 @@ def http_json(url, data, timeout=6):
             payload = response.read(2_000_001)
             if len(payload) > 2_000_000:
                 raise Refused("adapter response too large")
-            return json.loads(payload)
+            length = response.headers.get("Content-Length")
+            if length is not None and not response.chunked and len(payload) != int(length):
+                raise IncompleteRead(payload)
+            return json.loads(payload, parse_constant=finite_number, parse_float=finite_number)
+    except IncompleteRead as exc:
+        raise failure(Unavailable,"adapter response interrupted before completion",
+                      "transport.incomplete_response","transport") from exc
     except HTTPError as exc:
         cls=Unavailable if exc.code==429 or exc.code>=500 else Refused
         with exc:
-            raw=exc.read(16385)
+            try:
+                raw=exc.read(16385)
+            except (IncompleteRead,OSError):
+                raw=b""
         try:
-            reply=json.loads(raw) if len(raw)<=16384 else {}
+            reply=json.loads(raw, parse_constant=finite_number, parse_float=finite_number) if len(raw)<=16384 else {}
         except (ValueError,UnicodeError):
             reply={}
         err=remote_failure(cls,reply if isinstance(reply,dict) else {},"transport.http_"+str(exc.code))
@@ -100,7 +117,7 @@ def http_json(url, data, timeout=6):
     except (URLError, TimeoutError, OSError) as exc:
         raise failure(Unavailable,f"adapter unavailable: {type(exc).__name__}","transport.unavailable","transport") from exc
     except (ValueError, UnicodeError) as exc:
-        raise Refused("invalid adapter JSON") from exc
+        raise failure(Refused,"invalid adapter JSON","transport.invalid_json","provider") from exc
 
 
 def registry():
@@ -294,7 +311,8 @@ def build_plan(text, caps, diagnostic, trace=None):
         revision={"version":profile["version"],"sha256":hashlib.sha256(
             json.dumps(profile,sort_keys=True,ensure_ascii=False).encode()).hexdigest()}
         if not url:
-            raise Refused("本地策略无法解析这项请求。可输入明确坐标巡检、查询状态，或连接模型规划器并注册所需能力。")
+            raise failure(Refused,"本地策略无法解析这项请求。可输入明确坐标巡检、查询状态，或连接模型规划器并注册所需能力。",
+                          "planner.not_configured","planner")
         model = profile.get("model")
         provider = f"ollama/{model}"
         # Navigation by this adapter requires explicit coordinates. Withhold a
@@ -325,7 +343,7 @@ def build_plan(text, caps, diagnostic, trace=None):
                 reply=exchange(trace,"model","planner",body,lambda:http_json(url.rstrip("/")+"/api/chat",body,90),
                                meta={"provider":provider,"protocol":"ollama.chat","profile":revision,
                                      "prompt":{k:prompt[k] for k in ("id","version","sha256")}})
-                answer=json.loads(reply["message"]["content"])
+                answer=json.loads(reply["message"]["content"], parse_constant=finite_number, parse_float=finite_number)
             diagnostic.update(stage="plan_validation",proposal=json.dumps(answer,ensure_ascii=False)[:4096])
             steps=answer["steps"]
             if not steps:
@@ -363,7 +381,8 @@ def build_plan(text, caps, diagnostic, trace=None):
         if cap["id"]=="inspect" and not MOVE_TERMS.search(text):
             raise Refused("请求未明确要求移动或巡检")
         validated.append({"tool":cap["id"],"args":args,"version":cap["version"],"binding":binding(cap),"status":"PENDING"})
-    if (planned_coordinates or (coordinates and all(s["tool"] in BASE for s in validated))) and planned_coordinates!=coordinates:
+    check_points=planned_coordinates or (coordinates and (MOVE_TERMS.search(text) or all(s["tool"] in BASE for s in validated)))
+    if check_points and planned_coordinates!=coordinates:
         raise Refused("规划结果遗漏、重复或调整了请求中的坐标顺序")
     covered = {key for step in validated for key in caps[step["tool"]].get("outcomes",{})}
     if required-covered:

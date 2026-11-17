@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import ProxyHandler, Request, build_opener
 
 
 def check(condition, message):
@@ -16,10 +16,11 @@ def check(condition, message):
 
 
 def run(base, out, verify_model=False):
+    http = build_opener(ProxyHandler({}))
     def api(path, body=None):
         req=Request(base+path, data=json.dumps(body).encode() if body is not None else None,
                     headers={"Content-Type":"application/json"})
-        with urlopen(req,timeout=8) as reply:
+        with http.open(req,timeout=8) as reply:
             return json.load(reply)
 
     def wait(call, ok, seconds=65):
@@ -36,6 +37,7 @@ def run(base, out, verify_model=False):
     report={"run_id":run_id,"utc":datetime.now(timezone.utc).isoformat(),"tasks":[]}
     state=wait(lambda: api("/api/state"),lambda s: all(s["sources"][n]["fresh"] for n in
         ("scan","imu","pose","map","odom","truth","perception")))
+    check(state["environment"] == "simulation","this test requires a Gazebo simulation")
     src=state["sources"]
     counts=src["perception"]["data"]
     check(counts["matched_scans"]>0 and counts["occupied_cells"]>0 and counts["free_cells"]>0,"no real map")
@@ -69,8 +71,18 @@ def run(base, out, verify_model=False):
             kinds=[e["kind"] for e in page["events"]]
             return kinds.count("agent.verified")==steps and (not goal or "mission.transition" in kinds)
 
-        timeline=wait(lambda:api("/api/events?"+urlencode({"task_id":key,"after":0,"limit":200})),
-                      trace_complete)
+        def timeline_pages():
+            rows=[]
+            after=0
+            while True:
+                page=api("/api/events?"+urlencode({"task_id":key,"after":after,"limit":100}))
+                rows.extend(page["events"])
+                if not page["has_more"]:
+                    return {"events":rows}
+                check(rows and rows[-1]["seq"]>after,"archive pagination made no progress")
+                after=rows[-1]["seq"]
+
+        timeline=wait(timeline_pages,trace_complete)
         kinds=[e["kind"] for e in timeline["events"]]
         if goal:
             check("step.verified" in kinds and "mission.transition" in kinds,"ROS action trace missing")
@@ -80,7 +92,7 @@ def run(base, out, verify_model=False):
             check(frame["mode"]=="replay" and frame["cursor"]==e["seq"],"wrong historical snapshot")
         row["events"]=kinds
         report["tasks"].append(row)
-    with urlopen(base+"/api/export?"+urlencode({"task_id":report["tasks"][0]["id"]}), timeout=8) as response:
+    with http.open(base+"/api/export?"+urlencode({"task_id":report["tasks"][0]["id"]}), timeout=8) as response:
         data=response.read()
     rows=[json.loads(line) for line in data.splitlines()]
     check(rows and all(a["seq"]<b["seq"] for a,b in zip(rows,rows[1:])),"export sequence invalid")
@@ -94,7 +106,7 @@ def run(base, out, verify_model=False):
 if __name__=="__main__":
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url",default="http://127.0.0.1:8765")
-    parser.add_argument("--out",type=Path,default=Path("artifacts/console"))
+    parser.add_argument("--out",type=Path,default=Path(".ci-results/console"))
     parser.add_argument("--model",action="store_true",help="also run a free-form navigation request with the configured planner")
     opts=parser.parse_args()
     run(opts.url,opts.out,opts.model)

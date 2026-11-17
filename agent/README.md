@@ -72,3 +72,9 @@
 主清单目录优先；设定 `EDGE_EXTRA_PLUGIN_DIR` 时还读取第二目录，未配置时只读取主目录。对于只有一个字符串参数的可信能力，清单可写 `"parameters":{"place":"string"},"utterances":["去{place}巡检","前往{place}"]`。固定前后缀按字面完整匹配，捕获非空地点。多义匹配会拒绝派发。地点是否合法、可达和已经完成由对应场景提供者验收。
 
 回归命令为 `docker run --rm --network none edge-agent-ros:v0.1 python3 /opt/edge/tests/agent_trace_contract.py -v`。[测试实现](../tests/agent_trace_contract.py)
+
+## 如何核对一次工具调用是否真的成功
+
+内置 `inspect` 在首次绑定或接续旧版任务时向 ROS 内核提交原 `mission_id` 与原有序点列。内核核对绑定，重复的相同委托沿用原结果，点位不同返回 `core.id_conflict`。已发送但在内核账本内消失的委托进入 `RECOVERY_REQUIRED`。每个请求点均需有距离目标不超过 0.12 m 的有限测量，Agent 才能写入完成。要求前往明确点位并读取仪器时，规划校验会拒绝漏掉点位的测量方案。模型服务启动中或工具连接中断时，账本保留具体失败，幂等工具用原 `operation_id` 重试。回执身份错误或成功证据非法时进入 `RECOVERY_REQUIRED`，可先向提供者查询原操作。
+
+旧版曾允许提供者用 NaN 充当读数。升级后首次打开旧账本时，将含此类步骤的任务转为 `RECOVERY_REQUIRED`，保留原事件，在步骤内标记 `invalid_number`，并增加 `evidence_corrected` 记录原状态及变更前步骤内容的 SHA-256。复核时对照原提供者数据。本地测试覆盖提供者丢回执、超时、多步骤中途重启和两种任务标识冲突。[仿真故障验收](../tests/system/agent_faults.py)

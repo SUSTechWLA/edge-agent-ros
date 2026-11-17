@@ -98,12 +98,15 @@ class Observation:
     def __init__(self, config):
         self.config = config
         self.sub = None
+        self.cause = None
+        self.error = config.error
+        self.reset_sample()
+
+    def reset_sample(self):
         self.started = time.monotonic()
         self.received = self.sampled = self.data = self.stamp = self.frame = None
         self.truncated = False
-        self.error = config.error
         self.last_status = "error" if self.error else "waiting"
-        self.cause = None
 
     def update(self, message):
         data, truncated = preview(message)
@@ -144,6 +147,10 @@ class Observations:
     def snapshot(self, now):
         return {key:item.view(now,self.node.sim_clock) for key,item in self.items.items()}
 
+    def reset_samples(self):
+        for item in self.items.values():
+            item.reset_sample()
+
     def record(self, item, kind, detail):
         cfg = item.config
         state = item.view(time.monotonic(),self.node.sim_clock)
@@ -156,6 +163,12 @@ class Observations:
         with self.node.lock:
             if self.items.get(item.config.id) is not item:
                 return
+            header = getattr(msg, "header", None)
+            if header is not None and hasattr(header,"stamp"):
+                stamp = header.stamp.sec + header.stamp.nanosec*1e-9
+                if self.node.future_sample(stamp) or (
+                        self.node.sim_clock is not None and item.stamp is not None and stamp < item.stamp):
+                    return
             try:
                 item.update(msg)
             except Exception as exc:  # isolate third-party generated message accessors

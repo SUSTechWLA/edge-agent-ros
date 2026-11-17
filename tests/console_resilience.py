@@ -84,7 +84,7 @@ def run():
     http=build_opener(ProxyHandler({}))
     report={"project":project,"port":port,"image":image,"utc":datetime.now(timezone.utc).isoformat(),
             "passed":False,"cases":{}}
-    output=Path(os.getenv("EDGE_RESILIENCE_REPORT") or repo/"artifacts/console/resilience.json")
+    output=Path(os.getenv("EDGE_RESILIENCE_REPORT") or repo/".ci-results/resilience.json")
     output.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
         directory=Path(temp)

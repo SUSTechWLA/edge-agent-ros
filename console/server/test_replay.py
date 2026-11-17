@@ -13,6 +13,46 @@ from observer import Observer
 
 
 class ReplayTest(unittest.TestCase):
+    def test_import_continues_after_legacy_nonfinite_model_artifact(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            source = path / "tasks.db"
+            db = sqlite3.connect(source)
+            db.executescript("""
+                CREATE TABLE audit_identity(singleton INTEGER,id TEXT);
+                INSERT INTO audit_identity VALUES(1,'legacy-model');
+                CREATE TABLE events(seq INTEGER PRIMARY KEY,utc TEXT,task_id TEXT,step INTEGER,
+                                    kind TEXT,detail TEXT,operation_id TEXT,payload TEXT);
+                INSERT INTO events VALUES
+                    (1,'2025-11-01T12:00:00Z','diagnose',0,'model.response','','operation-1',
+                    '{"trace":{"event_id":"old-reply","trace_id":"old-trace","artifact":{"rows":[NaN,-Infinity,1e999]}}}'),
+                    (2,'2025-11-01T12:00:01Z','diagnose',0,'blocked','','operation-1',
+                    '{"trace":{"event_id":"old-block","parent_event_id":"old-reply","trace_id":"old-trace"}}');
+            """)
+            db.close()
+            env = {"EDGE_CONSOLE_DIR": str(path / "console"), "EDGE_TASK_DB": str(source),
+                   "EDGE_LEDGER_PATH": str(path / "absent.db"), "EDGE_ENVIRONMENT": "hardware"}
+            rclpy.init()
+            try:
+                with patch.dict(os.environ, env):
+                    for _ in range(2):
+                        obs = Observer()
+                        try:
+                            obs.tick()
+                            events = [json.loads(line) for line in obs.history.export({"trace_id":"old-trace"},True)]
+                            self.assertEqual([e["event_id"] for e in events], ["old-reply","old-block"])
+                            self.assertEqual([e["data"]["source_seq"] for e in events], [1,2])
+                            archived = events[0]["data"]
+                            self.assertEqual(archived["payload"]["trace"]["artifact"]["rows"], ["NaN","-Infinity","1e999"])
+                            self.assertCountEqual(archived["legacy_nonfinite_literals"], ["NaN","-Infinity","1e999"])
+                            self.assertNotIn("legacy_nonfinite_literals", events[1]["data"])
+                            self.assertEqual(events[1]["cause_seq"], events[0]["seq"])
+                        finally:
+                            obs.history.close()
+                            obs.destroy_node()
+            finally:
+                rclpy.shutdown()
+
     def test_authoritative_transitions_survive_disconnect(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder)

@@ -15,12 +15,14 @@ def run(project):
         return subprocess.run([*compose, *args], input=source, capture_output=True, check=True,
                               encoding="utf-8").stdout.strip()
 
-    address = command("port", "console", "8080")
-    if not address.startswith("127.0.0.1:"):
-        raise ValueError("use a dedicated simulation console bound to loopback")
+    def endpoint():
+        address = command("port", "console", "8080")
+        if not address.startswith("127.0.0.1:"):
+            raise ValueError("use a dedicated simulation console bound to loopback")
+        return "http://" + address
     if project == "edge-agent-ros":
         raise ValueError("use an isolated acceptance Compose project")
-    base = "http://" + address
+    base = endpoint()
     http = build_opener(ProxyHandler({}))
     def get(path):
         with http.open(base + path, timeout=3) as response:
@@ -67,6 +69,7 @@ print(json.dumps(row))
     finally:
         command("start", "console")
 
+    base = endpoint()
     until = time.monotonic() + 50
     while time.monotonic() < until:
         try:

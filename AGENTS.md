@@ -14,3 +14,4 @@
 3. 在规格「变更记录」补充实现路径、复测命令和结果，再运行 `python3 scripts/check_sdd.py --base <目标分支>`。提交正文、PR 都关联规格编号。
 4. 排障时从现场版本和任务 ID 开始。用 `git show <sha>:<path>` 读取当时行为，用 `git log --follow -- <规格路径>` 查契约演变。把故障转为可复跑的测试，再记录修复的前后结果。
 5. 在架构、界面和代码中沿用 [dsh / SuperAgent 与 ROS 术语对照](docs/harness-extensions.md#团队共用的术语)。引入近义概念时，以状态归属、生命周期和一个可观察的例子说明差别。标明当前实现或目标设计，保持已发布接口可用。
+6. 对待提交改动运行 `python tests/system_suite.py --changed-since HEAD --plan`，对整条 PR 使用目标分支作基点。如果新增消费方，在 [测试选择器](tests/test_selection.py) 增加依赖和断言。完整发布回归、独立真机门槛和证据存放规则见[系统测试报告](docs/testing/single-edge.md)。

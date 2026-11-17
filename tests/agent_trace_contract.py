@@ -70,6 +70,40 @@ class TraceContracts(unittest.TestCase):
         self.assertEqual(recovered.create(None,"status",trigger)["id"],key)
         self.assertEqual(json.loads(recovered.event_page(key)[0][0]["payload"])["trace"]["parent_event_id"],parent)
 
+    def test_default_trigger_cannot_rebind_an_explicit_source_event(self):
+        j=self.journal()
+        j.create("task-one","status",{"kind":"user","source":"user","id":"same-trigger"})
+        with self.assertRaises(planning.Refused):
+            j.create("same-trigger","status")
+        self.assertIsNone(j.get("same-trigger"))
+        self.assertEqual(j.get("task-one")["text"],"status")
+
+    def test_invalid_legacy_measurement_requires_reconciliation_once(self):
+        j=self.journal()
+        t=j.create("legacy-reading","fixture")
+        t["steps"]=[{"tool":"fixture","args":{},"operation_id":"legacy-reading/step/1",
+                     "status":"SUCCEEDED","evidence":{"reading":float("nan")}}]
+        t["cursor"]=1
+        j.save(t,"SUCCEEDED","historical confirmation",kind="verified",op="legacy-reading/step/1")
+        event_id=j.event_page(t["id"])[0][-1]["event_id"]
+        j.db.execute("PRAGMA user_version=0")
+        j.db.commit()
+        j.db.close()
+        j.owner.close()
+        for _ in range(2):
+            repaired=self.journal()
+            row=repaired.get(t["id"])
+            self.assertEqual(row["state"],"RECOVERY_REQUIRED")
+            self.assertFalse(row["can_retry"])
+            self.assertEqual(row["steps"][0]["evidence"]["reading"],{"invalid_number":"NaN"})
+            json.dumps(row,allow_nan=False)
+            events=repaired.event_page(t["id"])[0]
+            self.assertEqual([e["kind"] for e in events],["accepted","verified","evidence_corrected"])
+            self.assertEqual(events[1]["event_id"],event_id)
+            self.assertEqual(json.loads(events[-1]["payload"])["prior_state"],"SUCCEEDED")
+            repaired.db.close()
+            repaired.owner.close()
+
     def test_request_and_receipt_keep_actual_configuration_and_sanitized_content(self):
         j=self.journal()
         t=j.create("sensitive","询问设备位置 api_key=abcdefg12345")

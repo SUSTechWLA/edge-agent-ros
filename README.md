@@ -68,7 +68,19 @@ docker compose start
 
 客户端等候超时只会结束本地等待。用同一任务 ID 查询结果，明确取消请调用 cancel。状态保存在 Compose 命名卷 `state` 中；普通 stop/start 或 down/up 会保留账本。重新创建整套仿真会将 Gazebo 场地复位，账本里的历史位置代表过去那次运行。
 
-## 运行完整验收
+## 单机系统测试
+
+涉及运行代码的修改先查看受影响的测试组，观察行为是否改变，再定位是哪层产生了差异。在项目根目录执行：
+
+```sh
+python tests/system_suite.py --changed-since origin/main --plan
+python tests/system_suite.py --changed-since origin/main
+python tests/system_suite.py
+```
+
+最后一条运行完整仿真回归。使用本机已有的 Ollama 模型卷时追加 `--ollama-cache-volume edge-agent-ros_models`。每次运行在 `.ci-results/system/runs/<运行号>/` 独立保存摘要、阶段日志和证据。未配置模型时，摘要显式标记真实推理已跳过。查阅[系统测试报告、架构评价与测试选择规则](docs/testing/single-edge.md)。
+
+只验证 C++ 内核、停车和执行链路故障时可单独运行：
 
 ```powershell
 .\scripts\verify.ps1
@@ -78,7 +90,7 @@ docker compose start
 
 `verify.ps1` 使用临时、独立命名的 Compose 项目。脚本会注入两次进程级故障，完成后清理当次临时容器和卷。JSON、实际轨迹、SQLite 只读导出、单元测试输出和容器日志保存在 `artifacts/verification/<UTC时间-运行ID>/`。已构建同一版镜像时可以传 `-SkipBuild`。查看[核心验收报告](docs/v1/validation.md)。
 
-复核实际模型调用时，先按[模型配置](docs/model.md)启动 Ollama，再运行 `python3 tests/model_trace_acceptance.py`。这一用例读取 ROS 状态，并验证重复告警去重、子任务继承 trace 和事件导出。仓库保存了两份可直接阅读的结果：[真实模型、工具及 ROS 回执](docs/evidence/trace-sample.json) · [六个语义场景任务](docs/evidence/semantic-sample.json)。
+复核实际模型调用时，先按[模型配置](docs/model.md)启动 Ollama，再运行 `python3 tests/model_trace_acceptance.py`。这一用例读取 ROS 状态，并验证重复告警去重、子任务继承 trace 和事件导出。仓库保存了两份可直接阅读的历史结果：[真实模型、工具及 ROS 回执](docs/evidence/trace-sample.json) · [一次状态查询与六项场景任务](docs/evidence/semantic-sample.json)。
 
 | 想弄清的问题 | 从哪里看 |
 |---|---|

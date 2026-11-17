@@ -1,5 +1,6 @@
 """Optional read-only event consumer. Import archive rows and checkpoint in one transaction."""
 import argparse
+from http.client import IncompleteRead
 import json
 import sqlite3
 import sys
@@ -86,7 +87,7 @@ def main():
             try:
                 more=sink.copy()
                 backoff=1
-            except (URLError,TimeoutError,ConnectionError) as error:
+            except (URLError,TimeoutError,ConnectionError,IncompleteRead,json.JSONDecodeError,UnicodeDecodeError) as error:
                 if args.once:
                     raise
                 print(f"event source unavailable ({type(error).__name__}); retry in {backoff}s",

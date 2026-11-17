@@ -16,4 +16,4 @@
 
 `missions` 保存当前状态与原因，`steps` 保留每个点的目标、稳定操作 ID、网关结果、验收坐标和源时间戳。动作 ID 为 `<mission_id>/waypoint/<从1开始的序号>`；数据库中的 step 列从 0 开始。`submit`、派发、验收各自写入事务；SQLite 的单写者锁和底盘唯一索引分别防止双内核和双占用。[账本实现](../../src/edge_core/src/ledger.cpp) · [持久化测试](../../src/edge_core/test/ledger_test.cpp)
 
-默认实例运行时，执行 `docker compose exec -T core /usr/bin/python3 /opt/edge/tests/export_ledger.py`，可在一个只读事务中取得完整性检查、任务和步骤快照。终态原因与步骤证据可定位此版闭环；逐事件审计、模型调用追踪和远程身份管理属于后续扩展。
+默认实例运行时，执行 `docker compose exec -T core /usr/bin/python3 /opt/edge/tests/export_ledger.py`，可在一个只读事务中取得完整性检查、任务和步骤快照。控制台还汇集内核与 Agent 的事件。模型请求、响应及工具调用可按任务追溯。远端身份管理属于后续范围。[运行记录契约](../module-events.md) · [模型和工具追踪](../../agent/README.md)

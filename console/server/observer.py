@@ -60,6 +60,20 @@ def stamp_s(stamp):
     return stamp.sec + stamp.nanosec * 1e-9
 
 
+def legacy_payload(raw):
+    # Some old providers persisted JSON extensions (NaN) or exponents outside
+    # float64. Keep the original numeric lexeme so the source row is auditable.
+    converted = set()
+    def number(literal):
+        value = float(literal)
+        if math.isfinite(value):
+            return value
+        converted.add(literal)
+        return literal
+    payload = json.loads(raw, parse_float=number, parse_constant=number)
+    return payload, sorted(converted)
+
+
 class Observer(Node):
     def __init__(self):
         super().__init__("edge_console")
@@ -102,7 +116,7 @@ class Observer(Node):
         self.create_subscription(String,"/edge/events",self.module_event,100)
         self.last_wire_warning = {}
         if self.environment=="simulation":
-            self.create_subscription(Clock, "/clock",lambda m:setattr(self,"sim_clock",stamp_s(m.clock)),
+            self.create_subscription(Clock, "/clock",self.clock_update,
                                      qos_profile_sensor_data)
         self.create_timer(0.25, self.tick)
         self.event("console.started", "edge_console", "开始采集 ROS 状态",
@@ -110,6 +124,26 @@ class Observer(Node):
                          "source_revision":os.environ.get("EDGE_REVISION","unknown"),
                          "ros_distro":os.environ.get("ROS_DISTRO"),"rmw":os.environ.get("RMW_IMPLEMENTATION"),
                          "ros_domain_id":os.environ.get("ROS_DOMAIN_ID"),"schema_version":1})
+
+    def clock_update(self, msg):
+        now = stamp_s(msg.clock)
+        with self.lock:
+            previous = self.sim_clock
+            self.sim_clock = now
+            if previous is None or now >= previous:
+                return
+            self.sources.clear()
+            self.health.clear()
+            self.health_event.clear()
+            self.trail.clear()
+            self.historical.clear()
+            self.moving = self.mode = None
+            self.extra.reset_samples()
+            self.event("sensor.clock_reset", "/clock", "仿真时钟回退，等待新时间段的观测", "warn",
+                       data={"previous_stamp_s":previous, "stamp_s":now})
+
+    def future_sample(self, stamp):
+        return self.sim_clock is not None and stamp is not None and stamp > self.sim_clock + 1.0
 
     def data_for(self, key, msg):
         if key in ("pose","odom","truth"):
@@ -156,6 +190,8 @@ class Observer(Node):
         if key=="semantics" and len(msg.data)>100000:
             raise ValueError("semantic map exceeds preview limit")
         result = json.loads(msg.data)
+        # Require numbers to be representable in snapshots, including 1e999.
+        json.dumps(result, allow_nan=False)
         if not isinstance(result,dict):
             raise ValueError("expected a status object")
         if key=="semantics" and (result.get("schema_version")!=1 or not isinstance(result.get("frame"),str)
@@ -166,11 +202,18 @@ class Observer(Node):
     def consume(self, key, msg):
         try:
             data = self.data_for(key,msg)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, RecursionError, OverflowError):
+            now = time.monotonic()
+            if now-self.last_wire_warning.get(key,float("-inf"))>=10:
+                self.last_wire_warning[key]=now
+                self.event("source.invalid",self.resolve_topic_name(TOPICS[key][0]),
+                           "已丢弃无效的观测消息","warn",data={"key":key})
             return
         stamp = stamp_s(msg.header.stamp) if hasattr(msg,"header") else None
         now = time.monotonic()
         with self.lock:
+            if self.future_sample(stamp):
+                return
             prev = self.sources.get(key)
             rate = prev["rate"] if prev else None
             if prev and now > prev["recv"]:
@@ -178,10 +221,12 @@ class Observer(Node):
                 estimated = (1/rate)*0.9 + interval*0.1 if rate and interval < 3 else interval
                 rate = 1/max(estimated,0.001)
             if prev and stamp is not None and prev["stamp"] is not None and stamp < prev["stamp"]:
-                if key == "pose":
-                    self.trail.clear()
                 self.event("sensor.clock_regressed", TOPICS[key][0],"采样时钟回退","warn",
                            data={"previous_stamp_s":prev["stamp"], "stamp_s":stamp})
+                if self.sim_clock is not None:
+                    return
+                if key == "pose":
+                    self.trail.clear()
             sample_recv = prev["sample_recv"] if prev and stamp is not None and prev["stamp"]==stamp else now
             self.sources[key] = {"data":data,"recv":now,"sample_recv":sample_recv,"wall":time.time(),"stamp":stamp,"rate":rate}
             if key == "pose" and all(data[k] is not None for k in ("x","y")):
@@ -351,7 +396,9 @@ class Observer(Node):
                   "delegated_operation_id":row["operation_id"]}
             if row.get("payload"):
                 try:
-                    data["payload"]=json.loads(row["payload"])
+                    data["payload"], converted = legacy_payload(row["payload"])
+                    if converted:
+                        data["legacy_nonfinite_literals"] = converted
                 except (TypeError,ValueError):
                     data["payload"]=row["payload"]
             level="error" if kind in ("error","retry_exhausted","timeout") or kind.endswith(".error") else (

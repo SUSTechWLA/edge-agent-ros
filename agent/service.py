@@ -1,5 +1,6 @@
 """Persistent natural-language task supervisor. The ROS executive owns physical actions."""
 import fcntl
+import hashlib
 import json
 import math
 import os
@@ -71,6 +72,26 @@ class Journal:
             self.db.execute("ALTER TABLE events ADD COLUMN event_id TEXT")
         self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS events_by_id ON events(event_id) WHERE event_id IS NOT NULL")
         self.db.commit()
+        if self.db.execute("PRAGMA user_version").fetchone()[0] < 1:
+            self.repair_nonfinite_steps()
+
+    def repair_nonfinite_steps(self):
+        # Older providers could produce NaN/Infinity, making a confirmed task unreadable.
+        # Preserve historical events and tag each invalid measurement in its original place.
+        with self.db:
+            for row in self.db.execute("SELECT id,steps FROM tasks WHERE json_valid(steps)=0").fetchall():
+                try:
+                    steps=json.loads(row["steps"],parse_constant=lambda token: {"invalid_number":token})
+                except (TypeError, ValueError):
+                    # Unrelated database corruption requires recovery from the original backup.
+                    continue
+                task=self.get(row["id"])
+                task["steps"]=steps
+                original_hash=hashlib.sha256(row["steps"].encode()).hexdigest()
+                self.save(task,"RECOVERY_REQUIRED","历史步骤含非有限数值，需对照原始执行证据复核",
+                          kind="evidence_corrected",diagnostic={"code":"tool.legacy_invalid_evidence",
+                          "origin":"journal","original_steps_sha256":original_hash})
+            self.db.execute("PRAGMA user_version=1")
 
     def get(self, key):
         with self.lock:
@@ -91,8 +112,10 @@ class Journal:
         with self.lock, self.db:
             if trigger is not None:
                 trigger=trigger_input(trigger)
+            identity=trigger or {"kind":"user","source":"user","id":key}
+            if identity["id"] is not None:
                 origin=self.db.execute("""SELECT task_id FROM task_triggers WHERE kind=? AND source=? AND source_key=?""",
-                    (trigger["kind"],trigger["source"],trigger["id"])).fetchone()
+                    (identity["kind"],identity["source"],identity["id"])).fetchone()
                 if origin:
                     if key is not None and key!=origin[0]:
                         raise Refused("同一触发已绑定其他任务 ID")
@@ -141,6 +164,9 @@ class Journal:
 
     def exchange_event(self,task,kind,trace,operation_id):
         with self.lock,self.db:
+            if trace.get("module")=="edge_core.submit_mission" and kind in ("ros.request","ros.response"):
+                self.db.execute("UPDATE tasks SET steps=? WHERE id=?",
+                                (json.dumps(task["steps"]),task["id"]))
             if "diagnosis" in trace:
                 trace={**trace,"code":trace["diagnosis"]["code"]}
             self.append(task,kind,trace.get("diagnosis",{}).get("message",kind),{},
@@ -199,7 +225,8 @@ class Journal:
                     payload["step"]=project_step(t["steps"][index])
                 trace={}
                 if diagnostic and diagnostic.get("code"):
-                    trace={"layer":"planner" if op is None else "tool","code":diagnostic["code"],
+                    layer="journal" if kind=="evidence_corrected" else ("planner" if op is None else "tool")
+                    trace={"layer":layer,"code":diagnostic["code"],
                            "diagnosis":payload["diagnostic"]}
                 self.append(t,kind,detail,payload,step=index,op=op,trace=trace)
 
@@ -240,6 +267,11 @@ class Robot(Node):
 
     def receive_odom(self,msg):
         stamp=msg.header.stamp
+        position=msg.pose.pose.position
+        q=msg.pose.pose.orientation
+        if not all(math.isfinite(v) for v in (position.x,position.y,q.w,q.x,q.y,q.z,msg.twist.twist.linear.x)):
+            self.sample=None
+            return
         if self.sample and stamp==self.sample[1].header.stamp:
             return
         self.sample=time.monotonic(),msg
@@ -270,20 +302,32 @@ class Robot(Node):
         if step["tool"]=="inspect" and not cap.get("endpoint"):
             def current():
                 s=self.call(self.query,GetMission.Request(mission_id=op))
+                points=[[p.x,p.y] for p in s.evidence]
+                if any(not math.isfinite(v) for xy in points for v in xy):
+                    raise failure(OutcomeUnknown,"巡检回执含非有限坐标","tool.receipt_invalid","edge_core")
                 return {"found":s.found,"state":s.state,"detail":s.detail,"verified_count":s.verified_count,
-                        "points":[[p.x,p.y] for p in s.evidence]}
+                        "points":points}
             status=exchange(trace,"ros","edge_core.get_mission",{"mission_id":op},current)
-            if not status["found"]:
+            binding_state=step.get("ros_binding")
+            if not status["found"] and binding_state!="prepared":
+                raise failure(OutcomeUnknown,"原操作可能已执行，ROS 内核查不到记录",
+                              "navigation.mission_unaccounted","edge_core")
+            if binding_state!="bound":
+                # GetMission identifies a row but does not expose its requested waypoints.
+                # SubmitMission is the core's atomic check for an exact operation/payload pair.
                 pts=[Point(x=float(x),y=float(y)) for x,y in step["args"]["points"]]
                 def submit():
                     s=self.call(self.submit,SubmitMission.Request(mission_id=op,waypoints=pts))
+                    step["ros_binding"]="bound" if s.accepted else "prepared"
                     return {"accepted":s.accepted,"state":s.state,"detail":s.detail}
+                step["ros_binding"]="sent"
                 response=exchange(trace,"ros","edge_core.submit_mission",{"mission_id":op,"waypoints":step["args"]["points"]},submit)
                 if not response["accepted"]:
                     if "occupied" in response["detail"]:
                         raise failure(Unavailable,response["detail"],"core.base_occupied","edge_core")
                     raise failure(Refused,response["detail"],"navigation.goal_rejected","edge_core")
-                return None
+                if not status["found"] or response["state"]!=status["state"]:
+                    return None
             state=status["state"]
             if state in ("RUNNING","CANCELING"):
                 return None
@@ -293,6 +337,10 @@ class Robot(Node):
                 raise failure(OperationCanceled,status["detail"],"navigation.canceled","edge_core")
             if state!="SUCCEEDED":
                 raise failure(Refused,state+": "+status["detail"],"navigation.failed","edge_core")
+            count=len(step["args"]["points"])
+            if (status["verified_count"]!=count or len(status["points"])!=count or
+                    any(math.dist(point,target)>.12 for point,target in zip(status["points"],step["args"]["points"]))):
+                raise failure(OutcomeUnknown,"巡检终态与有序点位的逐点验收不符","tool.receipt_invalid","edge_core")
             return {"mission_id":op,"verified_count":status["verified_count"],"points":status["points"]}
         try:
             body={"operation_id":op,"arguments":step["args"],"version":step["version"]}
@@ -349,6 +397,8 @@ def worker(journal,robot,planning):
                 raise failure(Unavailable,"所需能力未挂载，或提供者与已保存的计划不一致","tool.binding_unavailable","registry")
             if step["status"]=="PENDING":
                 step.update(status="RUNNING",operation_id=op,started_at=time.time())
+                if step["tool"]=="inspect" and not cap.get("endpoint"):
+                    step["ros_binding"]="prepared"
                 journal.save(t,"RUNNING","已持久化步骤意图",kind="dispatch",op=op)
             context=journal.provider_context(t,op) if cap.get("accepts_trace") is True else None
             result=exchange(trace,"tool",step["tool"],{"operation_id":op,"arguments":step["args"],"version":step["version"]},
