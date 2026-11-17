@@ -33,3 +33,4 @@
 - 2026-11-17 对账本和历史查询加在途请求保护，避免慢读数持续被后台刷新取代。桌面概览和手机任务详情的独立仿真实拍收录在[使用手册](../console.md#从运行复盘读懂一台机器人的工作)。
 - AC-1 至 AC-4 初验使用独立 Compose 项目。运行 `tests/console_acceptance.py` 和 `tests/semantic_acceptance.py` 产生 8 个成功与 3 个受阻任务；`console/server/test_run_review.py` 通过 3 个 HTTP 契约用例；`tests/system/console_browser.mjs` 检查 1440 和 390 像素宽度下的只读访问。系统套件按 `python tests/system_suite.py --changed-since d28e7ee --ollama-cache-volume edge-agent-ros_models` 可复跑。
 - AC-5 更新本机 Console 后重新读取 52 项任务及升级前核对的 2,645 个归档编号和事件 ID，结果相同。首次日常浏览器测试发现脚本会在分页查询返回前点击禁用按钮，修正为等待目标可见且启用后再点击。修正后，两个视口均完成分页、成功与受阻任务回放、缺证据和临时断连验收，浏览器写请求数为 0。
+- 扩大到整套 Gazebo 回归时，最近创建的任务恰好受阻。筛选标签切换瞬间仍展示旧分类，首项相同使读者可能把夹杂的成功任务当作异常任务。人工切换分类或分页立即撤下旧行并显示读取状态，静默刷新同一页仍可继续阅读。任务列表与历史列表分别发布自己的 `aria-busy`，只有当前请求可清除该标记。

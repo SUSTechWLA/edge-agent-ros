@@ -60,9 +60,9 @@ const RunReview = (() => {
     get('review-now').textContent=date(s?.now);
   }
   function resetPage(p) { p.cursors=[null]; p.next=null; }
-  function pageControls(prefix,p) {
-    get(prefix+'-prev').disabled=p.cursors.length<2;
-    get(prefix+'-next').disabled=p.next==null;
+  function pageControls(prefix,p,loading=false) {
+    get(prefix+'-prev').disabled=loading || p.cursors.length<2;
+    get(prefix+'-next').disabled=loading || p.next==null;
     get(prefix+'-page').textContent='第 '+p.cursors.length+' 页';
   }
   function bindPager(p,prefix,load) {
@@ -77,11 +77,17 @@ const RunReview = (() => {
       node('small','review-meta',date(t.created)+' · '+t.id));
     return link;
   }
-  async function loadTasks() {
+  async function loadTasks(background=false) {
     const ticket=++list.ticket, query=new URLSearchParams({state:taskFilter,limit:8});
     list.pending=true;
+    get('review-task-list').setAttribute('aria-busy','true');
+    if(!background){
+      list.next=null;
+      notice('review-list-notice');
+      empty('review-task-list','正在读取此分类的任务…');
+    }
     if(list.cursors.at(-1)!=null)query.set('before',list.cursors.at(-1));
-    pageControls('review',list);
+    pageControls('review',list,!background);
     try {
       const r=await api('/api/review/tasks?'+query);
       if(ticket!==list.ticket)return;
@@ -98,7 +104,12 @@ const RunReview = (() => {
       document.querySelectorAll('[data-review-state] strong').forEach(n=>n.textContent='—');
       get('review-task-list').replaceChildren();
       notice('review-list-notice','任务账本暂不可读 · '+e.message+'。点击任务分类可重新读取。');
-    } finally {if(ticket===list.ticket)list.pending=false;}
+    } finally {
+      if(ticket===list.ticket){
+        list.pending=false;
+        get('review-task-list').setAttribute('aria-busy','false');
+      }
+    }
   }
   function eventDescription(ev) {
     const d=ev.data||{};
@@ -134,11 +145,17 @@ const RunReview = (() => {
     button.onclick=()=>showEvent(ev);
     return button;
   }
-  async function loadHistory() {
+  async function loadHistory(background=false) {
     const ticket=++history.ticket, query=new URLSearchParams({view:historyView,limit:8});
     history.pending=true;
+    get('review-history-rows').setAttribute('aria-busy','true');
+    if(!background){
+      history.next=null;
+      notice('review-history-notice');
+      empty('review-history-rows','正在读取此分类的历史记录…');
+    }
     if(history.cursors.at(-1)!=null)query.set('before',history.cursors.at(-1));
-    pageControls('history',history);
+    pageControls('history',history,!background);
     get('review-history-note').textContent=historyView==='issues'
       ? '曾经记录的告警、错误和故障。当前状态请核对实时观测和任务账本。'
       : '观测来源、模块、动作和任务的已归档事件。周期快照可在「事件记录」查看。';
@@ -153,7 +170,12 @@ const RunReview = (() => {
       if(ticket!==history.ticket)return;
       history.next=null; pageControls('history',history);
       get('review-history-rows').replaceChildren(); notice('review-history-notice','历史记录暂不可读 · '+e.message);
-    } finally {if(ticket===history.ticket)history.pending=false;}
+    } finally {
+      if(ticket===history.ticket){
+        history.pending=false;
+        get('review-history-rows').setAttribute('aria-busy','false');
+      }
+    }
   }
   function showSteps(steps) {
     const target=get('review-steps');
@@ -274,8 +296,8 @@ const RunReview = (() => {
   function refresh() {
     if(!open || get('event-modal').open || taskId)return;
     // Keep a reader's older pages stable while the first page follows the archive.
-    if(!list.pending && list.cursors.length===1 && !get('review-task-list').contains(document.activeElement))loadTasks();
-    if(!history.pending && history.cursors.length===1 && !get('review-history-rows').contains(document.activeElement))loadHistory();
+    if(!list.pending && list.cursors.length===1 && !get('review-task-list').contains(document.activeElement))loadTasks(true);
+    if(!history.pending && history.cursors.length===1 && !get('review-history-rows').contains(document.activeElement))loadHistory(true);
   }
   bindPager(list,'review',loadTasks);
   bindPager(history,'history',loadHistory);
