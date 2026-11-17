@@ -21,7 +21,7 @@
 <p><strong>Trigger、Tool 与 ROS Action。</strong> Trigger 是提出工作的那次输入，Tool 是模型可选的操作，ROS Action 是底盘实际执行、反馈和确认停止的长动作。用户只提交一次，提供者可能多次查询同一操作的状态。<a href="../harness-extensions.md#团队共用的术语">完整对照、代码入口及新增术语约定</a> · <a href="https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/001-domain.md">SuperAgent 领域词表</a></p></details>
 <p class="lead">假设 Brain 下发“核对 A 区三块设备铭牌并提交可读证据”。它只需说明范围、成功条件和授权。先读哪一块、逆光时怎样换角度、哪一步可以在断网后继续，都需要端侧根据刚刚观测到的现场作决定。</p>
 <div class="grid"><div class="tile"><h3>Brain 管团队目标</h3><p>持有 mission、用户授权、分工、团队成员与公共资源许可。收到进度、求助或能力变化后，可以修改或撤回子目标。</p></div><div class="tile"><h3>Edge 管本机任务</h3><p>每份子目标有自己的上下文。策略提出下一步，执行内核审核，本机持续跟踪动作、证据与资源；无网时仍能推进获准的独立步骤。</p></div><div class="tile"><h3>控制器管物理闭环</h3><p>导航栈、飞控、步态控制器或安全硬件落实运动、限幅与平台失效保护。停车、悬停、降落等策略逐机定义，在模型或 Linux 进程失效时仍须有本机保护路径。</p></div></div>
-<figure><img src="edge-runtime.svg" alt="端侧架构总图。Brain 连接单台 Edge 的云边链路，策略依赖能力目录和世界视图，执行内核经网关调用 ROS 控制器，结果与证据回流。"><figcaption class="actions"><span>图 1　部署边界、决策方向与事实来源</span><button type="button" id="open-map">放大架构图</button><a href="edge-runtime.svg">打开 SVG 原图</a></figcaption></figure>
+<figure><img src="edge-runtime.svg" alt="端侧架构总图。Brain 连接单台 Edge 的云边链路，策略依赖能力目录和世界视图，执行内核经网关调用 ROS 控制器，结果与证据回流。"><figcaption class="actions"><span>图 1　目标架构的部署边界、决策方向与事实来源</span><button type="button" id="open-map">放大架构图</button><a href="edge-runtime.svg">打开 SVG 原图</a></figcaption></figure>
 <div class="callout"><p><strong>第一版技术选择</strong>　任务内核、能力网关和 ROS 2 桥使用 C++20 / rclcpp。板卡推理 SDK 与动态扩展走版本化进程接口，避免把供应商库的崩溃、C++ ABI 和发布周期带进内核。首版用一种系统语言便于联调。语言选择依据是现有 ROS 和板卡接口，性能优势仍需同负载实测。</p></div>
 <details id="language-choice"><summary>选型依据：何时选 Rust，何时选 TypeScript？</summary>
 <p>先确定要交付的模块。第一台真机要尽快接上 ROS Action、控制器和板卡 SDK，优先复用 C++ / rclcpp。若从零开发要长期维护的任务内核，团队能维护 Rust 与 C++ 两套 ARM64 构建，可选 Rust 管任务状态、取消、资源和断线恢复，C++ 只保留设备桥。Rust 的所有权能在编译时检查一类内存错误，动作去重、资源代次与掉电恢复仍需协议和故障试验。ROS 2 Jazzy 将 rclcpp 列为核心团队维护的客户端，也列出了社区维护的 Rust 和 Node.js 客户端。<a href="https://github.com/ros2/ros2_documentation/blob/jazzy/source/Concepts/Basic/About-Client-Libraries.rst">ROS 2 客户端维护范围</a> · <a href="https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html">Rust 所有权</a></p>
@@ -89,7 +89,7 @@ ActionPort.start / query / cancel         用同一 operation_id 跟踪可中断
 VerifierPort.check(predicate, evidence)    返回 satisfied / failed / unknown 及依据</code></pre>
 <p>这是语义接口草案。进程内可以用窄 C++ 接口；进程外按版本化消息交互。作用域只授予清单声明的服务、设备和订阅。想调用通用模型的插件要显式申请推理端口，计入任务预算；获取推理能力并不授予设备控制权。签名/版本白名单、独立进程、ROS 写权限和设备节点白名单由部署层落实。</p>
 <div class="tablewrap"><table><thead><tr><th>能力与使用者</th><th>输入 → 输出 / 完成判据</th><th>实例如何变化</th></tr></thead><tbody>
-<tr><td><code>navigate_to</code><br>策略可选的语义动作</td><td>带坐标系的目标区域、运动模式约束、容差、截止期 → 当前位置、终态和定位证据。进入区域且满足速度/停稳约束才通过。</td><td>轮式走导航栈，足式接步态与导航，飞行平台要有独立的三维走廊、航态和返航约束。二维目标若缺飞行约束可拒绝。</td></tr>
+<tr><td><code>navigate_to</code><br>目标设计中的语义动作</td><td>带坐标系的目标区域、运动模式约束、容差、截止期 → 当前位置、终态和定位证据。进入区域且满足速度/停稳约束才通过。</td><td>轮式走导航栈，足式接步态与导航，飞行平台要有独立的三维走廊、航态和返航约束。二维目标若缺飞行约束可拒绝。</td></tr>
 <tr><td><code>inspect_label</code><br>可展开、可取消的技能</td><td>对象 ID、证据规范、尝试上限 → 拍摄、质量评估、识别与证据引用。检查可读度及编号匹配；低质量触发重新观测。</td><td>RGB 相机加 OCR、云台或人形机替换执行器。至少暴露子步骤、失败原因和资源冲突。</td></tr>
 <tr><td><code>observe_region</code><br>有期限的观测请求</td><td>区域、所需模态、最新采样时间界限 → 事实列表、未覆盖区、置信度及来源。</td><td>相机、热像、雷达等只提供各自能证实的事实。遮挡时返回未知或需要其他模态。</td></tr>
 <tr><td><code>request_confirmation</code><br>真人参与的异步能力</td><td>问题、候选、证据、期限 → 同意、拒绝、超时或带身份的答复。</td><td>若“人”指协作者，用授权终端和同意机制；人形机器人则照自身关节、平衡、抓取等能力登记。</td></tr>
@@ -139,7 +139,7 @@ DecisionProposal v1
 <tr><td>板端影子与灰度</td><td>在同一观测上并行记录候选输出，影子无执行权。资源紧张时先离线做对照。再限定任务与场地做真机试点，按模型哈希回滚。</td><td>新模型是否适配具体板型的热、内存与本体约束，并在真实闭环改善结果。</td></tr>
 </tbody></table></div>
 </section>
-<section id="example"><small>08 / 一次完整执行</small><h2>三块铭牌，一次断网，一次换相机</h2>
+<section id="example"><small>08 / 目标架构演练</small><h2>三块铭牌，一次断网，一次换相机</h2>
 <p>下面是一段设计演练。展开每一步，可以看到机器人知道什么、谁做决定、留下什么证据。起始条件是 Edge A 有轮式底盘、RGB 相机、定位和本地 OCR。B 是未来加入的第二台机器人。</p>
 <details open><summary>① Brain 分配 A 区，A 建立任务上下文</summary><p>Brain 发 <code>Assign(M42, inspect-A, rev=3)</code>，允许区内独自作业，第三块铭牌所在的通道须团队预约。Edge 验证目标区域、能量和能力，新建步骤与检查点，返回 <code>Accepted</code>。此时 A2 和 A3 都没有验收证据。</p></details>
 <details><summary>② A1 一次读对，A2 逆光，Edge 自主改方法</summary><p>策略选 <code>navigate_to(A1)</code>，内核持久登记操作再发给底盘；停稳和定位通过后，<code>inspect_label(A1)</code> 产生带位置和采样时间的读数。到 A2 时，控制器返回成功但图像质量不足。验收器记录 <code>evidence.glare</code>。下一次策略调用只收到失败、附近的合法观测位和剩余尝试预算，提议换位再拍。</p></details>
@@ -161,8 +161,8 @@ DecisionProposal v1
 <tr><td>P2　两台 Edge、一台 Brain</td><td>身份注册、能力增删、任务增量、队友投影与共享通道预约。增加与第一台运动约束不同的机体。</td><td>重连乱序、过期成员、重复放行、B 掉线或地图版本不兼容时，都要有明确处置。确认单机任务可持续、共享资源无违规新准入。</td></tr>
 <tr><td>P3　替换模型与群体学习</td><td>接一个自训策略并按前述消融评测；保留规则和通用 API 基线、观测/训练数据版本和模型回滚路径。</td><td>在未见场地和未见成员组合报告团队收益、通信开销和各机体回归。先影子对照，再逐项开通真机授权。</td></tr>
 </tbody></table></div>
-<p><strong>如何部署一版。</strong> 开发阶段在 Docker 中构建和测试 C++，仿真使用假网关。板端以同一套消息契约分别发布匹配 RK BSP 与 JetPack/L4T 的 ARM64 镜像；宿主保留匹配驱动与机体独立看门狗。给控制器、必要感知、存储留资源，按压力依次收缩可选感知、并行推理和模型规模。板型、内存、散热、功耗档和传感器负载是部署输入，实际支持清单须逐项验收。</p>
-<div class="callout"><p><strong>配套交付</strong>　板卡手册给出设备映射、上线前检查与 9 项试验；C++20 示例用于验证热插拔、资源占用与协作许可的核心契约。它用内存和模拟时钟运行，板端推理、实体动作与持久化恢复属于下一阶段验收。</p>
+<p><strong>如何部署一版。</strong> v0.1 的 Gazebo 仿真运行 C++ 运动网关，通过 ROS 控制桥驱动仿真底盘。独立网关测试使用合成里程计注入制动和失联条件。板端以同一套消息契约分别发布匹配 RK BSP 与 JetPack/L4T 的 ARM64 镜像；宿主保留匹配驱动与机体独立看门狗。给控制器、必要感知、存储留资源，按压力依次收缩可选感知、并行推理和模型规模。板型、内存、散热、功耗档和传感器负载是部署输入，实际支持清单须逐项验收。</p>
+<div class="callout"><p><strong>配套交付</strong>　板卡手册给出设备映射、上线前检查与 9 项试验；C++20 示例用于验证热插拔、资源占用与协作许可的核心契约。这份契约示例用内存和模拟时钟运行。v0.1 已在 Docker 中验证 SQLite 持久化恢复。板端推理和实体动作需在对应硬件验收。</p>
 <a class="file" href="board-validation.md">板卡部署与真机验收（Markdown）</a><a class="file" href="../../examples/edge_contract_smoke.cpp">C++20 契约示例</a></div>
 <p>在 Windows 的项目根目录，可用已有 ROS Docker 镜像离线复现示例。</p>
 <pre><code>docker run --rm --pull=never --network none --read-only --tmpfs /tmp:rw,exec `
@@ -170,7 +170,7 @@ DecisionProposal v1
   --entrypoint /bin/sh ros:jazzy-ros-base -ec 'g++ -std=c++20 -Wall -Wextra -Werror -pedantic /src/edge_contract_smoke.cpp -o /tmp/check &amp;&amp; /tmp/check'</code></pre>
 </section>
 </article></main>
-<dialog id="map-modal" aria-label="架构图放大视图"><div class="actions"><strong>单机 Edge 架构</strong><button id="zoom" type="button" aria-pressed="false">查看细节</button><button id="close-map" type="button">关闭</button></div><div id="canvas" tabindex="0" aria-label="可滚动的架构图"><img src="edge-runtime.svg" alt="单机 Edge 完整架构图"></div></dialog>
+<dialog id="map-modal" aria-label="架构图放大视图"><div class="actions"><strong>单机 Edge 目标架构</strong><button id="zoom" type="button" aria-pressed="false">查看细节</button><button id="close-map" type="button">关闭</button></div><div id="canvas" tabindex="0" aria-label="可滚动的架构图"><img src="edge-runtime.svg" alt="单机 Edge 目标架构全图"></div></dialog>
 <script>
 const modal=document.getElementById('map-modal'),canvas=document.getElementById('canvas'),zoom=document.getElementById('zoom');
 document.getElementById('open-map').addEventListener('click',()=>modal.showModal());

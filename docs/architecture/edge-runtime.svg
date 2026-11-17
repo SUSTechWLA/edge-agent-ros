@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="edge-title edge-desc" width="1500" height="1380" viewBox="0 0 1500 1380" xml:lang="zh-CN">
-<title id="edge-title">单台 Edge Agent 的软件与控制边界</title><desc id="edge-desc">云端 Brain 在单板之外下发委托并转发共享事实。板载执行器、策略、感知、能力网关和持久动作账本组成自主循环。实线为命令，点划线为观测，虚线为协作，细线为状态读写；箭头指向接收者。机身控制器独立处理实时保护。</desc>
+<title id="edge-title">单台 Edge Agent 目标架构的软件与控制边界</title><desc id="edge-desc">云端 Brain 在单板之外下发委托并转发共享事实。板载执行器、策略、感知、能力网关和持久动作账本组成自主循环。实线为命令，点划线为观测，虚线为协作，细线为状态读写；箭头指向接收者。机身控制器独立处理实时保护。</desc>
 <defs><style>
 text{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif}
 .title{font-size:38px;font-weight:700}.lead{font-size:19px}.section{font-size:24px;font-weight:700}.card-title{font-size:23px;font-weight:650}.body{font-size:17px}.kicker{font-size:14px;font-weight:650;letter-spacing:.4px}.hint{font-size:15px;font-weight:550}.caption{font-size:16px}
