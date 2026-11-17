@@ -51,3 +51,18 @@
 | AC-5 / AC-6 兼容性与运行平台 | ROS 镜像内 5 组任务账本测试、8 组服务目录和协议测试、Linux 容器内 10 组示例测试通过。AMD64 及模拟 ARM64 硬件镜像验证公开服务查询和缺里程计恢复；ARM64 另跑 5 组验收队列白盒。既有 Qwen 插件作者在此次版本上仍能从故障生成只读候选，重启后新增候选为 0。 |
 
 现场验收需要补充真实相机适配、产物写一次的存储语义、时钟相关性和任务要求的视觉内容。当前的环境证据为合成图像、ROS 传感器夹具及单机 Gazebo。团队复查时，从 JSON 中的 `blackbox.cases.<场景>` 查任务，再用 `calls_by_operation`、`sample_trace` 与 `raw_files_sha256` 回到原始操作、因果事件及本机完整报告。
+
+### 2026-11-18 · 插件开发规范与文档验收
+
+以 `5335e80` 为基线、`docs/plugin-development` 为工作分支完善开发约定。新增[插件开发指南](../plugin-development.md)，重整根 README 与 AGENTS，同步贡献流程、SDD / PR 模板、术语和工具入口，并在目标架构教材的 PluginHost 示例旁说明它尚非当前 SDK。新增功能优先复用 Tool / Service / 事件契约，明确所有者、消费者、上下文、版本、装卸、回退和受影响测试；没有新增运行时接口。
+
+源码审查确认 ready 不等于健康、draining 不自动排空、binding 不校验实现代码、Session 在读取期间 draining 会拒绝结果。指南给出对应限制和测试要求；独立复审还核对了受管发布 CLI，将示例中的故障测试明确限定到隔离夹具，避免误操作日常服务。
+
+| 计划与实际检查 | 结果 |
+|---|---|
+| `python tests/document_contract.py -v` | 2 项通过：仓库文档本地链接有效，签入证据满足既有断言。 |
+| `python tests/repository_contract.py -v` | 5 项通过：SDD 差异、PR 引用、模板与发布规则契约。 |
+| `python scripts/check_sdd.py --base 5335e80`、`git diff --check` | 通过；仅文档、教材说明及人工阅读模板差异。 |
+| `python tests/system_suite.py --changed-since 5335e80 --plan` | PR 模板属于未分类路径，保守选择全部 18 阶段；其余本次文档均选择 repository。审查确认无运行代码/配置差异，按贡献约定执行文档检查，未修改选择器以缩减覆盖。 |
+
+以上是在 Windows 主机使用 Python 3.11.18 的文档与仓库检查，不是新的 ROS/Gazebo、模型或真机验收。没有执行装卸示例或变更日常容器。本次不改变接口、账本或持久数据，撤回本次文档提交即可恢复先前说明；历史运行验收继续按各自固定版本解释。

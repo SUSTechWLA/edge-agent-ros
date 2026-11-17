@@ -2,6 +2,8 @@
 
 要让机器人学会“去庭院巡检”，需要把三个问题交给不同的模块。语言规划器从能力目录选出 `navigate_place`，场景提供者知道庭院的位置与通路，运动网关依据此刻的激光和里程计决定能否继续行驶。谁拥有这项事实，就由谁提供相应证据。替换场景插件时，既有的任务调度、运动制动和日志导出仍可复用。
 
+本文维护**术语、当前扩展矩阵和历史设计依据**。开始新功能时读[插件开发指南](plugin-development.md)，按 [SDD 模板](specs/TEMPLATE.md)定义契约、装卸和测试；本文不替代各接口的版本化协议。
+
 ## 团队共用的术语
 
 AI 也可作为插件作者。只读衍生工具的发布路径能从未派发的失败任务进入，以独立样本验收，将新工具提供给后续任务。管理器本身可独立装卸；现场规则匹配时，它能自动发布并验证限定工具版本的后续任务。独立服务也可走统一管理入口注册和撤回。[插件作者手册](plugin-authoring.md) · [插件管理与自主恢复](plugin-manager.md)
@@ -11,10 +13,12 @@ AI 也可作为插件作者。只读衍生工具的发布路径能从未派发�
 | 想回答的问题 | 沿用的名称 | 本项目的实际契约或目标 |
 |---|---|---|
 | 谁发起了这件事？ | **Source / Trigger**，来源和一次触发 | 当前任务入口接收 `trigger.kind/source/id`。同一三元组重投只受理一次。普通激光采样、工具回执和日志属于 Event，记录它们不会自动新建任务。外部模块决定哪些事实值得提交为 Trigger。[任务入口](../agent/README.md) |
-| 谁分工，谁完成？ | **Router / Worker** | 目标架构让云端 Brain 承担 Router 职责，Edge Agent 具备承接 Worker 工作的能力。上游 Worker 的执行会话按工单组织；一台 robot 是设备，能先后服务多项任务。v0.1 的 `agent` 服务在同一台 Edge 内规划、执行和恢复，云端 Router、跨机派工与 Worker 会话隔离属于后续能力。[上游执行模型](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/003-execution.md) |
-| 用户对哪件事追问？模型记得什么？ | **Thread / Session** | 上游 Thread 由来源组织相关触发，Worker 的 dsh Session 保存自己的执行上下文。当前 Edge 的 `trace_id` 只关联证据，`task_id` 用于恢复任务；同一 trace 下的子任务各自组装模型输入。跨轮对话历史、Thread 订阅和共享上下文需有独立契约。[任务账本](../agent/service.py) |
+| 谁分工，谁完成？ | **Router / Worker** | 这里沿用上游 preset 的角色名；其领域文档称 Main Session / Executor Session，代码称 orchestrator / worker。目标让云端 Brain 承担 Router 职责，Edge 承接 Worker 工作；Brain / Edge 是部署位置与职责配置，不是另外两套 Agent 基类。一台 robot 可先后服务多项工作。当前 `agent` 在本机规划、执行和恢复，云端派工与 Worker 会话隔离尚待实现。[上游执行模型](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/003-execution.md) |
+| 用户对哪件事追问？模型记得什么？ | **Thread / Session** | 上游 Thread 组织来源触发，执行者的 dsh Session 保存执行上下文。当前 `trace_id` 关联证据、`task_id` 定位任务，各任务分别组装模型输入。已实现的 `session.read` 是带引用的任务阅读投影，不是完整对话 SessionStore；共享 trace 不会自动共享模型历史。跨轮对话、Thread 订阅仍需独立契约。[Session 说明](sessions.md) |
 | 接受了哪项工作，交给了谁？ | **Ticket / Assignment**，工单和派工 | 上游 Ticket 表示获准的工作，Assignment 绑定一次执行者。当前语言 `task` 记录目标、计划、步骤与终态；ROS `mission_id` 标识提交给本机内核的点位委托。同一自然语言任务可能产生多个委托。未来跨机派工应显式关联工单、执行者和派工代次；现有调用方继续使用原字段。[ROS 接口](../src/edge_interfaces) |
-| 模型此刻能选什么，谁实现？ | **Plugin / Tool / Model Adapter** | Plugin 提供扩展。Tool 是模型能选择的操作，如 `navigate_place(place)`；工具清单还声明作用效果、执行端点和结果证据。一个 Plugin 可提供多个 Tool。模型适配器负责计划，工具提供者负责执行。仓库中的“能力”是工具对参数、效果与结果作出的契约声明。[规划器](../agent/planning.py) · [工具清单](../plugins/README.md) |
+| 模型此刻能选什么，谁实现？ | **Plugin / Tool / Model Adapter** | Plugin 提供扩展，可公开零个或多个 Tool。Tool 是模型可选的操作，清单声明参数、效果、端点和结果要求。当前模型适配为 Ollama / HTTP planner 的结构化规划，不代表已实现 dsh 完整流式 Agent loop 或任意模型插件注册。[规划器](../agent/planning.py) · [工具清单](../plugins/README.md) |
+| 非模型模块怎样复用能力？ | **Service Definition / Provider / Consumer** | 分别是接口、实现、调用者。例如 `session.read` 定义阅读协议，`session.default` 提供默认实现，Console 和 Evidence 消费它。`provides/requires` 只声明服务名与依赖，消息、上下文和错误由服务协议定义；不自动调用依赖。[Session 插件](../sessions_plugin/README.md) |
+| 模块怎样交换事实？ | **Event / EventBus** | 关键事实由各生产者持久化，Console 汇入公开归档，消费者按游标读取；另有 ROS 瞬态事件入口。当前不是跨域 broker，也未实现全部 dsh 运行时 hook。事件通知、查询协议和执行请求有不同职责，不要求所有调用都绕经事件归档。[EventBus](module-eventbus.md) |
 | 同一机器人动作重试了吗，真的完成了吗？ | **operation_id / evidence**，操作标识和执行证据 | 跨轮询、重试和进程重启复用同一个 `operation_id`，以原 ID 向控制器对账。每次具体调用另有 `call_id`。evidence 保存停稳后实测坐标等结果；这两个机器人执行约束决定了何时可以安全重试、何时可以报告完成。[验收用例](../tests/semantic_acceptance.py) |
 
 架构图还用了“队友状态投影”。它描述一个**目标设计中的操作**：收到带序号和时间的队友状态，更新本机可读的最新值；收到重复序号则跳过，超出有效时间则显示“未知”。SuperAgent 的 Subscription 决定一条来源消息发给哪些 Ticket，投影回答“我此刻能用哪个观测值”。例如 B 一分钟前说通道已空，A 仍能查到这条历史消息，但当前通行状态可以已经过期。v0.1 的单机器人账本和控制台没有跨机队友状态服务。[协作连接设计](architecture/index.html#team)
@@ -31,7 +35,7 @@ DeepSeek Harness 将须跨会话重载保留的事实追加到 `SessionEvent` �
 
 ### 新功能能否只改一个插件
 
-以运行版本 `38fee71` 为基线，Edge 已能热注册模型可选的操作，也允许独立服务监听事件。要判断架构是否达到 dsh 那样的通用性，可以问三个问题。谁能调用这个扩展？它在流程中的哪个时刻生效？卸载时谁接手依赖和正在进行的工作？
+判断一个扩展点可以问三个问题：谁能调用它？它在流程中的哪个时刻生效？卸载时谁接手依赖和在途工作？下面的实验保留了旧版本 `38fee71` 的缺陷，用于解释 SDD-006 为什么增加独立验收；**旧实验不是当前版本仍会误报成功的结论**。
 
 **Tool** 是供规划器选择的一项操作契约。例如 `navigate_place(place)` 有参数、作用效果、版本和结果证据，执行端可以是独立 HTTP 服务；实现语言和是否使用面向对象的类都由提供者决定。**Plugin** 是向宿主或其他模块提供行为的扩展单元，可以公开零个、一个或多个 Tool。现有的 `plugin-author` 正是零个 Tool 的例子。它在独立进程里消费规划故障、向模型请求候选并保存决定。用户无需在计划里加一步“调用插件作者”。[工具注册与绑定](../agent/planning.py) · [监听器](../client/plugin_author_watch.py)
 
@@ -42,7 +46,7 @@ DeepSeek Harness 将须跨会话重载保留的事实追加到 `SessionEvent` �
 | AI 发现困难并处理 | 已知暂态故障走退避重试；作者进程能为特定的未派发任务生成只读草案；独立模块可带来源触发后续任务。 | 针对新故障自动开发、验证、投放和回滚任意代码插件，以及让多个修复策略按权限协作。 |
 | 新增原始传感器、融合算法或运动策略 | 已安装的 ROS 消息类型可热加到控制台；融合算法运行在固定节点。运动策略有 C++ `PolicyPort`，默认实现在构造内核时选定。 | 运行中安全替换有状态算法，迁移坐标系或状态，并交还设备资源。新增一条传感器订阅不会自动改变融合算法。 |
 
-**一个能看出差别的实验。** 在隔离 Docker 中，测试相机声明拍照完成必须提供 `image_uri`。第一份成功回执缺这个字段，Agent 将任务置为 `RECOVERY_REQUIRED`；第二份给出非空地址，但测试确认该文件从未创建，Agent 仍写入 `verified` 并报告 `SUCCEEDED`。实验通过真实任务 API 和本机回环 HTTP 提供者执行，没有相机或运动输入。这里的 `verified` 表示现有回执规则通过。内置巡检有额外的专用判断，网关回报到达后，内核还会等更新的里程计核对位置。在该基线版本里，这类验收依赖各领域的实现。[两次任务的实测记录](evidence/tool-receipt-boundary.json) · [通用回执与任务终态](../agent/service.py) · [巡检独立测量](../src/edge_core/src/core_node.cpp)
+**旧版缺陷实验（38fee71）。** 在隔离 Docker 中，测试相机声明拍照完成必须提供 `image_uri`。第一份成功回执缺这个字段，Agent 将任务置为 `RECOVERY_REQUIRED`；第二份给出非空地址，但测试确认该文件从未创建，Agent 仍写入 `verified` 并报告 `SUCCEEDED`。实验通过真实任务 API 和本机回环 HTTP 提供者执行，没有相机或运动输入。当时的 `verified` 只表示该基线的回执规则通过。内置巡检另有专用判断：网关回报到达后，内核还会等更新的里程计核对位置。SDD-006 随后把独立验收开放给插件。[历史失败记录](evidence/tool-receipt-boundary.json) · [修复后的验收证据](evidence/runtime-plugins-sample.json) · [巡检独立测量](../src/edge_core/src/core_node.cpp)
 
 **SDD-006 把验收设在写入成功之前。** dsh 的 `tools/post-execute` 允许插件处理候选结果，`tools/result` 通知观察者已确定的工具输出，`tool/result` 将输出记入会话。Edge 使用独立进程执行只读验收。声明图像产物的工具在派发前绑定 `verify.image`；样例验收器检查操作作用域并解码 PGM。现场策略可以再挂一个摘要验收器。要判定图片里有没有指定对象，仍需实现能作该判断的服务。两种验收器都对模型公开零个 Tool。[dsh 工具执行时序](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/tool-execution-pipeline.md) · [安装示例](../examples/result-verifiers/README.md)
 
@@ -63,6 +67,8 @@ flowchart LR
 ```
 
 部署方先启动独立服务，再原子发布 `runtime/<id>.json`。管理者通过 `GET /agent/plugins` 看清单是否可解析，消费者通过 `GET /agent/services?name=verify.image` 取端点并记住 binding。查询时带原 binding 可识别不兼容的换版。声明就绪与 HTTP 服务实际在线分开验证。将清单置为 `draining: true` 可先停接新任务，让已绑定的操作完成，再撤清单、停进程。回滚时恢复原版本、原端点及依赖。所有必需验收通过才会推进原任务，日志消费者可独立启停。[协议、旧任务迁移与回退](specs/SDD-006-runtime-plugins.md)
+
+这套目录不统计在途工作、不自动等待排空或管理进程，也不支持同名 Service 的多版本路由。上面的旧绑定续办适用于验收消费者；Session 在回包后重新检查当前服务，期间 draining 也会使本次读取失败。binding 不包含提供者代码哈希，实现变化须提升版本并记录源码/镜像身份。[按消费者定义热插拔](plugin-development.md#5-注册和热拔插实际怎样工作)
 
 **新增插件怎样验收。** 通过配置接入第二个验收器，检查 Agent 和原工具源码能否保持不变；移除必需验收器，检查相关任务是否保留原操作、无关任务能否继续；变更传递依赖版本，检查旧候选是否仍要求原绑定；重启后核对实际工具调用次数。下一步若开放恢复策略、感知算法或硬件驱动，也需要各自的故障、资源交接与物理证据用例。[Docker 黑盒](../tests/system/runtime_plugin_acceptance.py)
 

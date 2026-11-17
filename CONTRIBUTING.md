@@ -5,7 +5,7 @@
 ## 从问题到 PR
 
 1. **复现并定位。** 记录版本、平台、输入、预期与实际结果。现场任务优先带上任务 ID、操作 ID、脱敏错误事件。检查已有 issue 和 [规格目录](docs/specs/)。
-2. **先写验收，再改实现。** 从 [SDD 模板](docs/specs/TEMPLATE.md) 建立 `docs/specs/SDD-NNN-short-name.md`。沿用同一契约的修复也可更新已有规格。写出能复测的 `AC-1` 等条件、涉及的模块、失败时机、旧数据如何处理。每次功能变更都更新「变更记录」，写明改动原因、路径、验证和残余范围。
+2. **先写验收，再改实现。** 从 [SDD 模板](docs/specs/TEMPLATE.md) 建立 `docs/specs/SDD-NNN-short-name.md`。沿用同一契约的修复也可更新已有规格。按[插件开发规范](docs/plugin-development.md)选择接入口，写出 Definition / Provider / Consumer、能复测的 `AC-1` 等条件、装卸边界、失败时机、旧任务和旧数据如何处理。每次功能变更都更新「变更记录」，写明改动原因、路径、验证和残余范围。
 3. **在短期分支提交。** 从目标分支新建 `feat/sdd-NNN-slug`、`fix/sdd-NNN-slug` 或 `docs/slug`。提交名和 PR 标题用 Conventional Commit，如 `fix(gateway): preserve stop timeout evidence`。提交正文写 `Spec: SDD-NNN`，涉及多个规格则逐一列出。配置自己的仓库 Git 身份。保留既有提交作者及 issue/PR 关联。
 4. **复测。** 本地先执行下方快速检查；涉及 ROS 或机器人行为时再执行容器验收。为每个 AC 在规格中关联命令、输入、观测结果及证据路径。仿真、指令集模拟和物理板测试分开记录。原始仓库检出应能够找到已签入的证据。大体积的新运行日志可留在 CI artifact 并引用 run。
 5. **发起 PR。** 在 [PR 模板](.github/PULL_REQUEST_TEMPLATE.md) 写明对应 SDD 编号、验收结果和兼容性。PR 审查核对每个功能改动是否由相应规格覆盖。CI 会检查实现差异、规格变更记录和 PR 引用；行为是否满足规格由测试和评审确认。
@@ -13,7 +13,7 @@
 ```sh
 git switch main
 git switch -c fix/sdd-003-navigation-timeout
-# 编辑 docs/specs/SDD-003-navigation-timeout.md、实现和回归测试
+# 更新关联规格，例如 docs/specs/SDD-003-simulation-system-tests.md
 python3 scripts/check_sdd.py --base main
 python3 tests/repository_contract.py -v
 python3 tests/planning_contract.py -v
@@ -30,6 +30,29 @@ Windows PowerShell 可将 `python3` 换为可用的 Python 3 解释器。提交�
 docker run --rm --network none edge-agent-ros:v0.1 python3 -m unittest discover -v -s /opt/edge/console/server
 python tests/console_resilience.py
 ```
+
+## 插件变更怎样评审
+
+[插件开发规范](docs/plugin-development.md)是接入和装卸的详细约定；[AGENTS.md](AGENTS.md)约束 Coding Agent，PR 使用相同标准：
+
+- **改动范围合理。** 新业务放在提供者中，消费者依公开契约接入。复用既有入口；确需改宿主时，说明为何已有扩展点不足、影响哪些已上线模块。
+- **可替换性有证据。** 检查新旧请求、依赖缺失、断连、换版、卸载和恢复。不要把“描述符可读”写成“服务健康”，或把进程重启写成透明热替换。
+- **旧行为能继续。** 独立观察原操作调用次数、任务/归档身份和无关任务结果。版本绑定不包含提供者二进制，行为变化必须更换版本并记录实现身份。
+- **选测覆盖消费者。** PR 列出消费者与测试夹具依赖，记录选测计划及实测结果。新增依赖同步更新选择规则和断言；公共执行契约、未知路径与发布候选遵守扩大回归要求。
+- **可部署、可撤回、可追溯。** 提供具体命令、数据保留方式、回退后的检查与 AC 证据。新增术语遵循[术语映射](docs/harness-extensions.md#团队共用的术语)，目标能力与当前实现分开写。
+
+## 只改文档时
+
+纯 README、规范、模板或注释性说明变更可执行以下检查，并在变更记录说明没有运行代码差异：
+
+```sh
+python tests/document_contract.py -v
+python tests/repository_contract.py -v
+python scripts/check_sdd.py --base <开发基线>
+git diff --check
+```
+
+仍查看选测计划。当前选择器对 `.github/PULL_REQUEST_TEMPLATE.md` 等未分类路径会保守地选全量；若仅为人工阅读模板，可记录差异审查后采用文档检查，不必为此改测试规则或操作日常机器人。**CI workflow、提示、工具清单、现场策略、部署配置不属于这一例外**。本地减测理由不能替代 PR 已要求的检查，也不能推断运行行为已重新验收。
 
 ## 分支、评审和回移
 

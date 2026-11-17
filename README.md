@@ -1,74 +1,55 @@
 # Edge Agent ROS
 
-给一台模拟轮式机器人下达 **“去庭院巡检”**。Edge 将地点解析为工坊、门廊和庭院间的路线，逐点驱动机器人、确认停稳，并记录到达位置。浏览器能同时看到原始激光、融合地图、机器人当前区域和任务进度。开发者可以沿同一条任务记录追到规划输入、工具调用、ROS 动作和失败原因。
+**让机器人通过自然语言接受任务，通过插件扩展能力，通过证据解释执行结果。**
 
-项目基于 C++20、ROS 2 Jazzy、Gazebo Harmonic 和 Docker Compose。具名地点任务可以离线执行，自由表述可接本地 Ollama 或独立 HTTP 规划器。[观测台使用手册](docs/console.md) · [部署矩阵](docs/deployment.md) · [插件与事件扩展手册](docs/harness-extensions.md)
+项目面向部署在机器人计算单元上的单机 Agent：将用户目标转成工具调用，由 ROS 2 执行和验收，遇到故障保留原因、执行状态与恢复依据。目标是逐步支持不同机器人、软件任务和长期运行；当前可复现的基线是 **Docker 中的单台轮式机器人与室内外 Gazebo 场景**。
 
-观测台默认打开「任务会话」，以中文呈现目标、计划、执行反馈和结果。用户与诊断模型读取同一份简短 Markdown，沿引用展开原事件。需要具体测量或调用时，证据插件可按任务查询公开 EventBus 数据，并为查询本身保存审计记录。[会话阅读与按需取证](docs/sessions.md)
+架构借鉴 **dsh 的 Plugin / Service / Tool**，保留未来与 **SuperAgent 的 Router / Worker 角色**协作的空间。当前实现并非 dsh SDK，也尚未实现跨机器人调度。执行内核和网关使用 C++20，Agent 与多数独立服务使用 Python，观测台使用浏览器前端；插件按协议接入，可选择自己的实现语言。
 
-遇到能力缺口时，可选的插件作者进程读取失败任务并生成候选定义。例如，用户要“用千米每小时报告本机前向速度”，模型可基于已存在的里程计定义工具，经样本验证后由发布者热加载。需要新算法时可编写独立 HTTP 提供者，使用同一套 Agent 入口。作者进程与发布者分别部署，前者只写候选。[从任务到插件的实操手册](docs/plugin-authoring.md) · [代码型插件样板](examples/timestamp-audit/)
+[快速运行](#快速运行) · [架构与插件边界](#架构与插件边界) · [开发一个插件](docs/plugin-development.md) · [Coding Agent 入口](AGENTS.md) · [部署与平台](docs/deployment.md)
 
-需要给现有工具增加独立检查时，可以注册一个对模型公开零个 Tool 的服务。例如，相机返回图片地址后，验收器读取文件并解码；加入第二个摘要验收器只需部署服务并发布清单和策略。遇到断连，Agent 保留候选并恢复验收。见[插件生命周期与架构图](docs/harness-extensions.md#新功能能否只改一个插件)、[SDD-006](docs/specs/SDD-006-runtime-plugins.md)与[可运行示例](examples/result-verifiers/README.md)。
+## 现在可以做什么
 
-要查“哪个插件变更造成了这次失败”，可以从同一条 trace 查任务、候选和受管发布，再用实际绑定版本核对后续任务。现场插件也可以接入持久事件源和独立心跳监督。[模块事件总线与故障回溯](docs/module-eventbus.md)
+| 能力 | 可以亲自验证的行为 | 入口 |
+|---|---|---|
+| 自然语言执行 | “去庭院巡检”解析地点、经过门口、到达并核实停稳；“去维修区巡检”返回限制通行原因 | [任务与观测台](docs/console.md) |
+| 观测与复盘 | 查看激光、融合地图、机器人状态；以可读 Session 查看目标、计划、反馈和结果，再按引用追查原始事件 | [Session 与取证](docs/sessions.md) |
+| 插件扩展 | 注册 HTTP Tool；添加不暴露 Tool 的共享 Service，例如独立结果验收器或 Session 提供者 | [插件开发规范](docs/plugin-development.md) |
+| 有界恢复 | 暂态错误退避重试；候选结果已保存时可续办验收；对未知物理结果保留待核查状态 | [任务账本与恢复](agent/README.md) |
+| 模型与能力演进 | 使用本地 Ollama 或 HTTP 规划器；为已有观测生成、验证并发布限定范围的只读工具 | [模型配置](docs/model.md) · [插件作者](docs/plugin-authoring.md) · [插件管理](docs/plugin-manager.md) |
 
-## 第一次运行
+具名地点任务有不依赖模型的解析路径；自由表述的能力取决于模型及已注册工具。当前 Agent 主要执行持久化步骤计划，尚不是任意任务都能完成的通用反馈循环。模型自写查询的实验也保留了失败记录，见 [Session 验收报告](docs/testing/session-evidence.md)。
 
-如需让 Agent 自己弥补能力缺口，可启用插件管理模块。例如它能为已有里程计新建经过独立样本检验的只读工具，再接着完成用户原先要做的测量。现场规则决定哪些任务可以自主处理。[插件管理与自主恢复](docs/plugin-manager.md)
+## 快速运行
 
-开发电脑需要能运行 Linux 容器的 Docker Engine 或 Docker Desktop，以及 Docker Compose v2。完整仿真在容器内运行。首次检出仓库后，从项目根目录启动：
+需要 Git、可运行 **Linux 容器**的 Docker Engine / Docker Desktop，以及 Docker Compose v2。ROS 2 Jazzy 和 Gazebo Harmonic 在容器内运行。
 
 ```sh
 git clone https://github.com/SUSTechWLA/edge-agent-ros.git
 cd edge-agent-ros
 ```
 
-| 环境 | 启动命令 |
+| 环境 | 在项目根目录运行 |
 |---|---|
 | Windows PowerShell | `.\scripts\start.ps1` |
-| Linux 服务器、Ubuntu、macOS | `sh scripts/deploy.sh sim up` |
-| Linux 实机，接入已有 ROS 驱动和执行器 | `sh scripts/deploy.sh hardware up` |
+| Linux / Ubuntu / macOS，启动仿真 | `sh scripts/deploy.sh sim up` |
+| Linux 实机，已有兼容 ROS 驱动和执行器 | `sh scripts/deploy.sh hardware up` |
 
-启动脚本会检查服务与仿真观测是否就绪。首次构建需要访问 Docker Hub、Ubuntu 和 ROS 软件源，可使用 Docker Desktop 配置的 VPN/代理。项目自带仿真地图；可用 `EDGE_BASE_IMAGE` 指定含相同 SDK 的预装基础镜像。远程服务器采用 SSH 端口转发访问同一观测台。[基础镜像配方](docker/Dockerfile.base) · [模型安装与复启](docs/model.md)
+启动脚本检查服务和仿真观测是否就绪。首次构建需要访问 Docker Hub、Ubuntu 和 ROS 软件源；使用 Docker Desktop 配置的 VPN / 代理。可通过 `EDGE_BASE_IMAGE` 选择含相同 SDK 的预装[基础镜像](docker/Dockerfile.base)。服务器访问、ARM64 与板卡验收条件见[部署矩阵](docs/deployment.md)；以上命令不表示所有平台都完成了实机验证。
 
-### 跟随一次室内外任务
+1. 打开[观测台](http://127.0.0.1:8765/)，下发 `去庭院巡检`。默认起点为工位，机器人沿标注路线经过门口。
+2. 在[任务会话](http://127.0.0.1:8765/#sessions)查看 `navigate_place` 的目标、反馈和结果；成功记录中可追查地图版本、路线和 `observed_xy`。
+3. 下发 `回到工位`，再试 `去维修区巡检`。后者应为 `BLOCKED`，原因是 `scene.place_inaccessible`。
+4. 在[运行复盘](http://127.0.0.1:8765/#review)或事件页按任务 ID 查看原始证据，区分规划失败、工具失败和结果尚未证实。
 
-1. 打开[本机观测台](http://127.0.0.1:8765/)，点击「下发任务」，输入 `去庭院巡检`。地图初始位置是工位，场景层标出门口和庭院，激光与占用栅格显示实时观测。
-2. 查看步骤 `navigate_place` 的参数和结果。场景插件解析“庭院”的别名，为路线保存地图版本、摘要和经过的节点。机器人穿过门口后，终态应为 `SUCCEEDED`，证据中可查 `observed_xy`。
-3. 再下发 `回到工位`。最后试一次 `去维修区巡检`。维修区在地图上存在，但标记为限制通行；任务应进入 `BLOCKED`，按 `scene.place_inaccessible` 可以查到原因。
-4. 打开[运行复盘](http://127.0.0.1:8765/#review)，查看当前机器人状态，按成功或异常找到刚提交的任务。点开后从用户目标读到步骤、结果和原始事件。手册提供了一例有停车证据的[导航阻塞复盘](docs/console.md#从运行复盘读懂一台机器人的工作)。
+场景的区域、地标与通行连接目前由人工标注，激光负责前方障碍检测，Gazebo 世界位姿用于独立核验。自动建图和语义区域发现仍需扩展。[场景设计与验证](docs/semantic-scene.md)
 
-默认场地采用人工标注的区域、地标和通行连接，实际激光用于探测前路障碍，独立 Gazebo 世界位姿可核对机器人是否穿过门口。[场地与验收方法](docs/semantic-scene.md) · [地图数据](scene/campus.json)
-
-## 从任务到运动
-
-```mermaid
-flowchart LR
-    U["浏览器 / 外部 Agent / Watchdog"] -->|"任务、trigger"| A["端侧 Agent · 计划与步骤账本"]
-    A <-->|"可选模型规划"| L["Ollama / HTTP 规划器"]
-    A -->|"地点 + operation_id"| S["场景插件 · 路线与地图版本"]
-    S -->|"ROS 委托"| C["C++ 任务内核 · 验收每个点"]
-    C -->|"NavigateTo Action"| G["C++ 网关 · 运动和停车"]
-    G -->|"速度指令"| R["Gazebo / 实机执行器"]
-    R -->|"里程计、IMU、激光"| P["感知 · 位姿与占用图"]
-    P -->|"融合位姿"| S
-    A -->|"任务账本"| O["观测台 · 事件、回放与导出"]
-    C -->|"执行账本"| O
-    P -->|"ROS 观测"| O
-```
-
-场景提供者能被其他语义导航服务替换。内核负责动作是否得到授权、停稳和证据是否足够。外部模块可向 `/edge/events` 发布自己的带因果标识的事实，日志消费者可以独立接入、断开、续读。[扩展矩阵与故障追踪](docs/harness-extensions.md)
-
-## 使用结构化 ROS 委托
+<details>
+<summary>直接使用 ROS 委托、取消任务与停止容器</summary>
 
 ```powershell
 .\scripts\mission.ps1 run my-first-inspection "0.8,0.0" "0.8,0.7" --wait
 .\scripts\mission.ps1 status my-first-inspection
-```
-
-成功响应包含 `state=SUCCEEDED`、`verified_count=2` 和两个按顺序排列的实测位置。坐标单位是米。同 ID、同目标重投返回原任务。可提交一至八个点，x、y 均在 [-4,4] 米范围内。直接给点位时须给出可行路段；场景插件可为已标注地点选择门口路径，网关按真实扫描对前方障碍制动。
-
-```powershell
 .\scripts\mission.ps1 run cancel-example "-2,1" "0,0"
 .\scripts\mission.ps1 cancel cancel-example --wait
 docker compose ps
@@ -77,57 +58,88 @@ docker compose stop
 docker compose start
 ```
 
-客户端等候超时只会结束本地等待。用同一任务 ID 查询结果，明确取消请调用 cancel。状态保存在 Compose 命名卷 `state` 中；普通 stop/start 或 down/up 会保留账本。重新创建整套仿真会将 Gazebo 场地复位，账本里的历史位置代表过去那次运行。
+委托支持 1–8 个点，x、y 均在 [-4,4] 米内，须给出可行路段；具名地点工具可以选择门口路径。同 ID、同目标重投返回原任务。客户端等待超时不会取消机器人动作，明确取消需调用 `cancel`。
 
-## 单机系统测试
+账本保存在 Compose 命名卷 `state`，普通 stop/start 或 down/up 保留历史。重新创建仿真会复位场地，历史位置仍代表过去的运行。`SUCCEEDED` 要求相应契约的结果证据；运动取消需要核实停止。ROS 内核的 `RECOVERY_REQUIRED` 可能仍保留底盘占用，应按原操作 ID 对账；语言任务的同名状态也可能只是只读观测过期。查看诊断、`can_retry` 和[恢复边界](agent/README.md)，不要仅按状态名称重发运动。
 
-涉及运行代码的修改先查看受影响的测试组，观察行为是否改变，再定位是哪层产生了差异。在项目根目录执行：
+</details>
+
+## 架构与插件边界
+
+**Plugin 是扩展单元，Tool 是供模型选择的操作，Service 是模块间使用的接口。** 一个插件可以提供多个 Tool / Service，也可以只消费事件。增加 Session、诊断或验收能力，不需要把它伪装成模型每次都要调用的工具。
+
+```mermaid
+flowchart TB
+    U["用户 / 外部客户端 / Watchdog"] -->|"任务请求 + trigger"| A["Agent · 规划、步骤账本、恢复"]
+    A <-->|"规划协议"| M["模型提供者 · Ollama / HTTP"]
+    A -->|"已绑定的工具操作"| T["Tool 提供者 · 地点导航 / 查询 / 扩展能力"]
+    D["插件目录 · Tool 清单 / Service 依赖与版本"] -.-> A
+    D -.-> V["Service 提供者 · 独立结果验收"]
+    A <-->|"候选结果 / 验收证据"| V
+    T -->|"ROS 委托"| C["C++ 内核 → 网关 → Gazebo / 实机"]
+    C -->|"传感器与状态"| P["感知节点 · 位姿 / 占用图"]
+    P --> T
+    A -->|"任务事件"| E["EventBus / 归档 · 来源、因果、游标"]
+    C -->|"执行事件"| E
+    T -->|"模块事件"| E
+    E -->|"公开读取接口"| S["Session / Evidence / 日志消费者"]
+    A -->|"公开任务接口"| S
+    D -.-> S
+    S --> O["观测台 · 可读会话、实时观测、证据"]
+    P --> O
+```
+
+Agent 拥有任务与步骤状态，运动内核拥有物理执行状态。EventBus 传递可关联的事实，Session 将事实整理成阅读视图；二者都不替代执行授权，也不凭摘要改写任务终态。这里的 EventBus 由持久账本、模块事件源、ROS 事件与 HTTP 游标读取协作实现，**不是单一的进程内发布订阅对象**。[事件通路](docs/module-eventbus.md) · [上下文与术语](docs/harness-extensions.md)
+
+“一切皆插件”是扩展原则：新业务优先使用已有接口，必要时才新增最小的通用扩展点。保持接口、状态归属和资源交接可检验，比把所有类改名为 Plugin 更重要。
+
+| 扩展对象 | 当前装卸边界 |
+|---|---|
+| HTTP Tool、共享 Service、Session 提供者、事件消费者 | 可在约定的查找/调用边界注册或撤回。Service 支持依赖解析、版本绑定和 `draining`；进程由部署方单独启动、停止。 |
+| 提示、诊断文案、已安装 ROS 消息类型的观测清单 | 按各自读取周期更新；不会自动改变已保存计划、融合算法或执行策略。 |
+| 导航场景、感知算法、运动内核和设备驱动 | 可以按现有协议替换实现，但当前需要协调重启或交接；尚无通用的有状态在线迁移。 |
+
+`ready` 只表示服务声明及依赖可解析，不代表进程健康。目录层的 `draining` 拒绝新绑定、允许匹配的旧绑定继续；具体消费者仍有自己的检查，例如 Session 在读取期间遇到 draining 会拒绝该次结果。**当前没有同一 Service 多版本自动路由，也不能保证任意插件更换都零停顿。** [完整扩展矩阵](docs/harness-extensions.md#扩展矩阵)
+
+## 为项目增加能力
+
+开发者和 Coding Agent 使用同一套流程：[AGENTS.md](AGENTS.md) → [插件开发规范](docs/plugin-development.md) → [SDD 模板](docs/specs/TEMPLATE.md) → 实现与证据 → [PR 模板](.github/PULL_REQUEST_TEMPLATE.md)。
+
+1. **先选择扩展点。** 模型需要主动选择的操作用 Tool；多个模块复用的能力用 Service；观察既有事实用事件消费者。先查已有接口，明确当前是否支持所需装卸行为。
+2. **先落契约和验收。** 定义输入输出、上下文 ID、状态所有者、版本、失败与重试语义。列清安装、排空、卸载、旧任务和回退的预期。
+3. **隔离实现。** 业务逻辑放在提供者中，消费者按公开契约调用；新增插件不直接修改其他模块的私有账本。需要新扩展点时，单独说明宿主改动的必要性。
+4. **证明兼容。** 除新增功能成功外，测试依赖缺失、断连、换版、重复请求与在途任务；同时证明无关任务仍可用、原副作用没有重复执行。
+5. **留可复查的证据。** 将 SDD、实现、测试、版本和运行结果关联。更新测试选择器的消费者依赖，使后续小改动可准确选测。
+
+可从两个已有例子开始：**零 Tool 的结果验收插件**见 [result-verifiers](examples/result-verifiers/README.md)；**可替换的会话阅读服务**见 [sessions_plugin](sessions_plugin/README.md)。命名沿用 dsh / SuperAgent / ROS；新概念须说明与已有概念的可观察差别，不为同一职责另起名称。
+
+## 目录与阅读路线
+
+| 目录 | 职责 / 阅读后应能回答的问题 |
+|---|---|
+| [agent/](agent/README.md) | 自然语言如何成为计划？Tool / Service 如何绑定？故障怎样续办？ |
+| [plugins/](plugins/README.md)、[contracts/](contracts/)、[policies/](policies/) | 能力清单、提示和诊断、现场发布规则在哪里配置？ |
+| [src/](src/)、[perception/](perception/)、[scene/](scene/)、[sim/](sim/) | ROS 接口、运动执行、感知、语义场景与仿真如何协作？ |
+| [sessions_plugin/](sessions_plugin/README.md)、[evidence/](evidence/README.md)、[console/](console/) | 如何从用户可读的 Session 追到任务和事件的原始事实？ |
+| [observations/](observations/README.md)、[examples/](examples/)、[client/](client/) | 如何接传感器、独立服务或事件消费者？ |
+| [scripts/](scripts/)、[docker/](docker/)、[compose.yaml](compose.yaml) | 如何启动、部署、管理版本与验证？ |
+| [docs/specs/](docs/specs/)、[docs/testing/](docs/testing/)、[docs/evidence/](docs/evidence/) | 为什么改、如何验收、哪些结论已有证据？ |
+| [tests/](tests/)、[artifacts/](artifacts/) | 在哪里复跑契约与仿真，查看已有样本？新全量运行产物位于 `.ci-results/system/runs/`。 |
+
+[贡献与发布流程](CONTRIBUTING.md)说明分支、提交、SDD 和发布；[目标架构教材](docs/architecture/index.html)用于学习后续方向。判断当前能力时，以实现、相应 SDD 的验收记录及其版本为准，不能把目标图当作已交付能力。
+
+## 验证与能力边界
 
 ```sh
+# 先查看改动会影响哪些消费者，再运行选中的测试
 python tests/system_suite.py --changed-since origin/main --plan
 python tests/system_suite.py --changed-since origin/main
+# 发布候选运行完整仿真回归
 python tests/system_suite.py
 ```
 
-最后一条运行完整仿真回归。使用本机已有的 Ollama 模型卷时追加 `--ollama-cache-volume edge-agent-ros_models`。每次运行在 `.ci-results/system/runs/<运行号>/` 独立保存摘要、阶段日志和证据。未配置模型时，摘要显式标记真实推理已跳过。查阅[系统测试报告、架构评价与测试选择规则](docs/testing/single-edge.md)。
+测试使用隔离 Compose 项目；每次运行单独保存摘要、阶段日志和证据。真实模型推理需显式配置，可用 `--ollama-cache-volume edge-agent-ros_models` 复用本机模型卷；未执行的项目须标为跳过。[系统测试与选测规则](docs/testing/single-edge.md) · [插件验收记录](docs/evidence/runtime-plugins-sample.json) · [Session 验收](docs/testing/session-evidence.md)
 
-要看系统在连续任务中何时自己恢复、何时需要人处理，可运行 `python tests/system/lifecycle_acceptance.py --tasks 96`。探针在独立仿真中重复投递用户请求、暂停传感器链路、重启 Agent，并监听实际故障事件。现有服务能保留任务和处置依据。面向值班人的持久待办、通知回执和有时限的批准属于下一阶段。[生命周期实测样本](docs/evidence/lifecycle-sample.json) · [持续运行与人工介入规格](docs/specs/SDD-004-single-edge-lifecycle.md)
+仅改文档可运行 `python tests/document_contract.py -v`、`python tests/repository_contract.py -v`、`python scripts/check_sdd.py --base <开发基线>` 和 `git diff --check`。功能改动按依赖选测，执行内核、公共契约与发布候选遵守完整回归门槛。可用 `.\scripts\verify.ps1` 单独验证 C++ 执行和停车链路；长期运行与故障注入见 [SDD-004](docs/specs/SDD-004-single-edge-lifecycle.md)。
 
-只验证 C++ 内核、停车和执行链路故障时可单独运行：
-
-```powershell
-.\scripts\verify.ps1
-```
-
-开发者还可在**空闲、起点为工位的默认仿真**上执行 `python3 tests/semantic_acceptance.py`，复测具名地点往返、未知地点、限制区和遮挡制动。脚本通过公开 API 提交任务，采集独立世界位姿，并把每项输入、终态和误差写入证据文件。Windows 可使用已安装的 Python 3 解释器。[语义任务验收](tests/semantic_acceptance.py)
-
-`verify.ps1` 使用临时、独立命名的 Compose 项目。脚本会注入两次进程级故障，完成后清理当次临时容器和卷。JSON、实际轨迹、SQLite 只读导出、单元测试输出和容器日志保存在 `artifacts/verification/<UTC时间-运行ID>/`。已构建同一版镜像时可以传 `-SkipBuild`。查看[核心验收报告](docs/v1/validation.md)。
-
-复核实际模型调用时，先按[模型配置](docs/model.md)启动 Ollama，再运行 `python3 tests/model_trace_acceptance.py`。这一用例读取 ROS 状态，并验证重复告警去重、子任务继承 trace 和事件导出。仓库保存了两份可直接阅读的历史结果：[真实模型、工具及 ROS 回执](docs/evidence/trace-sample.json) · [一次状态查询与六项场景任务](docs/evidence/semantic-sample.json)。
-
-| 想弄清的问题 | 从哪里看 |
-|---|---|
-| 如何按规格开发、分支提 PR 和发布？ | [贡献流程与 GitHub 规则](CONTRIBUTING.md)、[Coding Agent 导航](AGENTS.md)、[SDD 清单](docs/specs/) |
-| 如何加一种工具、换模型提示、热挂传感器或扩展报错？ | [扩展手册](docs/harness-extensions.md)、[工具契约](plugins/README.md)、[传感器清单示例](observations/README.md) |
-| 如何关联用户询问、watchdog 告警和模块证据？ | [触发与模型追溯](agent/README.md)、[运行事件与独立消费者](docs/module-events.md) |
-| 这次到底测了什么，失败案例与复测证据在哪？ | [联合验收与复测命令](docs/v1/console-validation.md) |
-| 自然语言怎么变成动作？中途重启怎么知道从哪继续？ | [例子、接口和重试边界](docs/console.md)、[实测记录](artifacts/console/missions.json) |
-| 如何测试插件热插拔、占用重试和恢复？ | [独立 Compose 故障测试](tests/console_resilience.py)、[实际执行证据](artifacts/console/resilience.json) |
-| 本版做到了什么，哪些要求属于后续版本？ | [PRD 与验收标准](docs/v1/PRD.md) |
-| Brain 或外部系统如何下任务？ | [公开 ROS 接口](docs/v1/interfaces.md)、[命令行客户端](client/mission.py) |
-| 为什么每一步要单独验收？什么时候会拒绝重试？ | [任务策略与持久化](docs/v1/core.md)、[实现](src/edge_core/src/core_node.cpp) |
-| 如何移动、确认取消、在失联时停稳？ | [执行网关](docs/v1/gateway.md)、[网关实现](src/edge_gateway/src/edge_gateway_node.cpp)、[仿真执行器看门狗](sim/velocity_watchdog.cpp) |
-| 怎样独立证明机器人真的动过？ | [Docker 与 Gazebo 验收模块](docs/v1/simulation.md)、[黑盒测试](tests/verify.py) |
-| 单 Edge 将来怎样接模型和多机器人？ | [目标架构教材](docs/architecture/index.html)、[板卡验收](docs/architecture/board-validation.md) |
-
-## 运行中断后怎么判断
-
-- ROS 巡检委托的 `SUCCEEDED` 要求每个路点有到达后的新鲜里程计证据，网关还会确认停稳。语言任务按实际工具验收，例如只读路线预览返回地图版本和路径，位置查询返回测量来源与时间。
-- `CANCELED` 表示当前移动已核实停止，或取消时没有在途移动。接受取消时可能会先看到 `CANCELING`。
-- `FAILED` 的详情说明是派发、执行或验收阶段失败。检查日志与动作记录后可决定是否发起新的任务。
-- 当 **ROS 内核** 的在途运动进入 `RECOVERY_REQUIRED`，底盘占用可能仍被保留。按原操作 ID 检查执行器和独立停稳观测，保留原卷用于追查。内核尚无在线解除未知占用的运维接口。
-- **语言任务** 也可能进入 `RECOVERY_REQUIRED`。例如里程计过期会使只读状态查询耗尽重试，此时没有物理动作。查看任务里的诊断、原操作 ID 和 `can_retry`。处理完原故障且 `can_retry` 为真时，可通过工作台续办原步骤。[任务接口](agent/README.md)
-
-## 首版的部署边界
-
-Windows Docker Desktop 上已验证单机器人仿真。Linux/ARM64 硬件镜像在指令模拟环境验证过 ROS 输入、感知、任务与观测台链路。其他场地须标定坐标系与通行约束，持续避障或复杂地形导航需相应导航栈。跨区域 Brain 协作、RK3588/Jetson 驱动、加速器与制动距离仍需现场验收。[部署矩阵](docs/deployment.md) · [历史平台证据](artifacts/console/platforms.json)
+已验证的主要环境为 Windows Docker Desktop 单机仿真；Linux/ARM64 硬件镜像有指令模拟测试。RK3588、Jetson 等物理板卡、真实驱动、复杂导航和制动距离仍需现场验收。跨域 Brain / Edge 协作、完整人工批准流程、任意代码自主开发与安全投放、通用有状态插件迁移属于后续工作。能力扩展应逐项交付契约与证据，不能由一次仿真成功推断任意任务或无限运行已得到保证。

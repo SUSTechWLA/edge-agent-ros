@@ -76,6 +76,7 @@ issuer / grant_epoch                签发 Brain 身份、本次授权代次</co
 <p>恢复时，读最近检查点并重放后继事件，查询所有未决 <code>operation_id</code>。查到执行中则接续订阅，查到终态则补验收，查不到则标记 <code>UNKNOWN</code>、保留占用并核对实测状态。需要用硬件可证明的安全重置或人工确认结束不确定状态。ROS Action 的结果缓存有生命周期，控制器重启后可能缺失；重复 UUID 或数据库事务本身无法保证物理动作只做一次。<a href="https://design.ros2.org/articles/actions.html#result-caching">ROS 2 Action 的结果缓存</a></p>
 </section>
 <section id="plugins"><small>04 / 插件与技能</small><h2>接入一种新机型，要改哪一层？</h2>
+<div class="callout"><p><strong>以下是目标接口设计，不是当前 SDK。</strong> 本节的 PluginHost、start / drain / stop 等用于说明未来职责。当前可直接使用的是 HTTP Tool 清单、provides / requires 服务目录、事件消费者及各自装卸协议；开发从<a href="../plugin-development.md">插件开发指南</a>和<a href="../harness-extensions.md">现有能力矩阵</a>开始。目录 ready 不代表服务健康，draining 不自动完成在途任务和设备交接。</p></div>
 <p>最高层抽象只描述插件的身份、依赖、版本、生命周期。插件按所能履行的职责实现小接口。一台车和一只机器狗可以都提供“到达观测位”，各自声明坡度、可达空间、定位和停止条件。Brain 拿到可用能力的交集及约束，Edge 为具体实例选适配器。</p>
 <pre><code>PluginHost.mount(manifest, factory)       检查协议版本、依赖、权限，建立实例作用域
 Plugin.start(scoped_services)             注册端口，健康/校准通过后才加入能力目录
