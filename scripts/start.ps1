@@ -9,8 +9,10 @@ try {
         docker compose --profile model up -d model
         if ($LASTEXITCODE) { throw "Local model service startup failed." }
     }
-    docker compose up -d --no-build sim bridge witness gateway core perception scene agent console
+    docker compose up -d --no-build sim bridge witness gateway core perception scene agent console evidence
     if ($LASTEXITCODE) { throw "Compose deployment failed." }
+    docker compose run --rm --no-deps -T evidence-admin
+    if ($LASTEXITCODE) { throw "Evidence tool registration failed." }
     docker compose exec -T core /usr/local/bin/edge-entrypoint /usr/bin/python3 /opt/edge/client/ready.py
     if ($LASTEXITCODE) { throw "ROS interfaces or live simulated measurements are unavailable. Inspect docker compose logs." }
     $port = $config.services.console.ports[0].published

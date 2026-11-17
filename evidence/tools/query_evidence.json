@@ -1,0 +1,9 @@
+{
+  "id": "query_evidence",
+  "version": "1",
+  "effect": "read",
+  "accepts_trace": true,
+  "description": "按需查询 task_id 的公开 EventBus 证据。先用 read_session 定位、evidence_schema 查字段。sql 是只读 SQLite SELECT，可查询 events(seq,kind,code,level,detail,operation_id,data_json) 并用 json_extract(data_json,'$.字段') 读数。首次 after_seq=0、archive_id=''，续页使用返回的 next_after 和 archive_id；limit 为1到50。coverage 表示本次加载范围，COUNT仅对此范围成立。例 SELECT seq,kind,code,detail FROM events WHERE level IN ('warn','error') ORDER BY seq。",
+  "parameters": {"task_id": "string", "sql": "string", "after_seq": "number", "limit": "number", "archive_id": "string"},
+  "endpoint": "http://evidence:8125/invoke?tool=query_evidence"
+}

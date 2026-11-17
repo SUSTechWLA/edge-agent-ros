@@ -36,7 +36,7 @@ def run(args, selected, reasons):
     env = {k:v for k,v in env.items() if not k.startswith(("EDGE_", "COMPOSE_"))}
     image = "edge-agent-ros:system-" + run_id.lower()
     env.update(COMPOSE_DISABLE_ENV_FILE="1", EDGE_IMAGE=image, EDGE_ROS_DOMAIN_ID="103",
-               EDGE_CONSOLE_PORT="0", EDGE_REVISION=revision+("-dirty" if dirty else ""),
+               EDGE_CONSOLE_PORT="0", EDGE_EVIDENCE_PORT="0", EDGE_REVISION=revision+("-dirty" if dirty else ""),
                EDGE_EVIDENCE_DIR=str(directory), EDGE_VERIFY_ROOT=str(directory/"core"),
                EDGE_RESILIENCE_REPORT=str(directory/"resilience.json"), PYTHONUTF8="1")
     if args.base_image:
@@ -128,6 +128,7 @@ def run(args, selected, reasons):
                                         f"type=bind,source={ROOT/'examples/result-verifiers'},target=/sample,readonly",
                                         "--entrypoint","python3",image,"-B","/sample/test_verifiers.py","-v"]],
                     "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server"),
+                                    in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/evidence"),
                                     test("system/module_bus_acceptance.py","--image",image,"--out",directory/"module-bus.json"),
                                     test("system/author_bus_acceptance.py","--image",image,"--out",directory/"author-bus.json")],
                     "scene-contracts":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/tests","-p","test_scene*.py")],
@@ -162,7 +163,11 @@ def run(args, selected, reasons):
                 if "model" in selected and not effective_model:
                     skip("model","real Ollama not requested; pass --ollama-cache-volume to exercise inference")
                 if public:
-                    services=["sim","bridge","witness","gateway","core","perception","scene","agent","console"]
+                    services=["sim","bridge","witness","gateway","core","perception","scene","agent","console","evidence"]
+                    # Public plugin tests write only to this run's capability directory.
+                    plugin_dir=directory/"plugins"
+                    plugin_dir.mkdir()
+                    env["EDGE_PLUGINS_DIR"]=str(plugin_dir)
                     started_sim=True
                     if effective_model:
                         override=directory/"model.override.json"
@@ -203,6 +208,9 @@ def run(args, selected, reasons):
                                 current="http://"+output([*compose,"port","console","8080"],env)
                                 commands[name]=[current if arg==url else arg for arg in commands[name]]
                             stage(name,[commands[name]])
+                            if name=="ui":
+                                stage("session-evidence",[test("system/session_evidence_acceptance.py","--url",current,
+                                      "--project",project,"--registry",plugin_dir,"--out",directory/"session-evidence.json")])
                     else:
                         for name in public:
                             skip(name,"simulator did not become ready","blocked")

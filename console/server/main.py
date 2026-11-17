@@ -13,6 +13,7 @@ import rclpy
 from history import TRACE_FIELDS, encode
 from observer import Observer
 from task_review import task_page
+from sessions import session_view
 
 
 def integer(params, key, default=None, ceiling=2**63-1):
@@ -123,7 +124,7 @@ class Handler(SimpleHTTPRequestHandler):
                 filters["view"]=view
             if url.path=="/api/state":
                 self.respond(200,self.observer.snapshot())
-            elif url.path=="/api/review/tasks":
+            elif url.path in ("/api/review/tasks","/api/sessions"):
                 try:
                     page=task_page(self.observer.tasks,params.get("state",["all"])[0],params.get("before",[None])[0],
                                    integer(params,"limit",30,100))
@@ -131,6 +132,24 @@ class Handler(SimpleHTTPRequestHandler):
                     self.respond(503,{"error":"任务账本暂时不可读，请检查 Agent 与任务数据卷。"})
                     return
                 self.respond(200,page)
+            elif url.path=="/api/session":
+                output=params.get("format",["json"])[0]
+                if output not in ("json","markdown"):
+                    raise ValueError("format must be json or markdown")
+                try:
+                    document=session_view(self.observer.tasks,store,params.get("task_id",[None])[0],
+                                          params.get("trace_id",[None])[0])
+                except (OSError,sqlite3.Error):
+                    self.respond(503,{"error":"会话证据暂不可读，请稍后重试。"})
+                    return
+                if document is None:
+                    self.respond(404,{"error":"未找到任务或归档证据。"})
+                elif output=="markdown":
+                    body=document["markdown"].encode("utf-8")
+                    self.api_headers(200,"text/markdown; charset=utf-8",len(body))
+                    self.wfile.write(body)
+                else:
+                    self.respond(200,document)
             elif url.path=="/api/history":
                 self.respond(200,store.retention())
             elif url.path=="/api/events":

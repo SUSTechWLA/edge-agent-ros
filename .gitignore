@@ -17,6 +17,7 @@ artifacts/verification/20261117-031532-ae63c8/*
 plugins/derived/.history/
 plugins/derived/.publish.lock
 plugins/derived/.staging-*
+plugins/evidence.*.json
 plugins/runtime/.history/
 plugins/runtime/.publish.lock
 plugins/runtime/.staging-*

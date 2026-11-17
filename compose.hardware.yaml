@@ -42,6 +42,7 @@ services:
         COPY console console
         COPY perception perception
         COPY agent agent
+        COPY evidence evidence
         ARG EDGE_REVISION=unknown
         ENV EDGE_REVISION=$$EDGE_REVISION
         LABEL org.opencontainers.image.revision=$$EDGE_REVISION
@@ -104,6 +105,30 @@ services:
     command: ["python3", "/opt/edge/console/server/main.py", "--ros-args",
       "-r", "/scan:=${EDGE_SCAN_TOPIC:-/scan}", "-r", "/imu:=${EDGE_IMU_TOPIC:-/imu}",
       "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}", "-r", "/cmd_vel:=${EDGE_CMD_TOPIC:-/cmd_vel}"]
+  evidence:
+    <<: *runtime
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/evidence/provider.py"]
+    environment:
+      EDGE_EVIDENCE_BIND: 127.0.0.1
+      EDGE_EVIDENCE_SOURCE: http://127.0.0.1:${EDGE_CONSOLE_PORT:-8765}
+      EDGE_EVIDENCE_JOURNAL: /var/lib/edge-evidence/evidence.query/module-events.sqlite
+    volumes:
+      - module-sources:/var/lib/edge-evidence
+  evidence-admin:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    pull_policy: never
+    profiles: ["evidence-admin"]
+    read_only: true
+    cap_drop: [ALL]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/client/register_evidence.py", "--endpoint", "http://127.0.0.1:8125"]
+    volumes:
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins
   plugin-author:
     image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
     pull_policy: never

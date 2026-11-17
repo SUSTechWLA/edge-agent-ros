@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkReview } from './review_browser.mjs';
+import { checkSessions } from './session_browser.mjs';
 
 const [url, output, screenshotOption] = process.argv.slice(2);
 if (screenshotOption && screenshotOption !== '--screenshots') throw new Error('Unknown browser test option');
@@ -84,8 +85,11 @@ try {
   await send('Runtime.enable');
   await send('Network.enable');
   await send('Page.navigate',{url});
+  await waitFor("document.querySelector('#sessions') && !document.querySelector('#sessions').hidden",
+                'Readable sessions are the default landing page');
   for (const width of [1440,390]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:860,deviceScaleFactor:1,mobile:false});
+    await evaluate("document.querySelector('#nav-live').click()");
     await waitFor("document.querySelector('#metric-pos')?.textContent.match(/[0-9]/) && document.querySelector('#map')?.width > 0");
     await evaluate("document.querySelector('#open-task').click()");
     await waitFor("document.querySelector('#task-modal').open && document.querySelector('#cap-list').textContent.includes('navigate_place')");
@@ -99,9 +103,10 @@ try {
       writeFileSync(join(dirname(output),'review-'+name+'-'+width+'.png'),Buffer.from(data,'base64'));
     };
     const review = await checkReview({url, width, evaluate, waitFor, send, screenshot});
+    const sessions = await checkSessions({url, width, evaluate, waitFor, send, screenshot});
     await evaluate("document.querySelector('#nav-live').click()");
     await waitFor("!document.querySelector('#monitor').hidden");
-    viewports.push({width,document_width:content,live_pose:true,tool_dialog:true,event_navigation:true,review});
+    viewports.push({width,document_width:content,live_pose:true,tool_dialog:true,event_navigation:true,review,sessions});
   }
   if (errors.length) throw new Error(errors.join(','));
   if (writeRequests.length) throw new Error('Read-only browsing made a write request: '+writeRequests);

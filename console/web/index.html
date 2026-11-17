@@ -2,16 +2,42 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><title>机器人观测台 · Edge Agent ROS</title>
-<link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/review.css"><script src="/map.js" defer></script><script src="/review.js" defer></script><script src="/app.js" defer></script>
+<link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/review.css"><link rel="stylesheet" href="/sessions.css"><script src="/map.js" defer></script><script src="/review.js" defer></script><script src="/sessions.js" defer></script><script src="/app.js" defer></script>
 </head><body>
 <a href="#main" class="skip">跳至工作区</a>
 <header class="topbar"><div class="brand"><svg viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="12" fill="#d6fb80"/><path d="m10 26 12-17 12 17-12 8z" fill="#19352c"/><path d="m16 25 6-9 6 9-6 4z" fill="#d6fb80"/></svg><span>Edge Agent <b>ROS</b></span></div>
-<nav class="tabs" aria-label="工作区"><a id="nav-live" href="#monitor" aria-current="page">实时监控</a><a id="nav-review" href="#review">运行复盘</a><a id="nav-events" href="#events">事件记录</a></nav>
+<nav class="tabs" aria-label="工作区"><a id="nav-sessions" href="#sessions" aria-current="page">任务会话</a><a id="nav-live" href="#monitor">实时监控</a><a id="nav-review" href="#review">运行复盘</a><a id="nav-events" href="#events">事件记录</a></nav>
 <div class="connection"><span class="pip" id="conn-pip"></span><span id="conn">连接中</span></div></header>
 <main id="main">
 <div class="heading"><div><p class="context"><span class="env-icon" aria-hidden="true">◈</span><span id="env">ROS 2</span><span class="slash">/</span><span id="robot">Edge</span></p><h1 id="page-title">机器人观测台</h1></div><div class="heading-right"><div class="clock"><span id="clock-label">状态更新时间</span><strong id="clock">—</strong></div><button id="open-task" class="primary">＋ 下发任务</button></div></div>
 <aside id="history-bar" class="history-bar" hidden><span id="history-msg"></span><div><a id="replay-review" class="more" hidden>返回本次复盘</a> <button id="resume">返回实时</button></div></aside>
 <div id="notice" role="status" class="notice" hidden></div>
+<section id="sessions" aria-label="任务会话" hidden>
+  <div class="session-live"><div><span class="session-live-label">实时观测</span><strong id="session-motion">正在连接机器人…</strong><span id="session-live-time"></span></div><a href="#monitor">查看机器人与地图 →</a></div>
+  <div class="session-filters" aria-label="任务分类">
+    <button data-session-state="all" aria-pressed="true"><span>全部任务</span><strong>—</strong></button>
+    <button data-session-state="active" aria-pressed="false"><span>正在处理</span><strong>—</strong></button>
+    <button data-session-state="succeeded" aria-pressed="false"><span>已完成</span><strong>—</strong></button>
+    <button data-session-state="issues" aria-pressed="false"><span>需要关注</span><strong>—</strong></button>
+  </div>
+  <div class="session-layout">
+    <aside class="panel session-directory">
+      <div class="panel-header"><h2>最近任务</h2><small>最新创建在前</small></div>
+      <p id="session-list-notice" class="session-notice" role="status" hidden></p>
+      <div id="session-list" aria-busy="false"></div>
+      <div class="pager"><button id="session-prev" disabled>上一页</button><span id="session-page"></span><button id="session-next" disabled>下一页</button></div>
+    </aside>
+    <article class="panel session-reader" id="session-reader" aria-busy="false">
+      <div class="session-reader-header"><span id="session-state" class="badge">等待选择</span><div class="session-actions"><button id="session-switch-task" aria-controls="session-list">切换任务</button><button id="session-refresh">刷新</button><a id="session-markdown" download="task-session.md" hidden>下载 Markdown ↓</a></div></div>
+      <div class="session-intro"><h2 id="session-goal">选择一项任务，阅读执行过程</h2><p id="session-headline"></p><p id="session-dates"></p></div>
+      <p id="session-notice" class="session-notice" role="status" hidden></p>
+      <div id="session-messages"></div>
+      <div id="session-diagnosis"></div>
+      <div id="session-related"></div>
+      <details id="session-coverage" class="session-coverage" hidden><summary>摘要依据与完整记录</summary><p id="session-coverage-text"></p><ul id="session-coverage-notes"></ul><dl id="session-identities"></dl><a id="session-advanced">查看完整执行时间线 →</a></details>
+    </article>
+  </div>
+</section>
 <section id="monitor" aria-label="实时监控">
 <div class="metrics"><div class="metric"><span>融合位置 <small>m</small></span><strong id="metric-pos">—</strong></div><div class="metric"><span>航向角 <small>°</small></span><strong id="metric-yaw">—</strong></div><div class="metric"><span>轮式里程计速度 <small>m/s</small></span><strong id="metric-speed">—</strong></div><div class="metric"><span>当前动作</span><strong class="op" id="metric-action">—</strong></div></div>
 <div class="workspace">

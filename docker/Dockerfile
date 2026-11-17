@@ -17,6 +17,7 @@ COPY perception perception
 COPY console console
 COPY agent agent
 COPY scene scene
+COPY evidence evidence
 ARG EDGE_REVISION=unknown
 ENV EDGE_REVISION=${EDGE_REVISION}
 LABEL org.opencontainers.image.revision=${EDGE_REVISION}

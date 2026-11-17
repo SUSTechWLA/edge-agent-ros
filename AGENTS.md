@@ -9,6 +9,7 @@
 | 原始传感器、融合、不新鲜的状态 | `perception/`、`observations/`、`console/server/observer.py` | 容器内运行 `python3 -m unittest discover -v -s /opt/edge/console/server` |
 | 保存、回放、事件导出 | `console/server/history.py`、`docs/console.md` | 以同一任务和操作 ID 核对源事件、重启后记录与回放时间 |
 | 值班人员想知道“现在在做什么，哪一步出了问题” | [运行复盘](docs/console.md#从运行复盘读懂一台机器人的工作)、[SDD-009](docs/specs/SDD-009-run-review.md)；任务终态由 Agent 持有，实时观测和归档序号由 Console 提供 | 先跑 `console/server/test_run_review.py` 的 HTTP 契约，在独立仿真运行 `tests/system/console_browser.mjs` 核对桌面和移动端任务、异常与回放 |
+| 人和模型需要低噪声会话，或按需查询某个调用 | [SDD-010](docs/specs/SDD-010-session-evidence.md)、[会话与证据手册](docs/sessions.md)，实现位于 `console/server/sessions.py` 和 `evidence/` | `test_sessions.py` 核对任务所有者证据，`evidence/test_provider.py` 核对查询边界，`tests/system/session_evidence_acceptance.py` 在独立仿真验证自然语言入口、热插拔与源值一致 |
 | 现场插件失联、版本突变或 AI 候选发布 | 查 [EventBus 读法与接入](docs/module-eventbus.md)、`agent/module_journal.py`、`console/server/journal_ingress.py`；用源身份区分操作、观察及诊断 | 在独立 Docker 运行 `tests/system/module_bus_acceptance.py`；按 [SDD-007](docs/specs/SDD-007-module-eventbus.md) 对照来源、父事件和副作用计数 |
 | 自动安装候选后怎样完成原用户工作 | 从[插件管理模块](docs/plugin-manager.md)查候选、现场规则、受管发布版本及绑定到只读工具的后续任务 | `tests/system/plugin_manager_acceptance.py` 验证无人工逐步推动时的完整链路，按 [SDD-008](docs/specs/SDD-008-plugin-manager.md) 复核 |
 | 新任务遇到能力缺口，需要开发工具 | 先查注册目录、原任务的终态事件和本机可用的观测。按[插件作者手册](docs/plugin-authoring.md)选择只读声明或独立 HTTP 提供者 | 从独立期望样本开始，执行草案检查和隔离 Docker 热更新测试，再发布到授权目录 |

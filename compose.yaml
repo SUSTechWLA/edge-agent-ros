@@ -67,6 +67,31 @@ services:
     profiles: ["model"]
     volumes:
       - models:/root/.ollama
+  evidence:
+    <<: *runtime
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/evidence/provider.py"]
+    environment:
+      EDGE_EVIDENCE_SOURCE: http://console:8080
+      EDGE_EVIDENCE_JOURNAL: /var/lib/edge-evidence/evidence.query/module-events.sqlite
+    volumes:
+      - module-sources:/var/lib/edge-evidence
+    ports:
+      - "127.0.0.1:${EDGE_EVIDENCE_PORT:-8125}:8125"
+  evidence-admin:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["evidence-admin"]
+    read_only: true
+    cap_drop: [ALL]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/client/register_evidence.py"]
+    volumes:
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins
   plugin-author:
     image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
     pull_policy: never

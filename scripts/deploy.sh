@@ -40,11 +40,13 @@ case "$action" in
   *) echo "Unknown action: $action" >&2; exit 2 ;;
 esac
 full_sim=no
+full_deployment=no
 if [ "$#" -eq 0 ]; then
+  full_deployment=yes
   if [ "$mode" = sim ]; then
     full_sim=yes
-    set -- sim bridge witness gateway core perception scene agent console
-  else set -- core perception agent console; fi
+    set -- sim bridge witness gateway core perception scene agent console evidence
+  else set -- core perception agent console evidence; fi
 fi
 if [ "$mode" = sim ]; then
   case " $* " in
@@ -55,6 +57,9 @@ if [ "$mode" = sim ]; then
   esac
 fi
 compose up -d --no-build "$@"
+if [ "$full_deployment" = yes ]; then
+  compose run --rm --no-deps -T evidence-admin
+fi
 if [ "$full_sim" = yes ]; then
   compose exec -T core /usr/local/bin/edge-entrypoint python3 /opt/edge/client/ready.py
 fi

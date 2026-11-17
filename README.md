@@ -4,6 +4,8 @@
 
 项目基于 C++20、ROS 2 Jazzy、Gazebo Harmonic 和 Docker Compose。具名地点任务可以离线执行，自由表述可接本地 Ollama 或独立 HTTP 规划器。[观测台使用手册](docs/console.md) · [部署矩阵](docs/deployment.md) · [插件与事件扩展手册](docs/harness-extensions.md)
 
+观测台默认打开「任务会话」，以中文呈现目标、计划、执行反馈和结果。用户与诊断模型读取同一份简短 Markdown，沿引用展开原事件。需要具体测量或调用时，证据插件可按任务查询公开 EventBus 数据，并为查询本身保存审计记录。[会话阅读与按需取证](docs/sessions.md)
+
 遇到能力缺口时，可选的插件作者进程读取失败任务并生成候选定义。例如，用户要“用千米每小时报告本机前向速度”，模型可基于已存在的里程计定义工具，经样本验证后由发布者热加载。需要新算法时可编写独立 HTTP 提供者，使用同一套 Agent 入口。作者进程与发布者分别部署，前者只写候选。[从任务到插件的实操手册](docs/plugin-authoring.md) · [代码型插件样板](examples/timestamp-audit/)
 
 需要给现有工具增加独立检查时，可以注册一个对模型公开零个 Tool 的服务。例如，相机返回图片地址后，验收器读取文件并解码；加入第二个摘要验收器只需部署服务并发布清单和策略。遇到断连，Agent 保留候选并恢复验收。见[插件生命周期与架构图](docs/harness-extensions.md#新功能能否只改一个插件)、[SDD-006](docs/specs/SDD-006-runtime-plugins.md)与[可运行示例](examples/result-verifiers/README.md)。

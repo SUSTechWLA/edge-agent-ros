@@ -14,6 +14,9 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("evidence/*", "client/register_evidence.py"), ("planner","observations","ui","console-missions","board")),
+    (("tests/system/session_evidence_acceptance.py", "tests/system/session_browser.mjs"), ("ui","console-missions","places")),
+    (("tests/system/evidence_model_acceptance.py",), ("model","ui","places")),
     (("agent/plugin_manager.py", "client/plugin_manager_watch.py","policies/plugin-recovery.json"),
      ("planner","observations","agent-faults","board")),
     (("tests/test_plugin_manager.py","tests/test_plugin_manager_watch.py"), ("planner",)),
@@ -86,6 +89,10 @@ def selection(files=None):
                        if any(fnmatch.fnmatchcase(name,p) for p in patterns)), STAGES)
         chosen.update(stages)
         reasons[name] = list(stages)
+    # Browser and evidence acceptance consume successful and blocked Gazebo tasks.
+    # Include their fixture producers even when only web/query code changed.
+    if "ui" in chosen:
+        chosen.update(("console-missions", "places"))
     return [stage for stage in STAGES if stage in chosen], reasons
 
 
@@ -120,6 +127,13 @@ class TestSelection(unittest.TestCase):
         self.assertIn("board",selection(["plugins/derived/derived.speed_kmh.json"])[0])
         for path in ("console/web/review.js","tests/system/review_browser.mjs"):
             self.assertEqual(selection([path])[0], [R,"console-missions","places","ui"])
+        for path in ("console/web/sessions.js", "tests/system/session_browser.mjs",
+                     "tests/system/session_evidence_acceptance.py"):
+            self.assertEqual(selection([path])[0], [R,"console-missions","places","ui"])
+        for path in ("evidence/provider.py", "evidence/public_source.py", "client/register_evidence.py"):
+            selected = selection([path])[0]
+            for consumer in ("planner", "observations", "console-missions", "places", "ui", "board"):
+                self.assertIn(consumer, selected, path)
 
 
 if __name__=="__main__":

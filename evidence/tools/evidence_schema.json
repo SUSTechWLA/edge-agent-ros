@@ -1,0 +1,9 @@
+{
+  "id": "evidence_schema",
+  "version": "1",
+  "effect": "read",
+  "accepts_trace": true,
+  "description": "查询证据字段与读取示例",
+  "parameters": {},
+  "endpoint": "http://evidence:8125/invoke?tool=evidence_schema"
+}

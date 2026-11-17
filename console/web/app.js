@@ -25,6 +25,7 @@ const filterInputs={task_id:'task-filter',mission_id:'mission-filter',kind:'kind
   module:'module-filter',code:'code-filter',trigger_kind:'trigger-kind-filter',trigger_id:'trigger-filter'};
 const section=()=>{
   const name=location.hash.slice(1).split('?')[0];
+  if(!name||name==='sessions')return 'sessions';
   return name==='review'||name==='events'?name:'monitor';
 };
 const displayed=()=>replay||live;
@@ -113,6 +114,7 @@ function render(){
   el('task-panel').hidden=!!replay||!taskRecord;
   el('recent-title').textContent=replay?'当时的归档事件':'最近状态变化';
   if(section()==='review')RunReview.liveStatus(live,liveOk);
+  if(section()==='sessions')SessionView.liveStatus(live,liveOk);
   if(section()!=='monitor')return;
   EdgeMap.update(s);renderRaw(s);
   health(el('fusion-health'),src.pose);
@@ -194,30 +196,35 @@ el('filter').onclick=applyFilter;el('clear-filter').onclick=()=>{clearFilterInpu
 Object.values(filterInputs).forEach(id=>el(id).onkeydown=e=>{if(e.key==='Enter')applyFilter();});
 el('older').onclick=()=>{if(page.length)loadPage(page.at(-1).seq);};el('newer').onclick=()=>loadPage();
 function route(){
-  const current=section(), titles={monitor:'机器人观测台',events:'事件记录',review:'运行复盘'};
-  for(const [key,nav] of Object.entries({monitor:'nav-live',events:'nav-events',review:'nav-review'})){
+  const current=section(), titles={monitor:'机器人观测台',events:'事件记录',review:'运行复盘',sessions:'任务会话'};
+  for(const [key,nav] of Object.entries({monitor:'nav-live',events:'nav-events',review:'nav-review',sessions:'nav-sessions'})){
     el(key).hidden=key!==current;
     if(key===current)el(nav).setAttribute('aria-current','page');else el(nav).removeAttribute('aria-current');
   }
   el('page-title').textContent=titles[current];
-  if(current==='review' && replay)replay=replayRecord=null;
+  if(['review','sessions'].includes(current) && replay)replay=replayRecord=null;
   RunReview.route(current==='review');
-  if(current==='review')requestAnimationFrame(()=>window.scrollTo(0,0));
+  SessionView.route(current==='sessions');
+  if(current==='review'||current==='sessions')requestAnimationFrame(()=>window.scrollTo(0,0));
   if(current==='events')loadPage(pageBefore);
   if(current==='monitor' && !replay)renderRecent();
   render();
 }
 window.addEventListener('hashchange',route);
-window.addEventListener('load',()=>{if(section()==='review')window.scrollTo(0,0);});
+window.addEventListener('load',()=>{if(['review','sessions'].includes(section()))window.scrollTo(0,0);});
 el('nav-review').addEventListener('click',event=>{
   if(location.hash==='#review'){event.preventDefault();window.scrollTo(0,0);}
 });
+el('nav-sessions').addEventListener('click',event=>{
+  if(location.hash==='#sessions'){event.preventDefault();window.scrollTo(0,0);}
+});
 el('replay').onclick=async()=>{
-  if(!selected)return;const ev=selected,fromReview=section()==='review'?location.hash:null;el('replay').disabled=true;
+  if(!selected)return;const ev=selected,fromReview=['review','sessions'].includes(section())?location.hash:null;el('replay').disabled=true;
   try{
     const s=await api('/api/replay?at='+encodeURIComponent(ev.seq));
     const log=await api('/api/events?before='+(ev.seq+1)+'&limit=5');
-    const back=el('replay-review');back.hidden=!fromReview;if(fromReview)back.href=fromReview;
+    const back=el('replay-review');back.hidden=!fromReview;
+    if(fromReview){back.href=fromReview;back.textContent=fromReview.startsWith('#sessions')?'返回任务会话':'返回本次复盘';}
     replay=s;replayRecord=ev;el('event-modal').close();location.hash='monitor';route();
     eventsRows('recent-rows',log.events,'该时刻暂无事件');window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){el('replay-error').textContent='无法回放 · '+e.message;}finally{el('replay').disabled=false;}
@@ -244,6 +251,7 @@ async function poll(){
     const s=await api('/api/state');live=s;liveOk=true;setNotice('');render();
     if(s.cursor!==lastCursor){
       if(section()==='review' && lastCursor!=null)RunReview.refresh();
+      if(section()==='sessions' && lastCursor!=null)SessionView.refresh();
       if(section()==='events' && pageBefore==null && !el('event-modal').open)loadPage();
       lastCursor=s.cursor;
     }
@@ -298,8 +306,8 @@ el('task-form').onsubmit=async e=>{
   try{
     const r=await api('/agent/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(taskDraft)});
     renderTask(r);localStorage.setItem('edge-last-task',r.id);el('task-modal').close();
-    el('task-text').value='';el('task-feedback').textContent='';taskDraft=null;location.hash='monitor';
-    el('task-panel').scrollIntoView({behavior:'smooth',block:'center'});
+    el('task-text').value='';el('task-feedback').textContent='';taskDraft=null;
+    location.hash='sessions?'+new URLSearchParams({task:r.id});
   }catch(err){el('task-feedback').textContent='下发未确认 · '+err.message+'。重试会沿用任务 ID '+taskDraft.id;}
   finally{submitBusy=false;el('task-submit').disabled=false;}
 };
