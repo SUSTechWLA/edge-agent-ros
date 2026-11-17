@@ -1,0 +1,156 @@
+{
+  "spec": "SDD-009",
+  "environment": "Local Windows host, Docker Linux containers, ROS 2 Jazzy and Gazebo. Live console checks were read-only.",
+  "implementation_revision": "efd6aa04113a491f3578a408518f8460414c8f1c",
+  "deployment_image": "sha256:bceefe270dbc0b4215e9df35922e736c190b00dc6e4d0ad0ec9ada68fb9e2896",
+  "console_service_tests": {
+    "passed": 23,
+    "includes_review_http_cases": 3
+  },
+  "isolated_simulation": {
+    "task_count": 11,
+    "states": {
+      "SUCCEEDED": 8,
+      "BLOCKED": 3
+    },
+    "blocked_scenarios": [
+      "unknown place",
+      "restricted place",
+      "forward clearance below braking threshold"
+    ],
+    "browser": {
+      "passed": true,
+      "widths_checked": [
+        1440,
+        390
+      ],
+      "write_requests": 0,
+      "uncaught_errors": 0
+    }
+  },
+  "daily_console": {
+    "service_count": 12,
+    "recreated": [
+      "console"
+    ],
+    "comparison": "SHA-256 over compact UTF-8 JSON of sorted (task ID,state) and ordered (archive seq,event_id)",
+    "task_count": 52,
+    "states": {
+      "SUCCEEDED": 42,
+      "BLOCKED": 10
+    },
+    "tasks_before": "9056f3f8e3f42446a9fc1b00f7d9bfe7a7e87e5323f699962b13946d53fe0a38",
+    "tasks_after": "9056f3f8e3f42446a9fc1b00f7d9bfe7a7e87e5323f699962b13946d53fe0a38",
+    "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+    "cutoff": 2645,
+    "rows_compared": 2645,
+    "archive_before": "857571bdcfd783d7f6936564ff665a7d65a210283b18db84f61e4e8ab19b162f",
+    "archive_after": "857571bdcfd783d7f6936564ff665a7d65a210283b18db84f61e4e8ab19b162f",
+    "api_counts": {
+      "all": 52,
+      "active": 0,
+      "succeeded": 42,
+      "issues": 10
+    },
+    "example": {
+      "task_id": "campus-19ee1d1543-wall",
+      "braking_seq": 1850,
+      "front_range_m": 0.3952096700668335,
+      "braking_threshold_m": 0.42,
+      "stationary_ack_seq": 1853,
+      "agent_blocked_seq": 1859,
+      "code": "navigation.path_blocked"
+    },
+    "sample": {
+      "seq": 2639,
+      "kind": "telemetry.sample",
+      "data_was_empty": true
+    },
+    "raw_export": {
+      "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+      "upper_seq": 2702,
+      "exported_seq_match": true,
+      "raw_rows_to_upper_seq": 2702,
+      "ordinary_snapshots": 776,
+      "example_task_raw_rows": 78,
+      "example_task_issue_rows": 5
+    },
+    "browser": {
+      "passed": true,
+      "uncaught_errors": 0,
+      "write_requests": 0,
+      "widths": [
+        1440,
+        390
+      ],
+      "checks_at_both_widths": [
+        "task pagination",
+        "success and blocked owner records with replay",
+        "partial archive",
+        "503 and recovery",
+        "missing deep link",
+        "raw periodic sample",
+        "return from replay to task",
+        "task-state",
+        "task-page",
+        "history-view",
+        "history-page"
+      ]
+    },
+    "final_archive_cursor_at_restart_check": 2702
+  },
+  "regression": {
+    "first_run": {
+      "run_id": "20261117T145903Z-810e4d1c",
+      "base_revision": "7a8e903c3a33c88f9d579814c6f64d339cc59241",
+      "dirty": true,
+      "passed": [
+        "repository",
+        "planner",
+        "board",
+        "agent-contracts",
+        "observations",
+        "scene-contracts",
+        "core",
+        "motion-sensors",
+        "agent-faults",
+        "resilience",
+        "motion-world",
+        "console-missions",
+        "places",
+        "scene-binding",
+        "scene-outage",
+        "clock-reset",
+        "model"
+      ],
+      "failed": [
+        "ui"
+      ],
+      "failure": "Latest blocked task appeared first in two filters. During a response delay the new filter temporarily displayed old rows."
+    },
+    "after_fix": {
+      "run_id": "20261117T151207Z-262bd5a5",
+      "runner_base_revision": "56eb250e80985a7a4115c8bc84afd7919b0567fd",
+      "runner_worktree_dirty": true,
+      "source_tree_sha256": "7a3859d5b515812b7c916d026ce76331ce6368d040bdc23676a638bda44034e0",
+      "deployed_source_tree_sha256": "7a3859d5b515812b7c916d026ce76331ce6368d040bdc23676a638bda44034e0",
+      "comparison": "Compared file paths and SHA-256s for console, tests, agent, client, scene, perception, src and sim inside both images, excluding Python bytecode. Test images and the revision-labelled deployment have identical checked files.",
+      "passed": [
+        "repository",
+        "observations",
+        "console-missions",
+        "places",
+        "scene-binding",
+        "scene-outage",
+        "clock-reset",
+        "ui"
+      ],
+      "ui_widths": [
+        1440,
+        390
+      ],
+      "status": "passed"
+    },
+    "physical_robot_exercised": false
+  }
+}
