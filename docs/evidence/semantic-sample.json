@@ -1,0 +1,158 @@
+{
+  "utc": "2026-11-17T03:44:31.195776+00:00",
+  "run_id": "campus-54a805051b",
+  "passed": true,
+  "method": "Public console HTTP → local natural-language planner → scene adapter/ROS gateway. Measurements sampled independently from Gazebo world truth.",
+  "tolerances": {
+    "goal_error_m": 0.18,
+    "door_x_m": 1.8,
+    "door_x_band_m": 0.2,
+    "door_max_abs_y_m": 0.55,
+    "rejection_drift_m": 0.025,
+    "stopped_speed_mps": 0.05,
+    "stopped_yaw_rate_radps": 0.1
+  },
+  "tasks": [
+    {
+      "id": "campus-54a805051b-garden",
+      "text": "去庭院巡检",
+      "state": "SUCCEEDED",
+      "terminal_code": "agent.verified",
+      "provider": "local",
+      "trace_id": "campus-54a805051b-garden",
+      "truth_samples": 132,
+      "start_xy_m": [
+        1.29156281137024e-08,
+        7.1961958258103e-19
+      ],
+      "end_xy_m": [
+        3.2630222541350076,
+        1.2970524682406104
+      ],
+      "max_displacement_m": 3.5113614527788792,
+      "gate_samples": 9,
+      "gate_max_abs_y": 4.1014783143181444e-12,
+      "world_error_m": 0.06458169097095193,
+      "route": [
+        "desk",
+        "door_in",
+        "door_out",
+        "garden"
+      ],
+      "map_revision": "1.0",
+      "waypoints_verified": 4
+    },
+    {
+      "id": "campus-54a805051b-desk",
+      "text": "回到工位",
+      "state": "SUCCEEDED",
+      "terminal_code": "agent.verified",
+      "provider": "local",
+      "trace_id": "campus-54a805051b-desk",
+      "truth_samples": 145,
+      "start_xy_m": [
+        3.2630222541350076,
+        1.2970524682406104
+      ],
+      "end_xy_m": [
+        0.046355685352908606,
+        0.012654622248114766
+      ],
+      "max_displacement_m": 3.4636139567669146,
+      "gate_samples": 8,
+      "gate_max_abs_y": 0.0026305458104438446,
+      "world_error_m": 0.048051940947066295,
+      "route": [
+        "door_out",
+        "door_in",
+        "desk"
+      ],
+      "map_revision": "1.0",
+      "waypoints_verified": 3
+    },
+    {
+      "id": "campus-54a805051b-unknown",
+      "text": "去火星巡检",
+      "state": "BLOCKED",
+      "terminal_code": "scene.place_unknown",
+      "provider": "local",
+      "trace_id": "campus-54a805051b-unknown",
+      "truth_samples": 9,
+      "start_xy_m": [
+        0.046355685352908606,
+        0.012654622248114766
+      ],
+      "end_xy_m": [
+        0.04635548402584351,
+        0.01265462296020975
+      ],
+      "max_displacement_m": 2.01328324433595e-07,
+      "last_three_max_speed_mps": 0.0,
+      "last_three_max_yaw_rate_radps": 0.0
+    },
+    {
+      "id": "campus-54a805051b-closed",
+      "text": "去维修区巡检",
+      "state": "BLOCKED",
+      "terminal_code": "scene.place_inaccessible",
+      "provider": "local",
+      "trace_id": "campus-54a805051b-closed",
+      "truth_samples": 11,
+      "start_xy_m": [
+        0.04635548402584351,
+        0.01265462296020975
+      ],
+      "end_xy_m": [
+        0.04635548402584351,
+        0.01265462296020975
+      ],
+      "max_displacement_m": 0.0,
+      "last_three_max_speed_mps": 0.0,
+      "last_three_max_yaw_rate_radps": 0.0
+    },
+    {
+      "id": "campus-54a805051b-wall",
+      "text": "巡检 (2.2,2.1)",
+      "state": "BLOCKED",
+      "terminal_code": "navigation.path_blocked",
+      "provider": "local",
+      "trace_id": "campus-54a805051b-wall",
+      "truth_samples": 66,
+      "start_xy_m": [
+        0.04635548402584351,
+        0.01265462296020975
+      ],
+      "end_xy_m": [
+        1.2864599322454642,
+        1.2520941339063862
+      ],
+      "max_displacement_m": 1.7543333308441744,
+      "last_three_max_speed_mps": 5.3488827307193604e-05,
+      "last_three_max_yaw_rate_radps": 9.203473686108177e-14
+    },
+    {
+      "id": "campus-54a805051b-recover",
+      "text": "回到工位",
+      "state": "SUCCEEDED",
+      "terminal_code": "agent.verified",
+      "provider": "local",
+      "trace_id": "campus-54a805051b-recover",
+      "truth_samples": 75,
+      "start_xy_m": [
+        1.2864609066431185,
+        1.2520950674653155
+      ],
+      "end_xy_m": [
+        0.038904977769394354,
+        0.042222850195316054
+      ],
+      "max_displacement_m": 1.7378684005959155,
+      "world_error_m": 0.05741399109845239,
+      "route": [
+        "desk"
+      ],
+      "map_revision": "1.0",
+      "waypoints_verified": 1
+    }
+  ]
+}

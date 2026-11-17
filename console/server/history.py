@@ -143,6 +143,14 @@ class History:
                 cause = row[0] if row else None
             parent_id = trace.get("parent_event_id")
             if parent_id:
+                if ingress_hash and self.db.execute("SELECT 1 FROM events WHERE parent_event_id=? LIMIT 1",
+                                                      (event_id,)).fetchone():
+                    cycle=self.db.execute("""WITH RECURSIVE parents(id) AS (
+                        SELECT ? UNION SELECT e.parent_event_id FROM events e JOIN parents p ON p.id=e.event_id
+                        WHERE e.parent_event_id IS NOT NULL)
+                        SELECT 1 FROM parents WHERE id=? LIMIT 1""",(parent_id,event_id)).fetchone()
+                    if cycle:
+                        raise ValueError("producer reported a cyclic event cause")
                 parent=self.db.execute("SELECT seq FROM events WHERE event_id=? ORDER BY seq LIMIT 1",(parent_id,)).fetchone()
                 cause=parent["seq"] if parent else None
             elif cause:

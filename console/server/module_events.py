@@ -53,7 +53,10 @@ def parse_event(raw):
     if "utc" in event:
         if not isinstance(event["utc"],str):
             raise ValueError("invalid utc")
-        at=datetime.fromisoformat(event["utc"].replace("Z","+00:00"))
+        try:
+            at=datetime.fromisoformat(event["utc"].replace("Z","+00:00"))
+        except ValueError:
+            raise ValueError("invalid utc") from None
         if at.tzinfo is None:
             raise ValueError("event time requires a timezone")
         event["utc"]=at.astimezone(timezone.utc).isoformat()

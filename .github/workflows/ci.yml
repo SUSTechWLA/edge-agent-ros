@@ -44,7 +44,7 @@ jobs:
       - name: Build ROS image and exercise motion, cancellation and crash recovery
         shell: pwsh
         env:
-          EDGE_VERIFY_ROOT: ${{ github.workspace }}/.ci-results/verification
+          EDGE_VERIFY_ROOT: .ci-results/verification
         run: ./scripts/verify.ps1
       - name: Run console, replay and ROS observation contracts
         run: docker run --rm --network none edge-agent-ros:v0.1 python3 -m unittest discover -v -s /opt/edge/console/server
@@ -54,7 +54,7 @@ jobs:
           docker run --rm --network none edge-agent-ros:v0.1 python3 -m unittest discover -v -s /opt/edge/tests -p 'test_*.py'
       - name: Verify restart, contention and plugin recovery in isolated Compose
         env:
-          EDGE_RESILIENCE_REPORT: ${{ github.workspace }}/.ci-results/resilience.json
+          EDGE_RESILIENCE_REPORT: .ci-results/resilience.json
         run: python3 tests/console_resilience.py
       - name: Verify semantic missions through the public console
         env:

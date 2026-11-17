@@ -8,8 +8,8 @@ text{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif}
 <marker id="arr-command" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#0E7165"/></marker><marker id="arr-sense" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#915F24"/></marker><marker id="arr-sync" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#385CAB"/></marker><marker id="arr-store" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#687A80"/></marker></defs>
 <rect x="0" y="0" width="1500" height="1380" rx="0" fill="#F4F7F6" stroke="none"/>
 <rect x="0" y="0" width="1500" height="157" rx="0" fill="#163645" stroke="none"/>
-<text x="52" y="56" class="title" fill="#F7FBFC">Edge Agent 的单板运行架构</text>
-<text x="52" y="94" class="lead" fill="#D8E9EB">一份受限子目标在本机完成感知、决策、执行与核验。Brain 在联网时协调多端任务。</text>
+<text x="52" y="56" class="title" fill="#F7FBFC">Edge Agent 的单板目标架构</text>
+<text x="52" y="94" class="lead" fill="#D8E9EB">云端 Brain 承担 Router 的派工职责。Edge Agent 提供 Worker 的本机执行能力，按任务使用工具并核验结果。</text>
 <path d="M54 129h45" class="wire command" marker-end="url(#arr-command)"/>
 <text x="110" y="135" class="caption" fill="#F0F7F7">命令 / 意图</text>
 <path d="M282 129h45" class="wire sense" marker-end="url(#arr-sense)"/>
@@ -22,7 +22,7 @@ text{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif}
 <rect x="39" y="177" width="1422" height="123" rx="18" fill="#E9EEF7" stroke="#C8D5E8"/>
 <text x="59" y="222" class="section" fill="#385CAB">云端</text>
 <text x="59" y="251" class="body" fill="#4D666C">群体协作</text>
-<text x="258" y="219" class="card-title" fill="#142F38">Brain · 任务协调</text>
+<text x="258" y="219" class="card-title" fill="#142F38">Brain · Router</text>
 <text x="258" y="248" class="body" fill="#4D666C">签发委托、分配资源、转发获准的共享事实</text>
 <text x="1000" y="219" class="card-title" fill="#142F38">其他 Edge Agent</text>
 <text x="1000" y="248" class="body" fill="#4D666C">发布能力、观测摘要或任务进展</text>

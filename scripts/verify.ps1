@@ -2,7 +2,8 @@ param([switch]$SkipBuild)
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 $id = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss") + "-" + [guid]::NewGuid().ToString("N").Substring(0,6)
-$evidenceRoot = if ($env:EDGE_VERIFY_ROOT) { $env:EDGE_VERIFY_ROOT } else { Join-Path $root "artifacts/verification" }
+$evidenceRoot = if ($env:EDGE_VERIFY_ROOT) { $env:EDGE_VERIFY_ROOT } else { "artifacts/verification" }
+if (-not [IO.Path]::IsPathRooted($evidenceRoot)) { $evidenceRoot = Join-Path $root $evidenceRoot }
 $outputDir = [IO.Path]::GetFullPath((Join-Path $evidenceRoot $id))
 $null = New-Item -ItemType Directory -Path $outputDir
 $priorOutput = $env:EDGE_EVIDENCE_DIR
@@ -51,8 +52,8 @@ try {
     if ($LASTEXITCODE) { throw "Image unavailable: $image" }
     $revision = docker image inspect $image --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'
     if ($LASTEXITCODE) { throw "Could not inspect the image revision." }
-    $sourceFiles = @(Get-ChildItem src,sim,scene,client,tests,docker,console,perception,agent,plugins,observations -Recurse -File) +
-                   @(Get-Item compose.yaml,compose.hardware.yaml,.dockerignore,scripts/build.ps1,scripts/verify.ps1)
+    $sourceFiles = @(Get-ChildItem src,sim,scene,client,tests,docker,console,perception,agent,plugins,contracts,observations -Recurse -File) +
+                   @(Get-Item -Force -LiteralPath compose.yaml,compose.hardware.yaml,.dockerignore,scripts/build.ps1,scripts/verify.ps1)
     $sourceFiles | Where-Object { $_.FullName -notmatch '[\\/]__pycache__[\\/]' } |
         Sort-Object FullName | ForEach-Object {
             $relative = $_.FullName.Substring($root.Length + 1).Replace('\','/')

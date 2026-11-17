@@ -1,0 +1,196 @@
+{
+  "utc": "2026-11-17T03:49:50.786557+00:00",
+  "scope": "Gazebo, actual Ollama and ROS odometry",
+  "passed": true,
+  "root_task": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+  "trace_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+  "trigger": {
+    "kind": "watchdog",
+    "source": "trace-acceptance",
+    "id": "watch-21c1667242e6"
+  },
+  "duplicate_task": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+  "child_task": "65e94a0e09af405ab290d50c03fe2c11",
+  "child_trigger": {
+    "kind": "agent",
+    "id": "watch-21c1667242e6-child",
+    "source": "remote-demo",
+    "parent_task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+    "parent_event_id": "2e6ec078d30b4750810356ab814e02a1"
+  },
+  "provider": "ollama/qwen2.5:1.5b",
+  "prompt_revision": {
+    "id": "planner.system",
+    "version": "1",
+    "sha256": "9ea4f37ba500002bfb438e4dc06bee31a8ff38e109dff7a399047386012415e5"
+  },
+  "profile_revision": {
+    "version": "qwen-cpu-acceptance",
+    "sha256": "d3f3b184548a65d1b075224ef5f5212e4b34dd0fa88abeeca38e5d5f3ae5d26a"
+  },
+  "model_call_id": "dcf1aee8b6d04d65a0fae20da67f29a5",
+  "model_request_sha256": "082d5f8dfe1106fdfbd8957d0345b6afdaa553f97a4d3d733c04676dd8435532",
+  "model_response_sha256": "f8c6df31a5a73dd3295c73e381e00b7f7bcc6c8a759efc07bbcf5ce20fccf052",
+  "model_ms": 3665.54,
+  "model_selected_tools": [
+    "status"
+  ],
+  "tool_call_id": "306afbd41425450bb065bea6d4d8b096",
+  "tool": "status",
+  "tool_ms": 1.58,
+  "ros_observation": {
+    "topic": "/odom",
+    "frame": "odom",
+    "stamp": {
+      "sec": 365,
+      "nanosec": 636000000
+    },
+    "x": 0.037622838351687525,
+    "y": 0.03430231631949491,
+    "yaw": -2.402326564565528,
+    "speed": 0.0
+  },
+  "exported_event_count": 14,
+  "indexed_events": [
+    {
+      "seq": 575,
+      "event_id": "6a03ad43c6b44499907ceeb1ffd3071e",
+      "parent_event_id": null,
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.accepted",
+      "code": "agent.accepted",
+      "call_id": null,
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 576,
+      "event_id": "dbd0d551f4c74d95aa9bea5bb83cc27e",
+      "parent_event_id": "6a03ad43c6b44499907ceeb1ffd3071e",
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.model.request",
+      "code": "agent.model.request",
+      "call_id": "dcf1aee8b6d04d65a0fae20da67f29a5",
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 577,
+      "event_id": "7b3d4c45909c4b3ea97836d4d9241c09",
+      "parent_event_id": "dbd0d551f4c74d95aa9bea5bb83cc27e",
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.model.response",
+      "code": "agent.model.response",
+      "call_id": "dcf1aee8b6d04d65a0fae20da67f29a5",
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 578,
+      "event_id": "11f65184e4094bd0810d2b17bea743f4",
+      "parent_event_id": "7b3d4c45909c4b3ea97836d4d9241c09",
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.planned",
+      "code": "agent.planned",
+      "call_id": null,
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 579,
+      "event_id": "8b1f7cf2e07d4cffa6423c8f0e89e173",
+      "parent_event_id": "11f65184e4094bd0810d2b17bea743f4",
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.dispatch",
+      "code": "agent.dispatch",
+      "call_id": null,
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 580,
+      "event_id": "7a38ed2696e143ff991f4f8a3143b149",
+      "parent_event_id": "8b1f7cf2e07d4cffa6423c8f0e89e173",
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.tool.request",
+      "code": "agent.tool.request",
+      "call_id": "306afbd41425450bb065bea6d4d8b096",
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 581,
+      "event_id": "1413fe14f15742979f54999b0e01cff5",
+      "parent_event_id": "7a38ed2696e143ff991f4f8a3143b149",
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.tool.response",
+      "code": "agent.tool.response",
+      "call_id": "306afbd41425450bb065bea6d4d8b096",
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 582,
+      "event_id": "2e6ec078d30b4750810356ab814e02a1",
+      "parent_event_id": "1413fe14f15742979f54999b0e01cff5",
+      "task_id": "a34bee3e7e4b4eb2abf5e80f8c11c587",
+      "kind": "agent.verified",
+      "code": "agent.verified",
+      "call_id": null,
+      "trigger_kind": "watchdog"
+    },
+    {
+      "seq": 583,
+      "event_id": "38d82d01322d479eacbf06647d8f151e",
+      "parent_event_id": "2e6ec078d30b4750810356ab814e02a1",
+      "task_id": "65e94a0e09af405ab290d50c03fe2c11",
+      "kind": "agent.accepted",
+      "code": "agent.accepted",
+      "call_id": null,
+      "trigger_kind": "agent"
+    },
+    {
+      "seq": 584,
+      "event_id": "5c312a9de3ed48c6b5317329d4a34e81",
+      "parent_event_id": "38d82d01322d479eacbf06647d8f151e",
+      "task_id": "65e94a0e09af405ab290d50c03fe2c11",
+      "kind": "agent.planned",
+      "code": "agent.planned",
+      "call_id": null,
+      "trigger_kind": "agent"
+    },
+    {
+      "seq": 585,
+      "event_id": "043f4ff377fb47c793f5890f0c06571b",
+      "parent_event_id": "5c312a9de3ed48c6b5317329d4a34e81",
+      "task_id": "65e94a0e09af405ab290d50c03fe2c11",
+      "kind": "agent.dispatch",
+      "code": "agent.dispatch",
+      "call_id": null,
+      "trigger_kind": "agent"
+    },
+    {
+      "seq": 586,
+      "event_id": "9021d4780ee04f0592d1722d1be6a270",
+      "parent_event_id": "043f4ff377fb47c793f5890f0c06571b",
+      "task_id": "65e94a0e09af405ab290d50c03fe2c11",
+      "kind": "agent.tool.request",
+      "code": "agent.tool.request",
+      "call_id": "0f779e2ed54b4455881081bbfeaef666",
+      "trigger_kind": "agent"
+    },
+    {
+      "seq": 587,
+      "event_id": "89432b84e859409999d2ae4ef3c12cce",
+      "parent_event_id": "9021d4780ee04f0592d1722d1be6a270",
+      "task_id": "65e94a0e09af405ab290d50c03fe2c11",
+      "kind": "agent.tool.response",
+      "code": "agent.tool.response",
+      "call_id": "0f779e2ed54b4455881081bbfeaef666",
+      "trigger_kind": "agent"
+    },
+    {
+      "seq": 588,
+      "event_id": "4f089626d9074727852f561b45e4ce98",
+      "parent_event_id": "89432b84e859409999d2ae4ef3c12cce",
+      "task_id": "65e94a0e09af405ab290d50c03fe2c11",
+      "kind": "agent.verified",
+      "code": "agent.verified",
+      "call_id": null,
+      "trigger_kind": "agent"
+    }
+  ]
+}
