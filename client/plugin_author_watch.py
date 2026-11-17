@@ -25,6 +25,14 @@ from module_journal import ModuleJournal
 
 
 NETWORK_ERRORS = (URLError, ConnectionError, TimeoutError, IncompleteRead)
+REVIEW_ACTIONS = {
+    "source_ineligible":"Inspect the original event source and planner diagnosis.",
+    "source_unavailable":"Restore access to the original task journal and inspect its terminal event.",
+    "source_mismatch":"Match the original task ID, trace and terminal planner event before drafting.",
+    "proposal_rejected":"Review the requested measurement and available sensors; supply a suitable provider if needed.",
+    "receipt_invalid":"Inspect the preserved private receipt and its originating archive row.",
+    "declined":"Review the original diagnosis and private decision before choosing a provider.",
+}
 
 
 class InvalidReceipt(Exception):
@@ -153,6 +161,7 @@ class Watch:
         except (KeyError, TypeError, ValueError, IndexError, RecursionError, OverflowError) as exc:
             result.update(status="declined", reason=str(exc)[:1024], reason_code=reason_code)
         result["utc"] = datetime.now(timezone.utc).isoformat()
+        result["decision_schema"] = 2
         author_tool.write_atomic(path, result)
         return result["status"], result
 
@@ -184,6 +193,7 @@ class Watch:
             receipt_id = hashlib.sha256(author_tool.json_bytes([archive,seq])).hexdigest()
             try:
                 status, receipt = self.decide(archive, seq, event, receipt_id)
+                new_receipt = receipt.get("decision_schema")==2
                 detail = receipt_id
                 finished, due = 1, 0
                 outcome = receipt["status"]
@@ -195,6 +205,7 @@ class Watch:
                     data.update(tool_id=candidate["id"], candidate_version=candidate["version"])
                 key = receipt_id + ".decision"
             except InvalidReceipt:
+                new_receipt = False
                 # Preserve the conflicting private file for inspection. Never recreate the
                 # proposal with another model call or hide a later healthy work item behind it.
                 status = outcome = "declined"
@@ -219,11 +230,20 @@ class Watch:
                     data["http_status"] = exc.code
                 key = f"{receipt_id}.deferred.{attempts+1}"
             public = decision_event(archive, seq, event, receipt_id, outcome, code, data, utc)
+            if outcome=="declined" and new_receipt:
+                public["data"]["action"] = REVIEW_ACTIONS.get(code, REVIEW_ACTIONS["declined"])
             with self.sink.db:
                 # Persist the exact public evidence with the work checkpoint. Independent journals
                 # cannot share a transaction; replay the small outbox using the same key after a crash.
                 self.sink.db.execute("INSERT OR REPLACE INTO author_outbox VALUES(?,?)",
                                      (key,json.dumps(public, ensure_ascii=False)))
+                if outcome=="declined" and not new_receipt:
+                    # Historical keyed outcomes are immutable. Attach guidance as a second
+                    # fact when an old or unreadable receipt requires operator intervention.
+                    advisory = {**public,"kind":"plugin.author.review_required",
+                                "data":{**public["data"],"action":REVIEW_ACTIONS.get(code,REVIEW_ACTIONS["declined"])}}
+                    self.sink.db.execute("INSERT OR REPLACE INTO author_outbox VALUES(?,?)",
+                                         (key+".review",json.dumps(advisory,ensure_ascii=False)))
                 self.sink.db.execute("INSERT OR REPLACE INTO author_work VALUES(?,?,?,?,?,?)",
                                      (archive,seq,finished,attempts+1,due,detail))
             counts[status] += 1

@@ -20,10 +20,10 @@ from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point
 from edge_interfaces.srv import GetMission, SubmitMission
-from derived_tools import evaluate
+from derived_tools import check_id, evaluate
 import runtime_plugins
 from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog,
-                      failure, http_json, plan, registry, remote_failure, verification_plan)
+                      failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
 
 
@@ -32,7 +32,7 @@ def utc():
 
 
 def trigger_input(data):
-    if not isinstance(data,dict) or set(data)-{"kind","id","source","parent_task_id","parent_event_id","trace_id"}:
+    if not isinstance(data,dict) or set(data)-{"kind","id","source","parent_task_id","parent_event_id","trace_id","read_only_tool"}:
         raise ValueError("trigger 格式无效")
     for field in ("kind","source","id",*set(data).intersection(("parent_task_id","parent_event_id","trace_id"))):
         value=data.get(field)
@@ -40,6 +40,12 @@ def trigger_input(data):
             raise ValueError("trigger."+field+" 格式无效")
     if not re.fullmatch(r"[a-z][a-z0-9_.-]{0,31}",data["kind"]):
         raise ValueError("trigger.kind 格式无效")
+    if "read_only_tool" in data:
+        pin = data["read_only_tool"]
+        if (not isinstance(pin,dict) or set(pin)!={"id","version"} or not isinstance(pin["version"],str)
+                or not re.fullmatch(r"[0-9a-f]{64}",pin["version"])):
+            raise ValueError("trigger.read_only_tool 格式无效")
+        check_id(pin["id"])
     return data
 
 
@@ -468,7 +474,11 @@ def worker(journal,robot,planning,verifying=False):
             journal.exchange_event(t,kind,fields,None if planning else op)
         try:
             if planning:
-                t["provider"],t["steps"]=plan(t["text"],registry(),trace)
+                pin = (t.get("trigger") or {}).get("read_only_tool")
+                if pin:
+                    t["provider"],t["steps"]=plan_read_only(t["text"],registry(),pin)
+                else:
+                    t["provider"],t["steps"]=plan(t["text"],registry(),trace)
                 t["retries"]=0
                 journal.save(t,"RUNNING","已验证计划",kind="planned")
                 continue

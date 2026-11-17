@@ -284,6 +284,18 @@ def plan(text, caps, trace=None):
         raise
 
 
+def plan_read_only(text, caps, pin):
+    """A restricted follow-up may execute only the approved local declaration."""
+    cap = caps.get(pin["id"])
+    if (not cap or cap["version"] != pin["version"] or cap.get("effect") != "read"
+            or "derived" not in cap or cap.get("endpoint") or cap["description"] != text):
+        raise failure(Refused, "已授权的本地只读声明或版本未挂载，需复核发布记录",
+                      "planner.approved_binding_unavailable", "registry")
+    policy = runtime_plugins.load_policy()
+    return "local/pinned-derived", [{"tool":cap["id"], "args":{}, "version":cap["version"],
+            "binding":binding(cap), "status":"PENDING", "verification":verification_plan(cap,policy)}]
+
+
 def verification_plan(cap, policy):
     required = runtime_plugins.requirements(cap, policy)
     result = {"required":required}

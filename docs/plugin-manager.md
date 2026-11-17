@@ -42,7 +42,7 @@ flowchart TD
 docker compose --profile model --profile plugin-manager up -d model plugin-author plugin-manager
 ```
 
-默认规则文件随仓库提供。它允许“用千米每小时报告本机前向速度”对应 `speed → km/h` 的只读声明，包含负速、零速、正速三种独立样本。部署者可以在启动时设置 `EDGE_RECOVERY_POLICY` 指向自己的 JSON 文件。增加规则时应同时给出意图、语义和独立期望值。缺少规则时仍可查候选及人工介入信息。实际模型也可能选择现有工具或拒绝任务；自动扩展从属于受支持范围的**规划能力缺口**开始。[现场规则](../contracts/plugin-recovery.json)
+默认规则文件随仓库提供。它允许“用千米每小时报告本机前向速度”对应 `speed → km/h` 的只读声明，包含负速、零速、正速三种独立样本。部署者可以在启动时设置 `EDGE_RECOVERY_POLICY` 指向自己的 JSON 文件。增加规则时应同时给出意图、语义和独立期望值。缺少规则时仍可查候选及人工介入信息。实际模型也可能选择现有工具或拒绝任务；自动扩展从属于受支持范围的**规划能力缺口**开始。[现场规则](../policies/plugin-recovery.json)
 
 通过观测台提交任务。要回看原始失败、作者和发布者，可从原任务取得 trace；自动管理器留下的处理记录可按模块查询。日常停用自动演化只需停止两项服务，已安装能力保存在注册目录中。
 

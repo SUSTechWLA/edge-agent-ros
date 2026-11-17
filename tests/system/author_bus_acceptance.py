@@ -24,7 +24,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         user = json.loads(body["messages"][-1]["content"])
-        if (self.path != "/api/chat" or user.get("request") != %r
+        if (self.path != "/api/chat" or user.get("request") not in %r
                 or user.get("reason_code") not in ("planner.not_configured","planner.capability_missing")):
             self.send_error(400)
             return
@@ -37,7 +37,20 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(wire)
 HTTPServer(("0.0.0.0",11434),Handler).serve_forever()
-""" % DEFAULT["description"]
+"""
+
+
+def author_model(*accepted_requests):
+    return MODEL % (tuple(accepted_requests),)
+
+
+def ros(peer):
+    return {"ROS_DOMAIN_ID":"153","RMW_IMPLEMENTATION":"rmw_cyclonedds_cpp",
+            "CYCLONEDDS_URI":'<CycloneDDS><Domain><General><AllowMulticast>false</AllowMulticast></General>'
+            '<Discovery><ParticipantIndex>auto</ParticipantIndex><Peers><Peer Address="'+peer+
+            '"/></Peers></Discovery></Domain></CycloneDDS>'}
+
+
 CLIENT = """
 import json,sys
 from urllib.request import Request,urlopen
@@ -72,11 +85,6 @@ def run(image, out):
         defaults = {"image":image,"pull_policy":"never"}
         # Docker's internal network need not carry multicast. Use explicit DDS peers
         # for the two sensor participants and keep discovery inside this test project.
-        def ros(peer):
-            return {"ROS_DOMAIN_ID":"153","RMW_IMPLEMENTATION":"rmw_cyclonedds_cpp",
-                    "CYCLONEDDS_URI":'<CycloneDDS><Domain><General><AllowMulticast>false</AllowMulticast></General>'
-                    '<Discovery><ParticipantIndex>auto</ParticipantIndex><Peers><Peer Address="'+peer+
-                    '"/></Peers></Discovery></Domain></CycloneDDS>'}
         services = {
             "agent":{**defaults,"command":["python3","/opt/edge/agent/service.py","--ros-args","-r","/odom:=/fixture/odom"],
                      "environment":{**ros("odometry"),"EDGE_OLLAMA_URL":"","EDGE_PLANNER_URL":"","EDGE_EXTRA_PLUGIN_DIR":""},
@@ -91,7 +99,8 @@ def run(image, out):
                       "volumes":["author-events:/events",mounted(proposals,"/proposals",read_only=False)]},
             "publisher":{**defaults,"entrypoint":["python3","/opt/edge/agent/author_tool.py"],
                          "volumes":[mounted(plugins,"/plugins",read_only=False),mounted(proposals,"/in")]},
-            "fixture":{**defaults,"entrypoint":["python3","-c",MODEL],"volumes":[mounted(audit,"/audit",read_only=False)]},
+            "fixture":{**defaults,"entrypoint":["python3","-c",author_model(DEFAULT["description"])],
+                       "volumes":[mounted(audit,"/audit",read_only=False)]},
             "odometry":{**defaults,"command":["python3","-c",PUBLISHER],"environment":ros("agent")}}
         stack = folder/"compose.json"
         write_json(stack, {"services":services,"volumes":{"tasks":{},"history":{},"author-events":{}},

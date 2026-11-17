@@ -139,7 +139,7 @@ services:
       - author-proposals:/proposals:ro
       - supervisor-state:/var/lib/edge-supervisor
       - ${EDGE_PLUGINS_DIR:-./plugins}/derived:/plugins/derived
-      - ${EDGE_RECOVERY_POLICY:-./contracts/plugin-recovery.json}:/etc/edge-policy/plugin-recovery.json:ro
+      - ${EDGE_RECOVERY_POLICY:-./policies/plugin-recovery.json}:/etc/edge-policy/plugin-recovery.json:ro
   plugin-admin:
     image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
     pull_policy: never

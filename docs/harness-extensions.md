@@ -4,7 +4,7 @@
 
 ## 团队共用的术语
 
-AI 也可作为插件作者。只读衍生工具的发布路径能从未派发的失败任务进入，以独立样本验收，将新工具提供给下一次规划；任意代码型提供者继续走独立交付。实际边界和操作示例见[插件作者手册](plugin-authoring.md)。
+AI 也可作为插件作者。只读衍生工具的发布路径能从未派发的失败任务进入，以独立样本验收，将新工具提供给后续任务。管理器本身可独立装卸；现场规则匹配时，它能自动发布并验证限定工具版本的后续任务。独立服务也可走统一管理入口注册和撤回。[插件作者手册](plugin-authoring.md) · [插件管理与自主恢复](plugin-manager.md)
 
 读架构图时先分清三件事：谁要求做事，谁为这件事工作，谁能让底盘动。dsh（DeepSeek Harness）提供单个 Agent 的插件、模型、工具与会话词汇；SuperAgent 给出了多来源和多 Worker 协作的词汇。下表注明 v0.1 实现到哪一层，方便读源码时对号入座。[dsh 架构](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/architecture.md) · [SuperAgent 领域词表](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/001-domain.md)
 

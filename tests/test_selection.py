@@ -14,6 +14,10 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/plugin_manager.py", "client/plugin_manager_watch.py","policies/plugin-recovery.json"),
+     ("planner","observations","agent-faults","board")),
+    (("tests/test_plugin_manager.py","tests/test_plugin_manager_watch.py"), ("planner",)),
+    (("tests/system/plugin_manager_acceptance.py",), ("agent-faults",)),
     (("agent/module_journal.py","agent/runtime_plugins.py", "plugins/runtime/*.json", "contracts/verification-policy.json"),
      (*AGENT,"observations","board")),
     (("tests/test_module_journal.py","tests/test_author_eventbus.py"), ("planner",)),
@@ -110,6 +114,8 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["tests/system/module_bus_acceptance.py"])[0], [R,"observations"])
         for path in ("agent/service.py", "agent/module_journal.py","agent/runtime_plugins.py","client/plugin_author_watch.py"):
             self.assertIn("observations",selection([path])[0])
+        for path in ("agent/plugin_manager.py","client/plugin_manager_watch.py","policies/plugin-recovery.json"):
+            self.assertEqual(selection([path])[0], [R,"planner","observations","agent-faults","board"])
         self.assertIn("board",selection(["plugins/derived/derived.speed_kmh.json"])[0])
 
 
