@@ -96,6 +96,7 @@ def run(args, selected, reasons):
         if "planner" in selected:
             stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
                              test("test_runtime_plugins.py","-v"),
+                             test("test_module_journal.py","-v"),test("test_author_eventbus.py","-v"),
                              [PY,str(ROOT/"examples/result-verifiers/test_verifiers.py"),"-v"],
                              test("test_author_tool.py","-v"),test("test_plugin_author_watch.py","-v"),
                              test("system/verify_sample_provider.py","--out",directory/"provider-contract.json")])
@@ -125,7 +126,9 @@ def run(args, selected, reasons):
                                         "--cap-drop","ALL","--user","65534:65534","--mount",
                                         f"type=bind,source={ROOT/'examples/result-verifiers'},target=/sample,readonly",
                                         "--entrypoint","python3",image,"-B","/sample/test_verifiers.py","-v"]],
-                    "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server")],
+                    "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server"),
+                                    test("system/module_bus_acceptance.py","--image",image,"--out",directory/"module-bus.json"),
+                                    test("system/author_bus_acceptance.py","--image",image,"--out",directory/"author-bus.json")],
                     "scene-contracts":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/tests","-p","test_scene*.py")],
                     "core":[script("verify.ps1","-SkipBuild")],
                     "motion-sensors":[in_image("python3","/opt/edge/tests/system/motion_faults.py","--out","/evidence/motion-sensors.json")],

@@ -14,13 +14,16 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
-    (("agent/runtime_plugins.py", "plugins/runtime/*.json", "contracts/verification-policy.json"), (*AGENT,"board")),
+    (("agent/module_journal.py","agent/runtime_plugins.py", "plugins/runtime/*.json", "contracts/verification-policy.json"),
+     (*AGENT,"observations","board")),
+    (("tests/test_module_journal.py","tests/test_author_eventbus.py"), ("planner",)),
+    (("tests/system/module_bus_acceptance.py","tests/system/author_bus_acceptance.py"), ("observations",)),
     (("examples/result-verifiers/*",), ("planner","agent-contracts","agent-faults")),
     (("tests/system/runtime_plugin_acceptance.py", "tests/system/runtime_plugin_fixture.py"), ("agent-faults",)),
     (("tests/agent_verification_contract.py",), ("agent-contracts",)),
     (("tests/test_runtime_plugins.py",), ("planner",)),
     (("agent/derived_tools.py","plugins/derived/*.json"), (*AGENT,"board")),
-    (("agent/author_tool.py",), ("planner","agent-faults")),
+    (("agent/author_tool.py",), ("planner","agent-faults","observations")),
     (("tests/test_derived_tools.py","tests/test_author_tool.py"), ("planner",)),
     (("tests/system/verify_sample_provider.py","tests/system/provider_contract.py","examples/timestamp-audit/*",
       "examples/derived-speed/*"), ("planner","agent-faults")),
@@ -28,7 +31,8 @@ RULES = [
     (("client/plugin_author_watch.py",), ("planner","observations")),
     (("tests/system/derived_tool_acceptance.py",), ("agent-faults",)),
     (("agent/contracts.json", "contracts/*.json"), ("planner","agent-contracts","agent-faults","model")),
-    (("agent/service.py", "agent/planning.py", "agent/tracing.py"), (*AGENT,"board")),
+    (("agent/service.py",), (*AGENT,"observations","board")),
+    (("agent/planning.py", "agent/tracing.py"), (*AGENT,"board")),
     (("agent/*.py", "plugins/*.json", "tests/agent*_contract.py"), AGENT),
     (("scene/plugins/*.json",), (*SCENE, "planner", "agent-faults", "ui", "model")),
     (("scene/start_world.py", "scene/campus.json", "scene/layout.py"), (*SCENE,"core","motion-world","ui","clock-reset")),
@@ -102,7 +106,10 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["examples/timestamp-audit/provider.py"])[0], [R,"planner","agent-faults"])
         self.assertEqual(selection(["examples/result-verifiers/verifier.py"])[0], [R,"planner","agent-contracts","agent-faults"])
         self.assertIn("board",selection(["plugins/runtime/image-check.json"])[0])
-        self.assertEqual(selection(["agent/author_tool.py"])[0], [R,"planner","agent-faults"])
+        self.assertEqual(selection(["agent/author_tool.py"])[0], [R,"planner","observations","agent-faults"])
+        self.assertEqual(selection(["tests/system/module_bus_acceptance.py"])[0], [R,"observations"])
+        for path in ("agent/service.py", "agent/module_journal.py","agent/runtime_plugins.py","client/plugin_author_watch.py"):
+            self.assertIn("observations",selection([path])[0])
         self.assertIn("board",selection(["plugins/derived/derived.speed_kmh.json"])[0])
 
 
