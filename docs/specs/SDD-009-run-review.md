@@ -32,3 +32,4 @@
 - 2026-11-17 在 `console/server/task_review.py` 实现只读任务目录，在 `history.py` 的查询端实现两种归档视图；原始采集和留存策略沿用。前端入口为 `console/web/review.js` 与 `#review?task=<id>`。设备实测速度、操作来源是否新鲜、任务当前终态和步骤最后记录分别显示。
 - 2026-11-17 对账本和历史查询加在途请求保护，避免慢读数持续被后台刷新取代。桌面概览和手机任务详情的独立仿真实拍收录在[使用手册](../console.md#从运行复盘读懂一台机器人的工作)。
 - AC-1 至 AC-4 初验使用独立 Compose 项目。运行 `tests/console_acceptance.py` 和 `tests/semantic_acceptance.py` 产生 8 个成功与 3 个受阻任务；`console/server/test_run_review.py` 通过 3 个 HTTP 契约用例；`tests/system/console_browser.mjs` 检查 1440 和 390 像素宽度下的只读访问。系统套件按 `python tests/system_suite.py --changed-since d28e7ee --ollama-cache-volume edge-agent-ros_models` 可复跑。
+- AC-5 更新本机 Console 后重新读取 52 项任务及升级前核对的 2,645 个归档编号和事件 ID，结果相同。首次日常浏览器测试发现脚本会在分页查询返回前点击禁用按钮，修正为等待目标可见且启用后再点击。修正后，两个视口均完成分页、成功与受阻任务回放、缺证据和临时断连验收，浏览器写请求数为 0。

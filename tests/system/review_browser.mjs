@@ -4,7 +4,11 @@ import { randomUUID } from 'node:crypto';
 
 export async function checkReview({url, width, evaluate, waitFor, send, screenshot}) {
   const q = selector => 'document.querySelector('+JSON.stringify(selector)+')';
-  const click = selector => evaluate(q(selector)+'.click()');
+  const click = async selector => {
+    await waitFor(q(selector)+' && !'+q(selector)+'.disabled && '+q(selector)+'.getClientRects().length>0',
+                  'Action available '+selector);
+    await evaluate(q(selector)+'.click()');
+  };
   const value = (selector, property) => evaluate(q(selector)+'.'+property);
   const api = async path => {
     const response = await fetch(new URL(path,url));
