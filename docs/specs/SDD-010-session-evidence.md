@@ -48,6 +48,16 @@ SDD-009 提供了任务目录和事件回放，但读者仍需在工具请求、
 
 ## 迁移与回退
 
+### 补充：Session 本身也是服务插件
+
+2026-11-18 根据用户补充，将会话实现从 Console 移到独立的 Session 提供者。沿用 SDD-006 的 `provides/requires`、版本、binding 和 draining 服务目录；注册服务名 `session.read`，默认提供者 `session.default`。Console 的 `/api/session` 只按名称解析服务并调用，无内置摘要兜底。缺插件、清单冲突、停用或服务失联返回可辨识错误，原始事件、任务目录和机器人任务继续可用。
+
+调用契约为 HTTP POST：输入 `schema_version=1`、`request_id`、`plugin_id/plugin_version/binding`，以及恰好一个 `task_id/trace_id`。返回同一请求及提供者绑定，`document` 保持现有会话 JSON；缺任务返回 404，插件不可用或契约不符返回 503。Console 校验响应和调用前后的绑定，避免替换过程中把旧提供者的结果标为新版本。记录中附提供者版本及绑定，Markdown 和页面继续共享同一份事实。
+
+默认插件通过 Console 的只读任务上下文接口与公开 EventBus HTTP 接口读取事实，不挂载任务/事件源数据库。内部投影规则可整体替换；源窗口有大小和时间预算，覆盖不足必须注明。服务自身请求/成功/失败通过 ModuleJournal 回到 EventBus，读取活动不反复挤占会话摘要。它与取证插件是两个可分别卸载的提供者，一个生成首读会话，另一个提供按需细节。
+
+新增 AC-8：运行中注册、撤回、draining、提供者失联、版本/绑定变化、替代实现、错误响应和恢复，分别验证服务发现、明确退化、证据来源以及不改变机器人任务。部署只提供默认插件组合；新增通用服务插件优先复用同一注册协议，不再为 Session 引入第二套插件框架。这里借鉴 dsh 的 Service Definition / Provider / Consumer 和可撤销注册；没有实现 Cordis SDK 兼容，也不把当前任务阅读视图等同于 dsh 的完整对话 SessionStore。[dsh 架构原文](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/architecture.md)
+
 沿用既有任务与公开事件存储，无需搬运生产者数据库。插件清单可撤回，Console 与插件可分别回退到已验证镜像。部署者保留观测历史卷和插件查询审计卷。缓存或投影不足时回到原始证据接口继续读取。
 
 ## 变更记录
@@ -55,3 +65,4 @@ SDD-009 提供了任务目录和事件回放，但读者仍需在工具请求、
 - 2026-11-17 以 `7f7223d` 为基线先记录设计和验收。根据用户补充采用 EventBus 公共接口作为插件取证入口。
 - 2026-11-17 实现 `console/server/sessions.py`、默认会话页面、独立 `evidence/` HTTP 提供者、三项工具模板及 Docker 安装入口。补充归属校验，避免插件仿造同名事件覆盖任务终态；按需查询允许在大模型记录相邻读取小型测量，避免大字段阻断整项任务取证。Windows/Docker 单元契约、独立 Gazebo 热插拔及桌面/移动浏览器已作预验收；最终完整运行证据在验证后补入。
 - 2026-11-17 独立审查发现同操作、同类型的跨模块告警会被错误合并。分组增加来源、模块和原因边界，回归验证夹爪过热、相机遮挡与相机超时分别可读，同来源重复仍折叠。修复后 Session 8 项、Evidence 15 项契约通过。
+- 2026-11-18 AC-5 的自然语言复盘与热插拔通过；真实 `qwen2.5:1.5b` 自主 SQL 诊断实验未通过。模型正确发现 `action.braking`，但连续三次遗漏 seq 并加入没有证据支持的 module 筛选，查询执行成功却均为零行，未进入结论回答。该部分保留为已知能力边界，不能宣称通用模型自主诊断验收通过。[完整请求、回执和失败证据](../evidence/session-query-model.json)；复跑入口 `tests/system/evidence_model_acceptance.py`。
