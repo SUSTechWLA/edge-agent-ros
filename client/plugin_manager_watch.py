@@ -32,6 +32,7 @@ ACTIONS = {
     "release_conflict":"Inspect the live tool version and the release journal; reconcile the change manually.",
     "task_conflict":"Check the existing task identity, trigger and pinned tool.",
     "followup_failed":"Inspect the follow-up task diagnosis and restore its required sensor or binding.",
+    "followup_missing":"A previously accepted task is absent. Restore or inspect its owner journal before dispatching again.",
     "receipt_mismatch":"Inspect the executed tool, version, original sample and verified step.",
     "dependency_unavailable":"Restore access to the dependency; the supervisor will retry the same work.",
     "source_missing":"Inspect the missing task or incomplete API response before proceeding.",
@@ -61,7 +62,9 @@ def request_json(url, body=None):
         with exc:
             if exc.code in (409,400):
                 raise Review("task_conflict") from exc
-            if exc.code in (403,404):
+            if exc.code==404:
+                raise Review("not_found") from exc
+            if exc.code==403:
                 raise Review("source_missing") from exc
             raise
     require(len(data)<=2_000_000, "source_missing")
@@ -186,6 +189,8 @@ class Supervisor:
                 self.db.execute("""CREATE TABLE IF NOT EXISTS supervisor_work(
                     id TEXT PRIMARY KEY, proposal TEXT NOT NULL, phase TEXT NOT NULL DEFAULT 'new', release TEXT,
                     due REAL NOT NULL DEFAULT 0, condition TEXT, attempt INTEGER NOT NULL DEFAULT 0)""")
+                if "dispatch" not in {r[1] for r in self.db.execute("PRAGMA table_info(supervisor_work)")}:
+                    self.db.execute("ALTER TABLE supervisor_work ADD COLUMN dispatch TEXT")
                 self.db.execute("CREATE TABLE IF NOT EXISTS supervisor_input(last_row INTEGER NOT NULL)")
                 if not self.db.execute("SELECT 1 FROM supervisor_input").fetchone():
                     self.db.execute("INSERT INTO supervisor_input VALUES(0)")
@@ -226,13 +231,12 @@ class Supervisor:
             self.db.execute("""UPDATE supervisor_work SET phase=?,release=coalesce(?,release),due=?,condition=?,attempt=?
                                WHERE id=?""",(current if waiting else phase,release,due,code,attempt,source))
 
-    def advance(self,p,phase,release):
-        require(p.get("source")=="journal:plugin.author" and p.get("module")=="plugin.author"
-                and p.get("kind")=="plugin.author.proposed" and p.get("code")=="author.proposed","untrusted_source")
+    def authorized(self,p):
         definition, source = proposal_definition(p,self.proposals)
         # With no 'after' the endpoint returns the latest entries in chronological order.
         # Older entries may be omitted; only the authoritative terminal event is required here.
-        task = self.api("/agent/tasks?"+urlencode({"id":p["task_id"],"limit":1}))
+        task = self.lookup(p["task_id"])
+        require(task is not None,"source_missing")
         require(task["id"]==p["task_id"] and task["trace_id"]==p["trace_id"] and task["state"]=="BLOCKED"
                 and task["steps"]==[] and task.get("events"),"source_changed")
         last = task["events"][-1]
@@ -242,25 +246,69 @@ class Supervisor:
                 and diagnostic["trace"]["trace_id"]==p["trace_id"] and diagnostic["trace"]["event_id"]==source["event_id"]
                 and diagnostic["trace"]["layer"]=="planner"
                 and diagnostic["diagnostic"]["code"]==source["reason_code"],"source_changed")
-        policy = rule_for(self.policy,task["text"],definition)
-        version = capability(definition)["version"]
-        binding = {"tool_id":definition["id"],"version":version}
-        if phase=="new":
-            self.record(p,"approved","approved",evidence=binding)
-            phase = "approved"
-        if phase=="approved":
-            release = ensure_release(self.registry,p,definition,policy["cases"])
-            self.record(p,"published","published",release=release,evidence=binding)
+        return definition, rule_for(self.policy,task["text"],definition)
+
+    def lookup(self,key):
+        try:
+            return self.api("/agent/tasks?"+urlencode({"id":key,"limit":1}))
+        except Review as exc:
+            if str(exc)=="not_found":
+                return None
+            raise
+
+    def advance(self,p,phase,release):
+        require(p.get("source")=="journal:plugin.author" and p.get("module")=="plugin.author"
+                and p.get("kind")=="plugin.author.proposed" and p.get("code")=="author.proposed","untrusted_source")
+        if phase in ("new","approved"):
+            definition, rule = self.authorized(p)
+            if phase=="new":
+                self.record(p,"approved","approved",evidence={"tool_id":definition["id"],"version":capability(definition)["version"]})
+            release = ensure_release(self.registry,p,definition,rule["cases"])
+            self.record(p,"published","published",release=release,
+                        evidence={"tool_id":definition["id"],"version":capability(definition)["version"]})
             phase = "published"
         followup = "recover-"+digest(p["event_id"].encode())[:40]
-        trigger = {"kind":"agent","source":"plugin.supervisor","id":followup,"parent_task_id":task["id"],
+        pin = {"id":p["data"]["tool_id"],"version":p["data"]["candidate_version"]}
+        binding = {"tool_id":pin["id"],"version":pin["version"]}
+        trigger = {"kind":"agent","source":"plugin.supervisor","id":followup,"parent_task_id":p["task_id"],
                    "parent_event_id":release,"trace_id":p["trace_id"],
-                   "read_only_tool":{"id":definition["id"],"version":version}}
-        if phase=="published":
-            outcome = self.api("/agent/tasks",{"id":followup,"trigger":trigger,"text":task["text"]})
-            require(outcome.get("id")==followup and outcome.get("trigger")==trigger,"task_conflict")
+                   "read_only_tool":pin}
+        outcome = self.lookup(followup)
+        raw = self.db.execute("SELECT dispatch FROM supervisor_work WHERE id=?",(p["event_id"],)).fetchone()[0]
+        saved = json.loads(raw) if raw else None
+        if outcome is None:
+            require(phase!="submitted","followup_missing")
+            # After a restart the deployment may have revoked the intent or changed its tests.
+            # Revalidate the current policy and replay the original publisher request before POST.
+            definition, rule = self.authorized(p)
+            require(ensure_release(self.registry,p,definition,rule["cases"])==release,"release_conflict")
+            saved = {"definition":definition,"trigger":trigger,"cases_sha256":digest(author_tool.json_bytes(rule["cases"])),
+                     "rule_sha256":digest(author_tool.json_bytes(rule)),"receipt_sha256":p["data"]["receipt_sha256"]}
+            with self.db:
+                self.db.execute("UPDATE supervisor_work SET dispatch=? WHERE id=?",(json.dumps(saved),p["event_id"]))
+            outcome = self.api("/agent/tasks",{"id":followup,"trigger":trigger,"text":definition["description"]})
+        elif saved is None:
+            # Old published/submitted rows did not retain the dispatch snapshot. Reconstruct
+            # only from an immutable, content-addressed installed revision and the native task.
+            history = self.registry/".history"/pin["id"]/(pin["version"]+".json")
+            author_tool.check_id(pin["id"])
+            require(re.fullmatch("[0-9a-f]{64}",pin["version"]),"receipt_mismatch")
+            try:
+                definition = author_tool.read_definition(history)
+            except (FileNotFoundError,ValueError) as exc:
+                raise Review("receipt_mismatch") from exc
+            saved = {"definition":definition,"trigger":trigger,"legacy":True}
+            with self.db:
+                self.db.execute("UPDATE supervisor_work SET dispatch=? WHERE id=?",(json.dumps(saved),p["event_id"]))
+        definition = saved["definition"]
+        require(capability(definition)["version"]==pin["version"] and definition["id"]==pin["id"]
+                and saved["trigger"]==trigger,"receipt_mismatch")
+        require(outcome.get("id")==followup and outcome.get("trigger")==trigger and outcome.get("text")==definition["description"]
+                and outcome.get("trace_id")==p["trace_id"],"task_conflict")
+        if phase!="submitted":
             self.record(p,"submitted","submitted",release=release,evidence=binding)
-        outcome = self.api("/agent/tasks?"+urlencode({"id":followup,"limit":1}))
+            outcome = self.lookup(followup)
+            require(outcome is not None,"followup_missing")
         if (evidence:=check_result(outcome,definition,followup,trigger)) is None:
             with self.db:
                 self.db.execute("UPDATE supervisor_work SET due=? WHERE id=?",(time.time()+1,p["event_id"]))

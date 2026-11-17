@@ -24,6 +24,7 @@ SENSOR_REQUIRED = "将里程计前向线速度换算为每小时千米并读取�
 SUPERVISOR = "plugin.supervisor"
 MODEL_IMAGE = "ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592"
 MANIFEST = json.loads((SAMPLE / "manifests/image-check.json").read_text(encoding="utf-8"))
+POLICY = ROOT / "policies/plugin-recovery.json"
 
 
 def compact(row):
@@ -35,8 +36,11 @@ def stack_config(image, workspace, cache):
     for path in (plugins, proposals, audit, inputs):
         path.mkdir()
     policy = workspace / "policy.json"
-    write_json(policy, {"schema_version": 1, "rules": [{"text": intent, "semantic": {"field":"speed","unit":"km/h"},
-                                                       "cases": fixtures("km/h")} for intent in (ALLOWED, SENSOR_REQUIRED)]})
+    rules = json.loads(POLICY.read_text(encoding="utf-8"))
+    default, = [r for r in rules["rules"] if r["text"] == ALLOWED]
+    if not cache:
+        rules["rules"].append({**default, "text":SENSOR_REQUIRED})
+    write_json(policy, rules)
     common = {"image": image, "pull_policy": "never", "cap_drop": ["ALL"], "security_opt": ["no-new-privileges:true"]}
     model_url = "http://model:11434" if cache else "http://fixture:11434"
     services = {
@@ -134,6 +138,13 @@ def run(image, out, cache=None):
             published = fact("plugin.supervisor.published",trace_id=trace)
             submitted = fact("plugin.supervisor.submitted",trace_id=trace)
             key = submitted["data"]["followup_task_id"]
+            native = fact("agent.verified",task_id=key)
+            def linked():
+                r, = events(event_id=verified["event_id"])
+                check(r["parent_event_id"] == r["data"]["verified_event_id"] == native["event_id"],
+                      "supervisor verification does not name the concrete agent execution event")
+                return r if r["cause_seq"] == native["seq"] else None
+            verified = wait_for(linked, "late native verifier cause was not linked")
             followup = get_task(key)
             receipt = followup["steps"][0]["evidence"]
             tool, version = proposal["data"]["tool_id"], proposal["data"]["candidate_version"]
@@ -162,7 +173,8 @@ def run(image, out, cache=None):
                   and (receipt["raw_value"],receipt["raw_unit"],receipt["value"],receipt["unit"]) == (-0.5,"m/s",-1.8,"km/h"),
                   "release, actual ROS odometry measurement or independently expected conversion differs")
             report["stages"]["autonomous_recovery"] = {"source_task":original["id"],"followup_task":key,
-                "events":[compact(r) for r in (blocked,proposal,approved,release,published,submitted,verified)],
+                "events":[compact(r) for r in (blocked,proposal,approved,release,published,submitted,native,verified)],
+                "policy_path":"policies/plugin-recovery.json", "native_verified_event_id":native["event_id"],
                 "tool":tool,"version":version,"receipt":receipt,"cases":release["data"]["case_count"],
                 "user_mutating_calls":1,"model_reply":decision["model"]["reply"],
                 "response_sha256":decision["model"]["response_sha256"]}

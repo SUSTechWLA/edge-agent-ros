@@ -38,6 +38,21 @@ class TraceContracts(unittest.TestCase):
         self.addCleanup(db.db.close)
         return db
 
+    def test_supervisor_source_requires_a_bound_read_only_followup(self):
+        journal = self.journal()
+        trigger = {"kind":"agent","source":"plugin.supervisor","id":"followup"}
+        with self.assertRaises(ValueError):
+            journal.create("followup","read velocity",trigger)
+        trigger.update(parent_task_id="original",parent_event_id="release",trace_id="original",
+                       read_only_tool={"id":"derived.velocity","version":"a"*64})
+        with self.assertRaises(planning.Refused):
+            journal.create("followup","read velocity",trigger)
+        parent = journal.create("original","read velocity")
+        journal.save(parent,"BLOCKED","fixture: no suitable tool",kind="blocked")
+        with self.assertRaises(planning.Refused):
+            journal.create("followup","different target",trigger)
+        self.assertEqual(journal.create("followup","read velocity",trigger)["trace_id"],"original")
+
     def test_legacy_rows_and_trigger_idempotence(self):
         d=self.root/"db"
         d.mkdir()

@@ -40,6 +40,9 @@ def trigger_input(data):
             raise ValueError("trigger."+field+" 格式无效")
     if not re.fullmatch(r"[a-z][a-z0-9_.-]{0,31}",data["kind"]):
         raise ValueError("trigger.kind 格式无效")
+    if data["source"] == "plugin.supervisor" and (data["kind"] != "agent" or
+            not {"parent_task_id","parent_event_id","trace_id","read_only_tool"} <= data.keys()):
+        raise ValueError("自主续办需要父任务、发布事件、原 trace 和只读工具绑定")
     if "read_only_tool" in data:
         pin = data["read_only_tool"]
         if (not isinstance(pin,dict) or set(pin)!={"id","version"} or not isinstance(pin["version"],str)
@@ -150,6 +153,9 @@ class Journal:
                 return existing
             trigger=trigger or {"kind":"user","source":"user","id":key}
             parent=self.get(trigger["parent_task_id"]) if trigger.get("parent_task_id") else None
+            if trigger["source"] == "plugin.supervisor" and (not parent or parent["state"] != "BLOCKED"
+                    or parent["steps"] or parent["text"] != text or key != trigger["id"]):
+                raise Refused("自主续办必须匹配尚无步骤的原始阻塞任务、目标和触发 ID")
             parent_event=trigger.get("parent_event_id")
             if parent_event:
                 row=self.db.execute("SELECT task_id FROM events WHERE event_id=?",(parent_event,)).fetchone()

@@ -140,11 +140,82 @@ class ManagerRecovery(unittest.TestCase):
         self.s.poll()
         original=self.followup
         self.assertEqual(self.events()[-1]["code"],"supervisor.dependency_unavailable")
+        self.receipt_path.unlink()
+        self.policy.unlink()
+        self.source["state"]="CANCELED"
         self.restart()
         self.resume()
         self.assertIs(self.followup,original)
-        self.assertEqual(self.submits,2)
+        self.assertEqual(self.submits,1)
         self.assertEqual(self.events()[-1]["kind"],"plugin.supervisor.submitted")
+        self.succeed()
+        self.resume()
+        self.assertEqual(self.events()[-1]["parent_event_id"],"verified-42")
+
+    def test_changed_reference_samples_after_publication_prevent_dispatch(self):
+        original = self.s.record
+        def stop_after(p,phase,code,**kwargs):
+            original(p,phase,code,**kwargs)
+            if phase=="published":
+                raise SystemExit(42)
+        with patch.object(self.s,"record",side_effect=stop_after),self.assertRaises(SystemExit):
+            self.s.poll()
+        self.restart()
+        self.write_policy(dict(self.rule,cases=[speed_case(-.5,999),speed_case(1,3.6)]))
+        self.resume()
+        self.assertEqual(self.events()[-1]["code"],"supervisor.cases_failed")
+        self.assertEqual(self.submits,0)
+
+    def test_valid_but_different_policy_tests_do_not_claim_original_approval(self):
+        original=self.s.record
+        def replace_rule(p,phase,code,**kwargs):
+            original(p,phase,code,**kwargs)
+            if phase=="published":
+                self.write_policy(dict(self.rule,cases=[speed_case(3,10.8),speed_case(2,7.2)]))
+        with patch.object(self.s,"record",side_effect=replace_rule):
+            self.s.poll()
+        self.assertEqual(self.events()[-1]["code"],"supervisor.release_conflict")
+        self.assertEqual(self.submits,0)
+
+    def test_pending_post_after_policy_revocation_stays_unsubmitted(self):
+        api=self.s.api
+        def die_before(path,body=None):
+            if body:
+                raise SystemExit(42)
+            return api(path,body)
+        self.s.api=die_before
+        with self.assertRaises(SystemExit):
+            self.s.poll()
+        snap=json.loads(self.s.db.execute("SELECT dispatch FROM supervisor_work").fetchone()[0])
+        self.assertEqual(snap["cases_sha256"],manager.digest(author_tool.json_bytes(self.rule["cases"])))
+        self.assertEqual(snap["trigger"]["read_only_tool"]["version"],self.version)
+        self.restart()
+        self.write_policy()
+        self.resume()
+        self.assertEqual(self.submits,0)
+        self.assertEqual(self.events()[-1]["code"],"supervisor.policy_denied")
+
+    def test_pre_upgrade_submitted_row_uses_content_history_without_reissuing_task(self):
+        self.s.poll()
+        self.succeed()
+        self.s.close()
+        with closing(sqlite3.connect(self.root/"state"/"module-events.sqlite")) as db:
+            with db:
+                db.execute("ALTER TABLE supervisor_work DROP COLUMN dispatch")
+        self.s=manager.Supervisor(*self.args)
+        self.configure()
+        self.policy.unlink()
+        self.receipt_path.unlink()
+        self.resume()
+        self.assertEqual(self.events()[-1]["kind"],"plugin.supervisor.verified")
+        self.assertEqual(self.submits,1)
+
+    def test_disappeared_submitted_task_generates_review_without_post(self):
+        self.s.poll()
+        self.followup=None
+        self.resume()
+        self.assertEqual(self.events()[-1]["code"],"supervisor.followup_missing")
+        self.assertEqual(self.submits,1)
 
     def test_failed_sensor_task_requires_intervention_without_reissuing_tool(self):
         self.s.poll()
@@ -196,6 +267,10 @@ class ManagerRecovery(unittest.TestCase):
             caps[cap["id"]]=dict(cap,endpoint="http://other-provider")
             with self.assertRaises(planning.Refused):
                 planning.plan_read_only(self.source["text"],caps,pin)
+            with self.assertRaises(planning.Unavailable):
+                planning.plan_read_only(self.source["text"],{},pin)
+            with self.assertRaises(planning.Refused):
+                planning.plan_read_only(self.source["text"],{cap["id"]:dict(cap,version="different")},pin)
 
 
 if __name__=="__main__":
