@@ -1,0 +1,7 @@
+string mission_id
+---
+bool found
+string state
+uint32 verified_count
+geometry_msgs/Point[] evidence
+string detail

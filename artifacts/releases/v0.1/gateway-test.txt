@@ -1,0 +1,3 @@
+PASS frame validation, exclusivity, operation replay, physical cancel
+PASS operation watchdog stopped motion and confirmed stationary samples
+PASS odometry watchdog and unknown-outcome resource fence

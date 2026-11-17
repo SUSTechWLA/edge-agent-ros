@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="edge-title edge-desc" width="1500" height="1380" viewBox="0 0 1500 1380" xml:lang="zh-CN">
+<title id="edge-title">单台 Edge Agent 的软件与控制边界</title><desc id="edge-desc">云端 Brain 在单板之外下发委托并转发共享事实。板载执行器、策略、感知、能力网关和持久动作账本组成自主循环。实线为命令，点划线为观测，虚线为协作，细线为状态读写；箭头指向接收者。机身控制器独立处理实时保护。</desc>
+<defs><style>
+text{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif}
+.title{font-size:38px;font-weight:700}.lead{font-size:19px}.section{font-size:24px;font-weight:700}.card-title{font-size:23px;font-weight:650}.body{font-size:17px}.kicker{font-size:14px;font-weight:650;letter-spacing:.4px}.hint{font-size:15px;font-weight:550}.caption{font-size:16px}
+.wire{fill:none;stroke-width:2.7;stroke-linejoin:round;stroke-linecap:round}.command{stroke:#0E7165}.sense{stroke:#915F24;stroke-dasharray:9 3 2 3}.sync{stroke:#385CAB;stroke-dasharray:7 5}.store{stroke:#687A80;stroke-width:1.9}
+</style>
+<marker id="arr-command" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#0E7165"/></marker><marker id="arr-sense" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#915F24"/></marker><marker id="arr-sync" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#385CAB"/></marker><marker id="arr-store" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#687A80"/></marker></defs>
+<rect x="0" y="0" width="1500" height="1380" rx="0" fill="#F4F7F6" stroke="none"/>
+<rect x="0" y="0" width="1500" height="157" rx="0" fill="#163645" stroke="none"/>
+<text x="52" y="56" class="title" fill="#F7FBFC">Edge Agent 的单板运行架构</text>
+<text x="52" y="94" class="lead" fill="#D8E9EB">一份受限子目标在本机完成感知、决策、执行与核验。Brain 在联网时协调多端任务。</text>
+<path d="M54 129h45" class="wire command" marker-end="url(#arr-command)"/>
+<text x="110" y="135" class="caption" fill="#F0F7F7">命令 / 意图</text>
+<path d="M282 129h45" class="wire sense" marker-end="url(#arr-sense)"/>
+<text x="338" y="135" class="caption" fill="#F0F7F7">观测 / 状态</text>
+<path d="M510 129h45" class="wire sync" marker-end="url(#arr-sync)"/>
+<text x="566" y="135" class="caption" fill="#F0F7F7">协作消息</text>
+<path d="M718 129h45" class="wire store" marker-end="url(#arr-store)"/>
+<text x="774" y="135" class="caption" fill="#F0F7F7">读写依赖</text>
+<text x="1035" y="135" class="caption" fill="#D3E4E5">箭头指向接收方；双箭头表示往返。</text>
+<rect x="39" y="177" width="1422" height="123" rx="18" fill="#E9EEF7" stroke="#C8D5E8"/>
+<text x="59" y="222" class="section" fill="#385CAB">云端</text>
+<text x="59" y="251" class="body" fill="#4D666C">群体协作</text>
+<text x="258" y="219" class="card-title" fill="#142F38">Brain · 任务协调</text>
+<text x="258" y="248" class="body" fill="#4D666C">签发委托、分配资源、转发获准的共享事实</text>
+<text x="1000" y="219" class="card-title" fill="#142F38">其他 Edge Agent</text>
+<text x="1000" y="248" class="body" fill="#4D666C">发布能力、观测摘要或任务进展</text>
+<path d="M646 230H958" class="wire sync" marker-end="url(#arr-sync)" marker-start="url(#arr-sync)"/>
+<text x="698" y="213" class="hint" fill="#385CAB">订阅 / 发布共享事实</text>
+<rect x="39" y="352" width="1422" height="605" rx="19" fill="#ECF3F2" stroke="#B7D2CD"/>
+<text x="62" y="406" class="section" fill="#0E7165">单板本机</text>
+<text x="62" y="437" class="body" fill="#4D666C">RK3588 / Jetson</text>
+<text x="62" y="463" class="body" fill="#4D666C">C++20 / rclcpp</text>
+<text x="62" y="495" class="body" fill="#4D666C">独立进程监护</text>
+<text x="62" y="617" class="section" fill="#0E7165">局部决策</text>
+<text x="62" y="646" class="body" fill="#4D666C">按委托运行</text>
+<text x="62" y="823" class="section" fill="#0E7165">执行与感知</text>
+<text x="62" y="854" class="body" fill="#4D666C">按能力装配</text>
+<path d="M359 265V381" class="wire sync" marker-end="url(#arr-sync)"/>
+<path d="M490 381V265" class="wire sync" marker-end="url(#arr-sync)"/>
+<text x="257" y="333" class="hint" fill="#385CAB">委托 / 授权</text>
+<text x="502" y="333" class="hint" fill="#385CAB">进度 / 证据 / 求助</text>
+<path d="M576 449H652" class="wire sync" marker-end="url(#arr-sync)"/>
+<text x="590" y="431" class="hint" fill="#385CAB">投影</text>
+<path d="M368 515V582" class="wire sync" marker-end="url(#arr-sync)"/>
+<path d="M488 582V515" class="wire sync" marker-end="url(#arr-sync)"/>
+<text x="256" y="555" class="hint" fill="#385CAB">本机接单</text>
+<text x="500" y="555" class="hint" fill="#385CAB">回报</text>
+<path d="M747 515V582" class="wire sense" marker-end="url(#arr-sense)"/>
+<text x="675" y="554" class="hint" fill="#915F24">获准事实</text>
+<path d="M1220 515V549H928V582" class="wire store" marker-end="url(#arr-store)" marker-start="url(#arr-store)"/>
+<text x="1036" y="537" class="hint" fill="#687A80">受限推理调用</text>
+<path d="M577 640H651" class="wire command" marker-end="url(#arr-command)"/>
+<path d="M651 652H577" class="wire command" marker-end="url(#arr-command)"/>
+<text x="589" y="631" class="hint" fill="#0E7165">目标</text>
+<text x="589" y="672" class="hint" fill="#0E7165">提案</text>
+<path d="M1056 663H985" class="wire sense" marker-end="url(#arr-sense)"/>
+<text x="997" y="644" class="hint" fill="#915F24">状态</text>
+<path d="M401 720V790" class="wire store" marker-end="url(#arr-store)" marker-start="url(#arr-store)"/>
+<text x="253" y="760" class="hint" fill="#687A80">检查点 / 待决动作</text>
+<path d="M549 720V750H819V790" class="wire command" marker-end="url(#arr-command)"/>
+<text x="615" y="742" class="hint" fill="#0E7165">核准的语义意图</text>
+<path d="M1223 790V720" class="wire sense" marker-end="url(#arr-sense)"/>
+<text x="1238" y="760" class="hint" fill="#915F24">融合观测</text>
+<path d="M650 861H577" class="wire store" marker-end="url(#arr-store)" marker-start="url(#arr-store)"/>
+<text x="585" y="844" class="hint" fill="#687A80">对账</text>
+<g id="collab" data-card="247,382,328,132"><title>协作连接</title><rect x="247" y="382" width="328" height="132" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="248" y="383" width="326" height="6" rx="3" fill="#ADC4EC" stroke="none"/>
+ <text x="265" y="410" class="kicker" fill="#385CAB">Edge 主动建立 mTLS 双向流</text><text x="265" y="442" class="card-title" fill="#142F38">协作连接</text><text x="265" y="470" class="body" fill="#4D666C">注册、心跳、持久收发箱</text><text x="265" y="494" class="body" fill="#4D666C">进度与事实按游标补传</text>
+ <g transform="translate(532 399)" stroke="#385CAB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M3 8h17l-4-4m5 12H4l4 4"/></g></g>
+<g id="peer" data-card="653,382,331,132"><title>同伴状态投影</title><rect x="653" y="382" width="331" height="132" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="654" y="383" width="329" height="6" rx="3" fill="#ADC4EC" stroke="none"/>
+ <text x="671" y="410" class="kicker" fill="#385CAB">只读 · 按任务与权限</text><text x="671" y="442" class="card-title" fill="#142F38">同伴状态投影</text><text x="671" y="470" class="body" fill="#4D666C">位置、能力、意图与证据引用</text><text x="671" y="494" class="body" fill="#4D666C">记录来源、修订、时间与有效期</text>
+ <g transform="translate(941 399)" stroke="#385CAB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="5" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="m8 11 7-4m-7 6 7 4"/></g></g>
+<g id="model" data-card="1058,382,371,132"><title>模型执行服务</title><rect x="1058" y="382" width="371" height="132" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="1059" y="383" width="369" height="6" rx="3" fill="#CDBDE8" stroke="none"/>
+ <text x="1076" y="410" class="kicker" fill="#63538F">异步推理 · 按板卡适配</text><text x="1076" y="442" class="card-title" fill="#142F38">模型执行服务</text><text x="1076" y="470" class="body" fill="#4D666C">本地小模型 / 获准远程模型</text><text x="1076" y="494" class="body" fill="#4D666C">固定版本、时限、并发与资源预算</text>
+ <g transform="translate(1386 399)" stroke="#63538F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3m6-3v3M9 19v3m6-3v3M2 9h3m-3 6h3m14-6h3m-3 6h3"/><rect x="9" y="9" width="6" height="6"/></g></g>
+<g id="exec" data-card="247,585,328,133"><title>子目标执行器</title><rect x="247" y="585" width="328" height="133" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="248" y="586" width="326" height="6" rx="3" fill="#A8D9C9" stroke="none"/>
+ <text x="265" y="613" class="kicker" fill="#0E7165">委托私有上下文</text><text x="265" y="645" class="card-title" fill="#142F38">子目标执行器</text><text x="265" y="673" class="body" fill="#4D666C">Mission / Assignment、阶段与验收</text><text x="265" y="697" class="body" fill="#4D666C">核准局部提案，处理偏差、恢复或求助</text>
+ <g transform="translate(532 602)" stroke="#0E7165" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M2 6h6l2 2h11M2 12h8l2 2h9M2 18h10l2 2h7"/></g></g>
+<g id="policy" data-card="653,585,331,133"><title>局部策略宿主</title><rect x="653" y="585" width="331" height="133" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="654" y="586" width="329" height="6" rx="3" fill="#A8D9C9" stroke="none"/>
+ <text x="671" y="613" class="kicker" fill="#0E7165">每份委托一个生效策略</text><text x="671" y="645" class="card-title" fill="#142F38">局部策略宿主</text><text x="671" y="673" class="body" fill="#4D666C">固定技能 / 通用模型 / 自训策略</text><text x="671" y="697" class="body" fill="#4D666C">读取状态并提议下一步工具或子技能</text>
+ <g transform="translate(941 602)" stroke="#0E7165" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="5" cy="12" r="3"/><circle cx="17" cy="5" r="3"/><circle cx="17" cy="19" r="3"/><path d="M8 12h2l4-7m-4 7 4 7"/></g></g>
+<g id="world" data-card="1058,585,371,133"><title>本地世界模型</title><rect x="1058" y="585" width="371" height="133" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="1059" y="586" width="369" height="6" rx="3" fill="#E8C690" stroke="none"/>
+ <text x="1076" y="613" class="kicker" fill="#915F24">有界的状态视图</text><text x="1076" y="645" class="card-title" fill="#142F38">本地世界模型</text><text x="1076" y="673" class="body" fill="#4D666C">对象、位姿、可达区域与不确定性</text><text x="1076" y="697" class="body" fill="#4D666C">保留坐标系、源时钟、时效与质量</text>
+ <g transform="translate(1386 602)" stroke="#915F24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="m3 6 6-2 7 3 5-2v14l-5 2-7-3-6 2zm6-2v14m7-11v14"/></g></g>
+<g id="ledger" data-card="247,792,328,133"><title>持久账本</title><rect x="247" y="792" width="328" height="133" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="248" y="793" width="326" height="6" rx="3" fill="#BCD0D3" stroke="none"/>
+ <text x="265" y="820" class="kicker" fill="#52646C">SQLite WAL · 本机恢复依据</text><text x="265" y="852" class="card-title" fill="#142F38">持久账本</text><text x="265" y="880" class="body" fill="#4D666C">委托、检查点、动作号、插件版本</text><text x="265" y="904" class="body" fill="#4D666C">回执、证据索引和未确认结果</text>
+ <g transform="translate(532 809)" stroke="#52646C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v13c0 4 16 4 16 0V5M4 11c0 4 16 4 16 0"/></g></g>
+<g id="gateway" data-card="653,792,331,133"><title>能力网关</title><rect x="653" y="792" width="331" height="133" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="654" y="793" width="329" height="6" rx="3" fill="#A8D9C9" stroke="none"/>
+ <text x="671" y="820" class="kicker" fill="#0E7165">每个动作的受控入口</text><text x="671" y="852" class="card-title" fill="#142F38">能力网关</text><text x="671" y="880" class="body" fill="#4D666C">核对授权、租约、期限和现场约束</text><text x="671" y="904" class="body" fill="#4D666C">登记原目标，再调用对应能力</text>
+ <g transform="translate(941 809)" stroke="#0E7165" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="m12 3 8 3v6c0 4-4 8-8 10-4-2-8-6-8-10V6z"/><path d="m8 12 3 3 5-6"/></g></g>
+<g id="sensors" data-card="1058,792,371,133"><title>感知适配与融合</title><rect x="1058" y="792" width="371" height="133" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="1059" y="793" width="369" height="6" rx="3" fill="#E8C690" stroke="none"/>
+ <text x="1076" y="820" class="kicker" fill="#915F24">插件 · 动态注册能力</text><text x="1076" y="852" class="card-title" fill="#142F38">感知适配与融合</text><text x="1076" y="880" class="body" fill="#4D666C">模态描述、校准、时钟与质量检查</text><text x="1076" y="904" class="body" fill="#4D666C">高频原始流在本机处理和存储</text>
+ <g transform="translate(1386 809)" stroke="#915F24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M2 13h4l2-7 4 14 3-11 2 4h5"/></g></g>
+<rect x="39" y="1006" width="1422" height="187" rx="18" fill="#F2F0EA" stroke="#D4D1C5"/>
+<text x="61" y="1054" class="section" fill="#615A45">执行后端</text>
+<text x="61" y="1084" class="body" fill="#4D666C">独立进程 / 设备</text>
+<path d="M766 926V973H423V1027" class="wire command" marker-end="url(#arr-command)"/>
+<path d="M861 926V1027" class="wire command" marker-end="url(#arr-command)"/>
+<path d="M898 1027V927" class="wire sense" marker-end="url(#arr-sense)"/>
+<text x="911" y="983" class="hint" fill="#915F24">动作回执</text>
+<text x="561" y="961" class="hint" fill="#0E7165">按能力路由</text>
+<path d="M1230 1027V927" class="wire sense" marker-end="url(#arr-sense)"/>
+<text x="1246" y="984" class="hint" fill="#915F24">本机采样</text>
+<g id="human" data-card="247,1029,328,139"><title>人协作 / 软件作业</title><rect x="247" y="1029" width="328" height="139" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="248" y="1030" width="326" height="6" rx="3" fill="#A8D9C9" stroke="none"/>
+ <text x="265" y="1057" class="kicker" fill="#0E7165">按任务选择</text><text x="265" y="1089" class="card-title" fill="#142F38">人协作 / 软件作业</text><text x="265" y="1117" class="body" fill="#4D666C">人通过通知、确认与陈述接单</text><text x="265" y="1141" class="body" fill="#4D666C">软件端使用有范围的作业与回执</text>
+ <g transform="translate(532 1046)" stroke="#0E7165" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M2 19c0-7 12-7 12 0m2-15h5v10h-4m-2 4 2 2 4-5"/></g></g>
+<g id="robot" data-card="653,1029,331,139"><title>机器人执行适配器</title><rect x="653" y="1029" width="331" height="139" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="654" y="1030" width="329" height="6" rx="3" fill="#A8D9C9" stroke="none"/>
+ <text x="671" y="1057" class="kicker" fill="#0E7165">ROS 2 Action / 厂商接口</text><text x="671" y="1089" class="card-title" fill="#142F38">机器人执行适配器</text><text x="671" y="1117" class="body" fill="#4D666C">轮式车、飞行器、四足、人形</text><text x="671" y="1141" class="body" fill="#4D666C">编译语义目标，关联原目标号与回执</text>
+ <g transform="translate(941 1046)" stroke="#0E7165" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><rect x="4" y="6" width="16" height="11" rx="3"/><path d="M8 21v-4m8 4v-4M9 11h1m4 0h1m-3-5V2"/></g></g>
+<g id="input" data-card="1058,1029,371,139"><title>传感器与数据源</title><rect x="1058" y="1029" width="371" height="139" rx="14" fill="#FFFFFF" stroke="#C6D3D3"/><rect x="1059" y="1030" width="369" height="6" rx="3" fill="#E8C690" stroke="none"/>
+ <text x="1076" y="1057" class="kicker" fill="#915F24">ROS 2 Topic / 厂商驱动</text><text x="1076" y="1089" class="card-title" fill="#142F38">传感器与数据源</text><text x="1076" y="1117" class="body" fill="#4D666C">相机、激光、IMU、GNSS、关节等</text><text x="1076" y="1141" class="body" fill="#4D666C">按量纲、频率、标定及丢帧语义接入</text>
+ <g transform="translate(1386 1046)" stroke="#915F24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M5 6a9 9 0 0 0 0 12m14-12a9 9 0 0 1 0 12M2 4a13 13 0 0 0 0 16m20-16a13 13 0 0 1 0 16"/></g></g>
+<rect x="39" y="1230" width="1422" height="105" rx="18" fill="#DEEBE6" stroke="#AFCCC3"/>
+<text x="62" y="1276" class="section" fill="#245A4C">机身保护</text>
+<path d="M794 1170V1245" class="wire command" marker-end="url(#arr-command)"/>
+<path d="M846 1245V1170" class="wire sense" marker-end="url(#arr-sense)"/>
+<text x="255" y="1274" class="card-title" fill="#244A40">实时控制器与本地保护</text>
+<text x="255" y="1305" class="body" fill="#39584F">底盘、飞控或关节控制器以自身频率执行限位、避障和停机策略；模型或云连接中断时仍能独立工作。</text>
+<text x="707" y="1210" class="hint" fill="#0E7165">受控目标</text>
+<text x="859" y="1210" class="hint" fill="#915F24">控制器状态</text>
+<text x="53" y="1366" class="caption" fill="#4D666C">目标架构 · 机型差异由能力与驱动表达；同伴摘要到期标为未知，新增动作继续经过本机准入。</text>
+</svg>

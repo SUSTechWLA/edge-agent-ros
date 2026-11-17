@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.16)
+project(edge_gateway)
+
+find_package(ament_cmake REQUIRED)
+find_package(edge_interfaces REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(std_msgs REQUIRED)
+
+add_executable(edge_gateway_node src/edge_gateway_node.cpp)
+target_compile_features(edge_gateway_node PRIVATE cxx_std_20)
+target_compile_options(edge_gateway_node PRIVATE -Wall -Wextra -Wpedantic)
+ament_target_dependencies(edge_gateway_node edge_interfaces geometry_msgs nav_msgs rclcpp rclcpp_action std_msgs)
+install(TARGETS edge_gateway_node DESTINATION lib/${PROJECT_NAME})
+ament_package()

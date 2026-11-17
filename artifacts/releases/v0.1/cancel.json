@@ -1,0 +1,23 @@
+{
+  "mission_id": "cancel-moving",
+  "origin": [
+    0.800557,
+    0.64108
+  ],
+  "moving_world": [
+    0.678624,
+    0.73635
+  ],
+  "state": "CANCELED",
+  "stop": {
+    "duration_s": 0.8,
+    "samples": 24,
+    "drift_m": 2.641968962726173e-05,
+    "max_speed_mps": 0.000147,
+    "max_abs_yaw_rate_radps": 0.0
+  },
+  "passed": true,
+  "phase": "cancel",
+  "utc": "2026-11-16T16:12:43.170551+00:00",
+  "witness_samples": 72
+}

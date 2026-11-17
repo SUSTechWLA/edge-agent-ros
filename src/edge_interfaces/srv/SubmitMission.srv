@@ -1,0 +1,6 @@
+string mission_id
+geometry_msgs/Point[] waypoints
+---
+bool accepted
+string state
+string detail

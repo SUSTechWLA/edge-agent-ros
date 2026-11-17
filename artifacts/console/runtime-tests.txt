@@ -1,0 +1,24 @@
+Range lifecycle: [(3, 'observation.added'), (7, 'observation.online'), (8, 'observation.stale'), (9, 'observation.online'), (10, 'observation.removed')] stale age: 0.7304 recovered range: 1.125
+test_live_registration_silence_recovery_and_unload (test_observations.ManifestTest.test_live_registration_silence_recovery_and_unload) ... ok
+test_large_sequence_reads_only_the_prefix (test_observations.PreviewTest.test_large_sequence_reads_only_the_prefix) ... ok
+test_authoritative_transitions_survive_disconnect (test_replay.ReplayTest.test_authoritative_transitions_survive_disconnect) ... ok
+test_count_and_age_work_independently (test_retention.RetentionTest.test_count_and_age_work_independently) ... ok
+test_existing_archive_survives_policy_change_and_restart (test_retention.RetentionTest.test_existing_archive_survives_policy_change_and_restart) ... ok
+test_export_is_pinned_across_concurrent_pruning (test_retention.RetentionTest.test_export_is_pinned_across_concurrent_pruning) ... ok
+/edge/perception/pose stale age=1.5085s receive_age=0.0256s ttl=1.5s seq=[4, 8, 11]
+/edge/perception/status stale age=5.0006s receive_age=5.0006s ttl=5.0s seq=[5, 9, 12]
+test_pose_and_status_disconnect_and_resume (test_signal_health.SignalHealthTest.test_pose_and_status_disconnect_and_resume) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 9.051s
+
+OK
+test_native_multistep (__main__.PlannerContract.test_native_multistep) ... ok
+test_registered_provider_can_replace_builtin (__main__.PlannerContract.test_registered_provider_can_replace_builtin) ... ok
+test_rejects_unsupported_or_incomplete_physical_plan (__main__.PlannerContract.test_rejects_unsupported_or_incomplete_physical_plan) ... ok
+test_required_deliverable_cannot_be_satisfied_by_status (__main__.PlannerContract.test_required_deliverable_cannot_be_satisfied_by_status) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.010s
+
+OK

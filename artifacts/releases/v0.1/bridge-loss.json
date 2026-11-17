@@ -1,0 +1,15 @@
+{
+  "state": "RECOVERY_REQUIRED",
+  "detail": "control-bridge-loss/waypoint/1 gateway: UNKNOWN: stop unconfirmed after odometry timeout; gateway inhibited",
+  "stop": {
+    "duration_s": 0.8,
+    "samples": 24,
+    "drift_m": 0.0,
+    "max_speed_mps": 0.0,
+    "max_abs_yaw_rate_radps": 0.0
+  },
+  "passed": true,
+  "phase": "bridge-loss",
+  "utc": "2026-11-16T16:13:13.998481+00:00",
+  "witness_samples": 105
+}

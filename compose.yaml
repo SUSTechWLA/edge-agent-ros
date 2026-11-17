@@ -1,0 +1,88 @@
+name: edge-agent-ros
+x-runtime: &runtime
+  image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+  pull_policy: never
+  init: true
+  logging:
+    driver: local
+    options: {max-size: "10m", max-file: "4"}
+  environment: &environment
+    ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+    RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    GZ_PARTITION: edge_v1
+    GZ_SIM_SYSTEM_PLUGIN_PATH: /opt/edge/lib/edge_sim
+  stop_grace_period: 6s
+services:
+  sim:
+    <<: *runtime
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        BASE_IMAGE: ${EDGE_BASE_IMAGE:-edge-agent-ros/base:jazzy-harmonic}
+    command: ["gz", "sim", "-s", "-r", "--headless-rendering", "/opt/edge/sim/world.sdf"]
+  bridge:
+    <<: *runtime
+    command: ["ros2", "run", "ros_gz_bridge", "parameter_bridge", "--ros-args", "-r", "__node:=edge_control_bridge", "-p", "config_file:=/opt/edge/sim/bridge.yaml"]
+  witness:
+    <<: *runtime
+    command: ["ros2", "run", "ros_gz_bridge", "parameter_bridge", "--ros-args", "-r", "__node:=edge_witness_bridge", "-p", "config_file:=/opt/edge/sim/witness.yaml"]
+  gateway:
+    <<: *runtime
+    command: ["ros2", "run", "edge_gateway", "edge_gateway_node"]
+  core:
+    <<: *runtime
+    volumes:
+      - state:/var/lib/edge-agent
+    command: ["ros2", "run", "edge_core", "edge_core_node"]
+  perception:
+    <<: *runtime
+    restart: unless-stopped
+    command: ["python3", "/opt/edge/perception/node.py"]
+  agent:
+    <<: *runtime
+    restart: unless-stopped
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      EDGE_OLLAMA_URL: ${EDGE_OLLAMA_URL:-}
+      EDGE_PLANNER_URL: ${EDGE_PLANNER_URL:-}
+      EDGE_RETRY_LIMIT: ${EDGE_RETRY_LIMIT:-7}
+      EDGE_STEP_TIMEOUT: ${EDGE_STEP_TIMEOUT:-1800}
+      EDGE_OLLAMA_MODEL: ${EDGE_OLLAMA_MODEL:-qwen2.5:1.5b}
+    volumes:
+      - task-state:/var/lib/edge-tasks
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/etc/edge/plugins:ro
+    command: ["python3", "/opt/edge/agent/service.py"]
+  model:
+    image: ${EDGE_MODEL_IMAGE:-ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592}
+    restart: unless-stopped
+    profiles: ["model"]
+    volumes:
+      - models:/root/.ollama
+  console:
+    <<: *runtime
+    restart: unless-stopped
+    environment:
+      <<: *environment
+      EDGE_TELEMETRY_RETENTION_DAYS: ${EDGE_TELEMETRY_RETENTION_DAYS:-7}
+      EDGE_TELEMETRY_MAX_SAMPLES: ${EDGE_TELEMETRY_MAX_SAMPLES:-10080}
+    command: ["python3", "/opt/edge/console/server/main.py"]
+    volumes:
+      - state:/var/lib/edge-agent:ro
+      - console-history:/var/lib/edge-console
+      - ${EDGE_OBSERVATIONS_DIR:-./observations}:/etc/edge/observations:ro
+      - task-state:/var/lib/edge-tasks:ro
+    ports:
+      - "127.0.0.1:${EDGE_CONSOLE_PORT:-8765}:8080"
+  probe:
+    <<: *runtime
+    profiles: ["validation"]
+    volumes:
+      - ${EDGE_EVIDENCE_DIR:-./artifacts/verification}:/evidence
+    command: ["python3", "/opt/edge/tests/verify.py", "mission"]
+volumes:
+  state:
+  console-history:
+  task-state:
+  models:

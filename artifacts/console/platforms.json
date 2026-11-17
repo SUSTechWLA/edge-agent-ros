@@ -1,0 +1,300 @@
+{
+  "schema_version": 3,
+  "recorded_utc": "2026-11-17T03:18:53Z",
+  "host": {
+    "os": "Windows + Docker Desktop Linux engine",
+    "daemon_arch": "amd64",
+    "engine": "29.9.3",
+    "compose": "5.7.0"
+  },
+  "deployment": {
+    "config": "compose.hardware.yaml",
+    "entrypoint": "scripts/deploy.sh hardware build / docker compose -f compose.hardware.yaml up -d --no-build",
+    "network": "host",
+    "services": [
+      "core",
+      "perception",
+      "agent",
+      "console"
+    ],
+    "topic_override": {
+      "EDGE_ODOM_TOPIC": "/robot37/odom"
+    },
+    "test_overrides": {
+      "EDGE_RETRY_LIMIT": 0,
+      "EDGE_ODOM_TOPIC": "/robot37/odom"
+    }
+  },
+  "test": {
+    "method": "Live ROS 2 publisher in each isolated hardware Compose project; query core GetMission service; submit HTTP status request through the console proxy, retrieve persisted task and API state. Before input, request an unavailable image and verify diagnostic and non-retryability; pause another status request with zero automatic retries, restore odometry, request resume on its original step and verify a single dispatch.",
+    "inputs": "150 synthetic stamped odometry/IMU pairs approximately 40 ms apart, x=0.002*i metres, wz=0.06 rad/s, laser frame every third pair, 7 ranges [1,2,+inf,1.4,2.2,1.8,1.6] m. Dispatch status at i=90. No Gazebo or motion controller in either project.",
+    "get_mission_request": "unknown-status-only",
+    "get_mission_expected_found": false,
+    "timestamp_encoding": "stamp_ns is a decimal string in this evidence file. On both platforms, API stamp.sec * 10^9 + stamp.nanosec matched the original integer stamp_ns exactly.",
+    "source_sha256": {
+      "agent/planning.py": "617087e08a178b842ae2e69a7f43e28b3312f0aec63ce453061486ee5fd77640",
+      "agent/service.py": "9651e24e5eb5286e65fe140aaf8c85e865c5b0509ced4199ad785deefd823c3a",
+      "console/server/observations.py": "16255e7d133c7d041655ff8f08a2061447804579211fd35f5d9b1b66c5b95144",
+      "console/web/app.js": "45567f73b7de51e5b97ab0fdcd543f6b49121ce971b0c51f12eab716a557ba17"
+    },
+    "extra_observations": "Run python3 /opt/edge/console/server/test_observations.py -v on each target in an isolated ROS_DOMAIN_ID. Manifest is added, sensor_msgs/msg/Range is published, silence makes it stale, publishing restores it, hot-removal releases the ROS subscription; assert durable replay and bounded message preview."
+  },
+  "runs": [
+    {
+      "execution": "QEMU Linux ARM64 on AMD64",
+      "image_tag": "edge-agent-ros/hardware:arm64-check",
+      "image_id": "sha256:1e1b24fd339d064f4dea14dc824d63c083e0cacfcde4e0520fd17ac12306a9e3",
+      "target": "linux/arm64",
+      "image_created_utc": "2026-11-17T03:16:57.791892315Z",
+      "results": {
+        "architecture": "aarch64",
+        "capabilities": [
+          "inspect",
+          "status"
+        ],
+        "core_get_mission_response_for_unknown_id": false,
+        "environment": "hardware",
+        "missing_product": {
+          "can_retry": false,
+          "detail": "当前能力目录缺少任务要求的产物或测量：image",
+          "diagnostic": {
+            "stage": "capability_check"
+          },
+          "dispatch_count": 0,
+          "request": "Report status and take a photo",
+          "retry_http_status": 409,
+          "state": "BLOCKED"
+        },
+        "odom_topic": "/robot37/odom",
+        "operator_resume": {
+          "can_retry_when_paused": true,
+          "events": [
+            "accepted",
+            "planned",
+            "dispatch",
+            "retry_exhausted",
+            "retry_requested",
+            "verified"
+          ],
+          "evidence": {
+            "frame": "odom",
+            "source": "/robot37/odom",
+            "speed": 0,
+            "stamp": {
+              "nanosec": 936681067,
+              "sec": 1794885457
+            },
+            "stamp_ns": "1794885457936681067",
+            "x": 0.098,
+            "y": 0,
+            "yaw": 0
+          },
+          "final_state": "SUCCEEDED",
+          "original_operation_id": "deployment-retry/step/1",
+          "paused_state": "RECOVERY_REQUIRED",
+          "resumed_operation_id": "deployment-retry/step/1",
+          "subject": "status before the first odometry sample"
+        },
+        "perception": {
+          "dropped_scans": 0,
+          "free_cells": 226,
+          "matched_scans": 48,
+          "mode": "wheel_imu",
+          "occupied_cells": 8
+        },
+        "sources_available": {
+          "imu": true,
+          "map": true,
+          "odom": true,
+          "pose": true,
+          "scan": true,
+          "truth": false
+        },
+        "task": {
+          "events": [
+            "accepted",
+            "planned",
+            "dispatch",
+            "verified"
+          ],
+          "evidence": {
+            "frame": "odom",
+            "source": "/robot37/odom",
+            "speed": 0,
+            "stamp": {
+              "nanosec": 988497616,
+              "sec": 1794885459
+            },
+            "stamp_ns": "1794885459988497616",
+            "x": 0.192,
+            "y": 0,
+            "yaw": 0
+          },
+          "id": "deployment-status",
+          "state": "SUCCEEDED",
+          "tool": "status"
+        },
+        "extra_observation": {
+          "type": "sensor_msgs/msg/Range",
+          "topic": "/front/range",
+          "test_count": 2,
+          "passed": true,
+          "events": [
+            {
+              "seq": 3,
+              "kind": "observation.added"
+            },
+            {
+              "seq": 7,
+              "kind": "observation.online"
+            },
+            {
+              "seq": 8,
+              "kind": "observation.stale"
+            },
+            {
+              "seq": 9,
+              "kind": "observation.online"
+            },
+            {
+              "seq": 10,
+              "kind": "observation.removed"
+            }
+          ],
+          "stale_age_s": 0.8913,
+          "recovered_range_m": 1.125
+        }
+      }
+    },
+    {
+      "execution": "native Linux AMD64 on AMD64",
+      "image_tag": "edge-agent-ros/hardware:v0.1",
+      "image_id": "sha256:830e0a8bbead33c0a60dfc680f4ecf8b5ac6cdc09d6d485fa85115c2a58a917e",
+      "target": "linux/amd64",
+      "image_created_utc": "2026-11-17T03:16:57.7006076Z",
+      "results": {
+        "architecture": "x86_64",
+        "capabilities": [
+          "inspect",
+          "status"
+        ],
+        "core_get_mission_response_for_unknown_id": false,
+        "environment": "hardware",
+        "missing_product": {
+          "can_retry": false,
+          "detail": "当前能力目录缺少任务要求的产物或测量：image",
+          "diagnostic": {
+            "stage": "capability_check"
+          },
+          "dispatch_count": 0,
+          "request": "Report status and take a photo",
+          "retry_http_status": 409,
+          "state": "BLOCKED"
+        },
+        "odom_topic": "/robot37/odom",
+        "operator_resume": {
+          "can_retry_when_paused": true,
+          "events": [
+            "accepted",
+            "planned",
+            "dispatch",
+            "retry_exhausted",
+            "retry_requested",
+            "verified"
+          ],
+          "evidence": {
+            "frame": "odom",
+            "source": "/robot37/odom",
+            "speed": 0,
+            "stamp": {
+              "nanosec": 462322398,
+              "sec": 1794885509
+            },
+            "stamp_ns": "1794885509462322398",
+            "x": 0.092,
+            "y": 0,
+            "yaw": 0
+          },
+          "final_state": "SUCCEEDED",
+          "original_operation_id": "deployment-retry/step/1",
+          "paused_state": "RECOVERY_REQUIRED",
+          "resumed_operation_id": "deployment-retry/step/1",
+          "subject": "status before the first odometry sample"
+        },
+        "perception": {
+          "dropped_scans": 0,
+          "free_cells": 225,
+          "matched_scans": 46,
+          "mode": "wheel_imu",
+          "occupied_cells": 10
+        },
+        "sources_available": {
+          "imu": true,
+          "map": true,
+          "odom": true,
+          "pose": true,
+          "scan": true,
+          "truth": false
+        },
+        "task": {
+          "events": [
+            "accepted",
+            "planned",
+            "dispatch",
+            "verified"
+          ],
+          "evidence": {
+            "frame": "odom",
+            "source": "/robot37/odom",
+            "speed": 0,
+            "stamp": {
+              "nanosec": 472668963,
+              "sec": 1794885511
+            },
+            "stamp_ns": "1794885511472668963",
+            "x": 0.19,
+            "y": 0,
+            "yaw": 0
+          },
+          "id": "deployment-status",
+          "state": "SUCCEEDED",
+          "tool": "status"
+        },
+        "extra_observation": {
+          "type": "sensor_msgs/msg/Range",
+          "topic": "/front/range",
+          "test_count": 2,
+          "passed": true,
+          "events": [
+            {
+              "seq": 3,
+              "kind": "observation.added"
+            },
+            {
+              "seq": 7,
+              "kind": "observation.online"
+            },
+            {
+              "seq": 8,
+              "kind": "observation.stale"
+            },
+            {
+              "seq": 9,
+              "kind": "observation.online"
+            },
+            {
+              "seq": 10,
+              "kind": "observation.removed"
+            }
+          ],
+          "stale_age_s": 0.7311,
+          "recovered_range_m": 1.125
+        }
+      }
+    }
+  ],
+  "scope": [
+    "Both builds compiled edge_interfaces and edge_core for the target architecture.",
+    "No physical board, motor, sensor driver, NPU/GPU, network fault, or real-time performance was measured in this test."
+  ]
+}

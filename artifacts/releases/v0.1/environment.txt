@@ -1,0 +1,10 @@
+x86_64
+8.15.0
+c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+libsqlite3-dev:amd64	3.45.1-1ubuntu2.9
+ros-jazzy-rclcpp	28.1.22-1noble.20260911.105434
+ros-jazzy-ros-gz-bridge	1.0.24-1noble.20260920.234644

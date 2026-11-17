@@ -1,0 +1,78 @@
+{
+  "contracts": {
+    "empty": "rejected_without_record",
+    "bounds": "rejected_without_record",
+    "nonfinite": "rejected_without_record",
+    "duplicate": "accepted_once",
+    "conflict": "rejected",
+    "busy": "rejected"
+  },
+  "mission_id": "inspect-ab",
+  "state": "SUCCEEDED",
+  "evidence": [
+    {
+      "goal": [
+        0.8,
+        0.0
+      ],
+      "odom": [
+        0.7478871001394326,
+        1.1551460167344036e-13
+      ],
+      "error_m": 0.05211289986056744
+    },
+    {
+      "goal": [
+        0.8,
+        0.7
+      ],
+      "odom": [
+        0.8014060577668942,
+        0.6476730984896573
+      ],
+      "error_m": 0.05234578894349524
+    }
+  ],
+  "stop": {
+    "duration_s": 0.8,
+    "samples": 24,
+    "drift_m": 1.4999999999987246e-05,
+    "max_speed_mps": 8.2e-05,
+    "max_abs_yaw_rate_radps": 0.0
+  },
+  "world_witnesses": [
+    {
+      "goal": [
+        0.8,
+        0.0
+      ],
+      "world": [
+        0.741052,
+        0.0
+      ],
+      "error_m": 0.058948,
+      "sim_s": 3.366,
+      "speed_mps": 0.000117,
+      "yaw_rate_radps": -0.0
+    },
+    {
+      "goal": [
+        0.8,
+        0.7
+      ],
+      "world": [
+        0.800557,
+        0.641054
+      ],
+      "error_m": 0.058948631578688855,
+      "sim_s": 7.48,
+      "speed_mps": 0.000136,
+      "yaw_rate_radps": -0.0
+    }
+  ],
+  "turn_observed": true,
+  "passed": true,
+  "phase": "mission",
+  "utc": "2026-11-16T16:12:39.158628+00:00",
+  "witness_samples": 246
+}

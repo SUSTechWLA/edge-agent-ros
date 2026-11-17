@@ -1,0 +1,100 @@
+# Standalone Linux hardware deployment. ROS drivers and the robot's motion
+# action server can run on the board itself or in compatible host-net containers.
+name: edge-agent-hardware
+x-env: &environment
+  ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+  RMW_IMPLEMENTATION: ${EDGE_RMW:-rmw_cyclonedds_cpp}
+x-runtime: &runtime
+  image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+  pull_policy: never
+  network_mode: host
+  init: true
+  logging:
+    driver: local
+    options: {max-size: "10m", max-file: "4"}
+  stop_grace_period: 6s
+  environment: *environment
+services:
+  core:
+    <<: *runtime
+    build:
+      context: .
+      args:
+        ROS_BASE: ${EDGE_ROS_BASE:-ros:jazzy-ros-base}
+        UBUNTU_MIRROR: ${UBUNTU_MIRROR:-}
+        ROS_MIRROR: ${ROS_MIRROR:-}
+      dockerfile_inline: |
+        ARG ROS_BASE=ros:jazzy-ros-base
+        FROM $$ROS_BASE
+        ARG UBUNTU_MIRROR
+        ARG ROS_MIRROR
+        SHELL ["/bin/bash","-o","pipefail","-c"]
+        ENV PYTHONUNBUFFERED=1
+        WORKDIR /opt/edge
+        RUN if [[ -n "$$UBUNTU_MIRROR" ]]; then sed -i "s|^URIs: .*|URIs: $$UBUNTU_MIRROR|" /etc/apt/sources.list.d/ubuntu.sources; fi && \
+            if [[ -n "$$ROS_MIRROR" ]]; then sed -i -e "s|^URIs: .*|URIs: $$ROS_MIRROR|" -e 's/^Types: deb deb-src$$/Types: deb/' /etc/apt/sources.list.d/ros2.sources; fi && \
+            apt-get -o Acquire::Retries=3 update && DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 install -y --no-install-recommends build-essential cmake python3-colcon-common-extensions libsqlite3-dev ros-jazzy-rosidl-default-generators ros-jazzy-rclcpp-action ros-jazzy-rmw-cyclonedds-cpp ros-jazzy-nav-msgs ros-jazzy-sensor-msgs && rm -rf /var/lib/apt/lists/*
+        COPY src/edge_interfaces src/edge_interfaces
+        COPY src/edge_core src/edge_core
+        RUN source /opt/ros/jazzy/setup.bash && MAKEFLAGS=-j2 colcon build --merge-install --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DPython3_EXECUTABLE=/usr/bin/python3
+        COPY client client
+        COPY console console
+        COPY perception perception
+        COPY agent agent
+        COPY docker/entrypoint.sh /usr/local/bin/edge-entrypoint
+        RUN sed -i 's/\r$$//' /usr/local/bin/edge-entrypoint && chmod +x /usr/local/bin/edge-entrypoint
+        ENTRYPOINT ["/usr/local/bin/edge-entrypoint"]
+    volumes:
+      - state:/var/lib/edge-agent
+    command: ["ros2", "run", "edge_core", "edge_core_node", "--ros-args", "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}", "-r", "/edge/navigate_to:=${EDGE_NAV_ACTION:-/edge/navigate_to}"]
+  perception:
+    <<: *runtime
+    restart: unless-stopped
+    command: ["python3", "/opt/edge/perception/node.py", "--ros-args",
+      "-p", "odom_topic:=${EDGE_ODOM_TOPIC:-/odom}", "-p", "imu_topic:=${EDGE_IMU_TOPIC:-/imu}",
+      "-p", "scan_topic:=${EDGE_SCAN_TOPIC:-/scan}", "-p", "base_frame:=${EDGE_BASE_FRAME:-base_link}",
+      "-p", "odom_frame:=${EDGE_ODOM_FRAME:-odom}", "-p", "imu_frame:=${EDGE_IMU_FRAME:-imu_link}",
+      "-p", "laser_frame:=${EDGE_LASER_FRAME:-laser_link}", "-p", "lidar_x:=${EDGE_LIDAR_X:-0.0}",
+      "-p", "lidar_y:=${EDGE_LIDAR_Y:-0.0}", "-p", "lidar_yaw:=${EDGE_LIDAR_YAW:-0.0}"]
+  agent:
+    <<: *runtime
+    restart: unless-stopped
+    environment:
+      <<: *environment
+      EDGE_AGENT_BIND: 127.0.0.1
+      EDGE_OLLAMA_URL: ${EDGE_OLLAMA_URL:-}
+      EDGE_PLANNER_URL: ${EDGE_PLANNER_URL:-}
+      EDGE_RETRY_LIMIT: ${EDGE_RETRY_LIMIT:-7}
+      EDGE_STEP_TIMEOUT: ${EDGE_STEP_TIMEOUT:-1800}
+      EDGE_OLLAMA_MODEL: ${EDGE_OLLAMA_MODEL:-qwen2.5:1.5b}
+    volumes:
+      - task-state:/var/lib/edge-tasks
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/etc/edge/plugins:ro
+    command: ["python3", "/opt/edge/agent/service.py", "--ros-args", "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}"]
+  console:
+    <<: *runtime
+    restart: unless-stopped
+    environment:
+      <<: *environment
+      EDGE_HTTP_BIND: 127.0.0.1
+      EDGE_HTTP_PORT: ${EDGE_CONSOLE_PORT:-8765}
+      EDGE_AGENT_URL: http://127.0.0.1:8090
+      EDGE_ENVIRONMENT: hardware
+      EDGE_TELEMETRY_RETENTION_DAYS: ${EDGE_TELEMETRY_RETENTION_DAYS:-7}
+      EDGE_TELEMETRY_MAX_SAMPLES: ${EDGE_TELEMETRY_MAX_SAMPLES:-10080}
+      EDGE_ROBOT_ID: ${EDGE_ROBOT_ID:-hardware-edge}
+      EDGE_BASE_FRAME: ${EDGE_BASE_FRAME:-base_link}
+      EDGE_SCAN_FRAME: ${EDGE_LASER_FRAME:-laser_link}
+      EDGE_SCAN_MOUNT: '{"x":${EDGE_LIDAR_X:-0.0},"y":${EDGE_LIDAR_Y:-0.0},"z":${EDGE_LIDAR_Z:-0.0},"yaw":${EDGE_LIDAR_YAW:-0.0}}'
+    volumes:
+      - state:/var/lib/edge-agent:ro
+      - task-state:/var/lib/edge-tasks:ro
+      - console-history:/var/lib/edge-console
+      - ${EDGE_OBSERVATIONS_DIR:-./observations}:/etc/edge/observations:ro
+    command: ["python3", "/opt/edge/console/server/main.py", "--ros-args",
+      "-r", "/scan:=${EDGE_SCAN_TOPIC:-/scan}", "-r", "/imu:=${EDGE_IMU_TOPIC:-/imu}",
+      "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}", "-r", "/cmd_vel:=${EDGE_CMD_TOPIC:-/cmd_vel}"]
+volumes:
+  state:
+  console-history:
+  task-state:

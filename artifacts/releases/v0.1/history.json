@@ -1,0 +1,15 @@
+{
+  "state": "SUCCEEDED",
+  "verified_count": 2,
+  "stop": {
+    "duration_s": 0.8,
+    "samples": 23,
+    "drift_m": 0.0,
+    "max_speed_mps": 0.0,
+    "max_abs_yaw_rate_radps": 0.0
+  },
+  "passed": true,
+  "phase": "history",
+  "utc": "2026-11-16T16:12:46.128584+00:00",
+  "witness_samples": 26
+}

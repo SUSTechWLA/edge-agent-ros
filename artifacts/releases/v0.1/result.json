@@ -1,0 +1,10 @@
+{
+  "run_id": "20261116-161215-c0298b",
+  "passed": true,
+  "error": "",
+  "image": "edge-agent-ros:v0.1",
+  "image_id": "sha256:232deffa0d786fefae4893fe2734602ed457b4c645c97320e3b23a824d135bf9",
+  "engine": "29.9.3",
+  "compose": "5.7.0",
+  "platform": "linux/x86_64"
+}

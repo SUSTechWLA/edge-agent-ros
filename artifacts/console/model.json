@@ -1,0 +1,1159 @@
+{
+  "environment": "Docker Desktop / Gazebo simulation",
+  "model": "qwen2.5:1.5b",
+  "quantization": "Q4_K_M",
+  "model_manifest_sha256": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+  "ollama_version": "0.40.16",
+  "ollama_image_digest": "sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592",
+  "processor": "100% CPU (Ollama ps)",
+  "experiments": [
+    {
+      "first_observed_submit_utc": "2026-11-17T11:01:41.8139903+08:00",
+      "first_observed_completion_utc": "2026-11-17T11:01:46.0106624+08:00",
+      "submit_to_terminal_poll_seconds": 4.19,
+      "poll_interval_seconds": 0.5,
+      "model_was_loaded_before_submission": false,
+      "task": {
+        "id": "llm-status-0aaa743992c6",
+        "text": "帮我瞧瞧这台小车眼下朝向哪边、停在什么地方，把当前的测量结果告诉我就好。",
+        "state": "BLOCKED",
+        "detail": "巡检点必须由请求明确给出并在 [-4,4] 米内",
+        "provider": null,
+        "steps": [],
+        "cursor": 0,
+        "retries": 0,
+        "due": 1794884505.5993316,
+        "created": "2026-11-17T11:01:41.876059+08:00",
+        "updated": "2026-11-17T11:01:45.599301+08:00",
+        "can_retry": false,
+        "events": [
+          {
+            "seq": 29,
+            "utc": "2026-11-17T11:01:41.876059+08:00",
+            "task_id": "llm-status-0aaa743992c6",
+            "step": 0,
+            "kind": "accepted",
+            "detail": "帮我瞧瞧这台小车眼下朝向哪边、停在什么地方，把当前的测量结果告诉我就好。",
+            "operation_id": null,
+            "payload": "{}"
+          },
+          {
+            "seq": 30,
+            "utc": "2026-11-17T11:01:45.599301+08:00",
+            "task_id": "llm-status-0aaa743992c6",
+            "step": 0,
+            "kind": "blocked",
+            "detail": "巡检点必须由请求明确给出并在 [-4,4] 米内",
+            "operation_id": null,
+            "payload": "{\"provider\": null, \"state\": \"BLOCKED\", \"retries\": 0}"
+          }
+        ]
+      },
+      "stage": "before_capability_filter"
+    },
+    {
+      "first_observed_submit_utc": "2026-11-17T11:02:35.2205134+08:00",
+      "first_observed_completion_utc": "2026-11-17T11:02:37.371511+08:00",
+      "submit_to_terminal_poll_seconds": 2.15,
+      "poll_interval_seconds": 0.5,
+      "model_was_loaded_before_submission": true,
+      "task": {
+        "id": "llm-status-5228af5d0c82",
+        "text": "麻烦只读取一下机器人的当前状态，将它的位置、朝向和速度返回给我。不要移动。",
+        "state": "SUCCEEDED",
+        "detail": "已取得步骤证据",
+        "provider": "ollama/qwen2.5:1.5b",
+        "steps": [
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-status-5228af5d0c82/step/1",
+            "started_at": 1794884557.1984432,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1073992000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-status-5228af5d0c82/step/2",
+            "started_at": 1794884557.2072978,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1074026000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-status-5228af5d0c82/step/3",
+            "started_at": 1794884557.2144809,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1074026000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          }
+        ],
+        "cursor": 3,
+        "retries": 0,
+        "due": 1794884557.21756,
+        "created": "2026-11-17T11:02:35.278644+08:00",
+        "updated": "2026-11-17T11:02:37.217508+08:00",
+        "can_retry": false,
+        "events": [
+          {
+            "seq": 31,
+            "utc": "2026-11-17T11:02:35.278644+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 0,
+            "kind": "accepted",
+            "detail": "麻烦只读取一下机器人的当前状态，将它的位置、朝向和速度返回给我。不要移动。",
+            "operation_id": null,
+            "payload": "{}"
+          },
+          {
+            "seq": 32,
+            "utc": "2026-11-17T11:02:37.038195+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 0,
+            "kind": "planned",
+            "detail": "已验证计划",
+            "operation_id": null,
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"steps\": [{\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}]}"
+          },
+          {
+            "seq": 33,
+            "utc": "2026-11-17T11:02:37.19845+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 0,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-status-5228af5d0c82/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-status-5228af5d0c82/step/1\", \"started_at\": 1794884557.1984432}}"
+          },
+          {
+            "seq": 34,
+            "utc": "2026-11-17T11:02:37.201304+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 0,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-status-5228af5d0c82/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-status-5228af5d0c82/step/1\", \"started_at\": 1794884557.1984432, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1073992000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 35,
+            "utc": "2026-11-17T11:02:37.207304+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 1,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-status-5228af5d0c82/step/2",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-status-5228af5d0c82/step/2\", \"started_at\": 1794884557.2072978}}"
+          },
+          {
+            "seq": 36,
+            "utc": "2026-11-17T11:02:37.210094+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 1,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-status-5228af5d0c82/step/2",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-status-5228af5d0c82/step/2\", \"started_at\": 1794884557.2072978, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1074026000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 37,
+            "utc": "2026-11-17T11:02:37.214483+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 2,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-status-5228af5d0c82/step/3",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-status-5228af5d0c82/step/3\", \"started_at\": 1794884557.2144809}}"
+          },
+          {
+            "seq": 38,
+            "utc": "2026-11-17T11:02:37.217508+08:00",
+            "task_id": "llm-status-5228af5d0c82",
+            "step": 2,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-status-5228af5d0c82/step/3",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"SUCCEEDED\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-status-5228af5d0c82/step/3\", \"started_at\": 1794884557.2144809, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1074026000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          }
+        ]
+      },
+      "stage": "before_capability_filter"
+    },
+    {
+      "stage": "after_capability_filter",
+      "first_observed_submit_utc": "2026-11-17T11:03:26.4403684+08:00",
+      "first_observed_completion_utc": "2026-11-17T11:03:28.5781356+08:00",
+      "submit_to_terminal_poll_seconds": 2.14,
+      "poll_interval_seconds": 0.5,
+      "model_was_loaded_before_submission": true,
+      "task": {
+        "id": "llm-check-30815a83c2ee",
+        "text": "帮我瞧瞧这台小车眼下朝向哪边、停在什么地方，把当前的测量结果告诉我就好。",
+        "state": "SUCCEEDED",
+        "detail": "已取得步骤证据",
+        "provider": "ollama/qwen2.5:1.5b",
+        "steps": [
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-30815a83c2ee/step/1",
+            "started_at": 1794884608.191795,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1124992000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-30815a83c2ee/step/2",
+            "started_at": 1794884608.1997414,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1124992000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          }
+        ],
+        "cursor": 2,
+        "retries": 0,
+        "due": 1794884608.2023263,
+        "created": "2026-11-17T11:03:26.497038+08:00",
+        "updated": "2026-11-17T11:03:28.202291+08:00",
+        "can_retry": false,
+        "events": [
+          {
+            "seq": 39,
+            "utc": "2026-11-17T11:03:26.497038+08:00",
+            "task_id": "llm-check-30815a83c2ee",
+            "step": 0,
+            "kind": "accepted",
+            "detail": "帮我瞧瞧这台小车眼下朝向哪边、停在什么地方，把当前的测量结果告诉我就好。",
+            "operation_id": null,
+            "payload": "{}"
+          },
+          {
+            "seq": 40,
+            "utc": "2026-11-17T11:03:28.008409+08:00",
+            "task_id": "llm-check-30815a83c2ee",
+            "step": 0,
+            "kind": "planned",
+            "detail": "已验证计划",
+            "operation_id": null,
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"steps\": [{\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}]}"
+          },
+          {
+            "seq": 41,
+            "utc": "2026-11-17T11:03:28.191801+08:00",
+            "task_id": "llm-check-30815a83c2ee",
+            "step": 0,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-30815a83c2ee/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-30815a83c2ee/step/1\", \"started_at\": 1794884608.191795}}"
+          },
+          {
+            "seq": 42,
+            "utc": "2026-11-17T11:03:28.194495+08:00",
+            "task_id": "llm-check-30815a83c2ee",
+            "step": 0,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-30815a83c2ee/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-30815a83c2ee/step/1\", \"started_at\": 1794884608.191795, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1124992000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 43,
+            "utc": "2026-11-17T11:03:28.199746+08:00",
+            "task_id": "llm-check-30815a83c2ee",
+            "step": 1,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-30815a83c2ee/step/2",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-30815a83c2ee/step/2\", \"started_at\": 1794884608.1997414}}"
+          },
+          {
+            "seq": 44,
+            "utc": "2026-11-17T11:03:28.202291+08:00",
+            "task_id": "llm-check-30815a83c2ee",
+            "step": 1,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-30815a83c2ee/step/2",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"SUCCEEDED\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-30815a83c2ee/step/2\", \"started_at\": 1794884608.1997414, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1124992000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "after_capability_filter",
+      "first_observed_submit_utc": "2026-11-17T11:03:28.5967226+08:00",
+      "first_observed_completion_utc": "2026-11-17T11:03:33.7597744+08:00",
+      "submit_to_terminal_poll_seconds": 5.16,
+      "poll_interval_seconds": 0.5,
+      "model_was_loaded_before_submission": true,
+      "task": {
+        "id": "llm-check-1e1277f68352",
+        "text": "帮我用相机拍一张前方环境的照片并保存下来。",
+        "state": "SUCCEEDED",
+        "detail": "已取得步骤证据",
+        "provider": "ollama/qwen2.5:1.5b",
+        "steps": [
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/1",
+            "started_at": 1794884613.6141076,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130432000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/2",
+            "started_at": 1794884613.6229436,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130432000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/3",
+            "started_at": 1794884613.6301372,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130432000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/4",
+            "started_at": 1794884613.6367674,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130432000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/5",
+            "started_at": 1794884613.6446629,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130432000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/6",
+            "started_at": 1794884613.651609,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130466000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/7",
+            "started_at": 1794884613.659306,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130466000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/8",
+            "started_at": 1794884613.666937,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130466000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/9",
+            "started_at": 1794884613.6746297,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130466000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/10",
+            "started_at": 1794884613.6811316,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130466000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/11",
+            "started_at": 1794884613.6880686,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130500000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/12",
+            "started_at": 1794884613.6950278,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130500000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/13",
+            "started_at": 1794884613.7026336,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130500000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/14",
+            "started_at": 1794884613.7098794,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130500000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/15",
+            "started_at": 1794884613.7165127,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130500000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          },
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-check-1e1277f68352/step/16",
+            "started_at": 1794884613.724043,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1130534000000,
+              "x": -0.04125405239128911,
+              "y": 0.029047221761112095,
+              "yaw": -0.6206857101636244,
+              "speed": 0.0
+            }
+          }
+        ],
+        "cursor": 16,
+        "retries": 0,
+        "due": 1794884613.7268813,
+        "created": "2026-11-17T11:03:28.600785+08:00",
+        "updated": "2026-11-17T11:03:33.726827+08:00",
+        "can_retry": false,
+        "events": [
+          {
+            "seq": 45,
+            "utc": "2026-11-17T11:03:28.600785+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 0,
+            "kind": "accepted",
+            "detail": "帮我用相机拍一张前方环境的照片并保存下来。",
+            "operation_id": null,
+            "payload": "{}"
+          },
+          {
+            "seq": 46,
+            "utc": "2026-11-17T11:03:33.491425+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 0,
+            "kind": "planned",
+            "detail": "已验证计划",
+            "operation_id": null,
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"steps\": [{\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}, {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}]}"
+          },
+          {
+            "seq": 47,
+            "utc": "2026-11-17T11:03:33.614112+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 0,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/1\", \"started_at\": 1794884613.6141076}}"
+          },
+          {
+            "seq": 48,
+            "utc": "2026-11-17T11:03:33.618753+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 0,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/1\", \"started_at\": 1794884613.6141076, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130432000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 49,
+            "utc": "2026-11-17T11:03:33.622946+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 1,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/2",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/2\", \"started_at\": 1794884613.6229436}}"
+          },
+          {
+            "seq": 50,
+            "utc": "2026-11-17T11:03:33.625555+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 1,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/2",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/2\", \"started_at\": 1794884613.6229436, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130432000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 51,
+            "utc": "2026-11-17T11:03:33.630139+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 2,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/3",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/3\", \"started_at\": 1794884613.6301372}}"
+          },
+          {
+            "seq": 52,
+            "utc": "2026-11-17T11:03:33.632375+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 2,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/3",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/3\", \"started_at\": 1794884613.6301372, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130432000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 53,
+            "utc": "2026-11-17T11:03:33.636769+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 3,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/4",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/4\", \"started_at\": 1794884613.6367674}}"
+          },
+          {
+            "seq": 54,
+            "utc": "2026-11-17T11:03:33.639272+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 3,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/4",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/4\", \"started_at\": 1794884613.6367674, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130432000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 55,
+            "utc": "2026-11-17T11:03:33.644665+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 4,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/5",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/5\", \"started_at\": 1794884613.6446629}}"
+          },
+          {
+            "seq": 56,
+            "utc": "2026-11-17T11:03:33.647018+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 4,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/5",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/5\", \"started_at\": 1794884613.6446629, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130432000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 57,
+            "utc": "2026-11-17T11:03:33.651612+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 5,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/6",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/6\", \"started_at\": 1794884613.651609}}"
+          },
+          {
+            "seq": 58,
+            "utc": "2026-11-17T11:03:33.654979+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 5,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/6",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/6\", \"started_at\": 1794884613.651609, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130466000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 59,
+            "utc": "2026-11-17T11:03:33.65931+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 6,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/7",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/7\", \"started_at\": 1794884613.659306}}"
+          },
+          {
+            "seq": 60,
+            "utc": "2026-11-17T11:03:33.661872+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 6,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/7",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/7\", \"started_at\": 1794884613.659306, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130466000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 61,
+            "utc": "2026-11-17T11:03:33.666939+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 7,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/8",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/8\", \"started_at\": 1794884613.666937}}"
+          },
+          {
+            "seq": 62,
+            "utc": "2026-11-17T11:03:33.669365+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 7,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/8",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/8\", \"started_at\": 1794884613.666937, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130466000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 63,
+            "utc": "2026-11-17T11:03:33.674631+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 8,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/9",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/9\", \"started_at\": 1794884613.6746297}}"
+          },
+          {
+            "seq": 64,
+            "utc": "2026-11-17T11:03:33.677252+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 8,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/9",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/9\", \"started_at\": 1794884613.6746297, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130466000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 65,
+            "utc": "2026-11-17T11:03:33.681133+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 9,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/10",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/10\", \"started_at\": 1794884613.6811316}}"
+          },
+          {
+            "seq": 66,
+            "utc": "2026-11-17T11:03:33.683571+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 9,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/10",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/10\", \"started_at\": 1794884613.6811316, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130466000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 67,
+            "utc": "2026-11-17T11:03:33.68807+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 10,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/11",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/11\", \"started_at\": 1794884613.6880686}}"
+          },
+          {
+            "seq": 68,
+            "utc": "2026-11-17T11:03:33.690476+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 10,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/11",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/11\", \"started_at\": 1794884613.6880686, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130500000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 69,
+            "utc": "2026-11-17T11:03:33.695029+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 11,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/12",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/12\", \"started_at\": 1794884613.6950278}}"
+          },
+          {
+            "seq": 70,
+            "utc": "2026-11-17T11:03:33.69785+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 11,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/12",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/12\", \"started_at\": 1794884613.6950278, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130500000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 71,
+            "utc": "2026-11-17T11:03:33.702637+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 12,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/13",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/13\", \"started_at\": 1794884613.7026336}}"
+          },
+          {
+            "seq": 72,
+            "utc": "2026-11-17T11:03:33.705443+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 12,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/13",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/13\", \"started_at\": 1794884613.7026336, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130500000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 73,
+            "utc": "2026-11-17T11:03:33.709881+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 13,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/14",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/14\", \"started_at\": 1794884613.7098794}}"
+          },
+          {
+            "seq": 74,
+            "utc": "2026-11-17T11:03:33.712227+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 13,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/14",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/14\", \"started_at\": 1794884613.7098794, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130500000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 75,
+            "utc": "2026-11-17T11:03:33.716514+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 14,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/15",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/15\", \"started_at\": 1794884613.7165127}}"
+          },
+          {
+            "seq": 76,
+            "utc": "2026-11-17T11:03:33.719262+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 14,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/15",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/15\", \"started_at\": 1794884613.7165127, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130500000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          },
+          {
+            "seq": 77,
+            "utc": "2026-11-17T11:03:33.724046+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 15,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-check-1e1277f68352/step/16",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-check-1e1277f68352/step/16\", \"started_at\": 1794884613.724043}}"
+          },
+          {
+            "seq": 78,
+            "utc": "2026-11-17T11:03:33.726827+08:00",
+            "task_id": "llm-check-1e1277f68352",
+            "step": 15,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-check-1e1277f68352/step/16",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"SUCCEEDED\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-check-1e1277f68352/step/16\", \"started_at\": 1794884613.724043, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1130534000000, \"x\": -0.04125405239128911, \"y\": 0.029047221761112095, \"yaw\": -0.6206857101636244, \"speed\": 0.0}}}"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "outcome_contract",
+      "first_observed_submit_utc": "2026-11-17T03:08:08.4994172+00:00",
+      "first_observed_completion_utc": "2026-11-17T03:08:10.6422703+00:00",
+      "submit_to_terminal_poll_seconds": 2.14,
+      "poll_interval_seconds": 0.5,
+      "model_was_loaded_before_submission": true,
+      "task": {
+        "id": "llm-final-e2b70e29cc9d",
+        "text": "帮我瞧瞧这台小车眼下朝向哪边、停在什么地方，把当前的测量结果告诉我就好。",
+        "state": "SUCCEEDED",
+        "detail": "已取得步骤证据",
+        "provider": "ollama/qwen2.5:1.5b",
+        "steps": [
+          {
+            "tool": "status",
+            "args": {},
+            "version": "1",
+            "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+            "status": "SUCCEEDED",
+            "operation_id": "llm-final-e2b70e29cc9d/step/1",
+            "started_at": 1794884890.1988218,
+            "evidence": {
+              "source": "/odom",
+              "frame": "odom",
+              "stamp_ns": 1406988000000,
+              "x": 0.03813940838132633,
+              "y": 0.5240501483221557,
+              "yaw": -2.9164953327992906,
+              "speed": 0.31999999999996476
+            }
+          }
+        ],
+        "cursor": 1,
+        "retries": 0,
+        "due": 1794884890.2032664,
+        "created": "2026-11-17T11:08:08.555026+08:00",
+        "updated": "2026-11-17T11:08:10.203234+08:00",
+        "can_retry": false,
+        "events": [
+          {
+            "seq": 108,
+            "utc": "2026-11-17T11:08:08.555026+08:00",
+            "task_id": "llm-final-e2b70e29cc9d",
+            "step": 0,
+            "kind": "accepted",
+            "detail": "帮我瞧瞧这台小车眼下朝向哪边、停在什么地方，把当前的测量结果告诉我就好。",
+            "operation_id": null,
+            "payload": "{}"
+          },
+          {
+            "seq": 109,
+            "utc": "2026-11-17T11:08:10.019538+08:00",
+            "task_id": "llm-final-e2b70e29cc9d",
+            "step": 0,
+            "kind": "planned",
+            "detail": "已验证计划",
+            "operation_id": null,
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"steps\": [{\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"PENDING\"}]}"
+          },
+          {
+            "seq": 110,
+            "utc": "2026-11-17T11:08:10.198826+08:00",
+            "task_id": "llm-final-e2b70e29cc9d",
+            "step": 0,
+            "kind": "dispatch",
+            "detail": "已持久化步骤意图",
+            "operation_id": "llm-final-e2b70e29cc9d/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"operation_id\": \"llm-final-e2b70e29cc9d/step/1\", \"started_at\": 1794884890.1988218}}"
+          },
+          {
+            "seq": 111,
+            "utc": "2026-11-17T11:08:10.203234+08:00",
+            "task_id": "llm-final-e2b70e29cc9d",
+            "step": 0,
+            "kind": "verified",
+            "detail": "已取得步骤证据",
+            "operation_id": "llm-final-e2b70e29cc9d/step/1",
+            "payload": "{\"provider\": \"ollama/qwen2.5:1.5b\", \"state\": \"SUCCEEDED\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"operation_id\": \"llm-final-e2b70e29cc9d/step/1\", \"started_at\": 1794884890.1988218, \"evidence\": {\"source\": \"/odom\", \"frame\": \"odom\", \"stamp_ns\": 1406988000000, \"x\": 0.03813940838132633, \"y\": 0.5240501483221557, \"yaw\": -2.9164953327992906, \"speed\": 0.31999999999996476}}}"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "outcome_contract",
+      "first_observed_submit_utc": "2026-11-17T03:08:10.9750192+00:00",
+      "first_observed_completion_utc": "2026-11-17T03:08:11.4909089+00:00",
+      "submit_to_terminal_poll_seconds": 0.52,
+      "poll_interval_seconds": 0.5,
+      "model_was_loaded_before_submission": true,
+      "task": {
+        "id": "llm-final-6cc207d0e3ca",
+        "text": "帮我用相机拍一张前方环境的照片并保存下来。",
+        "state": "BLOCKED",
+        "detail": "当前能力目录缺少任务要求的产物或测量：image",
+        "provider": null,
+        "steps": [],
+        "cursor": 0,
+        "retries": 0,
+        "due": 1794884891.0280297,
+        "created": "2026-11-17T11:08:10.978651+08:00",
+        "updated": "2026-11-17T11:08:11.028011+08:00",
+        "can_retry": false,
+        "events": [
+          {
+            "seq": 112,
+            "utc": "2026-11-17T11:08:10.978651+08:00",
+            "task_id": "llm-final-6cc207d0e3ca",
+            "step": 0,
+            "kind": "accepted",
+            "detail": "帮我用相机拍一张前方环境的照片并保存下来。",
+            "operation_id": null,
+            "payload": "{}"
+          },
+          {
+            "seq": 113,
+            "utc": "2026-11-17T11:08:11.028011+08:00",
+            "task_id": "llm-final-6cc207d0e3ca",
+            "step": 0,
+            "kind": "blocked",
+            "detail": "当前能力目录缺少任务要求的产物或测量：image",
+            "operation_id": null,
+            "payload": "{\"provider\": null, \"state\": \"BLOCKED\", \"retries\": 0, \"diagnostic\": {\"stage\": \"capability_check\"}}"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "outcome_contract",
+      "first_observed_submit_utc": "2026-11-17T03:08:11.8120153+00:00",
+      "first_observed_completion_utc": "2026-11-17T03:08:12.3405051+00:00",
+      "submit_to_terminal_poll_seconds": 0.53,
+      "poll_interval_seconds": 0.5,
+      "model_was_loaded_before_submission": true,
+      "task": {
+        "id": "llm-final-4c6b8d6b407d",
+        "text": "报告当前位置并拍一张前方环境的照片。",
+        "state": "BLOCKED",
+        "detail": "当前能力目录缺少任务要求的产物或测量：image",
+        "provider": null,
+        "steps": [],
+        "cursor": 0,
+        "retries": 0,
+        "due": 1794884891.8346815,
+        "created": "2026-11-17T11:08:11.816496+08:00",
+        "updated": "2026-11-17T11:08:11.834667+08:00",
+        "can_retry": false,
+        "events": [
+          {
+            "seq": 114,
+            "utc": "2026-11-17T11:08:11.816496+08:00",
+            "task_id": "llm-final-4c6b8d6b407d",
+            "step": 0,
+            "kind": "accepted",
+            "detail": "报告当前位置并拍一张前方环境的照片。",
+            "operation_id": null,
+            "payload": "{}"
+          },
+          {
+            "seq": 115,
+            "utc": "2026-11-17T11:08:11.834667+08:00",
+            "task_id": "llm-final-4c6b8d6b407d",
+            "step": 0,
+            "kind": "blocked",
+            "detail": "当前能力目录缺少任务要求的产物或测量：image",
+            "operation_id": null,
+            "payload": "{\"provider\": null, \"state\": \"BLOCKED\", \"retries\": 0, \"diagnostic\": {\"stage\": \"capability_check\"}}"
+          }
+        ]
+      }
+    }
+  ]
+}

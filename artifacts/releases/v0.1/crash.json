@@ -1,0 +1,15 @@
+{
+  "state": "RECOVERY_REQUIRED",
+  "detail": "restart: unresolved mission; inspect physical state",
+  "stop": {
+    "duration_s": 0.8,
+    "samples": 23,
+    "drift_m": 0.0,
+    "max_speed_mps": 0.0,
+    "max_abs_yaw_rate_radps": 0.0
+  },
+  "passed": true,
+  "phase": "crash",
+  "utc": "2026-11-16T16:12:58.198596+00:00",
+  "witness_samples": 85
+}

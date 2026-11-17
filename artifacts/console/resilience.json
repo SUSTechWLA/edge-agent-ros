@@ -1,0 +1,1353 @@
+{
+  "project": "edge-console-resilience-2121a2e1cc",
+  "port": 51361,
+  "image": "edge-agent-ros:v0.1",
+  "utc": "2026-11-17T03:18:13.403440+00:00",
+  "passed": true,
+  "cases": {
+    "restart": {
+      "passed": true,
+      "operation_id": "first/step/1/waypoint/1",
+      "gateway_starts": [
+        "gateway-1  | [INFO] [1794885498.719533007] [edge_gateway]: Tracking first/step/1/waypoint/1 to (2.600, 0.000)"
+      ],
+      "agent_started_before": "2026-11-17T03:18:14.375381354Z",
+      "agent_started_after": "2026-11-17T03:18:20.398984201Z",
+      "truth_at_kill": {
+        "x": 0.24016565326570055,
+        "y": -2.354203390330436e-15,
+        "z": 0.0,
+        "yaw": -9.809848417313334e-15,
+        "v": 0.3199994848969808,
+        "w": 0.0,
+        "frame": "world",
+        "child_frame": "base_link",
+        "quaternion": [
+          6.1967054504842964e-18,
+          7.016315935135468e-08,
+          -4.904924209091411e-15,
+          0.9999999999999976
+        ],
+        "linear_velocity": [
+          0.3199994848969808,
+          -9.232839705615696e-18,
+          0.0
+        ],
+        "angular_velocity": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "result": {
+        "mission_id": "first/step/1",
+        "verified_count": 1,
+        "points": [
+          [
+            2.5484854511074087,
+            -1.3771764017453602e-14
+          ]
+        ]
+      },
+      "events": [
+        {
+          "seq": 6,
+          "utc": "2026-11-17T03:18:18.246618+00:00",
+          "observed_at": 1794885498.3708901,
+          "kind": "agent.accepted",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first",
+          "operation_id": null,
+          "detail": "inspect (2.6,0)",
+          "data": {
+            "source_seq": 1,
+            "task_id": "first",
+            "journal_step": 0,
+            "delegated_operation_id": null,
+            "payload": {}
+          },
+          "cause_seq": null,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 1
+        },
+        {
+          "seq": 10,
+          "utc": "2026-11-17T03:18:18.719+00:00",
+          "observed_at": 1794885498.71936,
+          "kind": "operation.changed",
+          "level": "info",
+          "source": "/edge/active_operation",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "运动许可更新",
+          "data": {
+            "id": "first/step/1/waypoint/1"
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 13,
+          "utc": "2026-11-17T03:18:18.872+00:00",
+          "observed_at": 1794885498.8720949,
+          "kind": "motion.changed",
+          "level": "info",
+          "source": "/odom",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "里程计检测到运动",
+          "data": {
+            "moving": true,
+            "v": 0.3199999999994513,
+            "w": 0.0
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 14,
+          "utc": "2026-11-17T03:18:18.422866+00:00",
+          "observed_at": 1794885499.1182942,
+          "kind": "agent.planned",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first",
+          "operation_id": null,
+          "detail": "已验证计划",
+          "data": {
+            "source_seq": 2,
+            "task_id": "first",
+            "journal_step": 0,
+            "delegated_operation_id": null,
+            "payload": {
+              "provider": "local",
+              "state": "RUNNING",
+              "retries": 0,
+              "steps": [
+                {
+                  "tool": "inspect",
+                  "args": {
+                    "points": [
+                      [
+                        2.6,
+                        0.0
+                      ]
+                    ]
+                  },
+                  "version": "1",
+                  "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                  "status": "PENDING"
+                }
+              ]
+            }
+          },
+          "cause_seq": 6,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 2
+        },
+        {
+          "seq": 15,
+          "utc": "2026-11-17T03:18:18.622497+00:00",
+          "observed_at": 1794885499.122251,
+          "kind": "agent.dispatch",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first",
+          "operation_id": "first/step/1",
+          "detail": "已持久化步骤意图",
+          "data": {
+            "source_seq": 3,
+            "task_id": "first",
+            "journal_step": 0,
+            "delegated_operation_id": "first/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "RUNNING",
+              "retries": 0,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      2.6,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "RUNNING",
+                "operation_id": "first/step/1",
+                "started_at": 1794885498.6224914
+              }
+            }
+          },
+          "cause_seq": 14,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 3
+        },
+        {
+          "seq": 16,
+          "utc": "2026-11-17T03:18:18.627Z",
+          "observed_at": 1794885499.1259537,
+          "kind": "mission.created",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": null,
+          "detail": "accepted",
+          "data": {
+            "source_seq": 1,
+            "source_cause_seq": null,
+            "prior_state": null,
+            "state": "RUNNING",
+            "parent_task_id": "first",
+            "agent_dispatch_seq": 15
+          },
+          "cause_seq": 15,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 1
+        },
+        {
+          "seq": 17,
+          "utc": "2026-11-17T03:18:18.716Z",
+          "observed_at": 1794885499.1289964,
+          "kind": "step.dispatch",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "{\"step\":0,\"target_x\":2.6,\"target_y\":0.0}",
+          "data": {
+            "source_seq": 2,
+            "source_cause_seq": 1,
+            "prior_state": null,
+            "state": null,
+            "step": 0,
+            "target_x": 2.6,
+            "target_y": 0.0
+          },
+          "cause_seq": 16,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 2
+        },
+        {
+          "seq": 18,
+          "utc": "2026-11-17T03:18:18.716Z",
+          "observed_at": 1794885499.1320736,
+          "kind": "mission.detail",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "dispatch: first/step/1/waypoint/1",
+          "data": {
+            "source_seq": 3,
+            "source_cause_seq": 2,
+            "prior_state": "RUNNING",
+            "state": "RUNNING"
+          },
+          "cause_seq": 17,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 3
+        },
+        {
+          "seq": 33,
+          "utc": "2026-11-17T03:18:27.617+00:00",
+          "observed_at": 1794885507.617961,
+          "kind": "motion.changed",
+          "level": "info",
+          "source": "/odom",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "里程计低于运动阈值",
+          "data": {
+            "moving": false,
+            "v": 0.0,
+            "w": 0.0
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 34,
+          "utc": "2026-11-17T03:18:27.778+00:00",
+          "observed_at": 1794885507.7784762,
+          "kind": "ros.log",
+          "level": "info",
+          "source": "edge_gateway",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "first/step/1/waypoint/1: reached; stationary odometry confirmed",
+          "data": {
+            "file": "/opt/edge/src/edge_gateway/src/edge_gateway_node.cpp",
+            "line": 147,
+            "function": "finish",
+            "stamp_s": 1794885507.7781153,
+            "severity": 20
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 36,
+          "utc": "2026-11-17T03:18:27.778Z",
+          "observed_at": 1794885507.8688028,
+          "kind": "step.result",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "reached; stationary odometry confirmed",
+          "data": {
+            "source_seq": 8,
+            "source_cause_seq": 3,
+            "prior_state": null,
+            "state": null
+          },
+          "cause_seq": 18,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 8
+        },
+        {
+          "seq": 37,
+          "utc": "2026-11-17T03:18:27.782Z",
+          "observed_at": 1794885507.8728724,
+          "kind": "mission.detail",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "verifying: first/step/1/waypoint/1",
+          "data": {
+            "source_seq": 9,
+            "source_cause_seq": 8,
+            "prior_state": "RUNNING",
+            "state": "RUNNING"
+          },
+          "cause_seq": 36,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 9
+        },
+        {
+          "seq": 38,
+          "utc": "2026-11-17T03:18:27.798Z",
+          "observed_at": 1794885507.8755476,
+          "kind": "step.verified",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "{\"step\":0,\"observed_x\":2.54848545110741,\"observed_y\":-1.37717640174536e-14,\"odom_stamp_ns\":9690000000}",
+          "data": {
+            "source_seq": 10,
+            "source_cause_seq": 9,
+            "prior_state": null,
+            "state": null,
+            "step": 0,
+            "observed_x": 2.54848545110741,
+            "observed_y": -1.37717640174536e-14,
+            "odom_stamp_ns": 9690000000
+          },
+          "cause_seq": 37,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 10
+        },
+        {
+          "seq": 39,
+          "utc": "2026-11-17T03:18:27.798Z",
+          "observed_at": 1794885507.878423,
+          "kind": "mission.transition",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first/step/1",
+          "operation_id": "first/step/1/waypoint/1",
+          "detail": "verified waypoint 1",
+          "data": {
+            "source_seq": 11,
+            "source_cause_seq": 10,
+            "prior_state": "RUNNING",
+            "state": "SUCCEEDED"
+          },
+          "cause_seq": 38,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 11
+        },
+        {
+          "seq": 41,
+          "utc": "2026-11-17T03:18:28.283962+00:00",
+          "observed_at": 1794885508.618343,
+          "kind": "agent.verified",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "first",
+          "operation_id": "first/step/1",
+          "detail": "已取得步骤证据",
+          "data": {
+            "source_seq": 11,
+            "task_id": "first",
+            "journal_step": 0,
+            "delegated_operation_id": "first/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "SUCCEEDED",
+              "retries": 0,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      2.6,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "SUCCEEDED",
+                "operation_id": "first/step/1",
+                "started_at": 1794885498.6224914,
+                "evidence": {
+                  "mission_id": "first/step/1",
+                  "verified_count": 1,
+                  "points": [
+                    [
+                      2.5484854511074087,
+                      -1.3771764017453602e-14
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "cause_seq": 15,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 11
+        }
+      ]
+    },
+    "contention": {
+      "passed": true,
+      "owner_release_seq": 11,
+      "next_owner_seq": 12,
+      "retries": 4,
+      "events": [
+        {
+          "seq": 20,
+          "utc": "2026-11-17T03:18:19.295902+00:00",
+          "observed_at": 1794885499.6185007,
+          "kind": "agent.accepted",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": null,
+          "detail": "inspect (1.4,0)",
+          "data": {
+            "source_seq": 4,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": null,
+            "payload": {}
+          },
+          "cause_seq": null,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 4
+        },
+        {
+          "seq": 21,
+          "utc": "2026-11-17T03:18:19.430792+00:00",
+          "observed_at": 1794885499.622074,
+          "kind": "agent.planned",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": null,
+          "detail": "已验证计划",
+          "data": {
+            "source_seq": 5,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": null,
+            "payload": {
+              "provider": "local",
+              "state": "RUNNING",
+              "retries": 0,
+              "steps": [
+                {
+                  "tool": "inspect",
+                  "args": {
+                    "points": [
+                      [
+                        1.4,
+                        0.0
+                      ]
+                    ]
+                  },
+                  "version": "1",
+                  "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                  "status": "PENDING"
+                }
+              ]
+            }
+          },
+          "cause_seq": 20,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 5
+        },
+        {
+          "seq": 22,
+          "utc": "2026-11-17T03:18:19.442988+00:00",
+          "observed_at": 1794885499.6255624,
+          "kind": "agent.dispatch",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": "second/step/1",
+          "detail": "已持久化步骤意图",
+          "data": {
+            "source_seq": 6,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": "second/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "RUNNING",
+              "retries": 0,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      1.4,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "RUNNING",
+                "operation_id": "second/step/1",
+                "started_at": 1794885499.4429822
+              }
+            }
+          },
+          "cause_seq": 21,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 6
+        },
+        {
+          "seq": 23,
+          "utc": "2026-11-17T03:18:19.449306+00:00",
+          "observed_at": 1794885499.6284356,
+          "kind": "agent.retry",
+          "level": "warn",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": "second/step/1",
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 7,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": "second/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "WAITING",
+              "retries": 1,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      1.4,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "RUNNING",
+                "operation_id": "second/step/1",
+                "started_at": 1794885499.4429822
+              }
+            }
+          },
+          "cause_seq": 22,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 7
+        },
+        {
+          "seq": 24,
+          "utc": "2026-11-17T03:18:19.446Z",
+          "observed_at": 1794885499.632328,
+          "kind": "request.rejected",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": null,
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 4,
+            "source_cause_seq": null,
+            "prior_state": null,
+            "state": null
+          },
+          "cause_seq": null,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 4
+        },
+        {
+          "seq": 25,
+          "utc": "2026-11-17T03:18:20.966093+00:00",
+          "observed_at": 1794885501.368317,
+          "kind": "agent.retry",
+          "level": "warn",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": "second/step/1",
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 8,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": "second/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "WAITING",
+              "retries": 2,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      1.4,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "RUNNING",
+                "operation_id": "second/step/1",
+                "started_at": 1794885499.4429822
+              }
+            }
+          },
+          "cause_seq": 23,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 8
+        },
+        {
+          "seq": 26,
+          "utc": "2026-11-17T03:18:20.960Z",
+          "observed_at": 1794885501.3736863,
+          "kind": "request.rejected",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": null,
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 5,
+            "source_cause_seq": 4,
+            "prior_state": null,
+            "state": null
+          },
+          "cause_seq": 24,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 5
+        },
+        {
+          "seq": 28,
+          "utc": "2026-11-17T03:18:23.006699+00:00",
+          "observed_at": 1794885503.121072,
+          "kind": "agent.retry",
+          "level": "warn",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": "second/step/1",
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 9,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": "second/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "WAITING",
+              "retries": 3,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      1.4,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "RUNNING",
+                "operation_id": "second/step/1",
+                "started_at": 1794885499.4429822
+              }
+            }
+          },
+          "cause_seq": 25,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 9
+        },
+        {
+          "seq": 29,
+          "utc": "2026-11-17T03:18:23.002Z",
+          "observed_at": 1794885503.12577,
+          "kind": "request.rejected",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": null,
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 6,
+            "source_cause_seq": 5,
+            "prior_state": null,
+            "state": null
+          },
+          "cause_seq": 26,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 6
+        },
+        {
+          "seq": 31,
+          "utc": "2026-11-17T03:18:27.064557+00:00",
+          "observed_at": 1794885507.370403,
+          "kind": "agent.retry",
+          "level": "warn",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": "second/step/1",
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 10,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": "second/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "WAITING",
+              "retries": 4,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      1.4,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "RUNNING",
+                "operation_id": "second/step/1",
+                "started_at": 1794885499.4429822
+              }
+            }
+          },
+          "cause_seq": 28,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 10
+        },
+        {
+          "seq": 32,
+          "utc": "2026-11-17T03:18:27.061Z",
+          "observed_at": 1794885507.3737252,
+          "kind": "request.rejected",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": null,
+          "detail": "base occupied by first/step/1",
+          "data": {
+            "source_seq": 7,
+            "source_cause_seq": 6,
+            "prior_state": null,
+            "state": null
+          },
+          "cause_seq": 29,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 7
+        },
+        {
+          "seq": 43,
+          "utc": "2026-11-17T03:18:35.120+00:00",
+          "observed_at": 1794885515.1202533,
+          "kind": "operation.changed",
+          "level": "info",
+          "source": "/edge/active_operation",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "运动许可更新",
+          "data": {
+            "id": "second/step/1/waypoint/1"
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 45,
+          "utc": "2026-11-17T03:18:35.098Z",
+          "observed_at": 1794885515.368649,
+          "kind": "mission.created",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": null,
+          "detail": "accepted",
+          "data": {
+            "source_seq": 12,
+            "source_cause_seq": null,
+            "prior_state": null,
+            "state": "RUNNING",
+            "parent_task_id": "second",
+            "agent_dispatch_seq": 22
+          },
+          "cause_seq": 22,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 12
+        },
+        {
+          "seq": 46,
+          "utc": "2026-11-17T03:18:35.116Z",
+          "observed_at": 1794885515.3725,
+          "kind": "step.dispatch",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "{\"step\":0,\"target_x\":1.4,\"target_y\":0.0}",
+          "data": {
+            "source_seq": 13,
+            "source_cause_seq": 12,
+            "prior_state": null,
+            "state": null,
+            "step": 0,
+            "target_x": 1.4,
+            "target_y": 0.0
+          },
+          "cause_seq": 45,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 13
+        },
+        {
+          "seq": 47,
+          "utc": "2026-11-17T03:18:35.116Z",
+          "observed_at": 1794885515.375585,
+          "kind": "mission.detail",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "dispatch: second/step/1/waypoint/1",
+          "data": {
+            "source_seq": 14,
+            "source_cause_seq": 13,
+            "prior_state": "RUNNING",
+            "state": "RUNNING"
+          },
+          "cause_seq": 46,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 14
+        },
+        {
+          "seq": 49,
+          "utc": "2026-11-17T03:18:35.383+00:00",
+          "observed_at": 1794885515.3833141,
+          "kind": "motion.changed",
+          "level": "info",
+          "source": "/odom",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "里程计检测到运动",
+          "data": {
+            "moving": true,
+            "v": -1.5987211554602254e-12,
+            "w": 1.099999999999805
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 53,
+          "utc": "2026-11-17T03:18:42.119+00:00",
+          "observed_at": 1794885522.1192267,
+          "kind": "motion.changed",
+          "level": "info",
+          "source": "/odom",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "里程计低于运动阈值",
+          "data": {
+            "moving": false,
+            "v": 0.0,
+            "w": 0.0
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 54,
+          "utc": "2026-11-17T03:18:42.228+00:00",
+          "observed_at": 1794885522.228343,
+          "kind": "ros.log",
+          "level": "info",
+          "source": "edge_gateway",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "second/step/1/waypoint/1: reached; stationary odometry confirmed",
+          "data": {
+            "file": "/opt/edge/src/edge_gateway/src/edge_gateway_node.cpp",
+            "line": 147,
+            "function": "finish",
+            "stamp_s": 1794885522.2278943,
+            "severity": 20
+          },
+          "cause_seq": null,
+          "source_id": null,
+          "source_seq": null
+        },
+        {
+          "seq": 56,
+          "utc": "2026-11-17T03:18:42.430605+00:00",
+          "observed_at": 1794885522.8702824,
+          "kind": "agent.verified",
+          "level": "info",
+          "source": "mission_agent/tasks",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second",
+          "operation_id": "second/step/1",
+          "detail": "已取得步骤证据",
+          "data": {
+            "source_seq": 12,
+            "task_id": "second",
+            "journal_step": 0,
+            "delegated_operation_id": "second/step/1",
+            "payload": {
+              "provider": "local",
+              "state": "SUCCEEDED",
+              "retries": 0,
+              "step": {
+                "tool": "inspect",
+                "args": {
+                  "points": [
+                    [
+                      1.4,
+                      0.0
+                    ]
+                  ]
+                },
+                "version": "1",
+                "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+                "status": "SUCCEEDED",
+                "operation_id": "second/step/1",
+                "started_at": 1794885499.4429822,
+                "evidence": {
+                  "mission_id": "second/step/1",
+                  "verified_count": 1,
+                  "points": [
+                    [
+                      1.4522557734112185,
+                      0.0023305377649875986
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "cause_seq": 31,
+          "source_id": "agent:04febc6edeb7523fda55407f3102e18d",
+          "source_seq": 12
+        },
+        {
+          "seq": 57,
+          "utc": "2026-11-17T03:18:42.228Z",
+          "observed_at": 1794885522.874985,
+          "kind": "step.result",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "reached; stationary odometry confirmed",
+          "data": {
+            "source_seq": 15,
+            "source_cause_seq": 14,
+            "prior_state": null,
+            "state": null
+          },
+          "cause_seq": 47,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 15
+        },
+        {
+          "seq": 58,
+          "utc": "2026-11-17T03:18:42.236Z",
+          "observed_at": 1794885522.8786032,
+          "kind": "mission.detail",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "verifying: second/step/1/waypoint/1",
+          "data": {
+            "source_seq": 16,
+            "source_cause_seq": 15,
+            "prior_state": "RUNNING",
+            "state": "RUNNING"
+          },
+          "cause_seq": 57,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 16
+        },
+        {
+          "seq": 59,
+          "utc": "2026-11-17T03:18:42.248Z",
+          "observed_at": 1794885522.8813117,
+          "kind": "step.verified",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "{\"step\":0,\"observed_x\":1.45225577341122,\"observed_y\":0.0023305377649876,\"odom_stamp_ns\":24140000000}",
+          "data": {
+            "source_seq": 17,
+            "source_cause_seq": 16,
+            "prior_state": null,
+            "state": null,
+            "step": 0,
+            "observed_x": 1.45225577341122,
+            "observed_y": 0.0023305377649876,
+            "odom_stamp_ns": 24140000000
+          },
+          "cause_seq": 58,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 17
+        },
+        {
+          "seq": 60,
+          "utc": "2026-11-17T03:18:42.249Z",
+          "observed_at": 1794885522.8839138,
+          "kind": "mission.transition",
+          "level": "info",
+          "source": "edge_core/ledger",
+          "session_id": "c132415fbdb94214b9c4ea93cdc7553c",
+          "mission_id": "second/step/1",
+          "operation_id": "second/step/1/waypoint/1",
+          "detail": "verified waypoint 1",
+          "data": {
+            "source_seq": 18,
+            "source_cause_seq": 17,
+            "prior_state": "RUNNING",
+            "state": "SUCCEEDED"
+          },
+          "cause_seq": 59,
+          "source_id": "87cdfa43fcc271f7efda37de75816a4c",
+          "source_seq": 18
+        }
+      ],
+      "first_observed_world_pose": {
+        "x": 0.16400583928232038,
+        "y": -1.606724919398298e-15,
+        "z": 0.0,
+        "yaw": -9.80828661084422e-15,
+        "v": 0.319998747378622,
+        "w": 0.0,
+        "frame": "world",
+        "child_frame": "base_link",
+        "quaternion": [
+          4.9112667539754806e-18,
+          6.797703453965913e-08,
+          -4.904143305755929e-15,
+          0.9999999999999977
+        ],
+        "linear_velocity": [
+          0.319998747378622,
+          5.725792341996269e-19,
+          0.0
+        ],
+        "angular_velocity": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "operator_resume": {
+      "passed": true,
+      "paused_state": "RECOVERY_REQUIRED",
+      "events": [
+        {
+          "seq": 18,
+          "utc": "2026-11-17T03:18:52.546342+00:00",
+          "task_id": "repair",
+          "step": 0,
+          "kind": "accepted",
+          "detail": "read_fixture",
+          "operation_id": null,
+          "payload": "{}"
+        },
+        {
+          "seq": 19,
+          "utc": "2026-11-17T03:18:52.635809+00:00",
+          "task_id": "repair",
+          "step": 0,
+          "kind": "planned",
+          "detail": "已验证计划",
+          "operation_id": null,
+          "payload": "{\"provider\": \"local\", \"state\": \"RUNNING\", \"retries\": 0, \"steps\": [{\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"PENDING\"}]}"
+        },
+        {
+          "seq": 20,
+          "utc": "2026-11-17T03:18:52.836311+00:00",
+          "task_id": "repair",
+          "step": 0,
+          "kind": "dispatch",
+          "detail": "已持久化步骤意图",
+          "operation_id": "repair/step/1",
+          "payload": "{\"provider\": \"local\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"RUNNING\", \"operation_id\": \"repair/step/1\", \"started_at\": 1794885532.8363059}}"
+        },
+        {
+          "seq": 21,
+          "utc": "2026-11-17T03:18:52.853884+00:00",
+          "task_id": "repair",
+          "step": 0,
+          "kind": "retry_exhausted",
+          "detail": "adapter HTTP 503",
+          "operation_id": "repair/step/1",
+          "payload": "{\"provider\": \"local\", \"state\": \"RECOVERY_REQUIRED\", \"retries\": 1, \"step\": {\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"RUNNING\", \"operation_id\": \"repair/step/1\", \"started_at\": 1794885532.8363059}}"
+        },
+        {
+          "seq": 22,
+          "utc": "2026-11-17T03:18:53.027306+00:00",
+          "task_id": "repair",
+          "step": 0,
+          "kind": "retry_requested",
+          "detail": "操作员已请求用原步骤继续核对",
+          "operation_id": "repair/step/1",
+          "payload": "{\"provider\": \"local\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"RUNNING\", \"operation_id\": \"repair/step/1\", \"started_at\": 1794885532.8363059, \"resumed_at\": 1794885533.027302}}"
+        },
+        {
+          "seq": 23,
+          "utc": "2026-11-17T03:18:53.065953+00:00",
+          "task_id": "repair",
+          "step": 0,
+          "kind": "verified",
+          "detail": "已取得步骤证据",
+          "operation_id": "repair/step/1",
+          "payload": "{\"provider\": \"local\", \"state\": \"SUCCEEDED\", \"retries\": 0, \"step\": {\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"SUCCEEDED\", \"operation_id\": \"repair/step/1\", \"started_at\": 1794885532.8363059, \"resumed_at\": 1794885533.027302, \"evidence\": {\"value\": 17}}}"
+        }
+      ],
+      "state": "SUCCEEDED"
+    },
+    "hotplug": {
+      "passed": true,
+      "manifest": {
+        "id": "read_fixture",
+        "version": "1",
+        "effect": "read",
+        "description": "read fixture",
+        "endpoint": "http://plugin-fixture:8123/read",
+        "parameters": {}
+      },
+      "calls": [
+        {
+          "id": "plugin/step/1",
+          "http": 503,
+          "utc": "2026-11-17T03:18:43.458397+00:00"
+        },
+        {
+          "id": "plugin/step/1",
+          "http": 200,
+          "utc": "2026-11-17T03:18:44.469222+00:00"
+        }
+      ],
+      "events": [
+        {
+          "seq": 13,
+          "utc": "2026-11-17T03:18:43.329482+00:00",
+          "task_id": "plugin",
+          "step": 0,
+          "kind": "accepted",
+          "detail": "read_fixture",
+          "operation_id": null,
+          "payload": "{}"
+        },
+        {
+          "seq": 14,
+          "utc": "2026-11-17T03:18:43.382173+00:00",
+          "task_id": "plugin",
+          "step": 0,
+          "kind": "planned",
+          "detail": "已验证计划",
+          "operation_id": null,
+          "payload": "{\"provider\": \"local\", \"state\": \"RUNNING\", \"retries\": 0, \"steps\": [{\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"PENDING\"}]}"
+        },
+        {
+          "seq": 15,
+          "utc": "2026-11-17T03:18:43.441829+00:00",
+          "task_id": "plugin",
+          "step": 0,
+          "kind": "dispatch",
+          "detail": "已持久化步骤意图",
+          "operation_id": "plugin/step/1",
+          "payload": "{\"provider\": \"local\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"RUNNING\", \"operation_id\": \"plugin/step/1\", \"started_at\": 1794885523.4418218}}"
+        },
+        {
+          "seq": 16,
+          "utc": "2026-11-17T03:18:43.458773+00:00",
+          "task_id": "plugin",
+          "step": 0,
+          "kind": "retry",
+          "detail": "adapter HTTP 503",
+          "operation_id": "plugin/step/1",
+          "payload": "{\"provider\": \"local\", \"state\": \"WAITING\", \"retries\": 1, \"step\": {\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"RUNNING\", \"operation_id\": \"plugin/step/1\", \"started_at\": 1794885523.4418218}}"
+        },
+        {
+          "seq": 17,
+          "utc": "2026-11-17T03:18:44.469593+00:00",
+          "task_id": "plugin",
+          "step": 0,
+          "kind": "verified",
+          "detail": "已取得步骤证据",
+          "operation_id": "plugin/step/1",
+          "payload": "{\"provider\": \"local\", \"state\": \"SUCCEEDED\", \"retries\": 0, \"step\": {\"tool\": \"read_fixture\", \"args\": {}, \"version\": \"1\", \"binding\": \"a5a21d4d479a2e6578cfaefe806f00e763c5ac0aed742d54237d9d47bebb6098\", \"status\": \"SUCCEEDED\", \"operation_id\": \"plugin/step/1\", \"started_at\": 1794885523.4418218, \"evidence\": {\"value\": 17}}}"
+        }
+      ],
+      "unmounted_state": "BLOCKED",
+      "unmounted_catalog": [
+        "inspect",
+        "status"
+      ]
+    }
+  }
+}

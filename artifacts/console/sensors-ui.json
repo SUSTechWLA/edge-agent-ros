@@ -1,0 +1,35 @@
+{
+  "fixture": "Chromium network override injects example extra_sources into actual server responses; no hardware input",
+  "viewports": [
+    {
+      "width": 1460,
+      "empty_hidden": true,
+      "hotplug": true,
+      "source_frame_topic_value": true,
+      "stale": true,
+      "expired_before_first_sample": true,
+      "collector_truncation": true,
+      "browser_preview_limit": true,
+      "source_error": true,
+      "unplug_to_scan": true,
+      "historical_sample": true,
+      "horizontal_overflow": false,
+      "js_errors": []
+    },
+    {
+      "width": 390,
+      "empty_hidden": true,
+      "hotplug": true,
+      "source_frame_topic_value": true,
+      "stale": true,
+      "expired_before_first_sample": true,
+      "collector_truncation": true,
+      "browser_preview_limit": true,
+      "source_error": true,
+      "unplug_to_scan": true,
+      "historical_sample": true,
+      "horizontal_overflow": false,
+      "js_errors": []
+    }
+  ]
+}

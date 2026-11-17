@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>单机自主 Edge Agent · ROS 架构设计</title>
+<style>
+:root{color-scheme:light;--ink:#162f35;--dim:#39575c;--paper:#f7f6f1;--card:#fffefa;--rule:#ced9d4;--green:#0c5d53;--pale:#e3efea;--copper:#893f21;--dark:#153a3a;font:16px/1.78 "Segoe UI","Microsoft YaHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink)}a{color:var(--green);text-underline-offset:.2em}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #b95223;outline-offset:3px}p{margin:.65em 0 1em}h1,h2,h3{line-height:1.27;text-wrap:balance}h1{font-size:clamp(2.15rem,4.8vw,4.15rem);margin:.2em 0;color:#fff;font-weight:650}h2{font-size:clamp(1.6rem,2.8vw,2.25rem);margin:0 0 .52em}h3{font-size:1.13rem;margin:1.5em 0 .5em}code,pre{font-family:Consolas,monospace}code{font-size:.92em;overflow-wrap:anywhere}pre{padding:1em 1.2em;background:#173438;color:#e8f5ef;border-radius:8px;overflow-x:auto;line-height:1.6;tab-size:2}pre code{overflow-wrap:normal}header{background:var(--dark);color:#d9eee8;padding:clamp(2rem,6vw,5.3rem) max(calc((100vw - 1250px)/2),5vw)}header p{max-width:53em;margin:1em 0 0}header small{letter-spacing:.075em;color:#b6dbcb}main{max-width:1330px;margin:auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:clamp(1.5rem,4.4vw,4.8rem);padding:2.2rem 4vw 5rem}nav{position:sticky;top:1rem;align-self:start;max-height:95vh;overflow:auto;border-left:1px solid var(--rule);padding:.2rem 0 .2rem 1rem}nav b{display:block;margin-bottom:.5rem}nav a{display:block;font-size:.9rem;line-height:1.4;padding:.43em .5em;color:var(--dim);text-decoration:none}nav a:hover,nav a[aria-current]{background:var(--pale);color:var(--green);border-radius:4px}section{padding:1.65rem 0 2rem;border-bottom:1px solid var(--rule);scroll-margin:1rem}section:first-child{padding-top:.65rem}section>small{color:var(--green);font-weight:bold;font-family:Consolas,monospace}.lead{font-size:1.08rem;color:var(--dim)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(215px,100%),1fr));gap:.9rem;margin:1.1rem 0}.tile,.callout{border:1px solid var(--rule);background:var(--card);border-radius:9px;padding:1rem 1.15rem}.tile h3{margin:0 0 .45em}.tile p,.callout p{margin:.2em 0}.callout{border-left:4px solid var(--green);background:var(--pale);margin:1rem 0}.warm{background:#f6ece2;border-color:#d9bdad;border-left-color:var(--copper)}.tablewrap{overflow-x:auto;margin:1rem 0}table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{border-bottom:1px solid var(--rule);text-align:left;vertical-align:top;padding:.65em .72em;line-height:1.58}th{background:#e8eeea;color:#17473f}td:first-child{font-weight:600}figure{margin:1rem 0;padding:10px;border:1px solid var(--rule);border-radius:10px;background:#fff}figure img{display:block;width:100%;height:auto}figcaption{padding:.45rem;color:var(--dim);font-size:.9rem}button{font:inherit;color:var(--green);border:1px solid #9bb5ab;border-radius:6px;background:#fff;padding:.28em .78em;cursor:pointer}.actions{display:flex;align-items:center;gap:1em;flex-wrap:wrap}details{background:var(--card);border:1px solid var(--rule);border-radius:8px;margin:.5rem 0;padding:.65rem 1rem}summary{font-weight:600;cursor:pointer;color:var(--green)}details p:last-child{margin-bottom:0}ol,ul{padding-left:1.5em}li{margin:.35em 0}.sources{font-size:.9em;color:var(--dim)}dialog{width:94vw;max-width:none;max-height:94vh;padding:.6rem;border:1px solid var(--rule);border-radius:10px;background:var(--card)}dialog::backdrop{background:#112d32ce}dialog .actions{padding:.3em .3em .6em}#canvas{max-height:78vh;overflow:auto;background:#fff}#canvas img{display:block;width:100%}#canvas.zoom img{width:165%;min-width:1150px}.file{display:inline-block;margin:.25em 1em .25em 0}@media(max-width:850px){main{display:block}nav{position:static;max-height:none;display:flex;flex-wrap:wrap;gap:.1em .5em;border:0;padding:0 0 1em}nav b{width:100%}nav a{padding:.3rem}td,th{min-width:9em}header{padding:2.6rem 5vw}}@media print{nav,dialog,button{display:none}main{display:block;padding:0}header{background:white;color:#333;padding:0}header h1,header small{color:#142c2d}section{break-inside:auto}tr,.tile,details{break-inside:avoid}.tablewrap{overflow:visible}a{color:inherit}}
+</style>
+</head>
+<body>
+<header><small>AGENT ROS　/　端侧运行时设计稿 v0.1</small><h1>让一台机器人独立完成任务</h1><p>以单台 RK3588 或 Jetson 为部署单元。机器人自己选方法、观察结果、处理局部失败；Brain 表达任务意图、协调共享资源，并把有权限的队友事实送到本机。</p></header>
+<main>
+<nav aria-label="章节"><b>阅读路径</b><a href="#boundary">01　自主权与架构图</a><a href="#runtime">02　进程与事件流</a><a href="#assignment">03　从子目标到动作</a><a href="#plugins">04　能力与热插拔</a><a href="#sensors">05　传感器与世界模型</a><a href="#team">06　Brain 与队友同步</a><a href="#models">07　可训练的策略</a><a href="#example">08　走完一次任务</a><a href="#delivery">09　实施与验收</a></nav>
+<article>
+<section id="boundary"><small>01 / 系统边界</small><h2>谁决定下一步，谁能让机器动起来？</h2>
+<p>要操作已经实现的单机器人版本，可从<a href="../../README.md">启动指南</a>、<a href="../v1/PRD.md">v0.1 PRD</a>和<a href="../v1/validation.md">Gazebo 验收记录</a>进入。本页覆盖后续可替换模型、云边与群体协作的目标设计。</p>
+<p class="lead">假设 Brain 下发“核对 A 区三块设备铭牌并提交可读证据”。它只需说明范围、成功条件和授权。先读哪一块、逆光时怎样换角度、哪一步可以在断网后继续，都需要端侧根据刚刚观测到的现场作决定。</p>
+<div class="grid"><div class="tile"><h3>Brain 管团队目标</h3><p>持有 mission、用户授权、分工、团队成员与公共资源许可。收到进度、求助或能力变化后，可以修改或撤回子目标。</p></div><div class="tile"><h3>Edge 管本机任务</h3><p>每份子目标有自己的上下文。策略提出下一步，执行内核审核，本机持续跟踪动作、证据与资源；无网时仍能推进获准的独立步骤。</p></div><div class="tile"><h3>控制器管物理闭环</h3><p>导航栈、飞控、步态控制器或安全硬件落实运动、限幅与平台失效保护。停车、悬停、降落等策略逐机定义，在模型或 Linux 进程失效时仍须有本机保护路径。</p></div></div>
+<figure><img src="edge-runtime.svg" alt="端侧架构总图。Brain 连接单台 Edge 的云边链路，策略依赖能力目录和世界视图，执行内核经网关调用 ROS 控制器，结果与证据回流。"><figcaption class="actions"><span>图 1　部署边界、决策方向与事实来源</span><button type="button" id="open-map">放大架构图</button><a href="edge-runtime.svg">打开 SVG 原图</a></figcaption></figure>
+<div class="callout"><p><strong>第一版技术选择</strong>　任务内核、能力网关和 ROS 2 桥使用 C++20 / rclcpp。板卡推理 SDK 与动态扩展走版本化进程接口，避免把供应商库的崩溃、C++ ABI 和发布周期带进内核。首版用一种系统语言便于联调。语言选择依据是现有 ROS 和板卡接口，性能优势仍需同负载实测。</p></div>
+<details id="language-choice"><summary>选型依据：何时选 Rust，何时选 TypeScript？</summary>
+<p>先确定要交付的模块。第一台真机要尽快接上 ROS Action、控制器和板卡 SDK，优先复用 C++ / rclcpp。若从零开发要长期维护的任务内核，团队能维护 Rust 与 C++ 两套 ARM64 构建，可选 Rust 管任务状态、取消、资源和断线恢复，C++ 只保留设备桥。Rust 的所有权能在编译时检查一类内存错误，动作去重、资源代次与掉电恢复仍需协议和故障试验。ROS 2 Jazzy 将 rclcpp 列为核心团队维护的客户端，也列出了社区维护的 Rust 和 Node.js 客户端。<a href="https://github.com/ros2/ros2_documentation/blob/jazzy/source/Concepts/Basic/About-Client-Libraries.rst">ROS 2 客户端维护范围</a> · <a href="https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html">Rust 所有权</a></p>
+<p>若迭代最多的是模型 API、提示词与工具编排，或要直接装载现有 DeepSeek Harness 插件，可用 TypeScript / Node.js 实现策略宿主。耗时的同步计算交给独立工作进程；任务内核有自己的取消与健康通道。单纯借鉴插件架构时，C++ 或 Rust 也能实现服务发现、作用域和生命周期。<a href="https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop">Node.js 事件循环</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/cordis-primer.md">DeepSeek Harness 插件机制</a></p>
+<p>定版前只对有分歧的模块做对照。固定板卡、能力网关、推理后端、输入和负载，复用同一套契约测试。检查模型卡住时处理取消请求的 p99、控制器确认到达安全状态的实测时间、峰值内存、进程重启后重复动作数，以及接入新能力到通过板端 CI 的工程成本。离线的 C++ 契约示例只验证行为约束，无法给出语言性能排名。</p>
+</details>
+</section>
+<section id="runtime"><small>02 / 运行时</small><h2>一台 Edge 内部的模块怎样合作？</h2>
+<p>建议一个部署包、五个逻辑职责。最小镜像可以将低风险的视图构建、目录和链路客户端放在同一进程。控制器、易崩溃的推理 SDK 与可热更的驱动保持独立故障边界。下表给出生产部署的参考拆分。</p>
+<div class="tablewrap"><table><thead><tr><th>模块 / 归属</th><th>接收 → 产出</th><th>能写什么，失败如何隔离</th></tr></thead><tbody>
+<tr><td>云边客户端<br><code>linkd</code></td><td>身份、游标、待发消息 ↔ Brain 双向流；入站消息交内核，出站按确认重送。</td><td>维护连接与退避。持久收件、发件和任务状态由内核提交。断线按任务离线授权执行。</td></tr>
+<tr><td>任务执行内核<br><code>edge-execd</code></td><td>任务、策略提案、控制器回执和触发事件 → 状态转换、资源许可、待执行动作与证据索引。</td><td>本地任务状态单写者。内含调度器、插件目录、世界状态投影、验收器。进程恢复先对账，再放行相关资源。</td></tr>
+<tr><td>策略服务<br><code>policyd</code></td><td>定版观测、能力菜单、剩余预算 → 有类型的下一步提案。</td><td>可挂规则、外部通用 API 或本地模型。可终止、限时、替换。进程没有设备写权限。</td></tr>
+<tr><td>感知工作进程<br><code>perceptiond</code></td><td>图像、激光、IMU 等 → 带来源的观测、置信度、时间及证据引用。</td><td>按插件隔离 GPU/NPU 依赖。积压时丢弃允许丢弃的旧帧，报告数据缺口。关键传感器失效立即影响能力就绪。</td></tr>
+<tr><td>执行网关 / 适配器<br><code>gatewayd</code></td><td>经许可的动作、查询、取消 → ROS Action / 平台 SDK / 人工请求；返回物理状态与结果。</td><td>每个执行资源只接受当前许可代次，保留可查询的动作映射。底层控制器有独立的驱动写入和失联保护。</td></tr>
+</tbody></table></div>
+<h3>EventBus 在哪里用，怎样实现</h3>
+<div class="tablewrap"><table><thead><tr><th>通道</th><th>第一版实现</th><th>语义与背压</th></tr></thead><tbody>
+<tr><td>本地状态事件</td><td>内核内用有界队列、类型化消息和单写者事件循环。插件控制面跨进程用版本化 Protobuf / Unix socket 请求或订阅，网关操作有明确目标与回执。</td><td>任务、许可、取消、结果先落 SQLite 再通知订阅者。唤醒可合并，终态必须可重读。为取消与健康事件保留处理容量。</td></tr>
+<tr><td>传感与实时控制</td><td>ROS 2 topic / SDK 缓冲传样本，服务做短查询，Action 承载可反馈、可取消的长动作。高频流在板内就近消费。</td><td>针对每种传感器配置深度、可靠性与时效；事件日志只存结构化变化和引用。硬实时回路使用平台控制器自己的周期。</td></tr>
+<tr><td>跨 Edge 协作</td><td>Edge 向 Brain 主动建立 mTLS 双向 gRPC 流，收件去重、发件持久化、重连重放。Brain 过滤并分发队友状态。</td><td>任务消息至少一次传输。共享状态允许合并，任务终态、取消和屏障决议要持久确认。连接层 ACK 与完成回执有不同含义。</td></tr>
+</tbody></table></div>
+<p>事件信封最少有 <code>event_id, kind, schema_version, edge_id, boot_id, source_seq, mission_id?, assignment_id?, causation_id, trace_id, payload_ref</code>。观测另带采样时钟信息。内核提交时分配本机持久游标 <code>local_offset</code>；进程启动号与本机游标、云端团队游标分别管理。回放只调用状态归并函数，禁止触发真实执行出口。</p>
+<h3>哪些思想来自三个参考项目</h3>
+<ul>
+<li><strong>DeepSeek Harness</strong> 通过作用域上下文发现服务，声明依赖，可撤销服务注册和监听；类型化事件与直接服务调用各有用途。这里借其插件生命周期，将机械动作的占用和撤销结果另建契约。原版 Cordis 插件若需原样运行，可另写隔离的策略宿主；本文的 C++ 接口没有直接加载 TS 插件的兼容承诺。<a href="https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/cordis-primer.md">Harness 源文档</a></li>
+<li><strong>DeepSeek SuperAgent 原型</strong> 的 Engine 统一写入任务域对象，事务内登记外部工作，适配器在提交后实施。Edge 沿用这一恢复边界，加上控制器对账、物理资源仲裁、离线授权和验收证据。<a href="https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/007-architecture.md#engine">SuperAgent 的 Engine 设计</a></li>
+<li><strong>Tangying Robot Agent OS</strong> 已把能力、输入、作用效果、资源和验证写入契约，Edge 调用绑定任务与能力版本。这是定义语义技能、验收器和资源代次的直接起点。<a href="https://github.com/SUSTechWLA/tangying-robot-agent-os/blob/deb36504fee4f7281f1f35d0e434f41da168f075/core/capability/capability.go">能力契约</a> · <a href="https://github.com/SUSTechWLA/tangying-robot-agent-os/blob/deb36504fee4f7281f1f35d0e434f41da168f075/edge/worker/capability.go">Edge 调用绑定</a></li>
+</ul></section>
+<section id="assignment"><small>03 / 自主决策</small><h2>子目标怎样变成机器人可执行的动作？</h2>
+<p>子目标是一份带验收条件的委托。一次任务可以运行几小时，模型的单次调用只需解决“根据现在的事实，下一步提议做什么”。运行时保存任务历史并重新组装输入。</p>
+<pre><code>Assignment                         示例值
+mission_id / assignment_id / rev    M42 / inspect-A / 3
+goal / scope                        核对 A 区设备铭牌 A1、A2、A3
+acceptance                          每个 ID 有可读图像、识别结果、位置和时间
+allowed_capabilities / envelope      navigate、inspect_label；A 区边界、速度上限
+budget / deadline                   允许的尝试次数、能量储备、最迟完成时间
+offline_policy / team_requirements  可继续独占的区内步骤；共享通道须团队放行
+issuer / grant_epoch                签发 Brain 身份、本次授权代次</code></pre>
+<ol>
+<li><strong>接单。</strong> 验证身份、委托版本、能力与预算。可行则持久接收并回复 <code>Accepted</code>；传感器缺失或验收条件无法解释，回复结构化原因，可另回一份部分可行的方案。</li>
+<li><strong>形成局部计划。</strong> 以目标、前置条件、依赖、资源和验收谓词表示步骤。如“定位到 A2 → 检查图像质量 → 读取铭牌 → 存证”。模板技能可以直接展开；模型生成的新步骤经类型、环依赖、规模、权限和成本检查后才入计划。保存计划 revision，只替换尚可修改的步骤。</li>
+<li><strong>构造决策上下文。</strong> 用 <code>mission_id + assignment_id + attempt</code> 选取本任务，加入剩余步骤、近期有效事实、本机资源占用、获准队友摘要、前次失败和当前就绪的能力版本。大图、完整日志按需引用。记录 <code>observation_id</code> 与目录版本，供事后还原模型实际看见的输入。</li>
+<li><strong>提案与放行。</strong> 策略只能返回 <code>Invoke / Observe / Wait / RequestBrain / ProposeDone / Blocked</code>。执行内核重查任务版本、数据年龄、域权限、实体参数、插件代次、硬件健康、离线条件和资源冲突。提案来自旧快照时返回原因并重新观察。</li>
+<li><strong>动作与验收。</strong> 获准后分配稳定 <code>operation_id</code>，记录待分发动作；网关将其映射为控制器操作标识。控制器报告完成后，验收器检查世界事实和证据。“导航成功”只能关闭靠近步骤，“铭牌清晰且编号匹配”才能关闭读取步骤。全部谓词成立才提交子目标成功。</li>
+</ol>
+<div class="callout"><p><strong>并发的粒度是资源。</strong> 同一机器人可以边走边做不争用底盘的 OCR，也可以交错处理两份委托。调度器原子申领整组资源，如底盘独占、经驱动声明可共享的相机流、数量受限的推理槽位；优先级、截止期与等待时长决定次序。抢占先申请取消，收到平台定义的安全终态后再换发资源代次。超时本身无法释放仍可能运动的底盘。</p></div>
+<p><strong>什么时候再问一次模型？</strong> 新委托、验收失败、关键依赖变化、预算即将耗尽、用户变更目标都可以唤醒局部策略。按委托和原因去重，同一委托同一时刻只采纳一个有效 revision 的提案。普通导航反馈只更新状态；低电量可直接触发本机保护并向 Brain 上报受影响的委托。Brain 收到 <code>NeedsHelp(reason, evidence, alternatives)</code> 后选择补充信息、修改委托、换机或结束。先前版本的模型结果迟到时无法覆盖新决定。</p>
+<h3>落盘到哪里，掉电怎样接上</h3>
+<p>每台 Edge 使用本地持久卷，内核在 SQLite WAL 同一事务中更新 <code>assignments / steps / operations / resource_claims / events / inbox / outbox</code>。动作记录包括输入哈希、插件实例、授权代次、控制器目标 UUID、状态与证据摘要。较大的图像和点云存证据卷，先完成可校验的文件写入，再提交内容哈希与引用。关键日志设保留配额；不能可靠落盘时停止接收新的有副作用动作。</p>
+<p>恢复时，读最近检查点并重放后继事件，查询所有未决 <code>operation_id</code>。查到执行中则接续订阅，查到终态则补验收，查不到则标记 <code>UNKNOWN</code>、保留占用并核对实测状态。需要用硬件可证明的安全重置或人工确认结束不确定状态。ROS Action 的结果缓存有生命周期，控制器重启后可能缺失；重复 UUID 或数据库事务本身无法保证物理动作只做一次。<a href="https://design.ros2.org/articles/actions.html#result-caching">ROS 2 Action 的结果缓存</a></p>
+</section>
+<section id="plugins"><small>04 / 插件与技能</small><h2>接入一种新机型，要改哪一层？</h2>
+<p>最高层抽象只描述插件的身份、依赖、版本、生命周期。插件按所能履行的职责实现小接口。一台车和一只机器狗可以都提供“到达观测位”，各自声明坡度、可达空间、定位和停止条件。Brain 拿到可用能力的交集及约束，Edge 为具体实例选适配器。</p>
+<pre><code>PluginHost.mount(manifest, factory)       检查协议版本、依赖、权限，建立实例作用域
+Plugin.start(scoped_services)             注册端口，健康/校准通过后才加入能力目录
+Plugin.drain(reason, deadline)            停接新操作，交接或核实在途操作
+Plugin.stop()                             撤销订阅、定时器、端口和设备句柄
+
+SensorPort.describe / observe              暴露设备与观测契约
+PolicyPort.propose(observation, menu)      限时产出结构化提案
+SkillPort.expand(goal, constraints)        把语义目标展开为可追踪的步骤
+ActionPort.start / query / cancel         用同一 operation_id 跟踪可中断的动作
+VerifierPort.check(predicate, evidence)    返回 satisfied / failed / unknown 及依据</code></pre>
+<p>这是语义接口草案。进程内可以用窄 C++ 接口；进程外按版本化消息交互。作用域只授予清单声明的服务、设备和订阅。想调用通用模型的插件要显式申请推理端口，计入任务预算；获取推理能力并不授予设备控制权。签名/版本白名单、独立进程、ROS 写权限和设备节点白名单由部署层落实。</p>
+<div class="tablewrap"><table><thead><tr><th>能力与使用者</th><th>输入 → 输出 / 完成判据</th><th>实例如何变化</th></tr></thead><tbody>
+<tr><td><code>navigate_to</code><br>策略可选的语义动作</td><td>带坐标系的目标区域、运动模式约束、容差、截止期 → 当前位置、终态和定位证据。进入区域且满足速度/停稳约束才通过。</td><td>轮式走导航栈，足式接步态与导航，飞行平台要有独立的三维走廊、航态和返航约束。二维目标若缺飞行约束可拒绝。</td></tr>
+<tr><td><code>inspect_label</code><br>可展开、可取消的技能</td><td>对象 ID、证据规范、尝试上限 → 拍摄、质量评估、识别与证据引用。检查可读度及编号匹配；低质量触发重新观测。</td><td>RGB 相机加 OCR、云台或人形机替换执行器。至少暴露子步骤、失败原因和资源冲突。</td></tr>
+<tr><td><code>observe_region</code><br>有期限的观测请求</td><td>区域、所需模态、最新采样时间界限 → 事实列表、未覆盖区、置信度及来源。</td><td>相机、热像、雷达等只提供各自能证实的事实。遮挡时返回未知或需要其他模态。</td></tr>
+<tr><td><code>request_confirmation</code><br>真人参与的异步能力</td><td>问题、候选、证据、期限 → 同意、拒绝、超时或带身份的答复。</td><td>若“人”指协作者，用授权终端和同意机制；人形机器人则照自身关节、平衡、抓取等能力登记。</td></tr>
+</tbody></table></div>
+<p>每项能力的 manifest 包含 <code>capability_id, version, input/output_schema, dependencies, preconditions, effects, claims, cancel_policy, verifier, timeout, evidence_policy</code>。目录另记录本次挂载的 <code>instance_id, generation, ready, health, constraints</code>。模型看到紧凑的语义菜单；执行器可以保留更细的控制原语。是否拆成技能取决于是否有独立目标、过程反馈、取消和可验证终态。</p>
+<div class="callout warm"><p><strong>热拔插有两种路径。</strong> 主动下线先撤销就绪并排空，再解除注册。意外拔出直接把实例和依赖能力标为失效、撤回广告，触发在途操作核对。相同型号插回产生新代次；新相机须完成时钟、标定、坐标系和健康检查，并由内核显式重新绑定。旧证据保留原来源。电气层能否带电插拔取决于硬件接口。</p></div>
+<p>能力目录支持热变更；根执行内核、机体保护逻辑与未提供安全交接方式的控制器按维护窗口升级。新插件可以停止接单、任务可以等待或降级，安全保护的连续性必须有独立保障。</p>
+</section>
+<section id="sensors"><small>05 / 感知与上下文</small><h2>怎样为未知型号的传感器留好接口？</h2>
+<p>分三层保存信息。驱动提供原始样本，感知插件把它转换为可检验的事实，世界视图将本任务用得上的事实投影到某个版本。新传感器只需实现对应的描述和适配；用它完成某项任务，还需要相应的标定、解释算法和验收器。</p>
+<div class="tablewrap"><table><thead><tr><th>对象</th><th>必要字段</th><th>解决的具体问题</th></tr></thead><tbody>
+<tr><td>传感器描述</td><td>模态、schema / 编码、单位、维度、驱动版本、传输方式、标定版本、坐标系、频率与 QoS、健康和隐私范围。</td><td>相机/深度图、LiDAR/雷达、IMU/里程计/GNSS/UWB、力触觉/关节、电源、麦克风或未来专用传感器，可以有不同数据结构。</td></tr>
+<tr><td>采样信封</td><td>设备实例与代次、序号、采集时间及 clock domain、时钟误差界、本机接收的单调时刻、frame_id、标定 revision、方差或质量、数据引用。</td><td>区分“刚收到”与“刚采到”。同一位置在不同地图、同一数据在不同启动周期具有不同含义。</td></tr>
+<tr><td>可查询事实</td><td>命题、值或 unknown、可信范围、来源、TTL、证据引用、地图版本、变换链、可见范围。</td><td>内核能询问“此刻是否还有足够新鲜的定位”和“这是谁直接看见的”。模型可以按需请求小图或片段。</td></tr>
+</tbody></table></div>
+<p>本机超时与看门狗用单调钟；多设备融合用采集时间和已估计的时钟偏差及误差界。不同板的单调钟不能相减；无法确定时间/坐标变换一致性时，将位置降为未知。仿真时另记录 <code>clock_epoch</code>，遇到 <code>/clock</code> 回退令跨周期缓存失效。允许的误差和观测年龄由技能声明，在具体车速、飞行状态和感知频率下验证。<a href="https://design.ros2.org/articles/clock_and_time.html">ROS 时钟设计</a> · <a href="https://github.com/ros2/ros2_documentation/blob/d21e8d05fbca1ad23d6f2cac6be0d4aa2d8c18ed/source/Concepts/Intermediate/About-Quality-of-Service-Settings.rst">ROS 2 QoS</a></p>
+<p>原始流默认留在板上。原始证据按任务保留策略、磁盘水位和访问权限管理。共享事实如“门口被占用”可以只同步对象、时间、置信度与可授权检索的证据引用。引用失效要显示证据缺失，不能默认为验收成功。</p>
+</section>
+<section id="team"><small>06 / 云边与协作</small><h2>一台机器人怎样感知另一台，以及何时可以一起行动？</h2>
+<p>先分开三个问题：B 自己报告在哪，A 的相机看到谁，Brain 允许谁使用共享通道。三者可能同时成立，也可能冲突。每条信息都应能指出来源、有效期和相应权限。</p>
+<div class="tablewrap"><table><thead><tr><th>协议步骤</th><th>从哪里到哪里</th><th>契约与行为</th></tr></thead><tbody>
+<tr><td>注册与重连</td><td>Edge → Brain</td><td><code>Hello(edge_id, boot_id, protocol_versions, capability_revision, last_acked_cursor)</code>，Brain 校验证书和角色，返回当前成员代次、授权任务与快照/增量起点。能力变化发 delta；注册和删除由权威的团队视图确认。失联置离线/未知。</td></tr>
+<tr><td>分配与撤回</td><td>Brain → Edge → Brain</td><td><code>Assign / Amend / Revoke</code> 带 mission、委托 ID、版本和授权代次。Edge 持久接收后分别报告 accepted、progress、blocked、verified 或 canceled。重复信封返回原处理状态；旧版本无法重启任务。</td></tr>
+<tr><td>队友状态与事实</td><td>A → Brain → 获准的 B</td><td><code>PeerDelta(team_epoch, peer_id, boot_id, source_seq, capture_time±error, ttl, frame, map_rev, fact, evidence_ref)</code>。Brain 以任务/团队权限筛选。B 将其存入只读队友投影，按成员版本、来源实例、顺序、TTL 和坐标系检查。游标有缺口则取快照。</td></tr>
+<tr><td>协调放行</td><td>Brain ↔ 参与者</td><td><code>Prepare(barrier_id, epoch, members, resource, window) → Ready / Reject → Release / Abort</code>。Brain 持久化唯一决议和共享许可，参与方复核令牌、剩余窗口、本地健康和实际环境后才执行。释放时带资源 fencing token，拒绝迟到的旧代次。</td></tr>
+</tbody></table></div>
+<p><strong>从“看见队友”到“获得许可”有两次判断。</strong> 队友投影保留“B 自报的位置”和“A 本机看到的候选 B”两条观察，再按证据做身份关联。当身份可信度、新鲜度或地图不满足要求时，模型可建议询问 Brain 或重新观测；本地避障持续依靠本机传感和控制器。</p>
+<p>例如 B 负责确认已经退出共享通道，A 才是下一位通行者。<code>Ready</code> 必须结合 B 的实际退出证据；<code>Release</code> 指明通行权的唯一持有人 A。Brain 分别维护成员名单版本、一次协调的编号和资源许可代次。收到高版本成员快照，即使本机被移出也要立刻使旧许可失效；重新加入需重新准备。授权有效窗换算到本机时须计入时钟误差，重启后无法证明剩余期限则要求重新授权。</p>
+<p>断网时，单机可在既定授权、时间与能量边界内完成独立步骤，证据暂存发件箱。需要新共享许可、成员状态或联合放行的步骤等待；已进入共享区的机器人按预定清空/安全保持协议处置。Brain 在旧占用实际清除前保持冲突资源封锁。多方 <code>Ready</code> 与网络 <code>Release</code> 不能保证物理动作同时发生。确实要求同步起动的场景须另定义共同时间基准、最大偏差和丢包/失联时的机体级联锁，并做真机验证。</p>
+<div class="callout"><p><strong>为什么现在就定义 PeerPort？</strong> 第一台机器人可读到空队友集，单机策略照常工作。第二台接入后，同一个 <code>observe_peers(scope, freshness)</code> 返回经授权且标明来源的观测。未来的群体策略能直接消费这组变长输入；可在版本化协议后更换同步传输和学习方法。</p></div>
+</section>
+<section id="models"><small>07 / 模型可替换性</small><h2>自训模型将来究竟替换哪一块？</h2>
+<p>将可学习的决策集中在 <code>PolicyPort</code>。状态归并、资源仲裁、动作许可与结果验收始终可以单独测试。模型给出的理由可以归档为摘要；确定性复盘依靠它实际收到的输入、结构化输出、版本和随后的观测。</p>
+<pre><code>PolicyObservation v1
+  task(goal, acceptance, remaining_steps, budget) + local_facts(age, uncertainty)
+  + capability_menu(revision, legal_parameters) + peer_facts[0..n](source, age)
+  + open_operations + last_errors + permitted_evidence_refs
+DecisionProposal v1
+  basis_observation_id, task_revision, kind, capability?, arguments?,
+  expected_evidence?, scope?, wait_until?, reason_code</code></pre>
+<p>第一版可用规则或行为树完成已知技能，只在观测不符或选择有歧义时唤醒大模型。通用 LLM API、本地视觉语言模型和自训小模型各有 provider；推理超时、无效参数或预算用尽均返回有类型的失败。本机优先保证控制、取消、状态持久化和必要感知的资源，模型不足时回退到已批准的本地策略，或者上报 <code>Blocked</code>。</p>
+<p>训练样本至少包含任务与观测版本、有效队友集合、可选动作、候选动作、获准/拒绝及原因、实际动作、后续证据与验证结果、平台和模型版本。按场地、机体与任务划分训练/验证，避免同一轨迹泄漏。将来可以汇集多机轨迹集中训练，部署时各机仅消费当时自己可获得的观测。若新模型要直接输出本体控制轨迹，应另建经平台控制器约束与验证的专用技能端口。</p>
+<div class="tablewrap"><table><thead><tr><th>实验阶段</th><th>对照与指标</th><th>能回答的问题</th></tr></thead><tbody>
+<tr><td>离线回放</td><td>固定同一批观测与能力菜单，比较规则、通用 API、自训模型的合法提案率、过期队友引用率、延迟和内存。</td><td>模型是否遵守契约。替代动作的真实后果需要闭环实验。</td></tr>
+<tr><td>闭环仿真</td><td>匹配场地、任务、随机种子、设备能力，加入拔插、丢包和成员变化。比较验收成功率、失败类别、耗能、额外求助和恢复耗时。</td><td>策略是否改善长程任务。分机型和难度报告样本数与区间；预测更快与任务更成功分开报告。</td></tr>
+<tr><td>群体消融</td><td>同一批多机任务比较无队友输入、仅 Brain 分工、Brain 分工加队友事实、再加入自训策略。测完成率、重复覆盖、资源冲突、通信字节/任务和尾部时延。</td><td>收益来自共享事实、协调机制还是学习策略。加入队友失联、错误自报和队伍规模变化。</td></tr>
+<tr><td>板端影子与灰度</td><td>在同一观测上并行记录候选输出，影子无执行权。资源紧张时先离线做对照。再限定任务与场地做真机试点，按模型哈希回滚。</td><td>新模型是否适配具体板型的热、内存与本体约束，并在真实闭环改善结果。</td></tr>
+</tbody></table></div>
+</section>
+<section id="example"><small>08 / 一次完整执行</small><h2>三块铭牌，一次断网，一次换相机</h2>
+<p>下面是一段设计演练。展开每一步，可以看到机器人知道什么、谁做决定、留下什么证据。起始条件是 Edge A 有轮式底盘、RGB 相机、定位和本地 OCR。B 是未来加入的第二台机器人。</p>
+<details open><summary>① Brain 分配 A 区，A 建立任务上下文</summary><p>Brain 发 <code>Assign(M42, inspect-A, rev=3)</code>，允许区内独自作业，第三块铭牌所在的通道须团队预约。Edge 验证目标区域、能量和能力，新建步骤与检查点，返回 <code>Accepted</code>。此时 A2 和 A3 都没有验收证据。</p></details>
+<details><summary>② A1 一次读对，A2 逆光，Edge 自主改方法</summary><p>策略选 <code>navigate_to(A1)</code>，内核持久登记操作再发给底盘；停稳和定位通过后，<code>inspect_label(A1)</code> 产生带位置和采样时间的读数。到 A2 时，控制器返回成功但图像质量不足。验收器记录 <code>evidence.glare</code>。下一次策略调用只收到失败、附近的合法观测位和剩余尝试预算，提议换位再拍。</p></details>
+<details><summary>③ 网络中断，单机任务继续，协作步骤等待</summary><p>A 在授权区域内换位，进度和证据进入 outbox。通信超时产生一次状态转换；冷却期间不为每个失败重连重复唤醒模型。A3 的通道需要在线许可，步骤进入 <code>WaitingForTeam</code>。同一设备上的独立任务仍可使用未被占用的资源。</p></details>
+<details><summary>④ 相机被拔掉又换新，旧绑定失效</summary><p>采集中断后，目录撤销实例 <code>cam-7</code> 的就绪，依赖它的读取技能失效。新相机 <code>cam-8</code> 完成标定、时钟、坐标系和健康检查，内核显式改绑，重新采样；A1 的旧照片保留原来源。若上个硬件动作状态未知，内核先查询网关，无法查清就保持占用并上报原因。</p></details>
+<details><summary>⑤ 网络恢复，A 通过 Brain 得知 B 的状态</summary><p>A 从已确认游标续传。Brain 下发新成员视图和 B 的占用事实；如果 B 的报告已过期，A 的队友投影将通道状态记为未知。Brain 收到必要成员的有效就绪回执、核实公共资源后发放当前版本的许可。A 再检查本机感知、资源和窗口，才进入通道。如果检测到新障碍，A 拒绝执行并回报原因。</p></details>
+<details><summary>⑥ 任务成功，或具体到哪一层失败</summary><p>验收器逐一核对 A1/A2/A3 的编号、可读图像、位置和时间并生成清单。只完成两项时可报告部分结果。Brain 收到 <code>Verified</code> 后按用户任务验收。按 <code>trace_id → assignment_id → step_id → operation_id</code> 可查该步当时的观测、模型/规则提案、许可判定、控制器结果与验证记录。</p></details>
+<h3>同一句“没完成”，三种不同的修复</h3>
+<div class="tablewrap"><table><thead><tr><th>观察到的末端原因</th><th>可检查的证据</th><th>合适的下一步</th></tr></thead><tbody>
+<tr><td>模型或策略输出了旧相机 ID</td><td>输入目录版本、新实例激活时间、提案中的绑定、内核拒绝码。</td><td>重新构造上下文后做有预算的重提案；反复出错转确定性策略或求助。</td></tr>
+<tr><td>模型提案合法，控制器失联</td><td>已持久化的动作标识、资源许可代次、最后反馈、控制器重启与查询记录。</td><td>进入对账，保持资源占用；核实物理状态后才考虑重发或交接。</td></tr>
+<tr><td>控制器成功，任务验收失败</td><td>照片、采集与校准信息、验收器版本、失败谓词及剩余预算。</td><td>换观测位、模态或请求协助。保持完成项，避免重做整个任务。</td></tr>
+</tbody></table></div>
+</section>
+<section id="delivery"><small>09 / 工程落地</small><h2>第一版做到什么，才值得接第二台机器人？</h2>
+<div class="tablewrap"><table><thead><tr><th>里程碑</th><th>交付切片</th><th>门槛与可保留的证据</th></tr></thead><tbody>
+<tr><td>P0　单 Edge 软件闭环</td><td>持久内核、策略端口、模拟控制器、单个 inspect 子目标、取消与回放，优先用规则策略。</td><td>注入提交前后崩溃、重复委托和两个任务争用底盘；检查没有越权启动、没有双占，未决动作可解释。给出完整 trace 和持久化重启测试。</td></tr>
+<tr><td>P1　一种机体、两种板</td><td>实现一个真实动作和一个感知适配器；以同一组任务测试 RK3588 与选定 Jetson。容器设备映射、推理 provider 和镜像基线由各板 profile 描述。</td><td>测采集年龄、取消至机体安全状态、控制截止期、内存水位和热降频，做传感器拔出、模型进程崩溃、磁盘满与断电恢复。</td></tr>
+<tr><td>P2　两台 Edge、一台 Brain</td><td>身份注册、能力增删、任务增量、队友投影与共享通道预约。增加与第一台运动约束不同的机体。</td><td>重连乱序、过期成员、重复放行、B 掉线或地图版本不兼容时，都要有明确处置。确认单机任务可持续、共享资源无违规新准入。</td></tr>
+<tr><td>P3　替换模型与群体学习</td><td>接一个自训策略并按前述消融评测；保留规则和通用 API 基线、观测/训练数据版本和模型回滚路径。</td><td>在未见场地和未见成员组合报告团队收益、通信开销和各机体回归。先影子对照，再逐项开通真机授权。</td></tr>
+</tbody></table></div>
+<p><strong>如何部署一版。</strong> 开发阶段在 Docker 中构建和测试 C++，仿真使用假网关。板端以同一套消息契约分别发布匹配 RK BSP 与 JetPack/L4T 的 ARM64 镜像；宿主保留匹配驱动与机体独立看门狗。给控制器、必要感知、存储留资源，按压力依次收缩可选感知、并行推理和模型规模。板型、内存、散热、功耗档和传感器负载是部署输入，实际支持清单须逐项验收。</p>
+<div class="callout"><p><strong>配套交付</strong>　板卡手册给出设备映射、上线前检查与 9 项试验；C++20 示例用于验证热插拔、资源占用与协作许可的核心契约。它用内存和模拟时钟运行，板端推理、实体动作与持久化恢复属于下一阶段验收。</p>
+<a class="file" href="board-validation.md">板卡部署与真机验收（Markdown）</a><a class="file" href="../../examples/edge_contract_smoke.cpp">C++20 契约示例</a></div>
+<p>在 Windows 的项目根目录，可用已有 ROS Docker 镜像离线复现示例。</p>
+<pre><code>docker run --rm --pull=never --network none --read-only --tmpfs /tmp:rw,exec `
+  --mount "type=bind,source=${PWD}/examples,target=/src,readonly" `
+  --entrypoint /bin/sh ros:jazzy-ros-base -ec 'g++ -std=c++20 -Wall -Wextra -Werror -pedantic /src/edge_contract_smoke.cpp -o /tmp/check &amp;&amp; /tmp/check'</code></pre>
+</section>
+</article></main>
+<dialog id="map-modal" aria-label="架构图放大视图"><div class="actions"><strong>单机 Edge 架构</strong><button id="zoom" type="button" aria-pressed="false">查看细节</button><button id="close-map" type="button">关闭</button></div><div id="canvas" tabindex="0" aria-label="可滚动的架构图"><img src="edge-runtime.svg" alt="单机 Edge 完整架构图"></div></dialog>
+<script>
+const modal=document.getElementById('map-modal'),canvas=document.getElementById('canvas'),zoom=document.getElementById('zoom');
+document.getElementById('open-map').addEventListener('click',()=>modal.showModal());
+document.getElementById('close-map').addEventListener('click',()=>modal.close());
+zoom.addEventListener('click',()=>{const large=canvas.classList.toggle('zoom');zoom.setAttribute('aria-pressed',String(large));zoom.textContent=large?'适应宽度':'查看细节';});
+modal.addEventListener('close',()=>{canvas.classList.remove('zoom');canvas.scrollTo(0,0);zoom.setAttribute('aria-pressed','false');zoom.textContent='查看细节';});
+if('IntersectionObserver' in window){const links=Array.from(document.querySelectorAll('nav a'));const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){for(const link of links){if(link.hash==='#'+entry.target.id)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');}}}},{rootMargin:'0px 0px -72% 0px'});document.querySelectorAll('section[id]').forEach(el=>observer.observe(el));}
+</script></body></html>
