@@ -28,6 +28,18 @@ ros2 topic pub --once /edge/events std_msgs/msg/String "{data: '{\"schema_versio
 
 公开接口部署在受信 ROS 域。生产者只发送需要共享的测量和原因。接收器会过滤常见认证字段、令牌赋值和 HTTP 认证串，自由文本和设备特有机密仍须生产者在发送前处理。记录能证明发布者报告了哪些内容，实际任务完成还需执行器回执和对应结果证据。
 
+## 场景模块怎样记录一次真实决策
+
+输入“去庭院巡检”时，Agent 按能力清单的 `accepts_trace: true` 向 `navigate_place` 提供 `trace_id`、`task_id`、触发来源和原 `agent.dispatch` 事件 ID。派生任务会沿用上游的 trace。边缘场景导航模块从融合位姿、地图版本、可通行边和目标地点得到路线。
+
+- 路线成立时，`scene.navigation` 将路径、航点、地图摘要、起始位置以及 `scene.route_planned` 事件写入同一 SQLite 事务。事务提交之后才查询或提交 ROS 委托。
+- 地名未知、区域受限或缺少通路时，`scene.route_refused` 保存原请求、当时的地图修订和具体原因码（例如 `scene.place_inaccessible`）。重复的操作 ID 取回同一次决策。已经存在于旧版路由库的路线沿用原记录，升级不会补造当年的决策。
+- 发布线程将持久事件通过 ROS `/edge/events` 投递。工作台读接口返回该 event_id 的存档后才确认送达；观察器离线时执行可继续，恢复后使用同一 ID 重投。接收者可按 `module=scene.navigation` 和根 `trace_id` 查询；`parent_event_id` 指向对应任务的原派发。独立、无 Agent 上下文的调用会生成自己的 trace。
+
+默认仿真中的确认端点是 `http://console:8080`，可在场景容器设置 `EDGE_EVENT_ARCHIVE_URL`。将仿真环境的 `EDGE_SCENE_FILE` 与 `EDGE_EXTRA_PLUGIN_DIR` 同时设为空并重建相关容器，会启用旧空场、撤回场景能力声明。场景 HTTP 服务保持在线，对残留调用返回 `scene.disabled`。
+
+运行 `python tests/semantic_acceptance.py --url http://127.0.0.1:8765` 可从空闲的工位出发，核对具名导航每一项决策、因果引用、路线拒绝时没有底盘委托，以及终点真实轨迹。[场景决策实现](../scene/provider.py) · [验收脚本](../tests/semantic_acceptance.py)
+
 ## 可随时接入的日志消费者
 
 在默认仿真 Compose 运行期间，另开终端执行以下命令。示例消费者单独运行、只挂载自己的目标卷，通过只读的事件查询接口复制告警。它可以由日志平台或离线分析 Agent 替换。

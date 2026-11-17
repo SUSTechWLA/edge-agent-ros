@@ -146,6 +146,13 @@ class Journal:
             self.append(task,kind,trace.get("diagnosis",{}).get("message",kind),{},
                         step=task["cursor"],op=operation_id,trace=trace)
 
+    def provider_context(self,task,op):
+        with self.lock:
+            row=self.db.execute("SELECT event_id FROM events WHERE task_id=? AND operation_id=? AND kind='dispatch' ORDER BY seq LIMIT 1",
+                                (task["id"],op)).fetchone()
+        return {"trace_id":task["trace_id"],"task_id":task["id"],"parent_event_id":row[0] if row else None,
+                "trigger":task.get("trigger") or {}}
+
     def due(self, planning):
         states = ("PLANNING","PLANNING") if planning else ("RUNNING","WAITING")
         with self.lock:
@@ -248,7 +255,7 @@ class Robot(Node):
             raise Unavailable(f"{client.srv_name} 回执超时")
         return future.result()
 
-    def run(self,step,op,cap,trace=None):
+    def run(self,step,op,cap,trace=None,context=None):
         if step["tool"] == "status" and not cap.get("endpoint"):
             sample=self.sample
             if not sample or time.monotonic()-sample[0]>2:
@@ -289,6 +296,8 @@ class Robot(Node):
             return {"mission_id":op,"verified_count":status["verified_count"],"points":status["points"]}
         try:
             body={"operation_id":op,"arguments":step["args"],"version":step["version"]}
+            if context is not None:
+                body["trace"]=context
             result=exchange(trace,"adapter",step["tool"],body,lambda:http_json(cap["endpoint"],body))
         except Refused as exc:
             if cap["effect"]!="read":
@@ -341,8 +350,9 @@ def worker(journal,robot,planning):
             if step["status"]=="PENDING":
                 step.update(status="RUNNING",operation_id=op,started_at=time.time())
                 journal.save(t,"RUNNING","已持久化步骤意图",kind="dispatch",op=op)
+            context=journal.provider_context(t,op) if cap.get("accepts_trace") is True else None
             result=exchange(trace,"tool",step["tool"],{"operation_id":op,"arguments":step["args"],"version":step["version"]},
-                            lambda:robot.run(step,op,cap,trace),
+                            lambda:robot.run(step,op,cap,trace,context),
                             meta={"provider":"http-adapter" if cap.get("endpoint") else "ros","binding":binding(cap)})
             if result is None:
                 if time.time()-step.get("resumed_at",step["started_at"])>float(os.getenv("EDGE_STEP_TIMEOUT","1800")):

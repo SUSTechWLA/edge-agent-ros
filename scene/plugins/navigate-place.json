@@ -1,5 +1,5 @@
 {
-  "id":"navigate_place","version":"1","effect":"idempotent",
+  "id":"navigate_place","version":"1","effect":"idempotent","accepts_trace":true,
   "description":"按已标注地图穿过可通行门口到达命名地点并验收位置。可查询现场语义地图获得可用地点。",
   "parameters":{"place":"string"},"outcomes":{"arrival":"observed_xy"},
   "utterances":["去{place}巡检","前往{place}","回到{place}"],

@@ -35,8 +35,43 @@ def run(base, out):
     run_id="campus-"+uuid.uuid4().hex[:10]
     report={"run_id":run_id,"utc":datetime.now(timezone.utc).isoformat(),"passed":False,"tasks":[]}
 
-    def mission(suffix, text, success=True):
-        nonlocal report
+    def archive_rows(**filters):
+        query=urlencode({**filters,"after":0,"limit":100})
+        return api("/api/events?"+query)["events"]
+
+    def archive_one(match=lambda e: True, **filters):
+        # DDS, journal ingestion and the ROS-mission historian advance independently.
+        until=time.monotonic()+20
+        while time.monotonic()<until:
+            rows=[e for e in archive_rows(**filters) if match(e)]
+            if rows:
+                require(len(rows)==1,"duplicate archived event for "+str(filters))
+                return rows[0]
+            time.sleep(.2)
+        raise AssertionError("missing archive event for "+str(filters))
+
+    def decision(row, expected_kind):
+        op=row["steps"][0]["operation_id"]
+        event=archive_one(lambda e:e["operation_id"]==op,trace_id=row["trace_id"],module="scene.navigation")
+        require(event["kind"]==expected_kind and event["source"]=="ros:/edge/events","wrong provider event transport or kind")
+        require(event["task_id"]==row["id"] and event["trace_id"]==row["trace_id"],"provider lost task/trace identity")
+        parent=archive_one(event_id=event["parent_event_id"])
+        require(parent["kind"]=="agent.dispatch" and parent["operation_id"]==op,"scene decision lost original dispatch")
+        data=event["data"]
+        require(data["place"]==row["steps"][0]["args"]["place"] and data["digest"] and data["start_xy"],"missing decision inputs")
+        row["decision"]={k:event[k] for k in ("seq","utc","event_id","parent_event_id","trace_id","code","kind","source","module")}
+        row["decision"].update(revision=data["revision"],map_digest=data["digest"])
+        if expected_kind=="scene.route_planned":
+            require(data["path"]==row["steps"][0]["evidence"]["path"],"planned path differs from verified route")
+            created=archive_one(mission_id=op,kind="mission.created")
+            parse=lambda value: datetime.fromisoformat(value.replace("Z","+00:00")).timestamp()
+            # SQLite core event timestamps have millisecond rather than microsecond precision.
+            require(parse(event["utc"])<=parse(created["utc"])+.001,"route audit postdates core acceptance")
+        else:
+            require(event["code"]==row["terminal_code"],"provider refusal differs from agent terminal reason")
+            require(not api("/api/events?"+urlencode({"mission_id":op,"kind":"mission.created"}))["events"],"refusal dispatched a ROS mission")
+
+    def mission(suffix, text, success=True, parent=None):
         key=f"{run_id}-{suffix}"
         row={"id":key,"text":text,"truth":[]}
         report["tasks"].append(row)
@@ -44,6 +79,8 @@ def run(base, out):
         require(start is not None,"missing fresh world pose")
         row["truth"].append(start)
         req={"id":key,"text":text,"trigger":{"kind":"user","source":"semantic-acceptance","id":key}}
+        if parent:
+            req["trigger"].update(kind="agent",parent_task_id=parent["id"],parent_event_id=parent["last_event"])
         api("/agent/tasks",req)
         api("/agent/tasks",req)
         until=time.monotonic()+100
@@ -64,7 +101,10 @@ def run(base, out):
         row["terminal_code"]=last["code"]
         expected="SUCCEEDED" if success else "BLOCKED"
         require(row["state"]==expected,f"{text}: expected {expected}, got {row['state']}: {row['detail']}")
-        require(row["provider"]=="local" and row["trace_id"]==key,"wrong planner or trace identity")
+        require(row["provider"]=="local" and row["trace_id"]==(parent["trace_id"] if parent else key),"wrong planner or trace identity")
+        row["last_event"]=last["event_id"]
+        if row["steps"] and row["steps"][0]["tool"]=="navigate_place":
+            decision(row,"scene.route_planned" if success else "scene.route_refused")
         return row
 
     def arrival(row, goal, crossing):
@@ -101,7 +141,8 @@ def run(base, out):
         else:
             raise TimeoutError("campus simulator or named-place plugin unavailable")
         require(math.dist(ready["xy"],[0,0])<.18,"start at the campus desk")
-        arrival(mission("garden","去庭院巡检"),[3.3,1.35],True)
+        parent=mission("origin","报告当前位置")
+        arrival(mission("garden","去庭院巡检",parent=parent),[3.3,1.35],True)
         arrival(mission("desk","回到工位"),[0,0],True)
         for suffix,request,code in (("unknown","去火星巡检","scene.place_unknown"),
                                     ("closed","去维修区巡检","scene.place_inaccessible")):
