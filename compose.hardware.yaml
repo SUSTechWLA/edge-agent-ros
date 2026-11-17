@@ -100,7 +100,23 @@ services:
     command: ["python3", "/opt/edge/console/server/main.py", "--ros-args",
       "-r", "/scan:=${EDGE_SCAN_TOPIC:-/scan}", "-r", "/imu:=${EDGE_IMU_TOPIC:-/imu}",
       "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}", "-r", "/cmd_vel:=${EDGE_CMD_TOPIC:-/cmd_vel}"]
+  plugin-author:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    pull_policy: never
+    profiles: ["plugin-author"]
+    network_mode: host
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    entrypoint: ["python3","/opt/edge/client/plugin_author_watch.py"]
+    command: ["--url","http://127.0.0.1:${EDGE_CONSOLE_PORT:-8765}","--out-dir","/proposals","--ollama-url","${EDGE_OLLAMA_URL:-http://127.0.0.1:11434}","--model","${EDGE_OLLAMA_MODEL:-qwen2.5:1.5b}"]
+    volumes:
+      - author-proposals:/proposals
 volumes:
+  author-proposals:
   state:
   console-history:
   task-state:

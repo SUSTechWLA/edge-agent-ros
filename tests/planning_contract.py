@@ -110,6 +110,17 @@ class PlannerContract(unittest.TestCase):
         self.assertEqual(provider, "local")
         self.assertEqual([s["tool"] for s in steps], ["inspect","status"])
 
+    def test_same_tool_description_requires_specific_id(self):
+        caps = dict(planning.BASE)
+        for key in ("derived.forward", "derived.previous"):
+            caps[key] = {"id":key,"description":"报告前向读数。","parameters":{}}
+        with self.assertRaises(planning.Refused) as error:
+            planning.local_plan("报告前向读数",caps)
+        self.assertEqual(error.exception.code,"planner.tool_ambiguous")
+        self.assertEqual(planning.local_plan("derived.previous",caps)[0]["tool"],"derived.previous")
+        caps.pop("derived.previous")
+        self.assertEqual(planning.local_plan("报告前向读数",caps)[0]["tool"],"derived.forward")
+
     def test_registered_provider_can_replace_builtin(self):
         config = {"id":"status","description":"读取状态","effect":"read","version":"2",
                   "parameters":{},"endpoint":"http://adapter/a"}
@@ -123,6 +134,34 @@ class PlannerContract(unittest.TestCase):
         self.assertNotEqual(steps[0]["binding"], planning.binding(planning.registry()["status"]))
         path.unlink()
         self.assertEqual(planning.registry()["status"], planning.BASE["status"])
+
+    def test_bad_endpoint_does_not_disable_other_tools(self):
+        folder = Path(self.directory.name)
+        cap = {"id":"read_gauge", "version":"1", "parameters":{}, "description":"read gauge",
+               "endpoint":"http://fixture/read", "effect":"read"}
+        (folder/"healthy.json").write_text(json.dumps(cap))
+        for endpoint in (42, ["wrong"], {"url":"wrong"}):
+            with self.subTest(endpoint=endpoint):
+                (folder/"bad.json").write_text(json.dumps(dict(cap, id="broken", endpoint=endpoint)))
+                with patch("builtins.print") as logged:
+                    caps = planning.registry()
+                self.assertEqual(caps["read_gauge"], cap)
+                self.assertEqual(caps["status"], planning.BASE["status"])
+                self.assertNotIn("broken", caps)
+                self.assertIn("bad.json: endpoint", str(logged.call_args))
+
+    def test_unreadable_manifest_is_isolated(self):
+        folder = Path(self.directory.name)
+        good = {"id":"read_gauge","version":"1","parameters":{},"description":"read gauge",
+                "endpoint":"http://fixture/read","effect":"read"}
+        (folder/"ok.json").write_text(json.dumps(good))
+        (folder/"deep.json").write_text("["*1200 + "]"*1200)
+        (folder/"large.json").write_text(json.dumps(dict(good, id="oversize", description="x"*131072)))
+        with patch("builtins.print"):
+            caps = planning.registry()
+        self.assertEqual(caps["read_gauge"], good)
+        self.assertEqual(caps["status"], planning.BASE["status"])
+        self.assertNotIn("oversize", caps)
 
     def test_rejects_unsupported_or_incomplete_physical_plan(self):
         def inspect(*points):

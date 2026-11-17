@@ -4,6 +4,8 @@
 
 项目基于 C++20、ROS 2 Jazzy、Gazebo Harmonic 和 Docker Compose。具名地点任务可以离线执行，自由表述可接本地 Ollama 或独立 HTTP 规划器。[观测台使用手册](docs/console.md) · [部署矩阵](docs/deployment.md) · [插件与事件扩展手册](docs/harness-extensions.md)
 
+遇到能力缺口时，可选的插件作者进程读取失败任务并生成候选定义。例如，用户要“用千米每小时报告本机前向速度”，模型可基于已存在的里程计定义工具，经样本验证后由发布者热加载。需要新算法时可编写独立 HTTP 提供者，使用同一套 Agent 入口。作者进程与发布者分别部署，前者只写候选。[从任务到插件的实操手册](docs/plugin-authoring.md) · [代码型插件样板](examples/timestamp-audit/)
+
 ## 第一次运行
 
 开发电脑需要能运行 Linux 容器的 Docker Engine 或 Docker Desktop，以及 Docker Compose v2。完整仿真在容器内运行。首次检出仓库后，从项目根目录启动：

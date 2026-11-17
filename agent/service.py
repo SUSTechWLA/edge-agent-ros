@@ -20,6 +20,7 @@ from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point
 from edge_interfaces.srv import GetMission, SubmitMission
+from derived_tools import evaluate
 from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog,
                       failure, http_json, plan, registry, remote_failure)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
@@ -287,18 +288,27 @@ class Robot(Node):
             raise Unavailable(f"{client.srv_name} 回执超时")
         return future.result()
 
+    def odometry(self):
+        sample=self.sample
+        if not sample or time.monotonic()-sample[0]>2:
+            raise failure(Unavailable,"等待新鲜里程计","tool.odom_stale","ros.odometry")
+        msg=sample[1]
+        p=msg.pose.pose.position
+        q=msg.pose.pose.orientation
+        return {"source":self.resolve_topic_name("/odom"),"frame":msg.header.frame_id,
+                "stamp_ns":msg.header.stamp.sec*1000000000+msg.header.stamp.nanosec,
+                "stamp":{"sec":msg.header.stamp.sec,"nanosec":msg.header.stamp.nanosec},"x":p.x,"y":p.y,
+                "yaw":math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z)),"speed":msg.twist.twist.linear.x}
+
     def run(self,step,op,cap,trace=None,context=None):
         if step["tool"] == "status" and not cap.get("endpoint"):
-            sample=self.sample
-            if not sample or time.monotonic()-sample[0]>2:
-                raise failure(Unavailable,"等待新鲜里程计","tool.odom_stale","ros.odometry")
-            msg=sample[1]
-            p=msg.pose.pose.position
-            q=msg.pose.pose.orientation
-            return {"source":self.resolve_topic_name("/odom"),"frame":msg.header.frame_id,
-                    "stamp_ns":msg.header.stamp.sec*1000000000+msg.header.stamp.nanosec,
-                    "stamp":{"sec":msg.header.stamp.sec,"nanosec":msg.header.stamp.nanosec},"x":p.x,"y":p.y,
-                    "yaw":math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z)),"speed":msg.twist.twist.linear.x}
+            return self.odometry()
+        if "derived" in cap and not cap.get("endpoint"):
+            try:
+                evidence = evaluate(cap["derived"], self.odometry())
+            except ValueError as exc:
+                raise failure(Unavailable, str(exc), "tool.derived_sample_invalid", "ros.odometry") from exc
+            return {**evidence, "definition_version": cap["version"]}
         if step["tool"]=="inspect" and not cap.get("endpoint"):
             def current():
                 s=self.call(self.query,GetMission.Request(mission_id=op))
@@ -391,6 +401,9 @@ def worker(journal,robot,planning):
                 continue
             step=t["steps"][t["cursor"]]
             cap=caps.get(step["tool"])
+            if "binding" not in step and step["tool"] not in ("inspect","status"):
+                raise failure(OutcomeUnknown,"旧步骤未保存提供者绑定，请按原操作 ID 核对旧提供者的记录",
+                              "tool.binding_unverified","registry")
             if (not cap or cap["version"]!=step["version"] or
                     ("binding" in step and binding(cap)!=step["binding"]) or
                     ("binding" not in step and step["tool"] in ("inspect","status") and cap.get("endpoint"))):

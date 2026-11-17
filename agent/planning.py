@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
+from derived_tools import load_directory
 from tracing import CODE, artifact, contract, exchange
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -129,12 +130,21 @@ def registry():
         dirs.append(Path(extra))
     for path in (p for directory in dirs for p in sorted(directory.glob("*.json"))):
         try:
-            item = json.loads(path.read_text(encoding="utf-8-sig"))
+            if not path.is_file():
+                continue
+            with path.open("rb") as stream:
+                raw = stream.read(131073)
+            if len(raw) > 131072:
+                raise ValueError("manifest exceeds 128 KiB")
+            item = json.loads(raw.decode("utf-8-sig"))
             key = item["id"]
             parameters = item["parameters"]
             outcomes = item.get("outcomes",{})
             terms = item.get("outcome_terms",{})
             utterances=item.get("utterances",[])
+            if not isinstance(item.get("endpoint"), str):
+                print(f"Invalid capability manifest {path.name}: endpoint must be a string", flush=True)
+                continue
             url = urlsplit(item["endpoint"])
             compatible = (key not in BASE or
                           (parameters == BASE[key]["parameters"] and item["effect"] == BASE[key]["effect"]))
@@ -154,14 +164,23 @@ def registry():
                 caps[key] = item
             else:
                 print(f"Invalid capability manifest {path.name}", flush=True)
-        except (ValueError, TypeError, KeyError, OSError) as exc:
+        except (ValueError, TypeError, KeyError, OSError, RecursionError) as exc:
             print(f"Invalid capability manifest {path.name}: {type(exc).__name__}", flush=True)
+    # Preserve the existing precedence of deployed HTTP tools. Derived definitions
+    # have their own directory and cannot shadow an existing provider.
+    for key, cap in load_directory(dirs[0] / "derived").items():
+        caps.setdefault(key, cap)
     return caps
 
 
 def catalog(caps):
-    return [{k:v for k,v in item.items() if k in ("id","version","description","parameters","effect","outcomes")}
-            for item in caps.values()]
+    entries = []
+    for item in caps.values():
+        entry = {k:v for k,v in item.items() if k in ("id","version","description","parameters","effect","outcomes")}
+        if "derived" in item and not item.get("endpoint"):
+            entry["derived"] = {k:v for k,v in item["derived"].items() if k in ("field","unit","comparison")}
+        entries.append(entry)
+    return entries
 
 
 def binding(cap):
@@ -225,9 +244,15 @@ def local_plan(text, caps):
     request = normalized(text)
     if re.fullmatch(r"(?:请)?(?:报告|查询|查看|读取|告诉我)?(?:一下)?(?:机器人|本机)?(?:当前)?(?:的位置|位置|状态|位姿)|status",request,re.I):
         return [{"tool":"status","args":{}}]
-    for item in caps.values():
-        if item["id"] not in BASE and not item["parameters"] and request in (item["id"],item["description"]):
-            return [{"tool":item["id"],"args":{}}]
+    named = [item for item in caps.values() if item["id"] not in BASE and not item["parameters"]]
+    if any(item["id"]==request for item in named):
+        return [{"tool":request,"args":{}}]
+    matches = [item for item in named if request==normalized(item["description"])]
+    if len(matches)>1:
+        raise failure(Refused, "多个工具使用了相同描述，请指定工具 ID："+"、".join(item["id"] for item in matches),
+                      "planner.tool_ambiguous", "registry")
+    if matches:
+        return [{"tool":matches[0]["id"],"args":{}}]
     coordinates = points_in(request)
     skeleton = PAIR.sub("@",request)
     match = re.fullmatch(

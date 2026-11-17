@@ -14,5 +14,8 @@ artifacts/verification/20261117-031532-ae63c8/*
 .env.*
 !.env.example
 .ci-results/
+plugins/derived/.history/
+plugins/derived/.publish.lock
+plugins/derived/.staging-*
 *.db-wal
 *.db-shm

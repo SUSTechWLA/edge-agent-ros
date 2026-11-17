@@ -8,11 +8,11 @@ import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"agent"))
 import planning
-from service import Journal, Robot, event_diagnosis
+from service import Journal, Robot, event_diagnosis, worker
 from tracing import artifact, contract, encoded
 
 
@@ -77,6 +77,62 @@ class TraceContracts(unittest.TestCase):
             j.create("same-trigger","status")
         self.assertIsNone(j.get("same-trigger"))
         self.assertEqual(j.get("task-one")["text"],"status")
+
+    def test_missing_legacy_binding_cannot_dispatch_a_replacement(self):
+        journal = self.journal()
+        cap = {"id":"sample", "version":"1", "description":"sample", "effect":"idempotent",
+               "parameters":{}, "endpoint":"http://replacement/sample"}
+        (self.plugins/"sample.json").write_text(json.dumps(cap), encoding="utf-8")
+        robot = Mock(spec=Robot)
+        robot.run.return_value = {"sample_id":"new-sample"}
+        task = journal.create("legacy-sample", "sample")
+        op = "legacy-sample/step/1"
+        task["steps"] = [{"tool":"sample", "version":"1", "args":{}, "status":"RUNNING", "operation_id":op}]
+        journal.save(task, "WAITING", "original provider was awaiting a receipt")
+
+        with patch("service.rclpy.ok", side_effect=[True,False]):
+            worker(journal, robot, False)
+        robot.run.assert_not_called()
+        held = journal.get(task["id"])
+        self.assertEqual(held["state"], "RECOVERY_REQUIRED")
+        self.assertFalse(held["can_retry"])
+        error = journal.event_page(task["id"])[0][-1]
+        self.assertEqual(error["operation_id"], op)
+        self.assertEqual(json.loads(error["payload"])["diagnostic"]["code"], "tool.binding_unverified")
+
+        # A newly frozen plan can use the registered provider with its own stable operation ID.
+        fresh = journal.create("new-sample", "sample")
+        fresh["provider"], fresh["steps"] = planning.plan(fresh["text"], planning.registry())
+        journal.save(fresh, "RUNNING", "new binding")
+        with patch("service.rclpy.ok", side_effect=[True,False]):
+            worker(journal, robot, False)
+        self.assertEqual(journal.get(fresh["id"])["state"], "SUCCEEDED")
+        self.assertEqual(robot.run.call_args.args[1], "new-sample/step/1")
+
+    def test_legacy_builtins_only_use_the_native_implementation(self):
+        journal = self.journal()
+        for name, args in (("status", {}), ("inspect", {"points":[[0,0]]})):
+            native = planning.BASE[name]
+            path = self.plugins/(name+".json")
+            for override in (False, True):
+                with self.subTest(tool=name, override=override):
+                    if override:
+                        path.write_text(json.dumps(dict(native, endpoint="http://replacement/run")))
+                    task = journal.create(f"legacy-{name}-{override}", name)
+                    task["steps"] = [{"tool":name, "version":native["version"], "args":args, "status":"PENDING"}]
+                    journal.save(task, "RUNNING", "plan recorded before bindings")
+                    robot = Mock(spec=Robot)
+                    robot.run.return_value = {"verified":True}
+                    with patch.dict(os.environ, {"EDGE_RETRY_LIMIT":"0"}), patch("service.rclpy.ok", side_effect=[True,False]):
+                        worker(journal, robot, False)
+                    if override:
+                        robot.run.assert_not_called()
+                        self.assertEqual(journal.get(task["id"])["state"], "RECOVERY_REQUIRED")
+                        self.assertTrue(journal.get(task["id"])["can_retry"])
+                    else:
+                        self.assertEqual(robot.run.call_args.args[2], native)
+                        self.assertEqual(journal.get(task["id"])["state"], "SUCCEEDED")
+            path.unlink()
 
     def test_invalid_legacy_measurement_requires_reconciliation_once(self):
         j=self.journal()

@@ -1,0 +1,11 @@
+{
+  "id": "timestamp_audit",
+  "version": "1",
+  "effect": "read",
+  "description": "按收到的采样顺序检查给定的整数毫秒序列，统计重复值、相邻回拨和最大前向间隔。timestamps_ms 为 JSON 整数数组字符串。",
+  "parameters": {"timestamps_ms": "string"},
+  "outcomes": {"timestamp_audit": "sample_count"},
+  "outcome_terms": {"timestamp_audit": ["采样时间戳的重复与回拨"]},
+  "utterances": ["检查这组采样时间戳的重复与回拨：{timestamps_ms}"],
+  "endpoint": "http://timestamp-audit:8124/invoke"
+}

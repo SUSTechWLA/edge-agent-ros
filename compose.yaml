@@ -67,6 +67,20 @@ services:
     profiles: ["model"]
     volumes:
       - models:/root/.ollama
+  plugin-author:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["plugin-author"]
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    entrypoint: ["python3","/opt/edge/client/plugin_author_watch.py"]
+    command: ["--url","http://console:8080","--out-dir","/proposals","--ollama-url","${EDGE_OLLAMA_URL:-http://model:11434}","--model","${EDGE_OLLAMA_MODEL:-qwen2.5:1.5b}"]
+    volumes:
+      - author-proposals:/proposals
   scene:
     <<: *runtime
     environment:
@@ -98,6 +112,7 @@ services:
       - ${EDGE_EVIDENCE_DIR:-./artifacts/verification}:/evidence
     command: ["python3", "/opt/edge/tests/verify.py", "mission"]
 volumes:
+  author-proposals:
   scene-state:
   state:
   console-history:

@@ -94,7 +94,9 @@ def run(args, selected, reasons):
                                 test("test_selection.py","-v"),["docker","compose","config","--quiet"],
                                 ["docker","compose","-f","compose.hardware.yaml","config","--quiet"]])
         if "planner" in selected:
-            stage("planner",[test("planning_contract.py","-v")])
+            stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
+                             test("test_author_tool.py","-v"),test("test_plugin_author_watch.py","-v"),
+                             test("system/verify_sample_provider.py","--out",directory/"provider-contract.json")])
         if "board" in selected:
             env["EDGE_HARDWARE_IMAGE"]=board_image
             board_built=stage("board-build",[["docker","compose","-f","compose.hardware.yaml","build","core"]])
@@ -121,7 +123,9 @@ def run(args, selected, reasons):
                     "core":[script("verify.ps1","-SkipBuild")],
                     "motion-sensors":[in_image("python3","/opt/edge/tests/system/motion_faults.py","--out","/evidence/motion-sensors.json")],
                     "agent-faults":[test("system/agent_faults.py","--image",image,"--out",directory/"agent-faults.json"),
-                                    test("system/lifecycle_acceptance.py","--image",image,"--out-root",directory/"lifecycle")],
+                                    test("system/lifecycle_acceptance.py","--image",image,"--out-root",directory/"lifecycle"),
+                                    test("system/derived_tool_acceptance.py","--image",image,"--out",directory/"derived-tool.json"),
+                                    test("system/verify_sample_provider.py","--image",image,"--out",directory/"provider-hotplug.json")],
                     "resilience":[test("console_resilience.py")],
                 }
                 for name, commands in checks.items():

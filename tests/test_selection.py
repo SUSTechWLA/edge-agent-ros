@@ -14,6 +14,14 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/derived_tools.py","plugins/derived/*.json"), (*AGENT,"board")),
+    (("agent/author_tool.py",), ("planner","agent-faults")),
+    (("tests/test_derived_tools.py","tests/test_author_tool.py"), ("planner",)),
+    (("tests/system/verify_sample_provider.py","tests/system/provider_contract.py","examples/timestamp-audit/*",
+      "examples/derived-speed/*"), ("planner","agent-faults")),
+    (("tests/test_plugin_author_watch.py",), ("planner",)),
+    (("client/plugin_author_watch.py",), ("planner","observations")),
+    (("tests/system/derived_tool_acceptance.py",), ("agent-faults",)),
     (("agent/contracts.json", "contracts/*.json"), ("planner","agent-contracts","agent-faults","model")),
     (("agent/service.py", "agent/planning.py", "agent/tracing.py"), (*AGENT,"board")),
     (("agent/*.py", "plugins/*.json", "tests/agent*_contract.py"), AGENT),
@@ -23,7 +31,7 @@ RULES = [
     (("scene/*",), SCENE),
     (("console/server/*", "perception/*", "observations/*.json"), (*OBS,"board")),
     (("console/web/*", "tests/system/console_browser.mjs"), ("ui","console-missions")),
-    (("client/event_sink.py",), ("observations",)),
+    (("client/event_sink.py",), ("observations","planner")),
     (("sim/bridge.yaml","sim/witness.yaml","sim/world.sdf"), (*MOTION,*OBS)),
     (("src/edge_core/*",), (*MOTION,"board")),
     (("src/edge_gateway/*","sim/*"), MOTION),
@@ -86,6 +94,9 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["src/new-prompt.md"])[0],list(STAGES))
         self.assertIn("scene-binding", selection(["agent/service.py","scene/provider.py"])[0])
         self.assertEqual(selection(["tests/system/lifecycle_acceptance.py"])[0], [R,"agent-faults"])
+        self.assertEqual(selection(["examples/timestamp-audit/provider.py"])[0], [R,"planner","agent-faults"])
+        self.assertEqual(selection(["agent/author_tool.py"])[0], [R,"planner","agent-faults"])
+        self.assertIn("board",selection(["plugins/derived/derived.speed_kmh.json"])[0])
 
 
 if __name__=="__main__":

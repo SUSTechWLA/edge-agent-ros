@@ -33,6 +33,8 @@
     "tool.receipt_invalid": {"version":"1","hint":"校验提供者回传的 operation_id、终态与约定证据字段。"},
     "tool.transport_unavailable": {"version":"1","hint":"检查挂载端点、服务健康状态和重试时间。"},
     "tool.odom_stale": {"version":"1","hint":"核对里程计最近一次采样时间、驱动与话题映射。"},
+    "tool.derived_sample_invalid": {"version":"1","hint":"核对原始里程计的坐标系、采样时刻、有限数值及本次工具的单位。"},
+    "tool.binding_unverified": {"version":"1","hint":"按原操作 ID 核对旧提供者及其执行账本；补齐旧动作结论后再决定是否派发新任务。"},
     "planner.invalid_proposal": {"version":"1","hint":"对照本次模型请求、输出和能力参数契约。"}
   }
 }
