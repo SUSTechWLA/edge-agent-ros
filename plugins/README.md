@@ -18,6 +18,6 @@
 
 ### 让产物参与任务验收
 
-`outcomes` 把任务要求的产物映射到成功回执里的证据字段。上面的测温插件要求 `evidence.celsius`。相机可声明 `"outcomes":{"image":"image_uri"}`，提供者应在实际保存后返回可读取的图像引用，必要时附上采集时间和文件摘要。运行时检查约定字段；图像内容和引用的可访问性由相机提供者及其验收测试保证。
+`outcomes` 把任务要求的产物映射到回执里的证据字段。上面的测温插件要求 `evidence.celsius`。相机可声明 `"outcomes":{"image":"image_uri"}`。SDD-006 起，此类步骤必须绑定独立服务 `verify.image`。相机报告成功后，运行时保存候选；验收器读取实际产物，返回独立证据，全部必需验收通过才会写入任务成功。现场可用 `verification-policy.json` 为其他工具或产物登记必需验收器。[服务目录与生命周期](../docs/harness-extensions.md) · [清单、协议与启动命令](../examples/result-verifiers/README.md)
 
 新领域还可声明 `"outcome_terms":{"soil_moisture":["土壤含水量","土壤湿度"]}` 与 `"outcomes":{"soil_moisture":"volumetric_percent"}`。原请求命中这些词时，计划须含能提供该产物的步骤。内置规则能识别常见的照片、视频、抓取、温度和电量需求，即使相应模块尚未安装，也能指出缺少哪类能力。[拍照误报的修复与实测](../docs/model.md)

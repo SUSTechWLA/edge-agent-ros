@@ -104,7 +104,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         url=urlsplit(self.path)
-        if url.path in ("/agent/tasks","/agent/capabilities"):
+        if url.path in ("/agent/tasks","/agent/capabilities","/agent/plugins","/agent/services"):
             self.agent("GET",url)
             return
         if not url.path.startswith("/api/"):

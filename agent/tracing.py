@@ -70,7 +70,7 @@ def contract(section,key):
             if (doc["schema_version"]==1 and isinstance(entry["version"],str) and
                     0<len(entry["version"])<=64 and isinstance(entry[field],str) and 0<len(entry[field])<=8192):
                 value=entry
-        except (ValueError,KeyError,TypeError,OSError):
+        except (ValueError,KeyError,TypeError,OSError,RecursionError):
             continue
     if not value:
         return None
@@ -89,7 +89,7 @@ def diagnosis(exc, fallback, origin):
     return item
 
 
-def exchange(trace, layer, module, request, invoke, *, meta=None):
+def exchange(trace, layer, module, request, invoke, *, meta=None, commit_candidate=None):
     """Persist intent before IO; a request with no receipt is meaningful after a crash."""
     if trace is None:
         return invoke()
@@ -104,6 +104,11 @@ def exchange(trace, layer, module, request, invoke, *, meta=None):
         trace(layer+".error",{**common,"diagnosis":diagnostic,
                              "duration_ms":round((time.monotonic()-started)*1000,2)})
         raise
+    if commit_candidate is not None and response is not None:
+        # Store the full candidate and its bounded trace in one task-journal transaction.
+        commit_candidate(response, {**common,"outcome":"CANDIDATE","artifact":artifact(response),
+                                    "duration_ms":round((time.monotonic()-started)*1000,2)})
+        return response
     if layer=="tool":
         common["outcome"]="RUNNING" if response is None else "SUCCEEDED"
     trace(layer+".response",{**common,"artifact":artifact(response),

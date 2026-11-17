@@ -9,6 +9,7 @@
 | 原始传感器、融合、不新鲜的状态 | `perception/`、`observations/`、`console/server/observer.py` | 容器内运行 `python3 -m unittest discover -v -s /opt/edge/console/server` |
 | 保存、回放、事件导出 | `console/server/history.py`、`docs/console.md` | 以同一任务和操作 ID 核对源事件、重启后记录与回放时间 |
 | 新任务遇到能力缺口，需要开发工具 | 先查注册目录、原任务的终态事件和本机可用的观测。按[插件作者手册](docs/plugin-authoring.md)选择只读声明或独立 HTTP 提供者 | 从独立期望样本开始，执行草案检查和隔离 Docker 热更新测试，再发布到授权目录 |
+| 工具报告完成，现场结果未证实，或插件离线 | 先区分 `tool.response`、`verification_pending` 与步骤终态 `verified`。查看 `steps[].verification` 的要求、绑定和已通过回执，再用 `GET /agent/services` 查询所需原版本。[SDD-006](docs/specs/SDD-006-runtime-plugins.md) | 在独立 Docker 运行 `tests/system/runtime_plugin_acceptance.py`，用提供者侧的操作计数核对重启及重试是否重复执行 |
 
 1. 找到入口和证据来源，把用户输入、期望终态与成功/失败判据写成 AC。新规格从 [模板](docs/specs/TEMPLATE.md) 开始。
 2. 在短期分支实现。新增能力首先定义输入、结果证据、失败语义以及版本变化后的旧任务行为。日志引用 ID，公开证据使用可分发的测试输入。

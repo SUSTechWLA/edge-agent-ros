@@ -34,3 +34,7 @@
 2026-11-17 补充共享服务的使用方契约。模块可调用 `GET /agent/services?name=<服务>` 获取唯一可用的提供者及其声明的直接依赖，传入可选 `binding=<既有摘要>` 要求原绑定。成功返回 `{service,plugin_id,plugin_version,endpoint,binding,dependencies}`，dependencies 只列直接依赖的身份、地址和摘要。无法解析或不兼容返回 409 和诊断码。使用方按相应服务自己的协议调用端点；验收调用携带同一份直接依赖信息。AC-1 须从 HTTP 验证这一接口及旧绑定冲突。
 
 2026-11-17 补充有序卸载。清单可选布尔字段 `draining`。切到 true 后，该服务及其依赖方退出新操作的绑定；已持久绑定的操作仍可按原摘要取回端点并完成验收。仅改变接纳状态不会改变绑定摘要。目录报告 `draining`；未带摘要的查询返回 409 及 `plugin.draining`。撤下清单或更改实现后，旧摘要不再授权调用。AC-3 增加可复现的“拒接新任务、完成已接任务、随后卸载”场景。
+
+2026-11-17 实现服务目录、按名称或摘要解析、现场策略和独立验收队列。工具终态候选与对应 `tool.response` 在同一 SQLite 事务提交，已通过的验收逐项落账；只读校验通过有界 HTTP 调用。领域逻辑在两个独立进程中实现。复测入口为 `tests/test_runtime_plugins.py`、`tests/agent_verification_contract.py`、`examples/result-verifiers/test_verifiers.py` 及 `tests/system/runtime_plugin_acceptance.py`；由系统测试选择器纳入回归。开发镜像已验证强制停止 Agent 后不重复采集。发布候选以干净提交的全量结果为准。
+
+2026-11-17 AC-5 增补两个回归。现场策略 JSON 嵌套过深时，原诊断目录会再次解析同一坏文件；已隔离错误，并验证修正策略后任务可续办。旧活动任务步骤 JSON 损坏时，SQLite 对出队记录取 JSON 字段可能阻塞健康任务。现在启动时单独保存原文到 `quarantined_steps`，受影响任务挂起并记录 `journal.invalid_steps`，健康任务继续。

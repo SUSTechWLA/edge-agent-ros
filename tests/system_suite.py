@@ -95,6 +95,8 @@ def run(args, selected, reasons):
                                 ["docker","compose","-f","compose.hardware.yaml","config","--quiet"]])
         if "planner" in selected:
             stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
+                             test("test_runtime_plugins.py","-v"),
+                             [PY,str(ROOT/"examples/result-verifiers/test_verifiers.py"),"-v"],
                              test("test_author_tool.py","-v"),test("test_plugin_author_watch.py","-v"),
                              test("system/verify_sample_provider.py","--out",directory/"provider-contract.json")])
         if "board" in selected:
@@ -117,7 +119,12 @@ def run(args, selected, reasons):
                 report["docker"]=output(["docker","version","--format","{{.Server.Version}}"],env)
                 report["compose"]=output(["docker","compose","version","--short"],env)
                 checks={
-                    "agent-contracts":[in_image("python3","/opt/edge/tests/agent_trace_contract.py","-v")],
+                    "agent-contracts":[in_image("python3","/opt/edge/tests/agent_trace_contract.py","-v"),
+                                       in_image("python3","/opt/edge/tests/agent_verification_contract.py","-v"),
+                                       ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
+                                        "--cap-drop","ALL","--user","65534:65534","--mount",
+                                        f"type=bind,source={ROOT/'examples/result-verifiers'},target=/sample,readonly",
+                                        "--entrypoint","python3",image,"-B","/sample/test_verifiers.py","-v"]],
                     "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server")],
                     "scene-contracts":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/tests","-p","test_scene*.py")],
                     "core":[script("verify.ps1","-SkipBuild")],
@@ -125,7 +132,8 @@ def run(args, selected, reasons):
                     "agent-faults":[test("system/agent_faults.py","--image",image,"--out",directory/"agent-faults.json"),
                                     test("system/lifecycle_acceptance.py","--image",image,"--out-root",directory/"lifecycle"),
                                     test("system/derived_tool_acceptance.py","--image",image,"--out",directory/"derived-tool.json"),
-                                    test("system/verify_sample_provider.py","--image",image,"--out",directory/"provider-hotplug.json")],
+                                    test("system/verify_sample_provider.py","--image",image,"--out",directory/"provider-hotplug.json"),
+                                    test("system/runtime_plugin_acceptance.py","--image",image,"--out",directory/"runtime-plugins.json")],
                     "resilience":[test("console_resilience.py")],
                 }
                 for name, commands in checks.items():

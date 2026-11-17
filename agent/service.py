@@ -21,8 +21,9 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point
 from edge_interfaces.srv import GetMission, SubmitMission
 from derived_tools import evaluate
+import runtime_plugins
 from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog,
-                      failure, http_json, plan, registry, remote_failure)
+                      failure, http_json, plan, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
 
 
@@ -75,6 +76,20 @@ class Journal:
         self.db.commit()
         if self.db.execute("PRAGMA user_version").fetchone()[0] < 1:
             self.repair_nonfinite_steps()
+        self.quarantine_unreadable_active_steps()
+
+    def quarantine_unreadable_active_steps(self):
+        # SQLite JSON predicates in queue selection must never let one damaged legacy task
+        # stop another. Preserve the exact original record for offline diagnosis.
+        rows = self.db.execute("""SELECT id,steps FROM tasks WHERE state IN ('PLANNING','RUNNING','WAITING')
+            AND CASE WHEN json_valid(steps) THEN json_type(steps) IS NOT 'array' ELSE 1 END""").fetchall()
+        for row in rows:
+            with self.db:
+                self.db.execute("CREATE TABLE IF NOT EXISTS quarantined_steps(task_id TEXT PRIMARY KEY, original_steps BLOB)")
+                self.db.execute("INSERT INTO quarantined_steps VALUES(?,?)", (row["id"], row["steps"]))
+                self.db.execute("UPDATE tasks SET steps='[]' WHERE id=?", (row["id"],))
+                self.save(self.get(row["id"]), "RECOVERY_REQUIRED", "活动任务的步骤记录无法读取，原文已隔离",
+                          kind="steps_quarantined",diagnostic={"code":"journal.invalid_steps","origin":"journal"})
 
     def repair_nonfinite_steps(self):
         # Older providers could produce NaN/Infinity, making a confirmed task unreadable.
@@ -180,10 +195,17 @@ class Journal:
         return {"trace_id":task["trace_id"],"task_id":task["id"],"parent_event_id":row[0] if row else None,
                 "trigger":task.get("trigger") or {}}
 
-    def due(self, planning):
+    def due(self, planning, verifying=False):
         states = ("PLANNING","PLANNING") if planning else ("RUNNING","WAITING")
+        # One executor and one verifier consume disjoint durable step states. Slow evidence
+        # storage cannot occupy the thread responsible for dispatch or ROS polling.
+        queue = ""
+        if not planning:
+            condition = "IS" if verifying else "IS NOT"
+            queue = f" AND json_extract(steps,'$[' || cursor || '].status') {condition} 'VERIFYING'"
         with self.lock:
-            row=self.db.execute("SELECT id FROM tasks WHERE state IN (?,?) AND due<=? ORDER BY due,created LIMIT 1",
+            row=self.db.execute("SELECT id FROM tasks WHERE state IN (?,?) AND due<=?" + queue +
+                                " ORDER BY due,created LIMIT 1",
                                 (*states,time.time())).fetchone()
             return self.get(row[0]) if row else None
 
@@ -205,10 +227,12 @@ class Journal:
                       kind="retry_requested",op=op)
             return self.get(key)
 
-    def save(self,t, state, detail, delay=0, kind=None, op=None, diagnostic=None):
+    def save(self,t, state, detail, delay=0, kind=None, op=None, diagnostic=None, tool_response=None):
         now=utc()
         with self.lock,self.db:
             prior=self.db.execute("SELECT state FROM tasks WHERE id=?",(t["id"],)).fetchone()[0]
+            if tool_response is not None:
+                self.append(t, "tool.response", "tool.response", {}, step=t["cursor"], op=op, trace=tool_response)
             if kind is None and prior!=state:
                 kind="transition"
             self.db.execute("""UPDATE tasks SET state=?,detail=?,provider=?,steps=?,cursor=?,retries=?,due=?,updated=? WHERE id=?""",
@@ -226,7 +250,12 @@ class Journal:
                     payload["step"]=project_step(t["steps"][index])
                 trace={}
                 if diagnostic and diagnostic.get("code"):
-                    layer="journal" if kind=="evidence_corrected" else ("planner" if op is None else "tool")
+                    if kind in ("evidence_corrected","steps_quarantined"):
+                        layer = "journal"
+                    elif diagnostic["code"].startswith(("verification.","plugin.")):
+                        layer = "verification"
+                    else:
+                        layer = "planner" if op is None else "tool"
                     trace={"layer":layer,"code":diagnostic["code"],
                            "diagnosis":payload["diagnostic"]}
                 self.append(t,kind,detail,payload,step=index,op=op,trace=trace)
@@ -255,6 +284,9 @@ def project_step(step):
         if key in result:
             captured=artifact(result[key])
             result[key]=captured.get("content",captured)
+    if "verification" in result:
+        captured = artifact(result["verification"])
+        result["verification"] = captured.get("content", captured)
     return result
 
 
@@ -383,9 +415,51 @@ class OperationCanceled(Exception):
     """The executor confirmed that its operation was canceled."""
 
 
-def worker(journal,robot,planning):
+def prepare_verification(step, cap):
+    if "verification" not in step:
+        check = verification_plan(cap, runtime_plugins.load_policy())
+        if check["required"] and (step["status"] != "PENDING" or step.get("operation_id")):
+            raise failure(OutcomeUnknown, "旧操作已派发且没有验收绑定，请按原操作 ID 核查",
+                          "verification.legacy_unbound", "registry")
+        step["verification"] = check
+    check = step["verification"]
+    if check["required"] and not check["pins"]:
+        directory = runtime_plugins.snapshot()
+        check["pins"] = [directory.pin(name) for name in check["required"]]
+
+
+def verify_candidate(journal, task, step, op, trace):
+    check = step["verification"]
+    # Completed decisions were committed separately; resume at the first outstanding service.
+    for pin in check["pins"][len(check["decisions"]):]:
+        runtime_plugins.snapshot().pin(pin["service"], expected_binding=pin["binding"])
+        request = {"operation_id":op, "task_id":task["id"], "trace_id":task["trace_id"],
+                   "tool":step["tool"], "arguments":step["args"], "outcomes":check["outcomes"],
+                   "evidence":check["candidate"], "started_at":step["started_at"],
+                   **{k:pin[k] for k in ("service","plugin_id","plugin_version")}}
+        decision = runtime_plugins.verify(pin, request, trace)
+        if decision["verdict"] == "fail":
+            check["decisions"].append(decision)
+            raise failure(Refused, "独立验收发现反证：" + pin["service"],
+                          "verification.rejected", pin["plugin_id"], decision["evidence"])
+        check["decisions"].append(decision)
+        task["retries"] = 0
+        journal.save(task, "RUNNING", "已记录独立验收：" + pin["service"], kind="verification_passed", op=op)
+    return check["candidate"]
+
+
+def finish_step(journal, task, step, op, result):
+    step.update(status="SUCCEEDED", evidence=result)
+    step["verification"].pop("candidate", None)
+    task["cursor"] += 1
+    task["retries"] = 0
+    last = task["cursor"] == len(task["steps"])
+    journal.save(task, "SUCCEEDED" if last else "RUNNING", "已取得步骤证据", kind="verified", op=op)
+
+
+def worker(journal,robot,planning,verifying=False):
     while rclpy.ok():
-        t=journal.due(planning)
+        t=journal.due(planning, verifying)
         if not t:
             time.sleep(0.2)
             continue
@@ -393,14 +467,17 @@ def worker(journal,robot,planning):
         def trace(kind, fields):
             journal.exchange_event(t,kind,fields,None if planning else op)
         try:
-            caps=registry()
             if planning:
-                t["provider"],t["steps"]=plan(t["text"],caps,trace)
+                t["provider"],t["steps"]=plan(t["text"],registry(),trace)
                 t["retries"]=0
                 journal.save(t,"RUNNING","已验证计划",kind="planned")
                 continue
             step=t["steps"][t["cursor"]]
-            cap=caps.get(step["tool"])
+            if verifying:
+                result = verify_candidate(journal, t, step, op, trace)
+                finish_step(journal, t, step, op, result)
+                continue
+            cap=registry().get(step["tool"])
             if "binding" not in step and step["tool"] not in ("inspect","status"):
                 raise failure(OutcomeUnknown,"旧步骤未保存提供者绑定，请按原操作 ID 核对旧提供者的记录",
                               "tool.binding_unverified","registry")
@@ -408,27 +485,33 @@ def worker(journal,robot,planning):
                     ("binding" in step and binding(cap)!=step["binding"]) or
                     ("binding" not in step and step["tool"] in ("inspect","status") and cap.get("endpoint"))):
                 raise failure(Unavailable,"所需能力未挂载，或提供者与已保存的计划不一致","tool.binding_unavailable","registry")
+            prepare_verification(step, cap)
             if step["status"]=="PENDING":
                 step.update(status="RUNNING",operation_id=op,started_at=time.time())
                 if step["tool"]=="inspect" and not cap.get("endpoint"):
                     step["ros_binding"]="prepared"
                 journal.save(t,"RUNNING","已持久化步骤意图",kind="dispatch",op=op)
             context=journal.provider_context(t,op) if cap.get("accepts_trace") is True else None
+            def save_candidate(candidate, receipt):
+                step["verification"]["candidate"] = candidate
+                step["status"] = "VERIFYING"
+                t["retries"] = 0
+                journal.save(t, "RUNNING", "已保存工具候选结果，等待独立验收", kind="verification_pending",
+                             op=op, tool_response=receipt)
             result=exchange(trace,"tool",step["tool"],{"operation_id":op,"arguments":step["args"],"version":step["version"]},
                             lambda:robot.run(step,op,cap,trace,context),
-                            meta={"provider":"http-adapter" if cap.get("endpoint") else "ros","binding":binding(cap)})
+                            meta={"provider":"http-adapter" if cap.get("endpoint") else "ros","binding":binding(cap)},
+                            commit_candidate=save_candidate if step["verification"]["required"] else None)
             if result is None:
                 if time.time()-step.get("resumed_at",step["started_at"])>float(os.getenv("EDGE_STEP_TIMEOUT","1800")):
                     journal.save(t,"RECOVERY_REQUIRED","等待原操作终态超时，请对账",kind="timeout",op=op)
                 else:
                     journal.save(t,"WAITING","等待原操作回执",delay=.6)
                 continue
-            step.update(status="SUCCEEDED",evidence=result)
-            t["cursor"]+=1
-            t["retries"]=0
-            last=t["cursor"]==len(t["steps"])
-            journal.save(t,"SUCCEEDED" if last else "RUNNING","已取得步骤证据",kind="verified",op=op)
-        except Unavailable as exc:
+            if step["status"] == "VERIFYING":
+                continue
+            finish_step(journal, t, step, op, result)
+        except (Unavailable, runtime_plugins.PluginUnavailable, runtime_plugins.PolicyError) as exc:
             diagnostic=event_diagnosis(exc,planning,"tool.transport_unavailable")
             if planning and diagnostic.get("provider"):
                 t["provider"]=diagnostic["provider"]
@@ -475,6 +558,21 @@ class Handler(BaseHTTPRequestHandler):
         path=urlsplit(self.path)
         if path.path=="/agent/capabilities":
             return self.send(200,{"capabilities":catalog(registry())})
+        if path.path=="/agent/plugins":
+            return self.send(200,runtime_plugins.snapshot().public())
+        if path.path=="/agent/services":
+            query = parse_qs(path.query, keep_blank_values=True)
+            name = query.get("name", [""])[0]
+            expected = query.get("binding", [None])[0]
+            if (set(query) - {"name","binding"} or any(len(v) != 1 for v in query.values())
+                    or not runtime_plugins.NAME.fullmatch(name)
+                    or expected is not None and not re.fullmatch(r"[0-9a-f]{64}", expected)):
+                return self.send(400, {"code":"plugin.lookup_invalid","detail":"expected a service name and optional SHA-256 binding"})
+            try:
+                resolved = runtime_plugins.snapshot().pin(name, expected_binding=expected)
+            except runtime_plugins.PluginUnavailable as exc:
+                return self.send(409, {"code":exc.code,"detail":str(exc)})
+            return self.send(200, resolved)
         if path.path=="/agent/tasks":
             key=parse_qs(path.query).get("id",[""])[0]
             task=self.server.journal.get(key)
@@ -524,6 +622,7 @@ if __name__=="__main__":
     threading.Thread(target=rclpy.spin,args=(robot,),daemon=True).start()
     for planning in (True,False):
         threading.Thread(target=worker,args=(journal,robot,planning),daemon=True).start()
+    threading.Thread(target=worker,args=(journal,robot,False,True),daemon=True).start()
     server=ThreadingHTTPServer((os.getenv("EDGE_AGENT_BIND","0.0.0.0"),8090),Handler)
     server.journal=journal
     server.serve_forever()

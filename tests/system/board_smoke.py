@@ -10,7 +10,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
@@ -72,6 +72,14 @@ def exercise():
         rclpy.spin_until_future_complete(node, future, timeout_sec=8)
         check(future.done() and not future.result().found, "unexpected existing ROS mission")
         wait(lambda: api("/agent/capabilities"), "public Agent endpoint")
+        directory = api("/agent/plugins")
+        check(directory == {"plugins":[]}, "isolated board unexpectedly declared services")
+        try:
+            api("/agent/services?name=verify.image")
+        except HTTPError as exc:
+            check(exc.code == 409 and json.load(exc)["code"] == "plugin.service_missing", "service lookup diagnosis")
+        else:
+            raise AssertionError("undeployed verifier resolved on board")
         state = api("/api/state")
         check(state["environment"]=="hardware" and not state["sim_world_aligned"], "hardware mode")
         for key in ("odom","scan","imu","truth","pose"):
@@ -119,6 +127,7 @@ def exercise():
               and evidence["x"] == .375 and evidence["stamp_ns"]>0, "measured ROS evidence")
         return {"passed":True, "architecture":platform.machine(), "revision":os.getenv("EDGE_REVISION"),
                 "services":list(processes),"core_get_mission_found":future.result().found,
+                "runtime_plugins":directory["plugins"],"missing_service":"plugin.service_missing",
                 "without_odom":missing["state"], "diagnostic":"tool.odom_stale", "with_odom":recovered["state"],
                 "operation_id_before_and_after":operation, "evidence":evidence,
                 "occupied_cells":inputs["map"]["data"]["cells"].count(100), "truth_available":inputs["truth"]["available"]}

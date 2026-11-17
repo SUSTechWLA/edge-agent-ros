@@ -24,10 +24,13 @@
 | `model.request / response / error` | Ollama 请求中实际使用的 system 和 user messages、模型、选项、工具目录、约束 schema 及原始响应。自定义 HTTP 规划器保存其自身协议的输入输出；远端模型的内部提示只有提供者能提供。 |
 | `tool.request / response / error` | 语义调用使用的能力、版本、参数、操作 ID 及验收结果。在途步骤可多次查询，沿用稳定的操作 ID，每次查询各有调用 ID。 |
 | `adapter.request / response / error` | 独立插件收到的 HTTP 负载与回执。可用来区分“提供者报错”和“它声称成功，但本地验收失败”。 |
+| `verification_pending`, `verification.request / response / error`, `verification_passed` | 候选回执和 `verification_pending` 在同一事务落账。按操作 ID 查看哪个服务验收、证据和绑定是什么；通过一项就持久记录，全部通过才有步骤的 `verified`。 |
 | `ros.request / response / error` | 内置巡检实际查询和提交的 ROS 服务委托及核心回执。更低层动作和停稳验收另见巡检内核的账本。 |
 | `retry`, `retry_exhausted`, `blocked`, `error`, `retry_requested` | 谁发现了错误、是否自动重试、哪些情况需要操作员核对。诊断文案不改变现有重试或取消规则。 |
 
 以上数据位于 Agent 账本的 `events.payload.trace`。通用字段为 `schema_version, event_id, parent_event_id, trace_id, trigger, module, layer, code`。每个真实交互的来回记录共用 `call_id`，持续时间使用本机单调时钟。进程在外部调用过程中崩溃时，可能只留下一条已提交的 request。应先用操作 ID 对账。历史事实与适配器实际运动的证明需要分别查看。
+
+SDD-006 将候选落账后的恢复工作交给独立的验收线程。工具线程仍能处理其他设备委托。任务 API 的 `steps[].verification.required` 保存规划时的要求，`pins` 保存派发时的服务和依赖绑定，`decisions` 保存每份已接受的独立验收回执。验收途中可查 `candidate`，完成后原始工具结果在 `step.evidence`。如果验收 HTTP 请求已发出、回执尚未持久化就断电，恢复后可以再问只读验收器。若动作本身尚无可靠回执，需要回到工具提供者的原操作账本。[SDD-006](../docs/specs/SDD-006-runtime-plugins.md)
 
 可以通过 `GET /agent/tasks?id=<ID>&after=0&limit=100` 正序读 Agent 事件。下一页使用上一页最后一个 `seq`。默认返回最近 128 条且限制单页日志体积，`events_has_more=true` 表示有更多记录。
 

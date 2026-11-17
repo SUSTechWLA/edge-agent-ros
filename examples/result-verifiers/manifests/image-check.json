@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "image-check",
+  "version": "1",
+  "provides": ["verify.image"],
+  "requires": [],
+  "endpoint": "http://image-check:8095/verify"
+}

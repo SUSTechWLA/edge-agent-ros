@@ -35,6 +35,19 @@
     "tool.odom_stale": {"version":"1","hint":"核对里程计最近一次采样时间、驱动与话题映射。"},
     "tool.derived_sample_invalid": {"version":"1","hint":"核对原始里程计的坐标系、采样时刻、有限数值及本次工具的单位。"},
     "tool.binding_unverified": {"version":"1","hint":"按原操作 ID 核对旧提供者及其执行账本；补齐旧动作结论后再决定是否派发新任务。"},
+    "verification.policy_invalid": {"version":"1","hint":"检查 verification-policy.json 的版本、服务名称和完整 JSON，使用原子替换后再试。"},
+    "journal.invalid_steps": {"version":"1","hint":"按 task_id 核对 quarantined_steps 里的原始步骤与提供者账本，确认实际动作后再处理。"},
+    "verification.binding_unavailable": {"version":"1","hint":"按任务保存的服务绑定恢复原验收提供者及依赖，再用原操作 ID 续办。"},
+    "verification.rejected": {"version":"1","hint":"查看独立验收的反证、原操作 ID 与产物来源；新动作应拥有自己的操作身份。"},
+    "plugin.verdict_unknown": {"version":"1","hint":"查看验收器回传的现场证据与产物可用性；从已保存的候选继续验收。"},
+    "plugin.service_missing": {"version":"1","hint":"查询 /agent/plugins，检查需要的服务及它的依赖是否已发布。"},
+    "plugin.service_conflict": {"version":"1","hint":"查询 /agent/plugins，检查是否同时发布了多个相同服务名的提供者。"},
+    "plugin.draining": {"version":"1","hint":"提供者或传递依赖正在退出新任务；等旧操作交接后，恢复接单的清单并续办。"},
+    "plugin.dependency_unavailable": {"version":"1","hint":"按 /agent/plugins 展示的原因修复依赖链，然后恢复原绑定。"},
+    "plugin.dependency_cycle": {"version":"1","hint":"检查清单的 requires 和 provides，解除循环后原子替换清单。"},
+    "plugin.transport": {"version":"1","hint":"核对验收端点、服务存活与连接时限，恢复服务后可续验已有候选。"},
+    "plugin.receipt_invalid": {"version":"1","hint":"对照验收请求核对回执的操作标识、版本、结论与证据对象。"},
+    "verification.legacy_unbound": {"version":"1","hint":"核对旧提供者的账本和实体效果，旧操作没有可证明的验收绑定。"},
     "planner.invalid_proposal": {"version":"1","hint":"对照本次模型请求、输出和能力参数契约。"}
   }
 }

@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "digest-check",
+  "version": "1",
+  "provides": ["verify.digest"],
+  "requires": [],
+  "endpoint": "http://digest-check:8095/verify"
+}

@@ -1,0 +1,25 @@
+# Overlay for the simulation Compose project; its first file supplies the project root.
+x-verifier: &verifier
+  image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+  pull_policy: never
+  init: true
+  restart: unless-stopped
+  read_only: true
+  user: "${EDGE_VERIFIER_USER:-65534:65534}"
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  environment:
+    PYTHONDONTWRITEBYTECODE: "1"
+  entrypoint: ["python3", "/sample/verifier.py"]
+  volumes:
+    - ./examples/result-verifiers:/sample:ro
+    - verification-artifacts:/artifacts:ro
+services:
+  image-check:
+    <<: *verifier
+    command: ["--plugin", "image-check"]
+  digest-check:
+    <<: *verifier
+    command: ["--plugin", "digest-check"]
+volumes:
+  verification-artifacts:

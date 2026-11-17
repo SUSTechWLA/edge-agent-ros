@@ -11,6 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 from derived_tools import load_directory
+import runtime_plugins
 from tracing import CODE, artifact, contract, exchange
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -271,10 +272,24 @@ def local_plan(text, caps):
 def plan(text, caps, trace=None):
     diagnostic = {"stage":"capability_check"}
     try:
-        return build_plan(text,caps,diagnostic,trace)
+        policy = runtime_plugins.load_policy()
+        provider, steps = build_plan(text,caps,diagnostic,trace)
+        for step in steps:
+            step["verification"] = verification_plan(caps[step["tool"]], policy)
+        return provider, steps
+    except runtime_plugins.PolicyError as exc:
+        raise failure(Unavailable, str(exc), "verification.policy_invalid", "registry") from exc
     except (Refused,Unavailable) as exc:
         exc.diagnostic = diagnostic
         raise
+
+
+def verification_plan(cap, policy):
+    required = runtime_plugins.requirements(cap, policy)
+    result = {"required":required}
+    if required:
+        result.update(outcomes=dict(cap.get("outcomes", {})), pins=[], decisions=[])
+    return result
 
 
 def planner_profile():

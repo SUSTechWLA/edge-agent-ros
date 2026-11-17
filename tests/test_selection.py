@@ -14,6 +14,11 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/runtime_plugins.py", "plugins/runtime/*.json", "contracts/verification-policy.json"), (*AGENT,"board")),
+    (("examples/result-verifiers/*",), ("planner","agent-contracts","agent-faults")),
+    (("tests/system/runtime_plugin_acceptance.py", "tests/system/runtime_plugin_fixture.py"), ("agent-faults",)),
+    (("tests/agent_verification_contract.py",), ("agent-contracts",)),
+    (("tests/test_runtime_plugins.py",), ("planner",)),
     (("agent/derived_tools.py","plugins/derived/*.json"), (*AGENT,"board")),
     (("agent/author_tool.py",), ("planner","agent-faults")),
     (("tests/test_derived_tools.py","tests/test_author_tool.py"), ("planner",)),
@@ -95,6 +100,8 @@ class TestSelection(unittest.TestCase):
         self.assertIn("scene-binding", selection(["agent/service.py","scene/provider.py"])[0])
         self.assertEqual(selection(["tests/system/lifecycle_acceptance.py"])[0], [R,"agent-faults"])
         self.assertEqual(selection(["examples/timestamp-audit/provider.py"])[0], [R,"planner","agent-faults"])
+        self.assertEqual(selection(["examples/result-verifiers/verifier.py"])[0], [R,"planner","agent-contracts","agent-faults"])
+        self.assertIn("board",selection(["plugins/runtime/image-check.json"])[0])
         self.assertEqual(selection(["agent/author_tool.py"])[0], [R,"planner","agent-faults"])
         self.assertIn("board",selection(["plugins/derived/derived.speed_kmh.json"])[0])
 
