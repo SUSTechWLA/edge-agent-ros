@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "scope": "Public Agent and console HTTP APIs in isolated ROS 2/Gazebo deployments. The external event_sink runs continuously and polls the archive; there is no outbound messaging or actuator command in this experiment.",
+  "probe": "tests/system/lifecycle_acceptance.py",
+  "probe_sha256_on_final_run": "00084e77ae6a165388b7e5e265b122b03e884b5fe6f57bbba5b80eb22588c26f",
+  "model": "local deterministic planner",
+  "trigger_kind": "user",
+  "rerun": "python tests/system/lifecycle_acceptance.py --image edge-agent-ros:v0.1 --tasks <36 or 96>",
+  "runs": [
+    {
+      "run": "9aa943814cfd",
+      "started_at": "2026-11-17T07:31:58.016088+00:00",
+      "image_revision": "c113b9b419346004cfdf53d4814dbb3f943e280f",
+      "image_id": "sha256:f82a1f23b8d07d957f5e218a1a604094ef04ab0f493a42b5d3666308306dc803",
+      "passed": true,
+      "elapsed_s_including_startup_and_cleanup": 39.468,
+      "unique_tasks": 38,
+      "terminal_verified_events": 38,
+      "tool_counts": {
+        "status": 20,
+        "preview_route": 18
+      },
+      "duplicate_trigger_submissions": 76,
+      "world_samples": 38,
+      "max_observed_displacement_m": 1.1892012986150182e-08,
+      "retry_limit": 3,
+      "faults": {
+        "brief_outage": {
+          "id": "2231f3e94dd54ab498ce87c32d680c7e",
+          "state": "SUCCEEDED",
+          "operation_id": "2231f3e94dd54ab498ce87c32d680c7e/step/1",
+          "retry_events": 1,
+          "operator_retry_calls": 0
+        },
+        "persistent_outage": {
+          "id": "bc2813bd792e476180a2faf1dd897bf5",
+          "trace_id": "bc2813bd792e476180a2faf1dd897bf5",
+          "operation_id": "bc2813bd792e476180a2faf1dd897bf5/step/1",
+          "cause": "tool.odom_stale",
+          "operator_hint": "核对里程计最近一次采样时间、驱动与话题映射。",
+          "paused_state": "RECOVERY_REQUIRED",
+          "can_retry": true,
+          "after_agent_restart": "RECOVERY_REQUIRED",
+          "observer_kind": "agent.retry_exhausted",
+          "observer_event_id": "698d1a03790147e3a0de500dab87ba5a",
+          "observer_delivery": "local polling event sink",
+          "recovery_request": "POST /agent/retry",
+          "resumed": "SUCCEEDED",
+          "second_retry_http": 409
+        }
+      },
+      "independently_copied_exhaustion_events": 1,
+      "raw_sha256": {
+        "summary.json": "8347a2db38dae1e3e9f35f66a989d42b872ffff3806eb993b7a89df9288ff17a",
+        "tasks.ndjson": "378a6e86af2858e6aaef6c0b84829ea0db35f792af87225b85794c70924466ff"
+      }
+    },
+    {
+      "run": "ab6a188d1d21",
+      "started_at": "2026-11-17T07:33:12.054243+00:00",
+      "image_revision": "c113b9b419346004cfdf53d4814dbb3f943e280f",
+      "image_id": "sha256:f82a1f23b8d07d957f5e218a1a604094ef04ab0f493a42b5d3666308306dc803",
+      "passed": true,
+      "elapsed_s_including_startup_and_cleanup": 44.046,
+      "unique_tasks": 98,
+      "terminal_verified_events": 98,
+      "tool_counts": {
+        "status": 50,
+        "preview_route": 48
+      },
+      "duplicate_trigger_submissions": 196,
+      "world_samples": 98,
+      "max_observed_displacement_m": 1.011884975813111e-08,
+      "retry_limit": 3,
+      "faults": {
+        "brief_outage": {
+          "id": "dd4be8d8f5e84037a59879ad37a87c66",
+          "state": "SUCCEEDED",
+          "operation_id": "dd4be8d8f5e84037a59879ad37a87c66/step/1",
+          "retry_events": 1,
+          "operator_retry_calls": 0
+        },
+        "persistent_outage": {
+          "id": "daddd53866a943f0b4e7023dc684acfd",
+          "trace_id": "daddd53866a943f0b4e7023dc684acfd",
+          "operation_id": "daddd53866a943f0b4e7023dc684acfd/step/1",
+          "cause": "tool.odom_stale",
+          "operator_hint": "核对里程计最近一次采样时间、驱动与话题映射。",
+          "paused_state": "RECOVERY_REQUIRED",
+          "can_retry": true,
+          "after_agent_restart": "RECOVERY_REQUIRED",
+          "observer_kind": "agent.retry_exhausted",
+          "observer_event_id": "2bc82380eb50430a9688ddf86ead4a91",
+          "observer_delivery": "local polling event sink",
+          "recovery_request": "POST /agent/retry",
+          "resumed": "SUCCEEDED",
+          "second_retry_http": 409
+        }
+      },
+      "independently_copied_exhaustion_events": 1,
+      "raw_sha256": {
+        "summary.json": "86a9d247881a79a38f89da8349159f51ca3667bd6e4ef1b211a7363399e6336e",
+        "tasks.ndjson": "e32657b175acb9234d746f7541f1a70b6afc94530be47add7392814299f81989"
+      }
+    }
+  ],
+  "limitations": [
+    "Two short read-only trials; no endurance or general natural-language comprehension claim.",
+    "The harness restores the bridge. The Agent retries a failed read; it did not repair a physical sensor or restart the driver.",
+    "The event consumer observes an actionable fault locally. The operator retry was simulated through the existing HTTP API. External alert delivery, recipient identity, authenticated approval, and escalation after missed acknowledgement were not exercised.",
+    "Position assertions compare samples of independent simulator truth; neither physical travel nor continuous zero-displacement is certified."
+  ]
+}

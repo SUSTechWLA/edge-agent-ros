@@ -80,6 +80,8 @@ python tests/system_suite.py
 
 最后一条运行完整仿真回归。使用本机已有的 Ollama 模型卷时追加 `--ollama-cache-volume edge-agent-ros_models`。每次运行在 `.ci-results/system/runs/<运行号>/` 独立保存摘要、阶段日志和证据。未配置模型时，摘要显式标记真实推理已跳过。查阅[系统测试报告、架构评价与测试选择规则](docs/testing/single-edge.md)。
 
+要看系统在连续任务中何时自己恢复、何时需要人处理，可运行 `python tests/system/lifecycle_acceptance.py --tasks 96`。探针在独立仿真中重复投递用户请求、暂停传感器链路、重启 Agent，并监听实际故障事件。现有服务能保留任务和处置依据。面向值班人的持久待办、通知回执和有时限的批准属于下一阶段。[生命周期实测样本](docs/evidence/lifecycle-sample.json) · [持续运行与人工介入规格](docs/specs/SDD-004-single-edge-lifecycle.md)
+
 只验证 C++ 内核、停车和执行链路故障时可单独运行：
 
 ```powershell

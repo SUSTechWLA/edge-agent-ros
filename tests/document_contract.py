@@ -41,6 +41,12 @@ class DocumentContract(unittest.TestCase):
         self.assertEqual(matrix["passed_count"], sum(row["passed"] for row in matrix["runs"]))
         self.assertEqual(matrix["oom_count"], sum(row["oom_kill_events"] > 0 for row in matrix["runs"]))
 
+        for sample in records["lifecycle-sample.json"]["runs"]:
+            self.assertTrue(sample["passed"])
+            self.assertEqual(sum(sample["tool_counts"].values()), sample["unique_tasks"])
+            self.assertEqual(sample["terminal_verified_events"], sample["unique_tasks"])
+            self.assertEqual(sample["faults"]["persistent_outage"]["second_retry_http"], 409)
+
     def test_local_links_can_survive_a_clean_checkout(self):
         raw = subprocess.check_output(["git","ls-files","--cached","--others","--exclude-standard","-z"],cwd=ROOT)
         files = {name for name in raw.decode().split("\0") if name}

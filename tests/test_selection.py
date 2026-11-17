@@ -32,7 +32,7 @@ RULES = [
     (("tests/test_scene*","tests/semantic_acceptance.py","tests/scene_*acceptance.py","tests/system/scene_binding_acceptance.py"), SCENE),
     (("tests/system/motion_faults.py",), ("motion-sensors","motion-world")),
     (("tests/verify.py","tests/stop_witness.py","tests/export_ledger.py","scripts/verify.ps1"), ("core",)),
-    (("tests/system/agent_faults.py",), ("agent-faults",)),
+    (("tests/system/agent_faults.py","tests/system/lifecycle_acceptance.py"), ("agent-faults",)),
     (("tests/console_resilience.py",), ("resilience",)),
     (("tests/console_acceptance.py",), ("console-missions",)),
     (("tests/system/clock_reset_acceptance.py",), ("clock-reset",)),
@@ -85,6 +85,7 @@ class TestSelection(unittest.TestCase):
             self.assertIn("planner", selection([path])[0], path)
         self.assertEqual(selection(["src/new-prompt.md"])[0],list(STAGES))
         self.assertIn("scene-binding", selection(["agent/service.py","scene/provider.py"])[0])
+        self.assertEqual(selection(["tests/system/lifecycle_acceptance.py"])[0], [R,"agent-faults"])
 
 
 if __name__=="__main__":

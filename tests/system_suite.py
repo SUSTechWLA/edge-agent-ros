@@ -120,7 +120,8 @@ def run(args, selected, reasons):
                     "scene-contracts":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/tests","-p","test_scene*.py")],
                     "core":[script("verify.ps1","-SkipBuild")],
                     "motion-sensors":[in_image("python3","/opt/edge/tests/system/motion_faults.py","--out","/evidence/motion-sensors.json")],
-                    "agent-faults":[test("system/agent_faults.py","--image",image,"--out",directory/"agent-faults.json")],
+                    "agent-faults":[test("system/agent_faults.py","--image",image,"--out",directory/"agent-faults.json"),
+                                    test("system/lifecycle_acceptance.py","--image",image,"--out-root",directory/"lifecycle")],
                     "resilience":[test("console_resilience.py")],
                 }
                 for name, commands in checks.items():
