@@ -1,0 +1,101 @@
+{
+  "trials": [
+    {
+      "mission_id": "cancel-moving",
+      "origin": [
+        0.800455,
+        0.643276
+      ],
+      "moving_world": [
+        0.678986,
+        0.735056
+      ],
+      "state": "CANCELED",
+      "stop": {
+        "duration_s": 0.8,
+        "samples": 24,
+        "drift_m": 7.211102550889002e-06,
+        "max_speed_mps": 4.6e-05,
+        "max_abs_yaw_rate_radps": 0.0
+      }
+    },
+    {
+      "mission_id": "cancel-moving-2",
+      "origin": [
+        0.670319,
+        0.740327
+      ],
+      "moving_world": [
+        0.733864,
+        0.595603
+      ],
+      "state": "CANCELED",
+      "stop": {
+        "duration_s": 0.8,
+        "samples": 24,
+        "drift_m": 1.4764823060161693e-05,
+        "max_speed_mps": 8e-05,
+        "max_abs_yaw_rate_radps": 0.0
+      }
+    },
+    {
+      "mission_id": "cancel-moving-3",
+      "origin": [
+        0.73808,
+        0.586945
+      ],
+      "moving_world": [
+        0.63561,
+        0.468051
+      ],
+      "state": "CANCELED",
+      "stop": {
+        "duration_s": 0.8,
+        "samples": 24,
+        "drift_m": 0.0001032472759931085,
+        "max_speed_mps": 0.000424,
+        "max_abs_yaw_rate_radps": 0.0
+      }
+    },
+    {
+      "mission_id": "cancel-moving-4",
+      "origin": [
+        0.631733,
+        0.464173
+      ],
+      "moving_world": [
+        0.766284,
+        0.550678
+      ],
+      "state": "CANCELED",
+      "stop": {
+        "duration_s": 0.8,
+        "samples": 24,
+        "drift_m": 1.4142135624137616e-06,
+        "max_speed_mps": 1.1e-05,
+        "max_abs_yaw_rate_radps": 0.0
+      }
+    }
+  ],
+  "mission_id": "cancel-moving",
+  "origin": [
+    0.800455,
+    0.643276
+  ],
+  "moving_world": [
+    0.678986,
+    0.735056
+  ],
+  "state": "CANCELED",
+  "stop": {
+    "duration_s": 0.8,
+    "samples": 24,
+    "drift_m": 7.211102550889002e-06,
+    "max_speed_mps": 4.6e-05,
+    "max_abs_yaw_rate_radps": 0.0
+  },
+  "passed": true,
+  "phase": "cancel",
+  "utc": "2026-11-17T03:16:14.945572+00:00",
+  "witness_samples": 417
+}

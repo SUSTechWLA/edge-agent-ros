@@ -1,0 +1,16 @@
+{
+  "mission_id": "cancel-moving",
+  "origin": [
+    0.800543,
+    0.643277
+  ],
+  "moving_world": [
+    0.677633,
+    0.736332
+  ],
+  "error": "AssertionError: robot not stationary: drift=0.0009480770010921534, speed=0.102107, yaw_rate=0.000132",
+  "passed": false,
+  "phase": "cancel",
+  "utc": "2026-11-17T03:11:31.384862+00:00",
+  "witness_samples": 70
+}

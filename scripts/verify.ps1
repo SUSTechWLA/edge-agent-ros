@@ -2,7 +2,8 @@ param([switch]$SkipBuild)
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 $id = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss") + "-" + [guid]::NewGuid().ToString("N").Substring(0,6)
-$outputDir = Join-Path $root "artifacts/verification/$id"
+$evidenceRoot = if ($env:EDGE_VERIFY_ROOT) { $env:EDGE_VERIFY_ROOT } else { Join-Path $root "artifacts/verification" }
+$outputDir = [IO.Path]::GetFullPath((Join-Path $evidenceRoot $id))
 $null = New-Item -ItemType Directory -Path $outputDir
 $priorOutput = $env:EDGE_EVIDENCE_DIR
 $env:EDGE_EVIDENCE_DIR = $outputDir
@@ -48,8 +49,10 @@ try {
     $image = if ($env:EDGE_IMAGE) { $env:EDGE_IMAGE } else { "edge-agent-ros:v0.1" }
     $imageId = docker image inspect $image --format '{{.Id}}'
     if ($LASTEXITCODE) { throw "Image unavailable: $image" }
-    $sourceFiles = @(Get-ChildItem src,sim,client,tests,docker,console,perception,agent -Recurse -File) +
-                   @(Get-Item compose.yaml,.dockerignore,scripts/build.ps1,scripts/verify.ps1)
+    $revision = docker image inspect $image --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'
+    if ($LASTEXITCODE) { throw "Could not inspect the image revision." }
+    $sourceFiles = @(Get-ChildItem src,sim,scene,client,tests,docker,console,perception,agent,plugins,observations -Recurse -File) +
+                   @(Get-Item compose.yaml,compose.hardware.yaml,.dockerignore,scripts/build.ps1,scripts/verify.ps1)
     $sourceFiles | Where-Object { $_.FullName -notmatch '[\\/]__pycache__[\\/]' } |
         Sort-Object FullName | ForEach-Object {
             $relative = $_.FullName.Substring($root.Length + 1).Replace('\','/')
@@ -91,7 +94,7 @@ try {
         # Only ephemeral stacks created with this run's timestamp and UUID are removed.
         & docker compose -p $p down --volumes --remove-orphans --timeout 3
     }
-    [ordered]@{run_id=$id; passed=$passed; error=$failure; image=$image; image_id=$imageId;
+    [ordered]@{run_id=$id; passed=$passed; error=$failure; image=$image; image_id=$imageId; image_revision=$revision;
         engine=(docker version --format '{{.Server.Version}}'); compose=(docker compose version --short);
         platform=(docker info --format '{{.OSType}}/{{.Architecture}}')
     } | ConvertTo-Json | Set-Content (Join-Path $outputDir "result.json") -Encoding utf8
