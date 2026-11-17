@@ -18,6 +18,10 @@ dsh 的 Cordis 插件通过上下文取得服务，声明依赖，注册工具�
 
 Edge 沿用同样的职责划分。**作者**选取领域字段与单位并写候选；**发布者**核对样本和旧版本，修改已发布目录；**运行中的 Agent**在规划时获取当前目录，执行时复核原绑定。定义存放于 `plugins/derived/`，仿真和硬件 Compose 均以只读方式把整个插件目录挂载进 Agent。带设备副作用的跨进程操作另外受 ROS 内核及设备契约约束。[作者与发布者实现](../agent/author_tool.py) · [只读解释器](../agent/derived_tools.py)
 
+## 顺着一个实测任务读证据
+
+打开[本版实验记录](evidence/authored-tools-sample.json)，从 `event_to_model_to_tool` 开始。先查 `blocked_task.event_id`，它应与 `watcher.source.event_id` 和 `first.trigger.parent_event_id` 一致。这样就知道哪一次困难触发了作者、哪一次新任务验证了成果。再看 `model.reply` 的 `speed/km/h`，对照 `first.step.evidence` 中的 −0.5 m/s 和 −1.8 km/h。最后比对 `in_flight.resumed_version` 与 `first.step.version`，确认在途操作恢复到了原版本。这次原任务使用了离线规划器，发布后的任务按描述精确匹配；模型实际参与的环节是编写工具。系统回归、独立 HTTP 算法和两种 CPU 架构的运行记录也保存在同一文件。
+
 ## 认识工具定义与证据
 
 ```json

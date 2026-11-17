@@ -1,0 +1,438 @@
+{
+  "spec": "SDD-005",
+  "verified_revision": "38fee71fa54379138d68e6a9990f209cbd1daae2",
+  "environment": "Windows workstation, Linux Docker, Gazebo, ROS 2 Jazzy and local Ollama. Synthetic odometry at the Agent subscription; no physical robot.",
+  "suite": {
+    "run_id": "20261117T093629Z-e042b271",
+    "status": "passed",
+    "started_at": "2026-11-17T09:36:30.073383+00:00",
+    "finished_at": "2026-11-17T09:43:59.959160+00:00",
+    "image_id": "sha256:2976a1f67a6060b622dc984e3a4d4fa79d6e3010293cba037ede5ebb8ff804be",
+    "passed_stage_duration_s": {
+      "repository": 5.36,
+      "planner": 3.95,
+      "board": 3.7,
+      "agent-contracts": 3.11,
+      "observations": 21.08,
+      "scene-contracts": 1.12,
+      "core": 84.48,
+      "motion-sensors": 18.44,
+      "agent-faults": 118.88,
+      "resilience": 46.47,
+      "motion-world": 6.42,
+      "console-missions": 24.44,
+      "places": 59.14,
+      "scene-binding": 2.97,
+      "scene-outage": 14.06,
+      "clock-reset": 2.0,
+      "ui": 3.38,
+      "model": 9.86
+    }
+  },
+  "event_to_model_to_tool": {
+    "passed": true,
+    "started_at": "2026-11-17T09:36:34.355247+00:00",
+    "project": "edge-derived-5d47717cc515",
+    "revision": "38fee71fa54379138d68e6a9990f209cbd1daae2",
+    "image_id": "sha256:3b6f2ca66eac1d63e4d7f3e94c30cf4ff0f47958ba6ebf9571f567a0f9249b47",
+    "draft_input": "watcher with Ollama",
+    "definition": {
+      "description": "用千米每小时报告本机前向速度",
+      "field": "speed",
+      "id": "derived.task_1511bf802217580f16497cfafdc69bc9",
+      "schema_version": 1,
+      "unit": "km/h"
+    },
+    "fixture": {
+      "topic": "/fixture/odom",
+      "signed_speed_mps": -0.5
+    },
+    "releases": [
+      {
+        "action": "publish",
+        "returncode": 0
+      },
+      {
+        "action": "publish",
+        "returncode": 1
+      },
+      {
+        "action": "publish",
+        "returncode": 0
+      },
+      {
+        "action": "remove",
+        "returncode": 1
+      },
+      {
+        "action": "publish",
+        "returncode": 0
+      },
+      {
+        "action": "remove",
+        "returncode": 0
+      }
+    ],
+    "blocked_task": {
+      "task_id": "9eed3f30b209404585b4e9cbdcf2ef75",
+      "trace_id": "9eed3f30b209404585b4e9cbdcf2ef75",
+      "reason_code": "planner.not_configured",
+      "event_id": "245661f822e147348bbfa37277026fa6"
+    },
+    "watcher": {
+      "first": {
+        "proposed": 1,
+        "declined": 0,
+        "recovered": 0,
+        "deferred": 0
+      },
+      "restart_without_model": {
+        "proposed": 0,
+        "declined": 0,
+        "recovered": 0,
+        "deferred": 0
+      },
+      "source": {
+        "archive_id": "1032d6fe99eeb3551502750213e2d71b",
+        "event_id": "245661f822e147348bbfa37277026fa6",
+        "reason_code": "planner.not_configured",
+        "seq": 11,
+        "task_id": "9eed3f30b209404585b4e9cbdcf2ef75",
+        "trace_id": "9eed3f30b209404585b4e9cbdcf2ef75"
+      },
+      "artifact": "decisions/fe016db3d995a06887856c9210773dc41994614d4f1177ac2f7bd6046541c182.json",
+      "sha256": "170421282d399abb2a8cbe4419a849393fa3c5fa1973512605d3e5a63d54c2af",
+      "mounts": [
+        "/author"
+      ],
+      "root_readonly": true
+    },
+    "model": {
+      "author_protocol": "ollama.chat",
+      "id": "derived.task_1511bf802217580f16497cfafdc69bc9",
+      "model": "qwen2.5:1.5b",
+      "prompt_sha256": "6e3aaeb7b1f2010f640d1ec3e0e1c25ff375a8380eaf0529dfc67f7102b11970",
+      "reply": {
+        "field": "speed",
+        "op": "read",
+        "threshold": 0,
+        "unit": "km/h"
+      },
+      "request": "用千米每小时报告本机前向速度",
+      "response_sha256": "48c5915a7d265f6e4a636b09c586a0ad4a5baaa4ee4345d979afe4bd227def89",
+      "source_task": {
+        "reason_code": "planner.not_configured",
+        "task_id": "9eed3f30b209404585b4e9cbdcf2ef75",
+        "trace_id": "9eed3f30b209404585b4e9cbdcf2ef75"
+      }
+    },
+    "first": {
+      "task_id": "38f2b5e58b6448da89726364e8804d5e",
+      "trace_id": "9eed3f30b209404585b4e9cbdcf2ef75",
+      "trigger": {
+        "kind": "agent",
+        "source": "derived-tool-acceptance",
+        "id": "edge-derived-5d47717cc515-available",
+        "parent_task_id": "9eed3f30b209404585b4e9cbdcf2ef75",
+        "parent_event_id": "245661f822e147348bbfa37277026fa6"
+      },
+      "step": {
+        "tool": "derived.task_1511bf802217580f16497cfafdc69bc9",
+        "args": {},
+        "version": "0a2afac62a9ab11011528865af23c836f760faf5a2bbce05f524452775c99f8b",
+        "binding": "d66f4ea9dbdc8a73da8d58c58c8f4b43957da73df9baaa8cb43b6e33c83d3e23",
+        "status": "SUCCEEDED",
+        "operation_id": "38f2b5e58b6448da89726364e8804d5e/step/1",
+        "started_at": 1794908206.752708,
+        "evidence": {
+          "source": "/fixture/odom",
+          "frame": "odom",
+          "stamp_ns": 1794908206738113355,
+          "field": "speed",
+          "raw_value": -0.5,
+          "raw_unit": "m/s",
+          "value": -1.8,
+          "unit": "km/h",
+          "definition_version": "0a2afac62a9ab11011528865af23c836f760faf5a2bbce05f524452775c99f8b"
+        }
+      }
+    },
+    "second": {
+      "tool": "derived.task_1511bf802217580f16497cfafdc69bc9",
+      "args": {},
+      "version": "8d66d8a746f618a37d7bf895a522da61ae0ef7a01aa41629364a7c0c320ab090",
+      "binding": "d8508c96091fa7fdc52053f6c762c3d540b18c9cfc4542d86827503f20d17e57",
+      "status": "SUCCEEDED",
+      "operation_id": "41f9e7d02c374eac9a7b87dc8bf7e18c/step/1",
+      "started_at": 1794908217.3679705,
+      "evidence": {
+        "source": "/fixture/odom",
+        "frame": "odom",
+        "stamp_ns": 1794908217338189953,
+        "field": "speed",
+        "raw_value": -0.5,
+        "raw_unit": "m/s",
+        "value": -0.5,
+        "unit": "m/s",
+        "definition_version": "8d66d8a746f618a37d7bf895a522da61ae0ef7a01aa41629364a7c0c320ab090"
+      }
+    },
+    "in_flight": {
+      "task_id": "ee09e4851a71450a8e05d172eba87161",
+      "operation_id": "ee09e4851a71450a8e05d172eba87161/step/1",
+      "conflict": "tool.binding_unavailable",
+      "resumed_version": "0a2afac62a9ab11011528865af23c836f760faf5a2bbce05f524452775c99f8b"
+    },
+    "agent_identity": "f116bfe3ed9beec7f87b72c9e84560de6e51ec3aa7ef16c5c00df01e19db7e13 2026-11-17T09:36:35.894016486Z",
+    "gazebo_displacement_m": 8.436559874611488e-09
+  },
+  "unsupported_request": {
+    "record": {
+      "author_protocol": "ollama.chat",
+      "id": "derived.battery_temp",
+      "model": "qwen2.5:1.5b",
+      "prompt_sha256": "6e3aaeb7b1f2010f640d1ec3e0e1c25ff375a8380eaf0529dfc67f7102b11970",
+      "reply": {
+        "field": "unsupported",
+        "op": "read",
+        "threshold": 0,
+        "unit": "cm/s"
+      },
+      "request": "请用摄氏度读取电池温度",
+      "response_sha256": "b71cfd379ccb7e986529e70ac6a6d4267254e30e17053c1abbe8622cbd798843",
+      "source_task": null
+    },
+    "exit_code": 1,
+    "definition_emitted": false
+  },
+  "code_provider": {
+    "passed": true,
+    "started_at": "2026-11-17T09:40:47.576045+00:00",
+    "image": "edge-agent-ros:system-20261117t093629z-e042b271",
+    "image_id": "sha256:2976a1f67a6060b622dc984e3a4d4fa79d6e3010293cba037ede5ebb8ff804be",
+    "revision": "38fee71fa54379138d68e6a9990f209cbd1daae2",
+    "project": "edge-sample-99ae5fdb5f63",
+    "model": "local",
+    "scope": "internal Docker network, Agent and read-only HTTP provider",
+    "text": "检查这组采样时间戳的重复与回拨：[100,110,110,95,110,140]",
+    "before": "BLOCKED",
+    "after": "BLOCKED",
+    "task_id": "ebc29c24a0ee4ca0a121f7f3d44ad339",
+    "operation_id": "ebc29c24a0ee4ca0a121f7f3d44ad339/step/1",
+    "evidence": {
+      "sample_count": 6,
+      "duplicate_count": 2,
+      "backward_count": 1,
+      "max_forward_gap_ms": 30
+    },
+    "version": "1",
+    "trace_id": "ebc29c24a0ee4ca0a121f7f3d44ad339",
+    "event_kinds": [
+      "accepted",
+      "planner.context",
+      "planned",
+      "dispatch",
+      "tool.request",
+      "adapter.request",
+      "adapter.response",
+      "tool.response",
+      "verified"
+    ],
+    "replay_same_task": true,
+    "original_query_after_remove": "SUCCEEDED",
+    "agent_started_at": "2026-11-17T09:40:48.199528748Z",
+    "agent_restarted": false
+  },
+  "contract_cases": {
+    "id": "timestamp_audit",
+    "manifest_sha256": "29c10eb465762f5630d2e8042a4217abfb526c665f68eca0d0675d601af5c7b9",
+    "cases_sha256": "5c5298b89a3a9386a2f937a6167997fdaa53785bf306a6c0ca92dc08f553acc6",
+    "cases": [
+      {
+        "index": 1,
+        "expected": {
+          "sample_count": 4,
+          "duplicate_count": 0,
+          "backward_count": 0,
+          "max_forward_gap_ms": 30
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      },
+      {
+        "index": 2,
+        "expected": {
+          "sample_count": 6,
+          "duplicate_count": 2,
+          "backward_count": 1,
+          "max_forward_gap_ms": 30
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      },
+      {
+        "index": 3,
+        "expected": {
+          "sample_count": 3,
+          "duplicate_count": 0,
+          "backward_count": 2,
+          "max_forward_gap_ms": 0
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      },
+      {
+        "index": 4,
+        "expected": {
+          "sample_count": 1,
+          "duplicate_count": 0,
+          "backward_count": 0,
+          "max_forward_gap_ms": 0
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      },
+      {
+        "index": 5,
+        "expected": {
+          "arguments": {
+            "timestamps_ms": "[100, true]"
+          },
+          "error": "timestamp.invalid_series"
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      },
+      {
+        "index": 6,
+        "expected": {
+          "arguments": {
+            "timestamps_ms": "[100.1]"
+          },
+          "error": "timestamp.invalid_series"
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      },
+      {
+        "index": 7,
+        "expected": {
+          "arguments": {
+            "timestamps_ms": "[]"
+          },
+          "error": "timestamp.invalid_series"
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      },
+      {
+        "index": 8,
+        "expected": {
+          "arguments": {
+            "timestamps_ms": "[100,"
+          },
+          "error": "timestamp.invalid_series"
+        },
+        "passed": true,
+        "receipts": 2,
+        "http_status": 200
+      }
+    ]
+  },
+  "hardware_image_ros_fixture": {
+    "amd64": {
+      "passed": true,
+      "architecture": "x86_64",
+      "revision": "38fee71fa54379138d68e6a9990f209cbd1daae2",
+      "services": [
+        "core",
+        "perception",
+        "agent",
+        "console"
+      ],
+      "core_get_mission_found": false,
+      "without_odom": "RECOVERY_REQUIRED",
+      "diagnostic": "tool.odom_stale",
+      "with_odom": "SUCCEEDED",
+      "operation_id_before_and_after": "missing-odom/step/1",
+      "evidence": {
+        "source": "/fixture/odom",
+        "frame": "fixture_odom",
+        "stamp_ns": 1794908205216815138,
+        "stamp": {
+          "sec": 1794908205,
+          "nanosec": 216815138
+        },
+        "x": 0.375,
+        "y": 0.0,
+        "yaw": 0.0,
+        "speed": 0.0
+      },
+      "occupied_cells": 3,
+      "truth_available": false,
+      "image_id": "sha256:748c3acc0ab6181de8ee2e863a1eaa64ad5b2b8cc121e9f2116cd7cc9137c6d8",
+      "image": "edge-agent-ros/hardware:system-20261117t093629z-e042b271",
+      "host_machine": "AMD64",
+      "network": "none",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator"
+    },
+    "arm64_emulated": {
+      "passed": true,
+      "architecture": "aarch64",
+      "revision": "38fee71fa54379138d68e6a9990f209cbd1daae2",
+      "services": [
+        "core",
+        "perception",
+        "agent",
+        "console"
+      ],
+      "core_get_mission_found": false,
+      "without_odom": "RECOVERY_REQUIRED",
+      "diagnostic": "tool.odom_stale",
+      "with_odom": "SUCCEEDED",
+      "operation_id_before_and_after": "missing-odom/step/1",
+      "evidence": {
+        "source": "/fixture/odom",
+        "frame": "fixture_odom",
+        "stamp_ns": 1794908213140838408,
+        "stamp": {
+          "sec": 1794908213,
+          "nanosec": 140838408
+        },
+        "x": 0.375,
+        "y": 0.0,
+        "yaw": 0.0,
+        "speed": 0.0
+      },
+      "occupied_cells": 3,
+      "truth_available": false,
+      "image_id": "sha256:077651828351d5402d286dfded05ac4943a5fdab561679a11e8dc69ac1456f45",
+      "image": "edge-agent-ros/hardware:sdd005-arm64",
+      "host_machine": "AMD64",
+      "network": "none",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator"
+    }
+  },
+  "qualification": [
+    "The original planner was offline (planner.not_configured). A local deterministic route matched the published description on the follow-up task. The observed model call authored the definition.",
+    "The input was injected at /fixture/odom. The separate Gazebo pose measures displacement during the read-only scenario.",
+    "The timestamp provider was authored during development and deployed as a separate test service. The robot-side author generated the odometry declaration only.",
+    "Restart deduplication was observed after the decision was persisted. A crash before that write may repeat a model request."
+  ],
+  "raw_files_sha256": {
+    "runs/20261117T093629Z-e042b271/summary.json": "226f47632cdf8d7dd2be7385b4957768d0187cc4be90e20adeb12da86e0a5ba6",
+    "authored-tools/watch-final.json": "73f161af0ae027251c0fbc6801e5ec31387cc1ea0da27ef714371c5224b81e14",
+    "authored-tools/unsupported-final.json": "7ff7608d7a2163608c6cf25742741b7f613fd9099202ee68d1ad25b840183c51",
+    "runs/20261117T093629Z-e042b271/provider-hotplug.json": "b1a5798b319abd259022a39392ef90b9f02bdd6ea26da2f05192a63ce958ae65",
+    "runs/20261117T093629Z-e042b271/provider-contract.json": "67e2a0153f52d68508fffb3b20209c896ce1d7e38ea53737494e21ffe9c9821c",
+    "runs/20261117T093629Z-e042b271/board.json": "203112e89e4ca68f10fd71ef5eb1a83d9d09a2f9f3738fc14892f11a1838b52a",
+    "authored-tools/board-arm64.json": "6464abd9e68d56a143156ad0987edd3a27215a1b6ccb646cec027884e8776020"
+  }
+}
