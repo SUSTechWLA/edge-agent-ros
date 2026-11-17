@@ -559,7 +559,11 @@ class Handler(BaseHTTPRequestHandler):
         if path.path=="/agent/capabilities":
             return self.send(200,{"capabilities":catalog(registry())})
         if path.path=="/agent/plugins":
-            return self.send(200,runtime_plugins.snapshot().public())
+            try:
+                directory = self.server.registry_observer.observe()
+            except runtime_plugins.PluginUnavailable as exc:
+                return self.send(503, {"code":exc.code,"detail":str(exc)})
+            return self.send(200,directory)
         if path.path=="/agent/services":
             query = parse_qs(path.query, keep_blank_values=True)
             name = query.get("name", [""])[0]
@@ -616,7 +620,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__=="__main__":
-    journal=Journal(Path(os.getenv("EDGE_TASK_DIR","/var/lib/edge-tasks")))
+    task_dir=Path(os.getenv("EDGE_TASK_DIR","/var/lib/edge-tasks"))
+    journal=Journal(task_dir)
     rclpy.init()
     robot=Robot()
     threading.Thread(target=rclpy.spin,args=(robot,),daemon=True).start()
@@ -625,4 +630,12 @@ if __name__=="__main__":
     threading.Thread(target=worker,args=(journal,robot,False,True),daemon=True).start()
     server=ThreadingHTTPServer((os.getenv("EDGE_AGENT_BIND","0.0.0.0"),8090),Handler)
     server.journal=journal
-    server.serve_forever()
+    server.registry_observer=runtime_plugins.RegistryObserver(task_dir/"module-events.sqlite")
+    stop=threading.Event()
+    monitor=threading.Thread(target=server.registry_observer.run,args=(stop,),daemon=True)
+    monitor.start()
+    try:
+        server.serve_forever()
+    finally:
+        stop.set()
+        monitor.join(timeout=2)

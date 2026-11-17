@@ -8,6 +8,8 @@
 
 需要给现有工具增加独立检查时，可以注册一个对模型公开零个 Tool 的服务。例如，相机返回图片地址后，验收器读取文件并解码；加入第二个摘要验收器只需部署服务并发布清单和策略。遇到断连，Agent 保留候选并恢复验收。见[插件生命周期与架构图](docs/harness-extensions.md#新功能能否只改一个插件)、[SDD-006](docs/specs/SDD-006-runtime-plugins.md)与[可运行示例](examples/result-verifiers/README.md)。
 
+要查“哪个插件变更造成了这次失败”，可以从同一条 trace 查任务、候选和受管发布，再用实际绑定版本核对后续任务。现场插件也可以接入持久事件源和独立心跳监督。[模块事件总线与故障回溯](docs/module-eventbus.md)
+
 ## 第一次运行
 
 开发电脑需要能运行 Linux 容器的 Docker Engine 或 Docker Desktop，以及 Docker Compose v2。完整仿真在容器内运行。首次检出仓库后，从项目根目录启动：

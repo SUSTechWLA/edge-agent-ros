@@ -31,3 +31,5 @@
 ## 变更记录
 
 - 2026-11-17，基于 738172a 先固定以上范围、来源和验收条件，再实现与验证。
+- 2026-11-17，生产者使用 `agent/module_journal.py`；运行时目录、候选作者和受管发布入口分别写入隔离源。Console 独立线程导入，原 Archive/Sink 接口负责查询和只读重放。诊断按源隔离坏行和冲突；外部插件可注册心跳，观测端持久记录超期与再次续约。出处、拓扑、字段、操作样例和未覆盖边界见[模块事件总线](../module-eventbus.md)。
+- 开发验证已实际运行 Console 的 20 项容器测试和作者/发布者中断测试。正式回归从干净代码版本运行 `python tests/system_suite.py --ollama-cache-volume edge-agent-ros_models`；独立黑盒按 `tests/system/*bus_acceptance.py --image <本地镜像> --out <证据路径>` 复现。

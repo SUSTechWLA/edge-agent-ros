@@ -20,6 +20,7 @@ from sensor_msgs.msg import Imu, LaserScan
 from std_msgs.msg import String
 
 from history import EventConflict, History, ledger_batch, task_batch
+from journal_ingress import JournalIngress
 from module_events import parse_event
 from observations import Observations
 
@@ -88,6 +89,11 @@ class Observer(Node):
         self.history = History(Path(os.environ.get("EDGE_CONSOLE_DIR","/var/lib/edge-console")) / "history.db")
         self.ledger = Path(os.environ.get("EDGE_LEDGER_PATH","/var/lib/edge-agent/edge.db")).absolute()
         self.tasks = Path(os.environ.get("EDGE_TASK_DB","/var/lib/edge-tasks/tasks.db")).absolute()
+        self.journals = JournalIngress({
+            "runtime.registry":self.tasks.parent / "module-events.sqlite",
+            "plugin.author":Path("/var/lib/edge-author-events/module-events.sqlite"),
+            "plugin.publisher":Path("/etc/edge/plugins/derived/.history/module-events.sqlite"),
+        }, "/var/lib/edge-module-sources")
         self.sources = {}
         self.health = {}
         self.health_event = {}
@@ -413,10 +419,27 @@ class Observer(Node):
                                 cause=self.history.previous_task_event(source_id,row["task_id"]))
 
     def observed_frame(self, event_utc):
-        frame=self.at_source_time(event_utc)
-        prior=next((s for s in reversed(self.historical) if s["now"]<=frame["event_at"]), None)
-        frame["missions"]=prior["missions"] if prior and frame["telemetry_at"] is not None else []
-        return frame
+        with self.lock:
+            frame=self.at_source_time(event_utc)
+            prior=next((s for s in reversed(self.historical) if s["now"]<=frame["event_at"]), None)
+            frame["missions"]=prior["missions"] if prior and frame["telemetry_at"] is not None else []
+            return frame
+
+    def watch_journals(self, stop):
+        # Source locks, backlog import and snapshot compression must not occupy the ROS executor.
+        unavailable = False
+        while not stop.is_set():
+            try:
+                self.journals.poll(self.history, lambda at: self.observed_frame(at) if at else self.snapshot())
+                if unavailable:
+                    self.event("module.ingress_restored","edge_console","持久模块事件归档恢复")
+                    unavailable = False
+            except (OSError, sqlite3.Error) as error:
+                if not unavailable:
+                    # If archive media itself is unavailable, use an independent diagnostic channel.
+                    self.get_logger().error("module journal archive unavailable: " + type(error).__name__)
+                    unavailable = True
+            stop.wait(0.5)
 
     def poll_ledger(self):
         try:

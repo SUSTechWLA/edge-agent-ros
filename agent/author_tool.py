@@ -6,12 +6,16 @@ import json
 import math
 import os
 from pathlib import Path
+import re
+import sqlite3
 import sys
 import tempfile
 from urllib.request import Request, urlopen
+import uuid
 
 from derived_tools import COMPARISON_OPS, MAX_BYTES, UNITS_BY_FIELD, capability, check_id, evaluate, parse_definition, validate
 from tracing import clean_text
+from module_journal import ModuleJournal
 
 
 PROMPT = """Choose a read-only odometry tool for the exact user request.
@@ -27,11 +31,20 @@ def read_json(path, limit):
         raw = stream.read(limit+1)
     if len(raw) > limit:
         raise ValueError(f"{path}: input too large")
-    return json.loads(raw.decode("utf-8-sig"))
+    try:
+        return json.loads(raw.decode("utf-8-sig"))
+    except RecursionError as exc:
+        raise ValueError("JSON input is too deeply nested") from exc
 
 
 def json_bytes(value):
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)+"\n").encode()
+
+
+def public_reference(value):
+    # IDs travel to the shared archive. URLs and recognizable credentials belong in private records.
+    return (isinstance(value, str) and re.fullmatch(r"[\w./:@-]{1,240}", value) is not None
+            and "://" not in value and clean_text(value) == value)
 
 
 def read_definition(path):
@@ -153,6 +166,15 @@ def writer_lock(directory):
         yield
 
 
+def sync_directory(path):
+    if os.name == "posix":
+        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+
 def write_atomic(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(dir=path.parent, prefix=".staging-", delete=False) as stream:
@@ -163,38 +185,145 @@ def write_atomic(path, value):
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temp, path)
+        sync_directory(path.parent)
     finally:
         temp.unlink(missing_ok=True)
 
 
-def change(args):
-    if args.action=="remove":
-        name = check_id(args.id)
-        definition = None
-        evidence = {}
-    else:
-        definition, evidence = checked_definition(args.definition, args.cases)
-        name = check_id(definition["id"])
-        evidence["version"] = capability(definition)["version"]
-        if args.action=="check":
-            return {"id":name, **evidence}
+def installed(directory, name):
+    try:
+        current = read_definition(directory / (name+".json"))
+    except FileNotFoundError:
+        return None, "absent"
+    if current["id"] != name:
+        raise ValueError("registry changed; installed tool has a different id")
+    return current, capability(current)["version"]
+
+
+def release_event(journal, context, kind, code, level, **fields):
+    return journal.emit({"schema_version":1, "module":"plugin.publisher", "layer":"publication",
+                         "kind":"plugin.release."+kind, "code":"release."+code, "level":level,
+                         "trace_id":context["trace_id"], "parent_event_id":context["parent_event_id"],
+                         "data":{**context["data"], **fields}}, key=context["data"]["change_id"]+"."+kind)
+
+
+def finish_release(journal, context, kind, code, level, **fields):
+    with journal.db:
+        event_id = release_event(journal, context, kind, code, level, **fields)
+        journal.db.execute("DELETE FROM publication_pending WHERE change_id=?", (context["data"]["change_id"],))
+    return event_id
+
+
+def observed_version(directory, name):
+    try:
+        return installed(directory, name)[1]
+    except (OSError, ValueError):
+        return "unreadable"
+
+
+def reconcile_releases(journal, directory):
+    rows = journal.db.execute("SELECT context FROM publication_pending ORDER BY rowid").fetchall()
+    for (raw,) in rows:
+        context = json.loads(raw)
+        data = context["data"]
+        version = observed_version(directory, data["tool_id"])
+        if version == "unreadable":
+            observation = "unreadable"
+        elif version == data["target_version"] == data["previous_version"]:
+            observation = "versions_identical"
+        elif version == data["target_version"]:
+            observation = "target_present"
+        elif version == data["previous_version"]:
+            observation = "previous_present"
+        else:
+            observation = "diverged"
+        finish_release(journal, context, "reconciled", observation, "warn",
+                       observed_version=version, observation=observation, writer_attribution="unknown")
+
+
+def publish_managed(args, journal):
     directory = args.registry
-    active = directory/(name+".json")
-    with writer_lock(directory):
-        current = read_definition(active) if active.exists() else None
-        version = capability(current)["version"] if current else "absent"
-        if version!=args.expect or (current and current["id"]!=name):
+    with journal.db:
+        journal.db.execute("CREATE TABLE IF NOT EXISTS publication_pending(change_id TEXT PRIMARY KEY,context TEXT NOT NULL)")
+    reconcile_releases(journal, directory)
+    change_id = uuid.uuid4().hex
+    expected = args.expect if re.fullmatch(r"absent|[a-f0-9]{64}", args.expect) else "invalid"
+    data = {"change_id":change_id, "action":args.action, "expected_version":expected}
+    trace = getattr(args, "trace_id", None)
+    parent = getattr(args, "parent_event_id", None)
+    context = {"trace_id":trace if public_reference(trace) else change_id,
+               "parent_event_id":parent if public_reference(parent) else None, "data":data}
+    evidence = {}
+    definition = None
+    rejection = "input_invalid"
+    try:
+        if any(ref is not None and not public_reference(ref) for ref in (trace,parent)):
+            rejection = "invalid_reference"
+            raise ValueError("provide a valid public event or trace identifier")
+        if args.action == "remove":
+            name = check_id(args.id)
+            target = "absent"
+        else:
+            definition, evidence = checked_definition(args.definition, args.cases)
+            name = definition["id"]
+            target = capability(definition)["version"]
+            data.update(evidence)
+            evidence["version"] = target
+        data.update(tool_id=name, target_version=target)
+        rejection = "registry_unreadable"
+        current, version = installed(directory, name)
+        data["previous_version"] = version
+        if version != args.expect:
+            rejection = "version_conflict"
             raise ValueError(f"registry changed; current version is {version}")
+        if definition is None and current is None:
+            rejection = "already_absent"
+            raise ValueError("tool is not installed")
+    except (OSError, ValueError, TypeError, KeyError, OverflowError):
+        with journal.db:
+            context["parent_event_id"] = release_event(journal, context, "requested", "requested", "info")
+            release_event(journal, context, "rejected", rejection, "warn",
+                          observed_version=data.get("previous_version","unknown"))
+        raise
+
+    # The intent and pending row are one transaction. A replacement and a SQL commit
+    # cannot be one transaction. On restart, report the observed version without reapplying.
+    with journal.db:
+        context["parent_event_id"] = release_event(journal, context, "requested", "requested", "info")
+        journal.db.execute("INSERT INTO publication_pending VALUES(?,?)", (change_id, json.dumps(context)))
+    active = directory/(name+".json")
+    try:
         if current:
             write_atomic(directory/".history"/name/(version+".json"), current)
         if definition is None:
-            if current is None:
-                raise ValueError("tool is not installed")
             active.unlink()
+            sync_directory(directory)
         else:
-            write_atomic(directory/".history"/name/(evidence["version"]+".json"), definition)
+            write_atomic(directory/".history"/name/(target+".json"), definition)
             write_atomic(active, definition)
-    return {"action":args.action, "id":name, "previous":version, **evidence}
+    except OSError as exc:
+        finish_release(journal, context, "failed", "write_failed", "error", error_type=type(exc).__name__,
+                       observed_version=observed_version(directory, name))
+        raise
+    observed = observed_version(directory, name)
+    if observed != target:
+        finish_release(journal, context, "failed", "postcondition_mismatch", "error", observed_version=observed)
+        raise ValueError("registry differs after writing the managed definition")
+    event_id = finish_release(journal, context, "applied", "applied", "info", observed_version=observed)
+    return {"action":args.action, "id":name, "previous":version, "change_id":change_id,
+            "event_id":event_id, **evidence}
+
+
+def change(args):
+    if args.action == "check":
+        definition, evidence = checked_definition(args.definition, args.cases)
+        return {"id":definition["id"], "version":capability(definition)["version"], **evidence}
+    with writer_lock(args.registry):
+        journal = ModuleJournal(args.registry / ".history" / "module-events.sqlite")
+        try:
+            return publish_managed(args, journal)
+        finally:
+            journal.close()
 
 
 def main():
@@ -218,10 +347,14 @@ def main():
         if action!="check":
             cmd.add_argument("--registry", type=Path, required=True, help="managed derived definitions directory")
             cmd.add_argument("--expect", required=True, help="current content version or absent")
+            cmd.add_argument("--trace-id", help="trace of the proposal or change request")
+            cmd.add_argument("--parent-event-id", help="proposal or other source event for this change")
     args = parser.parse_args()
     try:
         result = draft(args) if args.action=="draft" else change(args)
         sys.stdout.buffer.write(json_bytes(result))
+    except sqlite3.Error as exc:
+        parser.exit(1, f"publication audit database error: {exc}\n")
     except (ValueError, OSError, KeyError, TypeError, OverflowError) as exc:
         parser.exit(1, f"{exc}\n")
 

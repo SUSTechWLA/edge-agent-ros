@@ -131,11 +131,12 @@ class History:
             trace = dict(trace or {})
             event_id = trace.get("event_id") or uuid.uuid4().hex
             if ingress_hash:
-                seen = self.db.execute("SELECT seq,ingress_hash FROM events WHERE event_id=? AND ingress_hash IS NOT NULL",
+                seen = self.db.execute("SELECT seq,ingress_hash,source,source_id,source_seq FROM events WHERE event_id=? ORDER BY seq LIMIT 1",
                                        (event_id,)).fetchone()
                 if seen:
-                    if seen["ingress_hash"]!=ingress_hash:
-                        raise EventConflict("module event ID was reused with different content")
+                    if (seen["ingress_hash"] != ingress_hash or seen["source"] != source
+                            or seen["source_id"] != source_id or seen["source_seq"] != source_seq):
+                        raise EventConflict("module event ID was reused with different content or source")
                     return seen["seq"]
             if source_cause is not None:
                 row = self.db.execute("SELECT seq FROM events WHERE source_id=? AND source_seq=?",

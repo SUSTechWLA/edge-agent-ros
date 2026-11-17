@@ -78,9 +78,12 @@ services:
     security_opt: ["no-new-privileges:true"]
     tmpfs: [/tmp]
     entrypoint: ["python3","/opt/edge/client/plugin_author_watch.py"]
+    environment:
+      EDGE_AUTHOR_EVENT_DB: /var/lib/edge-author-events/module-events.sqlite
     command: ["--url","http://console:8080","--out-dir","/proposals","--ollama-url","${EDGE_OLLAMA_URL:-http://model:11434}","--model","${EDGE_OLLAMA_MODEL:-qwen2.5:1.5b}"]
     volumes:
       - author-proposals:/proposals
+      - author-events:/var/lib/edge-author-events
   scene:
     <<: *runtime
     environment:
@@ -103,6 +106,9 @@ services:
       - console-history:/var/lib/edge-console
       - ${EDGE_OBSERVATIONS_DIR:-./observations}:/etc/edge/observations:ro
       - task-state:/var/lib/edge-tasks:ro
+      - author-events:/var/lib/edge-author-events:ro
+      - module-sources:/var/lib/edge-module-sources:ro
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/etc/edge/plugins:ro
     ports:
       - "127.0.0.1:${EDGE_CONSOLE_PORT:-8765}:8080"
   probe:
@@ -112,6 +118,8 @@ services:
       - ${EDGE_EVIDENCE_DIR:-./artifacts/verification}:/evidence
     command: ["python3", "/opt/edge/tests/verify.py", "mission"]
 volumes:
+  author-events:
+  module-sources:
   author-proposals:
   scene-state:
   state:

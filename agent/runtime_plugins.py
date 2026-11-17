@@ -10,9 +10,13 @@ import os
 from pathlib import Path
 import re
 import socket
+import sqlite3
+import stat
 import threading
+import time
 from urllib.parse import urlsplit
 
+from module_journal import ModuleJournal, canonical
 from tracing import encoded, exchange, sanitized
 
 
@@ -60,7 +64,7 @@ def _decode(raw):
 
 
 def _read(path):
-    if path.is_symlink() or not path.is_file():
+    if not stat.S_ISREG(path.lstat().st_mode):
         raise ValueError("expected a regular configuration file")
     with path.open("rb") as stream:
         raw = stream.read(MAX_CONFIG_BYTES + 1)
@@ -109,17 +113,29 @@ def _descriptor(path):
 class ServiceSnapshot:
     """Dependency bindings are computed once from these descriptors. No HTTP or process management."""
 
-    def __init__(self, directory):
+    def __init__(self, directory, observing=False):
         self.entries = {}
         self.owners = defaultdict(list)
         self.invalid = []
         self.problems = {}
         self.bindings = {}
         self.draining = {}
-        for path in sorted(directory.glob("*.json")):
+        self.directory_present = True
+        if observing:
+            # glob may silently turn a permission error into an empty directory.
+            try:
+                paths = sorted(p for p in directory.iterdir() if p.suffix == ".json")
+            except FileNotFoundError:
+                self.directory_present = False
+                paths = []
+        else:
+            paths = sorted(directory.glob("*.json"))
+        for path in paths:
             try:
                 item = _descriptor(path)
             except (OSError, ValueError, RecursionError) as error:
+                if observing and isinstance(error, OSError):
+                    raise
                 # Do not disclose parts of a malformed or credential-bearing descriptor in the catalog.
                 self.invalid.append({"id":path.stem, "status":"invalid", "code":"plugin.manifest_invalid",
                                      "reason":"invalid runtime descriptor: " + type(error).__name__})
@@ -206,8 +222,113 @@ class ServiceSnapshot:
         return {"plugins": sorted(rows, key=lambda row:row["id"])}
 
 
-def snapshot():
-    return ServiceSnapshot(Path(os.getenv("EDGE_PLUGIN_DIR", "/etc/edge/plugins")) / "runtime")
+def snapshot(observing=False):
+    return ServiceSnapshot(Path(os.getenv("EDGE_PLUGIN_DIR", "/etc/edge/plugins")) / "runtime", observing)
+
+
+class RegistryObserver:
+    """Serialize sampling with both durable state and evidence; absence of a mount is ambiguous."""
+
+    def __init__(self, path):
+        self.path = path
+        self.lock = threading.Lock()
+        self.journal = None
+        self.warning = None
+        self.next_pulse = 0
+
+    def _open(self):
+        if self.journal is None:
+            journal = ModuleJournal(self.path)
+            try:
+                journal.db.execute("""CREATE TABLE IF NOT EXISTS registry_projection(
+                    plugin TEXT PRIMARY KEY, state TEXT NOT NULL, event_id TEXT NOT NULL)""")
+            except BaseException:
+                journal.close()
+                raise
+            self.journal = journal
+        return self.journal
+
+    def _health(self, journal, error):
+        row = journal.db.execute("SELECT value FROM module_bus_meta WHERE key='registry_health'").fetchone()
+        previous, parent = json.loads(row[0]) if row else (None, None)
+        if error == previous:
+            return
+        code = "plugin.registry_observation_failed" if error else "plugin.registry_observation_restored"
+        eid = journal.emit({"kind":code, "code":code, "module":"runtime.registry", "layer":"registry",
+                            "trace_id":"registry-health."+journal.source_id, "parent_event_id":parent,
+                            "level":"warn" if error else "info", "data":{"reason":error, "previous_reason":previous}})
+        journal.db.execute("INSERT OR REPLACE INTO module_bus_meta VALUES('registry_health',?)",
+                           (canonical([error, eid]),))
+
+    def _record(self, journal, catalog, baseline):
+        db = journal.db
+        prior = {key:(json.loads(state), eid) for key,state,eid in
+                 db.execute("SELECT plugin,state,event_id FROM registry_projection")}
+        current = {}
+        for row in catalog["plugins"]:
+            key = row["id"]
+            if not NAME.fullmatch(key):
+                key = "invalid-file:" + hashlib.sha256(key.encode("utf-8", "surrogatepass")).hexdigest()
+            current[key] = {field:row.get(field) for field in ("status", "version", "binding", "code")}
+        for key in sorted(current.keys() | prior.keys()):
+            before, parent = prior.get(key, (None, None))
+            after = current.get(key)
+            if after == before:
+                continue
+            eid = journal.emit({"module":"runtime.registry", "layer":"registry", "kind":"plugin.registry_observed",
+                                "code":"plugin.registry_observed", "parent_event_id":parent,
+                                "trace_id":f"registry.{journal.source_id}.{key}", "level":
+                                "warn" if after and after["status"] in ("blocked","invalid") else "info",
+                                "data":{"plugin_id":key, "before":before, "after":after, "baseline":baseline}})
+            db.execute("INSERT OR REPLACE INTO registry_projection VALUES(?,?,?)", (key, canonical(after), eid))
+
+    def _sample(self, background):
+        journal = self._open()
+        try:
+            snap = snapshot(observing=True)
+        except OSError as exc:
+            with journal.db:
+                self._health(journal, type(exc).__name__)
+            raise
+        catalog = snap.public()
+        with journal.db:
+            baseline = journal.db.execute("SELECT 1 FROM module_bus_meta WHERE key='registry_sampled'").fetchone() is None
+            unavailable = not snap.directory_present and not baseline
+            self._health(journal, "DirectoryMissing" if unavailable else None)
+            if snap.directory_present:
+                self._record(journal, catalog, baseline)
+                if baseline:
+                    journal.db.execute("INSERT INTO module_bus_meta VALUES('registry_sampled','1')")
+            pulse = background and time.monotonic() >= self.next_pulse
+            if pulse:
+                journal.heartbeat(30)
+        if pulse:
+            self.next_pulse = time.monotonic() + 10
+        if unavailable:
+            raise FileNotFoundError("previously observed runtime directory unavailable")
+        return catalog
+
+    def observe(self, background=False):
+        with self.lock:
+            try:
+                catalog = self._sample(background)
+                self.warning = None
+                return catalog
+            except (OSError, sqlite3.Error, ValueError) as error:
+                code = type(error).__name__
+                if self.warning != code:
+                    print(f"runtime.registry observation unavailable ({code})", flush=True)
+                self.warning = code
+                raise PluginUnavailable("plugin.registry_observation_unavailable",
+                                        "Runtime registry evidence unavailable: " + code) from error
+
+    def run(self, stop):
+        while not stop.is_set():
+            try:
+                self.observe(background=True)
+            except PluginUnavailable:
+                pass  # The next sample retries. The task worker has a separate execution path.
+            stop.wait(1)
 
 
 def load_policy():

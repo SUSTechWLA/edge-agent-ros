@@ -153,12 +153,17 @@ def main():
     httpd=ThreadingHTTPServer(address, partial(Handler,observer=node))
     worker=threading.Thread(target=httpd.serve_forever,daemon=True)
     worker.start()
+    stop = threading.Event()
+    journals = threading.Thread(target=node.watch_journals, args=(stop,), name="module-journals")
+    journals.start()
     print(f"Edge console listening on {address[0]}:{address[1]}",flush=True)
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
+        stop.set()
+        journals.join()
         httpd.shutdown()
         httpd.server_close()
         worker.join()
