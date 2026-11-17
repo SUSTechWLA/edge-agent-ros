@@ -99,7 +99,9 @@ export async function checkReview({url, width, evaluate, waitFor, send, screensh
       await evaluate('window.fetch=window.reviewFixture.fetch; window.reviewFixture.pending.splice(0).forEach(release=>release()); delete window.reviewFixture');
     }
     await click('#nav-events');
+    await waitFor('!'+q('#events')+'.hidden');
     await click('#nav-review');
+    await waitFor('!'+q('#review-home')+'.hidden');
     await click('[data-review-state="all"]');
     await click('#review-history-tabs [data-view="changes"]');
     await waitFor(ready('#review-task-list')+' && '+q('[data-review-state="all"] strong')+'.textContent==='+JSON.stringify(String(baseline.counts.all)));
