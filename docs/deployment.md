@@ -50,6 +50,8 @@ docker compose -f compose.hardware.yaml exec -T perception /usr/local/bin/edge-e
 
 ## 板卡、镜像和推理
 
+为板卡准备镜像前，可以先在开发机重放缺失里程计与恢复任务的场景。报告给出了同一程序分配 384、512、768 和 1536 MiB 时的原生 AMD64 与模拟 ARM64 结果，以及上机仍需测的项目。[单机实测与资源限额复演](testing/sdd-003-results.md)
+
 Linux 设备上用 `uname -m` 与 `docker info --format '{{.Architecture}}'` 核实架构，x86-64 对应 linux/amd64，aarch64 对应 linux/arm64。设备上直接构建会使用本机目标，无须指定仿真平台。可在兼容架构的构建机用 `sh scripts/deploy.sh hardware build`，再用 `docker save edge-agent-ros/hardware:v0.1 -o edge-hardware.tar` 转运镜像，在目标机用 `docker load -i edge-hardware.tar` 后执行 `sh scripts/deploy.sh hardware start`。两端使用同一项目版本及部署文件。构建机可用 buildx/QEMU 交叉构建；要评估执行延迟、功耗和散热，需在对应板卡上重复测试。
 
 本机已保留单独的 ARM64 镜像标签 `edge-agent-ros/hardware:arm64-check` 和 AMD64 标签 `edge-agent-ros/hardware:v0.1`。在当前开发机的项目根目录执行第一组命令可打包 ARM64 镜像；`artifacts/console` 已存在，按需导出约 1.35 GB 镜像。将 tar 复制到目标板上与开发机版本一致的项目目录，然后运行第二组命令。板端可以离线加载镜像。

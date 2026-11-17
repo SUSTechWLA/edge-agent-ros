@@ -27,11 +27,19 @@ class DocumentContract(unittest.TestCase):
         self.assertEqual(model["exported_event_count"],len(model["indexed_events"]))
         for record in records.values():
             self.assertIsInstance(record,dict)
-        if "sdd-003-system.json" in records:
-            run=records["sdd-003-system.json"]
-            self.assertRegex(run["verified_revision"],r"^[a-f0-9]{40}$")
-            self.assertEqual(run["suite_status"],"passed")
-            self.assertTrue(run["arm64"]["passed"])
+        run = records["sdd-003-system.json"]
+        self.assertRegex(run["verified_revision"], r"^[a-f0-9]{40}$")
+        self.assertEqual(run["suite_status"], "passed")
+        suite = run["suite"]
+        self.assertEqual(len(suite["passed_stage_duration_s"]), suite["test_stage_count"])
+        self.assertEqual(suite["passed_stage_count"], suite["test_stage_count"])
+        for arch in ("amd64", "arm64"):
+            self.assertTrue(run[arch]["passed"])
+            self.assertEqual(run[arch]["revision"], run["verified_revision"])
+        matrix = run["resource_matrix"]
+        self.assertEqual(matrix["measured_cases"], len(matrix["runs"]))
+        self.assertEqual(matrix["passed_count"], sum(row["passed"] for row in matrix["runs"]))
+        self.assertEqual(matrix["oom_count"], sum(row["oom_kill_events"] > 0 for row in matrix["runs"]))
 
     def test_local_links_can_survive_a_clean_checkout(self):
         raw = subprocess.check_output(["git","ls-files","--cached","--others","--exclude-standard","-z"],cwd=ROOT)

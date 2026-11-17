@@ -1,6 +1,7 @@
 // Exercise the shipped browser UI against an isolated live simulation.
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { once } from 'node:events';
@@ -100,5 +101,7 @@ try {
     const stopped = await Promise.race([exited.then(()=>true),delay(2000).then(()=>false)]);
     if (!stopped) { browser.kill(); await exited; }
   }
-  rmSync(profile,{recursive:true,force:true,maxRetries:6,retryDelay:150});
+  // Chrome helpers can finish a profile write just after the main process exits.
+  // The asynchronous remover retries ENOTEMPTY on Linux as the helpers release it.
+  await rm(profile,{recursive:true,force:true,maxRetries:12,retryDelay:200});
 }

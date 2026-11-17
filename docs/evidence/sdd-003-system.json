@@ -1,0 +1,1047 @@
+{
+  "spec": "SDD-003",
+  "verified_revision": "c113b9b419346004cfdf53d4814dbb3f943e280f",
+  "baseline_revision": "d74e71dd04e7ea76e43fc6c173179c1924b06c4f",
+  "suite_status": "passed",
+  "local_run_id": "20261117T062741Z-49982651",
+  "suite": {
+    "started_at": "2026-11-17T06:27:41.684835+00:00",
+    "finished_at": "2026-11-17T06:33:40.729415+00:00",
+    "platform": "Docker Linux containers",
+    "image_id": "sha256:f82a1f23b8d07d957f5e218a1a604094ef04ab0f493a42b5d3666308306dc803",
+    "docker": "29.9.3",
+    "compose": "5.7.0",
+    "test_stage_count": 18,
+    "passed_stage_count": 18,
+    "duration_s": 359.04,
+    "passed_stage_duration_s": {
+      "repository": 4.47,
+      "planner": 0.17,
+      "agent-contracts": 1.19,
+      "observations": 18.73,
+      "scene-contracts": 1.0,
+      "core": 79.06,
+      "motion-sensors": 18.19,
+      "motion-world": 6.22,
+      "agent-faults": 47.42,
+      "resilience": 45.27,
+      "console-missions": 23.7,
+      "places": 59.41,
+      "scene-binding": 2.2,
+      "scene-outage": 14.14,
+      "clock-reset": 2.0,
+      "ui": 3.22,
+      "model": 5.33,
+      "board": 3.11
+    }
+  },
+  "source_directories": {
+    "full_run": ".ci-results/system/runs/20261117T062741Z-49982651",
+    "baseline": ".ci-results/system",
+    "repeat_braking": ".ci-results/system/repetitions",
+    "resource_limits": ".ci-results/system/resources"
+  },
+  "agent_faults": {
+    "baseline_image_id": "sha256:f2f3af0c2b01fefc5e60c4af8d63645d373f0bf48f53951d88cb69588be2bd59",
+    "baseline": {
+      "tested": 14,
+      "passed": 8
+    },
+    "candidate": {
+      "tested": 14,
+      "passed": 14
+    },
+    "cases": {
+      "existing_different_goal": {
+        "baseline": {
+          "passed": false,
+          "state": "SUCCEEDED",
+          "steps": [
+            "inspect"
+          ],
+          "last_code": "agent.verified"
+        },
+        "candidate": {
+          "passed": true,
+          "state": "BLOCKED",
+          "steps": [
+            "inspect"
+          ],
+          "last_code": "core.id_conflict"
+        }
+      },
+      "existing_same_goal": {
+        "baseline": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "inspect"
+          ],
+          "last_code": "agent.verified"
+        },
+        "candidate": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "inspect"
+          ],
+          "last_code": "agent.verified"
+        }
+      },
+      "truncated_receipt": {
+        "baseline": {
+          "passed": false,
+          "state": "RECOVERY_REQUIRED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 1,
+          "last_code": "tool.receipt_invalid",
+          "observed_distinct_effects": 1
+        },
+        "candidate": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 2,
+          "last_code": "agent.verified",
+          "observed_distinct_effects": 1
+        }
+      },
+      "socket_timeout": {
+        "baseline": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 2,
+          "last_code": "agent.verified",
+          "observed_distinct_effects": 1
+        },
+        "candidate": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 2,
+          "last_code": "agent.verified",
+          "observed_distinct_effects": 1
+        }
+      },
+      "wrong_receipt_id": {
+        "baseline": {
+          "passed": true,
+          "state": "RECOVERY_REQUIRED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 1,
+          "last_code": "tool.receipt_invalid",
+          "observed_distinct_effects": 1
+        },
+        "candidate": {
+          "passed": true,
+          "state": "RECOVERY_REQUIRED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 1,
+          "last_code": "tool.receipt_invalid",
+          "observed_distinct_effects": 1
+        }
+      },
+      "nonfinite_evidence": {
+        "baseline": {
+          "passed": false
+        },
+        "candidate": {
+          "passed": true,
+          "state": "RECOVERY_REQUIRED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 1,
+          "last_code": "transport.invalid_json",
+          "observed_distinct_effects": 1
+        }
+      },
+      "missing_evidence": {
+        "baseline": {
+          "passed": true,
+          "state": "RECOVERY_REQUIRED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 1,
+          "last_code": "tool.receipt_invalid",
+          "observed_distinct_effects": 1
+        },
+        "candidate": {
+          "passed": true,
+          "state": "RECOVERY_REQUIRED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 1,
+          "last_code": "tool.receipt_invalid",
+          "observed_distinct_effects": 1
+        }
+      },
+      "planner_retry": {
+        "baseline": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "status"
+          ],
+          "attempts": 2,
+          "last_code": "agent.verified"
+        },
+        "candidate": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "status"
+          ],
+          "attempts": 2,
+          "last_code": "agent.verified"
+        }
+      },
+      "invalid_model_tool": {
+        "baseline": {
+          "passed": true,
+          "state": "BLOCKED",
+          "steps": [],
+          "attempts": 1,
+          "last_code": "planner.invalid_proposal"
+        },
+        "candidate": {
+          "passed": true,
+          "state": "BLOCKED",
+          "steps": [],
+          "attempts": 1,
+          "last_code": "planner.invalid_proposal"
+        }
+      },
+      "omitted_navigation": {
+        "baseline": {
+          "passed": false,
+          "state": "SUCCEEDED",
+          "steps": [
+            "fixture"
+          ],
+          "attempts": 1,
+          "last_code": "agent.verified"
+        },
+        "candidate": {
+          "passed": true,
+          "state": "BLOCKED",
+          "steps": [],
+          "attempts": 1,
+          "last_code": "planner.invalid_proposal"
+        }
+      },
+      "concurrent_trigger": {
+        "baseline": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "status"
+          ],
+          "conflicting_status": 409,
+          "last_code": "agent.verified"
+        },
+        "candidate": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "steps": [
+            "status"
+          ],
+          "conflicting_status": 409,
+          "last_code": "agent.verified"
+        }
+      },
+      "multistep_restart": {
+        "baseline": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "attempts": [
+            1,
+            2,
+            1
+          ],
+          "operations": [
+            "long/step/1",
+            "long/step/2",
+            "long/step/3"
+          ],
+          "cursor": 3
+        },
+        "candidate": {
+          "passed": true,
+          "state": "SUCCEEDED",
+          "attempts": [
+            1,
+            2,
+            1
+          ],
+          "operations": [
+            "long/step/1",
+            "long/step/2",
+            "long/step/3"
+          ],
+          "cursor": 3
+        }
+      },
+      "offline_and_missing_capability": {
+        "baseline": {
+          "passed": false,
+          "offline": {
+            "state": "BLOCKED",
+            "steps": [],
+            "last_code": "planner.capability_missing"
+          }
+        },
+        "candidate": {
+          "passed": true,
+          "offline": {
+            "state": "BLOCKED",
+            "steps": [],
+            "last_code": "planner.not_configured"
+          },
+          "absent": {
+            "state": "BLOCKED",
+            "steps": [],
+            "last_code": "planner.capability_missing"
+          }
+        }
+      },
+      "replacement_core_ledger": {
+        "baseline": {
+          "passed": false,
+          "state": "BLOCKED",
+          "steps": [
+            "inspect"
+          ],
+          "original_missions": 1,
+          "new_missions": 1,
+          "last_code": "navigation.goal_rejected"
+        },
+        "candidate": {
+          "passed": true,
+          "state": "RECOVERY_REQUIRED",
+          "steps": [
+            "inspect"
+          ],
+          "original_missions": 1,
+          "new_missions": 0,
+          "last_code": "navigation.mission_unaccounted"
+        }
+      }
+    }
+  },
+  "gateway_faults": {
+    "baseline": {
+      "tested": 10,
+      "passed": 4
+    },
+    "candidate": {
+      "tested": 10,
+      "passed": 10
+    },
+    "cases": [
+      {
+        "case": "central_gap",
+        "baseline_passed": false,
+        "candidate_passed": true,
+        "expected_code": "navigation.scan_invalid",
+        "candidate_receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]"
+      },
+      {
+        "case": "sparse_obstacle",
+        "baseline_passed": false,
+        "candidate_passed": true,
+        "expected_code": "navigation.path_blocked",
+        "candidate_receipt": "forward clearance below 0.42 m; stationary odometry confirmed [code:navigation.path_blocked]"
+      },
+      {
+        "case": "too_close",
+        "baseline_passed": false,
+        "candidate_passed": true,
+        "expected_code": "navigation.path_blocked",
+        "candidate_receipt": "forward clearance below 0.42 m; stationary odometry confirmed [code:navigation.path_blocked]"
+      },
+      {
+        "case": "bad_ranges",
+        "baseline_passed": false,
+        "candidate_passed": true,
+        "expected_code": "navigation.scan_invalid",
+        "candidate_receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]"
+      },
+      {
+        "case": "bad_geometry",
+        "baseline_passed": false,
+        "candidate_passed": true,
+        "expected_code": "navigation.scan_invalid",
+        "candidate_receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]"
+      },
+      {
+        "case": "clock_ahead",
+        "baseline_passed": false,
+        "candidate_passed": true,
+        "expected_code": "navigation.scan_time_mismatch",
+        "candidate_receipt": "laser and odometry acquisition times differ by over one second; stationary odometry confirmed [code:navigation.scan_time_mismatch]"
+      },
+      {
+        "case": "duplicate",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "expected_code": "navigation.scan_stale",
+        "candidate_receipt": "laser scan unavailable; stationary odometry confirmed [code:navigation.scan_stale]"
+      },
+      {
+        "case": "drop",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "expected_code": "navigation.scan_stale",
+        "candidate_receipt": "laser scan unavailable; stationary odometry confirmed [code:navigation.scan_stale]"
+      },
+      {
+        "case": "wrong_frame",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "expected_code": "navigation.scan_stale",
+        "candidate_receipt": "laser scan unavailable; stationary odometry confirmed [code:navigation.scan_stale]"
+      },
+      {
+        "case": "rewind",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "expected_code": "navigation.stop_unconfirmed",
+        "candidate_receipt": "UNKNOWN: stop unconfirmed after odometry timeout; gateway inhibited [code:navigation.stop_unconfirmed]",
+        "new_action_refused": true
+      }
+    ]
+  },
+  "central_laser_gap": {
+    "baseline": {
+      "case": "central_gap",
+      "passed": false,
+      "independent_topic": "/ground_truth",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": null,
+      "action_status": 5,
+      "receipt": "cancel requested; stationary odometry confirmed [code:navigation.cancel_requested]",
+      "samples": 82,
+      "world_travel_m": 0.6507,
+      "last_300ms_drift_m": 0.0
+    },
+    "candidate": {
+      "case": "central_gap",
+      "passed": true,
+      "independent_topic": "/ground_truth",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": 0.045,
+      "action_status": 6,
+      "receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]",
+      "samples": 26,
+      "world_travel_m": 0.0249,
+      "last_300ms_drift_m": 0.0
+    }
+  },
+  "braking_repetitions": {
+    "verified_revision": "ebb6bbb1836274481d0061feeda9315a0e56a5e4",
+    "fixture": "Gazebo campus, first moving navigation action of each freshly started simulator",
+    "ground_truth": "/ground_truth",
+    "image_id": "sha256:abf63a0e016e8c5c774bb379bc2c59151551d366cadd01b3d898fc0726fe0740",
+    "passed": true,
+    "brake_command_s": {
+      "n": 5,
+      "min": 0.0462,
+      "median": 0.0636,
+      "max": 0.1036
+    },
+    "world_travel_m": {
+      "n": 5,
+      "min": 0.0249,
+      "median": 0.0311,
+      "max": 0.042
+    },
+    "last_300ms_drift_m": {
+      "n": 5,
+      "min": 0.0,
+      "median": 0.0,
+      "max": 0.0
+    },
+    "runs": [
+      {
+        "trial": 1,
+        "brake_command_s": 0.0559,
+        "world_travel_m": 0.0311,
+        "last_300ms_drift_m": 0.0,
+        "samples": 26,
+        "passed": true
+      },
+      {
+        "trial": 2,
+        "brake_command_s": 0.0462,
+        "world_travel_m": 0.0249,
+        "last_300ms_drift_m": 0.0,
+        "samples": 26,
+        "passed": true
+      },
+      {
+        "trial": 3,
+        "brake_command_s": 0.0636,
+        "world_travel_m": 0.0311,
+        "last_300ms_drift_m": 0.0,
+        "samples": 25,
+        "passed": true
+      },
+      {
+        "trial": 4,
+        "brake_command_s": 0.1036,
+        "world_travel_m": 0.042,
+        "last_300ms_drift_m": 0.0,
+        "samples": 27,
+        "passed": true
+      },
+      {
+        "trial": 5,
+        "brake_command_s": 0.0638,
+        "world_travel_m": 0.0311,
+        "last_300ms_drift_m": 0.0,
+        "samples": 25,
+        "passed": true
+      }
+    ]
+  },
+  "scene_binding": {
+    "case": "different_goal_same_ros_id",
+    "baseline": {
+      "task_id": "collision-f18c658fb8eb",
+      "operation_id": "collision-f18c658fb8eb/step/1",
+      "state": "SUCCEEDED",
+      "code": "agent.verified",
+      "passed": false,
+      "distance_from_garden_m": 3.5654592852473934,
+      "world_displacement_m": 0.0,
+      "claimed_place": "庭院",
+      "planned_waypoints": 4,
+      "verified_waypoints": 1
+    },
+    "candidate": {
+      "task_id": "collision-f7d86ec61066",
+      "operation_id": "collision-f7d86ec61066/step/1",
+      "state": "BLOCKED",
+      "code": "core.id_conflict",
+      "passed": true,
+      "distance_from_garden_m": 3.5194780077609398,
+      "world_displacement_m": 4.2697274313020407e-07
+    },
+    "read_only_preview": {
+      "tool": "preview_route",
+      "scene": "campus",
+      "revision": "1.0",
+      "digest": "f3d2d4a6a1774dc92195096c2fe1535b1f7512bb050461bef2a3ea99772ef67a",
+      "start_zone": "workshop",
+      "destination_id": "garden",
+      "path": [
+        "door_in",
+        "door_out",
+        "garden"
+      ],
+      "distance_m": 3.9821661806799984
+    }
+  },
+  "scene_missions": [
+    {
+      "id": "campus-0e160914b4-origin",
+      "text": "报告当前位置",
+      "state": "SUCCEEDED",
+      "detail": "已取得步骤证据",
+      "ground_truth_samples": 4
+    },
+    {
+      "id": "campus-0e160914b4-garden",
+      "text": "去庭院巡检",
+      "state": "SUCCEEDED",
+      "detail": "已取得步骤证据",
+      "world_error_m": 0.1471854954001073,
+      "ground_truth_samples": 130
+    },
+    {
+      "id": "campus-0e160914b4-desk",
+      "text": "回到工位",
+      "state": "SUCCEEDED",
+      "detail": "已取得步骤证据",
+      "world_error_m": 0.0447466359289314,
+      "ground_truth_samples": 145
+    },
+    {
+      "id": "campus-0e160914b4-unknown",
+      "text": "去火星巡检",
+      "state": "BLOCKED",
+      "detail": "场景中没有这个地点",
+      "ground_truth_samples": 10
+    },
+    {
+      "id": "campus-0e160914b4-closed",
+      "text": "去维修区巡检",
+      "state": "BLOCKED",
+      "detail": "目的地处于限制通行区",
+      "ground_truth_samples": 11
+    },
+    {
+      "id": "campus-0e160914b4-wall",
+      "text": "巡检 (2.2,2.1)",
+      "state": "BLOCKED",
+      "detail": "FAILED: campus-0e160914b4-wall/step/1/waypoint/1 gateway: forward clearance below 0.42 m; stationary odometry confirmed [code:navigation.path_blocked]",
+      "ground_truth_samples": 67
+    },
+    {
+      "id": "campus-0e160914b4-recover",
+      "text": "回到工位",
+      "state": "SUCCEEDED",
+      "detail": "已取得步骤证据",
+      "world_error_m": 0.06128894087531311,
+      "ground_truth_samples": 71
+    }
+  ],
+  "console_missions": [
+    {
+      "text": "依次巡检 (0.8,0) 和 (0.8,0.7)，然后报告状态",
+      "state": "SUCCEEDED",
+      "provider": "local",
+      "tools": [
+        "inspect",
+        "status"
+      ]
+    },
+    {
+      "text": "前往 (-0.5,0.4)",
+      "state": "SUCCEEDED",
+      "provider": "local",
+      "tools": [
+        "inspect"
+      ]
+    },
+    {
+      "text": "巡检 (0,0)",
+      "state": "SUCCEEDED",
+      "provider": "local",
+      "tools": [
+        "inspect"
+      ]
+    },
+    {
+      "text": "报告机器人当前位置",
+      "state": "SUCCEEDED",
+      "provider": "local",
+      "tools": [
+        "status"
+      ]
+    }
+  ],
+  "resilience": {
+    "restart": {
+      "passed": true,
+      "operation_id": "first/step/1/waypoint/1"
+    },
+    "contention": {
+      "passed": true
+    },
+    "operator_resume": {
+      "passed": true
+    },
+    "hotplug": {
+      "passed": true
+    }
+  },
+  "observations": {
+    "candidate_tests_passed": 16,
+    "baseline_failure_sources": {
+      "test_clock_rewind_clears_live_inputs_and_preserves_prior_replay": "before.txt",
+      "test_cut_http_body_after_first_page_recovers_without_skipping_events": "before-sink.txt",
+      "test_import_continues_after_legacy_nonfinite_model_artifact": "before-migration.txt",
+      "test_invalid_scan_keeps_the_original_capture_time": "before.txt",
+      "test_malformed_status_cannot_break_state_and_event_archive": "before.txt"
+    },
+    "clock_reset": {
+      "passed": true,
+      "old_map_stamp_s": 100.376,
+      "new_map_stamp_s": 0.626,
+      "reset_seq": 875,
+      "clock_jump": {
+        "previous_stamp_s": 101.716,
+        "stamp_s": 0.0
+      },
+      "at_reset_map_available": false,
+      "at_reset_trail_count": 0
+    },
+    "after_archive_outage": {
+      "operation_id": "outage-ee29257b0a1f48e7976790e9c7089ba7",
+      "event_id": "scene-cb7ca9323b854026a658679074718638",
+      "trace_id": "parent-outage-ee29257b0a1f48e7976790e9c7089ba7",
+      "module": "scene.navigation",
+      "code": "scene.place_unknown",
+      "source": "ros:/edge/events",
+      "utc": "2026-11-17T06:33:13.196162+00:00",
+      "pending_before_and_after_restart": true,
+      "same_receipt_on_retry": true,
+      "source_payload_unchanged": true,
+      "archive_rows_after_reconnect": 1,
+      "delivery_acknowledged": true
+    }
+  },
+  "model": {
+    "scope": "Gazebo, actual Ollama and ROS odometry",
+    "passed": true,
+    "root_task": "a6e50234d6244265981ad0b82a11436e",
+    "trace_id": "a6e50234d6244265981ad0b82a11436e",
+    "duplicate_task": "a6e50234d6244265981ad0b82a11436e",
+    "child_task": "87515621398b4f44acdef545f57e851a",
+    "prompt_revision": {
+      "id": "planner.system",
+      "version": "1",
+      "sha256": "9ea4f37ba500002bfb438e4dc06bee31a8ff38e109dff7a399047386012415e5"
+    },
+    "profile_revision": {
+      "version": "env",
+      "sha256": "856ea62a1029a5a9201ce8eadcdc73ab7b8fe7e67a163f28e38476791fa720ea"
+    },
+    "provider": "ollama/qwen2.5:1.5b",
+    "model_request_sha256": "522d1e77e388b7618b246030bbab1bda3c1b9be9e632a53fee05a69cc35a9325",
+    "model_response_sha256": "6f0bae2b49a71004083994e2bc2bac6d66dbbc50a07bb3b4e6cee75bcf56e046",
+    "model_ms": 4470.47,
+    "tool": "status",
+    "tool_ms": 1.63,
+    "model_selected_tools": [
+      "status",
+      "status",
+      "status"
+    ],
+    "ros_observation": {
+      "topic": "/odom",
+      "frame": "odom",
+      "stamp": {
+        "sec": 9,
+        "nanosec": 78000000
+      },
+      "x": -1.2477089674218302e-09,
+      "y": -5.943778524958859e-30,
+      "yaw": 2.6615874633078773e-18,
+      "speed": -4.1652162757224863e-19
+    },
+    "exported_event_count": 16,
+    "child_parent_task": "a6e50234d6244265981ad0b82a11436e",
+    "child_parent_event": "312ae81741d044bfbe763908fe482082"
+  },
+  "ui": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "document_width": 1425,
+        "live_pose": true,
+        "tool_dialog": true,
+        "event_navigation": true
+      },
+      {
+        "width": 390,
+        "document_width": 375,
+        "live_pose": true,
+        "tool_dialog": true,
+        "event_navigation": true
+      }
+    ],
+    "errors": []
+  },
+  "amd64": {
+    "passed": true,
+    "architecture": "x86_64",
+    "revision": "c113b9b419346004cfdf53d4814dbb3f943e280f",
+    "services": [
+      "core",
+      "perception",
+      "agent",
+      "console"
+    ],
+    "without_odom": "RECOVERY_REQUIRED",
+    "diagnostic": "tool.odom_stale",
+    "with_odom": "SUCCEEDED",
+    "operation_id_before_and_after": "missing-odom/step/1",
+    "evidence": {
+      "source": "/fixture/odom",
+      "frame": "fixture_odom",
+      "stamp_ns": 1794896870283526455,
+      "stamp": {
+        "sec": 1794896870,
+        "nanosec": 283526455
+      },
+      "x": 0.375,
+      "y": 0.0,
+      "yaw": 0.0,
+      "speed": 0.0
+    },
+    "occupied_cells": 3,
+    "truth_available": false,
+    "image_id": "sha256:c88bf622805a7fb4a361c9bb459a4aed49fe5947fd689847c0f21f1c6507da8c",
+    "host_machine": "AMD64",
+    "network": "none",
+    "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator",
+    "emulated": false
+  },
+  "arm64": {
+    "passed": true,
+    "architecture": "aarch64",
+    "revision": "c113b9b419346004cfdf53d4814dbb3f943e280f",
+    "services": [
+      "core",
+      "perception",
+      "agent",
+      "console"
+    ],
+    "without_odom": "RECOVERY_REQUIRED",
+    "diagnostic": "tool.odom_stale",
+    "with_odom": "SUCCEEDED",
+    "operation_id_before_and_after": "missing-odom/step/1",
+    "evidence": {
+      "source": "/fixture/odom",
+      "frame": "fixture_odom",
+      "stamp_ns": 1794896998168586608,
+      "stamp": {
+        "sec": 1794896998,
+        "nanosec": 168586608
+      },
+      "x": 0.375,
+      "y": 0.0,
+      "yaw": 0.0,
+      "speed": 0.0
+    },
+    "occupied_cells": 3,
+    "truth_available": false,
+    "image_id": "sha256:33a46ce04b2e2dbc4d373f90daa20f2650aa9c1bfc907256677414baa0b980d2",
+    "host_machine": "AMD64",
+    "network": "none",
+    "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator",
+    "emulated": true
+  },
+  "resource_matrix": {
+    "revision": "ebb6bbb1836274481d0061feeda9315a0e56a5e4",
+    "host_machine": "AMD64",
+    "docker": "29.9.3",
+    "method": "Sequential independent containers and clean journals. Integrated measurement from cgroup v2 including ROS input fixture and 4 services. Timings include docker run and bootstrap. ARM64 is emulation.",
+    "scope": "timed synthetic ROS 2 odom/IMU/laser fixture and original-task recovery; no Gazebo, model inference, network or actuator",
+    "limitations": "Not a minimum resource recommendation, native ARM measurement, endurance test, thermal test or control latency guarantee.",
+    "started_utc": "2026-11-17T06:25:06.298529+00:00",
+    "finished_utc": "2026-11-17T06:27:35.004089+00:00",
+    "measured_cases": 8,
+    "passed_count": 6,
+    "oom_count": 2,
+    "finding": "On this host the four-service ROS graph plus the sensor probe ran at all four limits natively on amd64; the emulated arm64 graph hit the cgroup limit on two runs. There was one sample per configuration.",
+    "images": {
+      "amd64": "sha256:66e68b5aba664ec9ba2e3dbe33b45a62813bba3ced2dabe0e9b13367eddd5f5e",
+      "arm64": "sha256:1b08cd30eacac7ea9a10d3798cd8ae40c58e057f8afc404b10de54d2e117a8e6"
+    },
+    "no_swap": true,
+    "runs": [
+      {
+        "case": "amd64-1cpu-512mib",
+        "passed": true,
+        "elapsed_s": 3.062,
+        "peak_mib": 173.04,
+        "exit_code": 0,
+        "oom_killed": false,
+        "oom_kill_events": 0,
+        "cpu_throttled_periods": 11
+      },
+      {
+        "case": "arm64-1cpu-512mib",
+        "passed": false,
+        "elapsed_s": 24.625,
+        "peak_mib": 512.0,
+        "exit_code": 137,
+        "oom_killed": true,
+        "oom_kill_events": 1,
+        "cpu_throttled_periods": 182
+      },
+      {
+        "case": "amd64-0.5cpu-384mib",
+        "passed": true,
+        "elapsed_s": 4.469,
+        "peak_mib": 172.59,
+        "exit_code": 0,
+        "oom_killed": false,
+        "oom_kill_events": 0,
+        "cpu_throttled_periods": 29
+      },
+      {
+        "case": "arm64-0.5cpu-384mib",
+        "passed": false,
+        "elapsed_s": 37.641,
+        "peak_mib": 384.0,
+        "exit_code": 137,
+        "oom_killed": true,
+        "oom_kill_events": 2,
+        "cpu_throttled_periods": 370
+      },
+      {
+        "case": "amd64-1cpu-768mib",
+        "passed": true,
+        "elapsed_s": 3.047,
+        "peak_mib": 172.41,
+        "exit_code": 0,
+        "oom_killed": false,
+        "oom_kill_events": 0,
+        "cpu_throttled_periods": 10
+      },
+      {
+        "case": "arm64-1cpu-768mib",
+        "passed": true,
+        "elapsed_s": 28.344,
+        "peak_mib": 562.04,
+        "exit_code": 0,
+        "oom_killed": false,
+        "oom_kill_events": 0,
+        "cpu_throttled_periods": 210
+      },
+      {
+        "case": "amd64-1cpu-1536mib",
+        "passed": true,
+        "elapsed_s": 3.094,
+        "peak_mib": 172.55,
+        "exit_code": 0,
+        "oom_killed": false,
+        "oom_kill_events": 0,
+        "cpu_throttled_periods": 10
+      },
+      {
+        "case": "arm64-1cpu-1536mib",
+        "passed": true,
+        "elapsed_s": 29.563,
+        "peak_mib": 562.33,
+        "exit_code": 0,
+        "oom_killed": false,
+        "oom_kill_events": 0,
+        "cpu_throttled_periods": 228
+      }
+    ],
+    "successful_recovery": {
+      "before": "RECOVERY_REQUIRED",
+      "after": "SUCCEEDED",
+      "diagnostic": "tool.odom_stale",
+      "operation_id": "missing-odom/step/1",
+      "x_m": 0.375
+    }
+  },
+  "resource_fixture": {
+    "core": {
+      "command": [
+        "ros2",
+        "run",
+        "edge_core",
+        "edge_core_node",
+        "--ros-args",
+        "-r",
+        "/odom:=/fixture/odom",
+        "-r",
+        "/edge/navigate_to:=/edge/navigate_to"
+      ],
+      "environment": {
+        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+        "ROS_DOMAIN_ID": "154"
+      }
+    },
+    "perception": {
+      "command": [
+        "python3",
+        "/opt/edge/perception/node.py",
+        "--ros-args",
+        "-p",
+        "odom_topic:=/fixture/odom",
+        "-p",
+        "imu_topic:=/fixture/imu",
+        "-p",
+        "scan_topic:=/fixture/scan",
+        "-p",
+        "base_frame:=fixture_base",
+        "-p",
+        "odom_frame:=fixture_odom",
+        "-p",
+        "imu_frame:=fixture_imu",
+        "-p",
+        "laser_frame:=fixture_laser",
+        "-p",
+        "lidar_x:=0.0",
+        "-p",
+        "lidar_y:=0.0",
+        "-p",
+        "lidar_yaw:=0.0"
+      ],
+      "environment": {
+        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+        "ROS_DOMAIN_ID": "154"
+      }
+    },
+    "agent": {
+      "command": [
+        "python3",
+        "/opt/edge/agent/service.py",
+        "--ros-args",
+        "-r",
+        "/odom:=/fixture/odom"
+      ],
+      "environment": {
+        "EDGE_AGENT_BIND": "127.0.0.1",
+        "EDGE_OLLAMA_MODEL": "qwen2.5:1.5b",
+        "EDGE_OLLAMA_URL": "",
+        "EDGE_PLANNER_URL": "",
+        "EDGE_RETRY_LIMIT": "0",
+        "EDGE_STEP_TIMEOUT": "1800",
+        "EDGE_TRACE_CONTENT": "redacted",
+        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+        "ROS_DOMAIN_ID": "154"
+      }
+    },
+    "console": {
+      "command": [
+        "python3",
+        "/opt/edge/console/server/main.py",
+        "--ros-args",
+        "-r",
+        "/scan:=/fixture/scan",
+        "-r",
+        "/imu:=/fixture/imu",
+        "-r",
+        "/odom:=/fixture/odom",
+        "-r",
+        "/cmd_vel:=/cmd_vel"
+      ],
+      "environment": {
+        "EDGE_AGENT_URL": "http://127.0.0.1:8090",
+        "EDGE_BASE_FRAME": "fixture_base",
+        "EDGE_ENVIRONMENT": "hardware",
+        "EDGE_HTTP_BIND": "127.0.0.1",
+        "EDGE_HTTP_PORT": "8765",
+        "EDGE_ROBOT_ID": "hardware-edge",
+        "EDGE_SCAN_FRAME": "fixture_laser",
+        "EDGE_SCAN_MOUNT": "{\"x\":0.0,\"y\":0.0,\"z\":0.0,\"yaw\":0.0}",
+        "EDGE_TELEMETRY_MAX_SAMPLES": "10080",
+        "EDGE_TELEMETRY_RETENTION_DAYS": "7",
+        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+        "ROS_DOMAIN_ID": "154"
+      }
+    }
+  },
+  "coverage_limits": [
+    "single differential-drive Gazebo model",
+    "synthetic ROS 2 sensor fixture for hardware software stack",
+    "QEMU AArch64 with AMD64 host",
+    "physical RK3588 / Jetson, real calibration, physical braking and long thermal or power-loss campaigns pending"
+  ]
+}
