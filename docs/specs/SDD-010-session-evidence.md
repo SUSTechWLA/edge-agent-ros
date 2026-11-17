@@ -62,6 +62,8 @@ SDD-009 提供了任务目录和事件回放，但读者仍需在工具请求、
 
 ## 变更记录
 
+- 2026-11-18 完整 18 类回归在 `dbacac8` 通过，最后修复的 7 类消费者回归在 `44fa0ed` 通过；相关契约共 56 项。独立提供者替换、撤回、draining、失联、错误版本、恢复及桌面/手机界面均通过。日常只更新 Console 并新增 Session/Evidence，52 项任务与升级前 2,785 条归档引用校验一致。AC-5 的小模型自主 SQL 诊断仍未通过，保留原始失败。[完整验收及局限](../testing/session-evidence.md) · [机器可读证据](../evidence/session-evidence.json)
+
 - 2026-11-18 修复查询审计被误判为任务证据：Session 在权威任务缺失时以已加载的非审计事实判断存在性；反复查询并导入自身审计仍返回 404，任务源不可读仍返回 503，真实模块事实可生成标明缺少任务账本的 UNKNOWN 会话。回归入口为 `sessions_plugin/test_provider.py::test_missing_session_does_not_become_a_task_when_query_audit_is_imported`，完整验证结果随本轮测试报告记录。
 
 - 2026-11-17 以 `7f7223d` 为基线先记录设计和验收。根据用户补充采用 EventBus 公共接口作为插件取证入口。

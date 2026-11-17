@@ -80,7 +80,7 @@
 | `EDGE_SESSION_JOURNAL` | `/var/lib/edge-session/session.default/module-events.sqlite` |
 | `EDGE_SESSION_PLUGIN_ID` / `EDGE_SESSION_PLUGIN_VERSION` | `session.default` / `1` |
 
-入口为 `python3 /opt/edge/sessions_plugin/provider.py`。此服务复用仓库中的公共 HTTP 辅助、事件信封与 ModuleJournal；自建镜像也需包含这些共享模块。仅给它自己的审计目录写权限，不挂载任务、模型原文或 Console 历史数据库。运行时清单的安装、撤回、绑定选择与验证由消费者及部署管理入口处理。
+入口为 `python3 /opt/edge/sessions_plugin/provider.py`。此服务复用仓库中的公共 HTTP 辅助、事件信封与 ModuleJournal；自建镜像也需包含这些共享模块。代码只写自己的审计子目录，不挂载任务、模型原文或 Console 历史数据库。随仓库提供的 Compose 使用受信任插件共享的 module-sources 卷，未实现多租户文件权限隔离；需要更强隔离时应为插件配置专属卷并将审计只读汇入归档。运行时清单的安装、撤回、绑定选择与验证由消费者及部署管理入口处理。
 
 ## 验证
 

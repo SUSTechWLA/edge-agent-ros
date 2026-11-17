@@ -1,0 +1,591 @@
+{
+  "passed": false,
+  "model": "qwen2.5:1.5b",
+  "model_calls": [
+    {
+      "prompt": "请编写只读SQL，查询本次events表中实际有哪些kind及各类数量，以便下一步定位制动。输入已由task限定范围，底层记录task_id列可能空。输出sql。\n{\"schema_version\": 1, \"table\": \"events\", \"columns\": [\"seq\", \"utc\", \"kind\", \"level\", \"source\", \"session_id\", \"mission_id\", \"operation_id\", \"detail\", \"cause_seq\", \"source_id\", \"source_seq\", \"event_id\", \"trace_id\", \"parent_event_id\", \"task_id\", \"module\", \"layer\", \"code\", \"call_id\", \"trigger_kind\", \"trigger_id\", \"trigger_source\", \"data_json\"], \"allowed_functions\": [\"->\", \"->>\", \"abs\", \"avg\", \"coalesce\", \"count\", \"glob\", \"ifnull\", \"instr\", \"json_array_length\", \"json_extract\", \"json_type\", \"json_valid\", \"length\", \"like\", \"lower\", \"ltrim\", \"max\", \"min\", \"nullif\", \"replace\", \"round\", \"rtrim\", \"substr\", \"substring\", \"sum\", \"total\", \"trim\", \"typeof\", \"upper\"], \"scope\": \"表已限于当前任务及 Console 显式关联的委托；底层事件 task_id 可以为空。不要再次 WHERE task_id=... 排除真实委托；没有私有任务库或宿主文件。\", \"limits\": {\"source_events\": 500, \"result_rows\": 50, \"result_bytes\": 12288, \"deadline_seconds\": 4, \"sql_bytes\": 16384, \"sql_vm_steps\": 200000}, \"parameters\": {\"task_id\": \"string\", \"sql\": \"string\", \"after_seq\": \"number (integer ≥ 0)\", \"limit\": \"number (integer 1..50)\", \"archive_id\": \"string; first page empty, continuation required\"}, \"sql\": \"单条 SELECT / WITH；只读 events；允许聚合、关联、json_extract(data_json, '$.path') 和 JSON -> / ->>。可用绑定参数 :task_id / :after_seq / :limit。禁止写入、ATTACH、PRAGMA、文件和扩展函数。\", \"discovery\": \"先 SELECT kind,count(*) FROM events GROUP BY kind，核对真实事件名称；再选一条 data_json 看实际字段。不得猜测事件枚举或 JSON 路径；NULL 只表示当前路径没有值。\", \"examples\": [\"SELECT kind,count(*) FROM events GROUP BY kind\", \"SELECT seq,code,detail FROM events WHERE level IN ('warn','error') ORDER BY seq\", \"SELECT seq,json_extract(data_json,'$.payload.diagnostic') AS diagnosis FROM events WHERE level IN ('warn','error')\", \"SELECT seq,json_extract(data_json,'$.payload.trace.diagnosis') AS diagnosis FROM events WHERE kind LIKE '%error%'\", \"SELECT child.seq,child.parent_event_id,parent.detail FROM events child LEFT JOIN events parent ON parent.event_id=child.parent_event_id\"], \"continuation\": \"after_seq=0, archive_id='' 首次读取；has_more 时以 coverage.next_after 与 archive_id 续读。输出截断时可缩小 SELECT 字段或用 WHERE seq 继续本窗口；next_after 只负责源事件分页。\", \"markdown\": \"先 read_session(task_id) 阅读任务会话，再 query_evidence 查询证据。查询成功表示读到了公开记录，不表示机器人任务成功。窗口缺少父事件时应回查同任务早期窗口。\"}",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sql"
+        ]
+      },
+      "raw_answer": "{\n  \"sql\": \"SELECT kind, count(*) FROM events GROUP BY kind\"\n}",
+      "usage": {
+        "prompt_tokens": 802,
+        "output_tokens": 19
+      },
+      "parsed": {
+        "sql": "SELECT kind, count(*) FROM events GROUP BY kind"
+      }
+    },
+    {
+      "prompt": "请依据这份任务会话和已查到的实际事件类型，设计一条查询以查明制动时记录的精确前向距离。返回名为 seq 和 distance_m 的两列，距离字段为 data_json 的 front_range_m；选择对应制动事件。输入events已由task限定范围，底层记录task_id列可能空，无需再次筛选task_id。使用SQLite json_extract函数从JSON中读数。只输出 sql。\n\n# 任务会话\n\n任务 campus-19ee1d1543-wall\n调用链 campus-19ee1d1543-wall\n\n用户请求 — 巡检 (2.2,2.1) [#1786]\n\n执行计划 — 前往指定坐标巡检 [[2.2, 2.1]]。 [#1788]\n\n执行进展 — 已登记本步骤的执行意图，开始调用对应工具。 [#1789]\n\n执行中的问题 — 执行器报告制动，当时前方净空为 0.395 米。 [#1850]\n\n执行进展 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1853]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1858]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1861]\n\n执行中的问题 — 插件作者记录本次任务不满足自动起草条件。 [#2614]\n\n当前结果 — 任务已受阻。导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1859]\n\n诊断 — navigation.path_blocked，来源 edge_core。检查制动事件的 front_range_m，对回放中的实际激光命中和门口路径进行比较。\n\n\n已归档 80 条，引用 9 条。范围截至 #2803。\n会话由公开任务快照及固定归档截止位置投影；两个来源不是同一事务快照。\n审计自事件不进入阅读窗口，原始归档及统计仍保留这些记录。\n归档编号表示接收先后，跨模块因果以原事件的父引用为准。\n\n查细节 /api/events?task_id=campus-19ee1d1543-wall\n\n会话提供者 session.default @ 1 · binding 60de4217fa55a0e34244ac77a5c69c6d181211f1b40eceaae70cad5b7571ac18\n\n\n{\"table\": \"events\", \"columns\": [\"seq\", \"utc\", \"kind\", \"level\", \"source\", \"session_id\", \"mission_id\", \"operation_id\", \"detail\", \"cause_seq\", \"source_id\", \"source_seq\", \"event_id\", \"trace_id\", \"parent_event_id\", \"task_id\", \"module\", \"layer\", \"code\", \"call_id\", \"trigger_kind\", \"trigger_id\", \"trigger_source\", \"data_json\"], \"allowed_functions\": [\"->\", \"->>\", \"abs\", \"avg\", \"coalesce\", \"count\", \"glob\", \"ifnull\", \"instr\", \"json_array_length\", \"json_extract\", \"json_type\", \"json_valid\", \"length\", \"like\", \"lower\", \"ltrim\", \"max\", \"min\", \"nullif\", \"replace\", \"round\", \"rtrim\", \"substr\", \"substring\", \"sum\", \"total\", \"trim\", \"typeof\", \"upper\"], \"scope\": \"表已限于当前任务及 Console 显式关联的委托；底层事件 task_id 可以为空。不要再次 WHERE task_id=... 排除真实委托；没有私有任务库或宿主文件。\"}\n实际事件类型\n{\"columns\": [\"kind\", \"count(*)\"], \"rows\": [[\"action.braking\", 1], [\"action.result\", 1], [\"action.started\", 1], [\"agent.accepted\", 1], [\"agent.blocked\", 1], [\"agent.dispatch\", 1], [\"agent.planned\", 1], [\"agent.planner.context\", 1], [\"agent.ros.request\", 15], [\"agent.ros.response\", 15], [\"agent.tool.error\", 1], [\"agent.tool.request\", 14], [\"agent.tool.response\", 13], [\"agent.transition\", 1], [\"evidence.query_completed\", 1], [\"evidence.query_requested\", 1], [\"mission.created\", 1], [\"mission.detail\", 1], [\"mission.transition\", 1], [\"motion.changed\", 2], [\"operation.changed\", 1], [\"plugin.author.declined\", 1], [\"ros.log\", 2], [\"session.query_completed\", 2], [\"session.query_requested\", 2], [\"step.dispatch\", 1], [\"step.result\", 1]]}",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sql"
+        ]
+      },
+      "raw_answer": "{\n  \"sql\": \"SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'\"\n}",
+      "usage": {
+        "prompt_tokens": 1095,
+        "output_tokens": 159
+      },
+      "parsed": {
+        "sql": "SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'"
+      }
+    },
+    {
+      "prompt": "请依据这份任务会话和已查到的实际事件类型，设计一条查询以查明制动时记录的精确前向距离。返回名为 seq 和 distance_m 的两列，距离字段为 data_json 的 front_range_m；选择对应制动事件。输入events已由task限定范围，底层记录task_id列可能空，无需再次筛选task_id。使用SQLite json_extract函数从JSON中读数。只输出 sql。\n\n# 任务会话\n\n任务 campus-19ee1d1543-wall\n调用链 campus-19ee1d1543-wall\n\n用户请求 — 巡检 (2.2,2.1) [#1786]\n\n执行计划 — 前往指定坐标巡检 [[2.2, 2.1]]。 [#1788]\n\n执行进展 — 已登记本步骤的执行意图，开始调用对应工具。 [#1789]\n\n执行中的问题 — 执行器报告制动，当时前方净空为 0.395 米。 [#1850]\n\n执行进展 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1853]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1858]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1861]\n\n执行中的问题 — 插件作者记录本次任务不满足自动起草条件。 [#2614]\n\n当前结果 — 任务已受阻。导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1859]\n\n诊断 — navigation.path_blocked，来源 edge_core。检查制动事件的 front_range_m，对回放中的实际激光命中和门口路径进行比较。\n\n\n已归档 80 条，引用 9 条。范围截至 #2803。\n会话由公开任务快照及固定归档截止位置投影；两个来源不是同一事务快照。\n审计自事件不进入阅读窗口，原始归档及统计仍保留这些记录。\n归档编号表示接收先后，跨模块因果以原事件的父引用为准。\n\n查细节 /api/events?task_id=campus-19ee1d1543-wall\n\n会话提供者 session.default @ 1 · binding 60de4217fa55a0e34244ac77a5c69c6d181211f1b40eceaae70cad5b7571ac18\n\n\n{\"table\": \"events\", \"columns\": [\"seq\", \"utc\", \"kind\", \"level\", \"source\", \"session_id\", \"mission_id\", \"operation_id\", \"detail\", \"cause_seq\", \"source_id\", \"source_seq\", \"event_id\", \"trace_id\", \"parent_event_id\", \"task_id\", \"module\", \"layer\", \"code\", \"call_id\", \"trigger_kind\", \"trigger_id\", \"trigger_source\", \"data_json\"], \"allowed_functions\": [\"->\", \"->>\", \"abs\", \"avg\", \"coalesce\", \"count\", \"glob\", \"ifnull\", \"instr\", \"json_array_length\", \"json_extract\", \"json_type\", \"json_valid\", \"length\", \"like\", \"lower\", \"ltrim\", \"max\", \"min\", \"nullif\", \"replace\", \"round\", \"rtrim\", \"substr\", \"substring\", \"sum\", \"total\", \"trim\", \"typeof\", \"upper\"], \"scope\": \"表已限于当前任务及 Console 显式关联的委托；底层事件 task_id 可以为空。不要再次 WHERE task_id=... 排除真实委托；没有私有任务库或宿主文件。\"}\n实际事件类型\n{\"columns\": [\"kind\", \"count(*)\"], \"rows\": [[\"action.braking\", 1], [\"action.result\", 1], [\"action.started\", 1], [\"agent.accepted\", 1], [\"agent.blocked\", 1], [\"agent.dispatch\", 1], [\"agent.planned\", 1], [\"agent.planner.context\", 1], [\"agent.ros.request\", 15], [\"agent.ros.response\", 15], [\"agent.tool.error\", 1], [\"agent.tool.request\", 14], [\"agent.tool.response\", 13], [\"agent.transition\", 1], [\"evidence.query_completed\", 1], [\"evidence.query_requested\", 1], [\"mission.created\", 1], [\"mission.detail\", 1], [\"mission.transition\", 1], [\"motion.changed\", 2], [\"operation.changed\", 1], [\"plugin.author.declined\", 1], [\"ros.log\", 2], [\"session.query_completed\", 2], [\"session.query_requested\", 2], [\"step.dispatch\", 1], [\"step.result\", 1]]}\n上次查询及工具反馈，请根据schema纠正后再写SQL。\n{\"sql\": \"SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'\", \"state\": \"SUCCEEDED\", \"usage\": {\"prompt_tokens\": 1095, \"output_tokens\": 159}, \"error\": null, \"feedback\": {\"rows_returned\": 5, \"columns\": [\"distance_m\"], \"rows\": [[null], [4.3869309425354], [null], [null], [null]]}, \"receipt\": {\"operation_id\": \"model-evidence-b341e6e113\", \"state\": \"SUCCEEDED\", \"evidence\": {\"scope\": {\"task_id\": \"campus-19ee1d1543-wall\"}, \"columns\": [\"distance_m\"], \"rows\": [[null], [4.3869309425354], [null], [null], [null]], \"refs\": [], \"coverage\": {\"archive_id\": \"ef3fe498869e5ea74539429eddb5c4cd\", \"task_id\": \"campus-19ee1d1543-wall\", \"after_seq\": 0, \"through_seq\": 2837, \"loaded_events\": 92, \"has_more\": false, \"next_after\": null, \"pruned_through_seq\": 0, \"retention_gap_possible\": false, \"notes\": [\"SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。\", \"范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。\"]}, \"truncated\": true, \"markdown\": \"本次载入任务 `campus-19ee1d1543-wall` 的 92 条公开事件，查询返回 5 行。\\n\\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。\", \"query_id\": \"c3f4f7c3b9b040b3a5388567d762cd3e\"}}}\n请把原始事件seq保留，并把距离表达式命名 AS distance_m。",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sql"
+        ]
+      },
+      "raw_answer": "{\n  \"sql\": \"SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'\"\n}",
+      "usage": {
+        "prompt_tokens": 1730,
+        "output_tokens": 159
+      },
+      "parsed": {
+        "sql": "SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'"
+      }
+    },
+    {
+      "prompt": "请依据这份任务会话和已查到的实际事件类型，设计一条查询以查明制动时记录的精确前向距离。返回名为 seq 和 distance_m 的两列，距离字段为 data_json 的 front_range_m；选择对应制动事件。输入events已由task限定范围，底层记录task_id列可能空，无需再次筛选task_id。使用SQLite json_extract函数从JSON中读数。只输出 sql。\n\n# 任务会话\n\n任务 campus-19ee1d1543-wall\n调用链 campus-19ee1d1543-wall\n\n用户请求 — 巡检 (2.2,2.1) [#1786]\n\n执行计划 — 前往指定坐标巡检 [[2.2, 2.1]]。 [#1788]\n\n执行进展 — 已登记本步骤的执行意图，开始调用对应工具。 [#1789]\n\n执行中的问题 — 执行器报告制动，当时前方净空为 0.395 米。 [#1850]\n\n执行进展 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1853]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1858]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1861]\n\n执行中的问题 — 插件作者记录本次任务不满足自动起草条件。 [#2614]\n\n当前结果 — 任务已受阻。导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1859]\n\n诊断 — navigation.path_blocked，来源 edge_core。检查制动事件的 front_range_m，对回放中的实际激光命中和门口路径进行比较。\n\n\n已归档 80 条，引用 9 条。范围截至 #2803。\n会话由公开任务快照及固定归档截止位置投影；两个来源不是同一事务快照。\n审计自事件不进入阅读窗口，原始归档及统计仍保留这些记录。\n归档编号表示接收先后，跨模块因果以原事件的父引用为准。\n\n查细节 /api/events?task_id=campus-19ee1d1543-wall\n\n会话提供者 session.default @ 1 · binding 60de4217fa55a0e34244ac77a5c69c6d181211f1b40eceaae70cad5b7571ac18\n\n\n{\"table\": \"events\", \"columns\": [\"seq\", \"utc\", \"kind\", \"level\", \"source\", \"session_id\", \"mission_id\", \"operation_id\", \"detail\", \"cause_seq\", \"source_id\", \"source_seq\", \"event_id\", \"trace_id\", \"parent_event_id\", \"task_id\", \"module\", \"layer\", \"code\", \"call_id\", \"trigger_kind\", \"trigger_id\", \"trigger_source\", \"data_json\"], \"allowed_functions\": [\"->\", \"->>\", \"abs\", \"avg\", \"coalesce\", \"count\", \"glob\", \"ifnull\", \"instr\", \"json_array_length\", \"json_extract\", \"json_type\", \"json_valid\", \"length\", \"like\", \"lower\", \"ltrim\", \"max\", \"min\", \"nullif\", \"replace\", \"round\", \"rtrim\", \"substr\", \"substring\", \"sum\", \"total\", \"trim\", \"typeof\", \"upper\"], \"scope\": \"表已限于当前任务及 Console 显式关联的委托；底层事件 task_id 可以为空。不要再次 WHERE task_id=... 排除真实委托；没有私有任务库或宿主文件。\"}\n实际事件类型\n{\"columns\": [\"kind\", \"count(*)\"], \"rows\": [[\"action.braking\", 1], [\"action.result\", 1], [\"action.started\", 1], [\"agent.accepted\", 1], [\"agent.blocked\", 1], [\"agent.dispatch\", 1], [\"agent.planned\", 1], [\"agent.planner.context\", 1], [\"agent.ros.request\", 15], [\"agent.ros.response\", 15], [\"agent.tool.error\", 1], [\"agent.tool.request\", 14], [\"agent.tool.response\", 13], [\"agent.transition\", 1], [\"evidence.query_completed\", 1], [\"evidence.query_requested\", 1], [\"mission.created\", 1], [\"mission.detail\", 1], [\"mission.transition\", 1], [\"motion.changed\", 2], [\"operation.changed\", 1], [\"plugin.author.declined\", 1], [\"ros.log\", 2], [\"session.query_completed\", 2], [\"session.query_requested\", 2], [\"step.dispatch\", 1], [\"step.result\", 1]]}\n上次查询及工具反馈，请根据schema纠正后再写SQL。\n{\"sql\": \"SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'\", \"state\": \"SUCCEEDED\", \"usage\": {\"prompt_tokens\": 1095, \"output_tokens\": 159}, \"error\": null, \"feedback\": {\"rows_returned\": 5, \"columns\": [\"distance_m\"], \"rows\": [[null], [4.3869309425354], [null], [null], [null]]}, \"receipt\": {\"operation_id\": \"model-evidence-b341e6e113\", \"state\": \"SUCCEEDED\", \"evidence\": {\"scope\": {\"task_id\": \"campus-19ee1d1543-wall\"}, \"columns\": [\"distance_m\"], \"rows\": [[null], [4.3869309425354], [null], [null], [null]], \"refs\": [], \"coverage\": {\"archive_id\": \"ef3fe498869e5ea74539429eddb5c4cd\", \"task_id\": \"campus-19ee1d1543-wall\", \"after_seq\": 0, \"through_seq\": 2837, \"loaded_events\": 92, \"has_more\": false, \"next_after\": null, \"pruned_through_seq\": 0, \"retention_gap_possible\": false, \"notes\": [\"SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。\", \"范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。\"]}, \"truncated\": true, \"markdown\": \"本次载入任务 `campus-19ee1d1543-wall` 的 92 条公开事件，查询返回 5 行。\\n\\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。\", \"query_id\": \"c3f4f7c3b9b040b3a5388567d762cd3e\"}}}\n请把原始事件seq保留，并把距离表达式命名 AS distance_m。\n上次查询及工具反馈，请根据schema纠正后再写SQL。\n{\"sql\": \"SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'\", \"state\": \"SUCCEEDED\", \"usage\": {\"prompt_tokens\": 1730, \"output_tokens\": 159}, \"error\": null, \"feedback\": {\"rows_returned\": 5, \"columns\": [\"distance_m\"], \"rows\": [[null], [4.3869309425354], [null], [null], [null]]}, \"receipt\": {\"operation_id\": \"model-evidence-3e21ff2179\", \"state\": \"SUCCEEDED\", \"evidence\": {\"scope\": {\"task_id\": \"campus-19ee1d1543-wall\"}, \"columns\": [\"distance_m\"], \"rows\": [[null], [4.3869309425354], [null], [null], [null]], \"refs\": [], \"coverage\": {\"archive_id\": \"ef3fe498869e5ea74539429eddb5c4cd\", \"task_id\": \"campus-19ee1d1543-wall\", \"after_seq\": 0, \"through_seq\": 2859, \"loaded_events\": 100, \"has_more\": false, \"next_after\": null, \"pruned_through_seq\": 0, \"retention_gap_possible\": false, \"notes\": [\"SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。\", \"范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。\"]}, \"truncated\": true, \"markdown\": \"本次载入任务 `campus-19ee1d1543-wall` 的 100 条公开事件，查询返回 5 行。\\n\\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。\", \"query_id\": \"7f32d37bb2624f6fa3ff5b7d074d2207\"}}}\n请把原始事件seq保留，并把距离表达式命名 AS distance_m。",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sql"
+        ]
+      },
+      "raw_answer": "{\n  \"sql\": \"SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'\"\n}",
+      "usage": {
+        "prompt_tokens": 2365,
+        "output_tokens": 159
+      },
+      "parsed": {
+        "sql": "SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'"
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "sql": "SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'",
+      "state": "SUCCEEDED",
+      "usage": {
+        "prompt_tokens": 1095,
+        "output_tokens": 159
+      },
+      "error": null,
+      "feedback": {
+        "rows_returned": 5,
+        "columns": [
+          "distance_m"
+        ],
+        "rows": [
+          [
+            null
+          ],
+          [
+            4.3869309425354
+          ],
+          [
+            null
+          ],
+          [
+            null
+          ],
+          [
+            null
+          ]
+        ]
+      },
+      "receipt": {
+        "operation_id": "model-evidence-b341e6e113",
+        "state": "SUCCEEDED",
+        "evidence": {
+          "scope": {
+            "task_id": "campus-19ee1d1543-wall"
+          },
+          "columns": [
+            "distance_m"
+          ],
+          "rows": [
+            [
+              null
+            ],
+            [
+              4.3869309425354
+            ],
+            [
+              null
+            ],
+            [
+              null
+            ],
+            [
+              null
+            ]
+          ],
+          "refs": [],
+          "coverage": {
+            "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+            "task_id": "campus-19ee1d1543-wall",
+            "after_seq": 0,
+            "through_seq": 2837,
+            "loaded_events": 92,
+            "has_more": false,
+            "next_after": null,
+            "pruned_through_seq": 0,
+            "retention_gap_possible": false,
+            "notes": [
+              "SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。",
+              "范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。"
+            ]
+          },
+          "truncated": true,
+          "markdown": "本次载入任务 `campus-19ee1d1543-wall` 的 92 条公开事件，查询返回 5 行。\n\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。",
+          "query_id": "c3f4f7c3b9b040b3a5388567d762cd3e"
+        }
+      }
+    },
+    {
+      "sql": "SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'",
+      "state": "SUCCEEDED",
+      "usage": {
+        "prompt_tokens": 1730,
+        "output_tokens": 159
+      },
+      "error": null,
+      "feedback": {
+        "rows_returned": 5,
+        "columns": [
+          "distance_m"
+        ],
+        "rows": [
+          [
+            null
+          ],
+          [
+            4.3869309425354
+          ],
+          [
+            null
+          ],
+          [
+            null
+          ],
+          [
+            null
+          ]
+        ]
+      },
+      "receipt": {
+        "operation_id": "model-evidence-3e21ff2179",
+        "state": "SUCCEEDED",
+        "evidence": {
+          "scope": {
+            "task_id": "campus-19ee1d1543-wall"
+          },
+          "columns": [
+            "distance_m"
+          ],
+          "rows": [
+            [
+              null
+            ],
+            [
+              4.3869309425354
+            ],
+            [
+              null
+            ],
+            [
+              null
+            ],
+            [
+              null
+            ]
+          ],
+          "refs": [],
+          "coverage": {
+            "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+            "task_id": "campus-19ee1d1543-wall",
+            "after_seq": 0,
+            "through_seq": 2859,
+            "loaded_events": 100,
+            "has_more": false,
+            "next_after": null,
+            "pruned_through_seq": 0,
+            "retention_gap_possible": false,
+            "notes": [
+              "SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。",
+              "范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。"
+            ]
+          },
+          "truncated": true,
+          "markdown": "本次载入任务 `campus-19ee1d1543-wall` 的 100 条公开事件，查询返回 5 行。\n\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。",
+          "query_id": "7f32d37bb2624f6fa3ff5b7d074d2207"
+        }
+      }
+    },
+    {
+      "sql": "SELECT json_extract(data_json, '$.front_range_m') AS distance_m FROM events WHERE kind IN ('action.braking', 'action.result', 'action.started', 'agent.accepted', 'agent.blocked', 'agent.dispatch', 'agent.planned', 'agent.ros.request', 'agent.ros.response', 'agent.tool.error', 'agent.tool.request', 'agent.tool.response', 'agent.transition', 'evidence.query_completed', 'evidence.query_requested', 'mission.created', 'mission.detail', 'mission.transition', 'motion.changed', 'operation.changed', 'plugin.author.declined', 'ros.log', 'session.query_completed', 'session.query_requested', 'step.dispatch', 'step.result') AND kind != 'action.result'",
+      "state": "SUCCEEDED",
+      "usage": {
+        "prompt_tokens": 2365,
+        "output_tokens": 159
+      },
+      "error": null,
+      "feedback": {
+        "rows_returned": 5,
+        "columns": [
+          "distance_m"
+        ],
+        "rows": [
+          [
+            null
+          ],
+          [
+            4.3869309425354
+          ],
+          [
+            null
+          ],
+          [
+            null
+          ],
+          [
+            null
+          ]
+        ]
+      },
+      "receipt": {
+        "operation_id": "model-evidence-52bb9091d5",
+        "state": "SUCCEEDED",
+        "evidence": {
+          "scope": {
+            "task_id": "campus-19ee1d1543-wall"
+          },
+          "columns": [
+            "distance_m"
+          ],
+          "rows": [
+            [
+              null
+            ],
+            [
+              4.3869309425354
+            ],
+            [
+              null
+            ],
+            [
+              null
+            ],
+            [
+              null
+            ]
+          ],
+          "refs": [],
+          "coverage": {
+            "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+            "task_id": "campus-19ee1d1543-wall",
+            "after_seq": 0,
+            "through_seq": 2861,
+            "loaded_events": 102,
+            "has_more": false,
+            "next_after": null,
+            "pruned_through_seq": 0,
+            "retention_gap_possible": false,
+            "notes": [
+              "SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。",
+              "范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。"
+            ]
+          },
+          "truncated": true,
+          "markdown": "本次载入任务 `campus-19ee1d1543-wall` 的 102 条公开事件，查询返回 5 行。\n\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。",
+          "query_id": "6c6528e0ba8c43a0ac1f9253c7f9a84d"
+        }
+      }
+    }
+  ],
+  "limitations": "One fixed disclosed navigation fixture and a known front_range_m field path. At most three diagnostic correction rounds after one event-kind discovery call. This validates real model query execution and source-checked extraction, not general diagnosis or autonomous repair. No tasks or robot controls are submitted.",
+  "task_id": "campus-19ee1d1543-wall",
+  "fixture": {
+    "id": "campus-19ee1d1543-wall",
+    "text": "巡检 (2.2,2.1)",
+    "state": "BLOCKED",
+    "detail": "FAILED: campus-19ee1d1543-wall/step/1/waypoint/1 gateway: forward clearance below 0.42 m; stationary odometry confirmed [code:navigation.path_blocked]",
+    "created": "2026-11-17T04:06:48.550529+00:00",
+    "updated": "2026-11-17T04:06:56.851987+00:00",
+    "trace_id": "campus-19ee1d1543-wall"
+  },
+  "session_markdown": "# 任务会话\n\n任务 campus-19ee1d1543-wall\n调用链 campus-19ee1d1543-wall\n\n用户请求 — 巡检 (2.2,2.1) [#1786]\n\n执行计划 — 前往指定坐标巡检 [[2.2, 2.1]]。 [#1788]\n\n执行进展 — 已登记本步骤的执行意图，开始调用对应工具。 [#1789]\n\n执行中的问题 — 执行器报告制动，当时前方净空为 0.395 米。 [#1850]\n\n执行进展 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1853]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1858]\n\n执行中的问题 — 导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1861]\n\n执行中的问题 — 插件作者记录本次任务不满足自动起草条件。 [#2614]\n\n当前结果 — 任务已受阻。导航执行报告前方路径受阻。里程计回执已确认机器人停稳。 [#1859]\n\n诊断 — navigation.path_blocked，来源 edge_core。检查制动事件的 front_range_m，对回放中的实际激光命中和门口路径进行比较。\n\n\n已归档 80 条，引用 9 条。范围截至 #2803。\n会话由公开任务快照及固定归档截止位置投影；两个来源不是同一事务快照。\n审计自事件不进入阅读窗口，原始归档及统计仍保留这些记录。\n归档编号表示接收先后，跨模块因果以原事件的父引用为准。\n\n查细节 /api/events?task_id=campus-19ee1d1543-wall\n\n会话提供者 session.default @ 1 · binding 60de4217fa55a0e34244ac77a5c69c6d181211f1b40eceaae70cad5b7571ac18\n",
+  "tool_schema": {
+    "schema_version": 1,
+    "table": "events",
+    "columns": [
+      "seq",
+      "utc",
+      "kind",
+      "level",
+      "source",
+      "session_id",
+      "mission_id",
+      "operation_id",
+      "detail",
+      "cause_seq",
+      "source_id",
+      "source_seq",
+      "event_id",
+      "trace_id",
+      "parent_event_id",
+      "task_id",
+      "module",
+      "layer",
+      "code",
+      "call_id",
+      "trigger_kind",
+      "trigger_id",
+      "trigger_source",
+      "data_json"
+    ],
+    "allowed_functions": [
+      "->",
+      "->>",
+      "abs",
+      "avg",
+      "coalesce",
+      "count",
+      "glob",
+      "ifnull",
+      "instr",
+      "json_array_length",
+      "json_extract",
+      "json_type",
+      "json_valid",
+      "length",
+      "like",
+      "lower",
+      "ltrim",
+      "max",
+      "min",
+      "nullif",
+      "replace",
+      "round",
+      "rtrim",
+      "substr",
+      "substring",
+      "sum",
+      "total",
+      "trim",
+      "typeof",
+      "upper"
+    ],
+    "scope": "表已限于当前任务及 Console 显式关联的委托；底层事件 task_id 可以为空。不要再次 WHERE task_id=... 排除真实委托；没有私有任务库或宿主文件。",
+    "limits": {
+      "source_events": 500,
+      "result_rows": 50,
+      "result_bytes": 12288,
+      "deadline_seconds": 4,
+      "sql_bytes": 16384,
+      "sql_vm_steps": 200000
+    },
+    "parameters": {
+      "task_id": "string",
+      "sql": "string",
+      "after_seq": "number (integer ≥ 0)",
+      "limit": "number (integer 1..50)",
+      "archive_id": "string; first page empty, continuation required"
+    },
+    "sql": "单条 SELECT / WITH；只读 events；允许聚合、关联、json_extract(data_json, '$.path') 和 JSON -> / ->>。可用绑定参数 :task_id / :after_seq / :limit。禁止写入、ATTACH、PRAGMA、文件和扩展函数。",
+    "discovery": "先 SELECT kind,count(*) FROM events GROUP BY kind，核对真实事件名称；再选一条 data_json 看实际字段。不得猜测事件枚举或 JSON 路径；NULL 只表示当前路径没有值。",
+    "examples": [
+      "SELECT kind,count(*) FROM events GROUP BY kind",
+      "SELECT seq,code,detail FROM events WHERE level IN ('warn','error') ORDER BY seq",
+      "SELECT seq,json_extract(data_json,'$.payload.diagnostic') AS diagnosis FROM events WHERE level IN ('warn','error')",
+      "SELECT seq,json_extract(data_json,'$.payload.trace.diagnosis') AS diagnosis FROM events WHERE kind LIKE '%error%'",
+      "SELECT child.seq,child.parent_event_id,parent.detail FROM events child LEFT JOIN events parent ON parent.event_id=child.parent_event_id"
+    ],
+    "continuation": "after_seq=0, archive_id='' 首次读取；has_more 时以 coverage.next_after 与 archive_id 续读。输出截断时可缩小 SELECT 字段或用 WHERE seq 继续本窗口；next_after 只负责源事件分页。",
+    "markdown": "先 read_session(task_id) 阅读任务会话，再 query_evidence 查询证据。查询成功表示读到了公开记录，不表示机器人任务成功。窗口缺少父事件时应回查同任务早期窗口。"
+  },
+  "event_discovery": {
+    "sql": "SELECT kind, count(*) FROM events GROUP BY kind",
+    "usage": {
+      "prompt_tokens": 802,
+      "output_tokens": 19
+    },
+    "receipt": {
+      "operation_id": "inventory-409dfc2f13",
+      "state": "SUCCEEDED",
+      "evidence": {
+        "scope": {
+          "task_id": "campus-19ee1d1543-wall"
+        },
+        "columns": [
+          "kind",
+          "count(*)"
+        ],
+        "rows": [
+          [
+            "action.braking",
+            1
+          ],
+          [
+            "action.result",
+            1
+          ],
+          [
+            "action.started",
+            1
+          ],
+          [
+            "agent.accepted",
+            1
+          ],
+          [
+            "agent.blocked",
+            1
+          ],
+          [
+            "agent.dispatch",
+            1
+          ],
+          [
+            "agent.planned",
+            1
+          ],
+          [
+            "agent.planner.context",
+            1
+          ],
+          [
+            "agent.ros.request",
+            15
+          ],
+          [
+            "agent.ros.response",
+            15
+          ],
+          [
+            "agent.tool.error",
+            1
+          ],
+          [
+            "agent.tool.request",
+            14
+          ],
+          [
+            "agent.tool.response",
+            13
+          ],
+          [
+            "agent.transition",
+            1
+          ],
+          [
+            "evidence.query_completed",
+            1
+          ],
+          [
+            "evidence.query_requested",
+            1
+          ],
+          [
+            "mission.created",
+            1
+          ],
+          [
+            "mission.detail",
+            1
+          ],
+          [
+            "mission.transition",
+            1
+          ],
+          [
+            "motion.changed",
+            2
+          ],
+          [
+            "operation.changed",
+            1
+          ],
+          [
+            "plugin.author.declined",
+            1
+          ],
+          [
+            "ros.log",
+            2
+          ],
+          [
+            "session.query_completed",
+            2
+          ],
+          [
+            "session.query_requested",
+            2
+          ],
+          [
+            "step.dispatch",
+            1
+          ],
+          [
+            "step.result",
+            1
+          ]
+        ],
+        "refs": [],
+        "coverage": {
+          "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+          "task_id": "campus-19ee1d1543-wall",
+          "after_seq": 0,
+          "through_seq": 2815,
+          "loaded_events": 84,
+          "has_more": false,
+          "next_after": null,
+          "pruned_through_seq": 0,
+          "retention_gap_possible": false,
+          "notes": [
+            "SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。",
+            "范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。"
+          ]
+        },
+        "truncated": false,
+        "markdown": "本次载入任务 `campus-19ee1d1543-wall` 的 84 条公开事件，查询返回 27 行。\n\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。",
+        "query_id": "a7a17efa3f2c47979c2f7405c2095543"
+      }
+    }
+  },
+  "failure": {
+    "type": "AssertionError",
+    "message": "query did not return source seq and distance_m after three attempts"
+  },
+  "model_call_count": 4
+}

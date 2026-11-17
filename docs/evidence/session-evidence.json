@@ -1,0 +1,773 @@
+{
+  "spec": "SDD-010",
+  "verified_revision": "44fa0edc216890e9925a8c25562b1199e6a090bb",
+  "deployment_image": "sha256:7eb9c67705a4112a65d4b01ede8f63b2b05d32e6b3e7668263e5b1054a2e99ca",
+  "platform": "Windows host, Docker Linux containers, ROS 2 Jazzy, Gazebo; hardware image checked on amd64 synthetic ROS inputs, no physical robot.",
+  "full_regression": {
+    "run_id": "20261117T162259Z-702004c2",
+    "revision": "dbacac85f8b87f49c06ed14a08581c6148de46a9",
+    "dirty": false,
+    "status": "passed",
+    "selected": [
+      "repository",
+      "planner",
+      "agent-contracts",
+      "observations",
+      "scene-contracts",
+      "core",
+      "motion-sensors",
+      "motion-world",
+      "agent-faults",
+      "resilience",
+      "console-missions",
+      "places",
+      "scene-binding",
+      "scene-outage",
+      "clock-reset",
+      "ui",
+      "model",
+      "board"
+    ],
+    "image_id": "sha256:b359fa3d2d2d605b315289a61bd5e2839578310341f20b16f77bb155924655ba",
+    "image_revision": "dbacac85f8b87f49c06ed14a08581c6148de46a9",
+    "stages": [
+      {
+        "name": "repository",
+        "started_at": "2026-11-17T16:22:59.877796+00:00",
+        "log": "repository.log",
+        "status": "passed",
+        "duration_s": 4.03
+      },
+      {
+        "name": "planner",
+        "started_at": "2026-11-17T16:23:03.900210+00:00",
+        "log": "planner.log",
+        "status": "passed",
+        "duration_s": 12.7
+      },
+      {
+        "name": "board-build",
+        "started_at": "2026-11-17T16:23:16.614796+00:00",
+        "log": "board-build.log",
+        "status": "passed",
+        "duration_s": 2.53
+      },
+      {
+        "name": "board",
+        "started_at": "2026-11-17T16:23:19.157385+00:00",
+        "log": "board.log",
+        "status": "passed",
+        "duration_s": 2.91
+      },
+      {
+        "name": "build",
+        "started_at": "2026-11-17T16:23:22.064914+00:00",
+        "log": "build.log",
+        "status": "passed",
+        "duration_s": 3.36
+      },
+      {
+        "name": "agent-contracts",
+        "started_at": "2026-11-17T16:23:25.942932+00:00",
+        "log": "agent-contracts.log",
+        "status": "passed",
+        "duration_s": 3.3
+      },
+      {
+        "name": "observations",
+        "started_at": "2026-11-17T16:23:29.252009+00:00",
+        "log": "observations.log",
+        "status": "passed",
+        "duration_s": 87.0
+      },
+      {
+        "name": "scene-contracts",
+        "started_at": "2026-11-17T16:24:56.243762+00:00",
+        "log": "scene-contracts.log",
+        "status": "passed",
+        "duration_s": 0.98
+      },
+      {
+        "name": "core",
+        "started_at": "2026-11-17T16:24:57.238949+00:00",
+        "log": "core.log",
+        "status": "passed",
+        "duration_s": 78.06
+      },
+      {
+        "name": "motion-sensors",
+        "started_at": "2026-11-17T16:26:15.307089+00:00",
+        "log": "motion-sensors.log",
+        "status": "passed",
+        "duration_s": 18.42
+      },
+      {
+        "name": "agent-faults",
+        "started_at": "2026-11-17T16:26:33.735796+00:00",
+        "log": "agent-faults.log",
+        "status": "passed",
+        "duration_s": 228.7
+      },
+      {
+        "name": "resilience",
+        "started_at": "2026-11-17T16:30:22.433909+00:00",
+        "log": "resilience.log",
+        "status": "passed",
+        "duration_s": 38.06
+      },
+      {
+        "name": "motion-world",
+        "started_at": "2026-11-17T16:31:00.494559+00:00",
+        "log": "motion-world.log",
+        "status": "passed",
+        "duration_s": 6.75
+      },
+      {
+        "name": "motion-cleanup",
+        "started_at": "2026-11-17T16:31:07.243258+00:00",
+        "log": "motion-cleanup.log",
+        "status": "passed",
+        "duration_s": 1.03
+      },
+      {
+        "name": "session-register",
+        "started_at": "2026-11-17T16:31:08.280216+00:00",
+        "log": "session-register.log",
+        "status": "passed",
+        "duration_s": 0.97
+      },
+      {
+        "name": "model-cache",
+        "started_at": "2026-11-17T16:31:09.252587+00:00",
+        "log": "model-cache.log",
+        "status": "passed",
+        "duration_s": 2.05
+      },
+      {
+        "name": "simulation-start",
+        "started_at": "2026-11-17T16:31:11.299014+00:00",
+        "log": "simulation-start.log",
+        "status": "passed",
+        "duration_s": 6.62
+      },
+      {
+        "name": "model-ready",
+        "started_at": "2026-11-17T16:31:17.922298+00:00",
+        "log": "model-ready.log",
+        "status": "passed",
+        "duration_s": 0.33
+      },
+      {
+        "name": "console-missions",
+        "started_at": "2026-11-17T16:31:18.593477+00:00",
+        "log": "console-missions.log",
+        "status": "passed",
+        "duration_s": 24.09
+      },
+      {
+        "name": "places",
+        "started_at": "2026-11-17T16:31:42.865859+00:00",
+        "log": "places.log",
+        "status": "passed",
+        "duration_s": 59.98
+      },
+      {
+        "name": "scene-binding",
+        "started_at": "2026-11-17T16:32:42.867029+00:00",
+        "log": "scene-binding.log",
+        "status": "passed",
+        "duration_s": 2.39
+      },
+      {
+        "name": "scene-outage",
+        "started_at": "2026-11-17T16:32:45.266533+00:00",
+        "log": "scene-outage.log",
+        "status": "passed",
+        "duration_s": 14.03
+      },
+      {
+        "name": "clock-reset",
+        "started_at": "2026-11-17T16:32:59.303895+00:00",
+        "log": "clock-reset.log",
+        "status": "passed",
+        "duration_s": 1.34
+      },
+      {
+        "name": "ui",
+        "started_at": "2026-11-17T16:33:00.831998+00:00",
+        "log": "ui.log",
+        "status": "passed",
+        "duration_s": 13.42
+      },
+      {
+        "name": "session-evidence",
+        "started_at": "2026-11-17T16:33:14.248371+00:00",
+        "log": "session-evidence.log",
+        "status": "passed",
+        "duration_s": 1.31
+      },
+      {
+        "name": "session-plugin",
+        "started_at": "2026-11-17T16:33:15.567552+00:00",
+        "log": "session-plugin.log",
+        "status": "passed",
+        "duration_s": 11.34
+      },
+      {
+        "name": "model",
+        "started_at": "2026-11-17T16:33:27.098323+00:00",
+        "log": "model.log",
+        "status": "passed",
+        "duration_s": 4.77
+      },
+      {
+        "name": "simulation-cleanup",
+        "started_at": "2026-11-17T16:33:31.871210+00:00",
+        "log": "simulation-cleanup.log",
+        "status": "passed",
+        "duration_s": 3.89
+      },
+      {
+        "name": "image-cleanup",
+        "started_at": "2026-11-17T16:33:35.761677+00:00",
+        "log": "image-cleanup.log",
+        "status": "passed",
+        "duration_s": 0.08
+      },
+      {
+        "name": "board-cleanup",
+        "started_at": "2026-11-17T16:33:35.839559+00:00",
+        "log": "board-cleanup.log",
+        "status": "passed",
+        "duration_s": 0.17
+      }
+    ]
+  },
+  "incremental_regression": {
+    "run_id": "20261117T163406Z-31330bb4",
+    "revision": "44fa0edc216890e9925a8c25562b1199e6a090bb",
+    "dirty": false,
+    "status": "passed",
+    "selected": [
+      "repository",
+      "planner",
+      "observations",
+      "console-missions",
+      "places",
+      "ui",
+      "board"
+    ],
+    "image_id": "sha256:7eb9c67705a4112a65d4b01ede8f63b2b05d32e6b3e7668263e5b1054a2e99ca",
+    "image_revision": "44fa0edc216890e9925a8c25562b1199e6a090bb",
+    "stages": [
+      {
+        "name": "repository",
+        "started_at": "2026-11-17T16:34:06.155247+00:00",
+        "log": "repository.log",
+        "status": "passed",
+        "duration_s": 4.12
+      },
+      {
+        "name": "planner",
+        "started_at": "2026-11-17T16:34:10.273925+00:00",
+        "log": "planner.log",
+        "status": "passed",
+        "duration_s": 14.91
+      },
+      {
+        "name": "board-build",
+        "started_at": "2026-11-17T16:34:25.184847+00:00",
+        "log": "board-build.log",
+        "status": "passed",
+        "duration_s": 2.8
+      },
+      {
+        "name": "board",
+        "started_at": "2026-11-17T16:34:27.991522+00:00",
+        "log": "board.log",
+        "status": "passed",
+        "duration_s": 2.98
+      },
+      {
+        "name": "build",
+        "started_at": "2026-11-17T16:34:30.977992+00:00",
+        "log": "build.log",
+        "status": "passed",
+        "duration_s": 2.86
+      },
+      {
+        "name": "observations",
+        "started_at": "2026-11-17T16:34:34.351881+00:00",
+        "log": "observations.log",
+        "status": "passed",
+        "duration_s": 89.45
+      },
+      {
+        "name": "session-register",
+        "started_at": "2026-11-17T16:36:03.813830+00:00",
+        "log": "session-register.log",
+        "status": "passed",
+        "duration_s": 0.86
+      },
+      {
+        "name": "simulation-start",
+        "started_at": "2026-11-17T16:36:04.667707+00:00",
+        "log": "simulation-start.log",
+        "status": "passed",
+        "duration_s": 5.78
+      },
+      {
+        "name": "console-missions",
+        "started_at": "2026-11-17T16:36:10.788751+00:00",
+        "log": "console-missions.log",
+        "status": "passed",
+        "duration_s": 22.91
+      },
+      {
+        "name": "places",
+        "started_at": "2026-11-17T16:36:33.874204+00:00",
+        "log": "places.log",
+        "status": "passed",
+        "duration_s": 60.48
+      },
+      {
+        "name": "ui",
+        "started_at": "2026-11-17T16:37:34.530256+00:00",
+        "log": "ui.log",
+        "status": "passed",
+        "duration_s": 13.44
+      },
+      {
+        "name": "session-evidence",
+        "started_at": "2026-11-17T16:37:47.967894+00:00",
+        "log": "session-evidence.log",
+        "status": "passed",
+        "duration_s": 1.31
+      },
+      {
+        "name": "session-plugin",
+        "started_at": "2026-11-17T16:37:49.278361+00:00",
+        "log": "session-plugin.log",
+        "status": "passed",
+        "duration_s": 7.39
+      },
+      {
+        "name": "simulation-cleanup",
+        "started_at": "2026-11-17T16:37:56.665235+00:00",
+        "log": "simulation-cleanup.log",
+        "status": "passed",
+        "duration_s": 3.81
+      },
+      {
+        "name": "image-cleanup",
+        "started_at": "2026-11-17T16:38:00.491192+00:00",
+        "log": "image-cleanup.log",
+        "status": "passed",
+        "duration_s": 0.06
+      },
+      {
+        "name": "board-cleanup",
+        "started_at": "2026-11-17T16:38:00.566231+00:00",
+        "log": "board-cleanup.log",
+        "status": "passed",
+        "duration_s": 0.14
+      }
+    ]
+  },
+  "related_contract_cases": {
+    "console": 32,
+    "evidence": 15,
+    "session_plugin": 9
+  },
+  "evidence_tools": {
+    "passed": true,
+    "task_id": "campus-8bf472a1f7-wall",
+    "source_seq": 722,
+    "distance_m": 0.4189879596233368,
+    "source_matches": true,
+    "session_markdown_bytes": 1477,
+    "raw_task_event_bytes": 140362,
+    "byte_reduction_fraction": 0.9895,
+    "tool_registered_then_removed": true,
+    "natural_language_review": "SUCCEEDED",
+    "duplicate_receipt_equal": true,
+    "write_query_rejected": true,
+    "audit_rows": 10
+  },
+  "session_plugin_lifecycle": {
+    "passed": true,
+    "task_id": "campus-8bf472a1f7-wall",
+    "cases": {
+      "draining": "session.draining",
+      "uninstalled": "session.service_missing",
+      "evidence_without_session": true,
+      "provider_offline": "session.transport",
+      "wrong_version": "session.identity_mismatch",
+      "separate_provider_replacement": {
+        "version": "fixture-v2",
+        "binding_changed": true
+      }
+    },
+    "restored_original_binding": true,
+    "robot_tasks_unchanged": true,
+    "task_count": 12,
+    "source": "isolated Gazebo and independent HTTP provider"
+  },
+  "isolated_browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "document_width": 1425,
+        "live_pose": true,
+        "tool_dialog": true,
+        "event_navigation": true,
+        "review": {
+          "tasks": {
+            "all": 8,
+            "active": "empty",
+            "succeeded": 8,
+            "issues": 3
+          },
+          "history": {
+            "changes": 833,
+            "issues": 737
+          },
+          "detail": {
+            "succeeded": {
+              "evidence": true,
+              "replayed": 738
+            },
+            "issues": {
+              "evidence": true,
+              "replay_return": true,
+              "replayed": 656
+            }
+          },
+          "task_page_checked": true,
+          "delayed_transitions": [
+            "task-state",
+            "task-page",
+            "history-view",
+            "history-page"
+          ],
+          "partial_archive": true,
+          "ledger_read_recovered": true,
+          "missing_deep_link": true,
+          "raw_periodic_sample": true
+        },
+        "sessions": {
+          "states": [
+            "SUCCEEDED",
+            "BLOCKED"
+          ],
+          "widths": 1440,
+          "evidence_dialog": true,
+          "markdown_download": true,
+          "read_recovered": true,
+          "plugin_unavailable": [
+            "session.service_missing",
+            "session.draining",
+            "session.transport"
+          ],
+          "plugin_read_recovered": true,
+          "missing_task": true
+        }
+      },
+      {
+        "width": 390,
+        "document_width": 375,
+        "live_pose": true,
+        "tool_dialog": true,
+        "event_navigation": true,
+        "review": {
+          "tasks": {
+            "all": 8,
+            "active": "empty",
+            "succeeded": 8,
+            "issues": 3
+          },
+          "history": {
+            "changes": 853,
+            "issues": 853
+          },
+          "detail": {
+            "succeeded": {
+              "evidence": true,
+              "replayed": 738
+            },
+            "issues": {
+              "evidence": true,
+              "replay_return": true,
+              "replayed": 656
+            }
+          },
+          "task_page_checked": true,
+          "delayed_transitions": [
+            "task-state",
+            "task-page",
+            "history-view",
+            "history-page"
+          ],
+          "partial_archive": true,
+          "ledger_read_recovered": true,
+          "missing_deep_link": true,
+          "raw_periodic_sample": true
+        },
+        "sessions": {
+          "states": [
+            "SUCCEEDED",
+            "BLOCKED"
+          ],
+          "widths": 390,
+          "evidence_dialog": true,
+          "markdown_download": true,
+          "read_recovered": true,
+          "plugin_unavailable": [
+            "session.service_missing",
+            "session.draining",
+            "session.transport"
+          ],
+          "plugin_read_recovered": true,
+          "missing_task": true
+        }
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "daily": {
+    "before": {
+      "task_count": 52,
+      "states": {
+        "SUCCEEDED": 42,
+        "BLOCKED": 10
+      },
+      "task_digest": "9056f3f8e3f42446a9fc1b00f7d9bfe7a7e87e5323f699962b13946d53fe0a38",
+      "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+      "cutoff": 2785,
+      "archive_rows": 2785,
+      "archive_digest": "1ff86a8702f02f01e4cdeef57e6a9c2afb30d0516ce37a9e97ed929507831b98",
+      "containers": {
+        "edge-agent-ros-console-1": "6c474388e0ef",
+        "edge-agent-ros-plugin-manager-1": "93dbc48aa0b0",
+        "edge-agent-ros-plugin-author-1": "5506f4b352ab",
+        "edge-agent-ros-agent-1": "d382d1e55ab8",
+        "edge-agent-ros-scene-1": "91b62d73d4bc",
+        "edge-agent-ros-core-1": "6f05f4a36047",
+        "edge-agent-ros-bridge-1": "2e0dc9132eb3",
+        "edge-agent-ros-gateway-1": "d5ac1fdfe59e",
+        "edge-agent-ros-witness-1": "1980ab79993d",
+        "edge-agent-ros-sim-1": "dede99c55ce3",
+        "edge-agent-ros-perception-1": "25b8f115bd48",
+        "edge-agent-ros-model-1": "ed82dc5fe0a6"
+      }
+    },
+    "after": {
+      "task_count": 52,
+      "states": {
+        "SUCCEEDED": 42,
+        "BLOCKED": 10
+      },
+      "task_digest": "9056f3f8e3f42446a9fc1b00f7d9bfe7a7e87e5323f699962b13946d53fe0a38",
+      "archive_id": "ef3fe498869e5ea74539429eddb5c4cd",
+      "cutoff": 2785,
+      "archive_rows": 2785,
+      "archive_digest": "1ff86a8702f02f01e4cdeef57e6a9c2afb30d0516ce37a9e97ed929507831b98",
+      "containers": {
+        "edge-agent-ros-console-1": "6eac41cf578c",
+        "edge-agent-ros-session-1": "0895db299b0b",
+        "edge-agent-ros-evidence-1": "315b62f867ec",
+        "edge-agent-ros-plugin-manager-1": "93dbc48aa0b0",
+        "edge-agent-ros-plugin-author-1": "5506f4b352ab",
+        "edge-agent-ros-agent-1": "d382d1e55ab8",
+        "edge-agent-ros-scene-1": "91b62d73d4bc",
+        "edge-agent-ros-core-1": "6f05f4a36047",
+        "edge-agent-ros-bridge-1": "2e0dc9132eb3",
+        "edge-agent-ros-gateway-1": "d5ac1fdfe59e",
+        "edge-agent-ros-witness-1": "1980ab79993d",
+        "edge-agent-ros-sim-1": "dede99c55ce3",
+        "edge-agent-ros-perception-1": "25b8f115bd48",
+        "edge-agent-ros-model-1": "ed82dc5fe0a6"
+      }
+    },
+    "recreated": [
+      "edge-agent-ros-console-1"
+    ],
+    "added": [
+      "edge-agent-ros-evidence-1",
+      "edge-agent-ros-session-1"
+    ],
+    "verification": {
+      "passed": true,
+      "service": {
+        "service": "session.read",
+        "plugin_id": "session.default",
+        "plugin_version": "1",
+        "binding": "60de4217fa55a0e34244ac77a5c69c6d181211f1b40eceaae70cad5b7571ac18"
+      },
+      "request_id": "c477949eca724d06b7bdf4dde6cd0b9e",
+      "task_id": "campus-19ee1d1543-wall",
+      "state": "BLOCKED",
+      "diagnosis": "navigation.path_blocked",
+      "source_seq": 1850,
+      "source_distance_m": 0.3952096700668335,
+      "query_value_matches_source": true,
+      "missing_task_statuses": [
+        404,
+        404,
+        404
+      ],
+      "registered_tools": [
+        "read_session",
+        "evidence_schema",
+        "query_evidence"
+      ],
+      "session_markdown_bytes": 1579,
+      "raw_task_event_bytes": 126118,
+      "robot_control_requests": 0,
+      "task_creation_requests": 0
+    },
+    "browser": {
+      "passed": true,
+      "viewports": [
+        {
+          "width": 1440,
+          "document_width": 1425,
+          "live_pose": true,
+          "tool_dialog": true,
+          "event_navigation": true,
+          "review": {
+            "tasks": {
+              "all": 8,
+              "active": "empty",
+              "succeeded": 8,
+              "issues": 8
+            },
+            "history": {
+              "changes": 2867,
+              "issues": 2859
+            },
+            "detail": {
+              "succeeded": {
+                "evidence": true,
+                "replayed": 2155
+              },
+              "issues": {
+                "evidence": true,
+                "replay_return": true,
+                "replayed": 1780
+              }
+            },
+            "task_page_checked": true,
+            "delayed_transitions": [
+              "task-state",
+              "task-page",
+              "history-view",
+              "history-page"
+            ],
+            "partial_archive": true,
+            "ledger_read_recovered": true,
+            "missing_deep_link": true,
+            "raw_periodic_sample": true
+          },
+          "sessions": {
+            "states": [
+              "SUCCEEDED",
+              "BLOCKED"
+            ],
+            "widths": 1440,
+            "evidence_dialog": true,
+            "markdown_download": true,
+            "read_recovered": true,
+            "plugin_unavailable": [
+              "session.service_missing",
+              "session.draining",
+              "session.transport"
+            ],
+            "plugin_read_recovered": true,
+            "missing_task": true
+          }
+        },
+        {
+          "width": 390,
+          "document_width": 375,
+          "live_pose": true,
+          "tool_dialog": true,
+          "event_navigation": true,
+          "review": {
+            "tasks": {
+              "all": 8,
+              "active": "empty",
+              "succeeded": 8,
+              "issues": 8
+            },
+            "history": {
+              "changes": 2887,
+              "issues": 2887
+            },
+            "detail": {
+              "succeeded": {
+                "evidence": true,
+                "replayed": 2155
+              },
+              "issues": {
+                "evidence": true,
+                "replay_return": true,
+                "replayed": 1780
+              }
+            },
+            "task_page_checked": true,
+            "delayed_transitions": [
+              "task-state",
+              "task-page",
+              "history-view",
+              "history-page"
+            ],
+            "partial_archive": true,
+            "ledger_read_recovered": true,
+            "missing_deep_link": true,
+            "raw_periodic_sample": true
+          },
+          "sessions": {
+            "states": [
+              "SUCCEEDED",
+              "BLOCKED"
+            ],
+            "widths": 390,
+            "evidence_dialog": true,
+            "markdown_download": true,
+            "read_recovered": true,
+            "plugin_unavailable": [
+              "session.service_missing",
+              "session.draining",
+              "session.transport"
+            ],
+            "plugin_read_recovered": true,
+            "missing_task": true
+          }
+        }
+      ],
+      "errors": [],
+      "writeRequests": []
+    }
+  },
+  "real_model_diagnosis": {
+    "passed": false,
+    "model": "qwen2.5:1.5b",
+    "model_call_count": 4,
+    "task_id": "campus-19ee1d1543-wall",
+    "failure": {
+      "type": "AssertionError",
+      "message": "query did not return source seq and distance_m after three attempts"
+    },
+    "report": "session-query-model-final.json",
+    "interpretation": "The model repeatedly selected unrelated event kinds and omitted seq. SQL executed, but no valid braking evidence pair was obtained; no final diagnosis or robot action was accepted."
+  },
+  "known_limits": [
+    "Sessions are rule-derived factual task reading views, not a full dsh conversation SessionStore or autonomous diagnostic loop.",
+    "Queries operate on bounded public event windows; coverage, pruning and output clipping must be checked.",
+    "The current small-model SQL diagnosis did not pass. Explicit schema-valid queries and natural-language session retrieval passed.",
+    "No physical RK3588/Jetson/Orin robot was tested in this change. Shared module-sources is a trusted deployment volume, not a multi-tenant isolation boundary."
+  ]
+}
