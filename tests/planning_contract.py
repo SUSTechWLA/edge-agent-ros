@@ -1,14 +1,92 @@
 """Contract regression for language input, capability swaps, and untrusted plans."""
 import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "agent"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "agent"))
 import planning
+import tracing
+
+
+class DeployedConfiguration(unittest.TestCase):
+    """Read the same checked-in files as Compose, without contacting any provider."""
+
+    def check_tools(self, plugins, extra):
+        with patch.dict(os.environ, {"EDGE_PLUGIN_DIR": str(plugins), "EDGE_EXTRA_PLUGIN_DIR": str(extra)}):
+            caps = planning.registry()
+        seen = set()
+        for folder in (plugins, extra):
+            for path in sorted(folder.glob("*.json")):
+                manifest = json.loads(path.read_text(encoding="utf-8-sig"))
+                tool = manifest["id"]
+                self.assertNotIn(tool, seen, f"{path.name}: duplicate deployed tool {tool}")
+                seen.add(tool)
+                self.assertTrue(caps.get(tool) == manifest, f"{path.name}: runtime did not register {tool}")
+
+    def check_override(self, path):
+        # Isolate each layer. A later valid override or a matching builtin must not hide a bad file in CI.
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            overrides = root / "contracts"
+            overrides.mkdir()
+            shutil.copyfile(path, overrides / path.name)
+            empty_builtins = root / "defaults.json"
+            empty_builtins.write_text("{}", encoding="utf-8")
+            doc = json.loads(path.read_text(encoding="utf-8-sig"))
+            with patch.dict(os.environ, {"EDGE_CONTRACT_DIR": str(overrides)}), patch.object(tracing, "BUILTINS", empty_builtins):
+                if path.name == "planner-profile.json":
+                    profile = planning.planner_profile()
+                    for key in ("version", "protocol", "url"):
+                        self.assertTrue(profile[key] == doc[key], f"{path.name}: different {key}")
+                    return
+                self.assertEqual(doc.get("schema_version"), 1, path.name)
+                self.assertTrue(doc.get("prompts") or doc.get("diagnostics"), f"{path.name}: no runtime entries")
+                for section, field in (("prompts", "text"), ("diagnostics", "hint")):
+                    for key, entry in doc.get(section, {}).items():
+                        actual = tracing.contract(section, key)
+                        self.assertIsNotNone(actual, f"{path.name}: runtime did not load {section}.{key}")
+                        self.assertEqual((actual["version"], actual[field]), (entry["version"], entry[field]), path.name)
+
+    def test_compose_deployment_files(self):
+        self.check_tools(ROOT / "plugins", ROOT / "scene/plugins")
+        for path in sorted((ROOT / "contracts").glob("*.json")):
+            with self.subTest(file=path.name):
+                self.check_override(path)
+
+    def test_rejected_deployment_files_fail_the_check(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            tools = root / "tools"
+            tools.mkdir()
+            manifest = {"id":"bad_tool", "version":"1", "parameters":{}, "effect":"read",
+                        "description":"invalid endpoint", "endpoint":"missing-host"}
+            (tools / "tool.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(AssertionError, "did not register"):
+                self.check_tools(tools, root / "extras")
+            profile = root / "planner-profile.json"
+            profile.write_text('{"schema_version":1,"version":"v1","protocol":"unknown","url":"http://test"}', encoding="utf-8")
+            with self.assertRaises(planning.Refused):
+                self.check_override(profile)
+            override = root / "site.json"
+            override.write_text('{"schema_version":1,"prompts":{"planner.system":{"version":"v2","text":""}}}', encoding="utf-8")
+            with self.assertRaisesRegex(AssertionError, "did not load"):
+                self.check_override(override)
+
+    def test_planner_profile_and_prompt_load_without_model(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            profile = root / "planner-profile.json"
+            profile.write_text('{"schema_version":1,"version":"v1","protocol":"http-planner","url":"http://test"}', encoding="utf-8")
+            self.check_override(profile)
+            override = root / "site.json"
+            override.write_text('{"schema_version":1,"prompts":{"planner.system":{"version":"v2","text":"local test"}}}', encoding="utf-8")
+            self.check_override(override)
 
 
 class PlannerContract(unittest.TestCase):
@@ -16,6 +94,7 @@ class PlannerContract(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         environment = patch.dict(os.environ, {"EDGE_PLUGIN_DIR":self.directory.name,
+                                 "EDGE_CONTRACT_DIR":self.directory.name, "EDGE_EXTRA_PLUGIN_DIR":"",
                                  "EDGE_PLANNER_URL":"http://planner/invoke","EDGE_OLLAMA_URL":""})
         environment.start()
         self.addCleanup(environment.stop)

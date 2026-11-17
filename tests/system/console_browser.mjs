@@ -1,6 +1,6 @@
 // Exercise the shipped browser UI against an isolated live simulation.
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { once } from 'node:events';
@@ -17,33 +17,41 @@ const state = await (await fetch(new URL('/api/state', url))).json();
 if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
 const profile = mkdtempSync(join(tmpdir(), 'edge-browser-test-'));
 const browser = spawn(binary, ['--headless=new','--disable-gpu','--no-first-run','--disable-extensions',
-  '--no-sandbox','--remote-debugging-pipe','--user-data-dir='+profile,'about:blank'],
-  {stdio:['ignore','ignore','ignore','pipe','pipe'],windowsHide:true});
+  '--no-sandbox','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],
+  {stdio:['ignore','ignore','pipe'],windowsHide:true});
+let diagnostics = '';
+browser.stderr.on('data', chunk => { diagnostics = (diagnostics + chunk).slice(-3000); });
 const exited = once(browser,'exit');
 const pending = new Map();
-let id = 0, bytes = Buffer.alloc(0), session;
+let id = 0, session, socket;
 const errors = [], viewports = [];
+async function connectBrowser() {
+  const portFile = join(profile,'DevToolsActivePort');
+  const deadline = Date.now()+20000;
+  while (Date.now()<deadline && browser.exitCode === null && !browser.signalCode) {
+    if (existsSync(portFile)) {
+      const [port,path] = readFileSync(portFile,'utf8').trim().split(/\r?\n/);
+      if (/^\d+$/.test(port) && path?.startsWith('/devtools/browser/')) {
+        const connection = new WebSocket('ws://127.0.0.1:'+port+path);
+        await once(connection,'open',{signal:AbortSignal.timeout(10000)});
+        return connection;
+      }
+    }
+    await delay(100);
+  }
+  throw new Error('Browser did not start: '+diagnostics);
+}
 function send(method, params={}, sessionId=session) {
   return new Promise((resolve,reject) => {
     const current = ++id;
-    const timer = setTimeout(() => { pending.delete(current); reject(new Error('timeout: '+method)); }, 10000);
+    const timer = setTimeout(() => { pending.delete(current); reject(new Error('timeout: '+method+' '+diagnostics)); }, 10000);
     pending.set(current, packet => {
       clearTimeout(timer);
       if (packet.error) reject(new Error(packet.error.message)); else resolve(packet.result);
     });
-    browser.stdio[3].write(JSON.stringify({id:current,method,params,sessionId})+'\0');
+    socket.send(JSON.stringify({id:current,method,params,sessionId}));
   });
 }
-browser.stdio[4].on('data', chunk => {
-  bytes = Buffer.concat([bytes, chunk]);
-  let end;
-  while ((end=bytes.indexOf(0)) >= 0) {
-    const packet = JSON.parse(bytes.subarray(0,end).toString());
-    bytes = bytes.subarray(end+1);
-    if (pending.has(packet.id)) { pending.get(packet.id)(packet); pending.delete(packet.id); }
-    if (packet.method === 'Runtime.exceptionThrown') errors.push(packet.params.exceptionDetails.text);
-  }
-});
 async function evaluate(expression) {
   const r = await send('Runtime.evaluate',{expression,returnByValue:true});
   if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || expression);
@@ -58,6 +66,12 @@ async function waitFor(expression) {
   throw new Error('UI condition failed: '+expression);
 }
 try {
+  socket = await connectBrowser();
+  socket.addEventListener('message', event => {
+    const packet = JSON.parse(event.data);
+    if (pending.has(packet.id)) { pending.get(packet.id)(packet); pending.delete(packet.id); }
+    if (packet.method === 'Runtime.exceptionThrown') errors.push(packet.params.exceptionDetails.text);
+  });
   const target = await send('Target.createTarget',{url:'about:blank'});
   session = (await send('Target.attachToTarget',{targetId:target.targetId,flatten:true})).sessionId;
   await send('Runtime.enable');
@@ -78,7 +92,10 @@ try {
   if (errors.length) throw new Error(errors.join(','));
   writeFileSync(output,JSON.stringify({passed:true,viewports,errors},null,2)+'\n');
 } finally {
-  try { await send('Browser.close',{},null); } catch { browser.kill(); }
+  if (socket?.readyState === WebSocket.OPEN) {
+    try { await send('Browser.close',{},null); } catch { browser.kill(); }
+    socket.close();
+  } else if (browser.exitCode === null && !browser.signalCode) { browser.kill(); }
   if (browser.exitCode === null && !browser.signalCode) {
     const stopped = await Promise.race([exited.then(()=>true),delay(2000).then(()=>false)]);
     if (!stopped) { browser.kill(); await exited; }

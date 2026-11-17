@@ -142,18 +142,31 @@ def run(args, selected, reasons):
                     skip("model","real Ollama not requested; pass --ollama-cache-volume to exercise inference")
                 if public:
                     services=["sim","bridge","witness","gateway","core","perception","scene","agent","console"]
+                    started_sim=True
                     if effective_model:
                         override=directory/"model.override.json"
-                        override.write_text(json.dumps({"services":{"model":{"environment":{"OLLAMA_MODELS":"/cache/models"},
-                            "volumes":["test-model-cache:/cache:ro"]}},
+                        override.write_text(json.dumps({"services":{"model":{"volumes":["test-model-cache:/cache:ro"]}},
                             "volumes":{"test-model-cache":{"external":True,"name":args.ollama_cache_volume}}}),encoding="utf-8")
-                        env["EDGE_OLLAMA_URL"]="http://model:11434"
                         compose.extend(["-f",str(override),"--profile","model"])
-                        services.append("model")
-                    started_sim=True
+                        # Ollama rebuilds its manifests on startup. Seed only model data into the
+                        # isolated writable volume and keep the developer's identity and cache untouched.
+                        seeded=stage("model-cache",[[*compose,"run","--rm","-T","--no-deps","--entrypoint","/bin/sh","model",
+                            "-ec","test -d /cache/models/blobs && mkdir -p /root/.ollama/models && cp -a /cache/models/. /root/.ollama/models/"]])
+                        if seeded:
+                            env["EDGE_OLLAMA_URL"]="http://model:11434"
+                            env["EDGE_OLLAMA_MODEL"]="qwen2.5:1.5b"
+                            services.append("model")
+                        else:
+                            skip("model","could not initialize isolated model data; see model-cache.log","blocked")
+                            public.remove("model")
                     ready=stage("simulation-start",[[*compose,"up","-d","--no-build",*services],
                                 [*compose,"exec","-T","core","/usr/local/bin/edge-entrypoint","python3","/opt/edge/client/ready.py"]])
                     if ready:
+                        if "model" in public and not stage("model-ready",[[*compose,"exec","-T","model","/bin/sh","-ec",
+                                'for attempt in $(seq 1 20); do ollama show "$1" >/dev/null && exit 0; sleep 1; done; exit 1',
+                                "model-ready",env["EDGE_OLLAMA_MODEL"]]]):
+                            skip("model","model service or required weights unavailable; see model-ready.log","blocked")
+                            public.remove("model")
                         url="http://"+output([*compose,"port","console","8080"],env)
                         commands={
                           "console-missions":test("console_acceptance.py","--url",url,"--out",directory/"console"),

@@ -15,7 +15,7 @@ MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults"
           "places", "scene-binding", "scene-outage")
 RULES = [
     (("agent/contracts.json", "contracts/*.json"), ("planner","agent-contracts","agent-faults","model")),
-    (("agent/service.py",), (*AGENT,"board")),
+    (("agent/service.py", "agent/planning.py", "agent/tracing.py"), (*AGENT,"board")),
     (("agent/*.py", "plugins/*.json", "tests/agent*_contract.py"), AGENT),
     (("scene/plugins/*.json",), (*SCENE, "planner", "agent-faults", "ui", "model")),
     (("scene/start_world.py", "scene/campus.json", "scene/layout.py"), (*SCENE,"core","motion-world","ui","clock-reset")),
@@ -78,6 +78,11 @@ class TestSelection(unittest.TestCase):
         self.assertIn("places", selection(["perception/node.py"])[0])
         self.assertIn("motion-world", selection(["scene/campus.json"])[0])
         self.assertIn("ui", selection(["agent/planning.py"])[0])
+        for path in ("agent/planning.py", "agent/tracing.py"):
+            self.assertIn("board", selection([path])[0])
+        for path in ("contracts/planner-profile.json", "contracts/site.json", "plugins/new-tool.json",
+                     "scene/plugins/preview-route.json"):
+            self.assertIn("planner", selection([path])[0], path)
         self.assertEqual(selection(["src/new-prompt.md"])[0],list(STAGES))
         self.assertIn("scene-binding", selection(["agent/service.py","scene/provider.py"])[0])
 

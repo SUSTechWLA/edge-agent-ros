@@ -22,7 +22,7 @@ git diff --check
 git diff --stat main...HEAD
 ```
 
-Windows PowerShell 可将 `python3` 换为可用的 Python 3 解释器。在 CI 上，`SDD and contracts` 检查规格、PR 标题、契约及两个 Compose 描述文件。`ROS and Gazebo` 构建项目镜像，执行 C++、ROS、Gazebo 故障验收及工作台回归。PR 验证使用只读令牌与模拟环境，不需要用户模型密钥。[工作流](.github/workflows/ci.yml)
+Windows PowerShell 可将 `python3` 换为可用的 Python 3 解释器。提交前运行 `python3 tests/system_suite.py --changed-since origin/main --plan`，将所改文件、选中的消费者和验收条件逐一对照。去掉 `--plan` 即可执行同一组测试。在新增跨模块依赖的同一条 PR 里补上选择规则和对应断言。CI 在 PR 上按影响范围测试，在主分支、发布分支和手动运行时做全套确定性回归。需要真实模型时，在本机显式传入模型缓存卷并保留报告。[选测实例与故障矩阵](docs/testing/single-edge.md) · [工作流](.github/workflows/ci.yml)
 
 ```powershell
 # 使用独立 Compose 项目，在临时机器人上测试停车、重启与控制链路故障
