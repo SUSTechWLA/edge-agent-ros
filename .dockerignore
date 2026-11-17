@@ -17,6 +17,8 @@
 !scene/**
 !evidence
 !evidence/**
+!sessions_plugin
+!sessions_plugin/**
 **/__pycache__
 !docker
 !docker/**

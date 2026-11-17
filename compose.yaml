@@ -67,6 +67,30 @@ services:
     profiles: ["model"]
     volumes:
       - models:/root/.ollama
+  session:
+    <<: *runtime
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/sessions_plugin/provider.py"]
+    environment:
+      EDGE_SESSION_SOURCE: http://console:8080
+      EDGE_SESSION_JOURNAL: /var/lib/edge-session/session.default/module-events.sqlite
+    volumes:
+      - module-sources:/var/lib/edge-session
+  session-admin:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["session-admin"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/client/register_session.py"]
+    volumes:
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins
   evidence:
     <<: *runtime
     restart: unless-stopped

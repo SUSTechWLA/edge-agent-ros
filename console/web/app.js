@@ -13,7 +13,7 @@ async function api(path,opts={}){
   let data;try{data=await res.json();}catch{throw new Error('服务响应格式异常（HTTP '+res.status+'）');}
   if(!res.ok){
     const error=new Error(typeof data.error==='string'?data.error:data.detail||'服务返回 HTTP '+res.status);
-    error.status=res.status;throw error;
+    error.status=res.status;error.code=data.code;throw error;
   }
   return data;
 }

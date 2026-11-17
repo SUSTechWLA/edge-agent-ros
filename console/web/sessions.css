@@ -41,6 +41,9 @@
 .session-intro h2 { font-size: clamp(1.2rem,2vw,1.65rem); line-height: 1.5; letter-spacing: -.035em; }
 #session-headline { font-size: .96rem; margin-top: .45rem; color: #244b3e; }
 #session-dates { font-size: .72rem; margin-top: .6rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+#session-provider { font-size: .72rem; margin-top: .3rem; color: var(--muted); }
+.session-fallback { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: .75rem 1rem 1rem; }
+.session-fallback a { font-size: .82rem; text-decoration: none; }
 #session-messages { padding: .5rem 1.5rem; }
 .session-message { padding: 1rem 0; border-bottom: 1px solid #e4e8df; }
 .session-message:last-child { border-bottom: 0; }

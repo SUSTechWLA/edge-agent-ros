@@ -14,6 +14,8 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("sessions_plugin/*", "client/register_session.py"), ("planner","observations","ui","console-missions","board")),
+    (("tests/system/session_plugin_acceptance.py",), ("ui","console-missions","places")),
     (("evidence/*", "client/register_evidence.py"), ("planner","observations","ui","console-missions","board")),
     (("tests/system/session_evidence_acceptance.py", "tests/system/session_browser.mjs"), ("ui","console-missions","places")),
     (("tests/system/evidence_model_acceptance.py",), ("model","ui","places")),
@@ -134,6 +136,9 @@ class TestSelection(unittest.TestCase):
             selected = selection([path])[0]
             for consumer in ("planner", "observations", "console-missions", "places", "ui", "board"):
                 self.assertIn(consumer, selected, path)
+        for path in ("sessions_plugin/provider.py", "client/register_session.py"):
+            for consumer in ("observations", "ui", "places", "board"):
+                self.assertIn(consumer, selection([path])[0], path)
 
 
 if __name__=="__main__":

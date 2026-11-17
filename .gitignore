@@ -18,6 +18,7 @@ plugins/derived/.history/
 plugins/derived/.publish.lock
 plugins/derived/.staging-*
 plugins/evidence.*.json
+plugins/runtime/session.default.json
 plugins/runtime/.history/
 plugins/runtime/.publish.lock
 plugins/runtime/.staging-*

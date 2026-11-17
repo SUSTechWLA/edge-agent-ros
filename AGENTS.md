@@ -9,7 +9,7 @@
 | 原始传感器、融合、不新鲜的状态 | `perception/`、`observations/`、`console/server/observer.py` | 容器内运行 `python3 -m unittest discover -v -s /opt/edge/console/server` |
 | 保存、回放、事件导出 | `console/server/history.py`、`docs/console.md` | 以同一任务和操作 ID 核对源事件、重启后记录与回放时间 |
 | 值班人员想知道“现在在做什么，哪一步出了问题” | [运行复盘](docs/console.md#从运行复盘读懂一台机器人的工作)、[SDD-009](docs/specs/SDD-009-run-review.md)；任务终态由 Agent 持有，实时观测和归档序号由 Console 提供 | 先跑 `console/server/test_run_review.py` 的 HTTP 契约，在独立仿真运行 `tests/system/console_browser.mjs` 核对桌面和移动端任务、异常与回放 |
-| 人和模型需要低噪声会话，或按需查询某个调用 | [SDD-010](docs/specs/SDD-010-session-evidence.md)、[会话与证据手册](docs/sessions.md)，实现位于 `console/server/sessions.py` 和 `evidence/` | `test_sessions.py` 核对任务所有者证据，`evidence/test_provider.py` 核对查询边界，`tests/system/session_evidence_acceptance.py` 在独立仿真验证自然语言入口、热插拔与源值一致 |
+| 人和模型需要低噪声会话，或按需查询某个调用 | [SDD-010](docs/specs/SDD-010-session-evidence.md)、[会话与证据手册](docs/sessions.md)，提供者位于 `sessions_plugin/` 和 `evidence/`，Console 通过 `session_service.py` 调用注册服务 | 两个插件目录的契约测试核对事实、来源和预算；`session_plugin_acceptance.py` 验证独立提供者替换、卸载和恢复；`session_evidence_acceptance.py` 验证自然语言复盘与源值一致 |
 | 现场插件失联、版本突变或 AI 候选发布 | 查 [EventBus 读法与接入](docs/module-eventbus.md)、`agent/module_journal.py`、`console/server/journal_ingress.py`；用源身份区分操作、观察及诊断 | 在独立 Docker 运行 `tests/system/module_bus_acceptance.py`；按 [SDD-007](docs/specs/SDD-007-module-eventbus.md) 对照来源、父事件和副作用计数 |
 | 自动安装候选后怎样完成原用户工作 | 从[插件管理模块](docs/plugin-manager.md)查候选、现场规则、受管发布版本及绑定到只读工具的后续任务 | `tests/system/plugin_manager_acceptance.py` 验证无人工逐步推动时的完整链路，按 [SDD-008](docs/specs/SDD-008-plugin-manager.md) 复核 |
 | 新任务遇到能力缺口，需要开发工具 | 先查注册目录、原任务的终态事件和本机可用的观测。按[插件作者手册](docs/plugin-authoring.md)选择只读声明或独立 HTTP 提供者 | 从独立期望样本开始，执行草案检查和隔离 Docker 热更新测试，再发布到授权目录 |
@@ -21,3 +21,4 @@
 4. 排障时从现场版本和任务 ID 开始。用 `git show <sha>:<path>` 读取当时行为，用 `git log --follow -- <规格路径>` 查契约演变。把故障转为可复跑的测试，再记录修复的前后结果。
 5. 在架构、界面和代码中沿用 [dsh / SuperAgent 与 ROS 术语对照](docs/harness-extensions.md#团队共用的术语)。引入近义概念时，以状态归属、生命周期和一个可观察的例子说明差别。标明当前实现或目标设计，保持已发布接口可用。
 6. 对待提交改动运行 `python tests/system_suite.py --changed-since HEAD --plan`，对整条 PR 使用目标分支作基点。如果新增消费方，在 [测试选择器](tests/test_selection.py) 增加依赖和断言。完整发布回归、独立真机门槛和证据存放规则见[系统测试报告](docs/testing/single-edge.md)。
+7. 新增产品模块首先定义 Plugin 的服务接口、提供者、消费者和装卸行为，复用现有 `provides/requires` 服务目录、Tool 清单与 EventBus 契约。Session、诊断、摘要等也遵守此要求。Console 和调度入口按契约调用提供者；业务策略放在插件中。新增扩展点须说明其与现有 dsh 术语的对应关系，并验收卸载、依赖缺失、换版与事件留痕。当前尚未开放热替换的旧模块应在文档明确边界，不能只改名称就宣称插件化。

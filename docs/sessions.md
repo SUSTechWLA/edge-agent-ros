@@ -10,7 +10,7 @@
 
 主诊断采用任务所有者记录的终态。例如执行失败后，插件作者又报告“无法生成修复候选”，会话把这个后续事实单独呈现。已经成功的任务仍可显示曾发生的故障，但当前结果继续以任务账本为依据。
 
-会话由规则投影生成，每条叙述都能追到任务账本或归档事件。它展示已记录的事实和诊断建议，不包含未记录的模型内部推理。目标、步骤和结果可以在没有 LLM 服务时读取。对未知插件，通用告警、code 和 detail 仍能作为事实进入阅读区。
+默认 `session.default` 插件使用规则投影，每条叙述都能追到任务账本或归档事件。它展示已记录的事实和诊断建议，不包含未记录的模型内部推理。目标、步骤和结果可以在没有 LLM 服务时读取。对未知插件，通用告警、code 和 detail 仍能作为事实进入阅读区。
 
 ## EventBus 在当前项目中的实际形式
 
@@ -19,7 +19,7 @@ flowchart LR
   A["Agent / ROS 内核 / 插件"] --> B["各模块的持久事件账本"]
   B --> C["Console 公共归档"]
   C --> D["HTTP 事件读取与游标续读"]
-  C --> E["可读 Session 投影"]
+  C --> E["可替换 session.read 服务插件"]
   E --> F["用户页面 / LLM 首读"]
   F --> G["evidence 插件"]
   G -->|按任务读公开事件| D
@@ -30,6 +30,24 @@ flowchart LR
 ```
 
 生产者和消费者通过公共事件契约协作。Console 按源身份与序号导入持久账本；消费者用 HTTP 读取归档，保存自己的游标。底层账本当前采用 SQLite。证据插件只依赖公共读取协议，源存储迁移时可以继续使用相同接口。ROS 瞬时消息和未持久化的事实仍受采集时机影响。
+
+## Session 也按插件管理
+
+沿用 dsh 的三个角色：服务定义规定输入输出，提供者实现行为，消费者按服务名调用。当前 `session.read` 是服务，`session.default` 是默认提供者，Console 和证据工具是消费者。它可以提供零个模型工具；Plugin 的范围包含工具、会话投影和后台消费者。[dsh 的服务与插件设计](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/architecture.md)
+
+Session 在独立 Docker 服务中运行。它通过只读 HTTP 获取任务上下文和 EventBus 事实，自己选择摘要规则，不挂载任务或原始事件数据库。Console 的会话入口只负责服务发现、调用、响应校验和显示。安装或替换一个兼容提供者时，机器人执行器和 Console 业务源码无需随之修改。
+
+| 角色 | 契约与实现 |
+|---|---|
+| 服务定义 | `session.read` 接收一个 task_id 或 trace_id、请求 ID 和提供者版本绑定，返回带事实引用的会话文档。 |
+| 默认提供者 | `sessions_plugin/` 提供有预算的公开读取、规则投影、查询审计。安装入口是 `client/register_session.py`。 |
+| 服务注册 | `plugins/runtime/session.default.json` 沿用已有 provides/requires/version/draining 清单，通过现有插件管理器发布并留存变更事件。 |
+| 消费者 | Console 解析服务，核对请求身份与响应范围，并在完成前再次核对绑定。页面显示当前提供者及版本。 |
+| 原始事实 | 任务状态仍由任务所有者提交，事件仍由各生产者记录。Session 插件的叙述不赋予动作或恢复权限。 |
+
+插件未安装、停止接单或失联时，页面明确显示不可用，仍可进入任务时间线和原始事件。Console 不偷偷切换到另一份内置摘要规则；恢复注册后，下一次读取就可使用提供者。替换中途返回的旧绑定不会被当成新实现的结果。读取期间任务和归档各有自己的快照，跨来源并非一个原子事务；覆盖信息会注明窗口、截止位置和历史清理。
+
+本页的 Session 是任务事实阅读视图。dsh 的 SessionStore 还承载模型历史、turn/step 与继续对话；本次未把这些能力全部移植进来。后续对话历史、压缩策略或诊断模型也应以同一服务契约和插件装卸方式扩展，分别说明谁持有事实、卸载影响哪些消费者、如何保存恢复证据。
 
 ## 三项可热挂载的查询能力
 
@@ -100,17 +118,23 @@ WHERE child.level IN ('warn', 'error');
 
 ## 部署、安装与卸载
 
-常规启动脚本会启动 evidence 并安装能力清单。服务运行后可独立安装或撤销三项工具。
+常规启动脚本会启动 Session 和 Evidence 两个服务，并分别安装服务清单与工具清单。也可以独立安装或撤销。
 
 ```powershell
-docker compose up -d --no-build evidence
+docker compose up -d --no-build session evidence
+docker compose run --rm --no-deps -T session-admin
 docker compose run --rm --no-deps -T evidence-admin
+# 只撤回会话服务；原始证据查询仍能使用
+docker compose run --rm --no-deps -T session-admin --remove
+# 只撤回三项模型查询工具
 docker compose run --rm --no-deps -T evidence-admin --remove
 ```
 
 Linux 实机使用相同命令并添加 `-f compose.hardware.yaml`。硬件清单指向本机 8125，仿真清单指向 Compose 的 evidence 服务。模板在 evidence/tools，运行现场生成的文件在 plugins/evidence.*.json。原子替换单个清单后，下一次规划即可发现该能力；正在执行的旧计划继续按既有版本绑定要求核对提供者。
 
 源码和模板受 Git 管理，生成的现场清单由安装命令重建。查询审计保存在 module-sources 卷的 evidence.query 子目录。停用服务时可单独执行 `docker compose stop evidence`。
+
+Session 审计保存在同卷的 session.default 子目录；清单变更由 runtime/.history 中的管理器记录，经现有 EventBus 汇集。停用 Session 可执行 `docker compose stop session`。修改 Docker 服务环境变量仍需重新创建该服务；注册清单的安装、撤回和 draining 会在下一次请求生效。
 
 ## 验证入口
 

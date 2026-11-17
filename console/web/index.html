@@ -29,8 +29,9 @@
     </aside>
     <article class="panel session-reader" id="session-reader" aria-busy="false">
       <div class="session-reader-header"><span id="session-state" class="badge">等待选择</span><div class="session-actions"><button id="session-switch-task" aria-controls="session-list">切换任务</button><button id="session-refresh">刷新</button><a id="session-markdown" download="task-session.md" hidden>下载 Markdown ↓</a></div></div>
-      <div class="session-intro"><h2 id="session-goal">选择一项任务，阅读执行过程</h2><p id="session-headline"></p><p id="session-dates"></p></div>
+      <div class="session-intro"><h2 id="session-goal">选择一项任务，阅读执行过程</h2><p id="session-headline"></p><p id="session-dates"></p><p id="session-provider" hidden></p></div>
       <p id="session-notice" class="session-notice" role="status" hidden></p>
+      <div id="session-fallback" class="session-fallback" hidden><a id="session-fallback-review">查看任务与执行时间线 →</a><a id="session-fallback-events" href="#events">打开原始事件 →</a></div>
       <div id="session-messages"></div>
       <div id="session-diagnosis"></div>
       <div id="session-related"></div>

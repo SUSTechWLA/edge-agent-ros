@@ -129,6 +129,7 @@ def run(args, selected, reasons):
                                         "--entrypoint","python3",image,"-B","/sample/test_verifiers.py","-v"]],
                     "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server"),
                                     in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/evidence"),
+                                    in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/sessions_plugin"),
                                     test("system/module_bus_acceptance.py","--image",image,"--out",directory/"module-bus.json"),
                                     test("system/author_bus_acceptance.py","--image",image,"--out",directory/"author-bus.json")],
                     "scene-contracts":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/tests","-p","test_scene*.py")],
@@ -163,11 +164,12 @@ def run(args, selected, reasons):
                 if "model" in selected and not effective_model:
                     skip("model","real Ollama not requested; pass --ollama-cache-volume to exercise inference")
                 if public:
-                    services=["sim","bridge","witness","gateway","core","perception","scene","agent","console","evidence"]
+                    services=["sim","bridge","witness","gateway","core","perception","scene","agent","console","session","evidence"]
                     # Public plugin tests write only to this run's capability directory.
                     plugin_dir=directory/"plugins"
                     plugin_dir.mkdir()
                     env["EDGE_PLUGINS_DIR"]=str(plugin_dir)
+                    stage("session-register",[[*compose,"run","--rm","-T","--no-deps","session-admin"]])
                     started_sim=True
                     if effective_model:
                         override=directory/"model.override.json"
@@ -211,6 +213,9 @@ def run(args, selected, reasons):
                             if name=="ui":
                                 stage("session-evidence",[test("system/session_evidence_acceptance.py","--url",current,
                                       "--project",project,"--registry",plugin_dir,"--out",directory/"session-evidence.json")])
+                                stage("session-plugin",[test("system/session_plugin_acceptance.py","--url",current,
+                                      "--project",project,"--registry",plugin_dir,"--image",image,
+                                      "--out",directory/"session-plugin.json")])
                     else:
                         for name in public:
                             skip(name,"simulator did not become ready","blocked")

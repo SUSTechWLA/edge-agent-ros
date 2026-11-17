@@ -9,8 +9,10 @@ try {
         docker compose --profile model up -d model
         if ($LASTEXITCODE) { throw "Local model service startup failed." }
     }
-    docker compose up -d --no-build sim bridge witness gateway core perception scene agent console evidence
+    docker compose up -d --no-build sim bridge witness gateway core perception scene agent console session evidence
     if ($LASTEXITCODE) { throw "Compose deployment failed." }
+    docker compose run --rm --no-deps -T session-admin
+    if ($LASTEXITCODE) { throw "Session service registration failed." }
     docker compose run --rm --no-deps -T evidence-admin
     if ($LASTEXITCODE) { throw "Evidence tool registration failed." }
     docker compose exec -T core /usr/local/bin/edge-entrypoint /usr/bin/python3 /opt/edge/client/ready.py

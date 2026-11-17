@@ -13,7 +13,8 @@ import rclpy
 from history import TRACE_FIELDS, encode
 from observer import Observer
 from task_review import task_page
-from sessions import session_view
+from session_service import SessionUnavailable, read_session
+from task_data import task_context
 
 
 def integer(params, key, default=None, ceiling=2**63-1):
@@ -113,11 +114,17 @@ class Handler(SimpleHTTPRequestHandler):
         if not url.path.startswith("/api/"):
             super().do_GET()
             return
-        params=parse_qs(url.query)
+        params=parse_qs(url.query,keep_blank_values=True)
         filters={k:params[k][0] for k in ("kind","mission_id","session_id","operation_id","level","source",*TRACE_FIELDS) if k in params}
         store=self.observer.history
         try:
-            if "view" in params and url.path in ("/api/events","/api/export"):
+            if "exclude_kind_prefixes" in params:
+                prefixes=params["exclude_kind_prefixes"][0].split(",")
+                if (len(params["exclude_kind_prefixes"])!=1 or len(prefixes)>8
+                        or any(not 1 <= len(prefix) <= 128 for prefix in prefixes)):
+                    raise ValueError("exclude_kind_prefixes requires 1 to 8 prefixes of 1 to 128 characters")
+                filters["exclude_kind_prefixes"]=prefixes
+            if "view" in params and url.path in ("/api/events","/api/export","/api/event-stats"):
                 view=params["view"][0]
                 if view not in ("all","issues","changes"):
                     raise ValueError("view must be all, changes or issues")
@@ -132,19 +139,22 @@ class Handler(SimpleHTTPRequestHandler):
                     self.respond(503,{"error":"任务账本暂时不可读，请检查 Agent 与任务数据卷。"})
                     return
                 self.respond(200,page)
-            elif url.path=="/api/session":
+            elif url.path in ("/api/session","/api/task-context"):
+                if any(len(params[key])!=1 for key in ("task_id","trace_id","format") if key in params):
+                    raise ValueError("each task, trace or format parameter must occur once")
+                task_id,trace_id=params.get("task_id",[None])[0],params.get("trace_id",[None])[0]
+                if url.path=="/api/task-context":
+                    self.respond(200,task_context(self.observer.tasks,task_id,trace_id))
+                    return
                 output=params.get("format",["json"])[0]
                 if output not in ("json","markdown"):
                     raise ValueError("format must be json or markdown")
                 try:
-                    document=session_view(self.observer.tasks,store,params.get("task_id",[None])[0],
-                                          params.get("trace_id",[None])[0])
-                except (OSError,sqlite3.Error):
-                    self.respond(503,{"error":"会话证据暂不可读，请稍后重试。"})
+                    document=read_session(task_id,trace_id)
+                except SessionUnavailable as error:
+                    self.respond(error.status,{"error":str(error),"code":error.code,"details":error.details})
                     return
-                if document is None:
-                    self.respond(404,{"error":"未找到任务或归档证据。"})
-                elif output=="markdown":
+                if output=="markdown":
                     body=document["markdown"].encode("utf-8")
                     self.api_headers(200,"text/markdown; charset=utf-8",len(body))
                     self.wfile.write(body)
@@ -152,6 +162,8 @@ class Handler(SimpleHTTPRequestHandler):
                     self.respond(200,document)
             elif url.path=="/api/history":
                 self.respond(200,store.retention())
+            elif url.path=="/api/event-stats":
+                self.respond(200,store.stats(filters,integer(params,"before")))
             elif url.path=="/api/events":
                 limit=integer(params,"limit",80,500)
                 if limit==0:

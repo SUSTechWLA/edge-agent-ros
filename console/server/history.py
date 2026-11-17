@@ -199,6 +199,9 @@ class History:
     def selection(self, after, before, filters, maximum=None):
         values = []
         where = []
+        for prefix in filters.get("exclude_kind_prefixes", []):
+            where.append("substr(kind,1,?) != ?")
+            values.extend((len(prefix),prefix))
         if filters.get("view")=="changes":
             # Explicit task/call/cause/trigger links carry diagnostic meaning,
             # even when no mission ID is available. This is a view predicate,
@@ -242,6 +245,17 @@ class History:
             cursor,pruned = self.cursor,self.pruned_through
         return {"events":[self.public(r) for r in rows[:limit]], "has_more":len(rows)>limit,
                 "cursor":cursor,"archive_id":self.archive_id,"pruned_through_seq":pruned}
+
+    def stats(self, filters, before=None):
+        """Public counts and the cutoff are observed together with retention state."""
+        with self.lock:
+            cursor = self.cursor
+            where, values = self.selection(None,before,filters,cursor)
+            row = self.db.execute("SELECT count(*),min(seq),max(seq),"
+                "coalesce(sum(length(CAST(data AS BLOB))+length(CAST(detail AS BLOB))),0) FROM events"
+                +where,values).fetchone()
+            return {"archive_id":self.archive_id,"cursor":cursor,"pruned_through_seq":self.pruned_through,
+                    "count":row[0],"first_seq":row[1],"last_seq":row[2],"public_payload_bytes":row[3]}
 
     def export(self, filters, include_snapshot=False):
         # A separate WAL reader pins one consistent view across streamed rows,

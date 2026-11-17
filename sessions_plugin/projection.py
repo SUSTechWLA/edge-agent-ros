@@ -1,12 +1,7 @@
-"""Bounded, evidence-linked reading view for humans and language models."""
-from contextlib import closing
+"""Pure default reading rules migrated from console/server/sessions.py (SDD-010)."""
 import json
 import math
-import sqlite3
 from urllib.parse import urlencode
-
-from history import EVENT_COLUMNS
-
 
 STATE_NAMES = {
     "PLANNING": "正在规划", "RUNNING": "正在执行", "WAITING": "正在等待结果",
@@ -40,85 +35,36 @@ def object_value(value, default):
     return result if isinstance(result, type(default)) else default
 
 
-def task_context(path, task_id, trace_id):
-    """One read transaction provides the owner result and nearby related work."""
-    with closing(sqlite3.connect(path.absolute().as_uri()+"?mode=ro", uri=True, timeout=0.15)) as db:
-        db.row_factory = sqlite3.Row
-        db.execute("BEGIN")
-        columns = {row[1] for row in db.execute("PRAGMA table_info(tasks)")}
-        if not columns:
-            raise sqlite3.DatabaseError("task table missing")
-        tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-        join, trace = "", "t.id"
-        if "task_triggers" in tables:
-            join = "LEFT JOIN task_triggers tr ON tr.task_id=t.id"
-            trace = "coalesce(tr.trace_id,t.id)"
-        names = ["id","text","state","detail","created","updated","provider","steps"]
-        projection = ",".join("t."+name if name in columns else "NULL AS "+name for name in names)
-        condition = "t.id=?" if task_id else trace+"=?"
-        row = db.execute(f"SELECT {projection}, {trace} AS trace_id FROM tasks t {join} WHERE {condition}"
-                         " ORDER BY t.rowid DESC LIMIT 1", (task_id or trace_id,)).fetchone()
-        if row is None:
-            return None, [], False
-        result = dict(row)
-        related = [dict(item) for item in db.execute(
-            f"SELECT t.id,t.text,t.state FROM tasks t {join} WHERE {trace}=? AND t.id!=?"
-            " ORDER BY t.rowid DESC LIMIT 9", (result["trace_id"],result["id"]))]
-        return result, related[:8], len(related)>8
+def audit_event(event):
+    return (event.get("module") in ("evidence.query","session.default")
+            or event["kind"].startswith(("evidence.query_","session.query_")))
 
 
-def archive_context(history, filters, owner_state=None):
-    """Counts and selected facts share the archive lock and cutoff."""
-    with history.lock:
-        cutoff = history.cursor
-        where, values = history.selection(None,None,filters,cutoff)
-        count, first, last, public_text_bytes = history.db.execute(
-            "SELECT count(*),min(seq),max(seq),coalesce(sum(length(CAST(data AS BLOB))"
-            "+length(CAST(detail AS BLOB))),0) FROM events"+where,values).fetchone()
-        audit_condition = "(module='evidence.query' OR kind LIKE 'evidence.query_%')"
-        audit_count = history.db.execute("SELECT count(*) FROM events"+where+" AND "+audit_condition,values).fetchone()[0]
-        kinds = ",".join("?" for _ in IMPORTANT)
-        predicate = f"(kind IN ({kinds}) OR level IN ('warn','error')) AND NOT coalesce({audit_condition},0)"
-        # Grouping collapses repeated polling/retry facts while retaining the latest
-        # occurrence and its exact reference. Priority selects abnormal facts first.
-        candidates = history.db.execute(
-            "SELECT max(seq) AS seq,count(*) AS repeats,"
-            "max(level IN ('warn','error')) AS problem FROM events"+where+
-            " AND "+predicate+" GROUP BY source,module,source_id,kind,code,operation_id,detail"
-            " ORDER BY problem DESC,seq DESC LIMIT 25",
-            [*values,*IMPORTANT]).fetchall()
-        selected = {row["seq"]:row["repeats"] for row in candidates[:16]}
-        # Acceptance and the latest recorded plan remain readable in a long run.
-        for kind, aggregate in (("agent.accepted","min"),("agent.planned","max")):
-            seq = history.db.execute(f"SELECT {aggregate}(seq) FROM events"+where+
-                                     " AND source='mission_agent/tasks' AND kind=?",
-                                     [*values,kind]).fetchone()[0]
-            if seq:
-                selected.setdefault(seq,1)
-        final_kinds = FINAL_KINDS.get(owner_state,("agent.transition",))
-        seq = history.db.execute("SELECT max(seq) FROM events"+where+
-                                 " AND source='mission_agent/tasks' AND kind IN ("+
-                                 ",".join("?" for _ in final_kinds)+")",
-                                 [*values,*final_kinds]).fetchone()[0]
-        if seq:
-            selected.setdefault(seq,1)
-        records = []
-        payload_truncated = False
-        for seq, repeats in sorted(selected.items()):
-            # Public envelopes can contain large model artifacts. The reading
-            # view bounds them before JSON decoding and never fetches snapshots.
-            columns = EVENT_COLUMNS.replace("detail,data,", "substr(detail,1,4096) AS detail,substr(data,1,65536) AS data,")
-            row = dict(history.db.execute("SELECT "+columns+" FROM events WHERE seq=?",(seq,)).fetchone())
-            data = object_value(row["data"],{})
-            payload_truncated |= bool(row["data"] and row["data"]!="{}" and not data)
-            row["data"],row["repeats"] = data,repeats
-            records.append(row)
-        return records, {
-            "archive_id":history.archive_id, "through_seq":cutoff, "first_seq":first, "last_seq":last,
-            "archived_events":count, "selected_events":0, "collapsed_events":count,
-            "truncated":len(candidates)>16 or payload_truncated, "audit_events":audit_count,
-            "public_payload_bytes":public_text_bytes, "pruned_through_seq":history.pruned_through,
-        }
+def select_events(rows, owner_state):
+    """Retain provenance boundaries, latest repeated facts and owner anchors."""
+    groups = {}
+    audit_count = 0
+    ordered = sorted(rows,key=lambda event:event["seq"])
+    for event in ordered:
+        if audit_event(event):
+            audit_count += 1
+            continue
+        if event["kind"] not in IMPORTANT and event["level"] not in ("warn","error"):
+            continue
+        key = tuple(event.get(name) for name in ("source","module","source_id","kind","code","operation_id","detail"))
+        previous = groups.get(key)
+        groups[key] = {**event,"repeats":previous["repeats"]+1 if previous else 1}
+    candidates = sorted(groups.values(),key=lambda row:(row["level"] in ("warn","error"),row["seq"]),reverse=True)
+    selected = {row["seq"]:row for row in candidates[:16]}
+    owner = [event for event in ordered if event["source"]=="mission_agent/tasks"]
+    for kind, reverse in (("agent.accepted",False),("agent.planned",True)):
+        found = next((row for row in (reversed(owner) if reverse else owner) if row["kind"]==kind),None)
+        if found:
+            selected.setdefault(found["seq"],{**found,"repeats":1})
+    final = next((row for row in reversed(owner) if row["kind"] in FINAL_KINDS.get(owner_state,("agent.transition",))),None)
+    if final:
+        selected.setdefault(final["seq"],{**final,"repeats":1})
+    return sorted(selected.values(),key=lambda row:row["seq"]),len(candidates)>16,audit_count
 
 
 def reference(event):
@@ -184,28 +130,17 @@ def plan_text(steps):
     return "，然后".join(parts)+"。" if parts else "账本尚未记录执行计划。"
 
 
-def session_view(path, history, task_id=None, trace_id=None):
-    if bool(task_id)==bool(trace_id):
-        raise ValueError("provide exactly one task_id or trace_id")
-    if len(task_id or trace_id)>512:
-        raise ValueError("task or trace identifier exceeds 512 characters")
-    notes = []
-    try:
-        task, related, related_more = task_context(path,task_id,trace_id)
-    except (OSError,sqlite3.Error):
-        task, related, related_more = None,[],False
-        notes.append("任务账本暂不可读，当前终态需要恢复连接后核对。")
-    scope = {"task_id":task["id"] if task else task_id,
-             "trace_id":task["trace_id"] if task else trace_id}
-    filters = {"task_id":scope["task_id"]} if scope["task_id"] else {"trace_id":scope["trace_id"]}
-    events, coverage = archive_context(history,filters,task["state"] if task else None)
-    if not task and not coverage["archived_events"]:
-        if notes:
-            raise sqlite3.DatabaseError("task journal unavailable")
-        return None
+def project(context, events, coverage):
+    """Project already bounded public facts; no database, network or filesystem access."""
+    task = dict(context["task"]) if context.get("task") else None
+    scope = {key:context["scope"].get(key) for key in ("task_id","trace_id")}
+    related = context.get("related_tasks",[])
+    related_more = context.get("related_tasks_has_more",False)
+    notes = list(context.get("notes",[]))+list(coverage.pop("notes",[]))
     coverage["task_available"] = task is not None
+    filters = {"task_id":scope["task_id"]} if scope["task_id"] else {"trace_id":scope["trace_id"]}
     if not task:
-        task = {"id":task_id,"text":"","state":"UNKNOWN","detail":"","created":None,"updated":None,"provider":None}
+        task = {"id":scope["task_id"],"text":"","state":"UNKNOWN","detail":"","created":None,"updated":None,"provider":None}
         notes.append("尚无权威任务记录，仅展示已归档的相关事实。")
     steps = object_value(task.pop("steps",None),[])
     state = task["state"]

@@ -43,6 +43,7 @@ services:
         COPY perception perception
         COPY agent agent
         COPY evidence evidence
+        COPY sessions_plugin sessions_plugin
         ARG EDGE_REVISION=unknown
         ENV EDGE_REVISION=$$EDGE_REVISION
         LABEL org.opencontainers.image.revision=$$EDGE_REVISION
@@ -105,6 +106,31 @@ services:
     command: ["python3", "/opt/edge/console/server/main.py", "--ros-args",
       "-r", "/scan:=${EDGE_SCAN_TOPIC:-/scan}", "-r", "/imu:=${EDGE_IMU_TOPIC:-/imu}",
       "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}", "-r", "/cmd_vel:=${EDGE_CMD_TOPIC:-/cmd_vel}"]
+  session:
+    <<: *runtime
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/sessions_plugin/provider.py"]
+    environment:
+      EDGE_SESSION_BIND: 127.0.0.1
+      EDGE_SESSION_SOURCE: http://127.0.0.1:${EDGE_CONSOLE_PORT:-8765}
+      EDGE_SESSION_JOURNAL: /var/lib/edge-session/session.default/module-events.sqlite
+    volumes:
+      - module-sources:/var/lib/edge-session
+  session-admin:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    pull_policy: never
+    profiles: ["session-admin"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/client/register_session.py", "--endpoint", "http://127.0.0.1:8126/session"]
+    volumes:
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins
   evidence:
     <<: *runtime
     restart: unless-stopped

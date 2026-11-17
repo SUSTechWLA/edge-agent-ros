@@ -53,6 +53,7 @@ const SessionView = (() => {
     get('session-refresh').disabled=!selectedId;
     get('session-state').className='badge';get('session-state').textContent='读取中';
     get('session-goal').textContent=title;get('session-headline').textContent='';get('session-dates').textContent='';
+    get('session-provider').hidden=true;get('session-fallback').hidden=true;
     for(const id of ['session-messages','session-diagnosis','session-related'])get(id).replaceChildren();
     get('session-markdown').hidden=true;get('session-coverage').hidden=true;notice('session-notice');
   }
@@ -131,6 +132,11 @@ const SessionView = (() => {
   }
   function renderSession(r) {
     projection=r;const t=r.task, coverage=r.coverage||{};
+    const service=r.service;
+    get('session-provider').hidden=!service?.plugin_id;
+    get('session-provider').textContent=service?.plugin_id
+      ? 'Session 插件 '+service.plugin_id+' · v'+service.plugin_version : '';
+    get('session-fallback').hidden=true;
     get('session-goal').textContent=t.text||'未记录任务原文';
     get('session-state').className='badge '+tone(t.state);get('session-state').textContent=stateLabel(t.state);
     get('session-headline').textContent=r.headline||'';
@@ -165,8 +171,10 @@ const SessionView = (() => {
     get('session-coverage-text').textContent='根据 '+(coverage.archived_events??'未知数量的')+' 条归档事件整理，'+
       (coverage.collapsed_events??'未知数量的')+' 条细节已折叠。时间按浏览器当地时区显示。';
     get('session-coverage-notes').replaceChildren(...(coverage.notes||[]).map(n=>node('li','',n)));
-    fields(get('session-identities'),[['任务 ID',t.id||selectedId],['调用链 ID',r.scope?.trace_id||'未记录'],
-      ['归档截止编号',coverage.through_seq??'未记录']]);
+    const identities=[['任务 ID',t.id||selectedId],['调用链 ID',r.scope?.trace_id||'未记录'],
+      ['归档截止编号',coverage.through_seq??'未记录']];
+    if(service?.binding)identities.push(['Session 插件绑定',service.binding]);
+    fields(get('session-identities'),identities);
     const limitations=[];
     if(coverage.truncated)limitations.push('摘要涵盖部分已读取的证据。完整过程请继续查看执行时间线。');
     if(coverage.task_available===false)limitations.push('任务账本当前不可读，以下内容以可用归档为依据。');
@@ -184,11 +192,17 @@ const SessionView = (() => {
       renderSession(r);
     }catch(e){
       if(ticket!==readerRequest)return;
+      const pluginUnavailable=e.status===503 && typeof e.code==='string' && e.code.startsWith('session.');
       if(!background){
-        get('session-state').className='badge warn';get('session-state').textContent='读取失败';
-        get('session-goal').textContent=e.status===404?'未找到这项任务':'任务会话暂不可读';
+        get('session-state').className='badge warn';
+        get('session-state').textContent=pluginUnavailable?'插件不可用':'读取失败';
+        get('session-goal').textContent=e.status===404?'未找到这项任务':pluginUnavailable?'会话插件暂不可用':'任务会话暂不可读';
       }
-      notice('session-notice','本次读取失败 · '+e.message+'。可点击刷新重试。');
+      const message=pluginUnavailable?'会话插件不可用，任务和原始事件仍可查看。':'本次读取失败。';
+      notice('session-notice',message+e.message+'。可点击刷新重试。'+(background?'当前正文为上次读取的会话。':''));
+      get('session-markdown').hidden=true;
+      get('session-fallback-review').href='#review?'+new URLSearchParams({task:id});
+      get('session-fallback').hidden=false;
     }finally{
       if(ticket===readerRequest){readerBusy=false;get('session-reader').setAttribute('aria-busy','false');get('session-refresh').disabled=false;}
     }

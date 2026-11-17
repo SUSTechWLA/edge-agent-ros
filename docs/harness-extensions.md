@@ -77,6 +77,7 @@ flowchart LR
 | 额外原始传感器 | 在 `observations/*.json` 配置已安装的 ROS 消息类型、topic、TTL 和名称，控制台按字段渲染有界预览。 | 每秒扫描清单，自动订阅或退订。ROS 消息包首次安装需要更新镜像，加入融合还需相应算法。 | 首次到达、缺测、恢复、卸载都有时间和来源；旧快照仍能查看。[测距传感器示例](../observations/README.md) |
 | ROS 模块、用户询问、watchdog 或其他 Agent | ROS 模块可向 `/edge/events` 发布版本化 JSON，记录内部状态或诊断。请求执行另走 `POST /agent/tasks`，带稳定的 trigger 三元组；只询问已有任务可直接 GET。 | 新生产者在同一受信 ROS 域加入即可发布，与 HTTP 客户端启动时间独立。跨网络部署需增加认证和授权边界。 | 重投沿用原 `event_id`；后续任务用 `parent_event_id` 和 `trace_id` 接上原告警。离线期间需由生产者补投。[外部生产者接口](module-events.md) |
 | 日志消费者（sink） | 通过 `GET /api/events` 按游标读取事件；示例进程将事件和读取位置一起提交到自己的 SQLite。可只取某个模块或告警等级。 | 单独启动、暂停或替换消费进程；使用同一目标卷和过滤条件可续读。 | 保存源归档身份、序号、因果 ID 及可能缺样的区间。可导出 NDJSON 给诊断 Agent。[消费者实现](../client/event_sink.py) |
+| 可读 Session 与细节取证 | `session.read` 是运行时服务，默认 `session.default` 从公开任务与事件接口生成有引用的会话；独立 Evidence 提供者提供三个 read Tool。 | Session 沿用统一服务目录，可安装、draining、替换、撤回；Console 无内置摘要回退。证据工具可独立装卸。 | 记录提供者版本、binding、request/query ID、覆盖窗口和失败原因；替换期间核对响应绑定。[会话与插件边界](sessions.md) |
 | 场景与语义地图 | `scene/campus.json` 定义区域、地标、可通行连接、明确限制和版本。`scene` 服务加载布局，从融合位姿判定所在区域，通过 `/edge/semantic_map` 发布，并提供具名地点技能。 | 可换成相同 ROS/HTTP 契约的提供者。默认 Gazebo 几何和场景进程在启动时读布局；更改自带场地要协调重启两者，镜像内文件有变化则重新构建。 | 冻结路线节点、地图摘要、终点实测值和原操作 ID。同一机器人换定位坐标系时须重新对齐地图。[语义场景设计](semantic-scene.md) |
 | 运动内核、底盘网关、定位融合 | 内核通过 ROS 服务接委托，网关提供 NavigateTo Action 和停止/取消回执。感知进程消费里程计、IMU 与激光。可实现同接口的机体适配器。 | 替换 ROS 节点或容器需有序交接资源与设备控制权。进程内状态、驱动与标定变更按其生命周期重启。 | 在途动作先按原 ID 对账；不确定的物理结果保持 `RECOVERY_REQUIRED`。用独立位姿或现场测量复验。[执行与制动](v1/gateway.md) |
 

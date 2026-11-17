@@ -26,6 +26,12 @@ export async function checkSessions({url, width, evaluate, waitFor, send, screen
     const expected = await api('/api/session?task_id='+encodeURIComponent(task.id));
     const actual = await evaluate(element('#session-reader')+'.innerText');
     assert.ok(actual.includes(expected.headline), 'Reader must show the evidenced headline');
+    assert.ok(expected.service?.plugin_id && expected.service?.plugin_version, 'Session provider identity is missing');
+    assert.equal(await evaluate(element('#session-provider')+'.textContent'),
+      'Session 插件 '+expected.service.plugin_id+' · v'+expected.service.plugin_version);
+    assert.equal(await evaluate(element('#session-provider')+'.hidden'),false);
+    assert.ok((await evaluate(element('#session-identities')+'.textContent')).includes(expected.service.binding),
+      'Expandable provenance must identify the actual plugin binding');
     assert.ok(expected.messages.length>0 && expected.messages.length<=14, 'Initial narrative must be bounded');
     assert.ok(actual.length<14000, 'Session initially exposed too much detail');
     for (const message of expected.messages) {
@@ -71,6 +77,8 @@ export async function checkSessions({url, width, evaluate, waitFor, send, screen
       await click('#session-refresh');
       await waitFor(element('#session-reader')+".getAttribute('aria-busy')!=='true' && !"+
                     element('#session-notice')+'.hidden && '+element('#session-notice')+'.textContent.length>0');
+      assert.ok(!(await evaluate(element('#session-notice')+'.textContent')).includes('会话插件不可用'),
+        'An unclassified server error must not be diagnosed as a plugin failure');
     } finally {
       await evaluate('window.fetch=window.sessionOriginalFetch; delete window.sessionOriginalFetch');
     }
@@ -78,6 +86,38 @@ export async function checkSessions({url, width, evaluate, waitFor, send, screen
     await waitFor(element('#session-reader')+".getAttribute('aria-busy')!=='true' && "+
                   element('#session-goal')+'.textContent==='+JSON.stringify(first.text)+' && '+element('#session-notice')+'.hidden');
     report.read_recovered=true;
+    report.plugin_unavailable=[];
+    for(const code of ['session.service_missing','session.draining','session.transport']){
+      await evaluate(`window.sessionOriginalFetch=window.fetch;
+        window.fetch=(resource, options)=>{
+          const path=new URL(resource instanceof Request?resource.url:resource,location.href).pathname;
+          if(path==='/api/session')return Promise.resolve(Response.json(
+            {error:'测试中的会话服务暂不可用',code:${JSON.stringify(code)}},{status:503}));
+          return window.sessionOriginalFetch(resource,options);
+        };`);
+      try{
+        await click('#session-refresh');
+        await waitFor(element('#session-reader')+".getAttribute('aria-busy')!=='true' && "+
+          element('#session-notice')+".textContent.includes('会话插件不可用，任务和原始事件仍可查看')");
+        assert.equal(await evaluate(element('#session-markdown')+'.hidden'),true);
+        assert.equal(await evaluate(element('#session-provider')+'.hidden'),true);
+        assert.equal(await evaluate(element('#session-fallback')+'.hidden'),false);
+        assert.equal(new URL(await evaluate(element('#session-fallback-review')+'.href')).hash,
+          '#review?'+new URLSearchParams({task:first.id}));
+        assert.equal(await evaluate(element('#session-fallback-events')+".getAttribute('href')"),'#events');
+        report.plugin_unavailable.push(code);
+      }finally{
+        await evaluate('window.fetch=window.sessionOriginalFetch; delete window.sessionOriginalFetch');
+      }
+    }
+    await click('#session-fallback-review');
+    await waitFor(element('#review-task-goal')+'.textContent==='+JSON.stringify(first.text));
+    await click('#nav-events');
+    await waitFor('!'+element('#events')+'.hidden && '+element('#event-rows')+'.innerText.length>0');
+    await send('Page.navigate',{url:new URL('#sessions?task='+encodeURIComponent(first.id),url).href});
+    await waitFor(element('#session-reader')+".getAttribute('aria-busy')!=='true' && "+
+      element('#session-goal')+'.textContent==='+JSON.stringify(first.text)+' && '+element('#session-fallback')+'.hidden');
+    report.plugin_read_recovered=true;
   }
   const missing='session-missing-'+randomUUID();
   await send('Page.navigate',{url:new URL('#sessions?task='+missing,url).href});
