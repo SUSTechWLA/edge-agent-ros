@@ -29,5 +29,6 @@
 ## 变更记录
 
 - 2026-11-17 记录问题、数据归属、只读契约及验收用例。实现前基线为本地 `d28e7ee`。
-- 2026-11-17 在 `console/server/task_review.py` 实现只读任务目录，在 `history.py` 的查询端实现两种归档视图；原始采集和留存策略延用。前端入口为 `console/web/review.js` 与 `#review?task=<id>`。设备实测速度、操作来源是否新鲜、任务当前终态和步骤最后记录分别显示。
+- 2026-11-17 在 `console/server/task_review.py` 实现只读任务目录，在 `history.py` 的查询端实现两种归档视图；原始采集和留存策略沿用。前端入口为 `console/web/review.js` 与 `#review?task=<id>`。设备实测速度、操作来源是否新鲜、任务当前终态和步骤最后记录分别显示。
+- 2026-11-17 对账本和历史查询加在途请求保护，避免慢读数持续被后台刷新取代。桌面概览和手机任务详情的独立仿真实拍收录在[使用手册](../console.md#从运行复盘读懂一台机器人的工作)。
 - AC-1 至 AC-4 初验使用独立 Compose 项目。运行 `tests/console_acceptance.py` 和 `tests/semantic_acceptance.py` 产生 8 个成功与 3 个受阻任务；`console/server/test_run_review.py` 通过 3 个 HTTP 契约用例；`tests/system/console_browser.mjs` 检查 1440 和 390 像素宽度下的只读访问。系统套件按 `python tests/system_suite.py --changed-since d28e7ee --ollama-cache-volume edge-agent-ros_models` 可复跑。

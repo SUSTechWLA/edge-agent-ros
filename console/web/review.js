@@ -34,7 +34,7 @@ const RunReview = (() => {
     return Number.isFinite(d.valueOf()) ? timeFormat.format(d) : String(value);
   };
   const detailLink = id => '#review?'+new URLSearchParams({task:id});
-  const pager = () => ({cursors:[null], next:null, ticket:0});
+  const pager = () => ({cursors:[null], next:null, ticket:0, pending:false});
   const list = pager(), history = pager();
   let open=false, taskId=null, task=null, taskFilter='all', historyView='changes';
   let ownerRequest=0, evidenceRequest=0, evidence=[], more=false;
@@ -79,6 +79,7 @@ const RunReview = (() => {
   }
   async function loadTasks() {
     const ticket=++list.ticket, query=new URLSearchParams({state:taskFilter,limit:8});
+    list.pending=true;
     if(list.cursors.at(-1)!=null)query.set('before',list.cursors.at(-1));
     pageControls('review',list);
     try {
@@ -97,7 +98,7 @@ const RunReview = (() => {
       document.querySelectorAll('[data-review-state] strong').forEach(n=>n.textContent='—');
       get('review-task-list').replaceChildren();
       notice('review-list-notice','任务账本暂不可读 · '+e.message+'。点击任务分类可重新读取。');
-    }
+    } finally {if(ticket===list.ticket)list.pending=false;}
   }
   function eventDescription(ev) {
     const d=ev.data||{};
@@ -135,6 +136,7 @@ const RunReview = (() => {
   }
   async function loadHistory() {
     const ticket=++history.ticket, query=new URLSearchParams({view:historyView,limit:8});
+    history.pending=true;
     if(history.cursors.at(-1)!=null)query.set('before',history.cursors.at(-1));
     pageControls('history',history);
     get('review-history-note').textContent=historyView==='issues'
@@ -151,7 +153,7 @@ const RunReview = (() => {
       if(ticket!==history.ticket)return;
       history.next=null; pageControls('history',history);
       get('review-history-rows').replaceChildren(); notice('review-history-notice','历史记录暂不可读 · '+e.message);
-    }
+    } finally {if(ticket===history.ticket)history.pending=false;}
   }
   function showSteps(steps) {
     const target=get('review-steps');
@@ -272,8 +274,8 @@ const RunReview = (() => {
   function refresh() {
     if(!open || get('event-modal').open || taskId)return;
     // Keep a reader's older pages stable while the first page follows the archive.
-    if(list.cursors.length===1 && !get('review-task-list').contains(document.activeElement))loadTasks();
-    if(history.cursors.length===1 && !get('review-history-rows').contains(document.activeElement))loadHistory();
+    if(!list.pending && list.cursors.length===1 && !get('review-task-list').contains(document.activeElement))loadTasks();
+    if(!history.pending && history.cursors.length===1 && !get('review-history-rows').contains(document.activeElement))loadHistory();
   }
   bindPager(list,'review',loadTasks);
   bindPager(history,'history',loadHistory);
