@@ -1,0 +1,43 @@
+{
+  "sample": "synthetic camera receipt; private loopback, no camera or motion",
+  "image_file_exists": false,
+  "results": [
+    {
+      "task": "missing-field",
+      "state": "RECOVERY_REQUIRED",
+      "tool": "camera_fixture",
+      "evidence": null,
+      "events": [
+        "accepted",
+        "planner.context",
+        "planned",
+        "dispatch",
+        "tool.request",
+        "adapter.request",
+        "adapter.response",
+        "tool.error",
+        "error"
+      ]
+    },
+    {
+      "task": "uri-only",
+      "state": "SUCCEEDED",
+      "tool": "camera_fixture",
+      "evidence": {
+        "image_uri": "file:///tmp/edge-artifact-never-created.jpg"
+      },
+      "events": [
+        "accepted",
+        "planner.context",
+        "planned",
+        "dispatch",
+        "tool.request",
+        "adapter.request",
+        "adapter.response",
+        "tool.response",
+        "verified"
+      ]
+    }
+  ],
+  "runtime_revision": "38fee71fa54379138d68e6a9990f209cbd1daae2"
+}
