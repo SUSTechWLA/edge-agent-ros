@@ -90,7 +90,10 @@ class SessionProvider:
             try:
                 context = sanitized(self.source.context(scope,started+DEADLINE))
                 events,coverage = self.source.collect(context,started+DEADLINE)
-                if not context.get("task") and not coverage["archived_events"]:
+                # Audit records describe this reader, not evidence that the
+                # requested task exists. The public loading window excludes
+                # query audit prefixes before pagination (unlike total count).
+                if not context.get("task") and not coverage["loaded_events"]:
                     if context.get("notes"):
                         raise EvidenceError("session.source_unavailable","任务来源暂不可读，无法确认该会话。",503)
                     raise EvidenceError("session.not_found","没有找到该任务或调用链的公开记录。",404)

@@ -243,6 +243,37 @@ class SessionPluginTest(unittest.TestCase):
         self.assertEqual(selected["scope"],{"task_id":"followup","trace_id":"work"})
         self.assertEqual(selected["related_tasks"][0]["id"],"route")
 
+    def test_missing_session_does_not_become_a_task_when_query_audit_is_imported(self):
+        imported = 0
+
+        def import_query_audit():
+            nonlocal imported
+            rows = self.provider.journal.db.execute(
+                "SELECT seq,event FROM module_bus_events WHERE seq>? ORDER BY seq",(imported,)).fetchall()
+            for seq,raw in rows:
+                event = json.loads(raw)
+                kind = event.pop("kind")
+                self.event(kind,source="journal:session.default",**event)
+                imported = seq
+
+        # Reproduce the normal asynchronous module-journal -> Console import.
+        # Repeated reads must not manufacture a session from their own audit.
+        for unavailable,expected in ((False,404),(False,404),(True,503),(True,503)):
+            self.context_unavailable = unavailable
+            status,reply = self.fetch()
+            self.assertEqual(status,expected,reply)
+            self.assertEqual(reply["code"],"session.source_unavailable" if unavailable else "session.not_found")
+            import_query_audit()
+        self.assertFalse(self.tasks)
+        self.assertEqual(len(self.events),8)
+        self.event("sensor.custom_failure",source="journal:sensor",module="sensor",level="error",detail="设备未响应")
+        orphan = self.document()
+        self.assertEqual(orphan["task"]["state"],"UNKNOWN")
+        self.assertFalse(orphan["coverage"]["task_available"])
+        self.assertEqual(orphan["coverage"]["loaded_events"],1)
+        self.assertEqual(orphan["coverage"]["archived_events"],9)
+        self.assertIn("设备未响应",orphan["markdown"])
+
     def test_protocol_timeout_source_change_and_retention_coverage(self):
         self.task()
         self.event("agent.accepted")
