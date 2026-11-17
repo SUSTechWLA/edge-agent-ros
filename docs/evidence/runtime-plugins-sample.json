@@ -1,0 +1,761 @@
+{
+  "spec": "SDD-006",
+  "verified_revision": "1c3334f923cf95ba5012c41ac2d3a371422ce7cb",
+  "first_spec_commit": "2ba9f90",
+  "scope": "isolated Docker network, fixture acquisition, local deterministic planner",
+  "suite": {
+    "run_id": "20261117T102847Z-50c064c2",
+    "status": "passed",
+    "started_at": "2026-11-17T10:28:47.602388+00:00",
+    "finished_at": "2026-11-17T10:36:35.417703+00:00",
+    "image_id": "sha256:7e692164b3d663b7f4c6813f18660e0f8d7b8149d0ea0eff796dff57ae97c925",
+    "stages": {
+      "repository": 4.61,
+      "planner": 5.36,
+      "board": 5.05,
+      "agent-contracts": 4.42,
+      "observations": 21.61,
+      "scene-contracts": 1.11,
+      "core": 79.0,
+      "motion-sensors": 18.17,
+      "agent-faults": 152.92,
+      "resilience": 37.89,
+      "motion-world": 6.61,
+      "console-missions": 23.22,
+      "places": 59.59,
+      "scene-binding": 2.42,
+      "scene-outage": 14.03,
+      "clock-reset": 1.56,
+      "ui": 3.2,
+      "model": 5.12
+    }
+  },
+  "blackbox": {
+    "passed": true,
+    "image_id": "sha256:7e692164b3d663b7f4c6813f18660e0f8d7b8149d0ea0eff796dff57ae97c925",
+    "task_count": 20,
+    "state_snapshots": 25,
+    "calls_by_operation": {
+      "before-install/step/1": 1,
+      "valid/step/1": 1,
+      "baseline-uri/step/1": 1,
+      "missing/step/1": 1,
+      "truncated/step/1": 1,
+      "foreign/step/1": 1,
+      "interrupted/step/1": 1,
+      "unrelated/step/1": 1,
+      "drain-health/step/1": 1,
+      "during-drain/step/1": 1,
+      "new-policy/step/1": 1,
+      "wrong-digest/step/1": 1,
+      "after-unmount/step/1": 1,
+      "concurrent/step/1": 1,
+      "during-check/step/1": 1,
+      "wrong-identity/step/1": 1,
+      "wrong-version/step/1": 1,
+      "unknown/step/1": 1,
+      "timeout/step/1": 1,
+      "crash-window/step/1": 1
+    },
+    "crash_window_verification_calls": {
+      "image-check": 1,
+      "review": 2
+    },
+    "service_resolution": {
+      "initial": {
+        "service": "verify.image",
+        "plugin_id": "image-check",
+        "plugin_version": "1",
+        "endpoint": "http://image-check:8095/verify",
+        "binding": "eae3d34009a24f3d6faced47bb1c1abc13546c86c3057d5b1cace228fa849309",
+        "dependencies": {
+          "fixture.context": {
+            "service": "fixture.context",
+            "plugin_id": "fixture-context",
+            "plugin_version": "1",
+            "endpoint": "http://fixture:8096/context",
+            "binding": "c8ba5c9979ed816c0308372a0882d0049b292c08ff6a8caf8659fc2bad0db289"
+          }
+        }
+      },
+      "changed": {
+        "service": "verify.image",
+        "plugin_id": "image-check",
+        "plugin_version": "1",
+        "endpoint": "http://image-check:8095/verify",
+        "binding": "b78c87dcb798ac09102f1323e45749bed7f94f06d397df063be85429a31a654a",
+        "dependencies": {
+          "fixture.context": {
+            "service": "fixture.context",
+            "plugin_id": "fixture-context",
+            "plugin_version": "2",
+            "endpoint": "http://fixture:8096/context",
+            "binding": "03330ef8268fd26ec07ed91f7a63f7a18e5480fd2946bff9f5abb9e252a44078"
+          }
+        }
+      },
+      "stale_binding": {
+        "code": "verification.binding_unavailable",
+        "detail": "installed binding for verify.image differs"
+      },
+      "drain": {
+        "new_lookup": {
+          "code": "plugin.draining",
+          "detail": "fixture-context is draining; verify.image is closed to new work"
+        },
+        "bound_lookup": {
+          "service": "verify.image",
+          "plugin_id": "image-check",
+          "plugin_version": "1",
+          "endpoint": "http://image-check:8095/verify",
+          "binding": "eae3d34009a24f3d6faced47bb1c1abc13546c86c3057d5b1cace228fa849309",
+          "dependencies": {
+            "fixture.context": {
+              "service": "fixture.context",
+              "plugin_id": "fixture-context",
+              "plugin_version": "1",
+              "endpoint": "http://fixture:8096/context",
+              "binding": "c8ba5c9979ed816c0308372a0882d0049b292c08ff6a8caf8659fc2bad0db289"
+            }
+          }
+        },
+        "new_capture_count_before_reopen": 0,
+        "after_removal": {
+          "code": "plugin.service_missing",
+          "detail": "image-check: fixture.context has 0 providers"
+        }
+      }
+    },
+    "cases": {
+      "before-install": {
+        "task_id": "before-install",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.service_missing",
+        "tool": "camera_fixture",
+        "operation_id": null,
+        "decisions": []
+      },
+      "after-install": {
+        "task_id": "before-install",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "camera_fixture",
+        "operation_id": "before-install/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "valid": {
+        "task_id": "valid",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "camera_fixture",
+        "operation_id": "valid/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "baseline-uri": {
+        "task_id": "baseline-uri",
+        "state": "BLOCKED",
+        "last_event": "verification.rejected",
+        "tool": "camera_fixture",
+        "operation_id": "baseline-uri/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "fail",
+            "evidence": {
+              "code": "artifact.invalid_reference"
+            }
+          }
+        ]
+      },
+      "missing": {
+        "task_id": "missing",
+        "state": "BLOCKED",
+        "last_event": "verification.rejected",
+        "tool": "camera_fixture",
+        "operation_id": "missing/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "fail",
+            "evidence": {
+              "code": "artifact.missing"
+            }
+          }
+        ]
+      },
+      "truncated": {
+        "task_id": "truncated",
+        "state": "BLOCKED",
+        "last_event": "verification.rejected",
+        "tool": "camera_fixture",
+        "operation_id": "truncated/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "fail",
+            "evidence": {
+              "code": "image.invalid_raster",
+              "expected_pixels": 4,
+              "actual_bytes": 3
+            }
+          }
+        ]
+      },
+      "foreign": {
+        "task_id": "foreign",
+        "state": "BLOCKED",
+        "last_event": "verification.rejected",
+        "tool": "camera_fixture",
+        "operation_id": "foreign/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "fail",
+            "evidence": {
+              "code": "artifact.wrong_operation"
+            }
+          }
+        ]
+      },
+      "interrupted": {
+        "task_id": "interrupted",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.transport",
+        "tool": "camera_fixture",
+        "operation_id": "interrupted/step/1",
+        "decisions": []
+      },
+      "new-policy": {
+        "task_id": "new-policy",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.service_missing",
+        "tool": "camera_fixture",
+        "operation_id": null,
+        "decisions": []
+      },
+      "unrelated": {
+        "task_id": "unrelated",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "heartbeat_fixture",
+        "operation_id": "unrelated/step/1",
+        "decisions": []
+      },
+      "changed-binding": {
+        "task_id": "interrupted",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "verification.binding_unavailable",
+        "tool": "camera_fixture",
+        "operation_id": "interrupted/step/1",
+        "decisions": []
+      },
+      "during-drain": {
+        "task_id": "during-drain",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.draining",
+        "tool": "camera_fixture",
+        "operation_id": null,
+        "decisions": []
+      },
+      "drain-health": {
+        "task_id": "drain-health",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "heartbeat_fixture",
+        "operation_id": "drain-health/step/1",
+        "decisions": []
+      },
+      "restored": {
+        "task_id": "interrupted",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "camera_fixture",
+        "operation_id": "interrupted/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "reopened": {
+        "task_id": "during-drain",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "camera_fixture",
+        "operation_id": "during-drain/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "second-plugin": {
+        "task_id": "new-policy",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "camera_fixture",
+        "operation_id": "new-policy/step/1",
+        "decisions": [
+          {
+            "service": "verify.digest",
+            "verdict": "pass",
+            "evidence": {
+              "algorithm": "sha256",
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5",
+              "bytes": 15
+            }
+          },
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "wrong-digest": {
+        "task_id": "wrong-digest",
+        "state": "BLOCKED",
+        "last_event": "verification.rejected",
+        "tool": "camera_fixture",
+        "operation_id": "wrong-digest/step/1",
+        "decisions": [
+          {
+            "service": "verify.digest",
+            "verdict": "fail",
+            "evidence": {
+              "code": "digest.mismatch",
+              "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "observed_sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "after-unmount": {
+        "task_id": "after-unmount",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "heartbeat_fixture",
+        "operation_id": "after-unmount/step/1",
+        "decisions": []
+      },
+      "concurrent": {
+        "task_id": "concurrent",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "camera_fixture",
+        "operation_id": "concurrent/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          },
+          {
+            "service": "verify.review",
+            "verdict": "pass",
+            "evidence": {
+              "observed_unrelated_task": "during-check",
+              "state": "SUCCEEDED"
+            }
+          }
+        ]
+      },
+      "during-check": {
+        "task_id": "during-check",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "heartbeat_fixture",
+        "operation_id": "during-check/step/1",
+        "decisions": []
+      },
+      "wrong-identity": {
+        "task_id": "wrong-identity",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.receipt_invalid",
+        "tool": "camera_fixture",
+        "operation_id": "wrong-identity/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "wrong-version": {
+        "task_id": "wrong-version",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.receipt_invalid",
+        "tool": "camera_fixture",
+        "operation_id": "wrong-version/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "unknown": {
+        "task_id": "unknown",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.verdict_unknown",
+        "tool": "camera_fixture",
+        "operation_id": "unknown/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "timeout": {
+        "task_id": "timeout",
+        "state": "RECOVERY_REQUIRED",
+        "last_event": "plugin.transport",
+        "tool": "camera_fixture",
+        "operation_id": "timeout/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          }
+        ]
+      },
+      "crash-window": {
+        "task_id": "crash-window",
+        "state": "SUCCEEDED",
+        "last_event": "agent.verified",
+        "tool": "camera_fixture",
+        "operation_id": "crash-window/step/1",
+        "decisions": [
+          {
+            "service": "verify.image",
+            "verdict": "pass",
+            "evidence": {
+              "format": "P5",
+              "width": 2,
+              "height": 2,
+              "pixels": 4,
+              "pixel_min": 0,
+              "pixel_max": 255,
+              "sha256": "6161bede1ebd72b2827697194b0c5248515f46e48260270f674d0a82b8696ed5"
+            }
+          },
+          {
+            "service": "verify.review",
+            "verdict": "pass",
+            "evidence": {
+              "reviewed": true
+            }
+          }
+        ]
+      }
+    },
+    "sample_trace": [
+      {
+        "kind": "accepted",
+        "operation_id": null,
+        "trace": {
+          "module": "agent",
+          "code": "agent.accepted",
+          "event_id": "b140369b53cc4070b34d784d824cd969",
+          "parent_event_id": null
+        }
+      },
+      {
+        "kind": "planner.context",
+        "operation_id": null,
+        "trace": {
+          "module": "registry",
+          "code": "agent.planner.context",
+          "event_id": "b9f736b306c1442897c08a53ca9a88fa",
+          "parent_event_id": "b140369b53cc4070b34d784d824cd969"
+        }
+      },
+      {
+        "kind": "planned",
+        "operation_id": null,
+        "trace": {
+          "module": "agent",
+          "code": "agent.planned",
+          "event_id": "562d8113f9bc4b6c84ea69dc7c95c9b3",
+          "parent_event_id": "b9f736b306c1442897c08a53ca9a88fa"
+        }
+      },
+      {
+        "kind": "dispatch",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "agent",
+          "code": "agent.dispatch",
+          "event_id": "4d9a4409847a47a2b277a8624593d0a1",
+          "parent_event_id": "562d8113f9bc4b6c84ea69dc7c95c9b3"
+        }
+      },
+      {
+        "kind": "tool.request",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "camera_fixture",
+          "code": "agent.tool.request",
+          "call_id": "37492731a06b4c7c82afd968b9663a27",
+          "event_id": "13295fa1967140ffa52af0d9951a8338",
+          "parent_event_id": "4d9a4409847a47a2b277a8624593d0a1"
+        }
+      },
+      {
+        "kind": "adapter.request",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "camera_fixture",
+          "code": "agent.adapter.request",
+          "call_id": "4603681ef5574468bae1d5f7548992c8",
+          "event_id": "da7a24304dcc4b7393aa4eb158dc1609",
+          "parent_event_id": "13295fa1967140ffa52af0d9951a8338"
+        }
+      },
+      {
+        "kind": "adapter.response",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "camera_fixture",
+          "code": "agent.adapter.response",
+          "call_id": "4603681ef5574468bae1d5f7548992c8",
+          "event_id": "e24ac4c18ade4d538fe7b2852b7dbcaa",
+          "parent_event_id": "da7a24304dcc4b7393aa4eb158dc1609"
+        }
+      },
+      {
+        "kind": "tool.response",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "camera_fixture",
+          "code": "agent.tool.response",
+          "call_id": "37492731a06b4c7c82afd968b9663a27",
+          "event_id": "9077623ef4e5486695e5f8a6ef78c364",
+          "parent_event_id": "e24ac4c18ade4d538fe7b2852b7dbcaa"
+        }
+      },
+      {
+        "kind": "verification_pending",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "agent",
+          "code": "agent.verification_pending",
+          "event_id": "acfdf7946f04491085d09e2799b0f436",
+          "parent_event_id": "9077623ef4e5486695e5f8a6ef78c364"
+        }
+      },
+      {
+        "kind": "verification.request",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "image-check",
+          "code": "agent.verification.request",
+          "call_id": "b66bfa7ab4e3452d9f7fa7411af623c8",
+          "event_id": "b8bc9bc38b0243dc91dfb9d3e05b52a0",
+          "parent_event_id": "acfdf7946f04491085d09e2799b0f436"
+        }
+      },
+      {
+        "kind": "verification.response",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "image-check",
+          "code": "agent.verification.response",
+          "call_id": "b66bfa7ab4e3452d9f7fa7411af623c8",
+          "event_id": "2241cfdf6ea3431bb60abd75347fb572",
+          "parent_event_id": "b8bc9bc38b0243dc91dfb9d3e05b52a0"
+        }
+      },
+      {
+        "kind": "verification_passed",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "agent",
+          "code": "agent.verification_passed",
+          "event_id": "f320bc2556b640318a85599d56494487",
+          "parent_event_id": "2241cfdf6ea3431bb60abd75347fb572"
+        }
+      },
+      {
+        "kind": "verified",
+        "operation_id": "valid/step/1",
+        "trace": {
+          "module": "agent",
+          "code": "agent.verified",
+          "event_id": "cdfc532bd59c40929fbe91dcc18fe0d3",
+          "parent_event_id": "f320bc2556b640318a85599d56494487"
+        }
+      }
+    ]
+  },
+  "board_fixtures": {
+    "amd64": {
+      "passed": true,
+      "architecture": "x86_64",
+      "host_machine": "AMD64",
+      "network": "none",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator",
+      "image_id": "sha256:b235c9917d204b7ecb8641e494b949e32e99097a375fcb6d5c70d0fa92ec7f38",
+      "revision": "1c3334f923cf95ba5012c41ac2d3a371422ce7cb",
+      "missing_service": "plugin.service_missing",
+      "without_odom": "RECOVERY_REQUIRED",
+      "with_odom": "SUCCEEDED"
+    },
+    "arm64_emulated": {
+      "passed": true,
+      "architecture": "aarch64",
+      "host_machine": "AMD64",
+      "network": "none",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator",
+      "image_id": "sha256:2cde5514aea1f54620b94084ab65a227639098a7af93460ab22aeae9b0eae6ab",
+      "revision": "1c3334f923cf95ba5012c41ac2d3a371422ce7cb",
+      "missing_service": "plugin.service_missing",
+      "without_odom": "RECOVERY_REQUIRED",
+      "with_odom": "SUCCEEDED"
+    }
+  },
+  "prior_model_author_compatibility": {
+    "model": "qwen2.5:1.5b",
+    "observed": {
+      "source": "/fixture/odom",
+      "frame": "odom",
+      "stamp_ns": 1794911347450107330,
+      "field": "speed",
+      "raw_value": -0.5,
+      "raw_unit": "m/s",
+      "value": -1.8,
+      "unit": "km/h",
+      "definition_version": "296ccf984a1dd375f8b3462be5e604386d50f7724cef7ff8f2e292068bc12f58"
+    },
+    "proposed_before_restart": 1,
+    "proposed_after_restart": 0
+  },
+  "interpretation": [
+    "Each provider call count is measured at the private synthetic photo/heartbeat provider. The crash interrupts a read-only verifier, not a physical robot.",
+    "The image verifier checks a small operation-scoped P5 image. It does not establish scene identity, object presence, or sensor clock accuracy.",
+    "Runtime declarations and the drain flag are hot applied. An independent service must be running for actual verification. Processes, real hardware, and motor authority retain their deployment owners."
+  ],
+  "raw_files_sha256": {
+    "runs/20261117T102847Z-50c064c2/summary.json": "48e6ad2bb19e9e4e1785edf7a943da68f04b63ea4894761ee867e8e8617f06b9",
+    "runs/20261117T102847Z-50c064c2/runtime-plugins.json": "5c9e368b5e447b4e708140c655d4829eb8cb2986dde12d80e4bea98c13f0c66e",
+    "runs/20261117T102847Z-50c064c2/board.json": "4bba277dc9fa6c782f8ec9c9099b059bf37805cce59319160f3f6fd2ccb2a231",
+    "runs/20261117T102847Z-50c064c2/agent-contracts.log": "98c3965cd702e1fe10745ddd3e6310843a8149de54dfe6986e2f42b1d61cd820",
+    "runs/20261117T102847Z-50c064c2/planner.log": "f6bd9ebc3661e2fb941eeb3720a79153fa78d63687673f30f15153200aeb1260",
+    "runtime-plugins/board-arm64.json": "5230caf79982d80dafd43859784ab8be4c61bdeb42817579298feadc1d27a348",
+    "runtime-plugins/arm64-verification-contract.log": "df4ad6649424cfa4405ab3e62fe02e5944d04f698c6fe6ec521edea4db779739",
+    "runtime-plugins/authored-watch-compat.json": "945687df0a9d93822ee3f5a547dee956b9cfbe7e06fb88264d9237699d5a8625",
+    "runtime-plugins/deploy-acceptance.json": "817fb539559fa500a6e7965457a20755db7db5a2772d90d9a5936dce9e61e8ec"
+  },
+  "workstation": {
+    "environment": "simulation",
+    "revision": "1c3334f923cf95ba5012c41ac2d3a371422ce7cb",
+    "image_id": "sha256:0dfd6d4ee61abfce402fe947ee58151c3724921a25899570a2c3525c818f8b89",
+    "blackbox_operations": 20,
+    "running_services": 10,
+    "historical_tasks_preserved": 52,
+    "task_trigger_event_hash_matched": true,
+    "demo_plugins_enabled": false,
+    "missing_verify_image": "plugin.service_missing"
+  }
+}

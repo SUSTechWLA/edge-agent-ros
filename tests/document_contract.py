@@ -27,6 +27,23 @@ class DocumentContract(unittest.TestCase):
         self.assertEqual(model["exported_event_count"],len(model["indexed_events"]))
         for record in records.values():
             self.assertIsInstance(record,dict)
+        plugins = records["runtime-plugins-sample.json"]
+        self.assertRegex(plugins["verified_revision"],r"^[a-f0-9]{40}$")
+        self.assertEqual(plugins["suite"]["status"],"passed")
+        self.assertEqual(len(plugins["suite"]["stages"]),18)
+        measured = plugins["blackbox"]
+        self.assertTrue(measured["passed"])
+        self.assertEqual(len(measured["cases"]),measured["state_snapshots"])
+        self.assertEqual(len({row["task_id"] for row in measured["cases"].values()}),measured["task_count"])
+        self.assertEqual(len(measured["calls_by_operation"]),measured["task_count"])
+        self.assertEqual(set(measured["calls_by_operation"].values()),{1})
+        self.assertEqual(measured["cases"]["baseline-uri"]["state"],"BLOCKED")
+        self.assertEqual(measured["cases"]["crash-window"]["state"],"SUCCEEDED")
+        self.assertEqual(measured["crash_window_verification_calls"],{"image-check":1,"review":2})
+        self.assertEqual(measured["service_resolution"]["drain"]["new_capture_count_before_reopen"],0)
+        for board in plugins["board_fixtures"].values():
+            self.assertTrue(board["passed"])
+            self.assertEqual(board["revision"],plugins["verified_revision"])
         run = records["sdd-003-system.json"]
         self.assertRegex(run["verified_revision"], r"^[a-f0-9]{40}$")
         self.assertEqual(run["suite_status"], "passed")

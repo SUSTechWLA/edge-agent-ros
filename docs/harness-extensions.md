@@ -42,7 +42,7 @@ DeepSeek Harness 将须跨会话重载保留的事实追加到 `SessionEvent` �
 | AI 发现困难并处理 | 已知暂态故障走退避重试；作者进程能为特定的未派发任务生成只读草案；独立模块可带来源触发后续任务。 | 针对新故障自动开发、验证、投放和回滚任意代码插件，以及让多个修复策略按权限协作。 |
 | 新增原始传感器、融合算法或运动策略 | 已安装的 ROS 消息类型可热加到控制台；融合算法运行在固定节点。运动策略有 C++ `PolicyPort`，默认实现在构造内核时选定。 | 运行中安全替换有状态算法，迁移坐标系或状态，并交还设备资源。新增一条传感器订阅不会自动改变融合算法。 |
 
-**一个能看出差别的实验。** 在隔离 Docker 中，测试相机声明拍照完成必须提供 `image_uri`。第一份成功回执缺这个字段，Agent 将任务置为 `RECOVERY_REQUIRED`；第二份给出非空地址，但测试确认该文件从未创建，Agent 仍写入 `verified` 并报告 `SUCCEEDED`。实验通过真实任务 API 和本机回环 HTTP 提供者执行，没有相机或运动输入。这里的 `verified` 表示现有回执规则通过。内置巡检有额外的专用判断，网关回报到达后，内核还会等更新的里程计核对位置。今天这类验收依赖各领域的实现。[两次任务的实测记录](evidence/tool-receipt-boundary.json) · [通用回执与任务终态](../agent/service.py) · [巡检独立测量](../src/edge_core/src/core_node.cpp)
+**一个能看出差别的实验。** 在隔离 Docker 中，测试相机声明拍照完成必须提供 `image_uri`。第一份成功回执缺这个字段，Agent 将任务置为 `RECOVERY_REQUIRED`；第二份给出非空地址，但测试确认该文件从未创建，Agent 仍写入 `verified` 并报告 `SUCCEEDED`。实验通过真实任务 API 和本机回环 HTTP 提供者执行，没有相机或运动输入。这里的 `verified` 表示现有回执规则通过。内置巡检有额外的专用判断，网关回报到达后，内核还会等更新的里程计核对位置。在该基线版本里，这类验收依赖各领域的实现。[两次任务的实测记录](evidence/tool-receipt-boundary.json) · [通用回执与任务终态](../agent/service.py) · [巡检独立测量](../src/edge_core/src/core_node.cpp)
 
 **SDD-006 把验收设在写入成功之前。** dsh 的 `tools/post-execute` 允许插件处理候选结果，`tools/result` 通知观察者已确定的工具输出，`tool/result` 将输出记入会话。Edge 使用独立进程执行只读验收。声明图像产物的工具在派发前绑定 `verify.image`；样例验收器检查操作作用域并解码 PGM。现场策略可以再挂一个摘要验收器。要判定图片里有没有指定对象，仍需实现能作该判断的服务。两种验收器都对模型公开零个 Tool。[dsh 工具执行时序](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/tool-execution-pipeline.md) · [安装示例](../examples/result-verifiers/README.md)
 
@@ -62,7 +62,7 @@ flowchart LR
     W -->|用原候选续办| V
 ```
 
-部署方先启动独立服务，再原子发布 `runtime/<id>.json`。管理者通过 `GET /agent/plugins` 看清单是否可解析，消费者通过 `GET /agent/services?name=verify.image` 取端点并记住 binding。查询时带原 binding 可识别不兼容的换版。声明就绪与 HTTP 服务实际在线分开验证。停用时先处理在途依赖，再撤清单、停进程；需要回滚时恢复原版本、原端点及依赖。所有必需验收通过才会推进原任务，日志消费者可独立启停。[协议、旧任务迁移与回退](specs/SDD-006-runtime-plugins.md)
+部署方先启动独立服务，再原子发布 `runtime/<id>.json`。管理者通过 `GET /agent/plugins` 看清单是否可解析，消费者通过 `GET /agent/services?name=verify.image` 取端点并记住 binding。查询时带原 binding 可识别不兼容的换版。声明就绪与 HTTP 服务实际在线分开验证。将清单置为 `draining: true` 可先停接新任务，让已绑定的操作完成，再撤清单、停进程。回滚时恢复原版本、原端点及依赖。所有必需验收通过才会推进原任务，日志消费者可独立启停。[协议、旧任务迁移与回退](specs/SDD-006-runtime-plugins.md)
 
 **新增插件怎样验收。** 通过配置接入第二个验收器，检查 Agent 和原工具源码能否保持不变；移除必需验收器，检查相关任务是否保留原操作、无关任务能否继续；变更传递依赖版本，检查旧候选是否仍要求原绑定；重启后核对实际工具调用次数。下一步若开放恢复策略、感知算法或硬件驱动，也需要各自的故障、资源交接与物理证据用例。[Docker 黑盒](../tests/system/runtime_plugin_acceptance.py)
 
