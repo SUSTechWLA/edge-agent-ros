@@ -15,12 +15,16 @@ x-runtime: &runtime
 services:
   sim:
     <<: *runtime
+    environment:
+      <<: *environment
+      EDGE_SCENE_FILE: ${EDGE_SCENE_FILE-/opt/edge/scene/campus.json}
     build:
       context: .
       dockerfile: docker/Dockerfile
       args:
         BASE_IMAGE: ${EDGE_BASE_IMAGE:-edge-agent-ros/base:jazzy-harmonic}
-    command: ["gz", "sim", "-s", "-r", "--headless-rendering", "/opt/edge/sim/world.sdf"]
+        EDGE_REVISION: ${EDGE_REVISION:-unknown}
+    command: ["python3", "/opt/edge/scene/start_world.py"]
   bridge:
     <<: *runtime
     command: ["ros2", "run", "ros_gz_bridge", "parameter_bridge", "--ros-args", "-r", "__node:=edge_control_bridge", "-p", "config_file:=/opt/edge/sim/bridge.yaml"]
@@ -29,7 +33,7 @@ services:
     command: ["ros2", "run", "ros_gz_bridge", "parameter_bridge", "--ros-args", "-r", "__node:=edge_witness_bridge", "-p", "config_file:=/opt/edge/sim/witness.yaml"]
   gateway:
     <<: *runtime
-    command: ["ros2", "run", "edge_gateway", "edge_gateway_node"]
+    command: ["ros2", "run", "edge_gateway", "edge_gateway_node", "--ros-args", "-p", "require_scan:=true"]
   core:
     <<: *runtime
     volumes:
@@ -47,12 +51,15 @@ services:
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
       EDGE_OLLAMA_URL: ${EDGE_OLLAMA_URL:-}
       EDGE_PLANNER_URL: ${EDGE_PLANNER_URL:-}
+      EDGE_EXTRA_PLUGIN_DIR: ${EDGE_EXTRA_PLUGIN_DIR-/opt/edge/scene/plugins}
+      EDGE_TRACE_CONTENT: ${EDGE_TRACE_CONTENT:-redacted}
       EDGE_RETRY_LIMIT: ${EDGE_RETRY_LIMIT:-7}
       EDGE_STEP_TIMEOUT: ${EDGE_STEP_TIMEOUT:-1800}
       EDGE_OLLAMA_MODEL: ${EDGE_OLLAMA_MODEL:-qwen2.5:1.5b}
     volumes:
       - task-state:/var/lib/edge-tasks
       - ${EDGE_PLUGINS_DIR:-./plugins}:/etc/edge/plugins:ro
+      - ${EDGE_CONTRACTS_DIR:-./contracts}:/etc/edge/contracts:ro
     command: ["python3", "/opt/edge/agent/service.py"]
   model:
     image: ${EDGE_MODEL_IMAGE:-ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592}
@@ -60,6 +67,15 @@ services:
     profiles: ["model"]
     volumes:
       - models:/root/.ollama
+  scene:
+    <<: *runtime
+    environment:
+      <<: *environment
+      EDGE_SCENE_FILE: ${EDGE_SCENE_FILE-/opt/edge/scene/campus.json}
+    restart: unless-stopped
+    command: ["python3", "/opt/edge/scene/provider.py"]
+    volumes:
+      - scene-state:/var/lib/edge-scene
   console:
     <<: *runtime
     restart: unless-stopped
@@ -82,6 +98,7 @@ services:
       - ${EDGE_EVIDENCE_DIR:-./artifacts/verification}:/evidence
     command: ["python3", "/opt/edge/tests/verify.py", "mission"]
 volumes:
+  scene-state:
   state:
   console-history:
   task-state:

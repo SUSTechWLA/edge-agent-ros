@@ -10,3 +10,10 @@
 .extra-select select:focus-visible{outline:3px solid #de8b28;outline-offset:2px}
 .preview-note{margin:.5rem 1.2rem;padding:.4rem .55rem;border-left:3px solid #bc8729;background:#fff3d7;color:#6c4e1b;font-size:.8rem}
 .source-meta code,#raw-values,.sensor-fields .field{min-width:0;overflow-wrap:anywhere}
+.event-filters { border-top:1px solid var(--border);border-bottom:1px solid var(--border) } .event-filters > summary { padding:.65rem 1.2rem;color:var(--green);font-size:.87rem } .event-filters[open] .filters { padding-top:.25rem }
+
+.scene-info{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem .8rem;padding:.6rem 1.15rem;background:#eaf0e5;border-bottom:1px solid #d4dfd0;color:#254a3a}
+#scene-zone{font-weight:650;font-size:.87rem}
+#scene-source{font-size:.77rem;color:#465d50;overflow-wrap:anywhere}
+.sym.zone{width:13px;height:9px;border:1px dashed #587950;background:#d6e7bd}
+@media(max-width:560px){.scene-info{align-items:flex-start;flex-direction:column;padding:.55rem .9rem}}

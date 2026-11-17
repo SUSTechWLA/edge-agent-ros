@@ -21,6 +21,7 @@ services:
       context: .
       args:
         ROS_BASE: ${EDGE_ROS_BASE:-ros:jazzy-ros-base}
+        EDGE_REVISION: ${EDGE_REVISION:-unknown}
         UBUNTU_MIRROR: ${UBUNTU_MIRROR:-}
         ROS_MIRROR: ${ROS_MIRROR:-}
       dockerfile_inline: |
@@ -41,6 +42,9 @@ services:
         COPY console console
         COPY perception perception
         COPY agent agent
+        ARG EDGE_REVISION=unknown
+        ENV EDGE_REVISION=$$EDGE_REVISION
+        LABEL org.opencontainers.image.revision=$$EDGE_REVISION
         COPY docker/entrypoint.sh /usr/local/bin/edge-entrypoint
         RUN sed -i 's/\r$$//' /usr/local/bin/edge-entrypoint && chmod +x /usr/local/bin/edge-entrypoint
         ENTRYPOINT ["/usr/local/bin/edge-entrypoint"]
@@ -64,12 +68,14 @@ services:
       EDGE_AGENT_BIND: 127.0.0.1
       EDGE_OLLAMA_URL: ${EDGE_OLLAMA_URL:-}
       EDGE_PLANNER_URL: ${EDGE_PLANNER_URL:-}
+      EDGE_TRACE_CONTENT: ${EDGE_TRACE_CONTENT:-redacted}
       EDGE_RETRY_LIMIT: ${EDGE_RETRY_LIMIT:-7}
       EDGE_STEP_TIMEOUT: ${EDGE_STEP_TIMEOUT:-1800}
       EDGE_OLLAMA_MODEL: ${EDGE_OLLAMA_MODEL:-qwen2.5:1.5b}
     volumes:
       - task-state:/var/lib/edge-tasks
       - ${EDGE_PLUGINS_DIR:-./plugins}:/etc/edge/plugins:ro
+      - ${EDGE_CONTRACTS_DIR:-./contracts}:/etc/edge/contracts:ro
     command: ["python3", "/opt/edge/agent/service.py", "--ros-args", "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}"]
   console:
     <<: *runtime

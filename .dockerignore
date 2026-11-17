@@ -13,6 +13,8 @@
 !console/**
 !agent
 !agent/**
+!scene
+!scene/**
 **/__pycache__
 !docker
 !docker/**

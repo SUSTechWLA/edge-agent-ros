@@ -1,0 +1,1 @@
+{"id":"describe_scene","version":"1","effect":"read","description":"查询场景地图","parameters":{},"endpoint":"http://scene:8092/describe"}

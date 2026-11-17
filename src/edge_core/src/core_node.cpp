@@ -87,24 +87,24 @@ private:
       db_.record_request(req.mission_id, "request.rejected", reason);
     };
     if (req.mission_id.empty() || req.mission_id.find('\0')!=std::string::npos) {
-      reject("invalid mission_id"); return;
+      reject("invalid mission_id [code:core.mission_id_invalid]"); return;
     }
-    if (req.waypoints.empty() || req.waypoints.size()>8) { reject("expected 1 to 8 waypoints"); return; }
+    if (req.waypoints.empty() || req.waypoints.size()>8) { reject("expected 1 to 8 waypoints [code:core.waypoint_invalid]"); return; }
     std::vector<Position> targets;
     for (const auto &p:req.waypoints) {
       if (!std::isfinite(p.x) || !std::isfinite(p.y) || std::abs(p.x)>4 || std::abs(p.y)>4 || p.z!=0.0) {
-        reject("invalid planar waypoint"); return;
+        reject("invalid planar waypoint [code:core.waypoint_invalid]"); return;
       }
       targets.push_back({p.x,p.y});
     }
     if (auto existing=db_.find(req.mission_id)) {
       res.state=existing->state;
       res.accepted=existing->targets==targets;
-      res.detail=res.accepted?"duplicate: "+existing->detail:"conflict: ID already bound to different waypoints";
+      res.detail=res.accepted?"duplicate: "+existing->detail:"conflict: ID already bound to different waypoints [code:core.id_conflict]";
       db_.record_request(req.mission_id, res.accepted ? "request.duplicate" : "request.rejected", res.detail);
       return;
     }
-    if (auto owner=db_.owner()) { reject("base occupied by "+*owner); return; }
+    if (auto owner=db_.owner()) { reject("base occupied by "+*owner+" [code:core.base_occupied]"); return; }
     db_.create(req.mission_id,targets);
     auto &a=active_.emplace();
     a.id=req.mission_id; a.targets=std::move(targets);
@@ -190,7 +190,7 @@ private:
       if (!current(op)) { if (handle) request_cancel(handle); return; }
       auto &active=*active_;
       if (!handle) {
-        finish(active.user_canceled?"CANCELED":"FAILED","gateway rejected; operation never accepted"); return;
+        finish(active.user_canceled?"CANCELED":"FAILED","gateway rejected; operation never accepted [code:navigation.goal_rejected]"); return;
       }
       active.goal=handle; active.phase=Phase::moving;
       if (active.stopping) request_cancel(handle);
@@ -203,7 +203,7 @@ private:
   void on_result(const std::string &op, const Goal::WrappedResult &r) {
     if (!current(op)) return;
     auto &a=*active_;
-    if (!r.result) { finish("RECOVERY_REQUIRED","missing action result"); return; }
+    if (!r.result) { finish("RECOVERY_REQUIRED","missing action result [code:navigation.outcome_unknown]"); return; }
     const auto &why=r.result->detail;
     db_.result(a.id,static_cast<int>(a.step),why);
     using Code=rclcpp_action::ResultCode;
@@ -227,10 +227,10 @@ private:
     observation_=Observation{{p.x,p.y},msg.header.frame_id,stamp,Clock::now()};
     if (!active_ || active_->phase!=Phase::verifying || stamp<=active_->verification_stamp) return;
     auto &a=*active_;
-    if (a.frame!=observation_->frame) { finish("FAILED","verification: odometry frame changed"); return; }
+    if (a.frame!=observation_->frame) { finish("FAILED","verification: odometry frame changed [code:core.frame_changed]"); return; }
     const auto target=a.targets[a.step];
     if (std::hypot(p.x-target.x,p.y-target.y)>0.12) {
-      finish("FAILED","verification: post-action odometry outside 0.12 m"); return;
+      finish("FAILED","verification: post-action odometry outside 0.12 m [code:core.arrival_mismatch]"); return;
     }
     bool last=a.step+1==a.targets.size();
     db_.verified(a.id,static_cast<int>(a.step),{p.x,p.y},stamp,last);
@@ -245,9 +245,9 @@ private:
     auto &a=*active_;
     auto now=Clock::now();
     if (now>=a.deadline) {
-      if (a.stopping || a.phase==Phase::requesting) { finish("RECOVERY_REQUIRED","gateway response or stop unconfirmed"); return; }
+      if (a.stopping || a.phase==Phase::requesting) { finish("RECOVERY_REQUIRED","gateway response or stop unconfirmed [code:navigation.outcome_unknown]"); return; }
       if (a.phase==Phase::moving) { stop(false); return; }
-      finish("FAILED",a.phase==Phase::verifying?"verification: fresh odometry timeout":"dispatch: gateway or fresh odometry unavailable");
+      finish("FAILED",a.phase==Phase::verifying?"verification: fresh odometry timeout [code:core.verification_timeout]":"dispatch: gateway or fresh odometry unavailable [code:core.dispatch_unavailable]");
       return;
     }
     if (a.phase==Phase::moving || a.phase==Phase::requesting) {

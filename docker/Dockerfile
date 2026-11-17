@@ -16,6 +16,10 @@ COPY client client
 COPY perception perception
 COPY console console
 COPY agent agent
+COPY scene scene
+ARG EDGE_REVISION=unknown
+ENV EDGE_REVISION=${EDGE_REVISION}
+LABEL org.opencontainers.image.revision=${EDGE_REVISION}
 COPY docker/entrypoint.sh /usr/local/bin/edge-entrypoint
 RUN sed -i 's/\r$//' /usr/local/bin/edge-entrypoint && chmod +x /usr/local/bin/edge-entrypoint && mkdir -p /var/lib/edge-agent /evidence
 ENTRYPOINT ["/usr/local/bin/edge-entrypoint"]

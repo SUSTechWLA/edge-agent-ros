@@ -17,7 +17,9 @@ async function api(path,opts={}){
 const icons={map:'<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z M9 3v15 M15 6v15"/>',scan:'<path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5"/><circle cx="12" cy="12" r="4"/><path d="m12 12 5-5"/>',layers:'<path d="m3 8 9-5 9 5-9 5-9-5Zm0 4 9 5 9-5m-18 4 9 5 9-5"/>',activity:'<path d="M2 13h5l3-7 4 12 3-6h5"/>',task:'<path d="M5 4h14v16H5z M8 8h8M8 12h8M8 16h5"/>'};
 document.querySelectorAll('[data-icon]').forEach(i=>i.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+icons[i.dataset.icon]+'</svg>');
 let live=null, replay=null, replayRecord=null, liveOk=false, requestBusy=false, sensor='scan', recent=[], page=[], selected=null, eventRequest=0;
-let pageBefore=null, filterTask='', filterMission='', filterKind='', observedKinds=new Set(), taskRecord=null, taskDraft=null, submitBusy=false;
+let pageBefore=null, eventFilters=new URLSearchParams(), observedKinds=new Set(), taskRecord=null, taskDraft=null, submitBusy=false;
+const filterInputs={task_id:'task-filter',mission_id:'mission-filter',kind:'kind-filter',trace_id:'trace-filter',
+  module:'module-filter',code:'code-filter',trigger_kind:'trigger-kind-filter',trigger_id:'trigger-filter'};
 const section=()=>location.hash==='#events'?'events':'monitor';
 const displayed=()=>replay||live;
 function health(out,source){
@@ -131,7 +133,13 @@ function eventsRows(where,records,message){
 function showEvent(ev){
   selected=ev;el('event-title').textContent='事件 #'+ev.seq;el('event-summary').textContent=ev.detail||ev.kind;
   const agentEvent=ev.source==='mission_agent/tasks';
-  fields(el('event-fields'),[['发生时间',ev.utc],['类型 / 等级',ev.kind+' · '+ev.level],['来源',ev.source],['自然语言任务',ev.task_id||ev.data?.task_id||(agentEvent?ev.mission_id:null)||'—'],['ROS 委托',agentEvent?'—':ev.mission_id||'—'],['动作 ID',ev.operation_id||'—'],['直接前因',ev.cause_seq?'事件 #'+ev.cause_seq:'未记录']]);
+  const details=[['发生时间',ev.utc],['类型 / 等级',ev.kind+' · '+ev.level],['采集来源',ev.source],
+    ['模块',ev.module],['诊断码',ev.code],['所属层',ev.layer],['调用链 ID',ev.trace_id],['事件 ID',ev.event_id],
+    ['触发类型',ev.trigger_kind],['触发 ID',ev.trigger_id],['触发来源',ev.trigger_source],
+    ['自然语言任务',ev.task_id||ev.data?.task_id||(agentEvent?ev.mission_id:null)],
+    ['ROS 委托',agentEvent?null:ev.mission_id],['动作 ID',ev.operation_id],['调用 ID',ev.call_id],
+    ['直接前因',ev.cause_seq?'事件 #'+ev.cause_seq:(ev.parent_event_id?'待归档 · '+ev.parent_event_id:'未记录')]];
+  fields(el('event-fields'),details.filter(([,v])=>v!=null));
   if(ev.cause_seq){
     const jump=node('button','cause','查看事件 #'+ev.cause_seq);
     jump.onclick=async()=>{try{const r=await api('/api/events?before='+(ev.cause_seq+1)+'&limit=1');if(r.events[0]?.seq!==ev.cause_seq)throw new Error('找不到该事件');showEvent(r.events[0]);}catch(e){el('replay-error').textContent=e.message;}};
@@ -142,7 +150,7 @@ function showEvent(ev){
 }
 el('close-modal').onclick=()=>el('event-modal').close();
 function pageQuery(){
-  const q=new URLSearchParams();if(filterTask)q.set('task_id',filterTask);if(filterMission)q.set('mission_id',filterMission);if(filterKind)q.set('kind',filterKind);return q;
+  return new URLSearchParams(eventFilters);
 }
 function registerKinds(records){
   for(const r of records)observedKinds.add(r.kind);
@@ -159,9 +167,14 @@ async function loadPage(before=null){
     el('page-range').textContent=page.length?'#'+page[0].seq+' – #'+page[page.length-1].seq:'0 条';
   }catch(e){if(ticket===eventRequest)eventsRows('event-rows',[],'读取事件失败 · '+e.message);}
 }
-function applyFilter(){filterTask=el('task-filter').value.trim();filterMission=el('mission-filter').value.trim();filterKind=el('kind-filter').value.trim();loadPage();}
-el('filter').onclick=applyFilter;el('clear-filter').onclick=()=>{el('task-filter').value=el('mission-filter').value=el('kind-filter').value='';applyFilter();};
-['task-filter','mission-filter','kind-filter'].forEach(id=>el(id).onkeydown=e=>{if(e.key==='Enter')applyFilter();});
+function applyFilter(){
+  eventFilters=new URLSearchParams();
+  for(const [key,id] of Object.entries(filterInputs)){const value=el(id).value.trim();if(value)eventFilters.set(key,value);}
+  loadPage();
+}
+function clearFilterInputs(){Object.values(filterInputs).forEach(id=>el(id).value='');}
+el('filter').onclick=applyFilter;el('clear-filter').onclick=()=>{clearFilterInputs();applyFilter();};
+Object.values(filterInputs).forEach(id=>el(id).onkeydown=e=>{if(e.key==='Enter')applyFilter();});
 el('older').onclick=()=>{if(page.length)loadPage(page.at(-1).seq);};el('newer').onclick=()=>loadPage();
 function route(){
   const journal=section()==='events';
@@ -253,7 +266,7 @@ async function refreshTask(id,silent=false){
   catch(e){if(!silent)setNotice('无法查询任务 · '+e.message);}finally{refreshingTask=false;}
 }
 el('refresh-task').onclick=()=>refreshTask(taskRecord?.id);
-el('trace-task').onclick=()=>{if(!taskRecord)return;el('task-filter').value=taskRecord.id;el('mission-filter').value=el('kind-filter').value='';pageBefore=null;applyFilter();location.hash='events';};
+el('trace-task').onclick=()=>{if(!taskRecord)return;clearFilterInputs();el('task-filter').value=taskRecord.id;pageBefore=null;applyFilter();location.hash='events';};
 route();poll();refreshTask(localStorage.getItem('edge-last-task'),true);
 setInterval(()=>{if(!document.hidden)poll();},1000);
 setInterval(()=>{if(!document.hidden && !replay && taskRecord && !['SUCCEEDED','CANCELED','FAILED','REJECTED','BLOCKED','RECOVERY_REQUIRED'].includes(taskRecord.state))refreshTask(taskRecord.id,true);},1800);

@@ -13,6 +13,11 @@ case "$mode" in
 esac
 compose() { docker compose -f "$config" "$@"; }
 build() {
+  if [ -z "${EDGE_REVISION:-}" ] && git rev-parse --verify HEAD >/dev/null 2>&1; then
+    EDGE_REVISION=$(git rev-parse HEAD)
+    if [ -n "$(git status --porcelain)" ]; then EDGE_REVISION="$EDGE_REVISION-dirty"; fi
+    export EDGE_REVISION
+  fi
   if [ "$mode" = sim ]; then
     base=${EDGE_BASE_IMAGE:-edge-agent-ros/base:jazzy-harmonic}
     if [ "$base" = edge-agent-ros/base:jazzy-harmonic ] && ! docker image inspect "$base" >/dev/null 2>&1; then
@@ -38,7 +43,7 @@ full_sim=no
 if [ "$#" -eq 0 ]; then
   if [ "$mode" = sim ]; then
     full_sim=yes
-    set -- sim bridge witness gateway core perception agent console
+    set -- sim bridge witness gateway core perception scene agent console
   else set -- core perception agent console; fi
 fi
 if [ "$mode" = sim ]; then

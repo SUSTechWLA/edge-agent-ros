@@ -5,7 +5,7 @@ window.EdgeMap = (() => {
   const finite = Number.isFinite;
   let state = null, scaleFactor = 1, panX = 0, panY = 0, drag = null;
   let mapPixels = null, pixelGrid = null;
-  const layers = {grid:true, scan:true, trail:true, truth:false};
+  const layers = {semantics:true, grid:true, scan:true, trail:true, truth:false};
 
   function surface(canvas) {
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -32,6 +32,51 @@ window.EdgeMap = (() => {
     ctx.putImageData(out,0,0); pixelGrid=grid; mapPixels=img; return img;
   }
   function rotate(x,y,a){return [x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a)];}
+  function drawScene(ctx,scene,screen,pp){
+    const colors={indoor:['#749cde32','#b4cdec'],outdoor:['#82b8663d','#b9df97'],transition:['#dabe642e','#f6df92']};
+    const pair=p=>Array.isArray(p)&&p.length===2&&p.every(finite);
+    const labels=[];
+    const caption=(label,x,y,color,font)=>{
+      ctx.font=font;ctx.lineWidth=3;ctx.strokeStyle='#213537';ctx.lineJoin='round';
+      const width=ctx.measureText(label).width+4;
+      for(const dy of [0,16,-16,32]){
+        const baseline=y+dy;
+        if(labels.some(box=>x<box.x+box.w && x+width>box.x && baseline-12<box.y+15 && baseline+3>box.y))continue;
+        labels.push({x,y:baseline-12,w:width});
+        ctx.strokeText(label,x,baseline);ctx.fillStyle=color;ctx.fillText(label,x,baseline);
+        break;
+      }
+    };
+    ctx.save();
+    for(const z of scene.zones){
+      if(!Array.isArray(z?.bounds)||z.bounds.length!==4||!z.bounds.every(finite))continue;
+      const [x0,y0,x1,y1]=z.bounds, [x,y]=screen(x0,y1), width=(x1-x0)*pp,height=(y1-y0)*pp;
+      const [fill,line]=colors[z.kind]||colors.indoor;
+      ctx.fillStyle=fill;ctx.fillRect(x,y,width,height);ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(x,y,width,height);
+      if(width>50)caption(z.label,x+5,y+16,line,'600 12px system-ui');
+    }
+    for(const f of scene.features){
+      if(!pair(f?.xy)||f.kind==='roof'||!Array.isArray(f.size)||!f.size.slice(0,2).every(finite))continue;
+      const [x,y]=screen(...f.xy),[w,h]=f.size;
+      ctx.fillStyle=f.kind==='wall'?'#99b3bc99':f.kind==='barrier'?'#dbab6c':'#84ae90';
+      ctx.fillRect(x-w*pp/2,y-h*pp/2,w*pp,h*pp);
+      if(f.kind!=='wall'&&pp>32)caption(f.label,x-w*pp/2,y-h*pp/2-3,'#eef6ee','11px system-ui');
+    }
+    const nodes=new Map(scene.nodes.filter(p=>pair(p?.xy)).map(p=>[p.id,p]));
+    ctx.setLineDash([3,5]);ctx.strokeStyle='#cbdfaeaa';
+    for(const e of scene.edges){
+      if(!Array.isArray(e))continue;
+      const a=nodes.get(e[0]),b=nodes.get(e[1]);if(!a||!b)continue;
+      ctx.beginPath();ctx.moveTo(...screen(...a.xy));ctx.lineTo(...screen(...b.xy));ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    for(const n of nodes.values()){
+      const [x,y]=screen(...n.xy);ctx.fillStyle=n.accessible===false?'#f8b792':'#d4eaba';
+      ctx.beginPath();ctx.arc(x,y,3,0,2*Math.PI);ctx.fill();
+      if(pp>55||!['door_in','door_out'].includes(n.id))caption(n.label,x+5,y+14,'#e7f0ce','11px system-ui');
+    }
+    ctx.restore();
+  }
   function matchedLaser(scan, pose, sources, frame){
     if(!scan || !pose || !scan.mount || scan.mounted_frame !== pose.child_frame ||
         pose.frame !== frame || !finite(sources.scan.stamp_s)) return null;
@@ -48,12 +93,20 @@ window.EdgeMap = (() => {
     const setup=surface(byId('map')); if(!setup)return;
     const {ctx,w,h}=setup, src=state?.sources||{};
     const grid=src.map?.data, pose=src.pose?.data, odom=src.odom?.data, truth=src.truth?.data, scan=src.scan?.data;
-    const frame=grid?.frame||pose?.frame||odom?.frame;
+    const sem=src.semantics?.data;
+    const frame=grid?.frame||pose?.frame||odom?.frame||sem?.frame;
+    const hasSem=!!sem && sem.frame===frame && Array.isArray(sem.zones)&&Array.isArray(sem.features)&&Array.isArray(sem.nodes)&&Array.isArray(sem.edges);
     const aligned=state?.sim_world_aligned===true && state?.environment==='simulation';
     byId('truth-label').hidden=!aligned; byId('map-frame').textContent=frame ? frame+' · m':'—';
     const gOK=grid && grid.width>0 && grid.height>0 && grid.resolution>0 && grid.frame===frame;
     const points=[];
-    if(gOK) for(const [x,y] of [[0,0],[grid.width,0],[0,grid.height],[grid.width,grid.height]]){
+    if(hasSem)for(const z of sem.zones){
+      if(Array.isArray(z?.bounds) && z.bounds.length===4 && z.bounds.every(finite)){
+        points.push([z.bounds[0]-.55,z.bounds[1]-.55],[z.bounds[2]+.55,z.bounds[3]+.55]);
+      }
+    }
+    // Fit authored landmarks on initial load; zoom out to inspect outlying raw cells.
+    if(gOK && !points.length) for(const [x,y] of [[0,0],[grid.width,0],[0,grid.height],[grid.width,grid.height]]){
       const v=rotate(x*grid.resolution,y*grid.resolution,grid.origin_yaw);
       points.push([grid.origin_x+v[0],grid.origin_y+v[1]]);
     }
@@ -66,6 +119,12 @@ window.EdgeMap = (() => {
     const pp=Math.min((w-35)/Math.max(4.5,right-left),(h-32)/Math.max(4.5,top-bottom))*scaleFactor;
     const ox=w/2-(left+right)*pp/2+panX, oy=h/2+(bottom+top)*pp/2+panY;
     const screen=(x,y)=>[ox+x*pp,oy-y*pp];
+    byId('semantics-label').hidden=!hasSem;
+    byId('scene-info').hidden=!hasSem;
+    if(hasSem){
+      byId('scene-zone').textContent='所在区域 · '+(sem.zones.find(z=>z?.id===sem.current_zone)?.label||'待定位');
+      byId('scene-source').textContent='场景先验 · '+(sem.source||'语义地图')+' v'+sem.revision+(src.semantics.fresh?'':' · 上次观测');
+    }
     if(gOK && layers.grid){
       const img=gridImage(grid);
       if(img){
@@ -74,6 +133,7 @@ window.EdgeMap = (() => {
         ctx.drawImage(img,0,0,grid.width*grid.resolution,grid.height*grid.resolution);ctx.restore();
       }
     }
+    if(hasSem&&layers.semantics)drawScene(ctx,sem,screen,pp);
     const step=[.1,.2,.5,1,2,5,10,20,50,100].find(n=>n*pp>=42)||100;
     ctx.font='10px Consolas, monospace';ctx.lineWidth=1;
     const gridLine=(a,b,c,d,axis)=>{ctx.strokeStyle=axis?'#83b2a878':'#82a5a321';ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();};
@@ -115,7 +175,7 @@ window.EdgeMap = (() => {
     }
     if(gOK)notes.unshift(grid.width+' × '+grid.height+' 栅格 · '+Number(grid.resolution.toFixed(3))+' m/格');
     if((gOK && !src.map.fresh) || (pose && !src.pose.fresh))notes.push('含上次观测，数据已过期');
-    byId('map-empty').hidden=!!(robot||gOK);byId('map-notes').textContent=notes.join('　·　');
+    byId('map-empty').hidden=!!(robot||gOK||(hasSem&&layers.semantics));byId('map-notes').textContent=notes.join('　·　');
   }
   function polar(scan) {
     const setup=surface(byId('polar'));if(!setup)return;

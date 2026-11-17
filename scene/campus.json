@@ -1,0 +1,29 @@
+{
+  "schema_version": 1, "id": "campus", "revision": "1.0", "frame": "odom",
+  "source": "Gazebo 场景设计标注", "alignment": "仿真初始位姿与 odom 原点对齐",
+  "clearance_m": 0.32,
+  "zones": [
+    {"id":"workshop","label":"室内工坊","kind":"indoor","bounds":[-4.4,-3.7,1.45,3.7]},
+    {"id":"threshold","label":"门廊","kind":"transition","bounds":[1.45,-0.85,2.15,0.85]},
+    {"id":"courtyard","label":"室外庭院","kind":"outdoor","bounds":[2.15,-3.7,4.5,3.7]}
+  ],
+  "nodes": [
+    {"id":"desk","label":"工位","zone":"workshop","xy":[0,0],"aliases":["室内工位","工坊"]},
+    {"id":"door_in","label":"门内","zone":"workshop","xy":[1.15,0]},
+    {"id":"door_out","label":"门外","zone":"courtyard","xy":[2.4,0]},
+    {"id":"garden","label":"庭院","zone":"courtyard","xy":[3.3,1.35],"aliases":["室外庭院"]},
+    {"id":"service","label":"维修区","zone":"courtyard","xy":[3.4,-2.65],"accessible":false}
+  ],
+  "edges":[["desk","door_in"],["door_in","door_out"],["door_out","garden"]],
+  "features": [
+    {"id":"west_wall","kind":"wall","label":"外墙","xy":[-4.5,0],"size":[0.16,7.7,1.5]},
+    {"id":"workshop_north","kind":"wall","label":"北墙","xy":[-1.35,3.8],"size":[6.45,0.16,1.5]},
+    {"id":"workshop_south","kind":"wall","label":"南墙","xy":[-1.35,-3.8],"size":[6.45,0.16,1.5]},
+    {"id":"door_wall_north","kind":"wall","label":"门侧墙","xy":[1.8,2.33],"size":[0.18,2.98,1.5]},
+    {"id":"door_wall_south","kind":"wall","label":"门侧墙","xy":[1.8,-2.33],"size":[0.18,2.98,1.5]},
+    {"id":"workbench","kind":"furniture","label":"工具台","xy":[-2.5,2.7],"size":[1.1,0.65,0.85]},
+    {"id":"planter","kind":"landmark","label":"花池","xy":[3.55,2.75],"size":[1.0,0.7,0.55]},
+    {"id":"service_fence","kind":"barrier","label":"维修隔栏","xy":[3.45,-2.03],"size":[1.85,0.14,0.65]},
+    {"id":"roof","kind":"roof","label":"工坊屋顶","xy":[-1.35,0],"size":[6.45,7.7,0.12],"base_z":2.15}
+  ]
+}

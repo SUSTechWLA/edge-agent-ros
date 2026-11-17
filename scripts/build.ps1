@@ -1,6 +1,11 @@
 $ErrorActionPreference = "Stop"
 Push-Location (Split-Path $PSScriptRoot -Parent)
+$oldRevision=$env:EDGE_REVISION
 try {
+    if (-not $oldRevision -and (Get-Command git -ErrorAction SilentlyContinue) -and (Test-Path .git)) {
+        $env:EDGE_REVISION=(git rev-parse HEAD).Trim()
+        if (git status --porcelain) { $env:EDGE_REVISION += "-dirty" }
+    }
     $base = "edge-agent-ros/base:jazzy-harmonic"
     if (-not $env:EDGE_BASE_IMAGE -or $env:EDGE_BASE_IMAGE -eq $base) {
         $local = docker image ls --format '{{.ID}}' $base
@@ -12,4 +17,4 @@ try {
     }
     docker compose build sim
     if ($LASTEXITCODE) { throw "Application image build failed." }
-} finally { Pop-Location }
+} finally { $env:EDGE_REVISION=$oldRevision; Pop-Location }
