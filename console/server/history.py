@@ -4,6 +4,7 @@ import os
 import sqlite3
 import threading
 import time
+import uuid
 import zlib
 from contextlib import closing
 from datetime import datetime, timezone
@@ -25,8 +26,14 @@ def pack(obj):
 # Only an unassociated, informational periodic observation is a pruning candidate.
 ORDINARY_SAMPLE = """kind='telemetry.sample' AND source='edge_console' AND level='info'
     AND mission_id IS NULL AND operation_id IS NULL AND cause_seq IS NULL AND source_id IS NULL"""
+TRACE_FIELDS = ("event_id","trace_id","parent_event_id","task_id","module","layer","code","call_id",
+                "trigger_kind","trigger_id","trigger_source")
 EVENT_COLUMNS = ("seq,utc,observed_at,kind,level,source,session_id,mission_id,operation_id,"
-                 "detail,data,cause_seq,source_id,source_seq")
+                 "detail,data,cause_seq,source_id,source_seq," + ",".join(TRACE_FIELDS))
+
+
+class EventConflict(ValueError):
+    """A module reused a published event ID with different content."""
 
 
 def retention_setting(name, default):
@@ -48,6 +55,10 @@ class History:
         self.db.executescript("""
             PRAGMA journal_mode=WAL;
             PRAGMA synchronous=FULL;
+            CREATE TABLE IF NOT EXISTS archive_identity (
+              singleton INTEGER PRIMARY KEY CHECK(singleton=1), id TEXT NOT NULL, pruned_through INTEGER NOT NULL
+            );
+            INSERT OR IGNORE INTO archive_identity VALUES(1,lower(hex(randomblob(16))),0);
             CREATE TABLE IF NOT EXISTS events (
               seq INTEGER PRIMARY KEY AUTOINCREMENT, utc TEXT NOT NULL, observed_at REAL NOT NULL,
               kind TEXT NOT NULL, level TEXT NOT NULL, source TEXT NOT NULL, session_id TEXT NOT NULL,
@@ -60,8 +71,19 @@ class History:
             CREATE INDEX IF NOT EXISTS events_session ON events(session_id,seq);
             CREATE INDEX IF NOT EXISTS events_cause ON events(cause_seq) WHERE cause_seq IS NOT NULL;
         """)
+        # Older records retain their original timestamps and identities. Leave
+        # unavailable provenance NULL instead of backfilling a guessed trigger.
+        with self.db:
+            existing = {r[1] for r in self.db.execute("PRAGMA table_info(events)")}
+            for name in (*TRACE_FIELDS,"ingress_hash"):
+                if name not in existing:
+                    self.db.execute(f"ALTER TABLE events ADD COLUMN {name} TEXT")
+            for name in ("event_id","trace_id","parent_event_id","task_id","module","code","trigger_kind","trigger_id","call_id","operation_id"):
+                self.db.execute(f"CREATE INDEX IF NOT EXISTS trace_{name} ON events({name},seq) WHERE {name} IS NOT NULL")
+            self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS wire_event_id ON events(event_id) WHERE ingress_hash IS NOT NULL")
         self.db.execute(f"CREATE INDEX IF NOT EXISTS ordinary_by_seq ON events(seq) WHERE {ORDINARY_SAMPLE}")
         self.db.execute(f"CREATE INDEX IF NOT EXISTS ordinary_by_age ON events(observed_at) WHERE {ORDINARY_SAMPLE}")
+        self.archive_id,self.pruned_through=self.db.execute("SELECT id,pruned_through FROM archive_identity").fetchone()
         with self.db:
             self.prune(time.time())
         self.earliest, self.cursor = self.db.execute("SELECT coalesce(min(seq),0),coalesce(max(seq),0) FROM events").fetchone()
@@ -71,14 +93,19 @@ class History:
         # releases. SQLite automatically reuses the freed pages without a VACUUM.
         eligible = f"""{ORDINARY_SAMPLE} AND NOT EXISTS
             (SELECT 1 FROM events AS child WHERE child.cause_seq=events.seq)"""
+        def remove(condition,value):
+            rows=self.db.execute(f"DELETE FROM events WHERE {condition} AND {eligible} RETURNING seq",(value,))
+            cut=max((row[0] for row in rows),default=0)
+            if cut>self.pruned_through:
+                self.db.execute("UPDATE archive_identity SET pruned_through=? WHERE singleton=1",(cut,))
+                self.pruned_through=cut
         if self.days:
-            self.db.execute(f"DELETE FROM events WHERE observed_at<? AND {eligible}",
-                            (now - self.days * 86400,))
+            remove("observed_at<?",now-self.days*86400)
         if self.max_samples:
             cutoff = self.db.execute(f"""SELECT seq FROM events WHERE {ORDINARY_SAMPLE}
                 ORDER BY seq DESC LIMIT 1 OFFSET ?""", (self.max_samples,)).fetchone()
             if cutoff:
-                self.db.execute(f"DELETE FROM events WHERE seq<=? AND {eligible}", (cutoff[0],))
+                remove("seq<=?",cutoff[0])
 
     def retention(self):
         with self.lock:
@@ -87,7 +114,8 @@ class History:
             page_size = self.db.execute("PRAGMA page_size").fetchone()[0]
             allocated = self.db.execute("PRAGMA page_count").fetchone()[0] * page_size
             reusable = self.db.execute("PRAGMA freelist_count").fetchone()[0] * page_size
-            return {"retention_days":self.days, "max_samples":self.max_samples, "samples":samples,
+            return {"archive_id":self.archive_id,"pruned_through_seq":self.pruned_through,
+                    "retention_days":self.days, "max_samples":self.max_samples, "samples":samples,
                     "events":total, "earliest_cursor":self.earliest, "latest_cursor":self.cursor,
                     "database_bytes":allocated, "reusable_bytes":reusable}
 
@@ -98,19 +126,43 @@ class History:
 
     def record(self, snapshot, *, kind, source, detail, level="info", mission_id=None,
                operation_id=None, data=None, event_utc=None, source_id=None,
-               source_seq=None, source_cause=None, cause=None):
+               source_seq=None, source_cause=None, cause=None, trace=None, ingress_hash=None):
         with self.lock, self.db:
+            trace = dict(trace or {})
+            event_id = trace.get("event_id") or uuid.uuid4().hex
+            if ingress_hash:
+                seen = self.db.execute("SELECT seq,ingress_hash FROM events WHERE event_id=? AND ingress_hash IS NOT NULL",
+                                       (event_id,)).fetchone()
+                if seen:
+                    if seen["ingress_hash"]!=ingress_hash:
+                        raise EventConflict("module event ID was reused with different content")
+                    return seen["seq"]
             if source_cause is not None:
                 row = self.db.execute("SELECT seq FROM events WHERE source_id=? AND source_seq=?",
                                       (source_id, source_cause)).fetchone()
                 cause = row[0] if row else None
+            parent_id = trace.get("parent_event_id")
+            if parent_id:
+                parent=self.db.execute("SELECT seq FROM events WHERE event_id=? ORDER BY seq LIMIT 1",(parent_id,)).fetchone()
+                cause=parent["seq"] if parent else None
+            elif cause:
+                parent=self.db.execute("SELECT event_id FROM events WHERE seq=?",(cause,)).fetchone()
+                parent_id = parent["event_id"] if parent else None
+            trigger = trace.get("trigger") or {}
+            metadata = (event_id,trace.get("trace_id"),parent_id,trace.get("task_id"),trace.get("module") or source,
+                        trace.get("layer"),trace.get("code") or kind,trace.get("call_id"),
+                        trigger.get("kind"),trigger.get("id"),trigger.get("source"))
             at = time.time()
             insert = self.db.execute("""
                 INSERT INTO events(utc,observed_at,kind,level,source,session_id,mission_id,operation_id,
-                  detail,data,cause_seq,source_id,source_seq,snapshot) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                  detail,data,cause_seq,source_id,source_seq,snapshot,ingress_hash,
+                  event_id,trace_id,parent_event_id,task_id,module,layer,code,call_id,trigger_kind,trigger_id,trigger_source)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (event_utc or utc(at), at, kind, level, source, snapshot["session_id"], mission_id,
-                  operation_id, detail, encode(data or {}), cause, source_id, source_seq, pack(snapshot)))
+                  operation_id, detail, encode(data or {}), cause, source_id, source_seq, pack(snapshot),ingress_hash,*metadata))
             self.cursor = insert.lastrowid
+            self.db.execute("UPDATE events SET cause_seq=? WHERE parent_event_id=? AND cause_seq IS NULL AND seq!=?",
+                            (self.cursor,event_id,self.cursor))
             if kind == "telemetry.sample":
                 self.prune(at)
                 self.earliest = self.db.execute("SELECT coalesce(min(seq),0) FROM events").fetchone()[0]
@@ -126,26 +178,34 @@ class History:
 
     def replay(self, seq):
         with self.lock:
-            row = self.db.execute("SELECT snapshot FROM events WHERE seq=?", (seq,)).fetchone()
+            row = self.db.execute(f"SELECT {EVENT_COLUMNS}, snapshot FROM events WHERE seq=?", (seq,)).fetchone()
         if row is None:
             return None
-        result = json.loads(zlib.decompress(row[0]))
+        event = self.public(row)
+        result = json.loads(zlib.decompress(event.pop("snapshot")))
         result.setdefault("extra_sources", {})
-        result.update(mode="replay", cursor=seq)
+        result.update(mode="replay", cursor=seq,event=event)
         return result
 
     def selection(self, after, before, filters, maximum=None):
         values = []
         where = []
-        for key in ("mission_id","kind","session_id","operation_id","level"):
+        for key in ("mission_id","kind","session_id","operation_id","level","source",*(f for f in TRACE_FIELDS if f not in ("task_id","trace_id"))):
             if key in filters:
                 where.append(key+"=?")
                 values.append(filters[key])
         if "task_id" in filters:
-            where.append("""(mission_id=? OR mission_id IN
+            where.append("""(task_id=? OR mission_id=? OR mission_id IN
               (SELECT operation_id FROM events WHERE source='mission_agent/tasks' AND mission_id=?
                AND operation_id IS NOT NULL))""")
-            values.extend([filters["task_id"]]*2)
+            values.extend([filters["task_id"]]*3)
+        if "trace_id" in filters:
+            # A ROS action server may only know the delegated mission ID. Join
+            # it to the agent's original dispatch without rewriting that event.
+            where.append("""(trace_id=? OR mission_id IN
+                 (SELECT operation_id FROM events WHERE trace_id=? AND source='mission_agent/tasks'
+                  AND kind='agent.dispatch' AND operation_id IS NOT NULL))""")
+            values.extend([filters["trace_id"]]*2)
         for cond, val in (("seq>?", after), ("seq<?", before), ("seq<=?",maximum)):
             if val is not None:
                 where.append(cond)
@@ -158,9 +218,9 @@ class History:
         sql += " ORDER BY seq " + ("ASC" if after is not None else "DESC") + " LIMIT ?"
         with self.lock:
             rows = self.db.execute(sql, [*values,limit+1]).fetchall()
-            cursor = self.cursor
+            cursor,pruned = self.cursor,self.pruned_through
         return {"events":[self.public(r) for r in rows[:limit]], "has_more":len(rows)>limit,
-                "cursor":cursor}
+                "cursor":cursor,"archive_id":self.archive_id,"pruned_through_seq":pruned}
 
     def export(self, filters, include_snapshot=False):
         # A separate WAL reader pins one consistent view across streamed rows,
@@ -173,9 +233,9 @@ class History:
                 row = self.public(item)
                 row["schema_version"] = 1
                 if include_snapshot:
-                    snapshot = json.loads(zlib.decompress(row["snapshot"]))
+                    snapshot = json.loads(zlib.decompress(row.pop("snapshot")))
                     snapshot.setdefault("extra_sources", {})
-                    snapshot.update(mode="replay",cursor=row["seq"])
+                    snapshot.update(mode="replay",cursor=row["seq"],event=dict(row))
                     row["snapshot"] = snapshot
                 yield (encode(row)+"\n").encode("utf-8")
 
@@ -191,7 +251,7 @@ class History:
 
     def dispatch_origin(self, source_id, delegated_id):
         with self.lock:
-            row=self.db.execute("""SELECT seq,mission_id FROM events
+            row=self.db.execute("""SELECT seq,mission_id,trace_id,trigger_kind,trigger_id,trigger_source FROM events
                 WHERE source_id=? AND operation_id=? AND kind='agent.dispatch'
                 ORDER BY source_seq LIMIT 1""", (source_id,delegated_id)).fetchone()
             return dict(row) if row else None

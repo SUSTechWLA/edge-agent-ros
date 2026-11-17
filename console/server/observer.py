@@ -19,7 +19,8 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Imu, LaserScan
 from std_msgs.msg import String
 
-from history import History, ledger_batch, task_batch
+from history import EventConflict, History, ledger_batch, task_batch
+from module_events import parse_event
 from observations import Observations
 
 
@@ -30,6 +31,7 @@ TOPICS = {
     "pose": ("/edge/perception/pose", Odometry, "nav_msgs/Odometry", 1.5),
     "map": ("/edge/perception/map", OccupancyGrid, "nav_msgs/OccupancyGrid", 5.0),
     "perception": ("/edge/perception/status", String, "std_msgs/String", 5.0),
+    "semantics": ("/edge/semantic_map", String, "std_msgs/String", 3.0),
     "truth": ("/ground_truth", Odometry, "nav_msgs/Odometry", 1.5),
     "cmd": ("/cmd_vel", Twist, "geometry_msgs/Twist", 1.0),
     "operation": ("/edge/active_operation", String, "std_msgs/String", 1.5),
@@ -97,12 +99,15 @@ class Observer(Node):
                 continue
             self.create_subscription(cls, topic, lambda msg, k=key: self.consume(k, msg), qos_profile_sensor_data)
         self.create_subscription(Log, "/rosout", self.ros_log, qos_profile_sensor_data)
+        self.create_subscription(String,"/edge/events",self.module_event,100)
+        self.last_wire_warning = {}
         if self.environment=="simulation":
             self.create_subscription(Clock, "/clock",lambda m:setattr(self,"sim_clock",stamp_s(m.clock)),
                                      qos_profile_sensor_data)
         self.create_timer(0.25, self.tick)
         self.event("console.started", "edge_console", "开始采集 ROS 状态",
                    data={"robot_id":self.robot_id, "environment":self.environment,
+                         "source_revision":os.environ.get("EDGE_REVISION","unknown"),
                          "ros_distro":os.environ.get("ROS_DISTRO"),"rmw":os.environ.get("RMW_IMPLEMENTATION"),
                          "ros_domain_id":os.environ.get("ROS_DOMAIN_ID"),"schema_version":1})
 
@@ -148,9 +153,14 @@ class Observer(Node):
             return {"v":num(msg.linear.x),"w":num(msg.angular.z)}
         if key == "operation":
             return {"id":msg.data}
+        if key=="semantics" and len(msg.data)>100000:
+            raise ValueError("semantic map exceeds preview limit")
         result = json.loads(msg.data)
         if not isinstance(result,dict):
             raise ValueError("expected a status object")
+        if key=="semantics" and (result.get("schema_version")!=1 or not isinstance(result.get("frame"),str)
+                or not all(isinstance(result.get(k),list) for k in ("zones","features","nodes","edges"))):
+            raise ValueError("invalid semantic map")
         return result
 
     def consume(self, key, msg):
@@ -241,6 +251,27 @@ class Observer(Node):
                        data={"file":msg.file,"line":msg.line,"function":msg.function,
                              "stamp_s":stamp_s(msg.stamp),"severity":int(msg.level)})
 
+    def module_event(self, msg):
+        try:
+            event,digest = parse_event(msg.data)
+            with self.lock:
+                frame = self.observed_frame(event["utc"]) if event.get("utc") else self.snapshot()
+                frame["module_event"] = event
+                # source records the actual transport, module is the producer's claim.
+                self.history.record(frame,kind=event["kind"],source="ros:/edge/events",
+                                    level=event.get("level","info"),detail=event.get("detail",""),
+                                    mission_id=event.get("mission_id"),operation_id=event.get("operation_id"),
+                                    data=event.get("data",{}),event_utc=event.get("utc"),
+                                    trace=event,ingress_hash=digest)
+        except (ValueError,OverflowError,RecursionError) as exc:
+            code = "module.event_conflict" if isinstance(exc,EventConflict) else "module.event_invalid"
+            now = time.monotonic()
+            if now-self.last_wire_warning.get(code,float("-inf"))>=10:
+                self.last_wire_warning[code]=now
+                # Never copy arbitrary malformed wire text (possibly secrets) to the archive.
+                self.event(code,"edge_console","模块事件 ID 冲突" if isinstance(exc,EventConflict) else "模块事件格式无效",
+                           "warn",data={"reason":str(exc)[:180],"topic":"/edge/events"})
+
     def ingest_event(self, row, targets):
         mid,op,kind = row["mission_id"],row["operation_id"],row["kind"]
         old = self.mission_data.get(mid)
@@ -272,14 +303,18 @@ class Observer(Node):
             self.mission_data.pop(next(reversed(self.mission_data)))
         snapshot = self.at_source_time(row["utc"])
         level = "error" if row["state"] in ("FAILED","RECOVERY_REQUIRED") else "info"
-        parent = self.history.dispatch_origin(self.task_source_id,mid) if kind=="mission.created" else None
-        if parent:
+        parent = self.history.dispatch_origin(self.task_source_id,mid)
+        if parent and kind=="mission.created":
             data["parent_task_id"]=parent["mission_id"]
             data["agent_dispatch_seq"]=parent["seq"]
         self.history.record(snapshot,kind=kind,source="edge_core/ledger",detail=row["detail"],level=level,
                             mission_id=mid,operation_id=op,data=data,event_utc=row["utc"],
                             source_id=self.source_id,source_seq=row["seq"],source_cause=row["cause_seq"],
-                            cause=parent["seq"] if parent else None)
+                            cause=parent["seq"] if parent and kind=="mission.created" else None,
+                            trace={"module":"edge.core","layer":"core","code":row.get("code") or kind,
+                                   "trace_id":parent["trace_id"] if parent else mid,
+                                   "task_id":parent["mission_id"] if parent else None,
+                                   "trigger":{k:parent["trigger_"+k] for k in ("kind","id","source")} if parent else {}})
 
     def at_source_time(self, event_utc):
         when = datetime.fromisoformat(event_utc.replace("Z","+00:00")).timestamp()
@@ -319,19 +354,22 @@ class Observer(Node):
                     data["payload"]=json.loads(row["payload"])
                 except (TypeError,ValueError):
                     data["payload"]=row["payload"]
-            level="error" if kind in ("error","retry_exhausted","timeout") else (
+            level="error" if kind in ("error","retry_exhausted","timeout") or kind.endswith(".error") else (
                 "warn" if kind in ("retry","blocked") else "info")
-            frame=self.at_source_time(row["utc"])
-            # Unlike the ROS ledger reducer, a task journal event has no
-            # simultaneous read of the core's mission table. Expose only the
-            # ordered task payload here when no contemporaneous observation exists.
-            prior=next((s for s in reversed(self.historical) if s["now"]<=frame["event_at"]), None)
-            frame["missions"]=prior["missions"] if prior and frame["telemetry_at"] is not None else []
+            frame=self.observed_frame(row["utc"])
             frame["agent_event"]=data
+            trace=(data["payload"].get("trace") or {}) if isinstance(data.get("payload"),dict) else {}
             self.history.record(frame,kind="agent."+kind,source="mission_agent/tasks",level=level,
                                 mission_id=row["task_id"],operation_id=row["operation_id"],detail=row["detail"],
                                 data=data,event_utc=row["utc"],source_id=source_id,source_seq=row["seq"],
+                                trace={**trace,"task_id":row["task_id"]},
                                 cause=self.history.previous_task_event(source_id,row["task_id"]))
+
+    def observed_frame(self, event_utc):
+        frame=self.at_source_time(event_utc)
+        prior=next((s for s in reversed(self.historical) if s["now"]<=frame["event_at"]), None)
+        frame["missions"]=prior["missions"] if prior and frame["telemetry_at"] is not None else []
+        return frame
 
     def poll_ledger(self):
         try:

@@ -19,11 +19,25 @@ from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point
 from edge_interfaces.srv import GetMission, SubmitMission
-from planning import OutcomeUnknown, Refused, Unavailable, binding, catalog, http_json, plan, registry
+from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog,
+                      failure, http_json, plan, registry, remote_failure)
+from tracing import artifact, clean_text, diagnosis, exchange, sanitized
 
 
 def utc():
     return datetime.now(timezone.utc).isoformat()
+
+
+def trigger_input(data):
+    if not isinstance(data,dict) or set(data)-{"kind","id","source","parent_task_id","parent_event_id","trace_id"}:
+        raise ValueError("trigger 格式无效")
+    for field in ("kind","source","id",*set(data).intersection(("parent_task_id","parent_event_id","trace_id"))):
+        value=data.get(field)
+        if not isinstance(value,str) or not re.fullmatch(r"[\w.:-]{1,128}",value):
+            raise ValueError("trigger."+field+" 格式无效")
+    if not re.fullmatch(r"[a-z][a-z0-9_.-]{0,31}",data["kind"]):
+        raise ValueError("trigger.kind 格式无效")
+    return data
 
 
 class Journal:
@@ -45,34 +59,92 @@ class Journal:
                 step INTEGER, kind TEXT, detail TEXT, operation_id TEXT, payload TEXT NOT NULL DEFAULT '{}');
             CREATE INDEX IF NOT EXISTS events_by_task ON events(task_id,seq);
             CREATE INDEX IF NOT EXISTS tasks_ready ON tasks(state,due,created);
+            CREATE TABLE IF NOT EXISTS task_triggers(
+              task_id TEXT PRIMARY KEY REFERENCES tasks(id), kind TEXT NOT NULL, source TEXT NOT NULL,
+              source_key TEXT NOT NULL, context TEXT NOT NULL, trace_id TEXT NOT NULL,
+              UNIQUE(kind,source,source_key));
         """)
         if "payload" not in {r[1] for r in self.db.execute("PRAGMA table_info(events)")}:
             self.db.execute("ALTER TABLE events ADD COLUMN payload TEXT NOT NULL DEFAULT '{}'")
             self.db.commit()
+        if "event_id" not in {r[1] for r in self.db.execute("PRAGMA table_info(events)")}:
+            self.db.execute("ALTER TABLE events ADD COLUMN event_id TEXT")
+        self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS events_by_id ON events(event_id) WHERE event_id IS NOT NULL")
+        self.db.commit()
 
     def get(self, key):
         with self.lock:
-            row = self.db.execute("""SELECT tasks.*, (SELECT kind FROM events WHERE task_id=tasks.id
-                       ORDER BY seq DESC LIMIT 1) AS latest_event FROM tasks WHERE id=?""",(key,)).fetchone()
+            row = self.db.execute("""SELECT tasks.*,tr.context,tr.trace_id,
+                       (SELECT kind FROM events WHERE task_id=tasks.id ORDER BY seq DESC LIMIT 1) AS latest_event
+                       FROM tasks LEFT JOIN task_triggers tr ON tr.task_id=tasks.id WHERE tasks.id=?""",(key,)).fetchone()
         if not row:
             return None
         item = dict(row)
         item["steps"] = json.loads(item["steps"])
+        context=item.pop("context")
+        item["trigger"]=json.loads(context) if context is not None else None
+        item["trace_id"]=item["trace_id"] or key
         item["can_retry"] = item.pop("latest_event")=="retry_exhausted" and item["state"] in ("BLOCKED","RECOVERY_REQUIRED")
         return item
 
-    def create(self,key,text):
+    def create(self,key,text,trigger=None):
         with self.lock, self.db:
+            if trigger is not None:
+                trigger=trigger_input(trigger)
+                origin=self.db.execute("""SELECT task_id FROM task_triggers WHERE kind=? AND source=? AND source_key=?""",
+                    (trigger["kind"],trigger["source"],trigger["id"])).fetchone()
+                if origin:
+                    if key is not None and key!=origin[0]:
+                        raise Refused("同一触发已绑定其他任务 ID")
+                    key=origin[0]
+            key=key or uuid.uuid4().hex
             existing = self.get(key)
             if existing:
-                if existing["text"] != text:
-                    raise Refused("同一任务 ID 已用于不同请求")
+                if existing["text"]!=text or (trigger is not None and existing["trigger"]!=trigger):
+                    raise Refused("同一任务 ID 已用于不同请求或触发来源")
                 return existing
+            trigger=trigger or {"kind":"user","source":"user","id":key}
+            parent=self.get(trigger["parent_task_id"]) if trigger.get("parent_task_id") else None
+            parent_event=trigger.get("parent_event_id")
+            if parent_event:
+                row=self.db.execute("SELECT task_id FROM events WHERE event_id=?",(parent_event,)).fetchone()
+                if row:
+                    if trigger.get("parent_task_id",row[0])!=row[0]:
+                        raise Refused("父事件与父任务不一致")
+                    parent=self.get(row[0])
+            if parent and trigger.get("trace_id",parent["trace_id"])!=parent["trace_id"]:
+                raise Refused("trace_id 与本地父任务不一致")
+            trace_id=parent["trace_id"] if parent else trigger.get("trace_id") or key
             now = utc()
             self.db.execute("INSERT INTO tasks VALUES(?,?,'PLANNING','等待生成计划',NULL,'[]',0,0,0,?,?)",
                             (key,text,now,now))
-            self.db.execute("INSERT INTO events(utc,task_id,step,kind,detail) VALUES(?,?,0,'accepted',?)",(now,key,text))
+            self.db.execute("INSERT INTO task_triggers VALUES(?,?,?,?,?,?)",
+                (key,trigger["kind"],trigger["source"],trigger["id"],json.dumps(trigger),trace_id))
+            task=self.get(key)
+            self.append(task,"accepted","已受理任务",{"request":artifact(text)},step=0)
             return self.get(key)
+
+    def append(self,task,kind,detail,payload,*,step,op=None,trace=None):
+        """Caller owns the transaction, so state and causal event commit together."""
+        prior=self.db.execute("SELECT event_id FROM events WHERE task_id=? ORDER BY seq DESC LIMIT 1",
+                              (task["id"],)).fetchone()
+        event_id=uuid.uuid4().hex
+        trigger=task["trigger"]
+        parent_id=prior[0] if prior else (trigger or {}).get("parent_event_id")
+        envelope={"schema_version":1,"module":"agent","layer":"task","code":"agent."+kind,
+                  **(trace or {}),"event_id":event_id,"trace_id":task["trace_id"],
+                  "parent_event_id":parent_id,"trigger":trigger}
+        self.db.execute("""INSERT INTO events(utc,task_id,step,kind,detail,operation_id,payload,event_id)
+                           VALUES(?,?,?,?,?,?,?,?)""",
+            (utc(),task["id"],step,kind,clean_text(detail)[:1200],op,
+             json.dumps({**payload,"trace":envelope},ensure_ascii=False),event_id))
+
+    def exchange_event(self,task,kind,trace,operation_id):
+        with self.lock,self.db:
+            if "diagnosis" in trace:
+                trace={**trace,"code":trace["diagnosis"]["code"]}
+            self.append(task,kind,trace.get("diagnosis",{}).get("message",kind),{},
+                        step=task["cursor"],op=operation_id,trace=trace)
 
     def due(self, planning):
         states = ("PLANNING","PLANNING") if planning else ("RUNNING","WAITING")
@@ -102,23 +174,53 @@ class Journal:
     def save(self,t, state, detail, delay=0, kind=None, op=None, diagnostic=None):
         now=utc()
         with self.lock,self.db:
+            prior=self.db.execute("SELECT state FROM tasks WHERE id=?",(t["id"],)).fetchone()[0]
+            if kind is None and prior!=state:
+                kind="transition"
             self.db.execute("""UPDATE tasks SET state=?,detail=?,provider=?,steps=?,cursor=?,retries=?,due=?,updated=? WHERE id=?""",
-                (state,detail,t["provider"],json.dumps(t["steps"]),t["cursor"],t["retries"],time.time()+delay,now,t["id"]))
+                (state,clean_text(detail)[:1200],t["provider"],json.dumps(t["steps"]),t["cursor"],t["retries"],time.time()+delay,now,t["id"]))
             if kind:
                 index = t["cursor"]-1 if kind=="verified" else t["cursor"]
-                payload = {"provider":t["provider"],"state":state,"retries":t["retries"]}
+                payload = {"provider":t["provider"],"prior_state":prior,"state":state,"retries":t["retries"]}
                 if diagnostic:
-                    payload["diagnostic"]=diagnostic
+                    payload["diagnostic"]=sanitized({k:v for k,v in diagnostic.items() if k!="proposal"})
+                    if "proposal" in diagnostic:
+                        payload["diagnostic"]["proposal_artifact"]=artifact(diagnostic["proposal"])
                 if kind=="planned":
-                    payload["steps"]=t["steps"]
+                    payload["steps"]=[project_step(s) for s in t["steps"]]
                 elif op and 0 <= index < len(t["steps"]):
-                    payload["step"]=t["steps"][index]
-                self.db.execute("INSERT INTO events(utc,task_id,step,kind,detail,operation_id,payload) VALUES(?,?,?,?,?,?,?)",
-                                (now,t["id"],index,kind,detail,op,json.dumps(payload,ensure_ascii=False)))
+                    payload["step"]=project_step(t["steps"][index])
+                trace={}
+                if diagnostic and diagnostic.get("code"):
+                    trace={"layer":"planner" if op is None else "tool","code":diagnostic["code"],
+                           "diagnosis":payload["diagnostic"]}
+                self.append(t,kind,detail,payload,step=index,op=op,trace=trace)
 
-    def events(self,key):
+    def event_page(self,key,after=None,limit=128):
+        if not 1<=limit<=500 or (after is not None and after<0):
+            raise ValueError("事件分页参数无效")
+        rows=[]
+        size=0
         with self.lock:
-            return [dict(r) for r in self.db.execute("SELECT * FROM events WHERE task_id=? ORDER BY seq",(key,))]
+            reverse=after is None
+            order="DESC" if reverse else "ASC"
+            stream=self.db.execute("SELECT * FROM events WHERE task_id=? AND seq>? ORDER BY seq "+order+" LIMIT ?",
+                                   (key,after or 0,limit+1))
+            for row in stream:
+                size+=len(row["payload"].encode())
+                if len(rows)==limit or (rows and size>350000):
+                    return (rows[::-1] if reverse else rows),True
+                rows.append(dict(row))
+        return (rows[::-1] if reverse else rows),False
+
+
+def project_step(step):
+    result=dict(step)
+    for key in ("args","evidence"):
+        if key in result:
+            captured=artifact(result[key])
+            result[key]=captured.get("content",captured)
+    return result
 
 
 class Robot(Node):
@@ -146,11 +248,11 @@ class Robot(Node):
             raise Unavailable(f"{client.srv_name} 回执超时")
         return future.result()
 
-    def run(self,step,op,cap):
+    def run(self,step,op,cap,trace=None):
         if step["tool"] == "status" and not cap.get("endpoint"):
             sample=self.sample
             if not sample or time.monotonic()-sample[0]>2:
-                raise Unavailable("等待新鲜里程计")
+                raise failure(Unavailable,"等待新鲜里程计","tool.odom_stale","ros.odometry")
             msg=sample[1]
             p=msg.pose.pose.position
             q=msg.pose.pose.orientation
@@ -159,41 +261,50 @@ class Robot(Node):
                     "stamp":{"sec":msg.header.stamp.sec,"nanosec":msg.header.stamp.nanosec},"x":p.x,"y":p.y,
                     "yaw":math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z)),"speed":msg.twist.twist.linear.x}
         if step["tool"]=="inspect" and not cap.get("endpoint"):
-            status=self.call(self.query,GetMission.Request(mission_id=op))
-            if not status.found:
+            def current():
+                s=self.call(self.query,GetMission.Request(mission_id=op))
+                return {"found":s.found,"state":s.state,"detail":s.detail,"verified_count":s.verified_count,
+                        "points":[[p.x,p.y] for p in s.evidence]}
+            status=exchange(trace,"ros","edge_core.get_mission",{"mission_id":op},current)
+            if not status["found"]:
                 pts=[Point(x=float(x),y=float(y)) for x,y in step["args"]["points"]]
-                response=self.call(self.submit,SubmitMission.Request(mission_id=op,waypoints=pts))
-                if not response.accepted:
-                    if "occupied" in response.detail:
-                        raise Unavailable(response.detail)
-                    raise Refused(response.detail)
+                def submit():
+                    s=self.call(self.submit,SubmitMission.Request(mission_id=op,waypoints=pts))
+                    return {"accepted":s.accepted,"state":s.state,"detail":s.detail}
+                response=exchange(trace,"ros","edge_core.submit_mission",{"mission_id":op,"waypoints":step["args"]["points"]},submit)
+                if not response["accepted"]:
+                    if "occupied" in response["detail"]:
+                        raise failure(Unavailable,response["detail"],"core.base_occupied","edge_core")
+                    raise failure(Refused,response["detail"],"navigation.goal_rejected","edge_core")
                 return None
-            if status.state in ("RUNNING","CANCELING"):
+            state=status["state"]
+            if state in ("RUNNING","CANCELING"):
                 return None
-            if status.state=="RECOVERY_REQUIRED":
-                raise OutcomeUnknown(status.detail)
-            if status.state=="CANCELED":
-                raise OperationCanceled(status.detail)
-            if status.state!="SUCCEEDED":
-                raise Refused(f"{status.state}: {status.detail}")
-            return {"mission_id":op,"verified_count":status.verified_count,
-                    "points":[[p.x,p.y] for p in status.evidence]}
+            if state=="RECOVERY_REQUIRED":
+                raise failure(OutcomeUnknown,status["detail"],"navigation.outcome_unknown","edge_core")
+            if state=="CANCELED":
+                raise failure(OperationCanceled,status["detail"],"navigation.canceled","edge_core")
+            if state!="SUCCEEDED":
+                raise failure(Refused,state+": "+status["detail"],"navigation.failed","edge_core")
+            return {"mission_id":op,"verified_count":status["verified_count"],"points":status["points"]}
         try:
-            result=http_json(cap["endpoint"],{"operation_id":op,"arguments":step["args"],"version":step["version"]})
+            body={"operation_id":op,"arguments":step["args"],"version":step["version"]}
+            result=exchange(trace,"adapter",step["tool"],body,lambda:http_json(cap["endpoint"],body))
         except Refused as exc:
             if cap["effect"]!="read":
-                raise OutcomeUnknown(str(exc)) from exc
+                raise failure(OutcomeUnknown,str(exc),getattr(exc,"code","tool.receipt_invalid"),
+                              getattr(exc,"origin","provider"),getattr(exc,"details",None)) from exc
             raise
         if not isinstance(result,dict) or result.get("operation_id")!=op:
-            raise OutcomeUnknown("插件回执缺少原始 operation_id")
+            raise failure(OutcomeUnknown,"插件回执缺少原始 operation_id","tool.receipt_invalid","provider")
         if result.get("state")=="RUNNING":
             return None
         if result.get("state")=="CANCELED":
             raise OperationCanceled(str(result.get("detail","操作已取消")))
         if result.get("state") in ("FAILED","BLOCKED"):
-            raise Refused(str(result.get("detail","插件未提供成功证据")))
+            raise remote_failure(Refused,result,"tool.provider_failed")
         if result.get("state")!="SUCCEEDED" or not result.get("evidence"):
-            raise OutcomeUnknown(str(result.get("detail","未收到可核对的插件执行证据")))
+            raise remote_failure(OutcomeUnknown,result,"tool.receipt_invalid")
         for outcome, field in cap.get("outcomes",{}).items():
             evidence = result["evidence"]
             if not isinstance(evidence,dict) or field not in evidence or evidence[field] in (None,""):
@@ -212,10 +323,12 @@ def worker(journal,robot,planning):
             time.sleep(0.2)
             continue
         op=f"{t['id']}/step/{t['cursor']+1}"
+        def trace(kind, fields):
+            journal.exchange_event(t,kind,fields,None if planning else op)
         try:
             caps=registry()
             if planning:
-                t["provider"],t["steps"]=plan(t["text"],caps)
+                t["provider"],t["steps"]=plan(t["text"],caps,trace)
                 t["retries"]=0
                 journal.save(t,"RUNNING","已验证计划",kind="planned")
                 continue
@@ -224,11 +337,13 @@ def worker(journal,robot,planning):
             if (not cap or cap["version"]!=step["version"] or
                     ("binding" in step and binding(cap)!=step["binding"]) or
                     ("binding" not in step and step["tool"] in ("inspect","status") and cap.get("endpoint"))):
-                raise Unavailable("所需能力未挂载，或提供者与已保存的计划不一致")
+                raise failure(Unavailable,"所需能力未挂载，或提供者与已保存的计划不一致","tool.binding_unavailable","registry")
             if step["status"]=="PENDING":
                 step.update(status="RUNNING",operation_id=op,started_at=time.time())
                 journal.save(t,"RUNNING","已持久化步骤意图",kind="dispatch",op=op)
-            result=robot.run(step,op,cap)
+            result=exchange(trace,"tool",step["tool"],{"operation_id":op,"arguments":step["args"],"version":step["version"]},
+                            lambda:robot.run(step,op,cap,trace),
+                            meta={"provider":"http-adapter" if cap.get("endpoint") else "ros","binding":binding(cap)})
             if result is None:
                 if time.time()-step.get("resumed_at",step["started_at"])>float(os.getenv("EDGE_STEP_TIMEOUT","1800")):
                     journal.save(t,"RECOVERY_REQUIRED","等待原操作终态超时，请对账",kind="timeout",op=op)
@@ -241,25 +356,34 @@ def worker(journal,robot,planning):
             last=t["cursor"]==len(t["steps"])
             journal.save(t,"SUCCEEDED" if last else "RUNNING","已取得步骤证据",kind="verified",op=op)
         except Unavailable as exc:
-            diagnostic=getattr(exc,"diagnostic",None)
-            if diagnostic:
-                t["provider"]=diagnostic.get("provider")
+            diagnostic=event_diagnosis(exc,planning,"tool.transport_unavailable")
+            if planning and diagnostic.get("provider"):
+                t["provider"]=diagnostic["provider"]
             t["retries"]+=1
             exhausted=t["retries"]>int(os.getenv("EDGE_RETRY_LIMIT","7"))
             journal.save(t,("BLOCKED" if planning else "RECOVERY_REQUIRED") if exhausted else
                          ("PLANNING" if planning else "WAITING"),str(exc),delay=min(30,2**min(t["retries"]-1,5)),
                          kind="retry_exhausted" if exhausted else "retry",op=None if planning else op,diagnostic=diagnostic)
         except Refused as exc:
-            diagnostic=getattr(exc,"diagnostic",None)
-            if diagnostic:
-                t["provider"]=diagnostic.get("provider")
+            diagnostic=event_diagnosis(exc,planning,"tool.rejected")
+            if planning and diagnostic.get("provider"):
+                t["provider"]=diagnostic["provider"]
             journal.save(t,"BLOCKED",str(exc),kind="blocked",op=None if planning else op,diagnostic=diagnostic)
         except OutcomeUnknown as exc:
-            journal.save(t,"RECOVERY_REQUIRED",str(exc),kind="error",op=op)
+            journal.save(t,"RECOVERY_REQUIRED",str(exc),kind="error",op=op,diagnostic=event_diagnosis(exc,planning,"tool.receipt_invalid"))
         except OperationCanceled as exc:
-            journal.save(t,"CANCELED",str(exc),kind="canceled",op=op)
+            journal.save(t,"CANCELED",str(exc),kind="canceled",op=op,diagnostic=event_diagnosis(exc,planning,"tool.canceled"))
         except Exception as exc:
-            journal.save(t,"RECOVERY_REQUIRED",f"{type(exc).__name__}: {exc}",kind="error",op=op)
+            journal.save(t,"RECOVERY_REQUIRED",f"{type(exc).__name__}: {exc}",kind="error",op=op,
+                         diagnostic=event_diagnosis(exc,planning,"agent.unexpected_error"))
+
+
+def event_diagnosis(exc,planning,fallback):
+    extra=getattr(exc,"diagnostic",{})
+    if planning:
+        fallback={"capability_check":"planner.capability_missing","plan_validation":"planner.invalid_proposal",
+                  "planner":"planner.provider_failed"}.get(extra.get("stage"),fallback)
+    return {**extra,**diagnosis(exc,fallback,"planner" if planning else "agent")}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -282,7 +406,13 @@ class Handler(BaseHTTPRequestHandler):
             key=parse_qs(path.query).get("id",[""])[0]
             task=self.server.journal.get(key)
             if task:
-                task["events"]=self.server.journal.events(key)
+                query=parse_qs(path.query)
+                try:
+                    after=int(query["after"][0]) if "after" in query else None
+                    limit=int(query.get("limit",["128"])[0])
+                    task["events"],task["events_has_more"]=self.server.journal.event_page(key,after,limit)
+                except ValueError:
+                    return self.send(400,{"detail":"事件分页参数无效"})
                 return self.send(200,task)
         self.send(404,{"detail":"未找到记录"})
 
@@ -296,15 +426,16 @@ class Handler(BaseHTTPRequestHandler):
             request=json.loads(self.rfile.read(size))
             if not isinstance(request,dict):
                 raise ValueError("请求必须是对象")
-            key=request.get("id") if self.path=="/agent/retry" else request.get("id",uuid.uuid4().hex)
+            key=request.get("id")
             text=request.get("text")
-            if not isinstance(key,str) or not re.fullmatch(r"[\w.-]{1,96}",key):
+            if (key is not None or self.path=="/agent/retry") and (
+                    not isinstance(key,str) or not re.fullmatch(r"[\w.-]{1,96}",key)):
                 raise ValueError("ID 格式无效")
             if self.path=="/agent/retry":
                 return self.send(202,self.server.journal.retry(key))
             if not isinstance(text,str) or not 1<=len(text.strip())<=4096:
                 raise ValueError("任务文本长度应为 1–4096 字符")
-            self.send(202,self.server.journal.create(key,text.strip()))
+            self.send(202,self.server.journal.create(key,text.strip(),request.get("trigger")))
         except (TypeError,ValueError) as exc:
             self.send(400,{"detail":str(exc)})
         except Refused as exc:

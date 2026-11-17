@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "prompts": {
+    "planner.system": {
+      "version": "1", "text": "你是机器人任务规划器。仅使用提供的能力。为用户要求的全部结果选择步骤。未提供完成整项任务所需的工具时返回空 steps，并解释缺少的能力。用户问小车在哪、朝哪边、是否在移动，都是读取当前测量值，使用 status，args 为 {}。若要拍照片或抓东西，必须有对应能力，查询状态不能代替拍照或抓取。inspect 需要用户给出具体坐标，保持原顺序。不得猜测坐标。输出 JSON。"
+    }
+  },
+  "diagnostics": {
+    "core.base_occupied": {"version":"1","hint":"查看底盘当前委托状态，核对释放事件后按原操作 ID 重试。"},
+    "navigation.odom_timeout": {"version":"1","hint":"核对里程计最后的采集时间、设备驱动、坐标系和 QoS。"},
+    "navigation.path_blocked": {"version":"1","hint":"检查制动事件的 front_range_m，对回放中的实际激光命中和门口路径进行比较。"},
+    "navigation.scan_stale": {"version":"1","hint":"检查前向激光样本时间、有效测距和安装坐标系，再核查停止回执。"},
+    "scene.place_unknown": {"version":"1","hint":"读取当前地图版本与地点别名，确认目标属于此场地。"},
+    "scene.place_inaccessible": {"version":"1","hint":"核对该地标的 accessible 标记和现场维护隔栏。"},
+    "scene.no_route": {"version":"1","hint":"检查起点定位、图连接和机器人外形间隙。"},
+    "navigation.heartbeat_expired": {"version":"1","hint":"按 operation_id 核对最后一个操作心跳和内核存活情况。"},
+    "navigation.deadline": {"version":"1","hint":"核对规划距离、实际运动轨迹及动作的持续时间。"},
+    "navigation.stop_unconfirmed": {"version":"1","hint":"检查执行器及停止观测，保持资源占用直至对账。"},
+    "navigation.goal_rejected": {"version":"1","hint":"检查动作资源、目标坐标与网关当前状态。"},
+    "core.waypoint_invalid": {"version":"1","hint":"检查点数、坐标系、边界与有限数值。"},
+    "core.verification_timeout": {"version":"1","hint":"检查网关成功回执之后是否有新鲜位置可供验收。"},
+    "navigation.outcome_unknown": {"version":"1","hint":"核对原操作的执行器回执、停止状态和传感器证据。"},
+    "tool.receipt_invalid": {"version":"1","hint":"校验提供者回传的 operation_id、终态与约定证据字段。"},
+    "tool.transport_unavailable": {"version":"1","hint":"检查挂载端点、服务健康状态和重试时间。"},
+    "tool.odom_stale": {"version":"1","hint":"核对里程计最近一次采样时间、驱动与话题映射。"},
+    "planner.invalid_proposal": {"version":"1","hint":"对照本次模型请求、输出和能力参数契约。"}
+  }
+}

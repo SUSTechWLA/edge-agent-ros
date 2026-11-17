@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import rclpy
 
-from history import encode
+from history import TRACE_FIELDS, encode
 from observer import Observer
 
 
@@ -111,7 +111,7 @@ class Handler(SimpleHTTPRequestHandler):
             super().do_GET()
             return
         params=parse_qs(url.query)
-        filters={k:params[k][0] for k in ("kind","mission_id","task_id","session_id","operation_id","level") if k in params}
+        filters={k:params[k][0] for k in ("kind","mission_id","session_id","operation_id","level","source",*TRACE_FIELDS) if k in params}
         store=self.observer.history
         try:
             if url.path=="/api/state":
