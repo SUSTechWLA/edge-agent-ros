@@ -11,7 +11,10 @@ function fields(container,pairs){
 async function api(path,opts={}){
   const res=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(8500),...opts});
   let data;try{data=await res.json();}catch{throw new Error('服务响应格式异常（HTTP '+res.status+'）');}
-  if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.detail||'服务返回 HTTP '+res.status);
+  if(!res.ok){
+    const error=new Error(typeof data.error==='string'?data.error:data.detail||'服务返回 HTTP '+res.status);
+    error.status=res.status;throw error;
+  }
   return data;
 }
 const icons={map:'<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z M9 3v15 M15 6v15"/>',scan:'<path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5"/><circle cx="12" cy="12" r="4"/><path d="m12 12 5-5"/>',layers:'<path d="m3 8 9-5 9 5-9 5-9-5Zm0 4 9 5 9-5m-18 4 9 5 9-5"/>',activity:'<path d="M2 13h5l3-7 4 12 3-6h5"/>',task:'<path d="M5 4h14v16H5z M8 8h8M8 12h8M8 16h5"/>'};
@@ -20,7 +23,10 @@ let live=null, replay=null, replayRecord=null, liveOk=false, requestBusy=false, 
 let pageBefore=null, eventFilters=new URLSearchParams(), observedKinds=new Set(), taskRecord=null, taskDraft=null, submitBusy=false;
 const filterInputs={task_id:'task-filter',mission_id:'mission-filter',kind:'kind-filter',trace_id:'trace-filter',
   module:'module-filter',code:'code-filter',trigger_kind:'trigger-kind-filter',trigger_id:'trigger-filter'};
-const section=()=>location.hash==='#events'?'events':'monitor';
+const section=()=>{
+  const name=location.hash.slice(1).split('?')[0];
+  return name==='review'||name==='events'?name:'monitor';
+};
 const displayed=()=>replay||live;
 function health(out,source){
   if(!replay && live && !liveOk){out.className='badge warn';out.textContent='连接中断';return;}
@@ -105,7 +111,9 @@ function render(){
     el('history-msg').textContent='历史回放　#'+replayRecord.seq+'　'+clock(replayRecord.utc)+'　'+replayRecord.kind+telemetry;
   }
   el('task-panel').hidden=!!replay||!taskRecord;
-  if(section()==='events')return;
+  el('recent-title').textContent=replay?'当时的归档事件':'最近状态变化';
+  if(section()==='review')RunReview.liveStatus(live,liveOk);
+  if(section()!=='monitor')return;
   EdgeMap.update(s);renderRaw(s);
   health(el('fusion-health'),src.pose);
   el('fusion-desc').textContent=!pose?'等待融合位姿与建图数据':diag?.mode==='wheel_only'?'当前采用轮式里程计推进位姿，激光观测用于建图。':'轮速估计平移，惯导与轮式航向共同估计朝向。激光观测用于建图。';
@@ -133,7 +141,7 @@ function eventsRows(where,records,message){
 function showEvent(ev){
   selected=ev;el('event-title').textContent='事件 #'+ev.seq;el('event-summary').textContent=ev.detail||ev.kind;
   const agentEvent=ev.source==='mission_agent/tasks';
-  const details=[['发生时间',ev.utc],['类型 / 等级',ev.kind+' · '+ev.level],['采集来源',ev.source],
+  const details=[['发生时间',ev.utc],['类型 / 等级',ev.kind+' · '+ev.level],['采集来源',ev.source],['观测会话',ev.session_id],
     ['模块',ev.module],['诊断码',ev.code],['所属层',ev.layer],['调用链 ID',ev.trace_id],['事件 ID',ev.event_id],
     ['触发类型',ev.trigger_kind],['触发 ID',ev.trigger_id],['触发来源',ev.trigger_source],
     ['自然语言任务',ev.task_id||ev.data?.task_id||(agentEvent?ev.mission_id:null)],
@@ -144,6 +152,13 @@ function showEvent(ev){
     const jump=node('button','cause','查看事件 #'+ev.cause_seq);
     jump.onclick=async()=>{try{const r=await api('/api/events?before='+(ev.cause_seq+1)+'&limit=1');if(r.events[0]?.seq!==ev.cause_seq)throw new Error('找不到该事件');showEvent(r.events[0]);}catch(e){el('replay-error').textContent=e.message;}};
     el('event-fields').lastChild.replaceChildren(jump);
+  }
+  const taskId=ev.task_id||ev.data?.task_id||(agentEvent?ev.mission_id:null);
+  const taskLink=el('event-task-review');
+  taskLink.hidden=!taskId;
+  if(taskId){
+    taskLink.href='#review?'+new URLSearchParams({task:taskId});
+    taskLink.onclick=()=>el('event-modal').close();
   }
   el('event-json').textContent=JSON.stringify(ev,null,2);el('replay-error').textContent='';el('replay').disabled=false;
   if(!el('event-modal').open)el('event-modal').showModal();
@@ -169,41 +184,70 @@ async function loadPage(before=null){
 }
 function applyFilter(){
   eventFilters=new URLSearchParams();
+  if(el('events-view').value!=='all')eventFilters.set('view',el('events-view').value);
   for(const [key,id] of Object.entries(filterInputs)){const value=el(id).value.trim();if(value)eventFilters.set(key,value);}
   loadPage();
 }
-function clearFilterInputs(){Object.values(filterInputs).forEach(id=>el(id).value='');}
+function clearFilterInputs(){Object.values(filterInputs).forEach(id=>el(id).value='');el('events-view').value='all';}
+el('events-view').onchange=applyFilter;
 el('filter').onclick=applyFilter;el('clear-filter').onclick=()=>{clearFilterInputs();applyFilter();};
 Object.values(filterInputs).forEach(id=>el(id).onkeydown=e=>{if(e.key==='Enter')applyFilter();});
 el('older').onclick=()=>{if(page.length)loadPage(page.at(-1).seq);};el('newer').onclick=()=>loadPage();
 function route(){
-  const journal=section()==='events';
-  el('monitor').hidden=journal;el('events').hidden=!journal;el('page-title').textContent=journal?'事件记录':'机器人观测台';
-  el('nav-events').toggleAttribute('aria-current',journal);el('nav-live').toggleAttribute('aria-current',!journal);
-  el(journal?'nav-events':'nav-live').setAttribute('aria-current','page');if(journal)loadPage(pageBefore);else if(!replay)eventsRows('recent-rows',recent,'尚无事件');render();
+  const current=section(), titles={monitor:'机器人观测台',events:'事件记录',review:'运行复盘'};
+  for(const [key,nav] of Object.entries({monitor:'nav-live',events:'nav-events',review:'nav-review'})){
+    el(key).hidden=key!==current;
+    if(key===current)el(nav).setAttribute('aria-current','page');else el(nav).removeAttribute('aria-current');
+  }
+  el('page-title').textContent=titles[current];
+  if(current==='review' && replay)replay=replayRecord=null;
+  RunReview.route(current==='review');
+  if(current==='review')requestAnimationFrame(()=>window.scrollTo(0,0));
+  if(current==='events')loadPage(pageBefore);
+  if(current==='monitor' && !replay)renderRecent();
+  render();
 }
 window.addEventListener('hashchange',route);
+window.addEventListener('load',()=>{if(section()==='review')window.scrollTo(0,0);});
+el('nav-review').addEventListener('click',event=>{
+  if(location.hash==='#review'){event.preventDefault();window.scrollTo(0,0);}
+});
 el('replay').onclick=async()=>{
-  if(!selected)return;const ev=selected;el('replay').disabled=true;
+  if(!selected)return;const ev=selected,fromReview=section()==='review'?location.hash:null;el('replay').disabled=true;
   try{
     const s=await api('/api/replay?at='+encodeURIComponent(ev.seq));
     const log=await api('/api/events?before='+(ev.seq+1)+'&limit=5');
+    const back=el('replay-review');back.hidden=!fromReview;if(fromReview)back.href=fromReview;
     replay=s;replayRecord=ev;el('event-modal').close();location.hash='monitor';route();
     eventsRows('recent-rows',log.events,'该时刻暂无事件');window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){el('replay-error').textContent='无法回放 · '+e.message;}finally{el('replay').disabled=false;}
 };
-el('resume').onclick=()=>{replay=replayRecord=null;render();eventsRows('recent-rows',recent,'尚无事件');poll();};
+el('resume').onclick=()=>{replay=replayRecord=null;render();renderRecent();poll();};
 function setNotice(text){el('notice').hidden=!text;el('notice').textContent=text||'';}
-let lastCursor=null;
+let lastCursor=null, recentCursor=null, recentBusy=false, recentError='';
+function renderRecent(){
+  eventsRows('recent-rows',recentError?[]:recent,recentError||'尚无已归档的状态变化');
+}
+async function updateRecent(cursor){
+  if(recentBusy || cursor===recentCursor)return;
+  recentBusy=true;
+  try{
+    const data=await api('/api/events?view=changes&limit=5');
+    recent=data.events;recentCursor=cursor;recentError='';registerKinds(recent);
+  }catch(e){recentError='最近状态变化暂不可读 · '+e.message;}
+  finally{recentBusy=false;}
+  if(!replay && section()==='monitor')renderRecent();
+}
 async function poll(){
   if(requestBusy)return;requestBusy=true;
   try{
     const s=await api('/api/state');live=s;liveOk=true;setNotice('');render();
     if(s.cursor!==lastCursor){
-      const data=await api('/api/events?limit=5');recent=data.events;lastCursor=s.cursor;registerKinds(recent);
-      if(!replay && section()==='monitor')eventsRows('recent-rows',recent,'尚无事件');
+      if(section()==='review' && lastCursor!=null)RunReview.refresh();
       if(section()==='events' && pageBefore==null && !el('event-modal').open)loadPage();
+      lastCursor=s.cursor;
     }
+    updateRecent(s.cursor);
   }catch(e){liveOk=false;setNotice('数据连接中断 · '+e.message+'。页面将自动重试。');render();}
   finally{requestBusy=false;}
 }

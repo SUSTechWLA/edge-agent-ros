@@ -199,6 +199,18 @@ class History:
     def selection(self, after, before, filters, maximum=None):
         values = []
         where = []
+        if filters.get("view")=="changes":
+            # Explicit task/call/cause/trigger links carry diagnostic meaning,
+            # even when no mission ID is available. This is a view predicate,
+            # not a change to the independent archive retention policy.
+            # event_id, module and code are assigned to ordinary samples too.
+            where.append(f"""NOT ({ORDINARY_SAMPLE}
+                AND task_id IS NULL AND trace_id IS NULL AND parent_event_id IS NULL
+                AND call_id IS NULL AND trigger_kind IS NULL AND trigger_id IS NULL
+                AND trigger_source IS NULL)""")
+        elif filters.get("view")=="issues":
+            where.append("""(level IN ('warn','error') OR kind IN
+                ('agent.blocked','agent.error','agent.timeout','agent.retry_exhausted','agent.steps_quarantined'))""")
         for key in ("mission_id","kind","session_id","operation_id","level","source",*(f for f in TRACE_FIELDS if f not in ("task_id","trace_id"))):
             if key in filters:
                 where.append(key+"=?")

@@ -2,15 +2,15 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><title>机器人观测台 · Edge Agent ROS</title>
-<link rel="stylesheet" href="/app.css"><script src="/map.js" defer></script><script src="/app.js" defer></script>
+<link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/review.css"><script src="/map.js" defer></script><script src="/review.js" defer></script><script src="/app.js" defer></script>
 </head><body>
 <a href="#main" class="skip">跳至工作区</a>
 <header class="topbar"><div class="brand"><svg viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="12" fill="#d6fb80"/><path d="m10 26 12-17 12 17-12 8z" fill="#19352c"/><path d="m16 25 6-9 6 9-6 4z" fill="#d6fb80"/></svg><span>Edge Agent <b>ROS</b></span></div>
-<nav class="tabs" aria-label="工作区"><a id="nav-live" href="#monitor" aria-current="page">实时监控</a><a id="nav-events" href="#events">事件记录</a></nav>
+<nav class="tabs" aria-label="工作区"><a id="nav-live" href="#monitor" aria-current="page">实时监控</a><a id="nav-review" href="#review">运行复盘</a><a id="nav-events" href="#events">事件记录</a></nav>
 <div class="connection"><span class="pip" id="conn-pip"></span><span id="conn">连接中</span></div></header>
 <main id="main">
 <div class="heading"><div><p class="context"><span class="env-icon" aria-hidden="true">◈</span><span id="env">ROS 2</span><span class="slash">/</span><span id="robot">Edge</span></p><h1 id="page-title">机器人观测台</h1></div><div class="heading-right"><div class="clock"><span id="clock-label">状态更新时间</span><strong id="clock">—</strong></div><button id="open-task" class="primary">＋ 下发任务</button></div></div>
-<aside id="history-bar" class="history-bar" hidden><span id="history-msg"></span><button id="resume">返回实时</button></aside>
+<aside id="history-bar" class="history-bar" hidden><span id="history-msg"></span><div><a id="replay-review" class="more" hidden>返回本次复盘</a> <button id="resume">返回实时</button></div></aside>
 <div id="notice" role="status" class="notice" hidden></div>
 <section id="monitor" aria-label="实时监控">
 <div class="metrics"><div class="metric"><span>融合位置 <small>m</small></span><strong id="metric-pos">—</strong></div><div class="metric"><span>航向角 <small>°</small></span><strong id="metric-yaw">—</strong></div><div class="metric"><span>轮式里程计速度 <small>m/s</small></span><strong id="metric-speed">—</strong></div><div class="metric"><span>当前动作</span><strong class="op" id="metric-action">—</strong></div></div>
@@ -28,10 +28,56 @@
 <section class="panel fusion-panel"><div class="panel-header"><div class="panel-label"><i class="glyph" data-icon="layers"></i><h2>融合感知</h2></div><span id="fusion-health" class="badge">等待数据</span></div><div class="fusion-body"><p id="fusion-desc">融合位姿与局部占据栅格</p><dl id="fusion-fields"></dl></div></section>
 </div></div>
 <section class="panel task-panel" id="task-panel" hidden><div class="panel-header"><div class="panel-label"><i class="glyph" data-icon="task"></i><h2>最近下发的任务</h2></div><div><button id="trace-task">查看事件</button> <button id="refresh-task">刷新结果</button></div></div><div id="task-status" class="task-status"></div></section>
-<section class="panel recent"><div class="panel-header"><div class="panel-label"><i class="glyph" data-icon="activity"></i><h2>最近事件</h2></div><a class="more" href="#events">查看事件记录 →</a></div><div id="recent-rows"></div></section>
+<section class="panel recent"><div class="panel-header"><div class="panel-label"><i class="glyph" data-icon="activity"></i><h2 id="recent-title">最近状态变化</h2></div><a class="more" href="#review">打开运行复盘 →</a></div><div id="recent-rows"></div></section>
 </section>
-<section id="events" aria-label="持久化事件记录" hidden><div class="panel"><div class="filters"><label>自然语言任务 ID<input type="search" id="task-filter" placeholder="全部任务"></label><label>ROS 委托 ID<input type="search" id="mission-filter" placeholder="全部委托"></label><label>事件类型<input type="search" id="kind-filter" placeholder="全部类型" list="kind-options"></label><datalist id="kind-options"></datalist><button id="filter" class="primary">查询</button><button id="clear-filter">重置</button><a class="download" id="export" href="/api/export" download="edge-events.ndjson">导出 NDJSON ↓</a></div><details class="event-filters"><summary>按调用链、模块或触发来源筛选</summary><div class="filters"><label>调用链 ID<input type="search" id="trace-filter"></label><label>模块<input type="search" id="module-filter" placeholder="edge.gateway"></label><label>诊断码<input type="search" id="code-filter"></label><label>触发类型<input type="search" id="trigger-kind-filter" placeholder="watchdog"></label><label>触发 ID<input type="search" id="trigger-filter"></label></div></details><div id="event-rows"></div><div class="pager"><button id="newer">最新一页</button><span id="page-range">—</span><button id="older">更早事件</button></div></div></section>
+<section id="review" aria-label="运行复盘" hidden>
+  <div id="review-home">
+    <section id="review-current" class="review-current" aria-label="实时运行状态">
+      <div><p class="review-kicker">实时运行状态</p><h2 id="review-operation">连接中…</h2><p id="review-freshness">正在读取传感器状态</p></div>
+      <dl><div><dt>融合模式</dt><dd id="review-mode">—</dd></div><div><dt>状态采集时间</dt><dd id="review-now">—</dd></div></dl>
+    </section>
+    <div class="review-columns">
+      <section class="panel">
+        <div class="panel-header"><h2>任务账本</h2><small id="review-counts-caption">最新创建在前</small></div>
+        <div class="review-states" aria-label="任务分类">
+          <button data-review-state="all" aria-pressed="true">全部<strong>—</strong></button>
+          <button data-review-state="active" aria-pressed="false">进行中<strong>—</strong></button>
+          <button data-review-state="succeeded" aria-pressed="false">已成功<strong>—</strong></button>
+          <button data-review-state="issues" aria-pressed="false">异常<strong>—</strong></button>
+        </div>
+        <p id="review-list-notice" class="review-notice" role="status" hidden></p>
+        <div id="review-task-list"></div>
+        <div class="pager"><button id="review-prev" disabled>上一页</button><span id="review-page"></span><button id="review-next" disabled>下一页</button></div>
+      </section>
+      <section class="panel review-history">
+        <div class="panel-header"><h2>运行历史</h2><small>最新收录在前</small></div>
+        <div id="review-history-tabs" class="segments" aria-label="历史记录类型">
+          <button data-view="changes" aria-pressed="true">状态变化</button>
+          <button data-view="issues" aria-pressed="false">历史问题</button>
+        </div>
+        <p id="review-history-note" class="review-hint">已归档的模块活动和状态变更。</p>
+        <p id="review-history-notice" class="review-notice" role="status" hidden></p><div id="review-history-rows"></div>
+        <div class="pager"><button id="history-prev" disabled>上一页</button><span id="history-page"></span><button id="history-next" disabled>下一页</button></div>
+      </section>
+    </div>
+  </div>
+  <article id="review-detail" hidden>
+    <div class="review-toolbar"><a href="#review">← 返回任务账本</a><button id="review-detail-refresh">刷新结果</button><a id="review-export" download="task-events.ndjson">导出归档证据 ↓</a></div>
+    <section class="panel" id="review-task-detail">
+      <div class="review-task-intro"><span id="review-result" class="badge">读取中</span><h2 id="review-task-goal">读取任务…</h2><p id="review-task-outcome"></p></div>
+      <dl id="review-identities" class="review-facts"></dl><div id="review-steps"></div>
+    </section>
+    <section class="panel review-evidence">
+      <div class="panel-header"><h2>执行时间线</h2><label>范围 <select id="review-scope"><option value="task_id">本次任务</option><option value="trace_id">整条调用链</option></select></label></div>
+      <p id="review-time-note" class="review-hint">按归档顺序排列，行内时间为来源报告的发生时间。</p>
+      <p id="review-evidence-notice" class="review-notice" role="status" hidden></p>
+      <div id="review-timeline"></div>
+      <div class="review-bottom"><button id="review-evidence-more" hidden>继续查看后续事件</button></div>
+    </section>
+  </article>
+</section>
+<section id="events" aria-label="持久化事件记录" hidden><div class="panel"><div class="filters"><label>记录范围<select id="events-view"><option value="all">全部原始事件</option><option value="changes">状态变化</option><option value="issues">历史问题</option></select></label><label>自然语言任务 ID<input type="search" id="task-filter" placeholder="全部任务"></label><label>ROS 委托 ID<input type="search" id="mission-filter" placeholder="全部委托"></label><label>事件类型<input type="search" id="kind-filter" placeholder="全部类型" list="kind-options"></label><datalist id="kind-options"></datalist><button id="filter" class="primary">查询</button><button id="clear-filter">重置</button><a class="download" id="export" href="/api/export" download="edge-events.ndjson">导出 NDJSON ↓</a></div><details class="event-filters"><summary>按调用链、模块或触发来源筛选</summary><div class="filters"><label>调用链 ID<input type="search" id="trace-filter"></label><label>模块<input type="search" id="module-filter" placeholder="edge.gateway"></label><label>诊断码<input type="search" id="code-filter"></label><label>触发类型<input type="search" id="trigger-kind-filter" placeholder="watchdog"></label><label>触发 ID<input type="search" id="trigger-filter"></label></div></details><div id="event-rows"></div><div class="pager"><button id="newer">最新一页</button><span id="page-range">—</span><button id="older">更早事件</button></div></div></section>
 </main>
-<dialog id="event-modal" aria-labelledby="event-title"><div class="modal-heading"><h2 id="event-title">事件详情</h2><button id="close-modal" aria-label="关闭详情">×</button></div><p id="event-summary"></p><dl id="event-fields"></dl><details open><summary>结构化记录</summary><pre id="event-json"></pre></details><p id="replay-error" role="status"></p><button id="replay" class="primary">回放此时状态</button></dialog>
+<dialog id="event-modal" aria-labelledby="event-title"><div class="modal-heading"><h2 id="event-title">事件详情</h2><button id="close-modal" aria-label="关闭详情">×</button></div><p id="event-summary"></p><dl id="event-fields"></dl><details open><summary>结构化记录</summary><pre id="event-json"></pre></details><p id="replay-error" role="status"></p><button id="replay" class="primary">回放此时状态</button> <a id="event-task-review" class="download" hidden>打开所属任务 →</a></dialog>
 <dialog id="task-modal" aria-labelledby="task-title"><form id="task-form"><div class="modal-heading"><h2 id="task-title">下发自然语言任务</h2><button type="button" id="close-task" aria-label="关闭任务窗口">×</button></div><label for="task-text" class="task-label">任务说明</label><textarea id="task-text" rows="3" required maxlength="2048" placeholder="依次巡检 (0.8,0) 和 (0.8,0.7)，然后报告状态"></textarea><button id="task-example" type="button">填入巡检示例</button><div class="task-cap" id="cap-list"></div><p role="status" id="task-feedback"></p><button type="submit" class="primary" id="task-submit">下发任务</button></form></dialog>
 </body></html>

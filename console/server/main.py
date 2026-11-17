@@ -2,6 +2,7 @@
 import http.client
 import json
 import os
+import sqlite3
 import threading
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -11,6 +12,7 @@ import rclpy
 
 from history import TRACE_FIELDS, encode
 from observer import Observer
+from task_review import task_page
 
 
 def integer(params, key, default=None, ceiling=2**63-1):
@@ -114,8 +116,21 @@ class Handler(SimpleHTTPRequestHandler):
         filters={k:params[k][0] for k in ("kind","mission_id","session_id","operation_id","level","source",*TRACE_FIELDS) if k in params}
         store=self.observer.history
         try:
+            if "view" in params and url.path in ("/api/events","/api/export"):
+                view=params["view"][0]
+                if view not in ("all","issues","changes"):
+                    raise ValueError("view must be all, changes or issues")
+                filters["view"]=view
             if url.path=="/api/state":
                 self.respond(200,self.observer.snapshot())
+            elif url.path=="/api/review/tasks":
+                try:
+                    page=task_page(self.observer.tasks,params.get("state",["all"])[0],params.get("before",[None])[0],
+                                   integer(params,"limit",30,100))
+                except (OSError,sqlite3.Error):
+                    self.respond(503,{"error":"任务账本暂时不可读，请检查 Agent 与任务数据卷。"})
+                    return
+                self.respond(200,page)
             elif url.path=="/api/history":
                 self.respond(200,store.retention())
             elif url.path=="/api/events":

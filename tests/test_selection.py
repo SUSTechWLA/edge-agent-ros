@@ -43,6 +43,7 @@ RULES = [
     (("scene/provider.py",), (*SCENE,"clock-reset")),
     (("scene/*",), SCENE),
     (("console/server/*", "perception/*", "observations/*.json"), (*OBS,"board")),
+    (("console/web/review.*","tests/system/review_browser.mjs"), ("ui","console-missions","places")),
     (("console/web/*", "tests/system/console_browser.mjs"), ("ui","console-missions")),
     (("client/event_sink.py",), ("observations","planner")),
     (("sim/bridge.yaml","sim/witness.yaml","sim/world.sdf"), (*MOTION,*OBS)),
@@ -117,6 +118,8 @@ class TestSelection(unittest.TestCase):
         for path in ("agent/plugin_manager.py","client/plugin_manager_watch.py","policies/plugin-recovery.json"):
             self.assertEqual(selection([path])[0], [R,"planner","observations","agent-faults","board"])
         self.assertIn("board",selection(["plugins/derived/derived.speed_kmh.json"])[0])
+        for path in ("console/web/review.js","tests/system/review_browser.mjs"):
+            self.assertEqual(selection([path])[0], [R,"console-missions","places","ui"])
 
 
 if __name__=="__main__":
