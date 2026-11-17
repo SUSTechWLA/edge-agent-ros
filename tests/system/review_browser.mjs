@@ -10,6 +10,7 @@ export async function checkReview({url, width, evaluate, waitFor, send, screensh
     await evaluate(q(selector)+'.click()');
   };
   const value = (selector, property) => evaluate(q(selector)+'.'+property);
+  const ready = selector => q(selector)+".getAttribute('aria-busy')!=='true'";
   const api = async path => {
     const response = await fetch(new URL(path,url));
     assert.ok(response.ok, 'Review reference API returned HTTP '+response.status);
@@ -39,6 +40,71 @@ export async function checkReview({url, width, evaluate, waitFor, send, screensh
                   "a=>new URLSearchParams(a.hash.split('?')[1]).get('task'))";
   const records = selector => 'Array.from(document.querySelectorAll('+JSON.stringify(selector+' [data-seq]')+
                               '), row => Number(row.dataset.seq))';
+  async function delayedTransitions() {
+    const fixtureTasks = [
+      {id:'review-fixture-blocked',text:'Browser fixture blocked task',state:'BLOCKED'},
+      {id:'review-fixture-success',text:'Browser fixture completed task',state:'SUCCEEDED'},
+      {id:'review-fixture-older',text:'Browser fixture older task',state:'SUCCEEDED'}
+    ].map(t=>({...t,detail:'Browser-only test response',created:'2026-01-01T00:00:00Z',updated:'2026-01-01T00:00:00Z',trace_id:t.id}));
+    const fixtureEvents = [900003,900002,900001].map((seq,i)=>({
+      seq,kind:i===0?'agent.blocked':'agent.verified',detail:'Browser-only test response',
+      source:'review.fixture',module:'review.fixture',level:i===0?'error':'info',utc:'2026-01-01T00:00:00Z',data:{}
+    }));
+    await evaluate(`window.reviewFixture={fetch:window.fetch,hold:false,pending:[]};
+      window.fetch=(resource,options)=>{
+        const uri=new URL(resource instanceof Request?resource.url:resource,location.href), query=uri.searchParams;
+        const fixture=window.reviewFixture;
+        let data;
+        if(uri.pathname==='/api/review/tasks' && query.get('limit')==='8'){
+          const tasks=${JSON.stringify(fixtureTasks)};
+          const issues=query.get('state')==='issues', older=query.has('before');
+          data={tasks:issues?tasks.slice(0,1):older?tasks.slice(2):tasks.slice(0,2),
+            counts:{all:3,active:0,succeeded:2,issues:1},next_before:issues||older?null:'fixture-next'};
+        }else if(uri.pathname==='/api/events' && query.has('view') && query.get('limit')==='8'){
+          const events=${JSON.stringify(fixtureEvents)};
+          const issues=query.get('view')==='issues', older=query.has('before');
+          data={events:issues?events.slice(0,1):older?events.slice(2):events.slice(0,2),has_more:!issues&&!older};
+        }else return fixture.fetch(resource,options);
+        if(!fixture.hold)return Promise.resolve(Response.json(data));
+        return new Promise(resolve=>fixture.pending.push(()=>resolve(Response.json(data))));
+      };`);
+    const taskResult = expected => ready('#review-task-list')+' && JSON.stringify('+taskIds+')==='+JSON.stringify(JSON.stringify(expected));
+    const historyResult = expected => ready('#review-history-rows')+' && JSON.stringify('+records('#review-history-rows')+')==='+JSON.stringify(JSON.stringify(expected));
+    async function delayedClick(selector,rows,prefix,loaded) {
+      await evaluate('window.reviewFixture.hold=true');
+      await click(selector);
+      await waitFor('window.reviewFixture.pending.length>0','Browser fixture captured the delayed read');
+      assert.equal(await evaluate(q(rows)+".getAttribute('aria-busy')"),'true','Pending '+prefix+' must announce loading');
+      assert.equal(await evaluate('document.querySelectorAll('+JSON.stringify(rows+' a[href*="task="], '+rows+' [data-seq]')+').length'),0,
+                   'Pending '+prefix+' retained records from the previous selection');
+      assert.ok(await evaluate(q('#'+prefix+'-prev')+'.disabled && '+q('#'+prefix+'-next')+'.disabled'),
+                'Pending '+prefix+' allowed another page action');
+      await evaluate('window.reviewFixture.hold=false; window.reviewFixture.pending.splice(0).forEach(release=>release())');
+      await waitFor(loaded,'Released '+prefix+' response rendered');
+    }
+    try {
+      await click('[data-review-state="all"]');
+      await waitFor(taskResult(fixtureTasks.slice(0,2).map(t=>t.id)));
+      await delayedClick('[data-review-state="issues"]','#review-task-list','review',taskResult([fixtureTasks[0].id]));
+      await click('[data-review-state="all"]');
+      await waitFor(taskResult(fixtureTasks.slice(0,2).map(t=>t.id)));
+      await delayedClick('#review-next','#review-task-list','review',taskResult([fixtureTasks[2].id]));
+      await click('#review-history-tabs [data-view="changes"]');
+      await waitFor(historyResult([900003,900002]));
+      await delayedClick('#review-history-tabs [data-view="issues"]','#review-history-rows','history',historyResult([900003]));
+      await click('#review-history-tabs [data-view="changes"]');
+      await waitFor(historyResult([900003,900002]));
+      await delayedClick('#history-next','#review-history-rows','history',historyResult([900001]));
+    } finally {
+      await evaluate('window.fetch=window.reviewFixture.fetch; window.reviewFixture.pending.splice(0).forEach(release=>release()); delete window.reviewFixture');
+    }
+    await click('#nav-events');
+    await click('#nav-review');
+    await click('[data-review-state="all"]');
+    await click('#review-history-tabs [data-view="changes"]');
+    await waitFor(ready('#review-task-list')+' && '+q('[data-review-state="all"] strong')+'.textContent==='+JSON.stringify(String(baseline.counts.all)));
+    report.delayed_transitions = ['task-state','task-page','history-view','history-page'];
+  }
   await click('#nav-review');
   await waitFor("location.hash==='#review' && !document.querySelector('#review').hidden");
   await waitFor(q('#review-now')+".textContent.match(/\\d/)");
@@ -53,6 +119,7 @@ export async function checkReview({url, width, evaluate, waitFor, send, screensh
   for (const group of ['all','active','succeeded','issues']) {
     const candidates = await api('/api/review/tasks?state='+group+'&limit=100');
     await click('[data-review-state="'+group+'"]');
+    await waitFor(ready('#review-task-list'),'Task category response settled');
     const task = candidates.tasks[0];
     if (!task) {
       await waitFor(taskIds+'.length===0 && '+q('#review-task-list')+'.innerText.trim().length>0');
@@ -67,10 +134,12 @@ export async function checkReview({url, width, evaluate, waitFor, send, screensh
     report.tasks[group] = visibleIds.length;
     if (group==='all' && candidates.tasks.length>visibleIds.length) {
       await click('#review-next');
+      await waitFor(ready('#review-task-list'),'Next task page response settled');
       await waitFor(taskIds+'[0]==='+JSON.stringify(candidates.tasks[visibleIds.length].id),'Next task page');
       const next = await evaluate(taskIds);
       assert.ok(next.every(id=>!visibleIds.includes(id)),'Task pagination repeated IDs');
       await click('#review-prev');
+      await waitFor(ready('#review-task-list'),'Previous task page response settled');
       await waitFor(taskIds+'[0]==='+JSON.stringify(task.id),'Previous task page');
       report.task_page_checked = true;
     }
@@ -132,6 +201,7 @@ export async function checkReview({url, width, evaluate, waitFor, send, screensh
     const expected = await api('/api/events?view='+view+'&limit=1');
     const tab = '#review-history-tabs [data-view="'+view+'"]';
     await click(tab);
+    await waitFor(ready('#review-history-rows'),'History view response settled');
     if (expected.events.length) {
       const seq = expected.events[0].seq;
       await waitFor(records('#review-history-rows')+'.includes('+seq+')','Visible '+view+' event');
@@ -146,6 +216,7 @@ export async function checkReview({url, width, evaluate, waitFor, send, screensh
     }
   }
 
+  await delayedTransitions();
   if (baseline.tasks.length) {
     const task = baseline.tasks[0];
     await simulateRead('/api/events',{task_id:task.id},200,{events:[],has_more:false},async()=>{
