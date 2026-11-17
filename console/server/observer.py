@@ -93,6 +93,8 @@ class Observer(Node):
             "runtime.registry":self.tasks.parent / "module-events.sqlite",
             "plugin.author":Path("/var/lib/edge-author-events/module-events.sqlite"),
             "plugin.publisher":Path("/etc/edge/plugins/derived/.history/module-events.sqlite"),
+            "plugin.manager":Path("/etc/edge/plugins/runtime/.history/module-events.sqlite"),
+            "plugin.supervisor":Path("/var/lib/edge-supervisor/module-events.sqlite"),
         }, "/var/lib/edge-module-sources")
         self.sources = {}
         self.health = {}

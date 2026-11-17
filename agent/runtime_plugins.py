@@ -115,11 +115,7 @@ class ServiceSnapshot:
 
     def __init__(self, directory, observing=False):
         self.entries = {}
-        self.owners = defaultdict(list)
         self.invalid = []
-        self.problems = {}
-        self.bindings = {}
-        self.draining = {}
         self.directory_present = True
         if observing:
             # glob may silently turn a permission error into an empty directory.
@@ -131,6 +127,8 @@ class ServiceSnapshot:
         else:
             paths = sorted(directory.glob("*.json"))
         for path in paths:
+            if path.name.startswith("."):
+                continue
             try:
                 item = _descriptor(path)
             except (OSError, ValueError, RecursionError) as error:
@@ -141,9 +139,28 @@ class ServiceSnapshot:
                                      "reason":"invalid runtime descriptor: " + type(error).__name__})
                 continue
             self.entries[item["id"]] = item
+        self._index()
+
+    def _index(self):
+        self.owners = defaultdict(list)
+        self.problems = {}
+        self.bindings = {}
+        self.draining = {}
+        for key,item in self.entries.items():
             for service in item["provides"]:
-                self.owners[service].append(item["id"])
+                self.owners[service].append(key)
         self._resolve()
+
+    def with_change(self, name, descriptor):
+        """Resolve a prospective update against the same observed catalog, without changing files."""
+        changed = object.__new__(type(self))
+        changed.entries = {key:item for key,item in self.entries.items() if key != name}
+        if descriptor is not None:
+            changed.entries[name] = descriptor
+        changed.invalid = [row for row in self.invalid if row["id"] != name]
+        changed.directory_present = self.directory_present
+        changed._index()
+        return changed
 
     def _resolve(self):
         graph = TopologicalSorter()

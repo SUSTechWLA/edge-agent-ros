@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "text": "用千米每小时报告本机前向速度",
+      "semantic": {"field": "speed", "unit": "km/h"},
+      "cases": [
+        {"sample": {"source": "/fixture/odom", "frame": "odom", "stamp_ns": 1000000000, "speed": -0.5}, "expected": {"value": -1.8, "unit": "km/h"}},
+        {"sample": {"source": "/fixture/odom", "frame": "odom", "stamp_ns": 2000000000, "speed": 0.0}, "expected": {"value": 0.0, "unit": "km/h"}},
+        {"sample": {"source": "/fixture/odom", "frame": "odom", "stamp_ns": 3000000000, "speed": 1.25}, "expected": {"value": 4.5, "unit": "km/h"}}
+      ]
+    }
+  ]
+}

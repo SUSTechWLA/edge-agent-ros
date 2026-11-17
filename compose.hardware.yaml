@@ -96,6 +96,7 @@ services:
       - state:/var/lib/edge-agent:ro
       - task-state:/var/lib/edge-tasks:ro
       - author-events:/var/lib/edge-author-events:ro
+      - supervisor-state:/var/lib/edge-supervisor:ro
       - module-sources:/var/lib/edge-module-sources:ro
       - ${EDGE_PLUGINS_DIR:-./plugins}:/etc/edge/plugins:ro
       - console-history:/var/lib/edge-console
@@ -106,7 +107,7 @@ services:
   plugin-author:
     image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
     pull_policy: never
-    profiles: ["plugin-author"]
+    profiles: ["plugin-author", "plugin-manager"]
     network_mode: host
     init: true
     restart: unless-stopped
@@ -121,7 +122,39 @@ services:
     volumes:
       - author-proposals:/proposals
       - author-events:/var/lib/edge-author-events
+  plugin-manager:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    pull_policy: never
+    profiles: ["plugin-manager"]
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    network_mode: host
+    entrypoint: ["python3","/opt/edge/client/plugin_manager_watch.py"]
+    command: ["--url","http://127.0.0.1:${EDGE_CONSOLE_PORT:-8765}","--policy","/etc/edge-policy/plugin-recovery.json","--proposals","/proposals","--registry","/plugins/derived","--state","/var/lib/edge-supervisor"]
+    volumes:
+      - author-proposals:/proposals:ro
+      - supervisor-state:/var/lib/edge-supervisor
+      - ${EDGE_PLUGINS_DIR:-./plugins}/derived:/plugins/derived
+      - ${EDGE_RECOVERY_POLICY:-./contracts/plugin-recovery.json}:/etc/edge-policy/plugin-recovery.json:ro
+  plugin-admin:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    pull_policy: never
+    profiles: ["plugin-admin"]
+    network_mode: none
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["python3","/opt/edge/agent/plugin_manager.py"]
+    command: ["--help"]
+    volumes:
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins
 volumes:
+  supervisor-state:
   author-events:
   module-sources:
   author-proposals:
