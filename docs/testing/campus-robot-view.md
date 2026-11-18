@@ -45,12 +45,12 @@
 
 在 Docker 的独立 ROS 域、Gazebo 分区中完成三次连续导航、六次机体动作、一次不支持动作、热重载后的再次出门和三个激光测站。返程与第二次出门实驶共 6.369 m，停稳后离目标点分别为 5.92 cm 和 7.25 cm。球场、林间和教学楼前三处测站各采集三帧单平面扫描，每帧含 360 条射线，三处每帧分别有 0、9、69 个有效回波。浏览器在 1440 px 与 390 px 两种宽度核对了机体、地图与路线。另完成 46 项校园及地图相关测试和 16 项部署测试。[版本、任务标识与测量摘要](../evidence/unified-campus.json) · [本机完整验收原件](../../artifacts/verification/unified-campus/final.json)
 
-开发机另保存了可离线查看的[校园 GLB](../../artifacts/sim-assets/generated/tu-delft-x/scene.glb)、[米制路线与测站](../../artifacts/sim-assets/generated/tu-delft-x/campus.json)和[模型署名](../../artifacts/sim-assets/generated/tu-delft-x/ATTRIBUTION.txt)。这些生成物位于 `artifacts/`。Gazebo 的碰撞、传感器和控制器由校园构建器生成，运行实验时使用 Docker 场景。
+开发机另保存了离线导出的 `scene.glb`（校园网格）、`campus.json`（米制路线与测站）和 `ATTRIBUTION.txt`（署名），目录为 `artifacts/sim-assets/generated/tu-delft-x/`。新检出的工作区可从已签入的场景源和素材清单重新生成地图。网格预期大小与 SHA-256 见上述测量摘要。Gazebo 的碰撞、传感器和控制器由校园构建器生成。[生成并启动校园](../../scene/campus_large/README.md) · [路线、场景数据与素材出处](../../scene/campus_large/ASSETS.md) · [机器人模型授权](../../scene/campus_large/robots/assets.json)
 
 在仓库根目录执行以下命令。将 `<镜像标签>` 替换为由当前提交构建的本地仿真镜像。
 
 ```sh
-python tests/system/campus_acceptance.py --image <镜像标签> --verify-reload --verify-texture --out artifacts/verification/unified-campus/final.json
+python tests/system/campus_acceptance.py --image <镜像标签> --verify-reload --verify-texture --out artifacts/verification/unified-campus-repeat/final.json
 ```
 
 报告中的 `live_geometry.route` 保存生成场景与实际 Gazebo 的几何检查。`mission` 保存差速车穿门轨迹，`robot_forms` 保存各机体的任务与独立物理反馈，`station_probes` 保存各测站激光数据。`texture_browser` 记录桌面与手机视口中采样到的真实机体像素数、近景和各地点截图。浏览器使用与遮挡、坐标拾取相同的深度缓冲辨认机体像素。检验缩放后的细跑道线时，需同时查看运动场截图，颜色数量本身无法说明白线连续。[四机体规格](../specs/SDD-030-campus-robot-forms.md) · [校园连通性规格](../specs/SDD-029-unified-campus.md)

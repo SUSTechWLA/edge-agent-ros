@@ -1,0 +1,3063 @@
+{
+  "passed": true,
+  "project": "edge-campus-audit-02089324a3",
+  "ros_domain": "169",
+  "gazebo_partition": "campus_audit_02089324a3",
+  "utc": "2026-11-18T13:30:44.387668+00:00",
+  "image": "edge-agent-ros:campus-forms-14dc41b",
+  "requested_text": "前往教学楼门外",
+  "live_geometry": {
+    "delft_surveyed_site": {
+      "world_pose": [
+        "-410",
+        "-161",
+        "0"
+      ],
+      "visuals": 2,
+      "collisions": 1,
+      "geometry_types": {
+        "mesh": 2
+      },
+      "mesh_uri_samples": [
+        "file:///campus/real_site/terrain.obj",
+        "file:///campus/real_site/buildings.obj"
+      ]
+    },
+    "teaching": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 489,
+      "collisions": 324,
+      "geometry_types": {
+        "box": 487,
+        "cylinder": 2
+      },
+      "mesh_uri_samples": [],
+      "largest_box_size_m": [
+        "hall_0_floor",
+        [
+          19.08,
+          18.48,
+          0.2
+        ]
+      ]
+    },
+    "woods": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 588,
+      "collisions": 98,
+      "geometry_types": {
+        "cylinder": 98,
+        "ellipsoid": 490
+      },
+      "mesh_uri_samples": []
+    },
+    "road": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 203,
+      "collisions": 10,
+      "geometry_types": {
+        "box": 167,
+        "cylinder": 35,
+        "mesh": 1
+      },
+      "mesh_uri_samples": [
+        "file:///campus/meshes/forecourt-0904aed27608.obj"
+      ],
+      "largest_box_size_m": [
+        "walk_grove_west_to_woodland",
+        [
+          98.6712,
+          2.8,
+          0.01
+        ]
+      ]
+    },
+    "track": {
+      "world_pose": [
+        "-234",
+        "61",
+        "0.080000000000000002"
+      ],
+      "visuals": 186,
+      "collisions": 100,
+      "geometry_types": {
+        "mesh": 1,
+        "box": 175,
+        "cylinder": 10
+      },
+      "mesh_uri_samples": [
+        "file:///campus/meshes/athletics-b3f979902d5c.obj"
+      ],
+      "largest_box_size_m": [
+        "pitch_foundation",
+        [
+          105.0,
+          68.0,
+          0.012
+        ]
+      ]
+    },
+    "route": {
+      "assembled": {
+        "nodes": [
+          "campus_gate",
+          "copse_entry",
+          "court_walk",
+          "east_green",
+          "east_plaza",
+          "faculty_walk",
+          "forest_exit",
+          "gallery_walk",
+          "garden_walk",
+          "gate_apron",
+          "grove_east",
+          "grove_west",
+          "lawn",
+          "meadow_entry",
+          "mekelweg",
+          "mekelweg_bend",
+          "plaza",
+          "south_concourse",
+          "sports_green",
+          "sports_walk",
+          "street_join",
+          "teaching_exit",
+          "terrace",
+          "track_gate",
+          "west_concourse",
+          "woodland"
+        ],
+        "segments": [
+          {
+            "from": "teaching_exit",
+            "to": "plaza",
+            "surface": "road/walk_teaching_exit_to_plaza",
+            "width_m": 4.1,
+            "length_m": 8.2,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "teaching/portal_jamb_-1.13",
+            "centerline_clearance_m_capped_at_10": 1.808
+          },
+          {
+            "from": "plaza",
+            "to": "terrace",
+            "surface": "road/walk_plaza_to_terrace",
+            "width_m": 4.1,
+            "length_m": 13.01,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "teaching/porch_post-2.1",
+            "centerline_clearance_m_capped_at_10": 7.525
+          },
+          {
+            "from": "terrace",
+            "to": "faculty_walk",
+            "surface": "road/walk_terrace_to_faculty_walk",
+            "width_m": 4.1,
+            "length_m": 27.166,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "teaching/hall_0_side_-1_sill",
+            "centerline_clearance_m_capped_at_10": 4.935
+          },
+          {
+            "from": "faculty_walk",
+            "to": "court_walk",
+            "surface": "road/walk_faculty_walk_to_court_walk",
+            "width_m": 4.1,
+            "length_m": 39.013,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_3_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "court_walk",
+            "to": "sports_walk",
+            "surface": "road/walk_court_walk_to_sports_walk",
+            "width_m": 4.1,
+            "length_m": 43.174,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_4_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "sports_walk",
+            "to": "sports_green",
+            "surface": "road/walk_sports_walk_to_sports_green",
+            "width_m": 4.1,
+            "length_m": 46.098,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_2_seat_2",
+            "centerline_clearance_m_capped_at_10": 1.717
+          },
+          {
+            "from": "sports_green",
+            "to": "gallery_walk",
+            "surface": "road/walk_sports_green_to_gallery_walk",
+            "width_m": 4.1,
+            "length_m": 38.053,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_6_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "gallery_walk",
+            "to": "south_concourse",
+            "surface": "road/walk_gallery_walk_to_south_concourse",
+            "width_m": 4.1,
+            "length_m": 35.508,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_7_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "south_concourse",
+            "to": "track_gate",
+            "surface": "road/walk_south_concourse_to_track_gate",
+            "width_m": 4.1,
+            "length_m": 10.399,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "track/terrace_-1_-1_0",
+            "centerline_clearance_m_capped_at_10": 2.5
+          },
+          {
+            "from": "track_gate",
+            "to": "west_concourse",
+            "surface": "road/walk_track_gate_to_west_concourse",
+            "width_m": 4.1,
+            "length_m": 9.223,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "track/terrace_-1_-1_3",
+            "centerline_clearance_m_capped_at_10": 1.705
+          },
+          {
+            "from": "west_concourse",
+            "to": "meadow_entry",
+            "surface": "road/walk_west_concourse_to_meadow_entry",
+            "width_m": 4.1,
+            "length_m": 33.176,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "track/terrace_-1_-1_3",
+            "centerline_clearance_m_capped_at_10": 4.532
+          },
+          {
+            "from": "meadow_entry",
+            "to": "lawn",
+            "surface": "road/walk_meadow_entry_to_lawn",
+            "width_m": 4.1,
+            "length_m": 27.459,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_3_seat_0",
+            "centerline_clearance_m_capped_at_10": 1.904
+          },
+          {
+            "from": "lawn",
+            "to": "copse_entry",
+            "surface": "road/walk_lawn_to_copse_entry",
+            "width_m": 2.8,
+            "length_m": 29.069,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_3_seat_0",
+            "centerline_clearance_m_capped_at_10": 6.02
+          },
+          {
+            "from": "copse_entry",
+            "to": "grove_west",
+            "surface": "road/walk_copse_entry_to_grove_west",
+            "width_m": 2.8,
+            "length_m": 37.0,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "pine_6",
+            "centerline_clearance_m_capped_at_10": 3.956
+          },
+          {
+            "from": "grove_west",
+            "to": "woodland",
+            "surface": "road/walk_grove_west_to_woodland",
+            "width_m": 2.8,
+            "length_m": 98.671,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "pine_6",
+            "centerline_clearance_m_capped_at_10": 2.625
+          },
+          {
+            "from": "woodland",
+            "to": "grove_east",
+            "surface": "road/walk_woodland_to_grove_east",
+            "width_m": 2.8,
+            "length_m": 66.408,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_68",
+            "centerline_clearance_m_capped_at_10": 2.363
+          },
+          {
+            "from": "grove_east",
+            "to": "forest_exit",
+            "surface": "road/walk_grove_east_to_forest_exit",
+            "width_m": 2.8,
+            "length_m": 20.881,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_95",
+            "centerline_clearance_m_capped_at_10": 3.745
+          },
+          {
+            "from": "forest_exit",
+            "to": "garden_walk",
+            "surface": "road/walk_forest_exit_to_garden_walk",
+            "width_m": 2.8,
+            "length_m": 25.0,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_125",
+            "centerline_clearance_m_capped_at_10": 6.897
+          },
+          {
+            "from": "garden_walk",
+            "to": "east_green",
+            "surface": "road/walk_garden_walk_to_east_green",
+            "width_m": 3.5,
+            "length_m": 47.074,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_109",
+            "centerline_clearance_m_capped_at_10": 3.765
+          },
+          {
+            "from": "east_green",
+            "to": "east_plaza",
+            "surface": "road/walk_east_green_to_east_plaza",
+            "width_m": 3.5,
+            "length_m": 31.048,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_1_seat_2",
+            "centerline_clearance_m_capped_at_10": 6.74
+          },
+          {
+            "from": "east_plaza",
+            "to": "campus_gate",
+            "surface": "road/walk_east_plaza_to_campus_gate",
+            "width_m": 3.5,
+            "length_m": 26.926,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_129",
+            "centerline_clearance_m_capped_at_10": 3.791
+          },
+          {
+            "from": "campus_gate",
+            "to": "gate_apron",
+            "surface": "road/walk_campus_gate_to_gate_apron",
+            "width_m": 3.5,
+            "length_m": 16.56,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_129",
+            "centerline_clearance_m_capped_at_10": 7.572
+          },
+          {
+            "from": "gate_apron",
+            "to": "street_join",
+            "surface": "road/walk_gate_apron_to_street_join",
+            "width_m": 3.5,
+            "length_m": 11.662,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": null,
+            "centerline_clearance_m_capped_at_10": 10.0
+          },
+          {
+            "from": "street_join",
+            "to": "mekelweg_bend",
+            "surface": "road/walk_street_join_to_mekelweg_bend",
+            "width_m": 3.5,
+            "length_m": 16.428,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.021,
+            "nearest_obstacle": null,
+            "centerline_clearance_m_capped_at_10": 10.0
+          },
+          {
+            "from": "mekelweg_bend",
+            "to": "mekelweg",
+            "surface": "road/walk_mekelweg_bend_to_mekelweg",
+            "width_m": 3.5,
+            "length_m": 19.617,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.021,
+            "nearest_obstacle": null,
+            "centerline_clearance_m_capped_at_10": 10.0
+          }
+        ],
+        "surveyed_segments": [
+          {
+            "from": "street_join",
+            "to": "mekelweg_bend",
+            "samples": 18,
+            "footway_ids": [
+              "G0503.654104fc5393403db02054554ba4cc63"
+            ]
+          },
+          {
+            "from": "mekelweg_bend",
+            "to": "mekelweg",
+            "samples": 21,
+            "footway_ids": [
+              "G0503.654104fc5393403db02054554ba4cc63"
+            ]
+          }
+        ],
+        "obstacle_projections": 6282,
+        "horizontal_body_radius_m": 0.32,
+        "obstacle_z_interval_m": [
+          0.065,
+          0.6
+        ],
+        "street_anchor_xy_m": [
+          65.5,
+          14
+        ],
+        "terrain_triangle": {
+          "uv": [
+            0.8724770642201836,
+            0.14957264957264957
+          ],
+          "surface_z_m": 0.025,
+          "vertices": [
+            1,
+            2,
+            3
+          ],
+          "barycentric": [
+            0.12752293577981652,
+            0.722904414647534,
+            0.14957264957264957
+          ]
+        },
+        "independent_footway": {
+          "crs": "EPSG:28992",
+          "rd_m": [
+            85675.5,
+            445615
+          ],
+          "footway_ids": [
+            "G0503.654104fc5393403db02054554ba4cc63"
+          ],
+          "reference_uv": [
+            0.8724770642201835,
+            0.14957264957264957
+          ],
+          "source": "https://api.pdok.nl/kadaster/bgt/ogc/v1/collections/wegdeel/items?bbox=85560%2C445575%2C85720%2C445780&bbox-crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F28992&crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F28992&f=json&limit=500"
+        },
+        "total_network_m": 776.82
+      },
+      "gazebo": {
+        "nodes": [
+          "campus_gate",
+          "copse_entry",
+          "court_walk",
+          "east_green",
+          "east_plaza",
+          "faculty_walk",
+          "forest_exit",
+          "gallery_walk",
+          "garden_walk",
+          "gate_apron",
+          "grove_east",
+          "grove_west",
+          "lawn",
+          "meadow_entry",
+          "mekelweg",
+          "mekelweg_bend",
+          "plaza",
+          "south_concourse",
+          "sports_green",
+          "sports_walk",
+          "street_join",
+          "teaching_exit",
+          "terrace",
+          "track_gate",
+          "west_concourse",
+          "woodland"
+        ],
+        "segments": [
+          {
+            "from": "teaching_exit",
+            "to": "plaza",
+            "surface": "road/walk_teaching_exit_to_plaza",
+            "width_m": 4.1,
+            "length_m": 8.2,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "teaching/portal_jamb_-1.13",
+            "centerline_clearance_m_capped_at_10": 1.808
+          },
+          {
+            "from": "plaza",
+            "to": "terrace",
+            "surface": "road/walk_plaza_to_terrace",
+            "width_m": 4.1,
+            "length_m": 13.01,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "teaching/porch_post-2.1",
+            "centerline_clearance_m_capped_at_10": 7.525
+          },
+          {
+            "from": "terrace",
+            "to": "faculty_walk",
+            "surface": "road/walk_terrace_to_faculty_walk",
+            "width_m": 4.1,
+            "length_m": 27.166,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "teaching/hall_0_side_-1_sill",
+            "centerline_clearance_m_capped_at_10": 4.935
+          },
+          {
+            "from": "faculty_walk",
+            "to": "court_walk",
+            "surface": "road/walk_faculty_walk_to_court_walk",
+            "width_m": 4.1,
+            "length_m": 39.013,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_3_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "court_walk",
+            "to": "sports_walk",
+            "surface": "road/walk_court_walk_to_sports_walk",
+            "width_m": 4.1,
+            "length_m": 43.174,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_4_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "sports_walk",
+            "to": "sports_green",
+            "surface": "road/walk_sports_walk_to_sports_green",
+            "width_m": 4.1,
+            "length_m": 46.098,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_2_seat_2",
+            "centerline_clearance_m_capped_at_10": 1.717
+          },
+          {
+            "from": "sports_green",
+            "to": "gallery_walk",
+            "surface": "road/walk_sports_green_to_gallery_walk",
+            "width_m": 4.1,
+            "length_m": 38.053,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_6_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "gallery_walk",
+            "to": "south_concourse",
+            "surface": "road/walk_gallery_walk_to_south_concourse",
+            "width_m": 4.1,
+            "length_m": 35.508,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "road/avenue_light_7_base",
+            "centerline_clearance_m_capped_at_10": 2.91
+          },
+          {
+            "from": "south_concourse",
+            "to": "track_gate",
+            "surface": "road/walk_south_concourse_to_track_gate",
+            "width_m": 4.1,
+            "length_m": 10.399,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "track/terrace_-1_-1_0",
+            "centerline_clearance_m_capped_at_10": 2.5
+          },
+          {
+            "from": "track_gate",
+            "to": "west_concourse",
+            "surface": "road/walk_track_gate_to_west_concourse",
+            "width_m": 4.1,
+            "length_m": 9.223,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "track/terrace_-1_-1_3",
+            "centerline_clearance_m_capped_at_10": 1.705
+          },
+          {
+            "from": "west_concourse",
+            "to": "meadow_entry",
+            "surface": "road/walk_west_concourse_to_meadow_entry",
+            "width_m": 4.1,
+            "length_m": 33.176,
+            "max_endpoint_gap_m": 0.0005,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "track/terrace_-1_-1_3",
+            "centerline_clearance_m_capped_at_10": 4.532
+          },
+          {
+            "from": "meadow_entry",
+            "to": "lawn",
+            "surface": "road/walk_meadow_entry_to_lawn",
+            "width_m": 4.1,
+            "length_m": 27.459,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_3_seat_0",
+            "centerline_clearance_m_capped_at_10": 1.904
+          },
+          {
+            "from": "lawn",
+            "to": "copse_entry",
+            "surface": "road/walk_lawn_to_copse_entry",
+            "width_m": 2.8,
+            "length_m": 29.069,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_3_seat_0",
+            "centerline_clearance_m_capped_at_10": 6.02
+          },
+          {
+            "from": "copse_entry",
+            "to": "grove_west",
+            "surface": "road/walk_copse_entry_to_grove_west",
+            "width_m": 2.8,
+            "length_m": 37.0,
+            "max_endpoint_gap_m": 0.0001,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "pine_6/collision",
+            "centerline_clearance_m_capped_at_10": 3.956
+          },
+          {
+            "from": "grove_west",
+            "to": "woodland",
+            "surface": "road/walk_grove_west_to_woodland",
+            "width_m": 2.8,
+            "length_m": 98.671,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "pine_6/collision",
+            "centerline_clearance_m_capped_at_10": 2.625
+          },
+          {
+            "from": "woodland",
+            "to": "grove_east",
+            "surface": "road/walk_woodland_to_grove_east",
+            "width_m": 2.8,
+            "length_m": 66.408,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_68",
+            "centerline_clearance_m_capped_at_10": 2.363
+          },
+          {
+            "from": "grove_east",
+            "to": "forest_exit",
+            "surface": "road/walk_grove_east_to_forest_exit",
+            "width_m": 2.8,
+            "length_m": 20.881,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_95",
+            "centerline_clearance_m_capped_at_10": 3.745
+          },
+          {
+            "from": "forest_exit",
+            "to": "garden_walk",
+            "surface": "road/walk_forest_exit_to_garden_walk",
+            "width_m": 2.8,
+            "length_m": 25.0,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_125",
+            "centerline_clearance_m_capped_at_10": 6.897
+          },
+          {
+            "from": "garden_walk",
+            "to": "east_green",
+            "surface": "road/walk_garden_walk_to_east_green",
+            "width_m": 3.5,
+            "length_m": 47.074,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_109",
+            "centerline_clearance_m_capped_at_10": 3.765
+          },
+          {
+            "from": "east_green",
+            "to": "east_plaza",
+            "surface": "road/walk_east_green_to_east_plaza",
+            "width_m": 3.5,
+            "length_m": 31.048,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "lawn/seat_1_seat_2",
+            "centerline_clearance_m_capped_at_10": 6.74
+          },
+          {
+            "from": "east_plaza",
+            "to": "campus_gate",
+            "surface": "road/walk_east_plaza_to_campus_gate",
+            "width_m": 3.5,
+            "length_m": 26.926,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_129",
+            "centerline_clearance_m_capped_at_10": 3.791
+          },
+          {
+            "from": "campus_gate",
+            "to": "gate_apron",
+            "surface": "road/walk_campus_gate_to_gate_apron",
+            "width_m": 3.5,
+            "length_m": 16.56,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": "woods/trunk_129",
+            "centerline_clearance_m_capped_at_10": 7.572
+          },
+          {
+            "from": "gate_apron",
+            "to": "street_join",
+            "surface": "road/walk_gate_apron_to_street_join",
+            "width_m": 3.5,
+            "length_m": 11.662,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.067,
+            "nearest_obstacle": null,
+            "centerline_clearance_m_capped_at_10": 10.0
+          },
+          {
+            "from": "street_join",
+            "to": "mekelweg_bend",
+            "surface": "road/walk_street_join_to_mekelweg_bend",
+            "width_m": 3.5,
+            "length_m": 16.428,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.021,
+            "nearest_obstacle": null,
+            "centerline_clearance_m_capped_at_10": 10.0
+          },
+          {
+            "from": "mekelweg_bend",
+            "to": "mekelweg",
+            "surface": "road/walk_mekelweg_bend_to_mekelweg",
+            "width_m": 3.5,
+            "length_m": 19.617,
+            "max_endpoint_gap_m": 0.0,
+            "top_z_m": 0.021,
+            "nearest_obstacle": null,
+            "centerline_clearance_m_capped_at_10": 10.0
+          }
+        ],
+        "surveyed_segments": [
+          {
+            "from": "street_join",
+            "to": "mekelweg_bend",
+            "samples": 18,
+            "footway_ids": [
+              "G0503.654104fc5393403db02054554ba4cc63"
+            ]
+          },
+          {
+            "from": "mekelweg_bend",
+            "to": "mekelweg",
+            "samples": 21,
+            "footway_ids": [
+              "G0503.654104fc5393403db02054554ba4cc63"
+            ]
+          }
+        ],
+        "obstacle_projections": 6282,
+        "horizontal_body_radius_m": 0.32,
+        "obstacle_z_interval_m": [
+          0.065,
+          0.6
+        ],
+        "street_anchor_xy_m": [
+          65.5,
+          14
+        ],
+        "terrain_triangle": {
+          "uv": [
+            0.8724770642201836,
+            0.14957264957264957
+          ],
+          "surface_z_m": 0.025,
+          "vertices": [
+            1,
+            2,
+            3
+          ],
+          "barycentric": [
+            0.12752293577981652,
+            0.722904414647534,
+            0.14957264957264957
+          ]
+        },
+        "independent_footway": {
+          "crs": "EPSG:28992",
+          "rd_m": [
+            85675.5,
+            445615
+          ],
+          "footway_ids": [
+            "G0503.654104fc5393403db02054554ba4cc63"
+          ],
+          "reference_uv": [
+            0.8724770642201835,
+            0.14957264957264957
+          ],
+          "source": "https://api.pdok.nl/kadaster/bgt/ogc/v1/collections/wegdeel/items?bbox=85560%2C445575%2C85720%2C445780&bbox-crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F28992&crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F28992&f=json&limit=500"
+        },
+        "total_network_m": 776.82
+      }
+    },
+    "robot_models": {
+      "edge_rover": {
+        "links": 4,
+        "visuals": 4,
+        "sensors": [
+          "imu",
+          "gpu_lidar"
+        ],
+        "physical_collisions": 4
+      },
+      "crazyflie": {
+        "links": 1,
+        "visuals": 7,
+        "sensors": [
+          "imu"
+        ],
+        "physical_collisions": 1
+      },
+      "go1": {
+        "links": 5,
+        "visuals": 5,
+        "sensors": [
+          "imu"
+        ],
+        "physical_collisions": 1
+      },
+      "g1": {
+        "links": 2,
+        "visuals": 3,
+        "sensors": [
+          "imu"
+        ],
+        "physical_collisions": 1
+      }
+    },
+    "live_model_count": 48,
+    "pine_instances": 36,
+    "world_sdf_sha256": "a2cb9c8d446bcb752dfcad5c20d162eb27eb8a934243a2dbe5c8e3f33357c012"
+  },
+  "mission": {
+    "task_id": "campus-gate-02089324a3",
+    "trace_id": "campus-gate-02089324a3",
+    "state": "SUCCEEDED",
+    "tool": "navigate_place",
+    "evidence": {
+      "scene": "campus_large",
+      "revision": "3.6e7cba8f9d258e39",
+      "digest": "be4e0bf5ad614a25b2e72beecd9954bc9bab0e789112da5becfca41675b4aaa0",
+      "frame": "odom",
+      "path": [
+        "teaching_lobby",
+        "teaching_door",
+        "teaching_exit"
+      ],
+      "waypoints": [
+        [
+          0,
+          0
+        ],
+        [
+          1.7,
+          0
+        ],
+        [
+          3.3,
+          0
+        ]
+      ],
+      "start_xy": [
+        -1.2477089665291077e-09,
+        -5.9437787033599685e-30
+      ],
+      "start_zone": "lobby",
+      "destination_id": "teaching_exit",
+      "distance_m": 3.300000001247709,
+      "place": "教学楼门外",
+      "observed_xy": [
+        3.246890262003843,
+        -4.5583541135629354e-14
+      ],
+      "verified_count": 3,
+      "mission_id": "campus-gate-02089324a3/step/1"
+    },
+    "paths": {
+      "truth": {
+        "start": [
+          544000000,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "inside_door": [
+          17782000000,
+          1.6263,
+          -0.0,
+          0.0797
+        ],
+        "end": [
+          25024000000,
+          3.2333,
+          0.0,
+          0.0
+        ],
+        "goal_error_m": 0.0667,
+        "samples": 241
+      },
+      "odom": {
+        "start": [
+          544000000,
+          -0.0,
+          -0.0,
+          0.0
+        ],
+        "inside_door": [
+          17782000000,
+          1.6332,
+          0.0,
+          0.0797
+        ],
+        "end": [
+          25024000000,
+          3.2469,
+          -0.0,
+          0.0
+        ],
+        "goal_error_m": 0.0531,
+        "samples": 241
+      }
+    },
+    "row_units": [
+      "stamp_ns",
+      "x_m",
+      "y_m",
+      "v_mps"
+    ]
+  },
+  "ros": {
+    "counts_start": {
+      "clock": 301,
+      "odom": 17,
+      "truth": 17,
+      "scan": 4
+    },
+    "counts_end": {
+      "clock": 12519,
+      "odom": 738,
+      "truth": 738,
+      "scan": 201
+    },
+    "first_scan": {
+      "stamp_ns": 376000000,
+      "frame": "laser_link",
+      "rays": 360,
+      "returns": 232,
+      "min_m": 1.7335,
+      "max_m": 6.0103
+    },
+    "last_scan": {
+      "stamp_ns": 24750000000,
+      "frame": "laser_link",
+      "rays": 360,
+      "returns": 120,
+      "min_m": 1.8213,
+      "max_m": 7.9469
+    },
+    "clock_before_ns": 606000000,
+    "clock_after_ns": 25108000000
+  },
+  "continuous_navigation": {
+    "session": "79ee5b0e30264514bbe549f16afd651f",
+    "first_outbound_task": "campus-gate-02089324a3",
+    "legs": [
+      {
+        "task_id": "campus-gate-02089324a3-continuation-1",
+        "text": "回到教学楼门厅",
+        "destination_id": "teaching_lobby",
+        "state": "SUCCEEDED",
+        "trace_id": "campus-gate-02089324a3-continuation-1",
+        "detail": "已取得步骤证据",
+        "tool": "navigate_place",
+        "scene_digest": "be4e0bf5ad614a25b2e72beecd9954bc9bab0e789112da5becfca41675b4aaa0",
+        "operation": "campus-gate-02089324a3-continuation-1/step/1",
+        "physical": {
+          "truth": {
+            "samples": 159,
+            "start": [
+              25024000000,
+              3.2333,
+              0.0,
+              0.0
+            ],
+            "gate": [
+              34714000000,
+              1.7151,
+              0.0148,
+              0.32
+            ],
+            "stop": [
+              41140000000,
+              0.0533,
+              0.0257,
+              0.0
+            ],
+            "distance_m": 3.184,
+            "goal_error_m": 0.0592
+          },
+          "odom": {
+            "samples": 159,
+            "start": [
+              25024000000,
+              3.2469,
+              -0.0,
+              0.0
+            ],
+            "gate": [
+              34816000000,
+              1.6825,
+              -0.0001,
+              0.32
+            ],
+            "stop": [
+              41140000000,
+              0.0533,
+              -0.0001,
+              0.0
+            ],
+            "distance_m": 3.197,
+            "goal_error_m": 0.0533
+          }
+        },
+        "waypoints": [
+          [
+            3.3,
+            0
+          ],
+          [
+            1.7,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "place": "教学楼门厅"
+      },
+      {
+        "task_id": "campus-gate-02089324a3-continuation-2",
+        "text": "前往教学楼门外",
+        "destination_id": "teaching_exit",
+        "state": "SUCCEEDED",
+        "trace_id": "campus-gate-02089324a3-continuation-2",
+        "detail": "已取得步骤证据",
+        "tool": "navigate_place",
+        "scene_digest": "be4e0bf5ad614a25b2e72beecd9954bc9bab0e789112da5becfca41675b4aaa0",
+        "operation": "campus-gate-02089324a3-continuation-2/step/1",
+        "physical": {
+          "truth": {
+            "samples": 159,
+            "start": [
+              41140000000,
+              0.0533,
+              0.0257,
+              0.0
+            ],
+            "gate": [
+              49912000000,
+              1.6268,
+              0.0328,
+              0.0794
+            ],
+            "stop": [
+              57256000000,
+              3.2355,
+              0.0331,
+              0.0
+            ],
+            "distance_m": 3.185,
+            "goal_error_m": 0.0725
+          },
+          "odom": {
+            "samples": 159,
+            "start": [
+              41140000000,
+              0.0533,
+              -0.0001,
+              0.0
+            ],
+            "gate": [
+              49912000000,
+              1.6334,
+              0.0018,
+              0.0794
+            ],
+            "stop": [
+              57256000000,
+              3.249,
+              -0.0001,
+              0.0
+            ],
+            "distance_m": 3.199,
+            "goal_error_m": 0.051
+          }
+        },
+        "waypoints": [
+          [
+            0,
+            0
+          ],
+          [
+            1.7,
+            0
+          ],
+          [
+            3.3,
+            0
+          ]
+        ],
+        "place": "教学楼门外"
+      }
+    ],
+    "continuation_ground_truth_m": 6.369,
+    "restored_destination": "teaching_exit"
+  },
+  "robot_forms": {
+    "tasks": [
+      {
+        "id": "forms-7020a13100-0",
+        "text": "无人机起飞",
+        "trace_id": "forms-7020a13100-0",
+        "tool": "delegate.crazyflie",
+        "evidence": {
+          "robot_id": "crazyflie",
+          "action": "起飞",
+          "target": 1.0,
+          "measured": [
+            0.976931897365135
+          ],
+          "before": [
+            0.08
+          ],
+          "units": "m",
+          "topic": "/world/edge_lab/dynamic_pose/info",
+          "stamp_s": 60.792,
+          "before_stamp_s": 57.674,
+          "imu_stamp_s": 60.8,
+          "settled_samples": 4,
+          "scene_revision": "3.6e7cba8f9d258e39",
+          "child_task_id": "dispatch-69b32246e3b3e00a28acf92b2a5a2a37",
+          "child_trace_id": "forms-7020a13100-0"
+        },
+        "independent_gazebo": {
+          "measurement": {
+            "stamp_s": 62.496,
+            "value": {
+              "altitude": 0.9775858142223331
+            }
+          },
+          "imu": {
+            "stamp_s": 62.5,
+            "value": [
+              0.0,
+              0.0,
+              9.8
+            ]
+          }
+        }
+      },
+      {
+        "id": "forms-7020a13100-1",
+        "text": "无人机降落",
+        "trace_id": "forms-7020a13100-1",
+        "tool": "delegate.crazyflie",
+        "evidence": {
+          "robot_id": "crazyflie",
+          "action": "降落",
+          "target": 0.075,
+          "measured": [
+            0.10602348009390733
+          ],
+          "before": [
+            0.9775858142223331
+          ],
+          "units": "m",
+          "topic": "/world/edge_lab/dynamic_pose/info",
+          "stamp_s": 65.756,
+          "before_stamp_s": 62.86,
+          "imu_stamp_s": 65.75,
+          "settled_samples": 4,
+          "scene_revision": "3.6e7cba8f9d258e39",
+          "child_task_id": "dispatch-51f894166f5caa3aef2eacbe94f6469a",
+          "child_trace_id": "forms-7020a13100-1"
+        },
+        "independent_gazebo": {
+          "measurement": {
+            "stamp_s": 67.294,
+            "value": {
+              "altitude": 0.10587667786719812
+            }
+          },
+          "imu": {
+            "stamp_s": 67.3,
+            "value": [
+              0.0,
+              0.0,
+              9.8
+            ]
+          }
+        }
+      },
+      {
+        "id": "forms-7020a13100-2",
+        "text": "四足机器人屈腿",
+        "trace_id": "forms-7020a13100-2",
+        "tool": "delegate.go1",
+        "evidence": {
+          "robot_id": "go1",
+          "action": "屈腿",
+          "target": 0.65,
+          "measured": [
+            0.65,
+            0.65,
+            0.65,
+            0.65
+          ],
+          "before": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "rad",
+          "topic": "/model/go1/joint_state",
+          "stamp_s": 68.25,
+          "before_stamp_s": 67.65,
+          "imu_stamp_s": 68.25,
+          "settled_samples": 4,
+          "scene_revision": "3.6e7cba8f9d258e39",
+          "child_task_id": "dispatch-a711f99c244378181297492138a347f7",
+          "child_trace_id": "forms-7020a13100-2"
+        },
+        "independent_gazebo": {
+          "measurement": {
+            "stamp_s": 69.6,
+            "value": {
+              "FR_thigh_joint": 0.65,
+              "FL_thigh_joint": 0.65,
+              "RR_thigh_joint": 0.65,
+              "RL_thigh_joint": 0.65
+            }
+          },
+          "imu": {
+            "stamp_s": 69.6,
+            "value": [
+              0.0,
+              0.0,
+              9.8
+            ]
+          }
+        }
+      },
+      {
+        "id": "forms-7020a13100-3",
+        "text": "四足机器人伸腿",
+        "trace_id": "forms-7020a13100-3",
+        "tool": "delegate.go1",
+        "evidence": {
+          "robot_id": "go1",
+          "action": "伸腿",
+          "target": 0.15,
+          "measured": [
+            0.15,
+            0.15,
+            0.15,
+            0.15
+          ],
+          "before": [
+            0.65,
+            0.65,
+            0.65,
+            0.65
+          ],
+          "units": "rad",
+          "topic": "/model/go1/joint_state",
+          "stamp_s": 70.4,
+          "before_stamp_s": 69.9,
+          "imu_stamp_s": 70.4,
+          "settled_samples": 4,
+          "scene_revision": "3.6e7cba8f9d258e39",
+          "child_task_id": "dispatch-b2549be6bfd720620a634fa80643b987",
+          "child_trace_id": "forms-7020a13100-3"
+        },
+        "independent_gazebo": {
+          "imu": {
+            "stamp_s": 72.15,
+            "value": [
+              0.0,
+              0.0,
+              9.8
+            ]
+          },
+          "measurement": {
+            "stamp_s": 72.15,
+            "value": {
+              "FR_thigh_joint": 0.15,
+              "FL_thigh_joint": 0.15,
+              "RR_thigh_joint": 0.15,
+              "RL_thigh_joint": 0.15
+            }
+          }
+        }
+      },
+      {
+        "id": "forms-7020a13100-4",
+        "text": "双足机器人举起左臂",
+        "trace_id": "forms-7020a13100-4",
+        "tool": "delegate.g1",
+        "evidence": {
+          "robot_id": "g1",
+          "action": "举起左臂",
+          "target": -0.85,
+          "measured": [
+            -0.85
+          ],
+          "before": [
+            0.0
+          ],
+          "units": "rad",
+          "topic": "/model/g1/joint_state",
+          "stamp_s": 73.45,
+          "before_stamp_s": 72.65,
+          "imu_stamp_s": 73.45,
+          "settled_samples": 4,
+          "scene_revision": "3.6e7cba8f9d258e39",
+          "child_task_id": "dispatch-a881094bce6b42b4e105f5c1dee0c5da",
+          "child_trace_id": "forms-7020a13100-4"
+        },
+        "independent_gazebo": {
+          "measurement": {
+            "stamp_s": 74.85,
+            "value": {
+              "left_shoulder_pitch_joint": -0.85
+            }
+          },
+          "imu": {
+            "stamp_s": 74.85,
+            "value": [
+              0.0,
+              0.0,
+              9.8
+            ]
+          }
+        }
+      },
+      {
+        "id": "forms-7020a13100-5",
+        "text": "双足机器人放下左臂",
+        "trace_id": "forms-7020a13100-5",
+        "tool": "delegate.g1",
+        "evidence": {
+          "robot_id": "g1",
+          "action": "放下左臂",
+          "target": 0.0,
+          "measured": [
+            0.0
+          ],
+          "before": [
+            -0.85
+          ],
+          "units": "rad",
+          "topic": "/model/g1/joint_state",
+          "stamp_s": 76.2,
+          "before_stamp_s": 75.35,
+          "imu_stamp_s": 76.2,
+          "settled_samples": 4,
+          "scene_revision": "3.6e7cba8f9d258e39",
+          "child_task_id": "dispatch-53e1b3d2bfaa1d3049687a2f4d2e480e",
+          "child_trace_id": "forms-7020a13100-5"
+        },
+        "independent_gazebo": {
+          "measurement": {
+            "stamp_s": 77.55,
+            "value": {
+              "left_shoulder_pitch_joint": 0.0
+            }
+          },
+          "imu": {
+            "stamp_s": 77.55,
+            "value": [
+              0.0,
+              0.0,
+              9.8
+            ]
+          }
+        }
+      }
+    ],
+    "rejected": {
+      "text": "双足机器人起飞",
+      "state": "BLOCKED",
+      "detail": "该机体支持：举起左臂、放下左臂"
+    }
+  },
+  "renders": {
+    "world_digest": {
+      "layout_sha256": "be4e0bf5ad614a25b2e72beecd9954bc9bab0e789112da5becfca41675b4aaa0",
+      "world_sha256": "8132c0875d90618b421d4ea753ff14971fd2d820e844d568ffe3dcad73cd2c35"
+    },
+    "views": {
+      "overview": {
+        "height": 650,
+        "sha256": "c4cc8656db719ef0fbde0684703193b47a8cf0af53a93e6baaa4e2a159bb5d23",
+        "stamp_ns": 4000000,
+        "topic": "/campus/view/overview/image",
+        "width": 1000,
+        "sampled_color_count": 1804
+      },
+      "campus": {
+        "height": 650,
+        "sha256": "04b642eba5d17682f5338e07c8c66e306983af57f84eaacf02ee8079470aebf9",
+        "stamp_ns": 6000000,
+        "topic": "/campus/view/campus/image",
+        "width": 1000,
+        "sampled_color_count": 4727,
+        "independent_gz": {
+          "sha256": "b5c40043bedee89aaf43d6985b652a8debc5786fe303d966168d1f81a7cd1c40",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 78750000000,
+          "matching_sample_fraction": 1.0
+        }
+      },
+      "teaching": {
+        "height": 650,
+        "sha256": "e803eab4efb7271d5cd8feb0348aa37682a93c575df036a8bf9faecb5108929e",
+        "stamp_ns": 250000000,
+        "topic": "/campus/view/teaching/image",
+        "width": 1000,
+        "sampled_color_count": 2620,
+        "independent_gz": {
+          "sha256": "0e0cd7856a4ec5723e0563cbe68c0eca6db75c51c07c49debd8fde60ebf266fa",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 78750000000,
+          "matching_sample_fraction": 1.0
+        }
+      },
+      "robots": {
+        "height": 650,
+        "sha256": "0cbe74cc50c75c136dfdb5fa16ecca5cad6ab42320c512bf63cd1d92c7c346f7",
+        "stamp_ns": 376000000,
+        "topic": "/campus/view/robots/image",
+        "width": 1000,
+        "sampled_color_count": 1530,
+        "independent_gz": {
+          "sha256": "d908fc9503fbdbec54ee0674664918838fa197bd1d00d4d14d31a8162277db57",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 78750000000,
+          "matching_sample_fraction": 0.99756
+        }
+      },
+      "track": {
+        "height": 650,
+        "sha256": "d3a17dce2bb29cd0edc2efac4369c4069c774593ac731c86b23e0e29cf45c767",
+        "stamp_ns": 500000000,
+        "topic": "/campus/view/track/image",
+        "width": 1000,
+        "sampled_color_count": 4191,
+        "independent_gz": {
+          "sha256": "589d9a6491773a81194bfbab8e7c5b70797644e5f884e9b6304ef31366e902e7",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 78750000000,
+          "matching_sample_fraction": 1.0
+        }
+      },
+      "lawn": {
+        "height": 650,
+        "sha256": "f9ca6458c2c12e6d26d0f07c7e0529407b8dd9f4b6645e8a79d8a16f1e81e75c",
+        "stamp_ns": 626000000,
+        "topic": "/campus/view/lawn/image",
+        "width": 1000,
+        "sampled_color_count": 1720
+      },
+      "woods": {
+        "height": 650,
+        "sha256": "b93e008f404b63debccdb387b8fac65f6d3515c0380f6fde69da67db0677458f",
+        "stamp_ns": 750000000,
+        "topic": "/campus/view/woods/image",
+        "width": 1000,
+        "sampled_color_count": 2759,
+        "independent_gz": {
+          "sha256": "a570549a3219ef2e5c550fd46fe4f0521cc9d1db8d3962bef92cd489b04e7175",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 78750000000,
+          "matching_sample_fraction": 1.0
+        }
+      },
+      "road": {
+        "height": 650,
+        "sha256": "988c3b908c7128c2680e358d6d26ea9ed17064430e8977f84b61e2cd9c517eae",
+        "stamp_ns": 876000000,
+        "topic": "/campus/view/road/image",
+        "width": 1000,
+        "sampled_color_count": 3435
+      },
+      "teaching_interior": {
+        "height": 650,
+        "sha256": "83c7276ce4878c51af403fd0556bb3283f4508f582c49dc63d1284f976546cef",
+        "stamp_ns": 1000000000,
+        "topic": "/campus/view/teaching_interior/image",
+        "width": 1000,
+        "sampled_color_count": 694
+      },
+      "campus_street": {
+        "height": 650,
+        "sha256": "832ebb7ce38f33473741bec28acb9b4a8275cdabafbdbc5bfe0117d06134eccf",
+        "stamp_ns": 1002000000,
+        "topic": "/campus/view/campus_street/image",
+        "width": 1000,
+        "sampled_color_count": 2423,
+        "independent_gz": {
+          "sha256": "f0f0a03cf7bdb18c9bf1489e95fa1f433832320313fc44e696df068771f6a1b7",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 78750000000,
+          "matching_sample_fraction": 1.0
+        }
+      },
+      "delft": {
+        "height": 650,
+        "sha256": "74f775daa0bcf0113dc6212863eaf9e9e3ed45b03ca0003ff689dd17b68f0d8f",
+        "stamp_ns": 1126000000,
+        "topic": "/campus/view/delft/image",
+        "width": 1000,
+        "sampled_color_count": 4148
+      }
+    },
+    "declared_areas": [
+      {
+        "id": "campus",
+        "label": "TU Delft X · 校园试验场",
+        "bounds": [
+          -355,
+          -137,
+          92,
+          165
+        ],
+        "center": [
+          -131.5,
+          14.0
+        ],
+        "origin": "代尔夫特市 TU Delft X 体育园 · 本项目训练设施",
+        "description": "从南面俯瞰体育园。林带紧邻运动场，步道经过教学楼广场，与东侧 Mekelweg 街网相连。后方为实测校园楼群。",
+        "camera": {
+          "eye": [
+            -145,
+            -295,
+            145
+          ],
+          "target": [
+            -128,
+            55,
+            6
+          ]
+        }
+      },
+      {
+        "id": "teaching",
+        "label": "教学楼与主入口",
+        "bounds": [
+          -41,
+          -10,
+          5,
+          10
+        ],
+        "center": [
+          -18.0,
+          0.0
+        ],
+        "origin": "体育园训练区",
+        "description": "教学楼首层走廊通向东侧雨棚。穿过门洞即可到铺砖广场，行道树引向操场。",
+        "camera": {
+          "eye": [
+            35,
+            -32,
+            10
+          ],
+          "target": [
+            -10,
+            1,
+            5.5
+          ]
+        }
+      },
+      {
+        "id": "robots",
+        "label": "机器人实验广场",
+        "bounds": [
+          2,
+          -11,
+          25,
+          13
+        ],
+        "center": [
+          13.5,
+          1.0
+        ],
+        "origin": "教学楼东侧共享广场",
+        "description": "从广场西南角看向停驻区。左前方是掌上四旋翼，中央是四足机器人，右后方是人形机器人。轮式车从相邻门厅出发。",
+        "camera": {
+          "eye": [
+            10.25,
+            3.8,
+            1.05
+          ],
+          "target": [
+            16.15,
+            7.62,
+            0.1
+          ]
+        }
+      },
+      {
+        "id": "track",
+        "label": "运动场与看台",
+        "bounds": [
+          -338,
+          -21,
+          -130,
+          143
+        ],
+        "center": [
+          -234.0,
+          61.0
+        ],
+        "origin": "体育园原有球场范围 · 本项目体育设施",
+        "description": "八道跑道与足球场顺应真实球场的轴线。南侧看台中央的平层通道连接校园步道。",
+        "camera": {
+          "eye": [
+            -170.395,
+            -78.669,
+            101
+          ],
+          "target": [
+            -234,
+            61,
+            0
+          ]
+        }
+      },
+      {
+        "id": "lawn",
+        "label": "草坪与休憩步道",
+        "bounds": [
+          -266,
+          -67,
+          -201,
+          -20
+        ],
+        "center": [
+          -233.5,
+          -43.5
+        ],
+        "origin": "体育园南侧开放地带",
+        "description": "穿过看台外的步道可到草坪和休憩座椅，再向南进入遮挡更强的林道。",
+        "camera": {
+          "eye": [
+            -274,
+            -68,
+            7
+          ],
+          "target": [
+            -236,
+            -31,
+            1
+          ]
+        }
+      },
+      {
+        "id": "woods",
+        "label": "林带与砾石小径",
+        "bounds": [
+          -260,
+          -129,
+          -73,
+          -39
+        ],
+        "center": [
+          -166.5,
+          -84.0
+        ],
+        "origin": "实地林带 · 本地建模与 Gazebo Fuel 松树",
+        "description": "树带沿场地南缘向东北延伸。土路穿过树干之间，与学校一侧的回程步道相连。",
+        "camera": {
+          "eye": [
+            -190,
+            -96,
+            3.5
+          ],
+          "target": [
+            -140,
+            -75,
+            2
+          ]
+        }
+      },
+      {
+        "id": "road",
+        "label": "Mekelweg · 体育园入口",
+        "bounds": [
+          38,
+          -2,
+          86,
+          52
+        ],
+        "center": [
+          62.0,
+          25.0
+        ],
+        "origin": "PDOK BGT 步道与配准航片",
+        "description": "入口步道在 (65.5,14) 米接入 Mekelweg 西侧实测人行道。",
+        "camera": {
+          "eye": [
+            42,
+            -13,
+            5.5
+          ],
+          "target": [
+            63,
+            20,
+            1.2
+          ]
+        }
+      },
+      {
+        "id": "teaching_interior",
+        "label": "教学楼一层教室",
+        "bounds": [
+          -17,
+          -9,
+          1.6,
+          9
+        ],
+        "center": [
+          -7.7,
+          0.0
+        ],
+        "origin": "教学训练区",
+        "description": "近看教室、窗带和桌椅，轮式机器人出生在相邻门厅。",
+        "camera": {
+          "eye": [
+            -15.8,
+            -7.9,
+            1.65
+          ],
+          "target": [
+            -5.6,
+            -4.1,
+            1.25
+          ]
+        }
+      },
+      {
+        "id": "campus_street",
+        "label": "Mekelweg 街面 · EWI 塔楼",
+        "bounds": [
+          -271,
+          672,
+          -231,
+          712
+        ],
+        "center": [
+          -251.0,
+          692.0
+        ],
+        "origin": "荷兰 3DBAG LoD2.2 + PDOK 2025 正射影像",
+        "description": "从园区北段街面观察 EWI 塔楼。街面来自配准航片，窗格为示意材质。",
+        "camera": {
+          "eye": [
+            -251,
+            692,
+            3.2
+          ],
+          "target": [
+            -224,
+            494,
+            39
+          ]
+        }
+      },
+      {
+        "id": "delft",
+        "label": "代尔夫特理工大学 · 实测建筑群",
+        "bounds": [
+          -410,
+          -161,
+          135,
+          1009
+        ],
+        "center": [
+          -137.5,
+          424.0
+        ],
+        "origin": "荷兰 3DBAG LoD2.2 + PDOK 2025 正射影像",
+        "description": "187 栋建筑，保留实测重建的屋顶、轮廓和高度。地面与屋顶采用航片，立面窗格为示意材质。",
+        "camera": {
+          "eye": [
+            5,
+            319,
+            115
+          ],
+          "target": [
+            -218,
+            567,
+            18
+          ]
+        }
+      }
+    ],
+    "bounds_m": [
+      -420,
+      -171,
+      145,
+      1019
+    ]
+  },
+  "viewer_restart": {
+    "unchanged": [
+      "sim",
+      "gateway",
+      "agent"
+    ],
+    "before_ns": {
+      "clock": 79014000000,
+      "scan": 78876000000,
+      "odom": 78982000000,
+      "truth": 78982000000
+    },
+    "after_ns": {
+      "clock": 79826000000,
+      "scan": 79750000000,
+      "odom": 79798000000,
+      "truth": 79798000000
+    }
+  },
+  "guarded_reload": {
+    "previous_session": "79ee5b0e30264514bbe549f16afd651f",
+    "new_session": "fb9fc580c7bf409da0cccc6edd3907b1",
+    "old_task_id": "campus-gate-02089324a3",
+    "old_evidence_preserved": true,
+    "task_id": "campus-gate-02089324a3-after-reload",
+    "state": "SUCCEEDED",
+    "verified_count": 3,
+    "truth": [
+      14008000000,
+      3.2362,
+      0.0,
+      0.0
+    ],
+    "odom": [
+      14008000000,
+      3.2498,
+      0.0,
+      0.0
+    ]
+  },
+  "texture_browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "scene": "campus_large",
+        "frame": "odom",
+        "revision": "af732f426d23ca6fcd7e",
+        "dimensions": [
+          972,
+          2047
+        ],
+        "files": {
+          "color": {
+            "sha256": "aae32391cb049c5bf2d80cabc7b0757be1fee97c5a59edd5539cf68e5fc51d97",
+            "bytes": 4415108
+          },
+          "height": {
+            "sha256": "223fdf61412792a74c6f19d52dc81b5fd17a04cb3fafad611a0ddf16fdf2ea45",
+            "bytes": 58679
+          },
+          "geometry": {
+            "sha256": "05a08b134867ca62b44278425e94d2c8a05907976e81ed2b8d539bf9e2f96deb",
+            "bytes": 20682976,
+            "meshes": 31,
+            "materials": 30,
+            "robot_templates": [
+              "edge_rover",
+              "crazyflie",
+              "go1",
+              "g1"
+            ]
+          }
+        },
+        "areas": [
+          "campus",
+          "teaching",
+          "robots",
+          "track",
+          "lawn",
+          "woods",
+          "road",
+          "teaching_interior",
+          "campus_street",
+          "delft"
+        ],
+        "modes": {
+          "planar": {
+            "layout": {
+              "page": 1425,
+              "plot_width": 1014.8125,
+              "plot_height": 584.796875,
+              "height": 1232
+            },
+            "screenshot": "campus-texture-2d-1440.png",
+            "atlas": {
+              "signature": 2880182636,
+              "opaque": 2287,
+              "colors": 362,
+              "width": 1015,
+              "height": 585
+            },
+            "restored": {
+              "signature": 154836064,
+              "opaque": 2287,
+              "colors": 372,
+              "width": 1015,
+              "height": 585,
+              "maskDifference": 0,
+              "meanChannelError": 2.4973036000583004
+            },
+            "hidden": {
+              "signature": 2065459009,
+              "opaque": 7,
+              "colors": 7,
+              "width": 1015,
+              "height": 585
+            },
+            "track": {
+              "signature": 3229896424,
+              "opaque": 10080,
+              "colors": 616,
+              "width": 1015,
+              "height": 585
+            },
+            "robot": {
+              "signature": 1662195272,
+              "opaque": 10080,
+              "colors": 81,
+              "width": 1015,
+              "height": 585
+            },
+            "zoom": {
+              "signature": 4149550739,
+              "opaque": 10080,
+              "colors": 580,
+              "width": 1015,
+              "height": 585
+            },
+            "landmarks": {},
+            "bodies": {},
+            "track_pick": "X -234.00 m · Y 61.00 m ｜ 仿真外观 · 运动场与看台 · Gazebo 校园世界 · 米制场景几何与材质 ｜ 无可见占据栅格"
+          },
+          "spatial": {
+            "layout": {
+              "page": 1425,
+              "plot_width": 1014.8125,
+              "plot_height": 584.796875,
+              "height": 1263
+            },
+            "screenshot": "campus-texture-3d-1440.png",
+            "atlas": {
+              "signature": 2088496314,
+              "opaque": 7643,
+              "colors": 263,
+              "width": 1015,
+              "height": 585
+            },
+            "restored": {
+              "signature": 2088496314,
+              "opaque": 7643,
+              "colors": 263,
+              "width": 1015,
+              "height": 585,
+              "maskDifference": 0,
+              "meanChannelError": 0
+            },
+            "hidden": {
+              "signature": 307108805,
+              "opaque": 0,
+              "colors": 0,
+              "width": 1015,
+              "height": 585
+            },
+            "track": {
+              "signature": 1133500685,
+              "opaque": 10080,
+              "colors": 570,
+              "width": 1015,
+              "height": 585
+            },
+            "robot": {
+              "signature": 3706272981,
+              "opaque": 10080,
+              "colors": 400,
+              "width": 1015,
+              "height": 585
+            },
+            "zoom": {
+              "signature": 3549880129,
+              "opaque": 10080,
+              "colors": 609,
+              "width": 1015,
+              "height": 585
+            },
+            "landmarks": {
+              "campus": {
+                "signature": 2800388806,
+                "opaque": 8402,
+                "colors": 549,
+                "width": 1015,
+                "height": 585,
+                "camera": {
+                  "eye": [
+                    -145,
+                    -295,
+                    145
+                  ],
+                  "target": [
+                    -128,
+                    55,
+                    6
+                  ]
+                },
+                "screenshot": "campus-geometry-campus-1440.png"
+              },
+              "campus_street": {
+                "signature": 2210231468,
+                "opaque": 4268,
+                "colors": 310,
+                "width": 1015,
+                "height": 585,
+                "camera": {
+                  "eye": [
+                    -251,
+                    692,
+                    3.2
+                  ],
+                  "target": [
+                    -224,
+                    494,
+                    39
+                  ]
+                },
+                "screenshot": "campus-geometry-campus_street-1440.png"
+              },
+              "teaching": {
+                "signature": 2399838394,
+                "opaque": 6554,
+                "colors": 448,
+                "width": 1015,
+                "height": 585,
+                "camera": {
+                  "eye": [
+                    35,
+                    -32,
+                    10
+                  ],
+                  "target": [
+                    -10,
+                    1,
+                    5.5
+                  ]
+                },
+                "screenshot": "campus-geometry-teaching-1440.png"
+              },
+              "track": {
+                "signature": 1133500685,
+                "opaque": 10080,
+                "colors": 570,
+                "width": 1015,
+                "height": 585,
+                "camera": {
+                  "eye": [
+                    -170.395,
+                    -78.669,
+                    101
+                  ],
+                  "target": [
+                    -234,
+                    61,
+                    0
+                  ]
+                },
+                "screenshot": "campus-geometry-track-1440.png"
+              }
+            },
+            "bodies": {
+              "edge_rover": {
+                "picked_pixels": 39339,
+                "detail": "轮式无人车 · 新鲜。位置 [3.24, 0.00, 0.10] m · odom。能力：门厅穿门导航。关节按模型参考姿态展示。位姿采样 30.14 s。",
+                "screenshot": "campus-robot-edge_rover-1440.png"
+              },
+              "crazyflie": {
+                "picked_pixels": 11712,
+                "detail": "Crazyflie 四旋翼 · 新鲜。位置 [11.50, 5.80, 0.08] m · odom。能力：高度闭环、定高与降落。关节按模型参考姿态展示。位姿采样 30.14 s。IMU 采样 30.15 s。",
+                "screenshot": "campus-robot-crazyflie-1440.png"
+              },
+              "go1": {
+                "picked_pixels": 22588,
+                "detail": "Unitree Go1 四足 · 新鲜。位置 [16.00, 6.50, 0.06] m · odom。能力：测试架上四腿关节联动。5 个关节有测量，其余按模型参考姿态展示。位姿采样 30.14 s。IMU 采样 30.15 s。",
+                "screenshot": "campus-robot-go1-1440.png"
+              },
+              "g1": {
+                "picked_pixels": 22530,
+                "detail": "Unitree G1 双足 · 新鲜。位置 [20.00, 4.90, 0.06] m · odom。能力：测试架上左臂关节控制。2 个关节有测量，其余按模型参考姿态展示。位姿采样 30.95 s。IMU 采样 30.95 s。",
+                "screenshot": "campus-robot-g1-1440.png"
+              }
+            },
+            "plaza": {
+              "rendered_pixels": {
+                "edge_rover": 0,
+                "crazyflie": 152,
+                "go1": 920,
+                "g1": 1112
+              },
+              "screenshot": "campus-geometry-robots-1440.png"
+            }
+          }
+        }
+      },
+      {
+        "width": 390,
+        "scene": "campus_large",
+        "frame": "odom",
+        "revision": "af732f426d23ca6fcd7e",
+        "dimensions": [
+          972,
+          2047
+        ],
+        "files": {
+          "color": {
+            "sha256": "aae32391cb049c5bf2d80cabc7b0757be1fee97c5a59edd5539cf68e5fc51d97",
+            "bytes": 4415108
+          },
+          "height": {
+            "sha256": "223fdf61412792a74c6f19d52dc81b5fd17a04cb3fafad611a0ddf16fdf2ea45",
+            "bytes": 58679
+          },
+          "geometry": {
+            "sha256": "05a08b134867ca62b44278425e94d2c8a05907976e81ed2b8d539bf9e2f96deb",
+            "bytes": 20682976,
+            "meshes": 31,
+            "materials": 30,
+            "robot_templates": [
+              "edge_rover",
+              "crazyflie",
+              "go1",
+              "g1"
+            ]
+          }
+        },
+        "areas": [
+          "campus",
+          "teaching",
+          "robots",
+          "track",
+          "lawn",
+          "woods",
+          "road",
+          "teaching_interior",
+          "campus_street",
+          "delft"
+        ],
+        "modes": {
+          "planar": {
+            "layout": {
+              "page": 375,
+              "plot_width": 341,
+              "plot_height": 421.390625,
+              "height": 1782
+            },
+            "screenshot": "campus-texture-2d-390.png",
+            "atlas": {
+              "signature": 1417475911,
+              "opaque": 4747,
+              "colors": 486,
+              "width": 341,
+              "height": 421
+            },
+            "restored": {
+              "signature": 1417475911,
+              "opaque": 4747,
+              "colors": 486,
+              "width": 341,
+              "height": 421,
+              "maskDifference": 0,
+              "meanChannelError": 0
+            },
+            "hidden": {
+              "signature": 439918949,
+              "opaque": 35,
+              "colors": 18,
+              "width": 341,
+              "height": 421
+            },
+            "track": {
+              "signature": 923863862,
+              "opaque": 10080,
+              "colors": 675,
+              "width": 341,
+              "height": 421
+            },
+            "robot": {
+              "signature": 4182418920,
+              "opaque": 10080,
+              "colors": 125,
+              "width": 341,
+              "height": 421
+            },
+            "zoom": {
+              "signature": 2957572501,
+              "opaque": 10080,
+              "colors": 631,
+              "width": 341,
+              "height": 421
+            },
+            "landmarks": {},
+            "bodies": {},
+            "track_pick": "X -234.00 m · Y 61.00 m ｜ 仿真外观 · 运动场与看台 · Gazebo 校园世界 · 米制场景几何与材质 ｜ 无可见占据栅格"
+          },
+          "spatial": {
+            "layout": {
+              "page": 375,
+              "plot_width": 341,
+              "plot_height": 421.390625,
+              "height": 1813
+            },
+            "screenshot": "campus-texture-3d-390.png",
+            "atlas": {
+              "signature": 1670119154,
+              "opaque": 7722,
+              "colors": 259,
+              "width": 341,
+              "height": 421
+            },
+            "restored": {
+              "signature": 1670119154,
+              "opaque": 7722,
+              "colors": 259,
+              "width": 341,
+              "height": 421,
+              "maskDifference": 0,
+              "meanChannelError": 0
+            },
+            "hidden": {
+              "signature": 307108805,
+              "opaque": 0,
+              "colors": 0,
+              "width": 341,
+              "height": 421
+            },
+            "track": {
+              "signature": 1692423793,
+              "opaque": 10080,
+              "colors": 583,
+              "width": 341,
+              "height": 421
+            },
+            "robot": {
+              "signature": 3566377138,
+              "opaque": 10080,
+              "colors": 378,
+              "width": 341,
+              "height": 421
+            },
+            "zoom": {
+              "signature": 977683063,
+              "opaque": 10080,
+              "colors": 602,
+              "width": 341,
+              "height": 421
+            },
+            "landmarks": {
+              "campus": {
+                "signature": 594563018,
+                "opaque": 7842,
+                "colors": 423,
+                "width": 341,
+                "height": 421,
+                "camera": {
+                  "eye": [
+                    -145,
+                    -295,
+                    145
+                  ],
+                  "target": [
+                    -128,
+                    55,
+                    6
+                  ]
+                },
+                "screenshot": "campus-geometry-campus-390.png"
+              },
+              "campus_street": {
+                "signature": 62015572,
+                "opaque": 4673,
+                "colors": 231,
+                "width": 341,
+                "height": 421,
+                "camera": {
+                  "eye": [
+                    -251,
+                    692,
+                    3.2
+                  ],
+                  "target": [
+                    -224,
+                    494,
+                    39
+                  ]
+                },
+                "screenshot": "campus-geometry-campus_street-390.png"
+              },
+              "teaching": {
+                "signature": 258818480,
+                "opaque": 6823,
+                "colors": 384,
+                "width": 341,
+                "height": 421,
+                "camera": {
+                  "eye": [
+                    35,
+                    -32,
+                    10
+                  ],
+                  "target": [
+                    -10,
+                    1,
+                    5.5
+                  ]
+                },
+                "screenshot": "campus-geometry-teaching-390.png"
+              },
+              "track": {
+                "signature": 1692423793,
+                "opaque": 10080,
+                "colors": 583,
+                "width": 341,
+                "height": 421,
+                "camera": {
+                  "eye": [
+                    -170.395,
+                    -78.669,
+                    101
+                  ],
+                  "target": [
+                    -234,
+                    61,
+                    0
+                  ]
+                },
+                "screenshot": "campus-geometry-track-390.png"
+              }
+            },
+            "bodies": {
+              "edge_rover": {
+                "picked_pixels": 13102,
+                "detail": "轮式无人车 · 新鲜。位置 [3.24, 0.00, 0.10] m · odom。能力：门厅穿门导航。关节按模型参考姿态展示。位姿采样 33.56 s。",
+                "screenshot": "campus-robot-edge_rover-390.png"
+              },
+              "crazyflie": {
+                "picked_pixels": 3969,
+                "detail": "Crazyflie 四旋翼 · 新鲜。位置 [11.50, 5.80, 0.08] m · odom。能力：高度闭环、定高与降落。关节按模型参考姿态展示。位姿采样 34.14 s。IMU 采样 34.10 s。",
+                "screenshot": "campus-robot-crazyflie-390.png"
+              },
+              "go1": {
+                "picked_pixels": 7633,
+                "detail": "Unitree Go1 四足 · 新鲜。位置 [16.00, 6.50, 0.06] m · odom。能力：测试架上四腿关节联动。5 个关节有测量，其余按模型参考姿态展示。位姿采样 34.14 s。IMU 采样 34.10 s。",
+                "screenshot": "campus-robot-go1-390.png"
+              },
+              "g1": {
+                "picked_pixels": 7547,
+                "detail": "Unitree G1 双足 · 新鲜。位置 [20.00, 4.90, 0.06] m · odom。能力：测试架上左臂关节控制。2 个关节有测量，其余按模型参考姿态展示。位姿采样 34.14 s。IMU 采样 34.10 s。",
+                "screenshot": "campus-robot-g1-390.png"
+              }
+            },
+            "plaza": {
+              "rendered_pixels": {
+                "edge_rover": 0,
+                "crazyflie": 4,
+                "go1": 114,
+                "g1": 138
+              },
+              "screenshot": "campus-geometry-robots-390.png"
+            }
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "route_browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "length_m": 776.823,
+        "legs": 25,
+        "spatial": {
+          "on": {
+            "pixels": 2832,
+            "hash": 976571252,
+            "bounds": [
+              54,
+              161,
+              847,
+              477
+            ],
+            "size": [
+              1015,
+              585
+            ]
+          },
+          "off": {
+            "pixels": 0,
+            "hash": 2166136261,
+            "bounds": [
+              1015,
+              585,
+              0,
+              0
+            ],
+            "size": [
+              1015,
+              585
+            ]
+          },
+          "changed": {
+            "pixels": 3040,
+            "hash": 3925436847,
+            "bounds": [
+              60,
+              143,
+              826,
+              521
+            ],
+            "size": [
+              1015,
+              585
+            ]
+          }
+        },
+        "planar": {
+          "on": {
+            "pixels": 4488,
+            "hash": 3801437532,
+            "bounds": [
+              50,
+              61,
+              964,
+              523
+            ],
+            "size": [
+              1015,
+              585
+            ]
+          },
+          "off": {
+            "pixels": 0,
+            "hash": 2166136261,
+            "bounds": [
+              1015,
+              585,
+              0,
+              0
+            ],
+            "size": [
+              1015,
+              585
+            ]
+          },
+          "changed": {
+            "pixels": 4256,
+            "hash": 588228943,
+            "bounds": [
+              0,
+              103,
+              1014,
+              569
+            ],
+            "size": [
+              1015,
+              585
+            ]
+          }
+        }
+      },
+      {
+        "width": 390,
+        "length_m": 776.823,
+        "legs": 25,
+        "spatial": {
+          "on": {
+            "pixels": 892,
+            "hash": 463730803,
+            "bounds": [
+              16,
+              157,
+              302,
+              273
+            ],
+            "size": [
+              341,
+              421
+            ]
+          },
+          "off": {
+            "pixels": 0,
+            "hash": 2166136261,
+            "bounds": [
+              341,
+              421,
+              0,
+              0
+            ],
+            "size": [
+              341,
+              421
+            ]
+          },
+          "changed": {
+            "pixels": 951,
+            "hash": 3463553155,
+            "bounds": [
+              21,
+              149,
+              298,
+              286
+            ],
+            "size": [
+              341,
+              421
+            ]
+          }
+        },
+        "planar": {
+          "on": {
+            "pixels": 1398,
+            "hash": 3976045765,
+            "bounds": [
+              16,
+              132,
+              324,
+              288
+            ],
+            "size": [
+              341,
+              421
+            ]
+          },
+          "off": {
+            "pixels": 0,
+            "hash": 2166136261,
+            "bounds": [
+              341,
+              421,
+              0,
+              0
+            ],
+            "size": [
+              341,
+              421
+            ]
+          },
+          "changed": {
+            "pixels": 1359,
+            "hash": 3921368162,
+            "bounds": [
+              0,
+              146,
+              340,
+              303
+            ],
+            "size": [
+              341,
+              421
+            ]
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "station_probes": {
+    "method": "original rover laser, three distinct scans bracketed by fresh simulator world poses per station",
+    "partition": "campus_audit_02089324a3",
+    "world_sha256": "8132c0875d90618b421d4ea753ff14971fd2d820e844d568ffe3dcad73cd2c35",
+    "revision": "3.6e7cba8f9d258e39",
+    "sensor_frame": "laser_link",
+    "mount_xyz_m": [
+      0.08,
+      0.0,
+      0.2
+    ],
+    "original_xy_m": [
+      3.2361646766433445,
+      5.971042819129766e-13
+    ],
+    "restored": true,
+    "restored_stamp_ns": 47682000000,
+    "restoration": {
+      "stamp_ns": 47682000000,
+      "world_xyz_m": [
+        3.2361646768586185,
+        5.970779502288581e-13,
+        0.09999993893700462
+      ],
+      "rpc_acknowledged": true
+    },
+    "stations": [
+      {
+        "id": "pitch_centre",
+        "environment": "open",
+        "xy_m": [
+          -234,
+          61
+        ],
+        "placement": {
+          "stamp_ns": 41802000000,
+          "world_xyz_m": [
+            -233.99999999999997,
+            61.0,
+            0.10162799999999632
+          ],
+          "rpc_acknowledged": false
+        },
+        "rays_per_scan": 360,
+        "range_max_m": 8.0,
+        "stamps_ns": [
+          42750000000,
+          42876000000,
+          43000000000
+        ],
+        "returns": [
+          0,
+          0,
+          0
+        ],
+        "nearest_m": [
+          null,
+          null,
+          null
+        ],
+        "frames": [
+          {
+            "stamp_ns": 42750000000,
+            "pose_bracket_ns": [
+              42736000000,
+              42750000000
+            ],
+            "rover_world_xyz_m": [
+              -233.99999998712227,
+              61.00000000468705,
+              0.09999918052639042
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              -233.92482455170153,
+              61.027361625528194,
+              0.29999916956201517
+            ],
+            "returns": 0,
+            "nearest_m": null,
+            "rays": 360,
+            "range_max_m": 8.0
+          },
+          {
+            "stamp_ns": 42876000000,
+            "pose_bracket_ns": [
+              42864000000,
+              42878000000
+            ],
+            "rover_world_xyz_m": [
+              -233.99999998712227,
+              61.00000000468705,
+              0.09999918052639042
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              -233.92482455170153,
+              61.027361625528194,
+              0.29999916956201517
+            ],
+            "returns": 0,
+            "nearest_m": null,
+            "rays": 360,
+            "range_max_m": 8.0
+          },
+          {
+            "stamp_ns": 43000000000,
+            "pose_bracket_ns": [
+              42988000000,
+              43006000000
+            ],
+            "rover_world_xyz_m": [
+              -233.99999998712227,
+              61.00000000468705,
+              0.09999918052639042
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              -233.92482455170153,
+              61.027361625528194,
+              0.29999916956201517
+            ],
+            "returns": 0,
+            "nearest_m": null,
+            "rays": 360,
+            "range_max_m": 8.0
+          }
+        ]
+      },
+      {
+        "id": "woodland_trail",
+        "environment": "cluttered",
+        "xy_m": [
+          -151,
+          -80
+        ],
+        "placement": {
+          "stamp_ns": 44570000000,
+          "world_xyz_m": [
+            -150.9999999869915,
+            -79.99999999568921,
+            0.09999918056498179
+          ],
+          "rpc_acknowledged": false
+        },
+        "rays_per_scan": 360,
+        "range_max_m": 8.0,
+        "stamps_ns": [
+          44876000000,
+          45000000000,
+          45126000000
+        ],
+        "returns": [
+          9,
+          9,
+          9
+        ],
+        "nearest_m": [
+          4.1,
+          4.1,
+          4.1
+        ],
+        "frames": [
+          {
+            "stamp_ns": 44876000000,
+            "pose_bracket_ns": [
+              44872000000,
+              44890000000
+            ],
+            "rover_world_xyz_m": [
+              -150.9999999869915,
+              -79.99999999568921,
+              0.09999918056498179
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              -150.9240611275254,
+              -79.97483466221733,
+              0.29999916960057915
+            ],
+            "returns": 9,
+            "nearest_m": 4.1,
+            "rays": 360,
+            "range_max_m": 8.0
+          },
+          {
+            "stamp_ns": 45000000000,
+            "pose_bracket_ns": [
+              44994000000,
+              45010000000
+            ],
+            "rover_world_xyz_m": [
+              -150.9999999869915,
+              -79.99999999568921,
+              0.09999918056498179
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              -150.9240611275254,
+              -79.97483466221733,
+              0.29999916960057915
+            ],
+            "returns": 9,
+            "nearest_m": 4.1,
+            "rays": 360,
+            "range_max_m": 8.0
+          },
+          {
+            "stamp_ns": 45126000000,
+            "pose_bracket_ns": [
+              45118000000,
+              45134000000
+            ],
+            "rover_world_xyz_m": [
+              -150.9999999869915,
+              -79.99999999568921,
+              0.09999918056498179
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              -150.9240611275254,
+              -79.97483466221733,
+              0.29999916960057915
+            ],
+            "returns": 9,
+            "nearest_m": 4.1,
+            "rays": 360,
+            "range_max_m": 8.0
+          }
+        ]
+      },
+      {
+        "id": "teaching_forecourt",
+        "environment": "street",
+        "xy_m": [
+          7.8,
+          0.7
+        ],
+        "placement": {
+          "stamp_ns": 47046000000,
+          "world_xyz_m": [
+            7.7999999862959974,
+            0.7,
+            0.09999918053565632
+          ],
+          "rpc_acknowledged": false
+        },
+        "rays_per_scan": 360,
+        "range_max_m": 8.0,
+        "stamps_ns": [
+          47376000000,
+          47500000000,
+          47626000000
+        ],
+        "returns": [
+          69,
+          69,
+          69
+        ],
+        "nearest_m": [
+          3.919,
+          3.919,
+          3.919
+        ],
+        "frames": [
+          {
+            "stamp_ns": 47376000000,
+            "pose_bracket_ns": [
+              47372000000,
+              47386000000
+            ],
+            "rover_world_xyz_m": [
+              7.7999999862959974,
+              0.7,
+              0.09999918053565632
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              7.719999958885053,
+              0.7,
+              0.2999991695712764
+            ],
+            "returns": 69,
+            "nearest_m": 3.919,
+            "rays": 360,
+            "range_max_m": 8.0
+          },
+          {
+            "stamp_ns": 47500000000,
+            "pose_bracket_ns": [
+              47490000000,
+              47510000000
+            ],
+            "rover_world_xyz_m": [
+              7.7999999862959974,
+              0.7,
+              0.09999918053565632
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              7.719999958885053,
+              0.7,
+              0.2999991695712764
+            ],
+            "returns": 69,
+            "nearest_m": 3.919,
+            "rays": 360,
+            "range_max_m": 8.0
+          },
+          {
+            "stamp_ns": 47626000000,
+            "pose_bracket_ns": [
+              47610000000,
+              47628000000
+            ],
+            "rover_world_xyz_m": [
+              7.7999999862959974,
+              0.7,
+              0.09999918053565632
+            ],
+            "reported_sensor_xyz_m": [
+              0.08,
+              0.0,
+              0.2
+            ],
+            "reported_pose_frame": "sensor_mount_local",
+            "sensor_world_xyz_m": [
+              7.719999958885053,
+              0.7,
+              0.2999991695712764
+            ],
+            "returns": 69,
+            "nearest_m": 3.919,
+            "rays": 360,
+            "range_max_m": 8.0
+          }
+        ]
+      }
+    ]
+  },
+  "baseline": {
+    "owned_fixture": false,
+    "services_unchanged": [
+      "agent",
+      "bridge",
+      "camera",
+      "camera-sensor",
+      "console",
+      "evidence",
+      "map3d",
+      "map3d-sensor",
+      "model",
+      "model-provider",
+      "perception",
+      "plugin-author",
+      "plugin-manager",
+      "rgbd",
+      "rgbd-sensor",
+      "scene",
+      "session",
+      "sim",
+      "watchdog",
+      "witness"
+    ],
+    "sim_id": "dede99c55ce3d7a9720e8d47d5ff09172a8fc384744c9d3afd04a3597d2da2a6",
+    "clock_before_ns": 20815112000000,
+    "clock_after_ns": 21008728000000
+  }
+}
