@@ -60,7 +60,8 @@ def append_robots(world, output, poses=None):
             if name == "crazyflie":
                 system(model,"velocity-control","VelocityControl",{"topic":"/model/crazyflie/cmd_vel"})
             else:
-                system(model,"joint-state-publisher","JointStatePublisher",{"topic":f"/model/{name}/joint_state"})
+                system(model,"joint-state-publisher","JointStatePublisher",{
+                    "topic":f"/model/{name}/joint_state", "update_rate":20})
                 for joint in model.findall("joint[@type='revolute']"):
                     joint_id = joint.get("name")
                     system(model,"joint-position-controller","JointPositionController",{

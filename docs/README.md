@@ -4,7 +4,7 @@
 
 | 我想做什么 | 从这里读 |
 |---|---|
-| 启动大型校园，在教学楼内外做实验，核对场景插件影响范围 | [校园部署](../scene/campus_large/README.md) · [插件边界与验证](testing/campus-plugin.md) |
+| 启动校园，查看四种机体、具名任务、关节测量和连通步道 | [校园部署](../scene/campus_large/README.md) · [机器人近景与验收](testing/campus-robot-view.md) · [插件边界](testing/campus-plugin.md) |
 | 给工作台加 3D 地图、相机、MID-360 或 RealSense 输入，切换本地/云端模型 | [全栈快速上手与逐项撤下](perception-model-quickstart.md) · [隔离实验](testing/map-and-model-plugins.md) · [真实模型选工具记录](evidence/workbench-model-routing.json) |
 | 部署仿真、模型或板端，知道哪些平台已有实测 | [部署](deployment.md) · [模型配置](model.md) · [板卡验收](architecture/board-validation.md) |
 | 在观测台下发任务，检查激光与地图，追查失败步骤 | [观测台](console.md) · [语义地图](semantic-scene.md) · [会话与按需取证](sessions.md) |

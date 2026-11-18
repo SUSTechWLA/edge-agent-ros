@@ -192,7 +192,9 @@
       const joints=Object.keys(chosen.joints||{}).length;
       const capabilities=(chosen.capabilities||[]).join("、")||"等待能力清单";
       detail.textContent=(chosen.label||chosen.id)+" · "+status+"。位置 ["+coordinates+"] m · "+chosen.frame+
-        "。能力："+capabilities+"。"+(joints?joints+" 个关节有测量，其余按模型参考姿态展示。":"关节按模型参考姿态展示。");
+        "。能力："+capabilities+"。"+(joints?joints+" 个关节有测量，其余按模型参考姿态展示。":"关节按模型参考姿态展示。")+
+        (Number.isFinite(chosen.stamp_s)?"位姿采样 "+chosen.stamp_s.toFixed(2)+" s。":"")+
+        (Number.isFinite(chosen.imu_stamp_s)?"IMU 采样 "+chosen.imu_stamp_s.toFixed(2)+" s。":"");
       if(chosen.camera_url){
         const url=new URL(chosen.camera_url,location.href);
         if(["http:","https:"].includes(url.protocol)){camera.href=url.href;camera.hidden=false;}

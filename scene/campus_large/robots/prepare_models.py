@@ -185,6 +185,7 @@ def rebuild(source):
         target = HERE/"licenses"
         target.mkdir(exist_ok=True)
         shutil.copyfile(folder/"LICENSE",target/(name+".txt"))
+        blobs[name+".LICENSE.txt"]=(folder/"LICENSE").read_bytes()
     with ZipFile(HERE/"models.zip","w") as z:
         for name,data in sorted(blobs.items()):
             z.writestr(ZipInfo(name),data,compress_type=ZIP_DEFLATED,compresslevel=9)

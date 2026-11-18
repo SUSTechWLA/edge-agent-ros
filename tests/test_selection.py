@@ -16,7 +16,7 @@ MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults"
           "places", "scene-binding", "scene-outage")
 RULES = [
     (("tests/test_map_texture_pack.py","tests/system/campus_texture_browser.mjs"),("plugin-isolation","campus-world")),
-    (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_acceptance.py","tests/test_campus_*.py"),
+    (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_*.py","tests/test_campus_*.py"),
      ("campus-world",)),
     (("perception/map3d/web/*","perception/map3d/texture.py","perception/map3d/provider.py"),
      ("planner","observations","board","plugin-isolation","campus-world")),
@@ -153,6 +153,8 @@ class TestSelection(unittest.TestCase):
     def test_examples(self):
         self.assertEqual(selection(["tests/system/campus_texture_browser.mjs"])[0],[R,"plugin-isolation","campus-world"])
         self.assertEqual(selection(["scene/campus_large/build.py","compose.campus.yaml"])[0],[R,"campus-world"])
+        for name in ("campus_route_geometry","campus_station_probe","campus_forms"):
+            self.assertEqual(selection(["tests/system/"+name+".py"])[0],[R,"campus-world"])
         self.assertEqual(selection(["docs/specs/example.md"])[0], [R])
         self.assertEqual(selection(["agent/contracts.json"])[0], [R,"planner","agent-contracts","agent-faults","model"])
         for path in ("src/edge_interfaces/srv/GetMission.srv","unclassified/kernel.rs",

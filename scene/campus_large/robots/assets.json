@@ -1,6 +1,7 @@
 {
   "commit": "370c43965323c0944b433b202aac5058b5f907a9",
   "files": {
+    "crazyflie.LICENSE.txt": "fc2e3286b47f415c0724d1f82047501d738ef60cff3779b2f3998ea75d8aae99",
     "crazyflie.sdf": "5f881ad2b9d7723f2cc09775bd9e09cea914bebca14c2bbf4e91b5c59272c548",
     "crazyflie_base_link_0.obj": "43e59715c72885a6d6fea80aba7d6deae8c6bfcf9df68f1fdd43817e983a5aae",
     "crazyflie_base_link_1.obj": "4c22b4ef4a9d020ec4cb539a96831c48a795d2278bb36ff3b946b8e34c9039ad",
@@ -9,10 +10,12 @@
     "crazyflie_base_link_4.obj": "215b058642c92244163e9fd8624018145c5a86df6a0cdfdf130af21100284c5f",
     "crazyflie_base_link_5.obj": "0144b88d687079d96001093b202b8964e525e396a8e2d0464be069c70f9c5ec3",
     "crazyflie_base_link_6.obj": "e627b12554036de16437b798706500c1fa3fadf28734517d35ab9093c9e568ba",
+    "g1.LICENSE.txt": "98335465f43a20b5850e4651db6e74c4aa1e9fc8e8813d38f345178045c0da50",
     "g1.sdf": "dac1a1af86d4824995e8e450b526fd24ccdc7b99009fea2cc7829415295e8c33",
     "g1_base_link_0.obj": "409b1896265086d3882e63152ec25e2fb26f7561b9a538d4d9da0da506e7d4d7",
     "g1_base_link_1.obj": "cde8fc54b03ef8cae4339192e50d14e0b458454016e6b7fa355168a0b7fd0ef8",
     "g1_left_shoulder_pitch_link_2.obj": "c79ea8e1bf4180f7c055ec422409eaf22165770d4689130f343b7c7a2a25e790",
+    "go1.LICENSE.txt": "2b794acf1e250f5545ae5a47d81e5685ea5488ce077d1087ed8be5f81e9ba5c0",
     "go1.sdf": "cf697879ce6f6e5bb31f650dcb451815a67d98989b6f16230a3a2b8d2552f5e6",
     "go1_FL_thigh_2.obj": "cc70e3efda1ce940eda8fab0ea60b816e3c1daaf96fe6186bfe223d9df15672a",
     "go1_FR_thigh_1.obj": "64aa2b8fa6cfdc4a27bb768347c9efc2ab87cfa9ad2f4e267448e8e5c870df18",
