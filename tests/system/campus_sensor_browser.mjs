@@ -23,7 +23,14 @@ export async function checkCampusSensors({url,width,output,evaluate,waitFor,send
   }
   await send('Page.navigate',{url:links.rgbd});
   await waitFor("document.getElementById('status')?.dataset.state==='online' && document.getElementById('depth-image').naturalWidth>0");
-  const data=await (await fetch(new URL('/api/rgbd',links.rgbd))).json();
+  let data;
+  const deadline=Date.now()+5000;
+  do {
+    data=await (await fetch(new URL('/api/rgbd',links.rgbd))).json();
+    if(data.status==='online')break;
+    await new Promise(resolve=>setTimeout(resolve,120));
+  } while(Date.now()<deadline);
+  assert.equal(data.status,'online','RGB-D pair did not become available within five seconds');
   assert.equal(data.frame,'edge_rover/rgbd_optical');
   assert.ok(data.skew_ms<=data.max_skew_ms);
   let pixel, empty;

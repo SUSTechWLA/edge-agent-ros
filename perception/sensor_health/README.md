@@ -30,6 +30,8 @@
 
 设置 `EDGE_HEALTH_<输入>_TOPIC`，输入键可选 `RGB`、`DEPTH`、`SCAN`、`POINTS`、`IMU`、`MATCH`、`LIDAR_MATCH`。可用同名 `_FRAME` 指定期望坐标系。显式空话题关闭该输入。车、飞行器、四足和人形可以在各自的 Compose 工程、ROS 域和端口装同一插件，读取对应话题。当前一实例一个配置机器人，多机请隔离实例和事件卷。
 
+1.1.0 起，为每台实际机体设置稳定且唯一的 `EDGE_HEALTH_ROBOT_ID`，同时保留其日志卷。发生故障期间进程被杀，Docker 自动拉起后会写入 `sensor.incident_resumed`。它的父事件指向上次告警，`observation_gap=unobserved` 标明停机期间没有采样。新进程的状态起初保留告警、最近样本为空、好帧计数为零；即使旧进程已收到两份正常样本，也必须重新取得三份新鲜独立样本。更换身份/坐标配置会记录 `sensor.source_detached`；未结指针与事件存放在同一数据库事务。进程重启前的滑动指标和单调时长不会拼接。此前 1.0.0 的私有表不存在，进入 1.1.0 后历史记录仍可读，新观测按新身份建档。[重启契约](../../docs/specs/SDD-037-sensor-incident-restart.md)
+
 仿真使用 ROS 仿真时钟，Linux 实机 Compose 使用本机时钟、host 网络和本机回环 HTTP。应先让数据源与观察者使用一致的时间基准。默认样本龄上限 `EDGE_HEALTH_MAX_AGE_S=1.5` 秒，容许最多 0.1 秒未来时间。默认无样本超时 `EDGE_HEALTH_TIMEOUT_S=3` 秒。发现异常进入采样复核，持续至 `EDGE_HEALTH_RECHECK_S=6` 秒提示人工核查。连续三份被接受的新鲜独立样本可结束一次故障。调参和运动操作由对应提供者接收独立授权。[实机部署](../../docs/deployment.md)
 
 ~~~sh

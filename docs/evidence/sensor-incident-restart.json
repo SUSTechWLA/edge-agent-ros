@@ -1,0 +1,209 @@
+{
+  "passed": true,
+  "image": "edge-agent-ros:field-9f6fbe7",
+  "image_id": "sha256:0a8df92e42055debabb4940a70860e759d9031a52d9a6d8f5f2e06e883f178b2",
+  "provider_source": "packaged image",
+  "container": "sensor-restart-74b419ef14c",
+  "policy": "unless-stopped",
+  "private_ros_domain": 186,
+  "initial": {
+    "state": "observed",
+    "code": "ok",
+    "consecutive_good": 0,
+    "event_id": "81d1bfcd0a464073a8ab035cd1e3ac24",
+    "stamp_ns": 1795017258065515496
+  },
+  "before": {
+    "id": "c1c46f898d1fdfac5ed752c0b846cd0b7d216e58ef61f1b83951b06c3d2d61a7",
+    "boot": "2026-11-18T15:54:14.511681887Z",
+    "running": true,
+    "restart_count": 0,
+    "policy": "unless-stopped"
+  },
+  "original_alarm": {
+    "state": "needs_attention",
+    "code": "black_image",
+    "consecutive_good": 0,
+    "event_id": "770b99cfe5c34cce802cb0a2612a8d4c",
+    "stamp_ns": 1795017260907047078
+  },
+  "before_crash_good": [
+    {
+      "state": "needs_attention",
+      "code": "black_image",
+      "consecutive_good": 1,
+      "event_id": "770b99cfe5c34cce802cb0a2612a8d4c",
+      "stamp_ns": 1795017262882356248
+    },
+    {
+      "state": "needs_attention",
+      "code": "black_image",
+      "consecutive_good": 2,
+      "event_id": "770b99cfe5c34cce802cb0a2612a8d4c",
+      "stamp_ns": 1795017263053256811
+    }
+  ],
+  "after_auto_restart": {
+    "id": "c1c46f898d1fdfac5ed752c0b846cd0b7d216e58ef61f1b83951b06c3d2d61a7",
+    "boot": "2026-11-18T15:54:24.435990017Z",
+    "running": true,
+    "restart_count": 1,
+    "policy": "unless-stopped"
+  },
+  "resumed_event": {
+    "code": "sensor.incident_resumed",
+    "data": {
+      "boot_event_id": "3cc27436d368404c954bd57ad9b76e52",
+      "input": "rgb",
+      "observation_gap": "unobserved",
+      "prior_code": "black_image",
+      "prior_frame": "front_optical",
+      "prior_identity": {
+        "domain": 186,
+        "expected_frame": "front_optical",
+        "input": "rgb",
+        "journal": "9a947474d6676bc96706560ea2ea278b",
+        "robot": "robot-a",
+        "sim_time": false,
+        "topic": "/restart_test/rgb"
+      },
+      "prior_phase": "needs_attention",
+      "prior_stamp_ns": 1795017260571709148
+    },
+    "detail": "进程重启后续查，重新计时并从零采集恢复样本。",
+    "event_id": "f1c1fefe4a81440b9c2da8cc5508d0bc",
+    "kind": "sensor.incident_resumed",
+    "layer": "perception",
+    "level": "warn",
+    "module": "sensor.health",
+    "parent_event_id": "770b99cfe5c34cce802cb0a2612a8d4c",
+    "schema_version": 1,
+    "trace_id": "sensor.health.rgb",
+    "utc": "2026-11-18T15:54:25.540141+00:00"
+  },
+  "continued_bad": {
+    "state": "needs_attention",
+    "code": "black_image",
+    "consecutive_good": 0,
+    "event_id": "f1c1fefe4a81440b9c2da8cc5508d0bc",
+    "stamp_ns": 1795017269253628938
+  },
+  "three_fresh": [
+    {
+      "state": "needs_attention",
+      "code": "black_image",
+      "consecutive_good": 1,
+      "event_id": "f1c1fefe4a81440b9c2da8cc5508d0bc",
+      "stamp_ns": 1795017271237487425
+    },
+    {
+      "state": "needs_attention",
+      "code": "black_image",
+      "consecutive_good": 2,
+      "event_id": "f1c1fefe4a81440b9c2da8cc5508d0bc",
+      "stamp_ns": 1795017271407089912
+    },
+    {
+      "state": "recovered",
+      "code": "ok",
+      "consecutive_good": 3,
+      "event_id": "deafa759fd604ff3b3ecc534eba4d019",
+      "stamp_ns": 1795017271577403393
+    }
+  ],
+  "recovery_event": {
+    "code": "sensor.ok",
+    "data": {
+      "consecutive_good": 3,
+      "elapsed_s": 6.044,
+      "identity": {
+        "domain": 186,
+        "expected_frame": "front_optical",
+        "input": "rgb",
+        "journal": "9a947474d6676bc96706560ea2ea278b",
+        "robot": "robot-a",
+        "sim_time": false,
+        "topic": "/restart_test/rgb"
+      },
+      "input": "rgb",
+      "max_age_s": 1.5,
+      "observation": {
+        "age_s": 0.0014,
+        "frame_id": "front_optical",
+        "measurement_code": "ok",
+        "metrics": {
+          "bright_fraction": 0.0,
+          "dark_fraction": 0.0,
+          "evidence_type": "raw_image_proxy",
+          "samples": 256,
+          "texture_edge_fraction": 0.5
+        },
+        "ros_now_ns": 1795017271578803262,
+        "stamp_ns": 1795017271577403393
+      },
+      "phase": "recovered",
+      "recheck_budget_s": 0.4,
+      "sample_timeout_s": 45.0,
+      "topic": "/restart_test/rgb"
+    },
+    "detail": "已连续检测到三份独立的新鲜正常测量。",
+    "event_id": "deafa759fd604ff3b3ecc534eba4d019",
+    "kind": "sensor.recovered",
+    "layer": "perception",
+    "level": "info",
+    "module": "sensor.health",
+    "parent_event_id": "f1c1fefe4a81440b9c2da8cc5508d0bc",
+    "schema_version": 1,
+    "trace_id": "sensor.health.rgb",
+    "utc": "2026-11-18T15:54:31.579033+00:00"
+  },
+  "closed_did_not_reopen": true,
+  "operator_stopped": {
+    "id": "c1c46f898d1fdfac5ed752c0b846cd0b7d216e58ef61f1b83951b06c3d2d61a7",
+    "boot": "2026-11-18T15:54:33.733235171Z",
+    "running": false,
+    "restart_count": 2,
+    "policy": "unless-stopped"
+  },
+  "stop_observation_s": 3,
+  "new_identity": {
+    "code": "sensor.source_detached",
+    "data": {
+      "boot_event_id": "060246286e684aea8d791754ff8432bd",
+      "current_identity": {
+        "domain": 186,
+        "expected_frame": "front_optical",
+        "input": "rgb",
+        "journal": "9a947474d6676bc96706560ea2ea278b",
+        "robot": "robot-b",
+        "sim_time": false,
+        "topic": "/restart_test/rgb"
+      },
+      "input": "rgb",
+      "observation_gap": "unobserved",
+      "prior_code": "black_image",
+      "prior_frame": "front_optical",
+      "prior_identity": {
+        "domain": 186,
+        "expected_frame": "front_optical",
+        "input": "rgb",
+        "journal": "9a947474d6676bc96706560ea2ea278b",
+        "robot": "robot-a",
+        "sim_time": false,
+        "topic": "/restart_test/rgb"
+      },
+      "prior_phase": "needs_attention",
+      "prior_stamp_ns": 1795017279291762752
+    },
+    "detail": "来源配置改变或移除，旧事故止于最后一次已知观测。",
+    "event_id": "f5ef9774cb87477496a62398e6986a70",
+    "kind": "sensor.source_detached",
+    "layer": "perception",
+    "level": "warn",
+    "module": "sensor.health",
+    "parent_event_id": "99721ace6bdb498980d8ddc8a8c5c216",
+    "schema_version": 1,
+    "trace_id": "sensor.health.rgb",
+    "utc": "2026-11-18T15:54:48.722864+00:00"
+  }
+}
