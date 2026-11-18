@@ -84,7 +84,8 @@ RULES = [
     (("sim/bridge.yaml","sim/witness.yaml","sim/world.sdf"), (*MOTION,*OBS)),
     (("src/edge_core/*",), (*MOTION,"board")),
     (("src/edge_gateway/*","sim/*"), MOTION),
-    (("compose.hardware.yaml","tests/system/board_smoke.py","tests/system/realsense_board.py"), ("board",)),
+    (("compose.hardware.yaml","compose.hardware-observe.yaml","client/hardware_preflight.py","tests/test_board_preflight.py",
+      "tests/system/board_smoke.py","tests/system/realsense_board.py"), ("board",)),
     (("tests/planning_contract.py",), ("planner",)),
     (("tests/test_scene*","tests/semantic_acceptance.py","tests/scene_*acceptance.py","tests/system/scene_binding_acceptance.py"), SCENE),
     (("tests/system/motion_faults.py",), ("motion-sensors","motion-world")),
@@ -153,6 +154,7 @@ class TestSelection(unittest.TestCase):
             self.assertIn(stage,chosen)
 
     def test_examples(self):
+        self.assertEqual(selection(["client/hardware_preflight.py"])[0],[R,"board"])
         self.assertEqual(selection(["tests/system/campus_texture_browser.mjs"])[0],[R,"plugin-isolation","campus-world"])
         self.assertEqual(selection(["scene/campus_large/build.py","compose.campus.yaml"])[0],[R,"campus-world"])
         for name in ("campus_route_geometry","campus_station_probe","campus_forms","campus_round_trip"):

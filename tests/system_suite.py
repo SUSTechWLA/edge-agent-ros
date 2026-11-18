@@ -124,7 +124,8 @@ def run(args, selected, reasons):
             env["EDGE_HARDWARE_IMAGE"]=board_image
             board_built=stage("board-build",[["docker","compose","-f","compose.hardware.yaml","build","core"]])
             if board_built:
-                stage("board",[test("system/board_smoke.py","--image",board_image,"--out",directory/"board.json"),
+                stage("board",[test("test_board_preflight.py","-v"),
+                               test("system/board_smoke.py","--image",board_image,"--out",directory/"board.json"),
                                test("system/realsense_board.py","--image",board_image,"--out",directory/"realsense-board.json")])
             else:
                 skip("board","hardware image build failed","blocked")

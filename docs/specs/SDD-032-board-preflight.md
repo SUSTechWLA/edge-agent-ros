@@ -24,3 +24,7 @@
 ## 变更记录
 
 2026-11-18，在本轮实机接入前登记 AC-1 至 AC-4。验证环境为隔离 Linux 容器与合成 ROS 话题。
+
+当天完成 `hardware observe`、`hardware preflight` 与运行手册。在 Linux/amd64 原生容器和 Linux/arm64 指令模拟容器中，先验证无驱动，发布真实 ROS 消息，再注入错 frame、时钟超前 30 秒、停止发布并恢复。对仍可达的真实 Agent 实测只读工作台拒绝提交和重试，历史读取正常，被拒绝任务在上游查询返回 404。原版工作台向隔离的测试上游转发过同样的请求。额外的入口测试覆盖时间戳冻结、跨会话采样、错误机器人身份及配置无效。单独运行部署脚本时，`observe` 只启动 perception 和 console，错误话题在启动业务进程之前返回 `config.invalid`。[双架构实测及失败原因](../evidence/board-preflight.json) · [操作、退出码及恢复](../deployment.md)
+
+复测命令为 `python tests/test_board_preflight.py -v` 和 `python tests/system/board_smoke.py --image <当前硬件镜像> --out artifacts/verification/edge-board-sdd032/board.json`。ROS 节点和工作台连接在隔离容器内，所有数据由测试驱动生成。具体板型的时钟同步精度、SLAM 定位质量、功耗、热状态与制动距离仍须在真机验收。

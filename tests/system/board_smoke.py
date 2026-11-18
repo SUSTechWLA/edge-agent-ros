@@ -61,6 +61,17 @@ def exercise():
             with urlopen(req, timeout=5) as reply:
                 return json.load(reply)
 
+        def preflight(*keys, expected=None):
+            result = subprocess.run([sys.executable, "/opt/edge/client/hardware_preflight.py",
+                "--timeout","2",*keys], env={**os.environ,**services["console"]["environment"]},
+                capture_output=True, text=True, timeout=12)
+            report = json.loads(result.stdout)
+            check(report["passed"] == (expected is None) and result.returncode == (0 if expected is None else 1),
+                  f"preflight returned {result.returncode}: {report}")
+            if expected:
+                check(expected in report["issues"], f"missing preflight diagnosis {expected}: {report}")
+            return report
+
         def terminal_task(key):
             def terminal():
                 result = api("/agent/tasks?id="+key)
@@ -84,6 +95,7 @@ def exercise():
         check(state["environment"]=="hardware" and not state["sim_world_aligned"], "hardware mode")
         for key in ("odom","scan","imu","truth","pose"):
             check(not state["sources"][key]["available"], f"unexpected initial {key}")
+        field_checks = {"without_drivers":preflight(expected="odom.missing")}
         task_id = "missing-odom"
         api("/agent/tasks", {"id":task_id, "text":"报告当前位置"})
         missing = terminal_task(task_id)
@@ -95,12 +107,16 @@ def exercise():
         odom = node.create_publisher(Odometry, "/fixture/odom", qos_profile_sensor_data)
         imu = node.create_publisher(Imu, "/fixture/imu", qos_profile_sensor_data)
         scan = node.create_publisher(LaserScan, "/fixture/scan", qos_profile_sensor_data)
+        fault = {"imu_frame": "fixture_imu", "clock_offset_s": 0, "paused": False}
         def emit():
+            if fault["paused"]:
+                return
             stamp = node.get_clock().now().to_msg()
+            stamp.sec += fault["clock_offset_s"]
             o, i, s = Odometry(), Imu(), LaserScan()
             o.header.frame_id, o.child_frame_id = "fixture_odom","fixture_base"
             o.pose.pose.position.x, o.pose.pose.orientation.w = .375, 1.
-            i.header.frame_id, s.header.frame_id = "fixture_imu", "fixture_laser"
+            i.header.frame_id, s.header.frame_id = fault["imu_frame"], "fixture_laser"
             s.angle_min, s.angle_increment, s.angle_max = -.1, .1, .1
             s.range_min, s.range_max, s.ranges = .05, 4., [1.25,1.25,1.25]
             for pub, message in ((imu,i),(odom,o),(scan,s)):
@@ -114,6 +130,7 @@ def exercise():
             if all(sources[k]["fresh"] for k in ("odom","imu","scan","pose","perception","map")):
                 return sources if 100 in sources["map"]["data"]["cells"] else None
         inputs = wait(sensed, "fresh sensors, fused pose and occupied map")
+        field_checks["with_drivers"] = preflight()
         check(inputs["odom"]["topic"] == "/fixture/odom" and inputs["pose"]["data"]["x"] == .375, "pose")
         check(inputs["imu"]["data"]["frame"] == "fixture_imu" and inputs["scan"]["data"]["ranges"] == [1.25]*3, "raw values")
         check(inputs["map"]["data"]["frame"] == "fixture_odom" and not inputs["truth"]["available"], "map or ground truth")
@@ -125,7 +142,50 @@ def exercise():
         evidence = recovered["steps"][0]["evidence"]
         check(evidence["source"] == "/fixture/odom" and evidence["frame"] == "fixture_odom"
               and evidence["x"] == .375 and evidence["stamp_ns"]>0, "measured ROS evidence")
+        fault["imu_frame"]="wrong_frame"
+        wait(lambda: api("/api/state")["sources"]["imu"]["data"]["frame"]=="wrong_frame","wrong IMU frame received")
+        field_checks["wrong_frame"] = preflight("imu",expected="imu.frame_mismatch")
+        field_checks["other_channel"] = preflight("odom")
+        fault.update(imu_frame="fixture_imu",clock_offset_s=30)
+        wait(lambda: api("/api/state")["sources"]["odom"]["stamp_s"]>time.time()+15,"future stamp received")
+        field_checks["future_clock"] = preflight("odom",expected="odom.clock_mismatch")
+        fault.update(clock_offset_s=0,paused=True)
+        wait(lambda: not api("/api/state")["sources"]["odom"]["fresh"],"stopped source expires")
+        field_checks["paused"] = preflight("odom",expected="odom.stale")
+        fault["paused"]=False
+        field_checks["recovered"] = preflight()
+
+        # Use the deployed observe-only console with a live Agent behind it.
+        # A missing proxy or unavailable upstream would not prove isolation.
+        rejected_id="must-stay-unsubmitted"
+        processes["console"].terminate()
+        processes["console"].wait(timeout=10)
+        console=services["console"]
+        processes["console"]=subprocess.Popen(console["command"],
+            env={**os.environ,**console["environment"],"EDGE_CONSOLE_OBSERVE_ONLY":"1"},
+            stdout=logs["console"],stderr=subprocess.STDOUT)
+        wait(lambda: api("/api/state").get("task_proxy_mode")=="observe","read-only console")
+        for endpoint,body in (("/agent/tasks",{"id":rejected_id,"text":"报告当前位置"}),("/agent/retry",{"id":task_id})):
+            try:
+                api(endpoint,body)
+            except HTTPError as exc:
+                check(exc.code==403 and json.load(exc)["code"]=="console.observe_only","wrong observe-only response")
+            else:
+                raise AssertionError("observe-only proxy forwarded "+endpoint)
+        direct="http://127.0.0.1:8090/agent/tasks?id="
+        with urlopen(direct+task_id,timeout=3) as reply:
+            check(json.load(reply)["state"]=="SUCCEEDED","upstream lost existing task")
+        try:
+            urlopen(direct+rejected_id,timeout=3).close()
+        except HTTPError as exc:
+            check(exc.code==404,"unexpected upstream HTTP response")
+        else:
+            raise AssertionError("observe-only task reached live upstream")
+        field_checks["observe_console"] = {"proxy_code":"console.observe_only","agent_reachable":True,
+            "submitted_task_absent":True,"previous_task_present":True,"events_readable":"events" in api("/api/events?limit=1")}
+        check(field_checks["observe_console"]["events_readable"], "observation history unavailable")
         return {"passed":True, "architecture":platform.machine(), "revision":os.getenv("EDGE_REVISION"),
+                "board_preflight":field_checks,
                 "services":list(processes),"core_get_mission_found":future.result().found,
                 "runtime_plugins":directory["plugins"],"missing_service":"plugin.service_missing",
                 "without_odom":missing["state"], "diagnostic":"tool.odom_stale", "with_odom":recovered["state"],

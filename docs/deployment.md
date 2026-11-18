@@ -6,7 +6,7 @@
 |---|---|---|
 | Windows x86-64 开发机 | `.\scripts\start.ps1` | Docker Desktop 的 Linux 容器，浏览器打开 localhost:8765 |
 | macOS Intel / Apple Silicon、Linux 开发机或服务器 | `sh scripts/deploy.sh sim up` | 按 Docker Engine 本机架构构建 Gazebo 环境；无桌面服务器同样可通过浏览器访问 |
-| RK3588、Jetson Orin 等 ARM64 Linux 边缘机；x86-64 Linux 工控机 | `sh scripts/deploy.sh hardware up` | 单独构建硬件镜像，启动四个服务，以 host 网络接入现有 ROS；传感器驱动和机体执行器单独部署 |
+| RK3588、Jetson Orin 等 ARM64 Linux 边缘机及 x86-64 Linux 工控机 | `hardware build` 后运行 `sh scripts/deploy.sh hardware observe` | 首次只启动工作台和感知，以 host 网络接入现有 ROS。传感器驱动和机体执行器单独部署 |
 
 ## 仿真或工作站
 
@@ -28,7 +28,7 @@ sh scripts/deploy.sh sim stop
 
 ## 在真实 Linux 设备接入 ROS
 
-`compose.hardware.yaml` 是独立部署。默认启动 `core`、`perception`、`agent` 和 `console`。构建只需 ROS 2 Jazzy、C++ 工具链和 SQLite 等运行依赖；硬件镜像的构建配方位于该文件的 `core.build.dockerfile_inline`。请使用支持 inline Dockerfile 的 Docker Compose v2.17 或更新版本。此部署既可只观察，也可接入设备控制。建议首次使用真实 ROS 输入时先验证观测。
+**第一阶段，在板上看真实传感器。** 使用 Linux Docker Engine、Compose v2 和本项目此次提交。ROS 2 Jazzy、工作台和 Agent 运行在容器内。先在板端原生构建硬件镜像；已有同架构镜像时可用后文的离线导入。镜像内入口与代码应来自同一提交，示例中的设备标识、话题与标定数值需要替换为现场值。
 
 ```sh
 # 示例：按真实网络、设备标识、驱动的 topic/frame 和标定结果填写
@@ -36,8 +36,45 @@ export EDGE_ROS_DOMAIN_ID=36 EDGE_ROBOT_ID=rover-01
 export EDGE_ODOM_TOPIC=/robot01/odom EDGE_SCAN_TOPIC=/robot01/scan EDGE_IMU_TOPIC=/robot01/imu
 export EDGE_ODOM_FRAME=odom EDGE_BASE_FRAME=base_link EDGE_LASER_FRAME=front_laser EDGE_IMU_FRAME=base_imu
 export EDGE_LIDAR_X=0.20 EDGE_LIDAR_Y=0.0 EDGE_LIDAR_Z=0.23 EDGE_LIDAR_YAW=0.0
-sh scripts/deploy.sh hardware up perception console
+export EDGE_HARDWARE_IMAGE=edge-agent-ros/hardware:field-$(git rev-parse --short HEAD)
+sh scripts/deploy.sh hardware build
+sh scripts/deploy.sh hardware observe
 docker compose -f compose.hardware.yaml exec -T perception /usr/local/bin/edge-entrypoint ros2 topic list
+```
+
+`observe` 启动 `perception` 和 `console`。通过此工作台提交或重试会得到 HTTP 403 和 `console.observe_only`。已在同一项目运行的控制服务会使模式切换停止，并保留原服务。它只约束本工作台，已有现场 ROS 驱动、外部任务入口和物理急停仍由机体负责。
+
+**第二阶段，用数据验收。** 工作台打开后执行下面的命令。本命令检查当前运行容器内的配置。在另一窗口更改环境变量后，需要重新执行 `hardware observe` 让配置生效。SSH 转发方式见上文。
+
+```sh
+mkdir -p artifacts/verification/field
+sh scripts/deploy.sh hardware preflight > "artifacts/verification/field/$(date -u +%Y%m%dT%H%M%SZ)-inputs.json"
+# 首次只接里程计时，明确缩小此次验收范围
+sh scripts/deploy.sh hardware preflight odom
+```
+
+退出码 0 表示选中的每个输入至少出现两组推进的时间戳，且通过话题、frame、新鲜度和身份校验。默认每 0.25 秒读一次，最长等 6 秒，可加 `--timeout 20` 等待慢启动驱动。驱动应以 ROS 系统时钟给采样打戳。样本晚于工作台系统时钟超过 0.25 秒，或早于该源的新鲜度预算，会产生 `.clock_mismatch`。预检报告保留每个源的 `wall_minus_stamp_s`，适合检查明显的时域错误；估测多传感器亚毫秒级同步需要专用测量。
+
+| 预检现象 | 到现场核对 |
+|---|---|
+| `.missing` 或 `.topic_mismatch` | 核对报告的机器人 ID、ROS 域和完整话题。用 `ros2 topic info -v` 检查发布者、消息类型和 QoS。 |
+| `.frame_mismatch` | 核对驱动 header.frame_id，轮式里程还要核对 child_frame_id，检查实际安装和 TF。 |
+| `.stale`、`.stamp_not_advancing` 或 `.clock_mismatch` | 核实设备与板端时钟、掉线、驱动重发旧帧和采样频率，再运行同一预检。 |
+| `console.session_changed` | 检查工作台是否重启，以完整的新会话重新采样。 |
+
+**第三阶段，开放任务。** 在保持执行器未使能的情况下，运行 `sh scripts/deploy.sh hardware start`。完整入口启动 core、perception、agent、console、session 和 evidence，并注册后两项读取服务。下发“报告当前位置”，比对回执中的话题、frame、ROS 时间与原始里程计，在 Session 页面查回相同 task 与 trace。上板验收通过后再接入机体自己的导航 Action，依次测试停止与取消、低速短程、失联停车及恢复。恢复路径和接管原因随任务证据归档。
+
+**定位与导航能力边界。** 当前具名任务依赖注册地点、航点执行与结果反馈。里程计、激光和 IMU 均新鲜，只能证明这些输入可用。毫米波、激光或视觉 SLAM 还需自己的定位器，提供 `map→odom→base_link` 坐标关系、时间戳、跟踪状态及算法支持的匹配内点比例、残差等质量观测。把质量观测接入独立的感知健康插件后，单独验证退化、重定位和运动放行策略。[健康信号与插件契约](specs/SDD-035-sensor-health.md)
+
+**离线交付。** 可在同架构 Linux 构建机上运行上述 build，把同一代码版本和下述归档一起复制到板端。在构建机和板端均设置相同的 `EDGE_HARDWARE_IMAGE` 标签；板端保存任务账本的 Docker 卷独立于镜像。
+
+```sh
+docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{.Os}}/{{.Architecture}} {{.Id}}'
+docker save "$EDGE_HARDWARE_IMAGE" | gzip > edge-agent-hardware.tar.gz
+sha256sum edge-agent-hardware.tar.gz > edge-agent-hardware.tar.gz.sha256
+# 板端在归档所在目录执行；随后从代码仓库运行 observe 和 preflight
+sha256sum -c edge-agent-hardware.tar.gz.sha256
+docker load -i edge-agent-hardware.tar.gz
 ```
 
 浏览器能看到新到达的原始样本。在回环接口查询 `/api/state` 可以核实 `environment=hardware`，消息的原始时间戳、参考系、观测来源和更新年龄用于诊断驱动或 DDS 配置。请在所有输入使用同一可信采样时域后再依赖栅格坐标。ROS 控制器、驱动和容器应使用同一 `ROS_DOMAIN_ID`，网络和 QoS 配置须允许发现、订阅。硬件模式没有 Gazebo 世界真值，参考里程计和融合位姿可单独检查。感知支持水平雷达和与车体 Z 轴对齐的角速度，其他安装姿态需通过驱动或适配器变换。[感知参数与坐标约定](../perception/README.md)

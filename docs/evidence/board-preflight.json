@@ -1,0 +1,174 @@
+{
+  "spec": "SDD-032",
+  "date": "2026-11-18",
+  "hardware_connected": false,
+  "fixture": "Ubuntu Linux Docker, isolated loopback ROS 2 Jazzy and synthetic odometry, IMU and planar laser",
+  "before_proxy_spy": {
+    "http_status": 200,
+    "calls_observed_by_spy": [
+      {
+        "id": "before",
+        "text": "status"
+      }
+    ],
+    "transport": "isolated loopback, no actuator"
+  },
+  "shell": {
+    "action": "scripts/deploy.sh hardware observe",
+    "running_services": [
+      "console",
+      "perception"
+    ],
+    "invalid_topic": "config.invalid",
+    "missing_board": {
+      "passed": false,
+      "architecture": "x86_64",
+      "revision": "1c80e48-worktree-SDD032",
+      "robot_id": "field-lab-simulated",
+      "ros_domain_id": 211,
+      "expected": {
+        "odom": {
+          "topic": "/fieldtest/odom",
+          "frame": "odom"
+        },
+        "imu": {
+          "topic": "/imu",
+          "frame": "imu_link"
+        },
+        "scan": {
+          "topic": "/scan",
+          "frame": "laser_link"
+        }
+      },
+      "session_id": "9a4c2fefd4554a14840ea55ec70ce9f9",
+      "task_proxy_mode": "observe",
+      "samples": {
+        "odom": {
+          "topic": "/fieldtest/odom",
+          "frame": null,
+          "stamp_s": null,
+          "age_s": null,
+          "wall_minus_stamp_s": null
+        },
+        "imu": {
+          "topic": "/imu",
+          "frame": null,
+          "stamp_s": null,
+          "age_s": null,
+          "wall_minus_stamp_s": null
+        },
+        "scan": {
+          "topic": "/scan",
+          "frame": null,
+          "stamp_s": null,
+          "age_s": null,
+          "wall_minus_stamp_s": null
+        }
+      },
+      "checked_at": 1795011397.7163713,
+      "issues": [
+        "odom.missing",
+        "imu.missing",
+        "scan.missing"
+      ]
+    }
+  },
+  "runs": {
+    "amd64": {
+      "arch": "x86_64",
+      "emulation": false,
+      "image_id": "sha256:3bff34b51ed65d023ed0b196cf472de4260f71b1798ad780878889142588a935",
+      "source_label": "1c80e48-worktree-SDD032",
+      "raw_sha256": "2aa13d891d92c70acabf6bdaaa12ec0ccf8faa50286ad94f5da8fa79054bd2f3",
+      "issues": {
+        "without_drivers": [
+          "odom.missing",
+          "imu.missing",
+          "scan.missing"
+        ],
+        "with_drivers": [],
+        "wrong_frame": [
+          "imu.frame_mismatch"
+        ],
+        "other_channel": [],
+        "future_clock": [
+          "odom.clock_mismatch"
+        ],
+        "paused": [
+          "odom.stale",
+          "odom.clock_mismatch"
+        ],
+        "recovered": []
+      },
+      "after_reconnect": {
+        "source": "/fixture/odom",
+        "frame": "fixture_odom",
+        "stamp_ns": 1795011303379028845,
+        "stamp": {
+          "sec": 1795011303,
+          "nanosec": 379028845
+        },
+        "x": 0.375,
+        "y": 0.0,
+        "yaw": 0.0,
+        "speed": 0.0
+      },
+      "observe": {
+        "proxy_code": "console.observe_only",
+        "agent_reachable": true,
+        "submitted_task_absent": true,
+        "previous_task_present": true,
+        "events_readable": true
+      },
+      "operation_id_on_retry": "missing-odom/step/1"
+    },
+    "arm64": {
+      "arch": "aarch64",
+      "emulation": true,
+      "image_id": "sha256:4e0635dc3f8c608eee7fde64236d8d375169743e037f9432516d26d23a114f92",
+      "source_label": "1c80e48-worktree-SDD032",
+      "raw_sha256": "5f2bc6303c27dcc17c6bb3ba36d397787705a8413de26307156ac563d7198c87",
+      "issues": {
+        "without_drivers": [
+          "odom.missing",
+          "imu.missing",
+          "scan.missing"
+        ],
+        "with_drivers": [],
+        "wrong_frame": [
+          "imu.frame_mismatch"
+        ],
+        "other_channel": [],
+        "future_clock": [
+          "odom.clock_mismatch"
+        ],
+        "paused": [
+          "odom.stale",
+          "odom.clock_mismatch"
+        ],
+        "recovered": []
+      },
+      "after_reconnect": {
+        "source": "/fixture/odom",
+        "frame": "fixture_odom",
+        "stamp_ns": 1795012043754177515,
+        "stamp": {
+          "sec": 1795012043,
+          "nanosec": 754177515
+        },
+        "x": 0.375,
+        "y": 0.0,
+        "yaw": 0.0,
+        "speed": 0.0
+      },
+      "observe": {
+        "proxy_code": "console.observe_only",
+        "agent_reachable": true,
+        "submitted_task_absent": true,
+        "previous_task_present": true,
+        "events_readable": true
+      },
+      "operation_id_on_retry": "missing-odom/step/1"
+    }
+  }
+}

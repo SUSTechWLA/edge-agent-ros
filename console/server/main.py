@@ -58,6 +58,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def agent(self, method, url):
+        if os.getenv("EDGE_CONSOLE_OBSERVE_ONLY") == "1":
+            self.respond(403, {"code":"console.observe_only","error":"当前工作台只读，未连接任务代理"})
+            return
         dest = urlsplit(os.environ.get("EDGE_AGENT_URL","http://agent:8090"))
         body=None
         if method == "POST":
@@ -130,7 +133,9 @@ class Handler(SimpleHTTPRequestHandler):
                     raise ValueError("view must be all, changes or issues")
                 filters["view"]=view
             if url.path=="/api/state":
-                self.respond(200,self.observer.snapshot())
+                snapshot = self.observer.snapshot()
+                snapshot["task_proxy_mode"] = "observe" if os.getenv("EDGE_CONSOLE_OBSERVE_ONLY")=="1" else "agent"
+                self.respond(200,snapshot)
             elif url.path in ("/api/review/tasks","/api/sessions"):
                 try:
                     page=task_page(self.observer.tasks,params.get("state",["all"])[0],params.get("before",[None])[0],
