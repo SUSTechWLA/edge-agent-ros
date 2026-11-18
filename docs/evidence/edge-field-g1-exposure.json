@@ -1,0 +1,333 @@
+{
+  "passed": true,
+  "image": "sha256:40f99d29241819d38d6a892a932ad9f3cc0c8ce2409701d6cd60633f13dd9eb6",
+  "capture_domain": "73",
+  "replay_domain": "182",
+  "phases": 11,
+  "sensor_events": 13,
+  "manifest_sha256": "958e2c8475b201d28637474bb83d1271521eb5fdf69bc28519f2c2ef2148586b",
+  "result_sha256": "770e81d347a52c06c853101f404e029108db802fd7ac80ea3eab03db54c3d091",
+  "source": "five distinct original ROS 2 CDR frames per robot from running Gazebo campus",
+  "replay": "DDS loopback only; sensor payloads original except named injected faults; stamps retimed",
+  "robots": {
+    "crazyflie": {
+      "topic": "/model/crazyflie/front/image_raw",
+      "frame": "crazyflie/front_optical",
+      "stamp_range_ns": [
+        55000000000,
+        56000000000
+      ],
+      "source_samples": {
+        "crazyflie-1.cdr": "b27ab3bd4b8fc33156572363bc28c5aa5ac5a7e3411c14b6b07a8ec4bd3d56fd",
+        "crazyflie-2.cdr": "fde6a93d1efcb4f96ce8798d000a34cdab309c8fba09e96947fa62ec54239b94",
+        "crazyflie-3.cdr": "5e3fd591d88891bb1e32f3682e3c3e8e047a40ca2f7c98cbaeaa050c4e0fc22b",
+        "crazyflie-4.cdr": "22ec21cdea184b0b15dcbbea05119225fc628d50fe3832d66020ffb072f76ff1",
+        "crazyflie-5.cdr": "a23a49575c04105100b194975b3c2f70823e0e70130426e77f99bc9c92f693dc"
+      },
+      "transitions": [
+        {
+          "seq": 2,
+          "event_id": "5e7a914c8182455784e812fcb9f10b31",
+          "parent": null,
+          "utc": "2026-11-18T15:03:35.237801+00:00",
+          "state": "observed",
+          "code": "sensor.ok",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.1351
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "crazyflie-5.cdr",
+            "payload": "original"
+          }
+        },
+        {
+          "seq": 3,
+          "event_id": "0460a5ba33314d9da020fece7bd67250",
+          "parent": "5e7a914c8182455784e812fcb9f10b31",
+          "utc": "2026-11-18T15:03:35.374528+00:00",
+          "state": "rechecking",
+          "code": "sensor.black_image",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 1.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0
+          },
+          "elapsed_s": 0.0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "crazyflie-1.cdr",
+            "payload": "occluded"
+          }
+        },
+        {
+          "seq": 4,
+          "event_id": "09809e8eb1bd473596dde2da6403dc6b",
+          "parent": "0460a5ba33314d9da020fece7bd67250",
+          "utc": "2026-11-18T15:03:36.177108+00:00",
+          "state": "needs_attention",
+          "code": "sensor.black_image",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 1.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0
+          },
+          "elapsed_s": 0.804,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "crazyflie-2.cdr",
+            "payload": "occluded"
+          }
+        },
+        {
+          "seq": 5,
+          "event_id": "a90e6e62181246fba8ee5ef3a9f7be1d",
+          "parent": "09809e8eb1bd473596dde2da6403dc6b",
+          "utc": "2026-11-18T15:03:36.578812+00:00",
+          "state": "recovered",
+          "code": "sensor.ok",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.1351
+          },
+          "elapsed_s": 1.205,
+          "consecutive_good": 3,
+          "input": {
+            "filename": "crazyflie-5.cdr",
+            "payload": "original"
+          }
+        }
+      ]
+    },
+    "go1": {
+      "topic": "/model/go1/lidar/points",
+      "frame": "go1/lidar_link",
+      "stamp_range_ns": [
+        54946000000,
+        56000000000
+      ],
+      "source_samples": {
+        "go1-1.cdr": "176e5f18970789593d2b60525061a2d5d5f1ac9c7d5769395d12efddf613ffd0",
+        "go1-2.cdr": "e330546c0a0a1777ac7e39b0caecfe65eec7857142fcbd4009dcb9741146bffd",
+        "go1-3.cdr": "e84f14cc72d66fbca8b447172417e3b863d763d5c28d94842350eeaf6551a2d5",
+        "go1-4.cdr": "c994b7ef13f800052d1ec4210b4ea2faf438116464fc64a77e58dedcec8a033a",
+        "go1-5.cdr": "986ccc8156ac39af27defd877fe77ceb8f39e4ca7764b497bef5f890e2ff32bd"
+      },
+      "transitions": [
+        {
+          "seq": 2,
+          "event_id": "42681b2194d5449c9a7efb2dbd788cfb",
+          "parent": null,
+          "utc": "2026-11-18T15:03:35.238249+00:00",
+          "state": "observed",
+          "code": "sensor.ok",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 405
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-5.cdr",
+            "payload": "original"
+          }
+        },
+        {
+          "seq": 3,
+          "event_id": "a25eda47c4c9467b91a304e1fbf28a7d",
+          "parent": "42681b2194d5449c9a7efb2dbd788cfb",
+          "utc": "2026-11-18T15:03:36.721865+00:00",
+          "state": "observed",
+          "code": "sensor.few_points",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 8,
+            "samples": 8,
+            "valid_samples": 8
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-1.cdr",
+            "payload": "sparse"
+          }
+        },
+        {
+          "seq": 4,
+          "event_id": "331b1d9a2c584766ac17f04ce022e515",
+          "parent": "a25eda47c4c9467b91a304e1fbf28a7d",
+          "utc": "2026-11-18T15:03:36.860405+00:00",
+          "state": "rechecking",
+          "code": "sensor.invalid_cloud_points",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 0
+          },
+          "elapsed_s": 0.0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-2.cdr",
+            "payload": "nan"
+          }
+        },
+        {
+          "seq": 5,
+          "event_id": "1d1537378a0f4759bad6681ca802faae",
+          "parent": "331b1d9a2c584766ac17f04ce022e515",
+          "utc": "2026-11-18T15:03:37.679038+00:00",
+          "state": "needs_attention",
+          "code": "sensor.invalid_cloud_points",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 0
+          },
+          "elapsed_s": 0.818,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-3.cdr",
+            "payload": "nan"
+          }
+        },
+        {
+          "seq": 6,
+          "event_id": "0cd439a6ea754a6390c0ccbfef83a271",
+          "parent": "1d1537378a0f4759bad6681ca802faae",
+          "utc": "2026-11-18T15:03:38.078621+00:00",
+          "state": "recovered",
+          "code": "sensor.ok",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 405
+          },
+          "elapsed_s": 1.218,
+          "consecutive_good": 3,
+          "input": {
+            "filename": "go1-1.cdr",
+            "payload": "original"
+          }
+        }
+      ]
+    },
+    "g1": {
+      "topic": "/model/g1/rgbd/image_raw",
+      "frame": "g1/rgbd_optical",
+      "stamp_range_ns": [
+        55000000000,
+        56000000000
+      ],
+      "source_samples": {
+        "g1-1.cdr": "fe309f297a4496059839f94caf4d3f46786d40dc0053b38f1141b09c289c66ae",
+        "g1-2.cdr": "eeb0cf257021c646595c27e780cc6f566231445e55a9f78197764aa90737b5e4",
+        "g1-3.cdr": "62d4befb0d5c70b30a3aa317ac4b5485e21fb6d7909a9a0885e023dc8db67794",
+        "g1-4.cdr": "ca502f6d17d4352691e3cd3fa0a4988bcf313aeb027a8abae4e2acd6a67fee84",
+        "g1-5.cdr": "3947f7807f1e7e73d6af990540082f170e8d91aa7ce9a0bc522c5527cc583c9d"
+      },
+      "transitions": [
+        {
+          "seq": 2,
+          "event_id": "1703b6597af1482684967ca98364e58f",
+          "parent": null,
+          "utc": "2026-11-18T15:03:35.238157+00:00",
+          "state": "observed",
+          "code": "sensor.ok",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0996
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "g1-5.cdr",
+            "payload": "original"
+          }
+        },
+        {
+          "seq": 3,
+          "event_id": "ae8bbcccbde84a098210f34414cf95a6",
+          "parent": "1703b6597af1482684967ca98364e58f",
+          "utc": "2026-11-18T15:03:38.222606+00:00",
+          "state": "rechecking",
+          "code": "sensor.overexposed",
+          "metrics": {
+            "bright_fraction": 1.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0
+          },
+          "elapsed_s": 0.0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "g1-2.cdr",
+            "payload": "saturated"
+          }
+        },
+        {
+          "seq": 4,
+          "event_id": "810873a057fd44b0a18596ccf9b2f154",
+          "parent": "ae8bbcccbde84a098210f34414cf95a6",
+          "utc": "2026-11-18T15:03:39.024062+00:00",
+          "state": "needs_attention",
+          "code": "sensor.overexposed",
+          "metrics": {
+            "bright_fraction": 1.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0
+          },
+          "elapsed_s": 0.802,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "g1-3.cdr",
+            "payload": "saturated"
+          }
+        },
+        {
+          "seq": 5,
+          "event_id": "6b71f5547e1a42bab569b57f80101b85",
+          "parent": "810873a057fd44b0a18596ccf9b2f154",
+          "utc": "2026-11-18T15:03:39.426033+00:00",
+          "state": "recovered",
+          "code": "sensor.ok",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0996
+          },
+          "elapsed_s": 1.204,
+          "consecutive_good": 3,
+          "input": {
+            "filename": "g1-1.cdr",
+            "payload": "original"
+          }
+        }
+      ]
+    }
+  }
+}

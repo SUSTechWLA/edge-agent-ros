@@ -31,12 +31,12 @@ def save(path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, allow_nan=False, indent=2) + "\n")
 
 
-def capture(root):
+def capture(root, sensors):
     root.mkdir(parents=True, exist_ok=True)
     if (root / "manifest.json").exists():
         raise FileExistsError("choose a new directory to protect the existing capture")
     node = Node("readonly_campus_frame_recorder", enable_rosout=False, start_parameter_services=False)
-    frames = {name: [] for name in SENSORS}
+    frames = {name: [] for name in sensors}
 
     def receive(name, msg):
         samples = frames[name]
@@ -50,7 +50,7 @@ def capture(root):
                         "bytes": len(data), "stamp_ns": stamp, "frame": msg.header.frame_id,
                         "width": msg.width, "height": msg.height})
 
-    for name, (_, kind, topic) in SENSORS.items():
+    for name, (_, kind, topic) in sensors.items():
         node.create_subscription(kind, topic, lambda msg, name=name: receive(name, msg), qos_profile_sensor_data)
     deadline = time.monotonic() + 90
     try:
@@ -59,13 +59,16 @@ def capture(root):
     finally:
         node.destroy_node()
         save(root / "manifest.json", {"source": "running Gazebo campus, ROS 2 unmodified CDR",
-             "domain": os.getenv("ROS_DOMAIN_ID"), "topics": {n: s[2] for n, s in SENSORS.items()}, "samples": frames})
+             "domain": os.getenv("ROS_DOMAIN_ID"), "topics": {n: s[2] for n, s in sensors.items()}, "samples": frames})
     counts = {name: len(v) for name, v in frames.items()}
     print("captured", counts, flush=True)
     assert min(counts.values()) == 5, counts
 
 
 def corrupt(message, fault):
+    if fault == "saturated":
+        message.data = b"\xff" * len(message.data)
+        return
     if fault in ("occluded", "depth_holes"):
         message.data = bytes(len(message.data))
         return
@@ -94,7 +97,7 @@ def corrupt(message, fault):
     message.is_dense = False
 
 
-def replay(root, out):
+def replay(root, out, sensors):
     manifest = json.loads((root / "manifest.json").read_text())
     if os.getenv("ROS_DOMAIN_ID") == manifest["domain"] or os.getenv("ROS_AUTOMATIC_DISCOVERY_RANGE") != "LOCALHOST":
         raise RuntimeError("replay requires a separate ROS domain and ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST")
@@ -107,11 +110,11 @@ def replay(root, out):
 
     def status(name):
         with urllib.request.urlopen(urls[name] + "/status", timeout=1) as response:
-            return json.load(response)["inputs"][SENSORS[name][0]]
+            return json.load(response)["inputs"][sensors[name][0]]
 
     def push(faults):
         nonlocal ticks
-        for name, (_, kind, _) in SENSORS.items():
+        for name, (_, kind, _) in sensors.items():
             sample = ticks % len(packets[name])
             msg = deserialize_message(packets[name][sample], kind)
             if name in faults:
@@ -130,7 +133,7 @@ def replay(root, out):
             push(faults)
             time.sleep(.13)
             try:
-                observations = {name: status(name) for name in SENSORS}
+                observations = {name: status(name) for name in sensors}
             except OSError:
                 continue
             if all((r["state"], r["code"]) == expected[n] and r["latest"].get("measurement_code") == r["code"]
@@ -142,9 +145,10 @@ def replay(root, out):
             raise AssertionError((label, expected, observations))
         phases.append({"phase": label, "inputs": faults or "original", "observations": observations})
 
-    healthy = {name: ("observed", "ok") for name in SENSORS}
+    g1_fault = ("saturated", "overexposed") if sensors["g1"][0] == "rgb" else ("depth_holes", "depth_holes")
+    healthy = {name: ("observed", "ok") for name in sensors}
     try:
-        for index, (name, (key, kind, topic)) in enumerate(SENSORS.items()):
+        for index, (name, (key, kind, topic)) in enumerate(sensors.items()):
             samples = manifest["samples"][name]
             assert topic == manifest["topics"][name] and len(samples) >= 3
             packets[name] = []
@@ -166,7 +170,7 @@ def replay(root, out):
                 "--ros-args", "-r", f"__ns:=/model/{name}"], env=env, stdout=logs[name], stderr=subprocess.STDOUT)
         phase("campus_baseline", {}, healthy)
         for name, fault, code in (("crazyflie", "occluded", "black_image"), ("go1", "sparse", "few_points"),
-                                  ("go1", "nan", "invalid_cloud_points"), ("g1", "depth_holes", "depth_holes")):
+                                  ("go1", "nan", "invalid_cloud_points"), ("g1", *g1_fault)):
             if fault == "sparse":
                 healthy[name] = ("observed", code)
                 phase("go1_eight_valid_points", {name: fault}, healthy)
@@ -176,7 +180,7 @@ def replay(root, out):
             healthy[name] = ("recovered", "ok")
             phase(name + "_restored", {}, healthy)
         events = {}
-        for name in SENSORS:
+        for name in sensors:
             db = sqlite3.connect(f"file:{ledger[name]}?mode=ro", uri=True)
             try:
                 events[name] = [dict(seq=seq, **json.loads(body)) for seq, body in
@@ -189,12 +193,12 @@ def replay(root, out):
             expected_events = [("observed", "ok")]
             if name == "go1":
                 expected_events.append(("observed", "few_points"))
-            error = {"crazyflie": "black_image", "go1": "invalid_cloud_points", "g1": "depth_holes"}[name]
+            error = {"crazyflie": "black_image", "go1": "invalid_cloud_points", "g1": g1_fault[1]}[name]
             expected_events += [("rechecking", error), ("needs_attention", error), ("recovered", "ok")]
             assert [(r["data"]["phase"], r["code"].removeprefix("sensor.")) for r in transitions] == expected_events
             for i, entry in enumerate(transitions):
                 assert entry.get("parent_event_id") == (transitions[i-1]["event_id"] if i else None)
-                assert entry["data"]["topic"] == SENSORS[name][2]
+                assert entry["data"]["topic"] == sensors[name][2]
                 assert entry["event_id"] not in all_ids
                 all_ids.add(entry["event_id"])
                 entry["replay_input"] = sent[entry["data"]["observation"]["stamp_ns"]]
@@ -211,7 +215,7 @@ def replay(root, out):
                    "robots": {}}
         for name, rows in events.items():
             samples = manifest["samples"][name]
-            summary["robots"][name] = {"topic": SENSORS[name][2], "frame": samples[0]["frame"],
+            summary["robots"][name] = {"topic": sensors[name][2], "frame": samples[0]["frame"],
                 "stamp_range_ns": [samples[0]["stamp_ns"], samples[-1]["stamp_ns"]],
                 "source_samples": {s["filename"]: s["sha256"] for s in samples},
                 "transitions": [{"seq": e["seq"], "event_id": e["event_id"], "parent": e.get("parent_event_id"),
@@ -241,15 +245,19 @@ def main():
     mode.add_argument("--capture", type=Path)
     mode.add_argument("--replay", type=Path)
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--g1-color", action="store_true", help="exercise G1 color exposure instead of depth")
     args = parser.parse_args()
+    sensors = dict(SENSORS)
+    if args.g1_color:
+        sensors["g1"] = ("rgb", Image, "/model/g1/rgbd/image_raw")
     rclpy.init()
     try:
         if args.capture:
-            capture(args.capture)
+            capture(args.capture, sensors)
         else:
             if args.out is None:
                 parser.error("--replay requires --out")
-            replay(args.replay, args.out)
+            replay(args.replay, args.out, sensors)
     finally:
         rclpy.try_shutdown()
 
