@@ -61,18 +61,19 @@ class PlayingSurface:
             self.polygon(name, material, [(-half,side*inner), (half,side*inner),
                                           (half,side*outer), (-half,side*outer)], z)
 
-    def write(self, directory):
+    def write(self, directory, prefix="athletics", palette=None):
         directory.mkdir(parents=True, exist_ok=True)
+        palette = PALETTE if palette is None else palette
         mtl = "".join(f"newmtl {name}\nKa {r} {g} {b}\nKd {r} {g} {b}\nKs 0 0 0\nillum 1\n"
-                      for name,(r,g,b) in PALETTE.items())
-        materials = "athletics-" + hashlib.sha256(mtl.encode()).hexdigest()[:12] + ".mtl"
+                      for name,(r,g,b) in palette.items())
+        materials = prefix+"-" + hashlib.sha256(mtl.encode()).hexdigest()[:12] + ".mtl"
         rows = [f"mtllib {materials}", "vn 0 0 1"]
         rows.extend(f"v {x} {y} {z}" for x,y,z in self.vertices)
         for (name, material), faces in self.faces.items():
             rows.extend((f"g {name}", f"usemtl {material}"))
             rows.extend(f"f {a}//1 {b}//1 {c}//1" for a,b,c in faces)
         obj = "\n".join(rows)+"\n"
-        target = directory/("athletics-" + hashlib.sha256(obj.encode()).hexdigest()[:12] + ".obj")
+        target = directory/(prefix+"-" + hashlib.sha256(obj.encode()).hexdigest()[:12] + ".obj")
         (directory/materials).write_bytes(mtl.encode())
         target.write_bytes(obj.encode())
         return target

@@ -205,7 +205,7 @@ def run(args, selected, reasons):
                                               test("test_campus_real_site.py","-v"),
                                               test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
                                               test("test_campus_capture.py","-v")]
-                    if assets or (ROOT / "artifacts/sim-assets/models/Campus/model.sdf").is_file():
+                    if assets or (ROOT / "artifacts/sim-assets/models/Pine Tree/model.sdf").is_file():
                         checks["campus-world"].append(test("system/campus_acceptance.py","--image",image,"--assets",
                                                        str((assets or ROOT/"artifacts/sim-assets").resolve()),
                                                        "--verify-reload","--verify-texture","--out",directory/"campus-world.json"))

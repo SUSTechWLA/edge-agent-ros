@@ -30,7 +30,8 @@ class DelftCampus(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(raw).hexdigest(), digest)
                 page = json.loads(raw)
                 self.assertFalse(any(link["rel"] == "next" for link in page["links"]))
-                self.assertTrue(page["metadata"]["metadata"]["referenceSystem"].endswith("/7415"))
+                if page["features"]:
+                    self.assertTrue(page["metadata"]["metadata"]["referenceSystem"].endswith("/7415"))
                 rectangles.append(tuple(map(int, Path(name).stem.split("_"))))
                 source_ids.update(feature["id"] for feature in page["features"])
             self.assertEqual(hashlib.sha256(archive.read("ortho.source")).hexdigest(), self.manifest["wms_sha256"])
@@ -74,18 +75,20 @@ class DelftCampus(unittest.TestCase):
         self.assertEqual(faces, sum(self.manifest["triangles_by_surface"].values()))
         self.assertGreater(walls, 1000)
         self.assertGreater(pitched_roofs, 100)
-        self.assertLessEqual(max(x for x,y,z in vertices),650)
-        self.assertLessEqual(max(y for x,y,z in vertices),760)
+        self.assertGreaterEqual(min(x for x,y,z in vertices),3)
+        self.assertLessEqual(max(x for x,y,z in vertices),542)
+        self.assertGreaterEqual(min(y for x,y,z in vertices),3)
+        self.assertLessEqual(max(y for x,y,z in vertices),1167)
         self.assertGreater(max(z for x,y,z in vertices),90)
-        self.assertGreater(max(z for x,y,z in vertices if 300<x<440 and 155<y<330),80)
+        self.assertGreater(max(z for x,y,z in vertices if 130<x<270 and 565<y<740),80)
 
     def test_world_and_texture_resources_install_offline(self):
         world = ET.Element("world")
         with tempfile.TemporaryDirectory() as tmp:
             bookmark = site.append_site(world, Path(tmp))
-            self.assertEqual(bookmark["bounds"], [395,12,1045,772])
+            self.assertEqual(bookmark["bounds"], [-410,-161,135,1009])
             model = world.find("model")
-            self.assertEqual(model.findtext("pose"),"395 12 0 0 0 0")
+            self.assertEqual(model.findtext("pose"),"-410 -161 0 0 0 0")
             self.assertEqual(model.findtext("link/collision/geometry/mesh/uri"),
                              model.findtext("link/visual[@name='buildings_visual']/geometry/mesh/uri"))
             for uri in model.iter("uri"):
@@ -96,7 +99,7 @@ class DelftCampus(unittest.TestCase):
                         self.assertTrue((mesh.parent/line.split()[1]).is_file())
             image = (Path(tmp)/"real_site"/"ortho.png").read_bytes()
             self.assertEqual(image[:8],b"\x89PNG\r\n\x1a\n")
-            self.assertEqual(struct.unpack(">II",image[16:24]),(1560,1824))
+            self.assertEqual(struct.unpack(">II",image[16:24]),(1090,2340))
 
     def test_street_camera_is_outdoors_and_sees_the_measured_ewi_tower(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -15,6 +15,29 @@ NATIVE = (shutil.which("g++") and Path("/usr/include/assimp/scene.h").is_file()
 
 @unittest.skipUnless(NATIVE, "Run in the Gazebo build image with Assimp, PNG and NumPy")
 class CampusMesh(unittest.TestCase):
+    def test_robot_template_keeps_link_transforms_and_native_joint_axis(self):
+        from scene.campus_large.export_mesh import export
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            sdf=root/"world.sdf"
+            sdf.write_text("<sdf><world><model name='leg_robot'><pose>7 2 1 0 0 0</pose>"
+                "<link name='body'/><link name='leg'><pose>1 2 3 0 0 1.57079632679</pose>"
+                "<visual name='shell'><geometry><box><size>.2 .1 .4</size></box></geometry></visual></link>"
+                "<joint name='hip' type='revolute'><parent>body</parent><child>leg</child>"
+                "<axis><xyz expressed_in='__model__'>1 0 0</xyz></axis></joint></model></world></sdf>")
+            output=root/"robots.glb";export(sdf,output,[])
+            p=output.read_bytes();doc=json.loads(p[20:20+struct.unpack_from("<I",p,12)[0]])
+            self.assertEqual(doc["nodes"][0]["children"],[])
+            template=next(s for s in doc["scenes"] if s.get("extras",{}).get("robot_model")=="leg_robot")
+            actor=doc["nodes"][template["nodes"][0]]
+            links={doc["nodes"][i]["name"]:doc["nodes"][i] for i in actor["children"]}
+            self.assertEqual(links["leg"]["matrix"][12:15],[1,2,3])
+            self.assertEqual(len(links["leg"]["children"]),1)
+            j=template["extras"]["joints"][0]
+            self.assertEqual((j["name"],j["parent"],j["child"]),("hip","body","leg"))
+            self.assertAlmostEqual(j["axis"][0],0)
+            self.assertAlmostEqual(j["axis"][1],-1)
+
     def test_quad_and_vertical_wall_survive_export(self):
         import numpy as np
         from scene.campus_large.export_mesh import export

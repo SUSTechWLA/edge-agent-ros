@@ -13,7 +13,8 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 PROJECT = "edge-agent-campus"
 SERVICES = ("sim", "bridge", "witness", "gateway", "core", "perception", "scene", "agent", "console",
-            "campus-capture", "campus-overview")
+            "campus-capture", "campus-overview","campus-robot-bridge","campus-fleet",
+            "crazyflie-agent","go1-agent","g1-agent")
 
 
 class ReloadBlocked(RuntimeError):
@@ -147,7 +148,7 @@ def main():
         subprocess.run(["docker",action,*ids],cwd=ROOT,env=env,check=True)
 
     if args.action in ("start", "reload"):
-        if not all((assets / "models" / name / "model.sdf").is_file() for name in ("Campus", "Pine Tree")):
+        if not (assets / "models" / "Pine Tree" / "model.sdf").is_file():
             parser.error(f"campus assets missing in {assets}. Run python scene/campus_large/fetch_assets.py and use its cache path.")
         if args.action == "reload":
             try:

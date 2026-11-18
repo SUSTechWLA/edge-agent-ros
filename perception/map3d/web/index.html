@@ -21,7 +21,7 @@
     <section class="view" aria-label="交互地图">
       <div class="view-head"><span id="view-name">三维透视</span><code id="frame">坐标系 —</code></div>
       <div class="map-places" id="map-places" hidden>
-        <button id="campus-fit" type="button">全校</button>
+        <button id="campus-fit" type="button">完整范围</button>
         <span id="landmarks"></span>
         <button id="robot-fit" type="button">机器人附近</button>
         <label for="place-fit">地点</label><select id="place-fit" aria-label="按校园地点取景"></select>
@@ -42,6 +42,12 @@
       </div>
     </section>
     <aside>
+      <section class="panel" id="robot-panel" hidden>
+        <div class="panel-head"><h2>场内机器人</h2><span id="robot-online"></span></div>
+        <div id="robot-choices" role="group" aria-label="查看机器人机体"></div>
+        <p id="robot-detail" aria-live="polite">选择机体，查看实时位置和可用能力。</p>
+        <a id="robot-camera" hidden target="_blank" rel="noopener noreferrer">查看 Gazebo 原生画面</a>
+      </section>
       <section class="panel inspect"><div class="panel-head"><h2>地图查询</h2><span class="live" id="connection" role="status">正在连接</span></div>
         <p id="pick-result" aria-live="polite"></p>
         <p id="grid-info"></p>

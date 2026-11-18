@@ -1,6 +1,5 @@
 """Run a private Gazebo campus, submit a named-place mission and compare independent live observations."""
 import argparse
-from array import array
 import base64
 from collections import deque
 from datetime import datetime, timezone
@@ -24,8 +23,9 @@ import uuid
 from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
-AREAS = ("fuel_campus", "delft_surveyed_site", "teaching", "woods", "road", "track", "lawn")
+AREAS = ("delft_surveyed_site", "teaching", "woods", "road", "track")
 SERVICES = ("sim", "bridge", "witness", "gateway", "core", "perception", "scene", "agent", "console")
+FLEET_SERVICES = ("campus-robot-bridge","campus-fleet","crazyflie-agent","go1-agent","g1-agent")
 
 
 def require(condition, message):
@@ -103,87 +103,6 @@ def ros_witness():
         rclpy.try_shutdown()
 
 
-def road_connection(models):
-    """Measure the join in the simulator's reconstructed SDF and the original OBJ Road polygons."""
-    def pose(element):
-        return tuple(map(float,(element.findtext("pose") or "0 0 0 0 0 0").split()))
-    def translation(*elements):
-        values=[pose(e) for e in elements]
-        require(all(abs(v)<1e-7 for row in values for v in row[3:]),"unexpected rotated parent in campus mesh")
-        return tuple(sum(row[i] for row in values) for i in range(3))
-    def rectangle(name):
-        visual=road_link.find("visual[@name='"+name+"']")
-        require(visual is not None,"road section missing: "+name)
-        x,y,z,roll,pitch,yaw=pose(visual)
-        require(abs(roll)+abs(pitch)<1e-7,"tilted connector geometry")
-        length,width,height=map(float,visual.findtext("geometry/box/size").split())
-        dx,dy=math.cos(yaw),math.sin(yaw)
-        x+=road_origin[0]
-        y+=road_origin[1]
-        return ([x-length*dx/2,y-length*dy/2], [x+length*dx/2,y+length*dy/2],
-                width, road_origin[2]+z+height/2)
-
-    road_link=models["road"].find("link")
-    road_origin=translation(models["road"],road_link)
-    drive_start,drive_end,drive_width,_=rectangle("campus_drive")
-    names=sorted((v.get("name") for v in road_link.findall("visual") if re.fullmatch(r"north_link_\d+",v.get("name",""))),
-                 key=lambda n:int(n.rsplit("_",1)[1]))
-    require(len(names)>=2,"expected a multi-segment connection")
-    segments=[rectangle(name) for name in names]
-    first=segments[0][0]
-    v=[b-a for a,b in zip(drive_start,drive_end)]
-    t=sum((x-a)*component for x,a,component in zip(first,drive_start,v))/sum(k*k for k in v)
-    projected=[a+t*component for a,component in zip(drive_start,v)]
-    require(0<=t<=1 and math.dist(first,projected)<drive_width/2,"connector does not reach the main drive")
-    gaps=[math.dist(previous[1],following[0]) for previous,following in zip(segments,segments[1:])]
-    require(max(gaps)<.01,"gap between connector centerlines")
-    end=segments[-1][1]
-    model=models["fuel_campus"]
-    link=model.find("link")
-    visual=link.find("visual")
-    mesh=visual.find("geometry/mesh")
-    require(mesh is not None,"source visual mesh not found")
-    source=Path("/assets/models/Campus/meshes/Campus_world.obj")
-    require(mesh.findtext("uri","").endswith("/meshes/"+source.name),"unexpected campus mesh")
-    offset=translation(model,link,visual)
-    scale=list(map(float,(mesh.findtext("scale") or "1 1 1").split()))
-    require(min(scale)>0,"invalid mesh scale")
-    q=[(end[i]-offset[i])/scale[i] for i in range(2)]
-    floor=models["floor"]
-    floor_link=floor.find("link")
-    floor_collision=floor_link.find("collision")
-    require(floor_collision.find("geometry/plane") is not None,"continuous floor missing")
-    ground=translation(floor,floor_link,floor_collision)[2]
-    vertices=array("d")
-    material=None
-    with source.open(encoding="utf-8",errors="strict") as obj:
-        for line_num,line in enumerate(obj,1):
-            if line.startswith("v "):
-                vertices.extend(float(x) for x in line.split()[1:4])
-            elif line.startswith("usemtl "):
-                material=line.split(None,1)[1].strip()
-            elif material=="Road" and line.startswith("f "):
-                refs=[int(token.split("/")[0]) for token in line.split()[1:]]
-                xyz=[vertices[(r-1)*3:(r-1)*3+3] for r in refs]
-                for i in range(1,len(xyz)-1):
-                    a,b,c=xyz[0],xyz[i],xyz[i+1]
-                    det=(b[1]-c[1])*(a[0]-c[0])+(c[0]-b[0])*(a[1]-c[1])
-                    if abs(det)<1e-12:
-                        continue
-                    u=((b[1]-c[1])*(q[0]-c[0])+(c[0]-b[0])*(q[1]-c[1]))/det
-                    v=((c[1]-a[1])*(q[0]-c[0])+(a[0]-c[0])*(q[1]-c[1]))/det
-                    weights=(u,v,1-u-v)
-                    if min(weights)<-1e-7:
-                        continue
-                    z=offset[2]+scale[2]*sum(k*p[2] for k,p in zip(weights,(a,b,c)))
-                    require(z>ground and abs(z-segments[-1][3])<.03,"buried road or vertical step at connection")
-                    return {"segment_names":names,"first_xy_m":first,"tip_xy_m":end,
-                            "junction_gaps_m":gaps,"obj_face_line":line_num,"material":"Road",
-                            "triangle_vertex_indices":[refs[0],refs[i],refs[i+1]],"barycentric_weights":weights,
-                            "mesh_surface_z_m":z,"connector_top_z_m":segments[-1][3],"ground_z_m":ground}
-    raise AssertionError("connector endpoint misses every Road triangle in the source campus mesh")
-
-
 def live_geometry():
     """Gazebo server serializes its live entities; no generator or layout module is imported."""
     from gz.transport13 import Node
@@ -191,6 +110,7 @@ def live_geometry():
     from gz.msgs10.scene_pb2 import Scene
     from gz.msgs10.sdf_generator_config_pb2 import SdfGeneratorConfig
     from gz.msgs10.stringmsg_pb2 import StringMsg
+    from campus_route_geometry import route_check
 
     node = Node()
     ok, scene = node.request("/world/edge_lab/scene/info", Empty(), Empty, Scene, 10000)
@@ -228,15 +148,20 @@ def live_geometry():
         if primitive_sizes:
             largest=max(primitive_sizes, key=lambda entry: entry[1][0]*entry[1][1])
             report[name]["largest_box_size_m"] = largest
-    require(report["fuel_campus"]["geometry_types"].get("mesh"), "upstream campus has no mesh")
     surveyed = report["delft_surveyed_site"]
     require(surveyed["geometry_types"].get("mesh",0)>=2 and surveyed["collisions"]>=1,
             "Delft district lacks rendered terrain, surveyed buildings or physical collision")
-    report["road_connection"] = road_connection(models)
+    world_dir=Path("/campus")
+    meta=json.loads((world_dir/"overview/manifest.json").read_bytes())
+    built=route_check(ET.parse(world_dir/"world.sdf").find("world"),meta,world_dir)
+    live=route_check(world,meta,world_dir)
+    require(built["nodes"]==live["nodes"] and len(built["segments"])==len(live["segments"]),"Build/live route disagreement")
+    for a,b in zip(built["segments"],live["segments"]):
+        require(a["surface"]==b["surface"] and abs(a["length_m"]-b["length_m"])<.035 and
+                abs(a["width_m"]-b["width_m"])<.035,"Simulator changed published route "+a["surface"])
+    report["route"]={"assembled":built,"gazebo":live}
     require(report["teaching"]["collisions"]>=2, "building cannot be physically sensed")
     require(report["track"]["geometry_types"].get("mesh"), "sports markings missing from live Gazebo")
-    for area, length in (("lawn",90),("woods",75),("road",200),("teaching",12)):
-        require(max(report[area]["largest_box_size_m"][1][:2])>=length, area+" is too small to represent campus scale")
     report["live_model_count"] = len(visible)
     report["pine_instances"] = len([name for name in visible if name.startswith("pine_")])
     require(report["pine_instances"]>2 and report["woods"]["collisions"]>=10,"woodland has too few physical trees")
@@ -306,12 +231,16 @@ def run(args):
             with socket.socket() as probe:
                 probe.bind(("127.0.0.1",0))
                 env["EDGE_CAMPUS_MAP_PORT"]=str(probe.getsockname()[1])
-        overrides={svc:{"environment":{"GZ_PARTITION":partition,"ROS_DOMAIN_ID":domain}} for svc in (*SERVICES,"campus-capture")}
+        overrides={svc:{"environment":{"GZ_PARTITION":partition,"ROS_DOMAIN_ID":domain}} for svc in
+                   (*SERVICES,"campus-capture","campus-robot-bridge","campus-fleet")}
         overrides["campus-audit-witness"]={"image":args.image,"pull_policy":"never","init":True,
             "environment":{"GZ_PARTITION":partition,"ROS_DOMAIN_ID":domain,"RMW_IMPLEMENTATION":"rmw_cyclonedds_cpp"},
             "command":["python3","-B","/opt/audit/tests/system/campus_acceptance.py","--ros-witness"],
             "volumes":[{"type":"bind","source":str(Path(__file__).resolve()),"target":"/opt/audit/tests/system/campus_acceptance.py","read_only":True},
+                       {"type":"bind","source":str(Path(__file__).with_name("campus_route_geometry.py").resolve()),"target":"/opt/audit/tests/system/campus_route_geometry.py","read_only":True},
+                       {"type":"bind","source":str(Path(__file__).with_name("campus_station_probe.py").resolve()),"target":"/opt/audit/tests/system/campus_station_probe.py","read_only":True},
                        {"type":"bind","source":str(args.assets.resolve()),"target":"/assets","read_only":True},
+                       {"type":"volume","source":"campus-world","target":"/campus","read_only":True},
                        {"type":"bind","source":str(tmp/"audit"),"target":"/audit"}]}
         write(tmp/"isolate.json",{"services":overrides})
         compose=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.campus.yaml"),"-f",str(tmp/"isolate.json")]
@@ -335,7 +264,7 @@ def run(args):
                 small=identities(project+"-small")
             require("sim" in small,"baseline project exists but has no running simulator")
             first_clock=small_clock(small)
-            dc("up","-d","--no-build",*SERVICES,"campus-audit-witness","campus-capture","campus-overview",timeout=180)
+            dc("up","-d","--no-build",*SERVICES,*FLEET_SERVICES,"campus-audit-witness","campus-capture","campus-overview",timeout=210)
             url=dc("port","console","8080")
             require(url.startswith("127.0.0.1:"),"console must bind to host loopback")
             base="http://"+url
@@ -376,20 +305,21 @@ def run(args):
                                "evidence":evidence,"paths":paths,"row_units":["stamp_ns","x_m","y_m","v_mps"]}
             report["ros"]={"counts_start":start["counts"],"counts_end":end["counts"],"first_scan":start["scan"][-1],
                            "last_scan":end["scan"][-1],"clock_before_ns":start["stamps"]["clock"],"clock_after_ns":end["stamps"]["clock"]}
+            from campus_forms import verify_forms
+            report["robot_forms"]=verify_forms(api,dc)
             viewer = "http://"+dc("port","campus-overview","8080")
             def assets():
                 with http.open(viewer+"/capture.json",timeout=3) as response:
                     receipt = json.load(response)
                 return receipt if receipt["complete"] else None
-            receipt = await_fact(assets,"all seven Gazebo camera views",260)
+            receipt = await_fact(assets,"all registered Gazebo camera views",260)
             with http.open(viewer+"/manifest.json",timeout=3) as response:
                 manifest = json.load(response)
             declared={area["id"]:area for area in manifest["areas"]}
-            require(set(declared)>={"campus","teaching","track","woods","road","lawn"} and manifest["unit"]=="m",
-                    "six areas and metric map required")
+            require(set(declared)>={"campus","campus_street","teaching","track","woods"} and manifest["unit"]=="m",
+                    "Missing campus experiment locations or metric map")
             require(manifest["bounds"][2]-manifest["bounds"][0]>250 and manifest["bounds"][3]-manifest["bounds"][1]>200,
                     "world unexpectedly small")
-            require(manifest["source_vertices"]>100, "upstream geometry missing")
             imgs={}
             direct=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
                                  "/opt/audit/tests/system/campus_acceptance.py","--direct-render",timeout=85))
@@ -424,7 +354,7 @@ def run(args):
                     imgs[label]["independent_gz"] = actual
             require(len({img["sha256"] for img in imgs.values()})==len(imgs),"duplicate region views")
             report["renders"]={"world_digest":receipt["world"],"views":imgs,"declared_areas":list(declared.values()),
-                               "bounds_m":manifest["bounds"],"fuel_vertices":manifest["source_vertices"]}
+                               "bounds_m":manifest["bounds"]}
             active=identities(project)
             first=observed()["stamps"].copy()
             dc("stop","campus-overview")
@@ -478,6 +408,10 @@ def run(args):
                 browser_out=args.out.with_name(args.out.stem+"-texture-browser.json")
                 cmd(["node",str(ROOT/"tests/system/console_browser.mjs"),map_url+"/?view=2d",str(browser_out),"--campus-texture"],timeout=120)
                 report["texture_browser"]=json.loads(browser_out.read_bytes())
+            probes=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
+                                 "/opt/audit/tests/system/campus_station_probe.py",timeout=150))
+            require(probes,"Empty station fixture evidence")
+            report["station_probes"]=probes
             dc("--profile","*","down","--volumes","--remove-orphans","--timeout","5")
             current=identities(project+"-small" if small_owned else args.baseline)
             require(all(current.get(svc)==cid for svc,cid in small.items()),"campus lifecycle replaced baseline services")

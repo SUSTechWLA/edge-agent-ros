@@ -195,8 +195,12 @@ def bake(assets, world_dir, output, width=2048):
                 ret = mesh(os.fsencode(meshfile),os.fsencode(texdir),int(name=="Pine Tree"),
                            np.array([x,y,z,yaw]),width,atlas.height,atlas.bounds,atlas.rgb,atlas.z)
                 if ret: raise RuntimeError(f"Failed to render {name}")
+            robot_names={r["id"] for r in overview.get("robots",[])}
             for model in world.findall("model"):
-                if model.get("name") in ("floor","edge_rover","campus_viewpoints"):
+                # Robot bodies belong to the pose-driven layer. Their initial meshes
+                # must never become permanent occupied-looking features on the basemap.
+                if (model.get("name") in ("floor","edge_rover","campus_viewpoints") or model.get("name") in robot_names
+                        or model.findtext("static")=="false" or model.find("joint") is not None):
                     continue
                 for link in model.findall("link"):
                     parent = compose(pose(model),pose(link))

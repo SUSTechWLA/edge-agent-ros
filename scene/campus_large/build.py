@@ -3,63 +3,18 @@ import argparse
 import hashlib
 import json
 import math
-import random
 import shutil
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 if __package__:
     from .athletics import PITCH_LENGTH, playing_surface
+    from .sdf import tag, values, static, shape
+    from .landscape import TRACK_CENTER, TRACK_YAW, SENSOR_STATIONS, field_xy, pedestrian_grounds, trees
 else:
     from athletics import PITCH_LENGTH, playing_surface
-
-
-def tag(parent, name, value):
-    child = ET.SubElement(parent, name)
-    child.text = value
-    return child
-
-
-def values(numbers):
-    return " ".join(f"{n:.6g}" for n in numbers)
-
-
-def static(world, name):
-    model = ET.SubElement(world, "model", name=name)
-    tag(model, "static", "true")
-    return ET.SubElement(model, "link", name="site")
-
-
-def shape(link, name, kind, position, dimensions, color, solid=False, yaw=0):
-    for role in (("visual", "collision") if solid else ("visual",)):
-        part = ET.SubElement(link, role, name=name)
-        tag(part, "pose", values((*position, 0, 0, yaw)))
-        geom = ET.SubElement(ET.SubElement(part, "geometry"), kind)
-        if kind == "box":
-            tag(geom, "size", values(dimensions))
-        elif kind == "cylinder":
-            tag(geom, "radius", str(dimensions[0]))
-            tag(geom, "length", str(dimensions[1]))
-        elif kind == "ellipsoid":
-            tag(geom, "radii", values(dimensions))
-        if role == "visual":
-            mat = ET.SubElement(part, "material")
-            tag(mat, "ambient", values((*color, 1)))
-            tag(mat, "diffuse", values((*color, 1)))
-
-
-def line(link, name, a, b, width, z, color, height=.014):
-    dx, dy = b[0]-a[0], b[1]-a[1]
-    shape(link,name,"box",((a[0]+b[0])/2,(a[1]+b[1])/2,z),(math.hypot(dx,dy),width,height),
-          color,yaw=math.atan2(dy,dx))
-
-
-def include(world, name, uri, position, yaw=0):
-    element = ET.SubElement(world,"include")
-    tag(element,"uri",uri)
-    tag(element,"name",name)
-    tag(element,"pose",values((*position,0,0,yaw)))
-    tag(element,"static","true")
+    from sdf import tag, values, static, shape
+    from landscape import TRACK_CENTER, TRACK_YAW, SENSOR_STATIONS, field_xy, pedestrian_grounds, trees
 
 
 BRICK=(.65,.41,.28)
@@ -104,7 +59,7 @@ def teaching(world):
         for i in range(bays):
             band(name+f"_mullion_{i}",axis,fixed,start+(i+.5)*bay,.073,.16,base+1.,2.13,frame)
 
-    shape(room,"tile_floor","box",(-7.7,0,.005),(18.6,18,.01),(.74,.70,.58))
+    shape(room,"tile_floor","box",(-7.7,0,.038),(18.6,18,.012),(.74,.70,.58))
     # A four-storey classroom block and a shorter set-back studio wing. The
     # east portal remains at (1.6,0), level with the mission's odometry origin.
     for wing,x0,x1,y0,y1,floors in (("hall",-17,1.6,-9,9,4),("studio",-40,-17,-6,8,3)):
@@ -175,8 +130,8 @@ def teaching(world):
 
 
 def stadium(world, output):
-    field = static(world, "track")
-    cx, cy = -103, 72
+    field = static(world, "track", (*TRACK_CENTER,.08), TRACK_YAW)
+    cx, cy = 0, 0
     # A single mesh draws continuous lane boundaries around both bends. The
     # continuous physics floor also supports the turf and running surface.
     path = playing_surface().write(output/"meshes")
@@ -233,95 +188,6 @@ def stadium(world, output):
                       (.65,.14,.70),(.91,.91,.81))
 
 
-def road_lawn(world):
-    road=static(world,"road")
-    line(road,"campus_drive",(14,-106),(14,154),8,.012,ASPHALT)
-    line(road,"athletics_branch",(-103,14),(45,14),6,.012,ASPHALT)
-    for y in range(-102,154,9):
-        line(road,"divider"+str(y),(14,y),(14,y+4),.15,.027,(.89,.72,.28))
-    for side in (-1,1):
-        line(road,"walk"+str(side),(14+side*5.1,-106),(14+side*5.1,154),1.9,.017,CONCRETE)
-    # These coordinates join the imported Road face near (-157.24, 7.75) in the locked OBJ.
-    connector=[(14,151),(15,174),(22,190),(36.55,202.63)]
-    for i,(a,b) in enumerate(zip(connector,connector[1:])):
-        line(road,"north_link_"+str(i),a,b,8,.016,ASPHALT)
-        shape(road,"north_joint_"+str(i),"cylinder",(*a,.016),(4,.014),ASPHALT)
-        for part in range(3):
-            t1=part/3
-            t2=t1+.15
-            dash=[tuple(a[j]+(b[j]-a[j])*t for j in (0,1)) for t in (t1,t2)]
-            line(road,f"north_divider_{i}_{part}",*dash,.15,.035,(.89,.72,.28))
-    line(road,"track_entrance",(-103,14),(-103,25.6),3.2,.02,CONCRETE)
-    line(road,"trail_entrance",(18.5,-66),(24,-66),2.8,.025,(.58,.48,.31))
-    line(road,"lawn_entrance",(4,-10),(9.3,-8),2.6,.03,(.71,.61,.44))
-    for i in range(10):
-        x=10.4+i*.8
-        line(road,"crossing"+str(i),(x,-1.6),(x,1.6),.34,.038,WHITE)
-    lawn=static(world,"lawn")
-    shape(lawn,"grass","box",(-79,-44,.009),(107,66,.016),(.32,.55,.255))
-    for i in range(4):
-        y=-67+i*14
-        shape(lawn,"bench"+str(i),"box",(-23.8,y,.29),(1.05,2.3,.58),(.48,.32,.19),True)
-    line(lawn,"walkway",(-136,-84),(5,-10),2.6,.03,(.71,.61,.44))
-
-
-def forest(world):
-    woods=static(world,"woods")
-    shape(woods,"forest_floor","box",(67,-54,.012),(89,85,.016),(.27,.355,.175))
-    rng=random.Random(247)
-    total=0
-    for j in range(9):
-        for i in range(10):
-            x=29+i*8.4+rng.uniform(-2.6,2.6)
-            y=-92+j*9.6+rng.uniform(-2.5,2.5)
-            if abs(y+55-.27*(x-67))<3.3:
-                continue
-            total+=1
-            if total%5==0:
-                include(world,"pine_"+str(total),"model://Pine Tree",(x,y,0),rng.uniform(0,math.tau))
-                continue
-            h=rng.uniform(3.5,6.8)
-            rad=rng.uniform(1.6,3.3)
-            shape(woods,"trunk"+str(total),"cylinder",(x,y,h*.46),(.15+h*.024,h*.92),(.36,.25,.16),True)
-            shade=(rng.uniform(.12,.26),rng.uniform(.32,.50),rng.uniform(.10,.22))
-            for k in range(3):
-                a=rng.uniform(0,math.tau)
-                shape(woods,f"crown_{total}_{k}","ellipsoid",(x+math.cos(a)*.8,y+math.sin(a)*.8,h+k*.53),
-                      (rad,rad*.89,rad*1.12),shade)
-    # Low returns in the understorey exercise sensors at wheel height; keep the diagonal trail open.
-    for n in range(26):
-        x,y=rng.uniform(26,108),rng.uniform(-92,-16)
-        if abs(y+55-.27*(x-67))<4:
-            continue
-        radius=rng.uniform(.55,1.25)
-        shade=(.35,.36,.31) if n%3==0 else (.25,.38,.17)
-        shape(woods,"undergrowth_"+str(n),"ellipsoid",(x,y,.27),(radius,.8*radius,.48),shade)
-        shape(woods,"undergrowth_base_"+str(n),"cylinder",(x,y,.21),(.55*radius,.42),shade,True)
-    line(woods,"trail",(24,-66),(110,-43),2.8,.025,(.58,.48,.31))
-    return total
-
-
-def mesh_extent(model_dir):
-    sdf=ET.parse(model_dir/"model.sdf")
-    mesh=sdf.find(".//visual/geometry/mesh")
-    uri=mesh.findtext("uri")
-    path=model_dir/uri.split("Campus/")[-1]
-    scale=[float(x) for x in (mesh.findtext("scale") or "1 1 1").split()]
-    lo=[math.inf]*3
-    hi=[-math.inf]*3
-    vertices=0
-    with path.open(encoding="utf-8",errors="replace") as obj:
-        for line_text in obj:
-            if line_text.startswith("v "):
-                xyz=tuple(float(v)*s for v,s in zip(line_text.split()[1:4],scale))
-                lo=[min(a,b) for a,b in zip(lo,xyz)]
-                hi=[max(a,b) for a,b in zip(hi,xyz)]
-                vertices+=1
-    if vertices<3 or min(hi[0]-lo[0],hi[1]-lo[1])<1:
-        raise ValueError("Campus mesh does not contain the expected metric geometry")
-    return lo,hi,vertices
-
-
 def area(id_,label,bounds,origin,description,eye=None,target=None):
     x0,y0,x1,y1=bounds
     result = dict(id=id_,label=label,bounds=bounds,center=[(x0+x1)/2,(y0+y1)/2],origin=origin,description=description)
@@ -368,7 +234,7 @@ def scene_revision(world, output, layout):
     for path in generated_mesh_files(world, output):
         digest.update(path.relative_to(output.resolve()).as_posix().encode())
         digest.update(path.read_bytes())
-    return "2."+digest.hexdigest()[:16]
+    return "3."+digest.hexdigest()[:16]
 
 
 def viewpoints(world, total, areas):
@@ -409,59 +275,69 @@ def viewpoints(world, total, areas):
 def build(assets, base, output):
     if __package__:
         from .real_site import append_site
+        from .robots import append_robots
     else:
         from real_site import append_site
-    if not all((assets/"models"/n/"model.sdf").is_file() for n in ("Campus","Pine Tree")):
-        raise SystemExit("Missing pinned campus assets. Run python scene/campus_large/fetch_assets.py from the repository root.")
+        from robots import append_robots
+    if not (assets/"models"/"Pine Tree"/"model.sdf").is_file():
+        raise SystemExit("Missing pine model. Run python scene/campus_large/fetch_assets.py.")
     tree=ET.parse(base)
     world=tree.getroot().find("world")
-    for m in list(world.findall("model")):
-        if m.get("name") not in ("edge_rover","floor"):
-            world.remove(m)
-    lo,hi,vertices=mesh_extent(assets/"models"/"Campus")
-    tx,ty=22-lo[0],23-lo[1]
-    orig=[22,23,hi[0]+tx,hi[1]+ty]
+    for model in list(world.findall("model")):
+        if model.get("name") not in ("edge_rover","floor"):
+            world.remove(model)
     output.mkdir(parents=True,exist_ok=True)
     surveyed=append_site(world,output)
-    dx0,dy0,dx1,dy1=surveyed["bounds"]
-    total=[min(-198,dx0-4),min(-110,dy0-4),max(orig[2],dx1)+4,max(155,orig[3]+4,dy1+4)]
+    x0,y0,x1,y1=surveyed["bounds"]
+    total=[x0-10,y0-10,x1+10,y1+10]
     size=max(abs(n) for n in total)*3+100
     for plane in world.findall("./model[@name='floor']//plane/size"):
         plane.text=values((size,size))
     for color in world.findall("./model[@name='floor']//material/diffuse"):
-        color.text=".51 .55 .41 1"
-    # Upstream sets its mesh to z=-0.25. The dominant Road faces in the OBJ are at z=0.
-    # Lift the source so road paint and grass remain above the new continuous physics floor.
-    include(world,"fuel_campus","model://Campus",(tx,ty,.265))
+        color.text=".35 .40 .32 1"
     features=teaching(world)
     stadium(world,output)
-    road_lawn(world)
-    trees=forest(world)
-    areas=[surveyed,
-           area("teaching","教学楼与主入口",[-41,-10,5,10],"本项目教学训练区","四层教学楼接三层侧翼。东侧雨棚下是可通行门廊，首层两间教室临走廊布置。",
-                [31,-39,12],[-12,0,6]),
-           area("track","田径场与足球场",[-194,17,-12,127],"本项目体育训练区","八道 400 米跑道包围 105 × 68 米足球场。可观察罚球区、角球弧、球门和分区看台。",
-                [-73,-66,104],[-103,72,0]),
-           area("fuel_campus","NCS 单层校园",orig,"Gazebo Fuel · NCS_robotmanager / Campus v2","保留原模型的道路、低墙、室内家具与绿化。源网格最高点为 3.49 米。"),
-           area("teaching_interior","教学楼一层教室",[-17,-9,1.6,9],"本项目教学训练区","近距离观察桌椅、教室分隔与窗带；机器人出生点位于中间走廊。",
-                [-15.8,-7.9,1.65],[-5.6,-4.1,1.25]),
-           area("woods","混合树林与林道",[22,-97,112,-11],"本项目训练区 · OpenRobotics / Pine Tree v6",f"{trees} 棵疏密不同的松树与阔叶树，土路斜穿林地。",
-                [22,-68,6.7],[78,-51,3]),
-           area("road","校园车道",[9,-106,40,203],"本项目训练区","双向车道和人行横道，北段弯道接入 NCS 校园道路。",
-                [9.8,-21,3.1],[14,25,1.5]),
-           area("lawn","开阔草坪",[-133,-77,-25,-11],"本项目训练区","开阔草地、边缘长椅和一条通向建筑的步道。",
-                [-134,-81,9],[-65,-44,0])]
+    walk=pedestrian_grounds(world,output)
+    tree_count=trees(world)
+    robots=append_robots(world,output)
     street=surveyed.pop("street_camera")
-    x,y,_=street["eye"]
-    areas.insert(1,area("campus_street","Mekelweg 街面 · EWI 塔楼",[x-20,y-20,x+20,y+20],
-                        surveyed["origin"],"从 Mekelweg 的街面朝向 EWI 塔楼。相机高 3.2 米。"
-                        "地面为配准航片，窗格为示意材质。",street["eye"],street["target"]))
+    surveyed["id"]="delft"
+    cx,cy=TRACK_CENTER
+    sx,sy,_=street["eye"]
+    areas=[
+        area("campus","TU Delft X · 校园试验场",[-355,-137,92,165],"代尔夫特市 TU Delft X 体育园 · 本项目训练设施",
+             "从南面俯瞰体育园。林带紧邻运动场，步道经过教学楼广场，与东侧 Mekelweg 街网相连。后方为实测校园楼群。",
+             [-137,-252,143],[-123,60,3]),
+        area("teaching","教学楼与主入口",[-41,-10,5,10],"体育园训练区",
+             "教学楼首层走廊通向东侧雨棚。穿过门洞即可到铺砖广场，行道树引向操场。",
+             [35,-32,10],[-10,1,5.5]),
+        area("robots","机器人实验广场",[2,-11,25,13],"教学楼东侧共享广场",
+             "入口在摄像机左侧。广场上停放飞行器、四足与人形机器人；轮式车从相邻门厅出发。",
+             [21,-11.5,4.3],[15.5,5.7,1.0]),
+        area("track","运动场与看台",[cx-104,cy-82,cx+104,cy+82],"体育园原有球场范围 · 本项目体育设施",
+             "八道跑道与足球场顺应真实球场的轴线。南侧看台中央的平层通道连接校园步道。",
+             [*field_xy(12,-153),101],[cx,cy,0]),
+        area("lawn","草坪与休憩步道",[-266,-67,-201,-20],"体育园南侧开放地带",
+             "穿过看台外的步道可到草坪和休憩座椅，再向南进入遮挡更强的林道。",
+             [-274,-68,7],[-236,-31,1]),
+        area("woods","林带与砾石小径",[-260,-129,-73,-39],"实地林带 · 本地建模与 Gazebo Fuel 松树",
+             "树带沿场地南缘向东北延伸。土路穿过树干之间，与学校一侧的回程步道相连。",
+             [-190,-96,3.5],[-140,-75,2]),
+        area("road","Mekelweg · 体育园入口",[38,-2,86,52],"PDOK BGT 步道与配准航片",
+             "入口步道在 (65.5,14) 米接入 Mekelweg 西侧实测人行道。",
+             [42,-13,5.5],[63,20,1.2]),
+        area("teaching_interior","教学楼一层教室",[-17,-9,1.6,9],"教学训练区",
+             "近看教室、窗带和桌椅，轮式机器人出生在相邻门厅。",
+             [-15.8,-7.9,1.65],[-5.6,-4.1,1.25]),
+        area("campus_street","Mekelweg 街面 · EWI 塔楼",[sx-20,sy-20,sx+20,sy+20],
+             surveyed["origin"],"从园区北段街面观察 EWI 塔楼。街面来自配准航片，窗格为示意材质。",
+             street["eye"],street["target"]), surveyed]
     projection=viewpoints(world,total,areas)
     out_web=output/"overview"
     out_web.mkdir(parents=True,exist_ok=True)
     tree.write(output/"world.sdf",encoding="utf-8",xml_declaration=True)
     layout={"schema_version":1,"id":"campus_large","frame":"odom",
-            "source":"代尔夫特实测建筑、Gazebo Fuel NCS Campus v2 与本项目训练区","alignment":"教学楼内机器人出生点为 odom 原点",
+            "source":"代尔夫特 TU Delft X 实测建筑与正射地表、同址教学体育训练区","alignment":"教学楼内机器人出生点为 odom 原点",
             "clearance_m":.32,"features":features,"zones":[
                {"id":"lobby","label":"教学楼一层","kind":"indoor","bounds":[-17,-9,1.59,9]},
                {"id":"door","label":"教学楼门廊","kind":"transition","bounds":[1.59,-1.1,2.5,1.1]},
@@ -471,12 +347,13 @@ def build(assets, base, output):
                      {"id":"teaching_exit","label":"教学楼门外","zone":"entry","xy":[3.3,0],"aliases":["教学楼外","教师楼门外"]}],
             "edges":[["teaching_lobby","teaching_door"],["teaching_door","teaching_exit"]]}
     layout["revision"]=scene_revision(world,output,layout)
-    manifest={"bounds":total,"unit":"m","frame":"odom","areas":areas,"source_vertices":vertices,"trees":trees,
-              "projection":projection,"spawn":[0,0],"source_file":"models/Campus/model.sdf"}
+    manifest={"bounds":total,"unit":"m","frame":"odom","areas":areas,"trees":tree_count,
+              "routes":[walk],"sensor_stations":SENSOR_STATIONS,"robots":robots,
+              "projection":projection,"spawn":[0,0],"source_file":"real_site/buildings.obj"}
     for path,obj in ((output/"layout.json",layout),(out_web/"manifest.json",manifest)):
         path.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     shutil.copyfile(Path(__file__).with_name("overview.html"),out_web/"index.html")
-    print(f"Campus ready: {vertices} source vertices; {trees} trees; extent {total}",flush=True)
+    print(f"TU Delft X ready: {tree_count} trees; {len(walk['edges'])} connected walk segments; extent {total}",flush=True)
 
 
 if __name__=="__main__":

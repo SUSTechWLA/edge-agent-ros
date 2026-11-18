@@ -1,4 +1,4 @@
-"""Export the static visuals of the campus SDF as one self-contained glTF 2.0 GLB."""
+"""Export campus SDF geometry and model-local robot links in a self-contained glTF 2.0 GLB."""
 import argparse
 from functools import lru_cache
 import json
@@ -204,18 +204,17 @@ class Exporter:
             raise ValueError(f"Missing geometry {path} / {subset}")
         return self.add("meshes",dict(name=path.name+(" "+subset if subset else ""),primitives=primitives))
 
-    def node(self, name, matrix, mesh):
+    def node(self, name, matrix, mesh, parent=0):
         node = self.add("nodes",dict(name=name,mesh=mesh,matrix=matrix.T.reshape(-1).tolist()))
-        self.doc["nodes"][0]["children"].append(node)
+        self.doc["nodes"][parent]["children"].append(node)
 
-    def model(self, model, parent, base, name):
-        transform = parent @ pose(model)
+    def visuals(self, links, base, name, parent=0):
         groups = [[],[],[],[]]
         offset = 0
-        for link in model.findall("link"):
+        for link,link_matrix in links:
             for vis in link.findall("visual"):
                 geometry = vis.find("geometry")[0]
-                matrix = transform @ pose(link) @ pose(vis)
+                matrix = link_matrix @ pose(vis)
                 diffuse = vis.findtext("material/diffuse")
                 rgb = tuple(numbers(diffuse)[:3]) if diffuse else None
                 if geometry.tag=="mesh":
@@ -224,7 +223,7 @@ class Exporter:
                     tex = self.resolve(albedo,base) if albedo else None
                     mesh = self.imported_mesh(path, geometry.findtext("submesh/name"),tex,rgb)
                     scale = numbers(geometry.findtext("scale","1 1 1"))
-                    self.node(name+"/"+vis.get("name"),matrix @ np.diag([*scale,1]),mesh)
+                    self.node(name+"/"+vis.get("name"),matrix @ np.diag([*scale,1]),mesh,parent)
                     continue
                 vertices,normals,indices = shape(geometry.tag)
                 matrix = matrix @ np.diag([*dimensions(geometry),1])
@@ -238,18 +237,48 @@ class Exporter:
         if offset:
             p,n,i,c = (np.concatenate(parts) for parts in groups)
             primitive = self.primitive(p,n,i,self.material("SDF diffuse"),colors=c)
-            self.node(name,np.eye(4),self.add("meshes",dict(name=name,primitives=[primitive])))
+            self.node(name,np.eye(4),self.add("meshes",dict(name=name,primitives=[primitive])),parent)
+
+    def model(self, model, parent, base, name):
+        links=model.findall("link")
+        if model.findtext("static","false").lower() in ("1","true"):
+            transform=parent @ pose(model)
+            self.visuals([(l,transform @ pose(l)) for l in links],base,name)
+            return
+        if not model.findall(".//visual"):
+            return
+        # Separate glTF scenes keep robot templates out of the static Gazebo
+        # prior. Each link retains its model-local rest transform and geometry.
+        root=self.add("nodes",dict(name=name,rotation=self.doc["nodes"][0]["rotation"],children=[]))
+        joints=[]
+        frames={link.get("name"):pose(link) for link in links}
+        frames["__model__"]=np.eye(4)
+        for j in model.findall("joint"):
+            if j.get("type") in ("revolute","continuous","prismatic","fixed"):
+                axis=j.find("axis/xyz")
+                direction=numbers(j.findtext("axis/xyz","0 0 1"))
+                origin=pose(j)
+                if axis is not None and axis.get("expressed_in"):
+                    to_model=frames[j.findtext("child")] @ origin
+                    direction=to_model[:3,:3].T @ frames[axis.get("expressed_in")][:3,:3] @ direction
+                joints.append(dict(name=j.get("name"),type=j.get("type"),parent=j.findtext("parent"),
+                                  child=j.findtext("child"),axis=direction.tolist(),origin=origin.T.reshape(-1).tolist()))
+        for link in links:
+            entry=self.add("nodes",dict(name=link.get("name"),matrix=pose(link).T.reshape(-1).tolist(),children=[]))
+            self.doc["nodes"][root]["children"].append(entry)
+            self.visuals([(link,np.eye(4))],base,name+"/"+link.get("name"),entry)
+            if not self.doc["nodes"][entry]["children"]:
+                del self.doc["nodes"][entry]["children"]
+        self.add("scenes",dict(name=name,nodes=[root],extras=dict(robot_model=name,joints=joints)))
 
     def write(self, filename):
         world = ET.parse(self.world).find("world")
         for model in world.findall("model"):
-            if model.findtext("static","false").lower() in ("1","true"):
-                self.model(model,np.eye(4),self.world.parent,model.get("name"))
+            self.model(model,np.eye(4),self.world.parent,model.get("name"))
         for inc in world.findall("include"):
             model_dir = self.resolve(inc.findtext("uri"),self.world.parent)
             model = ET.parse(model_dir/"model.sdf").find("model")
-            if model.findtext("static","false").lower() in ("1","true"):
-                self.model(model,pose(inc),model_dir,inc.findtext("name",model.get("name")))
+            self.model(model,pose(inc),model_dir,inc.findtext("name",model.get("name")))
         self.blob.extend(bytes(-len(self.blob)%4))
         self.doc["buffers"] = [{"byteLength":len(self.blob)}]
         for key in ("textures","images"):

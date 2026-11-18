@@ -19,12 +19,13 @@ from PIL import Image, ImageDraw
 
 
 DATA = Path(__file__).with_name("real_site_data")
-BBOX = (85030, 445850, 85680, 446610)
+BBOX = (85200, 445440, 85745, 446610)
 WIDTH, HEIGHT = BBOX[2] - BBOX[0], BBOX[3] - BBOX[1]
+IMAGE_SIZE = (WIDTH * 2, HEIGHT * 2)
 API = "https://api.3dbag.nl/collections/pand/items?bbox={}&limit=100"
 WMS = ("https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0?SERVICE=WMS&REQUEST=GetMap"
        "&VERSION=1.1.1&LAYERS=2025_ortho25&STYLES=&SRS=EPSG:28992"
-       "&BBOX=85030,445850,85680,446610&WIDTH=1560&HEIGHT=1824&FORMAT=image/png")
+       f"&BBOX={','.join(map(str,BBOX))}&WIDTH={IMAGE_SIZE[0]}&HEIGHT={IMAGE_SIZE[1]}&FORMAT=image/png")
 
 
 def divide(box):
@@ -63,6 +64,8 @@ def load_sources(cache):
         if any(link["rel"] == "next" for link in page["links"]):
             continue
         sources[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        if not page["features"]:
+            continue
         transform = page["metadata"]["transform"]
         for feature in page["features"]:
             buildings.setdefault(feature["id"], (feature, transform))
@@ -88,24 +91,6 @@ def triangulate(rings, vertices):
         product = np.dot(np.cross(b-a, c-a), normal)
         if abs(product) > 1e-10:
             yield ([a,b,c] if product > 0 else [a,c,b]), normal
-
-
-def clip_to_site(poly):
-    """Clip triangles that intersect the four sides of the mapped rectangle."""
-    for axis, bound, direction in ((0,0,1), (0,WIDTH,-1), (1,0,1), (1,HEIGHT,-1)):
-        if not poly:
-            return []
-        new = []
-        prev = poly[-1]
-        for cur in poly:
-            d0, d1 = direction*(prev[axis]-bound), direction*(cur[axis]-bound)
-            if (d0 < 0) != (d1 < 0):
-                new.append(prev + (cur-prev)*(d0/(d0-d1)))
-            if d1 >= 0:
-                new.append(cur)
-            prev = cur
-        poly = new
-    return poly
 
 
 class Obj:
@@ -155,13 +140,20 @@ class Obj:
 def building_mesh(buildings):
     mesh = Obj()
     counts = Counter()
-    included = []
+    included, perimeter = [], []
     for building_id, (feature, transform) in sorted(buildings.items()):
         vertices = np.array(feature["vertices"])*transform["scale"] + transform["translate"]
         vertices[:,:2] -= BBOX[:2]
         parts = [g for obj in feature["CityObjects"].values() for g in obj.get("geometry", [])
                  if g["lod"] == "2.2" and g["type"] == "Solid"]
         if not parts:
+            continue
+        shell_indices = [i for part in parts for shell in part["boundaries"]
+                         for surface in shell for ring in surface for i in ring]
+        xy = vertices[shell_indices,:2]
+        # Keep a complete surveyed shell or leave the entire building out.
+        if (xy.min(axis=0) < 3).any() or (xy.max(axis=0) > (WIDTH-3,HEIGHT-3)).any():
+            perimeter.append(building_id)
             continue
         # Keep each building's measured vertical differences. Align its ground
         # to the flat Gazebo support plane; local NAP elevation is not terrain.
@@ -182,12 +174,12 @@ def building_mesh(buildings):
                     else:
                         material = "ortho" if kind == "RoofSurface" else "base"
                     for triangle, normal in triangulate(rings, vertices):
-                        count = mesh.add(clip_to_site(triangle), normal, material)
+                        count = mesh.add(triangle, normal, material)
                         counts[kind] += count
                         total += count
         if total:
             included.append(building_id)
-    return mesh, included, counts
+    return mesh, included, perimeter, counts
 
 
 def materials():
@@ -221,7 +213,7 @@ def facade(path, glass):
 def rebuild(cache, output):
     output.mkdir(parents=True, exist_ok=True)
     sources, buildings = load_sources(cache)
-    mesh, included, counts = building_mesh(buildings)
+    mesh, included, perimeter, counts = building_mesh(buildings)
     faces = mesh.encode()
     (output/"buildings.obj.gz").write_bytes(gzip.compress(faces, compresslevel=9, mtime=0))
     (output/"buildings.mtl").write_bytes(materials())
@@ -232,7 +224,7 @@ def rebuild(cache, output):
     for name in ("brick", "glass"):
         facade(output/f"{name}.png", name=="glass")
     with Image.open(cache/"ortho.source") as im:
-        if im.size != (1560,1824):
+        if im.size != IMAGE_SIZE:
             raise ValueError(f"Unexpected aerial raster dimensions {im.size}")
         im.convert("RGB").save(output/"ortho.png", compress_level=9)
     runtime_files = {f: hashlib.sha256((output/f).read_bytes()).hexdigest() for f in
@@ -242,7 +234,8 @@ def rebuild(cache, output):
                     triangles_by_surface=counts, top_m=max(v[2] for v in mesh.positions),
                     runtime_files=runtime_files, cityjson_query=API, cityjson_pages=sources,
                     wms_query=WMS, wms_sha256=hashlib.sha256((cache/"ortho.source").read_bytes()).hexdigest(),
-                    source_building_ids=included)
+                    source_building_ids=included, omitted_perimeter_ids=perimeter,
+                    geometry_boundary="whole LoD2.2 shells only, 3 m inset")
     (output/"manifest.json").write_bytes((json.dumps(manifest,indent=2,sort_keys=True)+"\n").encode())
     print(f"{len(included)} buildings, {sum(counts.values())} triangles, height {manifest['top_m']:.2f} m")
 

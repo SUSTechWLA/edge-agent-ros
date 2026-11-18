@@ -20,6 +20,20 @@ x-campus-ready: &campus-ready
   campus-build:
     condition: service_completed_successfully
 
+x-body-agent: &body-agent
+  <<: *campus-tool
+  depends_on: *campus-ready
+  restart: unless-stopped
+  command: ["python3","-B","/opt/edge/agent/service.py"]
+
+x-body-env: &body-env
+  ROS_LOCALHOST_ONLY: "1"
+  ROS_LOG_DIR: /tmp/ros-logs
+  EDGE_PLUGIN_DIR: /etc/edge/campus-empty
+  EDGE_OLLAMA_URL: ""
+  EDGE_PLANNER_URL: ""
+  EDGE_TRACE_CONTENT: redacted
+
 services:
   campus-build:
     <<: *campus-tool
@@ -33,6 +47,7 @@ services:
       - -ec
       - |
         python3 -B /opt/edge/scene/campus_large/build.py --assets /assets --base /opt/edge/sim/world.sdf --output /campus
+        python3 -B /opt/edge/scene/campus_large/robot_agent/catalog.py
         exec python3 -B /opt/edge/scene/campus_large/capture.py prepare
 
   sim:
@@ -55,14 +70,47 @@ services:
       - campus-world:/campus:ro
 
   agent:
+    depends_on: *campus-ready
     environment:
       EDGE_OLLAMA_URL: ""
       EDGE_PLANNER_URL: ""
       EDGE_TRACE_CONTENT: redacted
-      EDGE_EXTRA_PLUGIN_DIR: /opt/edge/scene/plugins
+      EDGE_EXTRA_PLUGIN_DIR: /campus/agents/hub
     volumes:
       - campus-plugins:/etc/edge/plugins:ro
       - campus-contracts:/etc/edge/contracts:ro
+      - campus-world:/campus:ro
+
+  crazyflie-agent:
+    <<: *body-agent
+    environment: {<<: *body-env, EDGE_EXTRA_PLUGIN_DIR: /campus/agents/crazyflie}
+    volumes: [campus-world:/campus:ro, crazyflie-tasks:/var/lib/edge-tasks]
+  go1-agent:
+    <<: *body-agent
+    environment: {<<: *body-env, EDGE_EXTRA_PLUGIN_DIR: /campus/agents/go1}
+    volumes: [campus-world:/campus:ro, go1-tasks:/var/lib/edge-tasks]
+  g1-agent:
+    <<: *body-agent
+    environment: {<<: *body-env, EDGE_EXTRA_PLUGIN_DIR: /campus/agents/g1}
+    volumes: [campus-world:/campus:ro, g1-tasks:/var/lib/edge-tasks]
+  campus-robot-bridge:
+    <<: *campus-tool
+    depends_on: *campus-ready
+    restart: unless-stopped
+    environment: &robot-ros
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-73}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      GZ_PARTITION: edge_v1
+      ROS_LOG_DIR: /tmp/ros-logs
+    volumes: [campus-world:/campus:ro]
+    command: ["ros2","run","ros_gz_bridge","parameter_bridge","--ros-args","-p","config_file:=/campus/robot-bridge.yaml"]
+  campus-fleet:
+    <<: *campus-tool
+    depends_on: *campus-ready
+    restart: unless-stopped
+    environment: *robot-ros
+    volumes: [campus-world:/campus:ro, campus-fleet-state:/state]
+    command: ["python3","-B","/opt/edge/scene/campus_large/robot_agent/provider.py"]
 
   console:
     ports: !override
@@ -136,6 +184,7 @@ services:
         condition: service_completed_successfully
     environment:
       EDGE_MAP_TEXTURE_DIR: /campus/texture
+      EDGE_MAP_ROBOTS_TOPIC: /edge/robot_states
     volumes:
       - campus-world:/campus:ro
       - campus-map-inputs:/etc/edge/map3d-inputs:ro
@@ -143,6 +192,10 @@ services:
       - "127.0.0.1:${EDGE_CAMPUS_MAP_PORT:-8773}:8770"
 
 volumes:
+  crazyflie-tasks:
+  go1-tasks:
+  g1-tasks:
+  campus-fleet-state:
   campus-world:
   campus-runtime:
   campus-plugins:

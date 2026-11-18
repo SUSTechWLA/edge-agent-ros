@@ -7,7 +7,9 @@ import xml.etree.ElementTree as ET
 
 
 DATA = Path(__file__).with_name("real_site_data")
-SITE_XY = (395, 12)
+# RD New coordinates of the training building's lobby at odom (0,0).
+ODOM_ORIGIN_RD = (85610, 445601)
+SITE_XY = (85200-ODOM_ORIGIN_RD[0], 445440-ODOM_ORIGIN_RD[1])
 
 
 def append_site(world, output):
@@ -21,6 +23,7 @@ def append_site(world, output):
         if hashlib.sha256(content).hexdigest() != digest:
             raise ValueError(f"Invalid Delft campus map asset: {filename}")
         (target / filename.removesuffix(".gz")).write_bytes(content)
+    (target/"mekelweg-footpath.json").write_bytes((DATA/"mekelweg-footpath.json").read_bytes())
     model = ET.SubElement(world, "model", name="delft_surveyed_site")
     ET.SubElement(model, "static").text = "true"
     ET.SubElement(model, "pose").text = f"{SITE_XY[0]} {SITE_XY[1]} 0 0 0 0"
@@ -37,6 +40,6 @@ def append_site(world, output):
         "center": [x + (east-west)/2, y + (north-south)/2],
         "origin": "荷兰 3DBAG LoD2.2 + PDOK 2025 正射影像",
         "description": f"{manifest['buildings']} 栋建筑，保留实测重建的屋顶、轮廓和高度。地面与屋顶采用航片，立面窗格为示意材质。",
-        "camera": {"eye": [980, 82, 115], "target": [757, 330, 18]},
-        "street_camera": {"eye": [724, 455, 3.2], "target": [751, 257, 39]},
+        "camera": {"eye": [5, 319, 115], "target": [-218, 567, 18]},
+        "street_camera": {"eye": [-251, 692, 3.2], "target": [-224, 494, 39]},
     }

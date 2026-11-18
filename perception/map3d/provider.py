@@ -27,7 +27,7 @@ from module_journal import ModuleJournal
 
 STATIC = Path(__file__).parent / "web"
 TTL = 3.0
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 MAX_GRID_CELLS = 512 * 512
 GRID_TTL = 5.0
 CLOUD_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
@@ -59,6 +59,9 @@ class MapNode(Node):
         self.create_subscription(OccupancyGrid, self.grid_topic, self.grid, grid_qos)
         self.create_subscription(Odometry, os.getenv("EDGE_MAP3D_POSE", "/edge/perception/pose"), self.pose, qos_profile_sensor_data)
         self.create_subscription(String, "/edge/semantic_map", self.scene, qos_profile_sensor_data)
+        self.robot_states = None
+        if os.getenv("EDGE_MAP_ROBOTS_TOPIC"):
+            self.create_subscription(String,os.environ["EDGE_MAP_ROBOTS_TOPIC"],self.robots,qos_profile_sensor_data)
         if self.simulated:
             self.create_subscription(Clock, "/clock", self.clock, qos_profile_sensor_data)
         # Use steady time even when simulation time is paused.
@@ -86,6 +89,7 @@ class MapNode(Node):
             if self.clock_ns is not None and now < self.clock_ns:
                 self.surface = Surface()
                 self.layers = self.empty_layers()
+                self.robot_states = None
                 for key, item in self.inputs.items():
                     item["surface"] = Surface(EXTRA_VOXELS)
                     self.layers["lidar."+key] = self.empty_cloud(item["config"])
@@ -312,6 +316,29 @@ class MapNode(Node):
             self.layers["scene"] = layer
             self.transition("scene")
 
+    def robots(self,msg):
+        try:
+            if len(msg.data)>64000:
+                raise ValueError()
+            document=json.loads(msg.data)
+            rows=document["robots"]
+            if not isinstance(rows,list) or len(rows)>48:
+                raise ValueError()
+            for robot in rows:
+                if (not isinstance(robot["id"],str) or not isinstance(robot["label"],str)
+                        or robot["frame"]!=self.frame or robot["status"] not in {"online","waiting","stale","error"}):
+                    raise ValueError()
+                if "xyz" in robot and (len(robot["xyz"])!=3 or len(robot["quaternion"])!=4
+                        or not all(math.isfinite(c) for c in (*robot["xyz"],*robot["quaternion"]))):
+                    raise ValueError()
+            # Ensure non-finite values in optional measurements cannot break the map endpoint.
+            json.dumps(rows,allow_nan=False)
+            with self.lock:
+                self.robot_states=(time.monotonic(),document["scene_revision"],rows)
+        except (ValueError,KeyError,TypeError,RecursionError):
+            with self.lock:
+                self.robot_states=None
+
     def snapshot(self):
         with self.lock:
             now = time.monotonic()
@@ -336,6 +363,9 @@ class MapNode(Node):
             data["cloud"].update(topic=self.topic, voxel_m=VOXEL_M, evictions=self.surface.evictions,
                                  points=list(self.surface.cells.values()))
             data["grid"]["topic"] = self.grid_topic
+            group=getattr(self,"robot_states",None)
+            if group and data["scene"].get("revision")==group[1]:
+                data["robots"]=[dict(robot,status="stale") if now-group[0]>3 else robot for robot in group[2]]
             return data
 
 

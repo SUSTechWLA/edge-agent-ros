@@ -18,8 +18,8 @@ button.area[aria-pressed=true]{background:var(--green);color:white}button.area:f
 <p id="summary">正在读取场景范围…</p>
 <div class="layout"><figure><div class="stage"><img id="shot" hidden alt=""><div id="pending" class="pending" role="status">等待 Gazebo 渲染快照</div><svg viewBox="0 0 1000 650" id="markers" aria-hidden="true"></svg><div id="credit" class="credit"><a href="https://docs.3dbag.nl/en/copyright/">© 3DBAG by tudelft3d and 3DGI</a> · <a href="https://www.pdok.nl/ogc-webservices/-/article/pdok-luchtfoto-rgb-open-">Luchtfoto © Beeldmateriaal / PDOK</a></div></div>
 <figcaption><h2 id="label">校园全景</h2><p id="desc">选择地点可查看 Gazebo 中对应位置的实景快照。</p><p id="position"></p></figcaption></figure>
-<aside><h2>实验地点</h2><div id="choices" class="choices"></div><a id="map-link" hidden>打开校园纹理地图 ↗</a><p class="note">点全景标记或地点名切换视角。机器人出生在教学楼一层，可在工作台下发“前往教学楼门外”。</p></aside></div>
-<footer>各图由本地 Gazebo 相机采集。代尔夫特建筑由 3DBAG 数据裁剪、重定位并贴图（<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）。屋顶与地表采用 2025 正射影像，窗面材质、教学训练楼与运动场为项目补建。 <a href="https://app.gazebosim.org/NCS_robotmanager/fuel/models/Campus">NCS 单层校园</a> · <a href="https://app.gazebosim.org/OpenRobotics/fuel/models/Pine%20Tree">松树（Gazebo Fuel，CC0）</a> · <a href="manifest.json">场景坐标清单</a></footer>
+<aside><h2>实验地点</h2><div id="choices" class="choices"></div><a id="map-link" hidden>打开交互三维地图 ↗</a><p class="note">可在机器人工作台下发“前往教学楼门外”。</p><label id="route-control" hidden><input id="route-check" type="checkbox"> 显示连续测试路线</label><p id="route-details" class="note" hidden></p></aside></div>
+<footer>各图由本地 Gazebo 相机采集。代尔夫特建筑使用保留完整外壳的 3DBAG 数据（<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>），地面和屋顶使用 2025 正射影像。项目补建了教学楼、运动场、林道与机器人试验广场。 <a href="https://app.gazebosim.org/OpenRobotics/fuel/models/Pine%20Tree">松树（Gazebo Fuel，CC0）</a> · <a href="manifest.json">场景坐标与路线</a></footer>
 </main><script>
 const byId=id=>document.getElementById(id);
 const label=byId("label"), desc=byId("desc"), img=byId("shot"), marks=byId("markers");
@@ -27,7 +27,7 @@ let active="overview", meta, retry, request=0;
 async function change(id) {
   active=id; const version=++request; clearTimeout(retry);
   const place=meta.areas.find(a=>a.id===id); const named=Boolean(place);
-  byId("credit").hidden=named&&id!=="campus"&&id!=="campus_street";
+  byId("credit").hidden=false;
   for(const b of document.querySelectorAll("button.area")) b.setAttribute("aria-pressed",String(b.dataset.id===id));
   marks.style.display=named?"none":"block"; label.textContent=named?place.label:"校园全景";
   desc.textContent=named?place.description:"俯视全场，北向上、东向右。选择地点可近看建筑、田径设施或教室内部。";
@@ -57,6 +57,23 @@ async function linkMap(){
 linkMap().catch(()=>{});
 (async()=>{const res=await fetch("manifest.json",{cache:"no-store"});if(!res.ok)throw Error("manifest");
 meta=await res.json();const [x0,y0,x1,y1]=meta.bounds;byId("summary").textContent=Math.round(x1-x0)+" × "+Math.round(y1-y0)+" 米 · "+meta.areas.length+" 处地点 · "+meta.trees+" 棵新增林木";
+const walk=meta.routes?.[0];
+if(walk?.edges?.length){
+  const project=([x,y])=>[500+(x-meta.projection.center[0])*1000/meta.projection.view_width,325-(y-meta.projection.center[1])*1000/meta.projection.view_width];
+  const nodes=new Map(walk.nodes.map(n=>[n.id,n.xy]));
+  let length=0;
+  const segments=walk.edges.map(e=>{
+    const a=nodes.get(e.from),b=nodes.get(e.to);
+    length+=Math.hypot(a[0]-b[0],a[1]-b[1]);
+    return "M"+project(a).join(" ")+"L"+project(b).join(" ");
+  });
+  const route=svgTag("path");route.setAttribute("d",segments.join(" "));
+  route.setAttribute("stroke","#ffd55c");route.setAttribute("stroke-width","3.5");route.setAttribute("fill","none");
+  route.style.display="none";marks.append(route);
+  byId("route-control").hidden=false;
+  byId("route-details").textContent="教学楼 → 广场 → 运动场 → 草甸 → 林道 → Mekelweg。中心线约 "+Math.round(length)+" 米，共 "+walk.edges.length+" 段。";
+  byId("route-check").onchange=()=>{const on=byId("route-check").checked;route.style.display=on?"":"none";byId("route-details").hidden=!on;if(on)change("overview");};
+}
 addButton("overview","◎","校园全景");
 const placed=[];
 for(const [i,area] of meta.areas.entries()){
@@ -65,5 +82,6 @@ for(const [i,area] of meta.areas.entries()){
   if(placed.some(([px,py])=>Math.hypot(x-px,y-py)<18)) continue;
   placed.push([x,y]);
   const g=svgTag("g");g.setAttribute("transform","translate("+x+" "+y+")");const circle=svgTag("circle");circle.setAttribute("r","8");const text=svgTag("text");text.setAttribute("x","11");text.setAttribute("y","5");text.textContent=index;g.append(circle,text);g.onclick=()=>change(area.id);marks.append(g);
-}await change("overview")})().catch(()=>byId("pending").textContent="场景配置读取失败，请检查 campus-build 的运行记录。");
+}const first=new URLSearchParams(location.search).get("place") || "campus";
+await change(meta.areas.some(a=>a.id===first) ? first : "overview")})().catch(()=>byId("pending").textContent="场景配置读取失败，请检查 campus-build 的运行记录。");
 </script></body></html>

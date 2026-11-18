@@ -210,6 +210,7 @@
     let yaw=-.65, pitch=.65, distance=8, target=[0,0,0], autoFit=true, scaleRadius=1;
     let right,up,out, items=[], frame="", selected=null, selectedName="", readout="", renderedCamera=null;
     let lastTexture=null, mesh=null, activeTexture=null, requestedBounds=null, requestedCamera=null;
+    let followId=null, fitRobot=false;
     canvas.style.touchAction="none";
     function axes(){
       const c=Math.cos(yaw),s=Math.sin(yaw),h=Math.cos(pitch),v=Math.sin(pitch);
@@ -321,16 +322,32 @@
     function render(snapshot,options){
       const geometry=boundsFor(snapshot,options);
       const tex=options.texture?.frame===snapshot?.frame ? options.texture : null;
+      const source=options.appearancePack?.frame===snapshot?.frame?options.appearancePack:tex;
       if(activeTexture && !tex)autoFit=false;
       activeTexture=tex;
-      world?.configure(tex);
+      world?.configure(source);
+      const actors=source?.mesh_url && options.pose && world?.state==="ready" ?
+        (snapshot?.robots||[]).filter(r=>r.frame===snapshot.frame && ["online","stale"].includes(r.status) &&
+          xyz(r.xyz) && r.quaternion?.length===4 && r.quaternion.every(Number.isFinite) &&
+          Math.hypot(...r.quaternion)>.01 && world.templates.has(r.model_name)).slice(0,254):[];
+      if(actors.length)geometry.empty=false;
       if(tex) {
         if(tex!==lastTexture) {mesh=appearanceMesh(tex); lastTexture=tex;}
         geometry.empty=false;
       } else {mesh=null;lastTexture=null;}
       if(!surface.begin())return {empty:geometry.empty};
       axes();surface.focal=surface.h/(2*Math.tan(halfFov));
-      if(requestedCamera){
+      const following=actors.find(r=>r.id===followId);
+      if(following){
+        const template=world.templates.get(following.model_name);
+        target=following.xyz.map((v,i)=>v+template.center[i]);
+        if(fitRobot){
+          yaw=-.74;pitch=.22;axes();scaleRadius=template.radius;
+          distance=Math.max(.12,2.9*template.radius*Math.max(1,surface.h/surface.w));
+          fitRobot=false;
+        }
+        autoFit=false;
+      }else if(requestedCamera){
         const {eye,target:look}=requestedCamera;
         const direction=eye.map((v,i)=>v-look[i]);
         distance=Math.hypot(...direction);target=look.slice();
@@ -360,10 +377,15 @@
       const near=Math.max(.0001,distance*.003);
       items=[null];frame=snapshot?.frame||"";
       let modelDrawn=false;
-      if(tex?.mesh_url && world?.state==="ready"){
+      if((tex?.mesh_url || actors.length) && world?.state==="ready"){
         const id=record("仿真外观 · 三维模型");
         items[id].texture=tex;items[id].source="Gazebo 世界三维几何";
-        modelDrawn=world.paint(surface,renderedCamera,near,id);
+        const robots=actors.map(r=>({...r,pickId:record(r.label+" · "+r.id+" · 机体表面",null,r.status!=="online"||!options.connected)}));
+        modelDrawn=world.paint(surface,renderedCamera,near,id,robots,!!tex);
+      }
+      if(canvas.dataset){
+        canvas.dataset.robots=modelDrawn?actors.map(r=>r.id).join(","):"";
+        canvas.dataset.robotPixels=JSON.stringify(modelDrawn?world.robotPixels:{});
       }
       if(tex && !modelDrawn)drawTexture(near);
       if(canvas.dataset)canvas.dataset.surface=modelDrawn?"mesh":tex?"relief":"none";
@@ -412,7 +434,7 @@
           surface.marker(camera(p),near,1.85,live?heights[index]:colors.stale,record(label,p,!live));
         }
       }
-      if(geometry.pose){
+      if(geometry.pose && !following){
         const p=geometry.pose.xyz;
         const live=options.connected && geometry.pose.status==="online";
         surface.marker(camera(p),near,6,live?colors.pose:colors.stalePose,record("机器人位姿",p,!live));
@@ -487,6 +509,7 @@
     function orbit(dx,dy){autoFit=false;yaw-=dx*.007;pitch=clamp(pitch+dy*.007,-1.54,Math.PI/2);invalidate();}
     function pan(dx,dy){
       if(!surface.focal)return;
+      followId=null;
       autoFit=false;
       const units=distance*surface.scale/surface.focal;
       target=target.map((n,i)=>n+(dy*up[i]-dx*right[i])*units);invalidate();
@@ -495,12 +518,14 @@
       if(!Number.isFinite(factor)||factor<=0)return;
       autoFit=false;distance=clamp(distance/factor,Math.max(.01,.005*scaleRadius),Math.max(32,80*scaleRadius));invalidate();
     }
-    function reset(){yaw=-.65;pitch=.65;requestedBounds=null;requestedCamera=null;autoFit=true;clearPick();}
+    function reset(){yaw=-.65;pitch=.65;requestedBounds=null;requestedCamera=null;followId=null;autoFit=true;clearPick();}
     function focusBounds(bounds,view){
+      followId=null;
       requestedCamera=xyz(view?.eye)&&xyz(view?.target)&&Math.hypot(...view.eye.map((v,i)=>v-view.target[i]))>.1?view:null;
       requestedBounds=bounds;clearPick();
     }
-    function top(){yaw=0;pitch=Math.PI/2;requestedCamera=null;requestedBounds=null;autoFit=true;invalidate();}
+    function focusRobot(id){followId=id;fitRobot=true;requestedCamera=null;requestedBounds=null;clearPick();}
+    function top(){yaw=0;pitch=Math.PI/2;requestedCamera=null;requestedBounds=null;followId=null;autoFit=true;invalidate();}
     const center=([a,b])=>[(a.x+b.x)/2,(a.y+b.y)/2];
     const gap=([a,b])=>Math.hypot(a.x-b.x,a.y-b.y);
     canvas.addEventListener("pointerdown",e=>{
@@ -547,7 +572,7 @@
         const forward=[-Math.sin(yaw),Math.cos(yaw),0], lateral=[Math.cos(yaw),Math.sin(yaw),0];
         const axis=key==="w"||key==="s"?forward:key==="a"||key==="d"?lateral:[0,0,1];
         const sign=key==="s"||key==="a"||key==="q"?-1:1;
-        target=target.map((n,i)=>n+sign*speed*axis[i]);autoFit=false;invalidate();
+        target=target.map((n,i)=>n+sign*speed*axis[i]);followId=null;autoFit=false;invalidate();
       }else if(e.key==="+"||e.key==="=")zoomBy(1.15);
       else if(e.key==="-")zoomBy(1/1.15);
       else if(e.key==="Home")reset();
@@ -557,6 +582,6 @@
       }else return;
       e.preventDefault();
     });
-    return {render,reset,top,zoomBy,focusBounds,clearPick};
+    return {render,reset,top,zoomBy,focusBounds,focusRobot,clearPick};
   };
 })();

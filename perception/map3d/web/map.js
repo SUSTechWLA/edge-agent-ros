@@ -19,6 +19,7 @@
   const layers = Object.fromEntries(["cloud","scene","roof","pose","grid"].map(key => [key, el("layer-"+key)]));
   let active = query.get("view")==="2d" ? "planar" : "spatial";
   let data=null, connected=false, scheduled=false, sourceSignature=null;
+  let activeRobot=null,pendingRobot=query.get("robot"),robotSignature=null;
 
   function draw() {
     if (scheduled) return;
@@ -28,6 +29,7 @@
       const options = {connected, mutedSources};
       for (const [key, input] of Object.entries(layers)) options[key] = input.checked;
       options.texture = el("layer-texture").checked ? texture.current : null;
+      options.appearancePack=texture.current;
       const view = modes[active].renderer.render(data, options);
       if(options.texture && active==="spatial"){
         const message={ready:"已显示 · 三维网格",loading:"正在加载三维网格，暂显正射高度图",
@@ -91,6 +93,7 @@
   for (const input of Object.values(layers)) input.onchange = () => {clearPicks(); draw();};
 
   function focusPlace(place) {
+    activeRobot=null;updateRobots();
     const view=place.id==="track" && place.camera?{...place.camera,frameGround:true}:place.camera;
     modes[active].renderer.focusBounds(place.bounds,view);
   }
@@ -123,7 +126,7 @@
         el("map-attribution").append(anchor);
       }
       for (const a of ready?.areas || []) el("place-fit").add(new Option(a.label,a.id));
-      for(const [id,label] of [["campus","实景楼群"],["teaching","教学楼"],["track","田径场"]]){
+      for(const [id,label] of [["campus","校园总览"],["teaching","教学楼口"],["track","运动场"],["campus_street","实景街道"]]){
         const place=ready?.areas.find(a=>a.id===id);
         if(!place?.camera)continue;
         const button=document.createElement("button");button.type="button";button.textContent=label;
@@ -134,12 +137,12 @@
         const place = ready.areas.find(a => a.id === initialPlace);
         initialPlace = null;
         // Allow both the backing canvas and the new texture to acquire their dimensions.
-        if (place) { draw(); requestAnimationFrame(() => focusPlace(place)); }
+        if (place && !pendingRobot && !activeRobot) { draw(); requestAnimationFrame(() => {if(!activeRobot)focusPlace(place);}); }
       }
     }
   }
   el("layer-texture").onchange = () => {clearPicks();updateTextureControls();draw();};
-  el("campus-fit").onclick = () => modes[active].renderer.reset();
+  el("campus-fit").onclick = () => {activeRobot=null;updateRobots();modes[active].renderer.reset();};
   el("robot-fit").onclick = () => {
     const p = data?.pose;
     if (p?.status==="online" && p.xyz) {
@@ -152,6 +155,53 @@
     if (place) focusPlace(place);
     el("place-fit").value="";
   };
+
+  function chooseRobot(robot){
+    select("spatial");
+    layers.pose.checked=true;activeRobot=robot.id;pendingRobot=null;
+    modes.spatial.renderer.focusRobot(robot.id);updateRobots();draw();
+  }
+  function updateRobots(){
+    const robots=Array.isArray(data?.robots)?data.robots:[];
+    el("robot-panel").hidden=!robots.length;
+    if(!robots.length){activeRobot=null;robotSignature=null;return;}
+    const live=robots.filter(r=>connected && r.status==="online");
+    el("robot-online").textContent=live.length+" / "+robots.length+" 在线";
+    const signature=JSON.stringify(robots.map(r=>[r.id,r.label]));
+    if(signature!==robotSignature){
+      robotSignature=signature;el("robot-choices").replaceChildren();
+      for(const robot of robots){
+        const button=document.createElement("button");
+        button.type="button";button.textContent=robot.label||robot.id;button.dataset.robot=robot.id;
+        button.onclick=()=>{const current=data.robots.find(r=>r.id===robot.id);if(current)chooseRobot(current);};
+        el("robot-choices").append(button);
+      }
+    }
+    for(const button of el("robot-choices").children){
+      const robot=robots.find(r=>r.id===button.dataset.robot);
+      button.disabled=!(robot?.xyz && ["online","stale"].includes(robot.status) && robot.frame===data.frame);
+      button.setAttribute("aria-pressed",String(activeRobot===robot?.id));
+    }
+    const chosen=robots.find(r=>r.id===activeRobot);
+    const detail=el("robot-detail"),camera=el("robot-camera");
+    camera.hidden=true;
+    if(chosen){
+      const coordinates=chosen.xyz?.map(v=>Number(v).toFixed(2)).join(", ") || "等待测量";
+      const status=connected?(statuses[chosen.status]||chosen.status):"断线快照";
+      const joints=Object.keys(chosen.joints||{}).length;
+      const capabilities=(chosen.capabilities||[]).join("、")||"等待能力清单";
+      detail.textContent=(chosen.label||chosen.id)+" · "+status+"。位置 ["+coordinates+"] m · "+chosen.frame+
+        "。能力："+capabilities+"。"+(joints?joints+" 个关节有测量，其余按模型参考姿态展示。":"关节按模型参考姿态展示。");
+      if(chosen.camera_url){
+        const url=new URL(chosen.camera_url,location.href);
+        if(["http:","https:"].includes(url.protocol)){camera.href=url.href;camera.hidden=false;}
+      }
+    }else detail.textContent="选择机体，查看实时位置和可用能力。";
+    if(pendingRobot){
+      const first=robots.find(r=>r.id===pendingRobot && r.status==="online" && r.xyz);
+      if(first && texture.current)chooseRobot(first);
+    }
+  }
 
   function updateSources(extras) {
     const picker = el("inspect-source");
@@ -181,6 +231,7 @@
     texture.update(data.texture);
     updateTextureControls();
     updateSources(Object.entries(data.cloud_sources || {}));
+    updateRobots();
     const c = data.cloud_sources?.[el("inspect-source").value] || data.cloud;
     const g = data.grid, s = data.scene, p = data.pose;
     el("env").textContent = data.environment==="simulation" ? "GAZEBO  /  ROS 2" : "ROS 2  /  机器人";

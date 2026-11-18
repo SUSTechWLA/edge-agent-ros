@@ -198,7 +198,7 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
     await click('campus-fit');
     await paint();
     const restored=await assertRestored('whole-campus fit restores world extent: '+mode);
-    const landmarks={};
+    const landmarks={},bodies={};
     if(mode==='spatial') {
       for(const id of ['campus','campus_street','teaching','track']) {
         const option=texture.areas.find(a=>a.id===id);
@@ -214,8 +214,25 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
         landmarks[id]={...px,camera:option.camera,screenshot:filename};
       }
       assert.equal(new Set(Object.values(landmarks).map(p=>p.signature)).size,4);
+      const current=await (await fetch(new URL('/api/map',url))).json();
+      if(current.robots?.length){
+        for(const id of ['edge_rover','crazyflie','go1','g1']){
+          const button='document.querySelector('+JSON.stringify('#robot-choices [data-robot="'+id+'"]')+')';
+          await waitFor(button+' && !'+button+'.disabled','registered robot '+id,60000);
+          await evaluate(button+'.click()');
+          await waitFor('Number(JSON.parse(document.querySelector("#viewport").dataset.robotPixels||"{}")['+
+            JSON.stringify(id)+'])>180','actual rendered robot surface '+id,60000);
+          const counts=await evaluate('JSON.parse(document.querySelector("#viewport").dataset.robotPixels)');
+          const detail=await evaluate("document.getElementById('robot-detail').textContent");
+          assert.match(detail,/能力/);assert.match(detail,/关节/);
+          const screenshot='campus-robot-'+id+'-'+width+'.png';
+          const {data}=await send('Page.captureScreenshot',{format:'png'});
+          writeFileSync(join(dirname(output),screenshot),Buffer.from(data,'base64'));
+          bodies[id]={picked_pixels:counts[id],detail,screenshot};
+        }
+      }
     }
-    outcomes[mode]={layout,screenshot,atlas,restored,hidden,track,robot,zoom,landmarks,track_pick:trackPick};
+    outcomes[mode]={layout,screenshot,atlas,restored,hidden,track,robot,zoom,landmarks,bodies,track_pick:trackPick};
     for(const [name,value] of Object.entries(initialLayers)) await setLayer(name,value);
     await paint();
   }
