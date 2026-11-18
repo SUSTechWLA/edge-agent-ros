@@ -94,7 +94,17 @@ def record(folder):
     rclpy.spin(node)
 
 
-def validate(snapshot,mission,forms):
+def wheel_measurement(snapshot,mission):
+    times=mission["paths"]["truth"]
+    drive=[r for r in snapshot["rows"]["edge_rover.wheels"] if times["start"][0]<=r[0]<=times["end"][0]]
+    assert drive,("no encoder samples during navigation",times["start"][0],times["end"][0])
+    peak=max(min(abs(v) for v in r[1:]) for r in drive)
+    assert peak>1,("both wheel encoders must turn",peak)
+    return {"task_id":mission["task_id"],"samples":len(drive),"both_wheels_peak_rad_s":peak,
+            "start_ns":drive[0][0],"end_ns":drive[-1][0]}
+
+
+def validate(snapshot,wheel,forms):
     rows=snapshot["rows"]
     assert not snapshot["errors"], snapshot["errors"]
     assert all(len(r)>=3 for r in rows.values())
@@ -119,9 +129,6 @@ def validate(snapshot,mission,forms):
                       "depth":depth[matches[-1]],"intrinsics":info[matches[-1]]}
     assert max(r[3] for r in rows["crazyflie.color"])>12
     assert any(r[2]>=2 and r[3]>30 and r[4]>.2 for r in rows["go1.cloud"]),"degenerate multi-layer point cloud"
-    times=mission["paths"]["truth"]
-    drive=[r for r in rows["edge_rover.wheels"] if times["start"][0]<=r[0]<=times["end"][0]]
-    assert any(min(abs(v) for v in r[1:])>1 for r in drive),"no moving wheel encoders"
     assert max(abs(v) for v in rows["edge_rover.wheels"][-1][1:])<.15,"rover never settled"
     fly=next(t for t in forms["tasks"] if t["evidence"]["robot_id"]=="crazyflie" and t["evidence"]["action"]=="起飞")
     proof=fly["evidence"]
@@ -129,7 +136,7 @@ def validate(snapshot,mission,forms):
     assert high and any(abs(r[3]-proof["measured"][0])<.18 for r in high),(proof,high)
     floor_change=[r[3] for r in rows["crazyflie.down"] if r[3] is not None]
     assert max(floor_change)-min(floor_change)>.55,"range did not follow flight"
-    return {"sources":result,"rgbd_pairs":paired,"transforms":snapshot["tf"],"wheel_peak_rad_s":max(max(abs(v) for v in r[1:]) for r in drive),
+    return {"sources":result,"rgbd_pairs":paired,"transforms":snapshot["tf"],"wheel_motion":wheel,
             "flight_task_id":fly["id"],"altitude_m":proof["measured"][0],"down_range_near_hover_m":min(high,key=lambda r:abs(r[0]/1e9-proof["stamp_s"]))[3],
             "down_range_span_m":[min(floor_change),max(floor_change)]}
 

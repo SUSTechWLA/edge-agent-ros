@@ -284,7 +284,7 @@ def run(args):
                         and any(c["id"]=="navigate_place" for c in api("/agent/capabilities")["capabilities"]) else None)
             start=await_fact(ready,"Gazebo ROS streams and named-place capability",180)
             if args.verify_onboard:
-                from campus_sensor_probe import TOPICS,validate as validate_onboard
+                from campus_sensor_probe import TOPICS,validate as validate_onboard,wheel_measurement
                 dc("exec","-d","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
                    "/opt/edge/tests/system/campus_sensor_probe.py","/audit")
                 def onboard():
@@ -326,12 +326,14 @@ def run(args):
                                "evidence":evidence,"paths":paths,"row_units":["stamp_ns","x_m","y_m","v_mps"]}
             report["ros"]={"counts_start":start["counts"],"counts_end":end["counts"],"first_scan":start["scan"][-1],
                            "last_scan":end["scan"][-1],"clock_before_ns":start["stamps"]["clock"],"clock_after_ns":end["stamps"]["clock"]}
+            if args.verify_onboard:
+                report["wheel_motion"]=wheel_measurement(onboard(),report["mission"])
             from campus_round_trip import verify as verify_round_trip
             verify_round_trip(api,observed,await_fact,terminal,report["mission"],report.setdefault("continuous_navigation",{}))
             from campus_forms import verify_forms
             verify_forms(api,dc,report.setdefault("robot_forms",{}))
             if args.verify_onboard:
-                sensors=report["onboard"]=validate_onboard(onboard(),report["mission"],report["robot_forms"])
+                sensors=report["onboard"]=validate_onboard(onboard(),report["wheel_motion"],report["robot_forms"])
                 dc("stop","campus-robot-bridge")
                 time.sleep(1.8)
                 first=onboard()["counts"]
