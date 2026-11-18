@@ -74,3 +74,7 @@ class RegisteredWalk(unittest.TestCase):
                 candidate[key]=value
                 with self.assertRaises(ValueError):
                     pack.registered_route(candidate, meta)
+
+
+if __name__=="__main__":
+    unittest.main()

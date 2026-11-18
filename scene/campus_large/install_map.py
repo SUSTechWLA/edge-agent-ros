@@ -44,8 +44,11 @@ def route_payload(world, meta):
             raise ValueError("campus walk edge not present in the registered road model")
         visual = visuals[edge["visual"]]
         a,b = points[i:i+2]
-        x,y,_,_,_,yaw = map(float,visual.findtext("pose").split())
-        span = float(visual.findtext("geometry/box/size").split()[0])
+        x,y,z,roll,pitch,yaw = map(float,visual.findtext("pose").split())
+        span,_,height = map(float,visual.findtext("geometry/box/size").split())
+        if (not all(math.isfinite(v) for v in (x,y,z,roll,pitch,yaw,span,height))
+                or roll!=0 or pitch!=0 or not 0<height or not -.02<=z+height/2<.13):
+            raise ValueError("campus walk is not a verified ground-level surface")
         dx,dy = span*math.cos(yaw)/2,span*math.sin(yaw)/2
         if math.dist((x-dx,y-dy),a)>.012 or math.dist((x+dx,y+dy),b)>.012 or span<=0:
             raise ValueError("campus walk endpoints do not match Gazebo geometry")

@@ -39,6 +39,10 @@ docker compose -f compose.hardware.yaml --profile map3d up -d map3d
 
 仿真实例可挂载与当前 ROS 场景同版本、同坐标系的静态外观包。二维显示北向正射图。三维用 WebGL 2 绘制从 Gazebo 导出的 GLB，可以观察同一屋檐的顶部和下方，也可从地面看窗带与球门。只带高度图的旧包和无法使用 WebGL 的浏览器可回退到高度表面。建筑外观、ROS 占据与实测点云各有独立来源。[校园地图与书签](../../scene/campus_large/README.md) · [数据契约](../../docs/specs/SDD-028-campus-geometry.md)
 
+在“可见图层”勾选“已核查测试步道”，再点“查看整条步道”。青色中心线从教学楼门外经运动场、林地与广场连接 Mekelweg 步道，地图当前版本共 25 段、776.823 米。二维与三维共享同一组 `odom` 路线节点。三维视角用场景深度处理树木、看台和建筑的遮挡。线路表示已核查的场景几何；机器人已经行驶的距离和实际轨迹须从具体任务回执与位姿观测读取。
+
+外观包可以在 `manifest.json` 中提供 `route`，字段为 `id`、`frame`、`scene_revision`、`points`（顺序排列的米制 XY）和 `length_m`。校园发布脚本逐段核对原始清单与 Gazebo 路面网格端点。地图端再次核对坐标系、场景版本、地图范围和总长，接受 2 至 256 个节点、总长最多 10 公里。其他外观包可以省略此字段。可用 `node tests/system/console_browser.mjs http://127.0.0.1:8773 /existing/directory/route.json --campus-route` 在桌面和手机视口复核图层开关、视角变化及截图。
+
 打开地图地址（默认 `http://127.0.0.1:8770/`），选择“2D 平面地图”或“3D 空间地图”。也可直接以 `/?view=2d` 打开二维。图层开关共享，观察位置独立。切换回来可以继续检查刚才的位置。
 
 | 想知道什么 | 操作和读数 |
