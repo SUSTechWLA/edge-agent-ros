@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "project": "edge-camera-46ad4b683b2a",
+  "image": "edge-agent-ros:event-evolution-20b212a",
+  "scope": "Gazebo RGB and CameraInfo, synthetic ROS JPEG; desktop Linux containers",
+  "gazebo": {
+    "width": 320,
+    "height": 240,
+    "frame_id": "edge_camera_front",
+    "encoding": "rgb8",
+    "camera_info": {
+      "width": 320,
+      "height": 240,
+      "frame_id": "edge_camera_front",
+      "stamp_ns": 4000000,
+      "fx": 233.87136459350586,
+      "fy": 233.87134552001953,
+      "cx": 160.0,
+      "cy": 120.0,
+      "calibrated": true
+    },
+    "png_sha256": "1137cfaac3eb8e4311db25b4e197f222e028bc02f8928a95c13587cc0f5c2cf7",
+    "unique_sample_bytes": 158,
+    "preview_stamp_ns": "4000000"
+  },
+  "hot_config": {
+    "added_jpeg_frame": "fixture_optical",
+    "jpeg_sha256": "863acfa6e73462e936368923d879b6ad5c731f4996972cc9cb9e6b612af7aa79",
+    "invalid_kept_existing": true,
+    "removed_http_status": 404
+  },
+  "outage": {
+    "reason": "frame_timeout",
+    "stale_http_status": 503,
+    "old_stamp": 3750000000,
+    "new_stamp": 8250000000
+  }
+}

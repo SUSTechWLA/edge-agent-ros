@@ -8,17 +8,24 @@ import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkReview } from './review_browser.mjs';
 import { checkSessions } from './session_browser.mjs';
+import { checkMap3D } from './map3d_browser.mjs';
+import { checkRgbd } from './rgbd_browser.mjs';
 
 const [url, output, screenshotOption] = process.argv.slice(2);
-if (screenshotOption && screenshotOption !== '--screenshots') throw new Error('Unknown browser test option');
+if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+const mapOnly = screenshotOption === '--map3d';
+const rgbdOnly = screenshotOption === '--rgbd';
+const sensorViews = screenshotOption === '--sensor-views';
 const binary = [process.env.CHROME_PATH, '/usr/bin/google-chrome', '/usr/bin/chromium',
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   join(process.env.ProgramFiles || '', 'Google/Chrome/Application/chrome.exe'),
   join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe')]
   .find(file => file && existsSync(file));
 if (!binary) throw new Error('Set CHROME_PATH to an installed Chrome or Edge browser.');
-const state = await (await fetch(new URL('/api/state', url))).json();
-if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
+if (!mapOnly && !rgbdOnly) {
+  const state = await (await fetch(new URL('/api/state', url))).json();
+  if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
+}
 const profile = mkdtempSync(join(tmpdir(), 'edge-browser-test-'));
 const browser = spawn(binary, ['--headless=new','--disable-gpu','--no-first-run','--disable-extensions',
   '--no-sandbox','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],
@@ -85,11 +92,33 @@ try {
   await send('Runtime.enable');
   await send('Network.enable');
   await send('Page.navigate',{url});
-  await waitFor("document.querySelector('#sessions') && !document.querySelector('#sessions').hidden",
-                'Readable sessions are the default landing page');
+  if (!mapOnly && !rgbdOnly) {
+    await waitFor("document.querySelector('#sessions') && !document.querySelector('#sessions').hidden",
+                  'Readable sessions are the default landing page');
+  }
   for (const width of [1440,390]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:860,deviceScaleFactor:1,mobile:false});
+    if (mapOnly) {
+      viewports.push(await checkMap3D({url,width,output,evaluate,waitFor,send}));
+      continue;
+    }
+    if (rgbdOnly) {
+      viewports.push(await checkRgbd({width,output,evaluate,waitFor,send}));
+      continue;
+    }
     await evaluate("document.querySelector('#nav-live').click()");
+    if (sensorViews) {
+      await waitFor("['map3d','camera','rgbd'].every(id => document.querySelector('#'+id+'-link')?.offsetWidth > 0)",
+                    'independently registered map, camera and RGB-D views are visible');
+      const links = await evaluate("Object.fromEntries(['map3d','camera','rgbd'].map(id=>[id,document.getElementById(id+'-link').href]))");
+      for (const [name, href] of Object.entries(links)) {
+        if (new URL(href).hostname !== new URL(url).hostname) throw new Error('view on unexpected host: '+name);
+      }
+      const content = await evaluate('document.documentElement.scrollWidth');
+      if (content > width+1) throw new Error('horizontal overflow at '+width);
+      viewports.push({width, links, document_width:content});
+      continue;
+    }
     await waitFor("document.querySelector('#metric-pos')?.textContent.match(/[0-9]/) && document.querySelector('#map')?.width > 0");
     await evaluate("document.querySelector('#open-task').click()");
     await waitFor("document.querySelector('#task-modal').open && document.querySelector('#cap-list').textContent.includes('navigate_place')");

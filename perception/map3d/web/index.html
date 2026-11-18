@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>三维地图 · Edge Agent ROS</title><link rel="stylesheet" href="/map.css"><script defer src="/map.js"></script></head>
+<body><header><div class="brand"><i aria-hidden="true">⬡</i> Edge Agent <b>ROS</b></div><span class="bar"></span><span>感知工作台</span></header>
+<main><div class="title"><div><p id="env">ROS 2</p><h1>三维环境地图</h1></div><span class="live" id="connection" role="status">正在连接</span></div>
+<div class="layout"><section class="view" aria-label="三维空间视图">
+<div class="view-head"><span><i class="dot"></i> 空间视图</span><code id="frame">坐标系 —</code></div>
+<div class="plot"><canvas tabindex="0" id="viewport" aria-label="三维点云与场景。方向键旋转，加减号缩放。"></canvas>
+<div id="empty" role="status">等待空间数据</div>
+<div class="height"><small>实测高度 · m</small><i></i><div><span id="z-min">—</span><span id="z-max">—</span></div></div></div>
+<div class="foot"><span>拖动旋转 · Shift 拖动平移 · 滚轮缩放</span><div class="buttons"><button id="view-top" type="button">俯视</button><button id="orbit-reset" type="button">适应视图</button></div></div>
+</section>
+<aside><section class="panel"><div class="panel-head"><h2>实测表面</h2><span id="cloud-status">等待</span></div>
+<div class="number" id="point-count">0</div><p class="unit">已保留体素</p>
+<label id="inspect-source-row" hidden>来源 <select id="inspect-source"></select></label>
+<dl><dt>传感器</dt><dd id="sensor">等待数据</dd><dt>点云话题</dt><dd><code id="topic">—</code></dd><dt>采样时刻</dt><dd id="sample">—</dd><dt>体素边长</dt><dd id="resolution">—</dd></dl></section>
+<section class="panel"><h2>可见图层</h2>
+<label><input type="checkbox" id="layer-cloud" checked><i class="key points"></i>实测点云</label>
+<div id="lidar-sources" aria-label="附加雷达来源"></div>
+<label><input type="checkbox" id="layer-scene" checked><i class="key scene"></i>场景先验</label>
+<label class="sub"><input type="checkbox" id="layer-roof">显示屋顶</label>
+<label><input type="checkbox" id="layer-pose" checked><i class="key robot"></i>机器人位姿</label>
+<p id="sources">等待来源</p></section></aside></div></main></body></html>

@@ -4,6 +4,7 @@
 
 | 我想做什么 | 从这里读 |
 |---|---|
+| 给工作台加 3D 地图、相机、MID-360 或 RealSense 输入，切换本地/云端模型 | [全栈快速上手与逐项撤下](perception-model-quickstart.md) · [隔离实验](testing/map-and-model-plugins.md) · [真实模型选工具记录](evidence/workbench-model-routing.json) |
 | 部署仿真、模型或板端，知道哪些平台已有实测 | [部署](deployment.md) · [模型配置](model.md) · [板卡验收](architecture/board-validation.md) |
 | 在观测台下发任务，检查激光与地图，追查失败步骤 | [观测台](console.md) · [语义地图](semantic-scene.md) · [会话与按需取证](sessions.md) |
 | 看懂任务执行、资源占用、停车与重启 | [ROS 接口](v1/interfaces.md) · [任务内核](v1/core.md) · [执行网关](v1/gateway.md) |

@@ -1,0 +1,33 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>相机观测 · Edge Agent ROS</title>
+<style>
+*{box-sizing:border-box}body{margin:0;color:#dce6ea;background:#11191d;font-family:"Barlow","Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1120px;margin:auto;padding:clamp(20px,5vw,60px)}header{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:20px;flex-wrap:wrap}h1{margin:0;font-weight:500;font-size:clamp(28px,5vw,48px)}label{display:grid;gap:5px;color:#aabcbe;font-size:.85rem}select{min-width:180px;border:1px solid #485a61;border-radius:6px;background:#203038;color:white;padding:9px;font:inherit}.viewer{display:grid;place-items:center;min-height:180px;aspect-ratio:16/9;background:#05090b;border:1px solid #34434a;overflow:hidden;border-radius:9px}.viewer img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}.viewer p{color:#9fb0b7;padding:16px;text-align:center}[hidden]{display:none!important}.status{margin:18px 0;color:#8fe3bf;font-size:1.05rem}.status[data-bad=true]{color:#e5b673}dl{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:#3a464b;border:1px solid #3a464b;border-radius:8px;overflow:hidden}dl div{padding:13px 16px;background:#19252b;min-width:0}dt{font-size:.8rem;color:#9db0b6;margin-bottom:4px}dd{margin:0;word-break:break-word;font-family:Consolas,monospace}a{color:#9fd6ed}footer{margin-top:24px}
+</style>
+<main><header><h1>相机观测</h1><label>图像来源<select id="source" aria-label="图像来源"></select></label></header>
+<div class="viewer"><img id="preview" alt="当前相机的最新观测图像" hidden><p id="empty">等待读取相机目录</p></div>
+<p id="status" class="status" aria-live="polite"></p><p id="frameStamp" hidden></p><dl id="metadata"></dl>
+<footer><a href="/api/cameras">查看原始观测状态</a></footer></main>
+<script>
+const pick=document.querySelector('select'),img=document.querySelector('img'),blank=document.querySelector('#empty'),statusLine=document.querySelector('#status'),meta=document.querySelector('dl');
+const states={waiting:'等待图像',online:'正在接收',stale:'图像已过期',invalid:'输入无效'};
+let keys='',last='',currentURL='',selection=0;
+function hide(message){img.hidden=true;img.removeAttribute('src');document.querySelector('#frameStamp').hidden=true;blank.hidden=false;blank.textContent=message;last='';if(currentURL){URL.revokeObjectURL(currentURL);currentURL=''}}
+function detail(rows){meta.replaceChildren(...rows.map(([k,v])=>{const b=document.createElement('div'),t=document.createElement('dt'),d=document.createElement('dd');t.textContent=k;d.textContent=v;b.append(t,d);return b}))}
+pick.onchange=()=>{selection++;hide('正在读取所选相机');detail([])};
+async function update(){const generation=selection;
+try{
+ const res=await fetch('/api/cameras',{cache:'no-store',signal:AbortSignal.timeout(3500)});if(!res.ok)throw Error();const list=await res.json();
+ const next=JSON.stringify(list.sources.map(s=>[s.id,s.label]));if(next!==keys){const old=pick.value;pick.replaceChildren(...list.sources.map(s=>new Option(s.label,s.id)));if(list.sources.some(s=>s.id===old))pick.value=old;keys=next;hide('等待图像')}
+ const s=list.sources.find(s=>s.id===pick.value);if(!s){hide('尚未配置相机');detail([]);statusLine.textContent=list.config_status==='invalid'?'来源配置无效':'相机目录为空';return}
+ const healthy=s.state==='online';statusLine.dataset.bad=String(!healthy||list.config_status!=='ok');statusLine.textContent=(states[s.state]||s.state)+(list.config_status==='invalid'?' · 配置错误，保留上次有效定义':'');
+ detail([['话题',s.topic],['坐标系',s.frame_id||'—'],['原始分辨率',s.width?s.width+' × '+s.height:'—'],['格式',s.encoding||s.type],['最新采样时刻 (ns)',s.stamp_ns_text??'—'],['预览帧数',s.received],['状态原因',s.reason],['标定',s.camera_info?.calibrated?'已匹配':'无匹配标定']]);
+ if(!healthy){hide(states[s.state]||s.state);return}
+ const key=s.id+':'+s.stamp_ns_text;if(key===last)return;
+ const response=await fetch('/api/cameras/'+encodeURIComponent(s.id)+'/image',{cache:'no-store',signal:AbortSignal.timeout(3500)});if(!response.ok)throw Error();const blob=await response.blob();
+ if(generation!==selection||s.id!==pick.value)return;
+ const url=URL.createObjectURL(blob);const fresh=new Image();fresh.src=url;
+ try{await fresh.decode()}catch(e){URL.revokeObjectURL(url);throw e}
+ if(generation!==selection){URL.revokeObjectURL(url);return}if(currentURL)URL.revokeObjectURL(currentURL);currentURL=url;
+ img.src=url;img.hidden=false;blank.hidden=true;const stamp=response.headers.get('X-Frame-Stamp-Ns');last=s.id+':'+stamp;const caption=document.querySelector('#frameStamp');caption.textContent='当前画面 · '+response.headers.get('X-Frame-Id')+' · '+stamp+' ns';caption.hidden=false;
+}catch(e){if(generation===selection){hide('当前图像不可用');statusLine.textContent='读取或解码失败';statusLine.dataset.bad='true'}}finally{setTimeout(update,450)}
+}update();
+</script></html>

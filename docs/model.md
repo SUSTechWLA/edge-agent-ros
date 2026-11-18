@@ -1,4 +1,6 @@
-# 在 Docker 中使用本地语言模型
+# 在 Docker 中使用本地和云端语言模型
+
+部署本地 Qwen、接入 DeepSeek 或在运行中的 Agent 上切换模型，可使用独立的 Model Adapter。规划器、设计作者和编码作者继续使用原有 Ollama 请求格式；只有明确选择云模型的调用才进入云端。已有部署直连本地 Ollama 的方式见下文。[快速安装、切换与恢复](perception-model-quickstart.md) · [适配器协议与错误码](../model_provider/README.md) · [实际工作台验证](evidence/workbench-model-routing.json)
 
 从工作台提交“帮我瞧瞧这台小车眼下朝向哪边、停在什么地方，把当前的测量结果告诉我就好”。Agent 将当前可用能力及参数传给模型，检查模型返回的计划，再从 ROS 话题读取实际测量值。任务详情中的 `provider` 能区分固定指令解析（`local`）和 Ollama 推理（本例是 `ollama/qwen2.5:1.5b`）。坐标、朝向和速度都应能追溯到步骤的 `evidence`。
 

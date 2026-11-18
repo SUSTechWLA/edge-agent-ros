@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "project": "edge-sensor-audit-4bfc637747",
+  "image": "edge-agent-ros:map-isolation-audit",
+  "core_image": "edge-agent-ros:event-evolution-20b212a",
+  "scope": "Gazebo RGB camera plus fixed multilayer lidar, synthetic Livox driver2 PointXYZRTLT via real ROS 2 publish/subscribe.",
+  "camera": {
+    "stamp_ns": 250000000,
+    "frame_id": "edge_camera_front",
+    "width": 320,
+    "height": 240,
+    "pixel_sha256": "410392ac75c5cc2d0dad8a447360c234e0d6cbfaf60094ec74fc4e3d271d6081",
+    "distinct_rgb": 224,
+    "png_sha256": "9d76ece7c531f152e3bb851562fe822b8f4261c7a132a85d73ec26bf3e874d79"
+  },
+  "gazebo_camera_info": {
+    "width": 320,
+    "height": 240,
+    "frame_id": "edge_camera_front",
+    "stamp_ns": 500000000,
+    "fx": 233.87136459350586,
+    "fy": 233.87134552001953,
+    "cx": 160.0,
+    "cy": 120.0,
+    "calibrated": true
+  },
+  "missing_tf": "transform_unavailable",
+  "livox": {
+    "frame": "livox_frame",
+    "points_odom": [
+      [
+        0.75,
+        -2.0,
+        1.625
+      ],
+      [
+        0.75,
+        -0.5,
+        0.375
+      ],
+      [
+        1.75,
+        -0.5,
+        1.125
+      ]
+    ],
+    "topic": "/livox/lidar",
+    "fields": [
+      "x",
+      "y",
+      "z",
+      "intensity",
+      "tag",
+      "line",
+      "timestamp"
+    ],
+    "point_step": 26
+  },
+  "camera_before_unplug": 1500000000,
+  "camera_after_reconnect": 6500000000,
+  "unchanged_processes": [
+    "/edge-sensor-audit-4bfc637747-bridge-1 2026-11-18T06:15:21.422195077Z",
+    "/edge-sensor-audit-4bfc637747-camera-1 2026-11-18T06:15:23.296698807Z",
+    "/edge-sensor-audit-4bfc637747-map3d-1 2026-11-18T06:15:23.047208393Z",
+    "/edge-sensor-audit-4bfc637747-perception-1 2026-11-18T06:15:22.287522274Z",
+    "/edge-sensor-audit-4bfc637747-scene-1 2026-11-18T06:15:21.624634346Z",
+    "/edge-sensor-audit-4bfc637747-sim-1 2026-11-18T06:15:21.223400762Z"
+  ],
+  "isolated_stale_preview_status": 503,
+  "image_id": "sha256:63196a829458c7c6291667a556764d00478ad00c71458edff369868be2ad062a"
+}

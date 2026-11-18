@@ -5,7 +5,8 @@ import unittest
 
 STAGES = ("repository", "planner", "agent-contracts", "observations", "scene-contracts",
           "core", "motion-sensors", "motion-world", "agent-faults", "resilience",
-          "console-missions", "places", "scene-binding", "scene-outage", "clock-reset", "ui", "model", "board")
+          "console-missions", "places", "scene-binding", "scene-outage", "clock-reset", "ui", "model", "board",
+          "plugin-isolation")
 R = "repository"
 AGENT = ("planner", "agent-contracts", "agent-faults", "resilience", "console-missions",
          "places", "scene-binding", "ui", "model")
@@ -14,6 +15,15 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("perception/map3d/*", "perception/sim_station.py", "map-inputs/*", "tests/test_map3d_ros.py", "tests/test_map3d.py", "tests/test_lidar_inputs_ros.py",
+      "perception/camera/*", "compose.camera*.yaml", "perception/rgbd/*", "compose.rgbd*.yaml", "tests/test_rgbd.py"),
+     ("planner", "observations", "board", "plugin-isolation")),
+    (("model_provider/*", "compose.model-provider*.yaml", "tests/test_planner_model_selection.py"),
+     ("planner", "model", "plugin-isolation")),
+    (("tests/system/map_model_isolation.py", "tests/system/map3d_browser.mjs", "tests/system/camera_acceptance.py",
+      "tests/system/sensor_plugin_isolation.py", "tests/system/rgbd_acceptance.py", "tests/system/rgbd_browser.mjs"),
+     ("plugin-isolation",)),
+    (("console/web/view-plugins.js","console/web/view-plugins/*"), ("ui","plugin-isolation")),
     (("agent/series_tools.py",), (*AGENT,"observations","board")),
     (("client/plugin_design_watch.py","client/design_contracts.py","client/plugin_design.py",
       "client/software_author_watch.py","client/bounded_http.py","contracts/design/*"),
@@ -112,6 +122,14 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_map_and_model_plugin_consumers(self):
+        self.assertEqual(selection(["perception/map3d/provider.py"])[0],
+                         [R,"planner","observations","board","plugin-isolation"])
+        self.assertEqual(selection(["model_provider/provider.py"])[0],[R,"planner","model","plugin-isolation"])
+        self.assertEqual(selection(["tests/system/map_model_isolation.py"])[0],[R,"plugin-isolation"])
+        for plugin in ("compose.rgbd-hardware.yaml","perception/rgbd/pairs.py","map-inputs/points.json","perception/camera/frames.py"):
+            self.assertEqual(selection([plugin])[0],[R,"planner","observations","board","plugin-isolation"])
+
     def test_evolution_consumers(self):
         for name in ("client/plugin_design.py","client/plugin_design_watch.py","client/event_sink.py",
                      "contracts/design/ros-observation.json","client/design_contracts.py","client/bounded_http.py",

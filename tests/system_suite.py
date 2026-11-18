@@ -41,6 +41,12 @@ def run(args, selected, reasons):
                EDGE_RESILIENCE_REPORT=str(directory/"resilience.json"), PYTHONUTF8="1")
     if args.base_image:
         env["EDGE_BASE_IMAGE"] = args.base_image
+    # The operator's active planner can route work to a billed external API.
+    # Keep deployment-specific profiles outside all ephemeral regression projects.
+    contracts_dir = directory / "contracts"
+    shutil.copytree(ROOT / "contracts", contracts_dir,
+                    ignore=shutil.ignore_patterns("planner-profile.json", ".planner-history"))
+    env["EDGE_CONTRACTS_DIR"] = str(contracts_dir)
     report = {"run_id":run_id, "started_at":utc(), "revision":revision, "dirty":dirty,
               "selected":selected, "selection":reasons, "platform":"Docker Linux containers",
               "stages":[], "status":"running"}
@@ -92,9 +98,18 @@ def run(args, selected, reasons):
             stage("repository",[[PY,"scripts/check_sdd.py"],test("repository_contract.py","-v"),
                                 test("document_contract.py","-v"),
                                 test("test_selection.py","-v"),["docker","compose","config","--quiet"],
-                                ["docker","compose","-f","compose.hardware.yaml","config","--quiet"]])
+                                ["docker","compose","-f","compose.hardware.yaml","config","--quiet"],
+                                ["docker","compose","-f","compose.yaml","-f","compose.camera.yaml","-f","compose.rgbd.yaml",
+                                 "-f","compose.rgbd-sensor.yaml","-f","compose.model-provider.yaml","config","--quiet"],
+                                ["docker","compose","-f","compose.hardware.yaml","-f","compose.camera.yaml",
+                                 "-f","compose.camera-hardware.yaml","-f","compose.rgbd.yaml","-f","compose.rgbd-hardware.yaml",
+                                 "-f","compose.model-provider.yaml","-f","compose.model-provider-hardware.yaml","config","--quiet"]])
         if "planner" in selected:
             stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
+                             test("test_planner_model_selection.py","-v"),
+                             [PY,str(ROOT/"model_provider/test_provider.py"),"-v"],
+                             test("test_map3d.py","-v"),test("test_rgbd.py","-v"),
+                             [PY,str(ROOT/"perception/camera/test_frames.py"),"-v"],
                              test("test_series_tools.py","-v"),test("test_plugin_design.py","-v"),
                              test("test_plugin_design_watch.py","-v"),
                              test("test_software_author_watch.py","-v"),
@@ -125,6 +140,11 @@ def run(args, selected, reasons):
                 report["docker"]=output(["docker","version","--format","{{.Server.Version}}"],env)
                 report["compose"]=output(["docker","compose","version","--short"],env)
                 checks={
+                    "plugin-isolation":[test("system/map_model_isolation.py","--image",image,
+                                             "--out",directory/"map-model-isolation.json"),
+                                        test("system/camera_acceptance.py","--image",image,"--out",directory/"camera.json"),
+                                        test("system/sensor_plugin_isolation.py","--image",image,"--out",directory/"camera-lidar.json"),
+                                        test("system/rgbd_acceptance.py","--image",image,"--out",directory/"rgbd.json")],
                     "agent-contracts":[in_image("python3","/opt/edge/tests/agent_trace_contract.py","-v"),
                                        in_image("python3","/opt/edge/tests/agent_verification_contract.py","-v"),
                                        ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
@@ -132,6 +152,8 @@ def run(args, selected, reasons):
                                         f"type=bind,source={ROOT/'examples/result-verifiers'},target=/sample,readonly",
                                         "--entrypoint","python3",image,"-B","/sample/test_verifiers.py","-v"]],
                     "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server"),
+                                    in_image("python3","-B","/opt/edge/tests/test_map3d_ros.py","-v"),
+                                    in_image("python3","-B","/opt/edge/tests/test_lidar_inputs_ros.py","-v"),
                                     in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/evidence"),
                                     in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/sessions_plugin"),
                                     test("system/module_bus_acceptance.py","--image",image,"--out",directory/"module-bus.json"),

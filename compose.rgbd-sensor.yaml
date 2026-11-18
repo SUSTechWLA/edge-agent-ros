@@ -1,0 +1,17 @@
+services:
+  rgbd-sensor:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: [rgbd-sensor]
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 15s
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      GZ_PARTITION: edge_v1
+      ROS_LOG_DIR: /tmp/ros
+    command: ["python3", "-B", "/opt/edge/perception/rgbd/simulator.py"]
+    volumes:
+      - ./perception/rgbd:/opt/edge/perception/rgbd:ro
+      - ./perception/sim_station.py:/opt/edge/perception/sim_station.py:ro

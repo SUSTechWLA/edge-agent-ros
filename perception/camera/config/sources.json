@@ -1,0 +1,1 @@
+{"schema_version":1,"sources":[{"id":"front","label":"前方相机","topic":"/edge/cameras/front/image","type":"Image","info_topic":"/edge/cameras/front/camera_info","ttl_s":3.0}]}

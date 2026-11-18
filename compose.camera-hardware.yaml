@@ -1,0 +1,12 @@
+# Use with compose.hardware.yaml and compose.camera.yaml on native Linux.
+services:
+  camera-init:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+  camera:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    network_mode: host
+    ports: !reset []
+    environment:
+      EDGE_CAMERA_BIND: 127.0.0.1
+      EDGE_CAMERA_PORT: ${EDGE_CAMERA_PORT:-8771}
+    command: ["python3","-B","/opt/edge/perception/camera/provider.py","--ros-args","-p","use_sim_time:=false"]

@@ -15,6 +15,8 @@
 
 ## 定位模块与验证入口
 
+新增传感器时先确认标准 ROS 消息、采样时间、坐标系和状态所有者。地图消费点云/TF，相机预览消费 Image 或 CompressedImage，像素测距消费对齐深度和彩色标定。新增模型优先复用现有 Model Adapter 请求和路由，核对谁可以向外发送数据。用插件独立启停、故障时无关任务的实测结果以及来源完整的图像/模型回执验收。[SDD-020 至 SDD-024 的入口与命令](docs/perception-model-quickstart.md) · [隔离验证](docs/testing/map-and-model-plugins.md)
+
 | 需要定位的问题 | 先查什么 | 可用验证 |
 |---|---|---|
 | 能力缺口为什么没有触发设计、编码或发布 | 顺着[运行手册](docs/plugin-evolution-operations.md)查源事件、私有收据、已选接口、独立样本和批准摘要。订阅新事实时复用带持久游标和重试预算的消费者，并由新插件持有自己的状态 | `tests/test_plugin_design_watch.py`、`tests/test_software_author_watch.py` 覆盖中断与重投，`tests/system/software_provider_acceptance.py --automatic` 检验原请求至热装、运行及撤回 |

@@ -69,4 +69,3 @@ if __name__ == "__main__":
     except (ValueError, TypeError, OSError, RecursionError):
         encoded = b'{"error":"reply_invalid"}'
     sys.stdout.buffer.write(encoded)
-

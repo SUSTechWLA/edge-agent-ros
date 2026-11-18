@@ -67,4 +67,3 @@ def matches(value, schema, budget):
     if isinstance(value,str):
         return schema.get("minLength",0)<=len(value)<=schema.get("maxLength",len(value))
     return True
-

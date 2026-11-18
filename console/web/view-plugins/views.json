@@ -1,0 +1,5 @@
+[
+  {"id":"map3d","label":"打开实时三维地图","slot":"map","port":8770},
+  {"id":"camera","label":"彩色相机","slot":"sensor","port":8771},
+  {"id":"rgbd","label":"RGB-D 深度测量","slot":"sensor","port":8772}
+]

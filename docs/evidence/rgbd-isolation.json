@@ -1,0 +1,547 @@
+{
+  "passed": true,
+  "project": "edge-rgbd-audit-ef6f0a5ce3",
+  "image": "edge-agent-ros:perception-sdd024",
+  "core_image": "edge-agent-ros:event-evolution-20b212a",
+  "gazebo": {
+    "pair_id": "1644479905b2406bb6632b7406735b20-1",
+    "color_stamp_ns": 1332000000,
+    "depth_stamp_ns": 1332000000,
+    "depth_frame": "camera_color_optical_frame",
+    "image_size": [
+      320,
+      240
+    ],
+    "sampled": [
+      {
+        "xy": [
+          280,
+          150
+        ],
+        "ROS_Z_m": 3.109999895095825,
+        "API_Z_m": 3.109999895095825,
+        "rgb": [
+          81,
+          79,
+          75
+        ]
+      },
+      {
+        "xy": [
+          80,
+          150
+        ],
+        "ROS_Z_m": 5.960001468658447,
+        "API_Z_m": 5.960001468658447,
+        "rgb": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "xy": [
+          160,
+          120
+        ],
+        "ROS_Z_m": 3.1100001335144043,
+        "API_Z_m": 3.1100001335144043,
+        "rgb": [
+          81,
+          79,
+          75
+        ]
+      }
+    ],
+    "image_sha256": {
+      "color": "ead7e07cc2bf8cc508aa23ecfea50a27873b079840442c6414757bcba37266e8",
+      "depth": "80cf201cc389a740d64fe711aa3925bc0afd1ecbfc6241c5db83dfd9285c98a0"
+    },
+    "center_expected_m": 3.11,
+    "organized_cloud": {
+      "frame": "edge_rgbd_link",
+      "stamp_ns": 1332000000,
+      "size": [
+        320,
+        240
+      ],
+      "center_xyz": [
+        3.1100001335144043,
+        -0.005825730040669441,
+        -0.005825803615152836
+      ],
+      "center_rgb": 5328715,
+      "color_count": 18,
+      "map_alignment": {
+        "target": [
+          1.7100001335144044,
+          -1.0058257300406694,
+          1.0941741963848473
+        ],
+        "nearest_voxel": [
+          1.71,
+          -0.983,
+          1.141
+        ],
+        "distance_m": 0.05209289621543613
+      }
+    }
+  },
+  "browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "document_width": 1425,
+        "readings": {
+          "depth-image": "(160, 120) \u00b7 3.110 m \u00b7 RGB 81, 79, 75",
+          "color-image": "(160, 120) \u00b7 3.110 m \u00b7 RGB 81, 79, 75"
+        }
+      },
+      {
+        "width": 390,
+        "document_width": 375,
+        "readings": {
+          "depth-image": "(160, 120) \u00b7 3.110 m \u00b7 RGB 81, 79, 75",
+          "color-image": "(160, 120) \u00b7 3.110 m \u00b7 RGB 81, 79, 75"
+        }
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "station_cycles": [
+    {
+      "iteration": 1,
+      "stopped": "camera-sensor",
+      "before": {
+        "clock": [
+          true,
+          7500000000
+        ],
+        "camera-sensor": [
+          true,
+          7500000000
+        ],
+        "map3d-sensor": [
+          true,
+          7.66
+        ],
+        "rgbd-sensor": [
+          true,
+          7660000000
+        ]
+      },
+      "while_unplugged": {
+        "clock": [
+          true,
+          11000000000
+        ],
+        "camera-sensor": [
+          false,
+          8250000000
+        ],
+        "map3d-sensor": [
+          true,
+          11.322
+        ],
+        "rgbd-sensor": [
+          true,
+          11322000000
+        ]
+      },
+      "resumed": {
+        "clock": [
+          true,
+          13500000000
+        ],
+        "camera-sensor": [
+          true,
+          13500000000
+        ],
+        "map3d-sensor": [
+          true,
+          13.654
+        ],
+        "rgbd-sensor": [
+          true,
+          13320000000
+        ]
+      }
+    },
+    {
+      "iteration": 1,
+      "stopped": "map3d-sensor",
+      "before": {
+        "clock": [
+          true,
+          13500000000
+        ],
+        "camera-sensor": [
+          true,
+          13500000000
+        ],
+        "map3d-sensor": [
+          true,
+          13.654
+        ],
+        "rgbd-sensor": [
+          true,
+          13654000000
+        ]
+      },
+      "while_unplugged": {
+        "clock": [
+          true,
+          17000000000
+        ],
+        "camera-sensor": [
+          true,
+          17000000000
+        ],
+        "map3d-sensor": [
+          false,
+          13.986
+        ],
+        "rgbd-sensor": [
+          true,
+          16984000000
+        ]
+      },
+      "resumed": {
+        "clock": [
+          true,
+          19000000000
+        ],
+        "camera-sensor": [
+          true,
+          18750000000
+        ],
+        "map3d-sensor": [
+          true,
+          18.982
+        ],
+        "rgbd-sensor": [
+          true,
+          18982000000
+        ]
+      }
+    },
+    {
+      "iteration": 1,
+      "stopped": "rgbd-sensor",
+      "before": {
+        "clock": [
+          true,
+          19000000000
+        ],
+        "camera-sensor": [
+          true,
+          19000000000
+        ],
+        "map3d-sensor": [
+          true,
+          18.982
+        ],
+        "rgbd-sensor": [
+          true,
+          18982000000
+        ]
+      },
+      "while_unplugged": {
+        "clock": [
+          true,
+          21000000000
+        ],
+        "camera-sensor": [
+          true,
+          21250000000
+        ],
+        "map3d-sensor": [
+          true,
+          21.312
+        ],
+        "rgbd-sensor": [
+          false,
+          null
+        ]
+      },
+      "resumed": {
+        "clock": [
+          true,
+          24500000000
+        ],
+        "camera-sensor": [
+          true,
+          24500000000
+        ],
+        "map3d-sensor": [
+          true,
+          24.31
+        ],
+        "rgbd-sensor": [
+          true,
+          24310000000
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "stopped": "camera-sensor",
+      "before": {
+        "clock": [
+          true,
+          24500000000
+        ],
+        "camera-sensor": [
+          true,
+          24500000000
+        ],
+        "map3d-sensor": [
+          true,
+          24.31
+        ],
+        "rgbd-sensor": [
+          true,
+          24310000000
+        ]
+      },
+      "while_unplugged": {
+        "clock": [
+          true,
+          28000000000
+        ],
+        "camera-sensor": [
+          false,
+          24750000000
+        ],
+        "map3d-sensor": [
+          true,
+          27.972
+        ],
+        "rgbd-sensor": [
+          true,
+          27640000000
+        ]
+      },
+      "resumed": {
+        "clock": [
+          true,
+          29500000000
+        ],
+        "camera-sensor": [
+          true,
+          29750000000
+        ],
+        "map3d-sensor": [
+          true,
+          29.638
+        ],
+        "rgbd-sensor": [
+          true,
+          29638000000
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "stopped": "map3d-sensor",
+      "before": {
+        "clock": [
+          true,
+          29500000000
+        ],
+        "camera-sensor": [
+          true,
+          29750000000
+        ],
+        "map3d-sensor": [
+          true,
+          29.638
+        ],
+        "rgbd-sensor": [
+          true,
+          29638000000
+        ]
+      },
+      "while_unplugged": {
+        "clock": [
+          true,
+          32528000000
+        ],
+        "camera-sensor": [
+          true,
+          32750000000
+        ],
+        "map3d-sensor": [
+          false,
+          30.304
+        ],
+        "rgbd-sensor": [
+          true,
+          32634000000
+        ]
+      },
+      "resumed": {
+        "clock": [
+          true,
+          36000000000
+        ],
+        "camera-sensor": [
+          true,
+          36250000000
+        ],
+        "map3d-sensor": [
+          true,
+          36.298
+        ],
+        "rgbd-sensor": [
+          true,
+          35964000000
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "stopped": "rgbd-sensor",
+      "before": {
+        "clock": [
+          true,
+          36000000000
+        ],
+        "camera-sensor": [
+          true,
+          36250000000
+        ],
+        "map3d-sensor": [
+          true,
+          36.298
+        ],
+        "rgbd-sensor": [
+          true,
+          36298000000
+        ]
+      },
+      "while_unplugged": {
+        "clock": [
+          true,
+          38500000000
+        ],
+        "camera-sensor": [
+          true,
+          38750000000
+        ],
+        "map3d-sensor": [
+          true,
+          38.628
+        ],
+        "rgbd-sensor": [
+          false,
+          null
+        ]
+      },
+      "resumed": {
+        "clock": [
+          true,
+          42000000000
+        ],
+        "camera-sensor": [
+          true,
+          41750000000
+        ],
+        "map3d-sensor": [
+          true,
+          41.958
+        ],
+        "rgbd-sensor": [
+          true,
+          41958000000
+        ]
+      }
+    }
+  ],
+  "millimetre_fixture": {
+    "u": 2,
+    "v": 0,
+    "pair_id": "1644479905b2406bb6632b7406735b20-97",
+    "rgb": [
+      64,
+      128,
+      192
+    ],
+    "depth_m": 1.25,
+    "invalid": [
+      422,
+      "no_depth_return"
+    ]
+  },
+  "rejections": {
+    "skew": {
+      "status": "invalid",
+      "reason": "timestamp_skew",
+      "http": 503
+    },
+    "wrong-frame": {
+      "status": "invalid",
+      "reason": "frame_mismatch",
+      "http": 503
+    },
+    "malformed": {
+      "status": "invalid",
+      "reason": "depth_layout",
+      "http": 503
+    }
+  },
+  "driver_cloud": {
+    "topic": "/camera/camera/depth/color/points",
+    "ros_packed_colors": [
+      16728080,
+      4227311
+    ],
+    "map_xyz": [
+      [
+        1.0,
+        0.5,
+        1.375
+      ],
+      [
+        2.0,
+        -0.25,
+        2.625
+      ]
+    ],
+    "map_colors": null
+  },
+  "timestamps_before_after": {
+    "order": [
+      "2d_map_s",
+      "primary_cloud_s",
+      "camera_ns",
+      "driver_cloud_s"
+    ],
+    "before": [
+      47.25,
+      47.952,
+      47750000000,
+      47.95
+    ],
+    "after": [
+      49.126,
+      49.618,
+      49750000000,
+      49.7
+    ]
+  },
+  "unchanged": [
+    "/edge-rgbd-audit-ef6f0a5ce3-agent-1 2026-11-18T06:41:39.350166469Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-bridge-1 2026-11-18T06:41:40.387716999Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-camera-1 2026-11-18T06:41:42.308419938Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-console-1 2026-11-18T06:41:38.558117305Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-core-1 2026-11-18T06:41:40.828543071Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-gateway-1 2026-11-18T06:41:39.5864639Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-map3d-1 2026-11-18T06:41:42.584799006Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-perception-1 2026-11-18T06:41:41.489423664Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-scene-1 2026-11-18T06:41:39.09817849Z",
+    "/edge-rgbd-audit-ef6f0a5ce3-sim-1 2026-11-18T06:41:40.125028536Z"
+  ]
+}

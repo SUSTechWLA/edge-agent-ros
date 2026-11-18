@@ -1,0 +1,39 @@
+services:
+  rgbd-init:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["/bin/mkdir", "-p", "/sources/rgbd"]
+    volumes: [module-sources:/sources]
+  rgbd:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    init: true
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    pids_limit: 128
+    depends_on:
+      rgbd-init:
+        condition: service_completed_successfully
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+      RMW_IMPLEMENTATION: ${EDGE_RMW:-rmw_cyclonedds_cpp}
+      ROS_LOG_DIR: /tmp/ros
+      EDGE_RGBD_CONFIG: /config/${EDGE_RGBD_PROFILE:-simulation}.json
+    command: ["python3", "-B", "/opt/edge/perception/rgbd/service.py", "--ros-args", "-p", "use_sim_time:=true"]
+    ports: ["127.0.0.1:${EDGE_RGBD_PORT:-8772}:8772"]
+    volumes:
+      - ./perception/rgbd:/opt/edge/perception/rgbd:ro
+      - ./perception/camera:/opt/edge/perception/camera:ro
+      - ${EDGE_RGBD_CONFIG_DIR:-./perception/rgbd/config}:/config:ro
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: rgbd}

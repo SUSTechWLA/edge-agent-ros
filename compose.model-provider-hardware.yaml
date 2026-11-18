@@ -10,4 +10,3 @@ services:
       EDGE_MODEL_BIND: "127.0.0.1"
       EDGE_MODEL_LOCAL_URL: ${EDGE_MODEL_LOCAL_URL:-http://127.0.0.1:11434}
     command: ["--port", "${EDGE_MODEL_PORT:-8134}"]
-

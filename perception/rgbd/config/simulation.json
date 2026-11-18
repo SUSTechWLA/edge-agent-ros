@@ -1,0 +1,7 @@
+{
+  "id": "gazebo-rgbd",
+  "alignment": "gazebo_shared_optical_projection",
+  "color_topic": "/edge/rgbd/color/image_raw",
+  "aligned_depth_topic": "/edge/rgbd/aligned_depth_to_color/image_raw",
+  "info_topic": "/edge/rgbd/color/camera_info"
+}

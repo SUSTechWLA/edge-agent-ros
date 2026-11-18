@@ -13,6 +13,53 @@ x-runtime: &runtime
     GZ_SIM_SYSTEM_PLUGIN_PATH: /opt/edge/lib/edge_sim
   stop_grace_period: 6s
 services:
+  map3d-init:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["map3d"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["/bin/mkdir", "-p", "/sources/map3d"]
+    volumes:
+      - module-sources:/sources
+  map3d:
+    <<: *runtime
+    profiles: ["map3d"]
+    depends_on:
+      map3d-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    pids_limit: 96
+    tmpfs: [/tmp]
+    environment:
+      <<: *environment
+      EDGE_MAP3D_ENV: simulation
+      EDGE_MAP3D_BIND: 0.0.0.0
+      EDGE_MAP3D_FRAME: ${EDGE_MAP3D_FRAME:-odom}
+      ROS_LOG_DIR: /tmp/ros-logs
+      EDGE_MAP3D_TOPIC: ${EDGE_MAP3D_TOPIC:-/edge/map3d/points}
+      EDGE_MAP3D_POSE: ${EDGE_MAP3D_POSE:-/edge/perception/pose}
+    command: ["python3", "-B", "/opt/edge/perception/map3d/provider.py", "--ros-args", "-p", "use_sim_time:=true"]
+    volumes:
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: map3d}
+      - ${EDGE_MAP3D_INPUTS_DIR:-./map-inputs}:/etc/edge/map3d-inputs:ro
+    ports:
+      - "127.0.0.1:${EDGE_MAP3D_PORT:-8770}:8770"
+  map3d-sensor:
+    <<: *runtime
+    profiles: ["map3d-sensor"]
+    restart: unless-stopped
+    stop_grace_period: 12s
+    command: ["python3", "-B", "/opt/edge/perception/map3d/survey.py"]
   sim:
     <<: *runtime
     environment:
@@ -298,6 +345,7 @@ services:
       - state:/var/lib/edge-agent:ro
       - console-history:/var/lib/edge-console
       - ${EDGE_OBSERVATIONS_DIR:-./observations}:/etc/edge/observations:ro
+      - ${EDGE_CONSOLE_VIEWS_DIR:-./console/web/view-plugins}:/opt/edge/console/web/view-plugins:ro
       - task-state:/var/lib/edge-tasks:ro
       - author-events:/var/lib/edge-author-events:ro
       - supervisor-state:/var/lib/edge-supervisor:ro

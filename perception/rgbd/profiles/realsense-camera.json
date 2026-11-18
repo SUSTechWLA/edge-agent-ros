@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "realsense-color",
+      "label": "RealSense D4xx · color",
+      "topic": "/camera/camera/color/image_raw",
+      "info_topic": "/camera/camera/color/camera_info",
+      "type": "Image",
+      "ttl_s": 3
+    }
+  ]
+}
