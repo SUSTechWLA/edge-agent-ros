@@ -20,6 +20,8 @@
 
 仿真 Compose 附加 compose.rgbd.yaml；真机另加 compose.rgbd-hardware.yaml，外部已标定驱动持有 USB。按部署情况替换声明文件与实际命名空间，重建单个 rgbd 容器即可应用；停止 rgbd 只关闭此次测距。D4xx 的标准彩色流和驱动点云可分别登记到既有 camera / map3d 服务。
 
+仿真中单独停止 rgbd-sensor 会关闭图像、点云桥和该台站的静态 TF 发布者。固定的 Gazebo 实体保留到当前世界退出，重新启动服务会复用它。整个世界重建后，仍在运行的桥接服务会检查并补建台站。
+
 ## 变更记录
 
 2026-11-18，先登记 AC-1 至 AC-3。复用相机插件的有界 RGB 解码、ROS/Docker 环境和共享事件契约。D4xx 的标准话题和启动参数以[官方 ROS 2 驱动](https://github.com/realsenseai/realsense-ros)为依据。

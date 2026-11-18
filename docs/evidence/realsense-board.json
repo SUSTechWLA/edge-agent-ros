@@ -1,0 +1,76 @@
+{
+  "image": "edge-agent-ros/hardware:system-20261118t064644z-27098e79",
+  "image_id": "sha256:c5ae2c2499f022da2b14bc022a8dcc7c6929417a85588d997a0a7eb846670380",
+  "image_architecture": "linux/amd64",
+  "baked_import": true,
+  "ROS_DOMAIN_ID": 181,
+  "wall_clock": true,
+  "no_usb": true,
+  "overlays": [
+    "compose.hardware.yaml",
+    "compose.rgbd.yaml",
+    "compose.rgbd-hardware.yaml"
+  ],
+  "tested_at": "2026-11-18T06:53:42.797477+00:00",
+  "cameras": {
+    "realsense-d4xx": {
+      "sources": {
+        "id": "realsense-d4xx",
+        "alignment": "driver_aligned_to_color",
+        "color_topic": "/camera/camera/color/image_raw",
+        "aligned_depth_topic": "/camera/camera/aligned_depth_to_color/image_raw",
+        "info_topic": "/camera/camera/color/camera_info"
+      },
+      "frame": "camera_color_optical_frame",
+      "width": 4,
+      "height": 3,
+      "start_event": "b1c6fa15217443af86714bc33995e6a1",
+      "ROS_subscriber": "edge_rgbd_measurement",
+      "source_stamp_ns": 1794984825687971648,
+      "depth_encoding": "16UC1",
+      "skew_ms": 0.0,
+      "input_depth_mm": 1217,
+      "pixel": {
+        "u": 2,
+        "v": 1,
+        "pair_id": "6758832cec79463da0b8a5bf3a082918-1",
+        "rgb": [
+          2,
+          35,
+          153
+        ],
+        "depth_m": 1.217
+      }
+    },
+    "realsense-rear": {
+      "sources": {
+        "id": "realsense-rear",
+        "alignment": "driver_aligned_to_color",
+        "color_topic": "/rear/camera/color/image_raw",
+        "aligned_depth_topic": "/rear/camera/aligned_depth_to_color/image_raw",
+        "info_topic": "/rear/camera/color/camera_info"
+      },
+      "frame": "rear_color_optical_frame",
+      "width": 4,
+      "height": 3,
+      "start_event": "df174f1f41364fc697be0bc9eddc27d3",
+      "ROS_subscriber": "edge_rgbd_rear",
+      "source_stamp_ns": 1794984825714448247,
+      "depth_encoding": "16UC1",
+      "skew_ms": 0.0,
+      "input_depth_mm": 2217,
+      "pixel": {
+        "u": 2,
+        "v": 1,
+        "pair_id": "0fd9c20d022d4b629e32e7eeb8423125-1",
+        "rgb": [
+          3,
+          35,
+          153
+        ],
+        "depth_m": 2.217
+      }
+    }
+  },
+  "passed": true
+}

@@ -77,3 +77,5 @@ ros2 topic echo /camera/camera/aligned_depth_to_color/image_raw --field header -
 |no_depth_return|该像素有颜色，但深度传感器在该次曝光无有效回波|
 
 [SDD-024 与验收条件](../../docs/specs/SDD-024-realsense-rgbd.md) · [数值与配准回归测试](../../tests/test_rgbd.py)
+
+硬件镜像验收可从仓库根目录运行 `python tests/system/realsense_board.py --image <本地硬件镜像> --out artifacts/verification/realsense-board.json`。测试在独立 ROS Domain 启动两个提供者，使用不同相机话题/光学 frame、节点名、宿主端口和事件卷，同一像素的 1217 mm 和 2217 mm 分别读回 1.217 m 和 2.217 m。将后置节点以 `-r __node:=edge_rgbd_rear` 重命名的 Compose 示例在测试中；实物仍需 USB 与精度验收。[linux/amd64 双相机原始证据](../../docs/evidence/realsense-board.json)

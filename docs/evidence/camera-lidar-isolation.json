@@ -1,17 +1,17 @@
 {
   "passed": true,
-  "project": "edge-sensor-audit-4bfc637747",
-  "image": "edge-agent-ros:map-isolation-audit",
+  "project": "edge-sensor-audit-bc0b6f88d6",
+  "image": "edge-agent-ros:perception-sdd024",
   "core_image": "edge-agent-ros:event-evolution-20b212a",
   "scope": "Gazebo RGB camera plus fixed multilayer lidar, synthetic Livox driver2 PointXYZRTLT via real ROS 2 publish/subscribe.",
   "camera": {
-    "stamp_ns": 250000000,
+    "stamp_ns": 500000000,
     "frame_id": "edge_camera_front",
     "width": 320,
     "height": 240,
-    "pixel_sha256": "410392ac75c5cc2d0dad8a447360c234e0d6cbfaf60094ec74fc4e3d271d6081",
+    "pixel_sha256": "82b06e5351e53374b65fad921631afb55f1eaecea09daa07f53599fe7e52e0c6",
     "distinct_rgb": 224,
-    "png_sha256": "9d76ece7c531f152e3bb851562fe822b8f4261c7a132a85d73ec26bf3e874d79"
+    "png_sha256": "cd5dc0faee4c19175f3be2aae0f9c42577209382ab1ef664ba76e5e2a925cb42"
   },
   "gazebo_camera_info": {
     "width": 320,
@@ -56,16 +56,16 @@
     ],
     "point_step": 26
   },
-  "camera_before_unplug": 1500000000,
-  "camera_after_reconnect": 6500000000,
+  "camera_before_unplug": 1750000000,
+  "camera_after_reconnect": 6750000000,
   "unchanged_processes": [
-    "/edge-sensor-audit-4bfc637747-bridge-1 2026-11-18T06:15:21.422195077Z",
-    "/edge-sensor-audit-4bfc637747-camera-1 2026-11-18T06:15:23.296698807Z",
-    "/edge-sensor-audit-4bfc637747-map3d-1 2026-11-18T06:15:23.047208393Z",
-    "/edge-sensor-audit-4bfc637747-perception-1 2026-11-18T06:15:22.287522274Z",
-    "/edge-sensor-audit-4bfc637747-scene-1 2026-11-18T06:15:21.624634346Z",
-    "/edge-sensor-audit-4bfc637747-sim-1 2026-11-18T06:15:21.223400762Z"
+    "/edge-sensor-audit-bc0b6f88d6-bridge-1 2026-11-18T06:45:09.002084911Z",
+    "/edge-sensor-audit-bc0b6f88d6-camera-1 2026-11-18T06:45:10.65447024Z",
+    "/edge-sensor-audit-bc0b6f88d6-map3d-1 2026-11-18T06:45:10.86534035Z",
+    "/edge-sensor-audit-bc0b6f88d6-perception-1 2026-11-18T06:45:10.129565758Z",
+    "/edge-sensor-audit-bc0b6f88d6-scene-1 2026-11-18T06:45:09.221246745Z",
+    "/edge-sensor-audit-bc0b6f88d6-sim-1 2026-11-18T06:45:09.948168587Z"
   ],
   "isolated_stale_preview_status": 503,
-  "image_id": "sha256:63196a829458c7c6291667a556764d00478ad00c71458edff369868be2ad062a"
+  "image_id": "sha256:af50497b814b86b77d539d2d233683ebd965f909f7c7904225d5fd54ecec2fb3"
 }

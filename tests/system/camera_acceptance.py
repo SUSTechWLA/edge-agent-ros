@@ -83,12 +83,17 @@ def run(image,out):
         child=None
         try:
             stack("up","-d","--no-build","sim","bridge","camera","camera-sensor")
-            stack("exec","-T","camera","python3","-B","/opt/edge/perception/camera/test_http_clock.py","-v")
+            stack("exec","-T","camera","/usr/local/bin/edge-entrypoint","python3","-B",
+                  "/opt/edge/perception/camera/test_http_clock.py","-v")
             report["camera_read_clock_regression"]="passed"
             baseurl="http://"+stack("port","camera","8771")
             def read(path):
                 with urlopen(baseurl+path,timeout=2) as response:
                     return response.read(),dict(response.headers)
+            health=json.loads(read("/health")[0])
+            require(health["id"]=="camera" and health["started_event"] and isinstance(health["version"],str) and health["version"],
+                    "versioned camera startup identity")
+            report["camera_version"]=health["version"]
             def records():
                 return json.loads(read("/api/cameras")[0])
             def state(id_,state_):

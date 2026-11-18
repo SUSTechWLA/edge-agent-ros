@@ -1,14 +1,14 @@
 {
   "passed": true,
-  "project": "edge-mapisolation-02f26d346e",
-  "image": "edge-agent-ros:map-isolation-audit",
-  "started_utc": "2026-11-18T06:05:05.225885+00:00",
+  "project": "edge-mapisolation-23ca18719a",
+  "image": "edge-agent-ros:perception-sdd024",
+  "started_utc": "2026-11-18T06:44:32.016090+00:00",
   "scope": "Real Gazebo/ROS map, real Agent and adapter, deterministic local Ollama fixture; no cloud key.",
-  "initial_2d_grid_stamp": 0.75,
+  "initial_2d_grid_stamp": 0.126,
   "local_without_plugins": {
     "task": "baseline",
     "provider": "local",
-    "stamp_ns": 1598000000,
+    "stamp_ns": 782000000,
     "operation": "baseline/step/1"
   },
   "without_sensor": "waiting",
@@ -37,7 +37,7 @@
     "stamp_ns": 8262000000,
     "operation": "with-map/step/1",
     "request_sha256": "44af4d76b88c49382d2af4905718567631d77cdc650bb00ff13c60515e7e559f",
-    "adapter_receipt": "cd02d6610d7b4f1abd414ef5de053527"
+    "adapter_receipt": "ef4e9490728d486683308bfafea95420"
   },
   "browser": {
     "passed": true,
@@ -82,33 +82,33 @@
   "model_without_sensor": {
     "task": "without-sensor",
     "provider": "ollama/qwen2.5:1.5b",
-    "stamp_ns": 15912000000,
+    "stamp_ns": 15130000000,
     "operation": "without-sensor/step/1",
     "request_sha256": "bd369d2628399f241a91df84dcc3697fdf649f60e8551168f8120c979ded56fe",
-    "adapter_receipt": "62255926629146d995e81cea0d5e804a"
+    "adapter_receipt": "66216266398e44488867dbdced119a08"
   },
-  "map_during_model_outage_stamp": 18.316,
+  "map_during_model_outage_stamp": 18.982,
   "local_without_model": {
     "task": "without-model",
     "provider": "local",
-    "stamp_ns": 18496000000,
+    "stamp_ns": 19278000000,
     "operation": "without-model/step/1"
   },
   "model_without_map": {
     "task": "without-map",
     "provider": "ollama/qwen2.5:1.5b",
-    "stamp_ns": 22100000000,
+    "stamp_ns": 22406000000,
     "operation": "without-map/step/1",
     "request_sha256": "4f55df0118e435a1126555cf16d8b98bcc04aa3d517a9311088a228ac6b5175b",
-    "adapter_receipt": "f3c3afbaf0f840139be3f4a40e6dbbe4"
+    "adapter_receipt": "4a2f7d18f32149a1b0e95f13b60dbfbc"
   },
   "model_after_hot_route": {
     "task": "changed-route",
     "provider": "ollama/qwen2.5:1.5b",
-    "stamp_ns": 22508000000,
+    "stamp_ns": 22814000000,
     "operation": "changed-route/step/1",
     "request_sha256": "ab7252c6872eff437f4d03c16611010943fe42fb48be455e77e33ba8073681e5",
-    "adapter_receipt": "a73498c80f3f4761a02807e989aa080a"
+    "adapter_receipt": "f352917bea52481ca19957c8dc5b5a4c"
   },
   "upstream_witness": [
     "fixture-a",
@@ -118,72 +118,72 @@
   ],
   "model_receipts": [
     {
-      "event_id": "cd02d6610d7b4f1abd414ef5de053527",
-      "parent": "6fc9f7642a3447f6b8efb344a49dd677",
+      "event_id": "ef4e9490728d486683308bfafea95420",
+      "parent": "586a87a552f44d92ae5340bf25777770",
       "model": "fixture-a",
       "request_sha256": "44af4d76b88c49382d2af4905718567631d77cdc650bb00ff13c60515e7e559f"
     },
     {
-      "event_id": "62255926629146d995e81cea0d5e804a",
-      "parent": "7baf5eeefb274197b26ceff83e7ae84e",
+      "event_id": "66216266398e44488867dbdced119a08",
+      "parent": "adcdb796ab964667a5754aa5d945a9f1",
       "model": "fixture-a",
       "request_sha256": "bd369d2628399f241a91df84dcc3697fdf649f60e8551168f8120c979ded56fe"
     },
     {
-      "event_id": "f3c3afbaf0f840139be3f4a40e6dbbe4",
-      "parent": "33914f39a8f142a8ac1a70427d30005c",
+      "event_id": "4a2f7d18f32149a1b0e95f13b60dbfbc",
+      "parent": "937e913c6f9a41c5976bfd524fa3e96d",
       "model": "fixture-b",
       "request_sha256": "4f55df0118e435a1126555cf16d8b98bcc04aa3d517a9311088a228ac6b5175b"
     },
     {
-      "event_id": "a73498c80f3f4761a02807e989aa080a",
-      "parent": "09e5e5a699644538b28155c210f09249",
+      "event_id": "f352917bea52481ca19957c8dc5b5a4c",
+      "parent": "00e54c3f8f024fe6a0ea98cbdcdbb85c",
       "model": "fixture-a",
       "request_sha256": "ab7252c6872eff437f4d03c16611010943fe42fb48be455e77e33ba8073681e5"
     }
   ],
-  "route_missing_event": "f2451e7a55824e9494b5018ec10345af",
-  "stale_cloud_event": "140f9059244f4553bfb9ea1d09c45293",
-  "final_2d_grid_stamp": 22.0,
+  "route_missing_event": "b1e6428e57654572b1c70c8bfafdcb35",
+  "stale_cloud_event": "f18095401d8d4f1389f2398d48699d37",
+  "final_2d_grid_stamp": 23.126,
   "core_containers": {
     "agent": [
-      "d5aad4806280",
-      "2026-11-18T06:05:06.32382617Z"
+      "c665b7054431",
+      "2026-11-18T06:44:35.353315098Z"
     ],
     "bridge": [
-      "4d9779a0b150",
-      "2026-11-18T06:05:05.948549168Z"
+      "1c482e48d6b3",
+      "2026-11-18T06:44:33.694478779Z"
     ],
     "console": [
-      "5aeda56052aa",
-      "2026-11-18T06:05:06.730288662Z"
+      "42564181c05b",
+      "2026-11-18T06:44:33.939387753Z"
     ],
     "core": [
-      "1c4958590a18",
-      "2026-11-18T06:05:06.940879609Z"
+      "ddb01a732797",
+      "2026-11-18T06:44:34.779177967Z"
     ],
     "gateway": [
-      "7493e730eed9",
-      "2026-11-18T06:05:07.113490336Z"
+      "5ec88ec28f66",
+      "2026-11-18T06:44:35.151092832Z"
     ],
     "perception": [
-      "60343a3f4357",
-      "2026-11-18T06:05:07.514612488Z"
+      "9325ae0c0c68",
+      "2026-11-18T06:44:34.185863424Z"
     ],
     "scene": [
-      "909a9feeb016",
-      "2026-11-18T06:05:07.702917077Z"
+      "df5a068d2f8f",
+      "2026-11-18T06:44:34.967312052Z"
     ],
     "sim": [
-      "619da47e6b60",
-      "2026-11-18T06:05:06.134723461Z"
+      "0afb2a8e1c6b",
+      "2026-11-18T06:44:34.588103043Z"
     ],
     "witness": [
-      "faa944378f9a",
-      "2026-11-18T06:05:06.517129604Z"
+      "fc33f52b980b",
+      "2026-11-18T06:44:33.354970085Z"
     ]
   },
   "core_image": "edge-agent-ros:event-evolution-20b212a",
-  "image_id": "sha256:5fa36fae9869f601c27981cf6a09c7c7f7543b1ea7fe23fd2e8578cab778510f",
-  "finished_utc": "2026-11-18T06:05:38.854437+00:00"
+  "image_id": "sha256:af50497b814b86b77d539d2d233683ebd965f909f7c7904225d5fd54ecec2fb3",
+  "finished_utc": "2026-11-18T06:45:08.203947+00:00"
 }

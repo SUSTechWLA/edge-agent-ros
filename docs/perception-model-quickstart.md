@@ -49,6 +49,8 @@ python model_provider/select_planner.py --restore $cloudReceipt.previous --expec
 
 ## 3　从固定台站迁移到真实机器人
 
+RealSense D435i / D455 可直接使用随仓库提供的 D4xx 配置。先在持有 USB 设备的主机启动厂商驱动，再启动板端的 `rgbd` 容器，即可在相同的测距页面读数。板端 Agent 采用 host 网络时，本机模型适配器的规划地址设为 `--url http://127.0.0.1:8134`。[接线、驱动参数、话题、点云和标尺验收](../perception/rgbd/README.md)
+
 | 插件 / 规格 | 需要准备的真机输入 | 可单独改动、启停的部分 |
 |---|---|---|
 | [3D 地图 · SDD-020](specs/SDD-020-3d-map-plugin.md) | 已有标准 PointCloud2、有效的固定坐标系与采样时刻 TF | 只替换地图的视角、采样或可视化时改 map3d。只有二维激光时，真实高度观测还需新增数据源。 |
@@ -62,7 +64,7 @@ python model_provider/select_planner.py --restore $cloudReceipt.previous --expec
 ## 4　独立撤下与排障
 
 1. 先记下 `docker compose @edgeStack ps` 中当前服务身份，找一条实际成功且可重放的只读任务作对照。
-2. `docker compose @edgeStack stop camera-sensor` 仅关闭仿真 RGB 相机及桥接。camera 的健康端点仍可读，来源过期后图像端点返回 503。用 `start camera-sensor` 恢复。三维雷达与 RGB-D 仿真源分别用 `stop map3d-sensor` 和 `stop rgbd-sensor` 检验同类边界。
+2. `docker compose @edgeStack stop camera-sensor` 停止 RGB 相机的 ROS 桥。camera 的健康端点仍可读，来源过期后图像端点返回 503。三维雷达及 RGB-D 分别使用 `stop map3d-sensor` 和 `stop rgbd-sensor` 停止各自的桥及专用 TF 发布者。三个固定台站实体随 Gazebo 世界保留，场景可能仍占用渲染资源。用 `start <服务名>` 复用相应实体并恢复发布，核对新的 ROS 采样时间可确认恢复。世界重建后，仍运行的桥接服务会自动补建各自的台站。
 3. `docker compose @edgeStack stop camera map3d rgbd` 撤下选择的预览服务。已装驱动拥有设备，数据库仍保留原有事件。查看独立模块源、话题发布者与采样时刻，能分开识别驱动断流和显示插件退出。
 4. 撤下 model-provider 前先恢复此前的规划器配置并确认在途请求已经结束。若模型请求意外中断，恢复日志记录结果未知，不能据此推断一定未计费。然后执行 `docker compose @cloudStack stop model-provider`；仅使用本地 overlay 时改用 `@edgeStack`。
 5. 加回同名服务使用 `docker compose ... start <服务>`；更改了挂载或部署配置则使用 `up -d <服务>`。上述操作均保留工程卷。核心任务、视觉插件、设备驱动与模型提供者各自的职责，通过[独立装卸实验](testing/map-and-model-plugins.md)和[事件总线](module-eventbus.md)定位。

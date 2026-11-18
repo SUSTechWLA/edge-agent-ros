@@ -20,6 +20,7 @@ from module_journal import ModuleJournal
 
 WEB=Path(__file__).with_name("web.html")
 SENSOR_QOS=QoSProfile(depth=1,reliability=ReliabilityPolicy.BEST_EFFORT)
+VERSION="1.0.1"
 
 
 class CameraNode(Node):
@@ -33,7 +34,7 @@ class CameraNode(Node):
         self.ros_time=0
         self.run_id=uuid.uuid4().hex
         self.journal=ModuleJournal("/journal/module-events.sqlite")
-        self.started_event=self.fact("started",{},self.run_id)
+        self.started_event=self.fact("started",{"version":VERSION},self.run_id)
         self.directory=Path(os.getenv("EDGE_CAMERA_CONFIG_DIR","/config"))
         self.reload()
         self.maintenance=self.create_timer(.25,self.poll,clock=Clock(clock_type=ClockType.STEADY_TIME))
@@ -135,7 +136,7 @@ class CameraNode(Node):
     def response(self,path):
         if path=="/health":
             with self.lock:
-                return json_reply(200,{"id":"camera","started_event":self.started_event,"config_status":self.config_status})
+                return json_reply(200,{"id":"camera","version":VERSION,"started_event":self.started_event,"config_status":self.config_status})
         if path=="/":
             return 200,"text/html; charset=utf-8",WEB.read_bytes(),{}
         with self.lock:

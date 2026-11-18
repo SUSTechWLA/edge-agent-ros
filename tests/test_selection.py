@@ -77,7 +77,7 @@ RULES = [
     (("sim/bridge.yaml","sim/witness.yaml","sim/world.sdf"), (*MOTION,*OBS)),
     (("src/edge_core/*",), (*MOTION,"board")),
     (("src/edge_gateway/*","sim/*"), MOTION),
-    (("compose.hardware.yaml","tests/system/board_smoke.py"), ("board",)),
+    (("compose.hardware.yaml","tests/system/board_smoke.py","tests/system/realsense_board.py"), ("board",)),
     (("tests/planning_contract.py",), ("planner",)),
     (("tests/test_scene*","tests/semantic_acceptance.py","tests/scene_*acceptance.py","tests/system/scene_binding_acceptance.py"), SCENE),
     (("tests/system/motion_faults.py",), ("motion-sensors","motion-world")),

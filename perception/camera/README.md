@@ -14,7 +14,7 @@
 docker compose -f compose.yaml -f compose.camera.yaml --profile camera-sensor up -d sim bridge camera camera-sensor
 ```
 
-打开 [相机预览](http://127.0.0.1:8771/) 或 [传感器目录](http://127.0.0.1:8771/api/cameras)。如果指定过另一个端口，用 `EDGE_CAMERA_PORT` 对应的端口访问。仿真中的 bridge 提供 ROS /clock，camera-sensor 在当前场景插入真实 RGB 相机并桥接 Image / CameraInfo。已有仿真场景无需重建。使用 `docker compose -f compose.yaml -f compose.camera.yaml --profile camera-sensor stop camera-sensor` 可以单独撤下模拟传感器；约 3 秒后页面应显示断流，图片接口返回 HTTP 503。重新 start 该服务应出现新时间戳。仅停止 camera 会保留 ROS 传感器和其他模块。
+打开 [相机预览](http://127.0.0.1:8771/) 或 [传感器目录](http://127.0.0.1:8771/api/cameras)。如果指定过另一个端口，用 `EDGE_CAMERA_PORT` 对应的端口访问。仿真中的 bridge 提供 ROS /clock，camera-sensor 为世界中的固定 RGB 相机桥接 Image / CameraInfo。使用 `docker compose -f compose.yaml -f compose.camera.yaml --profile camera-sensor stop camera-sensor` 可停止 ROS 桥。缺样超过默认 3 秒后读取目录应显示断流，图片接口返回 HTTP 503。快照在读取时同时检查 ROS 和单调时钟，回拨会撤下旧时间段的图像。Gazebo 世界保留相机实体，重新 start 该服务将复用相机并发布新时间戳。单独停止 camera 会关闭预览页面及其 ROS 订阅。
 
 在原生 Linux 上可用下列组合接入已运行的 ROS 2 驱动。选择目标板架构镜像和正确的 ROS Domain，默认网络端口仅绑定宿主回环。
 
@@ -49,4 +49,4 @@ docker compose -f compose.hardware.yaml -f compose.camera.yaml -f compose.camera
 
 同一来源的晚到、重复消息会增加拒收计数；上一张已确认而且仍新鲜的图像继续显示。ROS 时钟回拨会清除各来源的像素与标定缓存。即使仿真暂停、ROS 时间不再向前，进程也按宿主单调时间判断断流。真实板端使用消息时间和板端 ROS 系统时钟，驱动不同步时能观察到 old_stamp 或 future_stamp。浏览器没有控制机器人或相机驱动的接口。
 
-纯处理白盒可运行 `python perception/camera/test_frames.py -v`。Docker 实验可运行 `python tests/system/camera_acceptance.py --image <Edge镜像> --out .ci-results/system/camera/result.json`。它包含一台真实 Gazebo RGB 相机及一条明确标注为合成来源的 ROS JPEG 流，检验热增删、坏配置保留原流、断流撤图与恢复。原始实验报告同目录保存实际采样 PNG。
+纯处理白盒可运行 `python perception/camera/test_frames.py -v`。Docker 实验可运行 `python tests/system/camera_acceptance.py --image <Edge镜像> --out .ci-results/system/camera/result.json`。脚本先对 HTTP 实际读路径注入可控时间，验证 ROS 前跳、回拨及暂停时两种时钟的有效期。随后从 Gazebo RGB 相机和合成 ROS JPEG 两路接收数据，检验热增删、坏配置保留原流、断流撤图与恢复。原始实验报告同目录保存实际采样 PNG。

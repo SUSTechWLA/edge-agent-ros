@@ -25,4 +25,6 @@
 
 2026-11-18，实施前记录多相机职责、输入、输出、热装边界及 AC-1 至 AC-4。
 
+同日审查复现维护定时器两次运行之间的陈旧读取。1.0.1 版将相同的新鲜度判定用于目录、图像和维护路径，/health 和启动事件可查实现版本。在独立 Linux Docker 中，3 项读取用例以及已有 6 项帧处理用例通过。Gazebo 联测中，停桥后图像返回 503，重启后采样戳由 4.50 秒推进至 9.25 秒。恢复试验使用保留在世界中的同一固定实体。硬件时钟漂移和 USB 断连仍需按具体设备验证。[读取回归](../../perception/camera/test_http_clock.py) · [1.0.1 验收报告](../evidence/camera/read-freshness.json)
+
 同日在 Windows 上的 Linux Docker 验证。真实 Gazebo Image/CameraInfo 为 320 × 240 RGB8；像素样本有 158 个不同字节值。实际订阅 CameraInfo 时发现 NumPy 布尔值不能直接序列化，现已转为 JSON 原生标量并用真实驱动消息复测。新增合成 ROS JPEG 来源时原相机继续 online；重复 ID 配置被拒，移除来源后返回 404。停模拟传感器后旧图返回 503，重启采样时刻从 3750000000 ns 后推进到 8250000000 ns。白盒 6 项通过，覆盖像素通道、行填充、尺寸、采样、时钟和标定条件。[运行手册](../../perception/camera/README.md) · [独立 Docker 脚本](../../tests/system/camera_acceptance.py) · [机器可读实验](../evidence/camera/acceptance.json) · [实际帧](../evidence/camera/gazebo-front.png)
