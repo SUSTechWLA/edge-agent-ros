@@ -1,0 +1,88 @@
+{
+  "scope": "Two separate workbench requests on ROS 2 / Gazebo. Local Ollama Qwen and authenticated official DeepSeek each selected the read-only status Tool. Result verified from /odom. No physical robot. Single observations, not a latency benchmark.",
+  "sdd": "SDD-021",
+  "cases": [
+    {
+      "file": "workbench-qwen.json",
+      "sha256": "40b991b0dc2d1617c3dbc8751575e9a2da0d13c51cc6c46d865e98364e9e9bc5",
+      "utc": "2026-11-18T06:08:35.833426+00:00",
+      "passed": true,
+      "root_task": "8aaa0b4e1680478e8ecdf869ea4172fe",
+      "child_task": "b9c9f331134d4349beb4dd877d462f3c",
+      "trace_id": "8aaa0b4e1680478e8ecdf869ea4172fe",
+      "provider": "ollama/qwen2.5:1.5b",
+      "model_call_id": "861c49a1aeb24e3fb4c718d4b3c15030",
+      "model_ms": 4181.48,
+      "model_request_sha256": "6f43705ec136ae2fe312177aa9d46e1f476ba7646a61ae7b1e65513216505805",
+      "model_response_sha256": "5dd730b60f55940038ae1ccaa57c58ad9aa68054a01457a61d34eab186415703",
+      "model_selected_tools": [
+        "status"
+      ],
+      "tool": "status",
+      "tool_call_id": "93da033bf6fe406a9f5825ab026f13e6",
+      "tool_ms": 2.85,
+      "exported_event_count": 16,
+      "native_observation": {
+        "topic": "/odom",
+        "frame": "odom",
+        "stamp": {
+          "sec": 494,
+          "nanosec": 598000000
+        }
+      },
+      "provider_receipt": {
+        "event_id": "914efafa32aa47ec9fdecfdf9bfc82e0",
+        "parent_event_id": "80b8ed1ab04249849843581e65b712b4",
+        "call_id": "bbcaf7a4d15a487cb5030b2bf402b20b",
+        "alias": "qwen2.5:1.5b",
+        "provider": "ollama",
+        "model": "qwen2.5:1.5b",
+        "route_sha256": "2e832590efd93566c4bada9074c578bb34f5cb59fc35de5befff90fb5411158d",
+        "request_sha256": "6f43705ec136ae2fe312177aa9d46e1f476ba7646a61ae7b1e65513216505805",
+        "done_reason": "stop",
+        "elapsed_ms": 4161
+      }
+    },
+    {
+      "file": "workbench-deepseek.json",
+      "sha256": "15602f211f4c89bd751c08f14b266840bab00fc3790a3431790b834a9770d077",
+      "utc": "2026-11-18T06:08:38.587409+00:00",
+      "passed": true,
+      "root_task": "5c213c31d92b4d06b628c102d6ba3ed3",
+      "child_task": "80646fb9567b4b64ba742394b45bcca6",
+      "trace_id": "5c213c31d92b4d06b628c102d6ba3ed3",
+      "provider": "ollama/deepseek-flash",
+      "model_call_id": "7275b58b670341049310fc3f24640623",
+      "model_ms": 1174.71,
+      "model_request_sha256": "0d67a734d3e7e5b36bab2ecac1e2268b2b57b4e0a2daa94f040ca4215d12894f",
+      "model_response_sha256": "be2797d785363fad7cee8f8fb962928369e3c3b29129d597a362efdb03084373",
+      "model_selected_tools": [
+        "status"
+      ],
+      "tool": "status",
+      "tool_call_id": "5d24105334cc4a589ac2eeef2e0b137c",
+      "tool_ms": 1.99,
+      "exported_event_count": 16,
+      "native_observation": {
+        "topic": "/odom",
+        "frame": "odom",
+        "stamp": {
+          "sec": 497,
+          "nanosec": 420000000
+        }
+      },
+      "provider_receipt": {
+        "event_id": "321373393a7f43349ab0e217fa393b27",
+        "parent_event_id": "79b615198410470abeb3e646010f6572",
+        "call_id": "7df8bf2fd83b44c2869be887d3d764e9",
+        "alias": "deepseek-flash",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "route_sha256": "2e832590efd93566c4bada9074c578bb34f5cb59fc35de5befff90fb5411158d",
+        "request_sha256": "0d67a734d3e7e5b36bab2ecac1e2268b2b57b4e0a2daa94f040ca4215d12894f",
+        "done_reason": "stop",
+        "elapsed_ms": 1157
+      }
+    }
+  ]
+}

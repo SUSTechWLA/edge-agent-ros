@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "routes": {
+    "qwen2.5:1.5b": {"provider": "ollama", "model": "qwen2.5:1.5b"},
+    "deepseek-flash": {"provider": "deepseek", "model": "deepseek-flash"}
+  }
+}

@@ -1,0 +1,35 @@
+services:
+  model-provider-init:
+    image: ${EDGE_MODEL_ADAPTER_IMAGE:-${EDGE_IMAGE:-edge-agent-ros:v0.1}}
+    pull_policy: never
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["/bin/mkdir", "-p", "/sources/model.provider"]
+    volumes: [module-sources:/sources]
+  model-provider:
+    image: ${EDGE_MODEL_ADAPTER_IMAGE:-${EDGE_IMAGE:-edge-agent-ros:v0.1}}
+    pull_policy: never
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 32
+    mem_limit: 128m
+    depends_on:
+      model-provider-init:
+        condition: service_completed_successfully
+    entrypoint: ["python3", "-B", "/opt/edge/model_provider/provider.py"]
+    environment:
+      EDGE_MODEL_LOCAL_URL: ${EDGE_MODEL_LOCAL_URL:-http://model:11434}
+    ports:
+      - "127.0.0.1:${EDGE_MODEL_PORT:-8134}:8134"
+    volumes:
+      - ./model_provider:/opt/edge/model_provider:ro
+      - ${EDGE_MODEL_ROUTES_DIR:-./model_provider/config}:/routes:ro
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: model.provider}

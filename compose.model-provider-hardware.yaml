@@ -1,0 +1,13 @@
+# Add after compose.hardware.yaml and compose.model-provider.yaml for native Linux boards.
+services:
+  model-provider-init:
+    image: ${EDGE_MODEL_ADAPTER_IMAGE:-${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}}
+  model-provider:
+    image: ${EDGE_MODEL_ADAPTER_IMAGE:-${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}}
+    network_mode: host
+    ports: !reset []
+    environment:
+      EDGE_MODEL_BIND: "127.0.0.1"
+      EDGE_MODEL_LOCAL_URL: ${EDGE_MODEL_LOCAL_URL:-http://127.0.0.1:11434}
+    command: ["--port", "${EDGE_MODEL_PORT:-8134}"]
+
