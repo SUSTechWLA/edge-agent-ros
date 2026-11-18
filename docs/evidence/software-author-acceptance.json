@@ -1,0 +1,324 @@
+{
+  "spec": "SDD-019",
+  "tested_on": "2026-11-18",
+  "environment": "Windows host / Docker Desktop Linux, ROS 2 Jazzy Agent with real HTTP Console and SQLite journals; isolated Compose projects and registries.",
+  "method": "Exactly one user task triggers a missing-capability event, a deterministic legacy-author decline, then two installed independent plugins. Real-model cases call the local Ollama server directly for design and code. The release owner tests the generated package using independent cases and grants a digest-bound approval. A new user task uses the generated prefix to invoke the installed Tool. Withdrawal leaves its earlier result and the original blocked intake intact.",
+  "guardrails_checked": [
+    "No manifest before approval",
+    "Mismatched independent expectation rejected",
+    "Stale approval rejected",
+    "Explicit hot registration with no Agent restart",
+    "Wrong provider version and oversized original rejected",
+    "Duplicate publication replays the same receipt with provider offline",
+    "Withdrawal blocks new uses and preserves completed task and intake history"
+  ],
+  "reproduction": {
+    "script": "tests/system/software_provider_acceptance.py",
+    "common": "--image <candidate-image> --out <report.json>",
+    "deterministic": "--automatic",
+    "local_model": "--automatic --scenario uppercase --model-cache <read-only-cache-volume>",
+    "model_quality_probe": "--automatic --scenario word-count --model-cache <read-only-cache-volume>",
+    "manual_control": "omit --automatic"
+  },
+  "verified_automatic_cases": [
+    {
+      "run": "edge-software-8794bd0a8ebc",
+      "image_id": "sha256:6fee2257adf8e4fd8b020845453956cef87388a40018bcc5050d30685e434206",
+      "report_file": ".ci-results/system/runs/sdd019-author/fixture-verified.json",
+      "report_sha256": "02aca9dc51cddbf0c2a635471c85482dac964f2271c00b2125c96a87ece8654b",
+      "passed": true,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "candidate_author": "deterministic Ollama protocol fixture",
+      "intake": {
+        "task": "word-gap",
+        "state_at_end": "BLOCKED",
+        "planning_blocked": "f0e8efe64ae3445da2b79dd61a073bcf",
+        "author_declined": "2d7e4e84cb9b4ec3a0e6d28746d59bd3",
+        "design_drafted": "077443361c8143c8a593edc281409ac2",
+        "design_id": "28c443268178c8934ea94819a09ab0bb37b7097c68fcde2047f2945adf5e40b6",
+        "selected_interface": "text-transform"
+      },
+      "candidate": {
+        "tool_id": "software.t_28c443268178c8934ea94819a09ab0bb",
+        "review_state": "unverified",
+        "request_sha256": "ff7389599a3f05c4bf7ca13ffa6ba0ea54b890fa759e69442d2e1bbcfd02a1a0",
+        "response_sha256": "78e8ef698db9c079eedb48ccd02a4dd4ec95b78bfa0e12026748390808711350",
+        "draft_sha256": "264ebe55bf0d8e3c029fe81f62ab968f832603991bdff1a7bc3abe387e283f47",
+        "source_sha256": "5f0b4cd86defe9f55b7bfafea64dd32cccd4f3bf5a77c970194bc33baf83987d",
+        "implementation": "def transform(text):\n    return text.casefold().split().count('robot')\n",
+        "causal_chain": [
+          "f57fd9ad40ee40919925dd048c80c498",
+          "800a599ae2904ca4b54db7874e7f84d8",
+          "8fc11d0361aa4d9d9d1e3b2f1caa55dd",
+          "8f121325141240b4b141f793ea24060b",
+          "077443361c8143c8a593edc281409ac2",
+          "42473841ba3f43a6b129db908d2f8783",
+          "2d7e4e84cb9b4ec3a0e6d28746d59bd3",
+          "f0e8efe64ae3445da2b79dd61a073bcf",
+          "79ed442e74734cf2b9948b54873d82fb",
+          "986dbd90cdca430ca0a32d88c16e4d78"
+        ],
+        "events": [
+          [
+            "plugin.software_author.queued",
+            "86a157b91cc1621e3797fcf648cf389be65b2389b17616b4186ffe76ca5d4fde"
+          ],
+          [
+            "plugin.software_author.attempt",
+            "a8c7d9e9126c200821eecb41342a0a29049f9a60d08e30d7fda736530cb613da"
+          ],
+          [
+            "plugin.software_author.model_requested",
+            "8f121325141240b4b141f793ea24060b"
+          ],
+          [
+            "plugin.software_author.model_replied",
+            "8fc11d0361aa4d9d9d1e3b2f1caa55dd"
+          ],
+          [
+            "plugin.software_author.prepared",
+            "800a599ae2904ca4b54db7874e7f84d8"
+          ],
+          [
+            "plugin.software_author.authored",
+            "f57fd9ad40ee40919925dd048c80c498"
+          ],
+          [
+            "plugin.software_author.completed",
+            "1838c7fb2d5186d8b0a3d925e6b7890b363b29049e3b4bd66307124c285141b9"
+          ]
+        ]
+      },
+      "verification": {
+        "case_count": 4,
+        "cases_sha256": "203b216ec133d7ab2448685d91fa508a94f2ebb81e406c110157dc34c8c78832",
+        "approval_sha256": "4cb834ec8f2dd8f7cea73039c3fcd1505c93e9bef93e4f55bd03468de8d0ebe8",
+        "event_id": "22bdc6be8c2944bda3100c8105c9caaa"
+      },
+      "release_and_execution": {
+        "published": "a35b1ce973f94779b21dd385e03d6ee8",
+        "execution_task": "word-active",
+        "original_operation": "word-active/step/1",
+        "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+        "value": 2,
+        "empty_value": 0,
+        "duplicate_publication_id": "a35b1ce973f94779b21dd385e03d6ee8",
+        "removed": "7a1ebd63efbe4654bb77b047919535c2",
+        "rejected": [
+          "software.approval_mismatch",
+          "software.case_mismatch",
+          "software.version_mismatch",
+          "software.input_invalid"
+        ],
+        "declared_version": "351ea9413637f01482e8dbfed86b738983d86a75b5a2940084abaff92a80da8c"
+      }
+    },
+    {
+      "run": "edge-software-faf2c2857461",
+      "image_id": "sha256:6fee2257adf8e4fd8b020845453956cef87388a40018bcc5050d30685e434206",
+      "report_file": ".ci-results/system/runs/sdd019-author/ollama-uppercase-verified.json",
+      "report_sha256": "1667fb3037e6316db45376a244f06a6ba289a97f00ae48d020de13f00eadb3da",
+      "passed": true,
+      "goal": "Given literal text, return the same text in uppercase as one string. Preserve whitespace and punctuation. The input and output are text values.",
+      "candidate_author": "qwen2.5:1.5b",
+      "intake": {
+        "task": "word-gap",
+        "state_at_end": "BLOCKED",
+        "planning_blocked": "387ab1741ddb425abba635bd103659bf",
+        "author_declined": "0669e1ab1c1c4a9da85634d152f8eec3",
+        "design_drafted": "d2482281817f45cc9d31b0e61878d532",
+        "design_id": "e89907e55c28ae5ad2ed13f3c21048022ce4068dcc6a437cf9b763919f254cf7",
+        "selected_interface": "text-transform"
+      },
+      "candidate": {
+        "tool_id": "software.t_e89907e55c28ae5ad2ed13f3c2104802",
+        "review_state": "unverified",
+        "request_sha256": "2fa5fd6aa234d6b5137c2eef1aeb6013a773112f43e71dd4a7d673bebedb901f",
+        "response_sha256": "8141d7fa3169ae898637295fcc56882aabe3ccc94939abbf250304c00ffde657",
+        "draft_sha256": "3058df86ba6d145617c74efbd7c425aec96f3e93b87ae689667cfb1056c031b9",
+        "source_sha256": "249dffac0694d655d66f077ec5e087b2a202bc6383dccc479cb96f02316b0067",
+        "implementation": "def transform(text):\n    return text.upper()\n",
+        "causal_chain": [
+          "27289357f9644e76a6c9a08f0a2e8249",
+          "fead933380234a3090991d559e4d2a55",
+          "fec4bfacfc68490399cebd0451b4aac4",
+          "0eac8a66d5344f4781ea81d6efe5277a",
+          "d2482281817f45cc9d31b0e61878d532",
+          "bbbbc0308cba470d80ebaa19ed9de39a",
+          "0669e1ab1c1c4a9da85634d152f8eec3",
+          "387ab1741ddb425abba635bd103659bf",
+          "9bef72ea21e94918a6e9c03cde34eb7d",
+          "fb7f534bb73b42efb90b519007dcb381"
+        ],
+        "events": [
+          [
+            "plugin.software_author.queued",
+            "32c7f466eb772b146fbec2b6b38e167ec7d08b3362f88311145aae4773dc655c"
+          ],
+          [
+            "plugin.software_author.attempt",
+            "8f02489fd5f29c15a21c4c8f2277923387c8d29478f9c164d43e081d7d254503"
+          ],
+          [
+            "plugin.software_author.model_requested",
+            "0eac8a66d5344f4781ea81d6efe5277a"
+          ],
+          [
+            "plugin.software_author.model_replied",
+            "fec4bfacfc68490399cebd0451b4aac4"
+          ],
+          [
+            "plugin.software_author.prepared",
+            "fead933380234a3090991d559e4d2a55"
+          ],
+          [
+            "plugin.software_author.authored",
+            "27289357f9644e76a6c9a08f0a2e8249"
+          ],
+          [
+            "plugin.software_author.completed",
+            "b02f280314ad05c4ed711d5fce9852ec3ee816b8029412fba59113057805ed30"
+          ]
+        ]
+      },
+      "verification": {
+        "case_count": 4,
+        "cases_sha256": "66d5787ef89a4b4cfed3063b47c91f9698fef4cb52d8d7618486be5e50530382",
+        "approval_sha256": "6850352bf27b02d0197b47ff6d3831d95d6826062866cc44f3b4ad0de2c8feb2",
+        "event_id": "400e0cb11a0a48ebb2a7f91ffe6df09c"
+      },
+      "release_and_execution": {
+        "published": "0b41af1e82d444afb695da317e9b965f",
+        "execution_task": "word-active",
+        "original_operation": "word-active/step/1",
+        "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+        "value": "ＲＯＢＯＴ  ROBOT\tROBOT   ",
+        "empty_value": "",
+        "duplicate_publication_id": "0b41af1e82d444afb695da317e9b965f",
+        "removed": "c084ccd8c4fc477daa677102f42d4eaf",
+        "rejected": [
+          "software.approval_mismatch",
+          "software.case_mismatch",
+          "software.version_mismatch",
+          "software.input_invalid"
+        ],
+        "declared_version": "4c99db6758708dc62440e54518f804e7f63b9ad17af332f311331222d0474b4e"
+      }
+    }
+  ],
+  "legacy_manual_control": {
+    "run": "edge-software-d11505ca0a85",
+    "image_id": "sha256:65d1d8e8e7eaae4316fe36a9eed577486f409026e79fc0347634a5a05e00a59c",
+    "report_file": ".ci-results/system/runs/sdd019-author/legacy.json",
+    "report_sha256": "8828187b64cc380246abe56ab1a4f6793d55b59cbefd7e18b7e09f6223fb24fb",
+    "passed": true,
+    "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+    "candidate_author": "coding agent fixture",
+    "verification": {
+      "case_count": 4,
+      "cases_sha256": "203b216ec133d7ab2448685d91fa508a94f2ebb81e406c110157dc34c8c78832",
+      "approval_sha256": "b563aef13c29ce8c8e5219e72e3929f87cfc6629bbea84240c3633cf78c41b01",
+      "event_id": "57d3c5376c2645cca94d12fff4f8c6a7"
+    },
+    "release_and_execution": {
+      "published": "1282a76167c9452fa7364ef60249f1c2",
+      "original_operation": "word-active/step/1",
+      "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+      "value": 2,
+      "empty_value": 0,
+      "duplicate_publication_id": "1282a76167c9452fa7364ef60249f1c2",
+      "removed": "32748557873045318203d791f1dc8bff",
+      "rejected": [
+        "software.approval_mismatch",
+        "software.case_mismatch",
+        "software.version_mismatch",
+        "software.input_invalid"
+      ],
+      "declared_version": "0878243bb7b4fd2fb627a4f44969e330036662e1cde0e7b62fbf891f1d3a6996"
+    }
+  },
+  "real_model_word_count_probes": [
+    {
+      "run": "edge-software-346c6c368908",
+      "image_id": "sha256:d4c055a3d57a7a4fd78ef5362b69857ed04f6e21db87e0d6a46f2f2bee086f0f",
+      "report_file": ".ci-results/system/runs/sdd019-author/ollama.json",
+      "report_sha256": "4575c6faff43db7969d44130dcb42dc722e6146a2fa92ec3df965189e8654495",
+      "passed": false,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "model": "qwen2.5:1.5b",
+      "selected_interface": "Tool",
+      "design_event": "236ecc794971486fb40ae9b664e7067c",
+      "design_prompt_sha256": "f9f1179e0929ca4e914b5b36f050fc7ba0b3dc720ba6117dac98fd8297b765b5",
+      "fixture": "This is a test text with some words and another word.",
+      "model_expected": "bytes",
+      "test_error": "code candidate or review",
+      "last_event": {
+        "kind": "plugin.software_author.skipped",
+        "event_id": "f7184a6d0c7001a17e28176d382f80ed059f9d4d3a26f381a4d63c6fb19e4ec6",
+        "data": {
+          "attempt": 1,
+          "attempt_event_id": "c61e44f76a7f8ea8cec7de3b40630b95e721eeff302d75bf99e0f6b2b80e3793",
+          "design_id": "03e3742ea9579ae21c0b2d6590aa57bde7d1dab8c4f7df66c49c04892f29f840",
+          "reason": "other_interface"
+        }
+      },
+      "retries": []
+    },
+    {
+      "run": "edge-software-d675f60437d5",
+      "image_id": "sha256:b849017028a3b60ddc00c99fd814e917c179754b752fd67d81afc26e068a703d",
+      "report_file": ".ci-results/system/runs/sdd019-author/ollama-specific.json",
+      "report_sha256": "ef3441ee70edeecad8d97f04cea15a713d2a99c5832bef8d72831d4a14245c98",
+      "passed": false,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "model": "qwen2.5:1.5b",
+      "selected_interface": "result-verifier",
+      "design_event": "a5782c5554a4462f82f6c991ca3ca893",
+      "design_prompt_sha256": "060051dc1dcd4b4ec15aec76a3416660f239f18d3b25d8af7f891d7f77d0350e",
+      "fixture": "The quick brown fox jumps over the lazy dog.",
+      "model_expected": "4",
+      "test_error": "No candidate: plugin.software_author.skipped other_interface",
+      "last_event": {
+        "kind": "plugin.software_author.skipped",
+        "event_id": "b2119235cf1d0334725839ac29d3d08c4391b0cbca0aa1987f3cfbcf673553d5",
+        "data": {
+          "attempt": 1,
+          "attempt_event_id": "9192c83ae5f4b5e56093f5cad964efbb39db01ba188b303ad29acd2eb6bc3405",
+          "design_id": "ba59c10d0831d793edea920dab3fa49508644fb3e483c795b0435a0e7739a3fb",
+          "reason": "other_interface"
+        }
+      },
+      "retries": []
+    },
+    {
+      "run": "edge-software-ba19ac20b228",
+      "image_id": "sha256:4b8d39151bf9fd747e8011442e68b2289d60c776eecf38a6f37ad3b37e43dd0b",
+      "report_file": ".ci-results/system/runs/sdd019-author/ollama-role.json",
+      "report_sha256": "96a692717f26315b26cbd6ff4a2bad062af50480f906cca7e8c14a2fa13257dd",
+      "passed": false,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "model": "qwen2.5:1.5b",
+      "selected_interface": "text-transform",
+      "design_event": "9d6f6c63a7214f778c2ab8dfbf4aa397",
+      "design_prompt_sha256": "5095b5496a0ba656179999172f5b77a76dfb8b716ab93dbcb63f2d7ade8c253d",
+      "fixture": "The quick brown fox jumps over the lazy dog.",
+      "model_expected": "4",
+      "test_error": "code candidate or review",
+      "last_event": {
+        "kind": "plugin.software_author.model_requested",
+        "event_id": "16353c478b494de38f30bf9e77e109ed",
+        "data": {
+          "model_sha256": "46a7fdadcb4d5c007019a9af98c586ee443ed2cb82dfca6bdb16cb23401cea3c",
+          "request_sha256": "5018490765437cd44aff3f06f0eae677ada577c4dc0e20785c756c8a29c64bbd"
+        }
+      },
+      "retries": [
+        {
+          "attempt": 1,
+          "reason": "model_unavailable"
+        }
+      ]
+    }
+  ],
+  "interpretation": "The protocol fixture establishes deterministic control-flow and release behavior. The uppercase case demonstrates real local-model selection, generation and execution of one text tool. A small collection of synthetic tasks does not establish general model quality or hardware safety."
+}

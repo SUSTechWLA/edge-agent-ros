@@ -37,3 +37,5 @@ SQLite 及私有输入输出依赖本机持久卷。丢失工作卷后需与原�
 2026-11-18 `python tests/test_plugin_design_watch.py -v` 六组契约通过。实验覆盖归档换代与同源重放、未授权收据、缺失原始目标、模型失败、最后一次尝试中断、已写私有文件但未写成功事件、已有成功事件但尚未确认、原订阅库与两个并发消费者。更新前的原生请求→草案父链继续供 SDD-014 读取。公开事件源统一为 `journal:plugin.design`。按 trace 可查 `plugin.design_watch.completed` 或 `plugin.design_watch.intervention_required`，再由父引用、attempt_event_id 与 design_event_id 追到尝试和产物。观测归档不可用时，私有队列中已经受理的工作仍可完成。
 
 2026-11-18 AC-6 新增第七组边界。模型连接与归档连接均重放了每 35 ms 发送一字节的真实 HTTP 应答。测试将整体预算缩到 180 ms，分别查到 `design.model_unavailable` 的 `transport_reason=deadline` 和 `subscription.deadline`，归档无法读取期间第二条已受理任务仍能完成。部署使用模型 90 秒、归档页 10 秒总预算，单进程最多四个未释放的传输槽，超时即交还调度权。全部七组本机测试通过，已有 014 的九组契约和隔离 ROS Docker 中的九组订阅契约也通过。
+
+2026-11-18 AC-7 修复通过第八组故障注入。运行时先持久提交 `plugin.design.prepared`，再写入文件，`drafted` 保留指向同一 `requested` 的原始父链。最后一次尝试丢失完成确认后，分别改写目标、模型建议与权限列表均得到 `draft_conflict`。缺少任何可信摘要的旧孤儿文件同样转人工。原样恢复与已完成的历史草案继续工作。五份输入合计五次推理，重启没有增加模型调用。
