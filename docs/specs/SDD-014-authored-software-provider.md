@@ -35,5 +35,9 @@ Tool 自选 `verbatim_argument: true` 和一条带首尾边界、单占位符的
 | AC-1、AC-4 | `python tests/test_software_provider.py -v`，5 个白盒测试通过。涵盖不受信设计导出、篡改私有设计、同目标换来源、换样本、换端点、另一份事件库、无重复发布、语法和资源边界。 |
 | AC-1 至 AC-4 | `python tests/system/software_provider_acceptance.py --image edge-agent-ros:sdd014-check --out .ci-results/system/runs/sdd014-provider/coding-final.json`。独立项目 `edge-software-d6aa6fce004b` 由编码 Agent 交付源码。四组独立样本通过。错误期望和旧批准被拒绝。以公开任务接口执行时，含全角、大小写、制表符和末尾空白的输入返回 2，空文本返回 0。原有受阻/完结任务保持，提供者停止后重放发布请求获得原回执，卸载后新任务受阻。 |
 | AC-1 至 AC-4 | 上一命令加 `--model-cache edge-agent-ros_models`，输出 `ollama-final.json`。独立项目 `edge-software-e4e36bc15e2f` 的 qwen2.5:1.5b 根据设计实际生成了函数，使用相同的四个样本和装卸场景全部通过。两个项目的直连错版本和超限输入均得到明确拒绝。它们分别归档 15、17 条本次软件插件事件。 |
+| AC-4、AC-5 | 上述白盒命令在 Windows 和 Linux 非 root、只读、禁网容器中各通过 9 项。复核包含归档传输中断、整批超时后活动目录保持原状、延迟建连可按时退出、单请求释放时另一个请求可并行完成，以及旧撤回不能删除后来发布的新版本。 |
+| AC-1 至 AC-5 | 改用镜像 `edge-agent-ros:sdd014-budget-check` 实测项目 `edge-software-dc4efc573545` 的注册、工具调用、去重、拒绝和卸载。普通任务返回 2，空输入返回 0，归档 15 条事件。细粒度并发和时间预算由上行白盒验证。 |
 
 两次早期故障也已记录。专用内网最初妨碍测试宿主访问 Console，已给 Console 增加回环监听专用的读取网络。模型首次生成的候选只允许作者 UID 读取，提供者在非 root UID 下无法启动。修正为只读候选文件后两个模式均通过。此例覆盖单机纯软件插件，涉及硬件、跨设备事务、任意 Python 包及长期在线资源压力另需验收。[机器可读证据、实际候选源码与运行摘要](../evidence/authored-software-provider.json)
+
+复查发现旧版串行接收，可因一个迟迟不结束的请求令后续请求排队，发布时逐样本检查也可能长时间持有注册表锁。AC-5 限制连接数与总时长。归档读失败时归属尚未核实，系统为失败创建本地 trace，记录失败阶段、动作和原因。受信归档恢复后可重试。已关联的草案后续失败可按设计的原 trace 检索。

@@ -253,6 +253,21 @@
       "report_sha256": "b3943c3fc0205d88b4678d5177a9857a0301e6388d4dc91ee780ea49e851fea8"
     }
   ],
+  "time_budget_review": {
+    "checked": "2026-11-18",
+    "whitebox": {"windows": {"run": 9, "passed": 9}, "linux_nonroot_readonly_network_none": {"run": 9, "passed": 9}},
+    "blackbox": {
+      "project": "edge-software-dc4efc573545",
+      "passed": true,
+      "image_id": "sha256:95f9d2b811fec401c705fe702447d837e09ffae7a4a68225bd30abbf39ea326e",
+      "report_sha256": "0e3101a1583ec2d1c56bc4c1d86afdc7913cc801251958a69f8869c20ee3f479",
+      "applied_event": "2d5c6cc482fc4a838fe21c572f0b4ddc",
+      "removed_event": "80df44ddb05d4a87a0fbbdbf89f2d0df",
+      "case_value": 2,
+      "empty_value": 0,
+      "software_events": 15
+    }
+  },
   "failed_first_attempts": [
     {
       "project": "edge-software-f7323d7a4a9f",

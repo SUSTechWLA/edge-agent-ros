@@ -25,6 +25,9 @@ class DocumentContract(unittest.TestCase):
         self.assertEqual(tracked(".ci-results"),[])
         published = tracked("artifacts")
         self.assertIn(root + "README.md",published)
+        rules = (ROOT/root/".gitignore").read_text(encoding="utf-8").splitlines()
+        selected = {root + line[2:] for line in rules if line.startswith("!/")}
+        self.assertEqual(set(published),selected,"Each selected original must be present in Git's index.")
         for path in published:
             self.assertTrue(path.startswith(root) and not ignored(path),path)
         for path in (root+"new-run/result.json",root+"new-run/trace.ndjson",

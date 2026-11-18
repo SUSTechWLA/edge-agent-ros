@@ -1,30 +1,30 @@
 {
   "passed": true,
-  "project": "edge-watchdog-0dbbc311694c",
-  "utc": "2026-11-18T02:37:48.663605+00:00",
+  "project": "edge-watchdog-2e1e01dbe0fa",
+  "utc": "2026-11-18T02:45:30.663816+00:00",
   "scope": "private Docker network, ROS Agent, Console, independent Watchdog, read Tool",
-  "image_id": "sha256:2f0df061d570f32b3a8a8f756dd728090f413cb4c48751c44a619157dfcb78c6",
+  "image_id": "sha256:a576c399f3a7d9e9070b4c985fcfed2d92de709dd18244bb5cf371150323e0fa",
   "revision": "50b9344-sdd015-worktree",
   "mirror_repair": {
     "before": {
-      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "archive_id": "b292354ad75cd6914efb4af42b805761",
       "seq": 17
     },
     "after": {
-      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "archive_id": "b292354ad75cd6914efb4af42b805761",
       "seq": 51
     },
     "repaired_source_event": {
-      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "archive_id": "b292354ad75cd6914efb4af42b805761",
       "seq": 49,
-      "event_id": "23a6d8ecb3a74c14b362f174c8f73404",
+      "event_id": "1cd0a5e71b4a49679083b99c3dca6c71",
       "task_id": "unserved-during-console-outage",
       "trace_id": "unserved-during-console-outage",
       "code": "planner.not_configured"
     },
     "receipt": {
       "archive_changed": false,
-      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "archive_id": "b292354ad75cd6914efb4af42b805761",
       "cutoff": 51,
       "from_seq": 17,
       "pages": 1,
@@ -38,8 +38,8 @@
   },
   "incidents": {
     "console": {
-      "trace_id": "watchdog-318921bb9748463996bf100d9df59e48",
-      "operation_id": "watchdog-318921bb9748463996bf100d9df59e48/sync",
+      "trace_id": "watchdog-d352eb6ab1d84740a92bb1a207de2ba3",
+      "operation_id": "watchdog-d352eb6ab1d84740a92bb1a207de2ba3/sync",
       "counts": {
         "watchdog.detected": 1,
         "watchdog.action_requested": 1,
@@ -58,71 +58,71 @@
         {
           "seq": 19,
           "kind": "watchdog.detected",
-          "event_id": "26609cd7ad01484a8b782267eb97cc1b",
+          "event_id": "552eac337e474b75b5b832364b274026",
           "parent_event_id": null,
           "source_seq": 3
         },
         {
           "seq": 20,
           "kind": "watchdog.action_requested",
-          "event_id": "edd75572c704406fa025d687b63e583d",
-          "parent_event_id": "26609cd7ad01484a8b782267eb97cc1b",
+          "event_id": "86db7382fe564fb7997f54ac46f9f517",
+          "parent_event_id": "552eac337e474b75b5b832364b274026",
           "source_seq": 4
         },
         {
           "seq": 21,
           "kind": "watchdog.action_attempt",
-          "event_id": "e9a9c679fd6442f1bc91e8c2f127d715",
-          "parent_event_id": "edd75572c704406fa025d687b63e583d",
+          "event_id": "bdf7719c769944639ea948d0df6b6453",
+          "parent_event_id": "86db7382fe564fb7997f54ac46f9f517",
           "source_seq": 5
         },
         {
           "seq": 22,
           "kind": "watchdog.action_unavailable",
-          "event_id": "1001cab2965c4ef4909c3284ec466dde",
-          "parent_event_id": "e9a9c679fd6442f1bc91e8c2f127d715",
+          "event_id": "3badd68fa536477fb307c0d2b1f1ff03",
+          "parent_event_id": "bdf7719c769944639ea948d0df6b6453",
           "source_seq": 6
         },
         {
           "seq": 23,
           "kind": "watchdog.action_attempt",
-          "event_id": "60a0837c947741a3b1c10303550faa8f",
-          "parent_event_id": "1001cab2965c4ef4909c3284ec466dde",
+          "event_id": "058a34d5a1994b1aa5b21ce7fbd83788",
+          "parent_event_id": "3badd68fa536477fb307c0d2b1f1ff03",
           "source_seq": 7
         },
         {
           "seq": 24,
           "kind": "watchdog.action_unavailable",
-          "event_id": "80c5c1e4b9f2484d90c648214e1b1dd0",
-          "parent_event_id": "60a0837c947741a3b1c10303550faa8f",
+          "event_id": "9e18c30967064b30b3391e9d764edfef",
+          "parent_event_id": "058a34d5a1994b1aa5b21ce7fbd83788",
           "source_seq": 8
         },
         {
           "seq": 25,
           "kind": "watchdog.intervention_required",
-          "event_id": "bf2b714881c948a3af7245935234d2f7",
-          "parent_event_id": "80c5c1e4b9f2484d90c648214e1b1dd0",
+          "event_id": "a9004017beda48fd9d8a542571ab99c3",
+          "parent_event_id": "9e18c30967064b30b3391e9d764edfef",
           "source_seq": 9
         },
         {
           "seq": 53,
           "kind": "watchdog.action_confirmed",
-          "event_id": "b9c4c4a337f2462391ce93b690fe7aa8",
-          "parent_event_id": "bf2b714881c948a3af7245935234d2f7",
+          "event_id": "02d09f0595e64adeb875cb56ad67fe8d",
+          "parent_event_id": "a9004017beda48fd9d8a542571ab99c3",
           "source_seq": 23
         },
         {
           "seq": 54,
           "kind": "watchdog.recovered",
-          "event_id": "0b2e915668554a909c919d42b2798bee",
-          "parent_event_id": "b9c4c4a337f2462391ce93b690fe7aa8",
+          "event_id": "d839d31093e84245b798dabfe5b8baa8",
+          "parent_event_id": "02d09f0595e64adeb875cb56ad67fe8d",
           "source_seq": 24
         }
       ]
     },
     "agent": {
-      "trace_id": "watchdog-dae18087ada247a8bbb8996219941eff",
-      "operation_id": "watchdog-dae18087ada247a8bbb8996219941eff/sync",
+      "trace_id": "watchdog-d7057f36b6224ae4b600a9f3a31a51c0",
+      "operation_id": "watchdog-d7057f36b6224ae4b600a9f3a31a51c0/sync",
       "counts": {
         "watchdog.detected": 1,
         "watchdog.action_requested": 1,
@@ -141,64 +141,64 @@
         {
           "seq": 26,
           "kind": "watchdog.detected",
-          "event_id": "85e9797279e949beaf5b6765354cb2eb",
+          "event_id": "5f18ef308a8e4b89ad05e0e7c03224c3",
           "parent_event_id": null,
           "source_seq": 10
         },
         {
           "seq": 27,
           "kind": "watchdog.action_requested",
-          "event_id": "e0697d4349b84ee78088255bd4ecfc9b",
-          "parent_event_id": "85e9797279e949beaf5b6765354cb2eb",
+          "event_id": "89d4014f7eb2409b81e692da5a3ce112",
+          "parent_event_id": "5f18ef308a8e4b89ad05e0e7c03224c3",
           "source_seq": 11
         },
         {
           "seq": 28,
           "kind": "watchdog.action_attempt",
-          "event_id": "10ab83149f424d95ace8d29b9f4a50dc",
-          "parent_event_id": "e0697d4349b84ee78088255bd4ecfc9b",
+          "event_id": "69b9bd5e71c04cc190ab52248a24b2d8",
+          "parent_event_id": "89d4014f7eb2409b81e692da5a3ce112",
           "source_seq": 12
         },
         {
           "seq": 29,
           "kind": "watchdog.action_unavailable",
-          "event_id": "a9ecadc5de0245db806074cd35fc9a76",
-          "parent_event_id": "10ab83149f424d95ace8d29b9f4a50dc",
+          "event_id": "7ffed3247f594360838b08d522b8fb51",
+          "parent_event_id": "69b9bd5e71c04cc190ab52248a24b2d8",
           "source_seq": 13
         },
         {
           "seq": 30,
           "kind": "watchdog.action_attempt",
-          "event_id": "a0ef0150703f45709807d2a8c8383de0",
-          "parent_event_id": "a9ecadc5de0245db806074cd35fc9a76",
+          "event_id": "d4939931a2a04a19897947a37775fcb1",
+          "parent_event_id": "7ffed3247f594360838b08d522b8fb51",
           "source_seq": 14
         },
         {
           "seq": 31,
           "kind": "watchdog.action_unavailable",
-          "event_id": "979f04a2e32842d1bc9c78bb67b451d6",
-          "parent_event_id": "a0ef0150703f45709807d2a8c8383de0",
+          "event_id": "de1a1defbb794f33b1868fa5f11e2965",
+          "parent_event_id": "d4939931a2a04a19897947a37775fcb1",
           "source_seq": 15
         },
         {
           "seq": 32,
           "kind": "watchdog.intervention_required",
-          "event_id": "8f4b9b8267c44e72bd4a939006f51442",
-          "parent_event_id": "979f04a2e32842d1bc9c78bb67b451d6",
+          "event_id": "da3ff58588244d0ca87e86dd01e4d4af",
+          "parent_event_id": "de1a1defbb794f33b1868fa5f11e2965",
           "source_seq": 16
         },
         {
           "seq": 35,
           "kind": "watchdog.action_confirmed",
-          "event_id": "10bceefce8634a239479b0d43b60e86e",
-          "parent_event_id": "8f4b9b8267c44e72bd4a939006f51442",
+          "event_id": "9992a4bf87a24467b6ae31080738dbe8",
+          "parent_event_id": "da3ff58588244d0ca87e86dd01e4d4af",
           "source_seq": 19
         },
         {
           "seq": 36,
           "kind": "watchdog.recovered",
-          "event_id": "db6c5d62c7e144a3b8922973434cef1d",
-          "parent_event_id": "10bceefce8634a239479b0d43b60e86e",
+          "event_id": "0977e9ffcca14e49aaa29a019e1ee24b",
+          "parent_event_id": "9992a4bf87a24467b6ae31080738dbe8",
           "source_seq": 20
         }
       ]
@@ -220,8 +220,8 @@
   ],
   "readonly_mount_root": true,
   "request_counts": {
-    "agent/GET//agent/capabilities": 20,
-    "console/GET//api/event-stats": 20,
+    "agent/GET//agent/capabilities": 19,
+    "console/GET//api/event-stats": 19,
     "console/GET//api/events": 3,
     "console/GET//api/history": 3,
     "agent/GET//agent/plugins": 3

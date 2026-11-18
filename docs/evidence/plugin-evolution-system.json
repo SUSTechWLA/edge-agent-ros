@@ -1,0 +1,250 @@
+{
+  "passed": true,
+  "run_id": "20261118T024655Z-1faabe83",
+  "revision": "49ee6f2e47ff1c8fd463491cc8b14a76203aff32",
+  "dirty": true,
+  "image_revision": "49ee6f2e47ff1c8fd463491cc8b14a76203aff32-dirty",
+  "image_id": "sha256:65d1d8e8e7eaae4316fe36a9eed577486f409026e79fc0347634a5a05e00a59c",
+  "docker": "29.9.3",
+  "compose": "5.7.0",
+  "started_at": "2026-11-18T02:46:55.534383+00:00",
+  "finished_at": "2026-11-18T02:59:19.417149+00:00",
+  "selected_count": 18,
+  "executed_stage_count": 30,
+  "stages": {
+    "repository": "passed",
+    "planner": "passed",
+    "board-build": "passed",
+    "board": "passed",
+    "build": "passed",
+    "agent-contracts": "passed",
+    "observations": "passed",
+    "scene-contracts": "passed",
+    "core": "passed",
+    "motion-sensors": "passed",
+    "agent-faults": "passed",
+    "resilience": "passed",
+    "motion-world": "passed",
+    "motion-cleanup": "passed",
+    "session-register": "passed",
+    "model-cache": "passed",
+    "simulation-start": "passed",
+    "model-ready": "passed",
+    "console-missions": "passed",
+    "places": "passed",
+    "scene-binding": "passed",
+    "scene-outage": "passed",
+    "clock-reset": "passed",
+    "ui": "passed",
+    "session-evidence": "passed",
+    "session-plugin": "passed",
+    "model": "passed",
+    "simulation-cleanup": "passed",
+    "image-cleanup": "passed",
+    "board-cleanup": "passed"
+  },
+  "raw_files": [
+    {
+      "path": "summary.json",
+      "sha256": "8ee2320140c8d4efa5d6ed7359f05df8132f0d6672b4d8f13e3e412f8c5cfec2"
+    },
+    {
+      "path": "module-bus.json",
+      "sha256": "194d1a53367baac0393cd369a3b6802b05aca5d9052d5e92ff31be94768c1944"
+    },
+    {
+      "path": "watchdog.json",
+      "sha256": "4af0fbd8a8d09e5e0c454a60ca78fc393bf7aec0d79ba1befd0aedfac01d6006"
+    },
+    {
+      "path": "watchdog-mounts.json",
+      "sha256": "1a7178cfb272181c1bb5e5281870bdaa1ecf7286de51c1ef69fe867c7b76dd88"
+    },
+    {
+      "path": "plugin-design.json",
+      "sha256": "5cc14830f8138cf6f186a12c51af49f97f3e3204e6288f1137069e0327318a79"
+    },
+    {
+      "path": "software-provider-model.json",
+      "sha256": "2d18df8e8fb538a2ae7edd884fc278ecb703f4ef0532c5e107d0da3d786c9a50"
+    },
+    {
+      "path": "plugin-manager-model.json",
+      "sha256": "a061a273e947bc338dfbad7495804b5448465e7ff01623dea6f9d5876f2e6e03"
+    },
+    {
+      "path": "board.json",
+      "sha256": "31d345e4d777e6aeb0cde13140271a8342c350ed71a4f68786e03959bec458f6"
+    }
+  ],
+  "image_sources_compared_to_worktree": [
+    {
+      "path": "agent/planning.py",
+      "sha": "87a90521d2211b77b379e03006529be0ae5f9f4037a99f059ccdd69779969032"
+    },
+    {
+      "path": "agent/service.py",
+      "sha": "6e5875f28b446bb39db5326f2755d32af9cf03bfa37354b0a7d7d53a383e4db3"
+    },
+    {
+      "path": "agent/series_tools.py",
+      "sha": "c66464da17bd9809f6735ddad1a48907aef541b04632b7853a32154f2099722e"
+    },
+    {
+      "path": "agent/author_tool.py",
+      "sha": "a43996c286451dd21df495b49d66df82c48cae80c0cf03798840859b80a251e6"
+    },
+    {
+      "path": "agent/derived_tools.py",
+      "sha": "f7be321a182a8e3a6ea453116978617722970aee5e8d6dde0dc66c52b9fbe169"
+    },
+    {
+      "path": "client/plugin_manager_watch.py",
+      "sha": "fe0b0733e8430455e00b9effff4cec440cbacdc89700895bd333ad54453f5895"
+    },
+    {
+      "path": "client/plugin_design.py",
+      "sha": "50bcc7b57bfcab8e0bb16bb431cb669f2aca0694e1a283a4ce27b378f110ec2b"
+    },
+    {
+      "path": "client/software_release.py",
+      "sha": "6fff3b394c3c60644e664a034e3a59b4d9c59ec76bf90b40dde151a315c274a1"
+    },
+    {
+      "path": "client/software_provider.py",
+      "sha": "162ebae596210338dadcdb2c7d1d76ec9c4a37d43e7c3a8a26283eb3b0cc83f6"
+    },
+    {
+      "path": "client/watchdog.py",
+      "sha": "862ae71fc68a747f732777d8d09f87d77be8028c7068f92cc939ff14fda3bdc1"
+    },
+    {
+      "path": "console/server/history.py",
+      "sha": "a1f3c5101f00b71b8e3945517511615b08433167008e41544994ca0921769eb3"
+    },
+    {
+      "path": "console/server/journal_ingress.py",
+      "sha": "00b6996ee6fd7e9870f4ac50b76b7f5e67b48636d3e5f3697bdc8d7d5ecf5441"
+    }
+  ],
+  "results": {
+    "watchdog": {
+      "source_rows": 24,
+      "incidents": {
+        "console": {
+          "operation_id": "watchdog-39bb358fa67147a7a7f7c9432f127f0b/sync",
+          "counts": {
+            "watchdog.detected": 1,
+            "watchdog.action_requested": 1,
+            "watchdog.action_attempt": 2,
+            "watchdog.action_unavailable": 2,
+            "watchdog.intervention_required": 1,
+            "watchdog.action_confirmed": 1,
+            "watchdog.recovered": 1
+          }
+        },
+        "agent": {
+          "operation_id": "watchdog-adc56693b9bb4124b4deb1b8fb4723ee/sync",
+          "counts": {
+            "watchdog.detected": 1,
+            "watchdog.action_requested": 1,
+            "watchdog.action_attempt": 2,
+            "watchdog.action_unavailable": 2,
+            "watchdog.intervention_required": 1,
+            "watchdog.action_confirmed": 1,
+            "watchdog.recovered": 1
+          }
+        }
+      },
+      "repair": {
+        "archive_changed": false,
+        "archive_id": "3382d0f468afffcb86b1e2e34942e66e",
+        "cutoff": 51,
+        "from_seq": 17,
+        "pages": 1,
+        "retention_crossed": false,
+        "rows_copied": 1,
+        "rows_reused": 0,
+        "through_seq": 51
+      },
+      "repaired_event": {
+        "archive_id": "3382d0f468afffcb86b1e2e34942e66e",
+        "seq": 49,
+        "event_id": "fdeb60b9e4624568a8b13b7a0b9aae75",
+        "task_id": "unserved-during-console-outage",
+        "trace_id": "unserved-during-console-outage",
+        "code": "planner.not_configured"
+      },
+      "control_operations": [
+        "control-before/step/1",
+        "control-without-console/step/1",
+        "control-after-unload/step/1"
+      ]
+    },
+    "mounts": [
+      {
+        "compose": "compose.yaml",
+        "subpath": "watchdog",
+        "neighbor_visible": false,
+        "neighbor_writable": false,
+        "restart_same_source": true
+      },
+      {
+        "compose": "compose.hardware.yaml",
+        "subpath": "watchdog",
+        "neighbor_visible": false,
+        "neighbor_writable": false,
+        "restart_same_source": true
+      }
+    ],
+    "bus": {
+      "gap": {
+        "journal": "demo.coverage",
+        "missing_from": 1,
+        "missing_to": 6,
+        "next_source_seq": 7
+      },
+      "health": [
+        "module.journal_available",
+        "module.journal_unavailable",
+        "module.journal_available"
+      ],
+      "unrelated_calls": 1
+    },
+    "software_recovery": {
+      "user_task": "software-gap",
+      "user_mutating_calls": 1,
+      "receipt": {
+        "source": "arguments.series",
+        "input_sha256": "2a11abf59d13422fe429a404ad7daa0e8afbfc51eef50fd752354322a5132bba",
+        "input_count": 4,
+        "output_count": 3,
+        "value": 8,
+        "definition_version": "ede68ad772e751a95803614af3a8ce8a4a1dd6ce9b5009c4a07f7f7df73cff2e"
+      }
+    },
+    "software_provider_model": {
+      "source": "def transform(text):\n    return text.casefold().lower().strip().split().count('robot')\n",
+      "case_count": 4,
+      "value": 2,
+      "empty_value": 0,
+      "version": "06df8c001858235a8e320531b0aad3c56b9c93cd8f30f93f633ad8dcd9a53f0b",
+      "task_input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+      "maintenance_events": 17
+    },
+    "hardware_compose_architecture": "x86_64"
+  },
+  "daily_deployment": {
+    "compose_project": "edge-agent-ros",
+    "candidate_tag": "edge-agent-ros:plugin-evolution-49ee6f2",
+    "existing_containers_checked": 14,
+    "existing_container_ids_and_states_matched": true,
+    "console_start_event_seq": 3466,
+    "console_subscription_event_seq": 3467,
+    "targets_with_healthy_baseline": [
+      "agent",
+      "console"
+    ],
+    "total_incidents_at_first_check": 0
+  }
+}
