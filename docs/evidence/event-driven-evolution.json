@@ -1,0 +1,434 @@
+{
+  "scope": "Single edge, Windows x86-64 host with Linux Docker, local ROS 2 Jazzy / Gazebo and Ollama. Real-device and overnight stability are separate future validation.",
+  "integrated_before_feedback": {
+    "run_id": "20261118T051640Z-a1f814c2",
+    "revision": "9c75bbe5972c6db4b528aaa59c0c81b23440be8c",
+    "workspace_dirty_at_start": false,
+    "selected": [
+      "repository",
+      "planner",
+      "agent-contracts",
+      "observations",
+      "scene-contracts",
+      "core",
+      "motion-sensors",
+      "motion-world",
+      "agent-faults",
+      "resilience",
+      "console-missions",
+      "places",
+      "scene-binding",
+      "scene-outage",
+      "clock-reset",
+      "ui",
+      "model",
+      "board"
+    ],
+    "stages": {
+      "repository": "passed",
+      "planner": "passed",
+      "board-build": "passed",
+      "board": "passed",
+      "build": "passed",
+      "agent-contracts": "passed",
+      "observations": "passed",
+      "scene-contracts": "passed",
+      "core": "passed",
+      "motion-sensors": "passed",
+      "agent-faults": "passed",
+      "resilience": "passed",
+      "motion-world": "passed",
+      "motion-cleanup": "passed",
+      "session-register": "passed",
+      "model-cache": "passed",
+      "simulation-start": "passed",
+      "model-ready": "passed",
+      "console-missions": "passed",
+      "places": "passed",
+      "scene-binding": "passed",
+      "scene-outage": "passed",
+      "clock-reset": "passed",
+      "ui": "passed",
+      "session-evidence": "passed",
+      "session-plugin": "passed",
+      "model": "passed",
+      "simulation-cleanup": "passed",
+      "image-cleanup": "passed",
+      "board-cleanup": "passed"
+    },
+    "status": "passed",
+    "started": "2026-11-18T05:16:40.970635+00:00",
+    "finished": "2026-11-18T05:31:39.696069+00:00",
+    "seconds": 898.725,
+    "docker": "29.9.3",
+    "compose": "5.7.0",
+    "image_id": "sha256:0adc83dda08459ac3385bec752b0cdb3ecebd4e785bc23f96666f86404794924",
+    "image_label": "9c75bbe5972c6db4b528aaa59c0c81b23440be8c",
+    "summary_sha256": "eda9bc26b68849f5035a2fd031241ecebbc193cb85a73d69a92dea23674aeafc"
+  },
+  "integrated_with_feedback": {
+    "run_id": "20261118T052602Z-537a237f",
+    "revision": "20b212abd74ab12cf1c6bfc4484c3a042d7a39a5",
+    "workspace_dirty_at_start": false,
+    "selected": [
+      "repository",
+      "planner",
+      "agent-contracts",
+      "observations",
+      "scene-contracts",
+      "core",
+      "motion-sensors",
+      "motion-world",
+      "agent-faults",
+      "resilience",
+      "console-missions",
+      "places",
+      "scene-binding",
+      "scene-outage",
+      "clock-reset",
+      "ui",
+      "model",
+      "board"
+    ],
+    "stages": {
+      "repository": "passed",
+      "planner": "passed",
+      "board-build": "passed",
+      "board": "passed",
+      "build": "passed",
+      "agent-contracts": "passed",
+      "observations": "passed",
+      "scene-contracts": "passed",
+      "core": "passed",
+      "motion-sensors": "passed",
+      "agent-faults": "passed",
+      "resilience": "passed",
+      "motion-world": "passed",
+      "motion-cleanup": "passed",
+      "session-register": "passed",
+      "model-cache": "passed",
+      "simulation-start": "passed",
+      "model-ready": "passed",
+      "console-missions": "passed",
+      "places": "passed",
+      "scene-binding": "passed",
+      "scene-outage": "passed",
+      "clock-reset": "passed",
+      "ui": "passed",
+      "session-evidence": "passed",
+      "session-plugin": "passed",
+      "model": "passed",
+      "simulation-cleanup": "passed",
+      "image-cleanup": "passed",
+      "board-cleanup": "passed"
+    },
+    "status": "passed",
+    "started": "2026-11-18T05:26:02.970948+00:00",
+    "finished": "2026-11-18T05:41:55.486975+00:00",
+    "seconds": 952.516,
+    "docker": "29.9.3",
+    "compose": "5.7.0",
+    "image_id": "sha256:7e3b566105dccf6201e848fac56479a41faf8c7fb7421a7387ba5f419400a105",
+    "image_label": "20b212abd74ab12cf1c6bfc4484c3a042d7a39a5",
+    "summary_sha256": "cfc66925568526da3ab8ea51fc29e0e82c16f15cc271a3107c4f704e972d4aec"
+  },
+  "clock_and_motion_reports": {
+    "motion-sensors.json": "c4a37ffa6a20ca05d8fadd107eaa92cfc312a8c7b75bb8ef7875a947f938290a",
+    "motion-world.json": "401c705a75511fbde8644480c0cecbd9d2963b9cb1c08d9e4b2d204417b1b691",
+    "clock-reset.json": "1d763259aee9393f858b4bd579a184450ca480f030d18311db0bd307bda2ee7c"
+  },
+  "design_cases": [
+    {
+      "source_file": "plugin-design.json",
+      "sha256": "02edeeef6cf65f1d5158004c39de6e2fa643f2dd57ec303eb22ac5d03626a510",
+      "passed": true,
+      "model": null,
+      "state": "BLOCKED",
+      "steps": 0,
+      "automatic": {
+        "requests": 1,
+        "before_archive": "65f437fc7d3e0d570398727b7ffc4397",
+        "after_archive": "29af289812a7ef592fe708e74b080104",
+        "delivered_event": "ca461665c7253db8916e8ad72ed7b1a47aaa179e2f44afa2b884a85196630644",
+        "redelivered_source_event": "6c52f862d56948c7894f6e528c95f93b",
+        "model_and_device_witness": {
+          "author_calls": 1,
+          "design_calls": 0,
+          "device_calls": 0
+        },
+        "jobs": 1,
+        "attempts": 1,
+        "contract_count": 6,
+        "contracts_sha256": "d3d58164323e2667675a553409355c55d3f9c90900968d3b2ea8462d1e17ba4e"
+      },
+      "selected_interface": null,
+      "unresolved_fields": null
+    },
+    {
+      "source_file": "plugin-design-model.json",
+      "sha256": "1bee2d62baf41b2fdc0bf5301f9590650b8da867e0d3bc73f2f24189380a54d5",
+      "passed": true,
+      "model": "qwen2.5:1.5b",
+      "model_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+      "state": "BLOCKED",
+      "steps": 0,
+      "automatic": {
+        "requests": 1,
+        "before_archive": "4df09267a4cd0ffbb9a96aa87a5cbb24",
+        "after_archive": "1cbe55f32920ab58c1156a6b66d062c9",
+        "delivered_event": "77d3bd6ae7359d44b8dc50608760abcc363bd5900c551f818644d10916164944",
+        "redelivered_source_event": "698fdeeb91754b869d2ce3c9aa459415",
+        "model_and_device_witness": {
+          "author_calls": 1,
+          "design_calls": 1,
+          "device_calls": 0,
+          "model_contracts_sha256": "d3d58164323e2667675a553409355c55d3f9c90900968d3b2ea8462d1e17ba4e"
+        },
+        "jobs": 1,
+        "attempts": 1,
+        "contract_count": 6,
+        "contracts_sha256": "d3d58164323e2667675a553409355c55d3f9c90900968d3b2ea8462d1e17ba4e"
+      },
+      "selected_interface": "Tool",
+      "unresolved_fields": [
+        "rollback"
+      ]
+    }
+  ],
+  "software_delivery_cases": [
+    {
+      "source_file": "software-author-auto.json",
+      "sha256": "0e861de79292752b715814260ddce01810cd7eb6f3d675c579d6d72573f904ad",
+      "passed": true,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "candidate_author": "deterministic Ollama protocol fixture",
+      "source_design": "8ca7899d96c46ad146c270e39947fcc7f079e3ea1812fcb896421d146fdfc7ff",
+      "candidate": "def transform(text):\n    return text.casefold().split().count('robot')\n",
+      "attempts": 1,
+      "result": {
+        "design_task": "word-gap",
+        "execution_task": "word-active",
+        "intake_task_state": "BLOCKED",
+        "old_task": "SUCCEEDED",
+        "value": 2,
+        "empty_value": 0,
+        "published": "ef88bc3923594d7dbc2b4153c7fe7c6e",
+        "removed": "efcd10999d2a434b910594368d6eea1c"
+      }
+    },
+    {
+      "source_file": "software-author-correction.json",
+      "sha256": "fd12ecea01711c2c02c08c9d90ffa4ed768168016c2f55276fb19a23e2c5f596",
+      "passed": true,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "candidate_author": "deterministic Ollama protocol fixture",
+      "source_design": "48841c76df1d67d0a9f1eba2d497245b2df99e29ebfd6484cdc46090e34d3ac6",
+      "candidate": "def transform(text):\n    return text.casefold().split().count('robot')\n",
+      "attempts": 2,
+      "result": {
+        "design_task": "word-gap",
+        "execution_task": "word-active",
+        "intake_task_state": "BLOCKED",
+        "old_task": "SUCCEEDED",
+        "value": 2,
+        "empty_value": 0,
+        "published": "5c7b2ef6742b482dbf71a7115efb0ca1",
+        "removed": "8e51c476ef12426b9e65215639807971"
+      }
+    },
+    {
+      "source_file": "software-author-auto-model.json",
+      "sha256": "f466b7c320ad2f0fe5075af2809a8c728e2e233fd2a0aa63178af737adfd374d",
+      "passed": true,
+      "goal": "Given literal text, return the same text in uppercase as one string. Preserve whitespace and punctuation. The input and output are text values.",
+      "candidate_author": "qwen2.5:1.5b",
+      "source_design": "ee8a130a41a891d7899e44a656f26cd46995567e0402513ee5f7b062afd41793",
+      "candidate": "def transform(text):\n    return text.upper()\n",
+      "attempts": 1,
+      "result": {
+        "design_task": "word-gap",
+        "execution_task": "word-active",
+        "intake_task_state": "BLOCKED",
+        "old_task": "SUCCEEDED",
+        "value": "ＲＯＢＯＴ  ROBOT\tROBOT   ",
+        "empty_value": "",
+        "published": "d9f1cc8098344e8595bb876a5e4badc4",
+        "removed": "e9ec5d6a91fd4797811570da4d394b72"
+      }
+    }
+  ],
+  "software_model_quality_evidence": "software-author-acceptance.json",
+  "software_model_quality_sha256": "e02890a61e114f65f66bb149642cf6c266fca01ca380ac482295831fa338cf3f",
+  "deployment": {
+    "sha256": "ad574ec8decb3a9f4c756ddfd8d54c763820e2375f26230236e5bde07bbfbc7b",
+    "cases": [
+      {
+        "compose_file": "compose.yaml",
+        "passed": true,
+        "independent_requests": 4,
+        "unchanged_unrelated_instance": true,
+        "volume_readback_verified": true,
+        "services": {
+          "plugin-design": {
+            "actual_mounts": {
+              "/journal": true,
+              "/private": true,
+              "/decisions": false,
+              "/contracts": false
+            },
+            "image_id": "sha256:7e3b566105dccf6201e848fac56479a41faf8c7fb7421a7387ba5f419400a105",
+            "init_exit": 0,
+            "devices": null,
+            "device_requests": null,
+            "journal_subpath": "plugin.design"
+          },
+          "software-author": {
+            "actual_mounts": {
+              "/journal": true,
+              "/private": true,
+              "/drafts": false,
+              "/contract.json": false
+            },
+            "image_id": "sha256:7e3b566105dccf6201e848fac56479a41faf8c7fb7421a7387ba5f419400a105",
+            "init_exit": 0,
+            "devices": null,
+            "device_requests": null,
+            "journal_subpath": "plugin.software_author"
+          }
+        }
+      },
+      {
+        "compose_file": "compose.hardware.yaml",
+        "passed": true,
+        "independent_requests": 4,
+        "unchanged_unrelated_instance": true,
+        "volume_readback_verified": true,
+        "services": {
+          "plugin-design": {
+            "actual_mounts": {
+              "/journal": true,
+              "/private": true,
+              "/decisions": false,
+              "/contracts": false
+            },
+            "image_id": "sha256:1c64e88375d0da9e56326d27099090a2e5654d6bae2fdeb850838457d16f9d14",
+            "init_exit": 0,
+            "devices": null,
+            "device_requests": null,
+            "journal_subpath": "plugin.design"
+          },
+          "software-author": {
+            "actual_mounts": {
+              "/journal": true,
+              "/private": true,
+              "/drafts": false,
+              "/contract.json": false
+            },
+            "image_id": "sha256:1c64e88375d0da9e56326d27099090a2e5654d6bae2fdeb850838457d16f9d14",
+            "init_exit": 0,
+            "devices": null,
+            "device_requests": null,
+            "journal_subpath": "plugin.software_author"
+          }
+        }
+      }
+    ]
+  },
+  "backlog_first_experiment": {
+    "sha256": "1fe1fbc9334c9ca44f32966e82bae69e54cd9f94a513a7f21c97c1af03427416",
+    "revision": "9c75bbe5972c6db4b528aaa59c0c81b23440be8c",
+    "passed": true,
+    "image_id": "sha256:0adc83dda08459ac3385bec752b0cdb3ecebd4e785bc23f96666f86404794924",
+    "pre_outage_rows": 64,
+    "outage_backlog": 1024,
+    "console_start_to_backlog_visible_seconds": 19.891,
+    "archive_http_witness": {
+      "rows": 1088,
+      "unique_ids": 1088,
+      "duplicate_ids": 0,
+      "ordered_id_and_ordinal_sha256": "251f1630feac97f39b52ecb26a1ecd0a4266b0d7b2a3577d1608f2a26014cb88"
+    },
+    "consumers": {
+      "alpha": {
+        "rows": 1088,
+        "duplicates": 0,
+        "catch_up_s": 0.381,
+        "full_replay_s": 0.271,
+        "notices": [
+          "subscription.blocked",
+          "subscription.restored"
+        ]
+      },
+      "beta": {
+        "rows": 1088,
+        "duplicates": 0,
+        "catch_up_s": 0.328,
+        "full_replay_s": 0.267,
+        "notices": []
+      }
+    }
+  },
+  "backlog_integrated": {
+    "sha256": "bfcaddc4c1e98161a36b6c66620aaf334188d9bb626a1c767faf5987f33ba5f4",
+    "revision": "20b212abd74ab12cf1c6bfc4484c3a042d7a39a5",
+    "passed": true,
+    "image_id": "sha256:7e3b566105dccf6201e848fac56479a41faf8c7fb7421a7387ba5f419400a105",
+    "pre_outage_rows": 64,
+    "outage_backlog": 1024,
+    "console_start_to_backlog_visible_seconds": 19.781,
+    "archive_http_witness": {
+      "rows": 1088,
+      "unique_ids": 1088,
+      "duplicate_ids": 0,
+      "ordered_id_and_ordinal_sha256": "0a577e9443b37f176862a798e15a4b2da625f1473c2671e8ab94f8e4bf2c66ed"
+    },
+    "consumers": {
+      "alpha": {
+        "rows": 1088,
+        "duplicates": 0,
+        "catch_up_s": 0.32,
+        "full_replay_s": 0.256,
+        "notices": [
+          "subscription.blocked",
+          "subscription.restored"
+        ]
+      },
+      "beta": {
+        "rows": 1088,
+        "duplicates": 0,
+        "catch_up_s": 0.3,
+        "full_replay_s": 0.272,
+        "notices": []
+      }
+    }
+  },
+  "recovery_review": {
+    "pass": true,
+    "fault": "process exit after draft file committed and before public drafted fact, followed by private goal changed or preserved",
+    "review": "fresh watchers, offline mode, one attempt",
+    "cases": [
+      {
+        "goal_changed": false,
+        "written_digest": "185f96558503dd66438bf39170e7c2a9584080e2ee1115aecd8dc4bffb6c7e88",
+        "recovered_file_digest": "185f96558503dd66438bf39170e7c2a9584080e2ee1115aecd8dc4bffb6c7e88",
+        "completed": 1,
+        "attempts": 1,
+        "interventions": [],
+        "public_final_digests": [
+          "185f96558503dd66438bf39170e7c2a9584080e2ee1115aecd8dc4bffb6c7e88"
+        ]
+      },
+      {
+        "goal_changed": true,
+        "written_digest": "185f96558503dd66438bf39170e7c2a9584080e2ee1115aecd8dc4bffb6c7e88",
+        "recovered_file_digest": "fc257ed7696cdb94c2f5c06862afbb811e7aec89d853755b5eb50e22fcc068c0",
+        "completed": 0,
+        "attempts": 1,
+        "interventions": [
+          "draft_conflict"
+        ],
+        "public_final_digests": []
+      }
+    ]
+  }
+}

@@ -496,5 +496,463 @@
     "The first two word-count runs did not select the supported interface. Each worker recorded its skipped reason.",
     "The early role-prompt run was cut off by the test at 130 s during retry, before a terminal outcome. The test now allows 320 s per worker for three 90 s requests plus backoff.",
     "With the expanded test window and without the model output cap, the author exhausted three attempts as model_unavailable. In the final build each coding reply has a 384-token budget. The final evidence distinguishes a replied request plus rejected expression from a missing reply."
-  ]
+  ],
+  "validator_feedback": {
+    "spec": "SDD-019 AC-7",
+    "base_commit": "9c75bbe5972c6db4b528aaa59c0c81b23440be8c",
+    "runtime_sha256": "2d4079e874d168d9546579328bfd229151e7a6d9fa95d86754e17ce0dadc80a0",
+    "fixture_sha256": "c422c31e47dafe15abb470da61660e6de9a2a0f1775324678bf5c9c20558dc28",
+    "reproduction": "Use --automatic --scenario word-count-correction for the strict fixture; use --automatic --model-cache <volume> with --scenario uppercase or --scenario word-count to test the model independently.",
+    "fixture_success": {
+      "run": "edge-software-83667fe9d43f",
+      "image_id": "sha256:c1c95c3e05d2861a323cc9d8fb3056572ac09897ef5da266313192b69d00fa1a",
+      "report_file": ".ci-results/system/runs/sdd019-author/fixture-correction-ac7.json",
+      "report_sha256": "af100f4cfd69aa290718b492458561044cb8da4f014622d6f3a82d668169483a",
+      "passed": true,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "candidate_author": "deterministic Ollama protocol fixture",
+      "intake": {
+        "task": "word-gap",
+        "state_at_end": "BLOCKED",
+        "planning_blocked": "081e81fbf85c4978a86f93d0a6933f6e",
+        "author_declined": "fd0f37f707f1423fa9e671965ad17766",
+        "design_drafted": "28ecda0bff7e4b04b2f7748f909f16d9",
+        "design_id": "d2be4eb6c1835ea6376ccd51cf9bace47e4927739d3adf1c55457a89aa74703c",
+        "selected_interface": "text-transform"
+      },
+      "candidate": {
+        "tool_id": "software.t_d2be4eb6c1835ea6376ccd51cf9bace4",
+        "review_state": "unverified",
+        "request_sha256": "b41774b4984a61cf5b9f7e305de9f89189925e7178d3bdff20eb4c19c5f1acea",
+        "response_sha256": "78e8ef698db9c079eedb48ccd02a4dd4ec95b78bfa0e12026748390808711350",
+        "draft_sha256": "0849161c5408f4a2ae05c8af18699d0322ba9f359e72cdadab8fda9484b2f022",
+        "source_sha256": "5f0b4cd86defe9f55b7bfafea64dd32cccd4f3bf5a77c970194bc33baf83987d",
+        "implementation": "def transform(text):\n    return text.casefold().split().count('robot')\n",
+        "causal_chain": [
+          "1399918635cb4609a0dc2bab3b94261a",
+          "bd5e09f27c864282a3ed8b4213ecbfd4",
+          "b52ba6aba0cf4cd086d3f9fa1e20019a",
+          "1c9e6c4e4ba04f1fa0080235ef1f20d8",
+          "28ecda0bff7e4b04b2f7748f909f16d9",
+          "b50ecd22149647ff943f7503d785b908",
+          "fd0f37f707f1423fa9e671965ad17766",
+          "081e81fbf85c4978a86f93d0a6933f6e",
+          "776cf92c991a4107954c2f8c5fcbfcf1",
+          "1778294075624ad7a1f6f63b6cd3bf40"
+        ],
+        "events": [
+          [
+            "plugin.software_author.queued",
+            "121b06d55715857a90cef364ddd5ca65f305c82f6c1138775827810ab9155cce"
+          ],
+          [
+            "plugin.software_author.attempt",
+            "cbf9ffcbf9b41de2f7374b193f7e7f1426b3b2087985aedd1e082b66718a78e1"
+          ],
+          [
+            "plugin.software_author.model_requested",
+            "2b6e27ae5bc84aa88fb56f38aee68095"
+          ],
+          [
+            "plugin.software_author.model_replied",
+            "f57db37f6b9a44e9b21cb00755703fdf"
+          ],
+          [
+            "plugin.software_author.candidate_rejected",
+            "42fb5715e755e9942a65806004c4e94698ef2687396035cdf79f8046e3b079ae"
+          ],
+          [
+            "plugin.software_author.retry",
+            "88f3a0ee3857f27fc89bd91cbe61bdc95098ddc21048c451211bed055f2d66e1"
+          ],
+          [
+            "plugin.software_author.attempt",
+            "ab369bf05918a469a002bbca4e9924d2eb1810e49a9fed9cd33de8c120eb6b57"
+          ],
+          [
+            "plugin.software_author.model_requested",
+            "1c9e6c4e4ba04f1fa0080235ef1f20d8"
+          ],
+          [
+            "plugin.software_author.model_replied",
+            "b52ba6aba0cf4cd086d3f9fa1e20019a"
+          ],
+          [
+            "plugin.software_author.prepared",
+            "bd5e09f27c864282a3ed8b4213ecbfd4"
+          ],
+          [
+            "plugin.software_author.authored",
+            "1399918635cb4609a0dc2bab3b94261a"
+          ]
+        ]
+      },
+      "verification": {
+        "case_count": 4,
+        "cases_sha256": "203b216ec133d7ab2448685d91fa508a94f2ebb81e406c110157dc34c8c78832",
+        "approval_sha256": "1b44ff16a24d2e2412f0e062dddc78fc75c96998eada7b552a55b053418be631",
+        "event_id": "33a5d3c804eb4efabfea6b61a8830fb8"
+      },
+      "release_and_execution": {
+        "published": "1273ef026db64a3a8f4b0052a1d006a2",
+        "execution_task": "word-active",
+        "original_operation": "word-active/step/1",
+        "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+        "value": 2,
+        "empty_value": 0,
+        "duplicate_publication_id": "1273ef026db64a3a8f4b0052a1d006a2",
+        "removed": "54fbe24edffd40b497d53894e4969161",
+        "rejected": [
+          "software.approval_mismatch",
+          "software.case_mismatch",
+          "software.version_mismatch",
+          "software.input_invalid"
+        ],
+        "declared_version": "17de2fa1da1a6d80a19ba485b43f961cc98c77d00df8cff1e4f6f28fd446ad14"
+      },
+      "correction_trace": [
+        {
+          "event_id": "2b6e27ae5bc84aa88fb56f38aee68095",
+          "stage": "model_requested",
+          "attempt": 1,
+          "num_predict": 384,
+          "request_sha256": "3e314ce7af18b19b0031cc645956476427e2e1f87f5103d1165a39dd411cbdac"
+        },
+        {
+          "event_id": "f57db37f6b9a44e9b21cb00755703fdf",
+          "stage": "model_replied",
+          "response_sha256": "416ab6095303779961f6179a058953aa6be724de1310fcc13a515485894d3afc"
+        },
+        {
+          "event_id": "42fb5715e755e9942a65806004c4e94698ef2687396035cdf79f8046e3b079ae",
+          "stage": "candidate_rejected",
+          "attempt": 1,
+          "reason": "software.expression",
+          "feedback_sha256": "808c0cd2f3a6e6d3a47a32ac6032910939d701a4310e5d88d3775c68166ebd15",
+          "expression_sha256": "fc7f36e55abe93d8d6ac295a25103b177d48b9fdfc6bae91f434b66b77576a5c"
+        },
+        {
+          "event_id": "88f3a0ee3857f27fc89bd91cbe61bdc95098ddc21048c451211bed055f2d66e1",
+          "stage": "retry",
+          "attempt": 1,
+          "reason": "model_reply_invalid"
+        },
+        {
+          "event_id": "1c9e6c4e4ba04f1fa0080235ef1f20d8",
+          "stage": "model_requested",
+          "attempt": 2,
+          "num_predict": 384,
+          "request_sha256": "b41774b4984a61cf5b9f7e305de9f89189925e7178d3bdff20eb4c19c5f1acea",
+          "feedback_event_id": "42fb5715e755e9942a65806004c4e94698ef2687396035cdf79f8046e3b079ae",
+          "feedback_attempt": 1,
+          "feedback_sha256": "808c0cd2f3a6e6d3a47a32ac6032910939d701a4310e5d88d3775c68166ebd15"
+        },
+        {
+          "event_id": "b52ba6aba0cf4cd086d3f9fa1e20019a",
+          "stage": "model_replied",
+          "response_sha256": "78e8ef698db9c079eedb48ccd02a4dd4ec95b78bfa0e12026748390808711350"
+        }
+      ]
+    },
+    "real_model_uppercase": {
+      "run": "edge-software-f1363044339f",
+      "image_id": "sha256:c1c95c3e05d2861a323cc9d8fb3056572ac09897ef5da266313192b69d00fa1a",
+      "report_file": ".ci-results/system/runs/sdd019-author/qwen-uppercase-ac7.json",
+      "report_sha256": "5a11fb85e594dd3c9ca0c266ac61cb651d4d71d7846d95d7c5198d24ec9ddff4",
+      "passed": true,
+      "goal": "Given literal text, return the same text in uppercase as one string. Preserve whitespace and punctuation. The input and output are text values.",
+      "candidate_author": "qwen2.5:1.5b",
+      "intake": {
+        "task": "word-gap",
+        "state_at_end": "BLOCKED",
+        "planning_blocked": "a31c216af0674b2391315e46026074a6",
+        "author_declined": "3d3600409f7642ff9f1dd1ef2eaefc3f",
+        "design_drafted": "7ff75bc93c15466abe99e23ebce2d70b",
+        "design_id": "d286af8021e5a21c3e621e0dba82ba483cb2ed2df9afe52e8c5a1def14f2589a",
+        "selected_interface": "text-transform"
+      },
+      "candidate": {
+        "tool_id": "software.t_d286af8021e5a21c3e621e0dba82ba48",
+        "review_state": "unverified",
+        "request_sha256": "f96ef51949f5c45f973f8d35204206ade9e992e1fbad269ebbd5a0b83a23d40a",
+        "response_sha256": "7adf3487c58b79f4baa6f61bdf9bdc7c49eda735bb8d08f3e11bf862c7d3abba",
+        "draft_sha256": "a29c6217e4dd8d1d3f06731d352d99fcf7a152b11dc63b2b55595a558801bd8c",
+        "source_sha256": "249dffac0694d655d66f077ec5e087b2a202bc6383dccc479cb96f02316b0067",
+        "implementation": "def transform(text):\n    return text.upper()\n",
+        "causal_chain": [
+          "3ebaa5a273ec47a982f74cd16366601d",
+          "2681a048a6fb424b8c6baf32d02a4b82",
+          "5e4aada76ad648329c0f677e0e615dfc",
+          "a043d6e832d54462a797ca34989abede",
+          "7ff75bc93c15466abe99e23ebce2d70b",
+          "0ddb22afcd1a4c358f2bd46399e2a3df",
+          "3d3600409f7642ff9f1dd1ef2eaefc3f",
+          "a31c216af0674b2391315e46026074a6",
+          "5560376cf3174b7c88204eac8f7cda81",
+          "9ffca514408d413da748cd9c8740364f"
+        ],
+        "events": [
+          [
+            "plugin.software_author.queued",
+            "026e1320ffd6df36be469303f39a0242381052f3ce061aed59451ac9f52c0bab"
+          ],
+          [
+            "plugin.software_author.attempt",
+            "45ae75090591e8d0cea8a7e14531077acfba6d212c26016e9dfe96a1a4666731"
+          ],
+          [
+            "plugin.software_author.model_requested",
+            "a043d6e832d54462a797ca34989abede"
+          ],
+          [
+            "plugin.software_author.model_replied",
+            "5e4aada76ad648329c0f677e0e615dfc"
+          ],
+          [
+            "plugin.software_author.prepared",
+            "2681a048a6fb424b8c6baf32d02a4b82"
+          ],
+          [
+            "plugin.software_author.authored",
+            "3ebaa5a273ec47a982f74cd16366601d"
+          ],
+          [
+            "plugin.software_author.completed",
+            "a10f4f8d604af31ee34c0bfa306273b92d2c35721df1fb422fa995ac4acf524d"
+          ]
+        ]
+      },
+      "verification": {
+        "case_count": 4,
+        "cases_sha256": "66d5787ef89a4b4cfed3063b47c91f9698fef4cb52d8d7618486be5e50530382",
+        "approval_sha256": "359196db9174c3e198e4ba56f5c3fe05d3a3855dc6b8f574293644c6e8996725",
+        "event_id": "22b422d401f247d08d14a4ca87c68999"
+      },
+      "release_and_execution": {
+        "published": "c15fd49608a944b98970a9e6d26c356b",
+        "execution_task": "word-active",
+        "original_operation": "word-active/step/1",
+        "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+        "value": "ＲＯＢＯＴ  ROBOT\tROBOT   ",
+        "empty_value": "",
+        "duplicate_publication_id": "c15fd49608a944b98970a9e6d26c356b",
+        "removed": "c4ccb6d96bbb4cc9b72de1545ffd1644",
+        "rejected": [
+          "software.approval_mismatch",
+          "software.case_mismatch",
+          "software.version_mismatch",
+          "software.input_invalid"
+        ],
+        "declared_version": "672a5f2576f5ee655f24e9dd2a87fd90e8f1d349a9a3b4006e100a2dc46e3c81"
+      },
+      "correction_trace": [
+        {
+          "event_id": "a043d6e832d54462a797ca34989abede",
+          "stage": "model_requested",
+          "attempt": 1,
+          "num_predict": 384,
+          "request_sha256": "f96ef51949f5c45f973f8d35204206ade9e992e1fbad269ebbd5a0b83a23d40a"
+        },
+        {
+          "event_id": "5e4aada76ad648329c0f677e0e615dfc",
+          "stage": "model_replied",
+          "eval_count": 41,
+          "done_reason": "stop",
+          "response_sha256": "7adf3487c58b79f4baa6f61bdf9bdc7c49eda735bb8d08f3e11bf862c7d3abba"
+        }
+      ]
+    },
+    "real_model_word_count": {
+      "run": "edge-software-593f2375d666",
+      "image_id": "sha256:c1c95c3e05d2861a323cc9d8fb3056572ac09897ef5da266313192b69d00fa1a",
+      "report_file": ".ci-results/system/runs/sdd019-author/qwen-word-ac7.json",
+      "report_sha256": "db26a754c67a412a111a50531f5739f410a69bf119710174236790b40ca2fafe",
+      "passed": false,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "model": "qwen2.5:1.5b",
+      "selected_interface": "text-transform",
+      "design_event": "df6e47f1c47c4ddeae7e718d79ddd4e2",
+      "design_prompt_sha256": "5095b5496a0ba656179999172f5b77a76dfb8b716ab93dbcb63f2d7ade8c253d",
+      "fixture": "The quick brown fox jumps over the lazy dog.",
+      "model_expected": "4",
+      "test_error": "No candidate: plugin.software_author.intervention_required model_reply_invalid",
+      "last_event": {
+        "kind": "plugin.software_author.intervention_required",
+        "event_id": "1329420eaf1def5d09f7279a686ae17fe812ec993181b06cd6399f70bd4a23d3",
+        "data": {
+          "attempt": 3,
+          "budget": 3,
+          "design_event_id": "00e88c1ddd7a34c2766f5290d5fbe314aa30bd89a5014c54ff54f3c2e0d63565",
+          "reason": "model_reply_invalid",
+          "request_id": "499bb9edb1963b3b9aaa04e83cc356f79722de52d3833481ce5b1ee6c638d340",
+          "steps": [
+            "复核原事件、私有输入与已持久化工件，再交接研发审查。"
+          ]
+        }
+      },
+      "retries": [
+        {
+          "attempt": 1,
+          "reason": "model_reply_invalid"
+        },
+        {
+          "attempt": 2,
+          "reason": "model_reply_invalid"
+        }
+      ],
+      "attempt_evidence": [
+        {
+          "event_id": "ad97f433ae334defa2ec8846773849f9",
+          "stage": "model_requested",
+          "num_predict": 384
+        },
+        {
+          "event_id": "f11b166f24b74092bb2fed09c88ccf7b",
+          "stage": "model_replied",
+          "eval_count": 196,
+          "done_reason": "stop"
+        },
+        {
+          "event_id": "1316b8fc94c20fb3c31f6190b35da920288524aaacf0d9d53b619217af5aa4e5",
+          "stage": "candidate_rejected",
+          "source_sha256": "aa2e9afd65502098df8def4095128d1f95eff38016460fd8516e1e57abee594b",
+          "reason": "software.expression"
+        },
+        {
+          "event_id": "41714666d39e428fb5f80917800d6e7e",
+          "stage": "model_requested",
+          "num_predict": 384
+        },
+        {
+          "event_id": "d7e89391cd4d436fa8e3ae566e2488b4",
+          "stage": "model_replied",
+          "eval_count": 196,
+          "done_reason": "stop"
+        },
+        {
+          "event_id": "b5a24e2780882eab5ace5c13ab0dc1a01366c5468cf322ff0a596896883de713",
+          "stage": "candidate_rejected",
+          "source_sha256": "aa2e9afd65502098df8def4095128d1f95eff38016460fd8516e1e57abee594b",
+          "reason": "software.expression"
+        },
+        {
+          "event_id": "ccb08cb312604038b339ae6adac52515",
+          "stage": "model_requested",
+          "num_predict": 384
+        },
+        {
+          "event_id": "d5c7098fe41e439faa686c782d5cc7c6",
+          "stage": "model_replied",
+          "eval_count": 194,
+          "done_reason": "stop"
+        },
+        {
+          "event_id": "00e88c1ddd7a34c2766f5290d5fbe314aa30bd89a5014c54ff54f3c2e0d63565",
+          "stage": "candidate_rejected",
+          "source_sha256": "aa2e9afd65502098df8def4095128d1f95eff38016460fd8516e1e57abee594b",
+          "reason": "software.expression"
+        }
+      ],
+      "active_manifests": 0,
+      "intake_final_state": "BLOCKED",
+      "private_package_present": false,
+      "model_http_status_and_time": [
+        "200 6.33s",
+        "200 5.41s"
+      ],
+      "correction_trace": [
+        {
+          "event_id": "ad97f433ae334defa2ec8846773849f9",
+          "stage": "model_requested",
+          "attempt": 1,
+          "num_predict": 384,
+          "request_sha256": "0fc4a11c0239a7805bb0bc4e08f886a55a9af27fcc66c211a166e547df2038c3"
+        },
+        {
+          "event_id": "f11b166f24b74092bb2fed09c88ccf7b",
+          "stage": "model_replied",
+          "eval_count": 196,
+          "done_reason": "stop",
+          "response_sha256": "dbd2067bec48cd65b7929ffc48691884298129fd3261d8c32e7b338b26774c96"
+        },
+        {
+          "event_id": "1316b8fc94c20fb3c31f6190b35da920288524aaacf0d9d53b619217af5aa4e5",
+          "stage": "candidate_rejected",
+          "attempt": 1,
+          "reason": "software.expression",
+          "feedback_sha256": "4165e63d6090c3a4ebfd9cb4da30b55bf8bf1a3b8203983bb585154638c6e358",
+          "expression_sha256": "239f6c21c36cf686cae7b57dc07f3d42ea7ce3f4959664c3500e2e4343532598"
+        },
+        {
+          "event_id": "8da0e8d1cf968e6db56e5634bc3c77233469af3da1c6dd95c3e638752a442aac",
+          "stage": "retry",
+          "attempt": 1,
+          "reason": "model_reply_invalid"
+        },
+        {
+          "event_id": "41714666d39e428fb5f80917800d6e7e",
+          "stage": "model_requested",
+          "attempt": 2,
+          "num_predict": 384,
+          "request_sha256": "5f3e2011f00742fb4c1ff729526ada725c5458d651e99e5413e73776e154b0a6",
+          "feedback_event_id": "1316b8fc94c20fb3c31f6190b35da920288524aaacf0d9d53b619217af5aa4e5",
+          "feedback_attempt": 1,
+          "feedback_sha256": "4165e63d6090c3a4ebfd9cb4da30b55bf8bf1a3b8203983bb585154638c6e358"
+        },
+        {
+          "event_id": "d7e89391cd4d436fa8e3ae566e2488b4",
+          "stage": "model_replied",
+          "eval_count": 196,
+          "done_reason": "stop",
+          "response_sha256": "d8cce38e5743e4305a30bb5dfde346a35f228e5481cde08f7391de4680b9f405"
+        },
+        {
+          "event_id": "b5a24e2780882eab5ace5c13ab0dc1a01366c5468cf322ff0a596896883de713",
+          "stage": "candidate_rejected",
+          "attempt": 2,
+          "reason": "software.expression",
+          "feedback_sha256": "14ffa265c0de16e8779ca0688e8bd09dcc4cf43961e4f6dda2d036dadc523f61",
+          "expression_sha256": "239f6c21c36cf686cae7b57dc07f3d42ea7ce3f4959664c3500e2e4343532598"
+        },
+        {
+          "event_id": "95ab9c959773788b3eb7e1cbe1e877777584d0c25b0cabcde0df939807a6fc7b",
+          "stage": "retry",
+          "attempt": 2,
+          "reason": "model_reply_invalid"
+        },
+        {
+          "event_id": "ccb08cb312604038b339ae6adac52515",
+          "stage": "model_requested",
+          "attempt": 3,
+          "num_predict": 384,
+          "request_sha256": "89bf4ac44de15c5d4e9153911884fe53a34f6940cbceb6782cf3d5b7ab11447e",
+          "feedback_event_id": "b5a24e2780882eab5ace5c13ab0dc1a01366c5468cf322ff0a596896883de713",
+          "feedback_attempt": 2,
+          "feedback_sha256": "14ffa265c0de16e8779ca0688e8bd09dcc4cf43961e4f6dda2d036dadc523f61"
+        },
+        {
+          "event_id": "d5c7098fe41e439faa686c782d5cc7c6",
+          "stage": "model_replied",
+          "eval_count": 194,
+          "done_reason": "stop",
+          "response_sha256": "13fed5bd04c3cccce4904135e217eb414a3263448b497ef07db70348e216a608"
+        },
+        {
+          "event_id": "00e88c1ddd7a34c2766f5290d5fbe314aa30bd89a5014c54ff54f3c2e0d63565",
+          "stage": "candidate_rejected",
+          "attempt": 3,
+          "reason": "software.expression",
+          "feedback_sha256": "ecbb666305d593c4588ec390565572eb80215955b1a4309e008d4adcedd2a66e",
+          "expression_sha256": "239f6c21c36cf686cae7b57dc07f3d42ea7ce3f4959664c3500e2e4343532598"
+        },
+        {
+          "event_id": "1329420eaf1def5d09f7279a686ae17fe812ec993181b06cd6399f70bd4a23d3",
+          "stage": "intervention_required",
+          "attempt": 3,
+          "reason": "model_reply_invalid"
+        }
+      ]
+    },
+    "interpretation": "The test fixture withholds correction until a subsequent request supplies its original rejected expression, attempt, validator code and diagnostic. The public request points back to the rejection digest. Under this condition the provider passed independent cases and ran. Qwen2.5:1.5b independently passed uppercase on its first attempt. For word counting it consumed feedback on attempts two and three, returned the same rejected expression digest three times and requested intervention after the third failure. Original intake stayed blocked; zero private packages or manifests were installed."
+  }
 }

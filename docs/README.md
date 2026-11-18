@@ -13,6 +13,7 @@
 | 让新插件记录异常和版本变化，按来源追查事实 | [模块事件总线](module-eventbus.md) · [ROS 消息与归档读取](module-events.md) |
 | 运行巡检、查看人工介入原因或核对失联后的补收 | [Watchdog 手册](watchdog.md) · [故障窗口的实际记录](evidence/watchdog-acceptance.json) |
 | 把 AI 提出的新算法做成可以热装的文本 Tool | [设计草案](specs/SDD-013-plugin-design.md) · [候选、验收和批准发布](specs/SDD-014-authored-software-provider.md) |
+| 对照语言模型实际写对、写错、修正、交付和撤回的案例 | [系统验收与积压复现](testing/event-driven-evolution.md) · [模型正反样本](evidence/software-author-acceptance.json) |
 | 评估下一步的架构与开发范围 | [单机能力评价、EventBus 与插件演进](architecture/plugin-evolution.md) · [目标架构教材](architecture/index.html) · [首版 PRD](v1/PRD.md) · [各次变更的 SDD](specs/) |
 | 找到一次测试的输入、运行环境和结论 | [单机故障与选测](testing/single-edge.md) · [Watchdog 与 AI 工具集成实测](testing/plugin-evolution.md) · [实测报告](testing/) · [首版验收](v1/validation.md) · [精选证据](evidence/) |
 

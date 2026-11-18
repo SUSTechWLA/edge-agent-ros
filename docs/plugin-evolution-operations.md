@@ -4,6 +4,8 @@
 
 ## 安装与启停
 
+此次工作站已保存验证用标签 `edge-agent-ros:event-evolution-20b212a` 和 `edge-agent-ros/hardware:event-evolution-20b212a`。PowerShell 仿真部署时可设置 `$env:EDGE_IMAGE='edge-agent-ros:event-evolution-20b212a'`。首次启用的新消费者会从可见历史开始查收，已有私有工作卷的消费者使用原游标。启用前可用下文的拒绝事实查询估计历史待处理量。
+
 从项目根目录执行。先按[部署手册](deployment.md)构建对应本次代码的镜像并启动 Agent 和 Console。若机上保留了多个候选镜像，启动前将 `EDGE_IMAGE`（仿真）或 `EDGE_HARDWARE_IMAGE`（板端）设为已验收的标签。两份 Compose 都使用 Docker 卷子目录挂载，Engine 和 Compose 需要支持 `volume.subpath`。
 
 **仿真或工作站。** 默认模型地址为同一 Compose 网络内的 `http://model:11434`，默认模型为 `qwen2.5:1.5b`。使用已缓存该模型的 Ollama 卷时，以下命令只启动列出的服务及其初始化器。
@@ -54,6 +56,8 @@ Docker 将工程名作为默认卷名前缀。向开发者交付来源材料时�
 例如，在文本工具黑盒实验里，`word-gap` 提出开发能力的目标，安装前和安装后都能查到其原始受阻状态。新工具获准后，`word-active` 才携带具体正文执行，`word-empty` 验证空输入。要判断是否自动续办了最初任务，应核对后续任务与原请求的关联和实际输入。SDD-012 的预授权数列工具已有这种续办；SDD-019 的软件候选交付由独立客户端显式发起后续调用。[文本验收程序](../tests/system/software_provider_acceptance.py) · [数列工具续办](specs/SDD-012-authored-software-tools.md)
 
 ## 失败怎样处置
+
+编码阶段发生 `candidate_rejected` 时，在下一条 `model_requested` 的数据中检查 `feedback_event_id`、`feedback_attempt` 和 `feedback_sha256`。它们指向上一次静态校验，原表达式与诊断保存在该作者的私有工作状态，并仅向同一受信设计的后续模型请求提供。输出 token 到上限、读网络超时或根本没有可校验表达式时，应分别查询预算和模型连接。独立验收方持有的样本与期望不会进入这条反馈。
 
 | 看到的证据 | 现场处置 |
 |---|---|
