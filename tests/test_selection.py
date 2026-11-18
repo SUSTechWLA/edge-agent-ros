@@ -15,6 +15,8 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("perception/sensor_health/*","compose.sensor-health.yaml","tests/system/sensor_health_acceptance.py"),
+     ("plugin-isolation",)),
     (("tests/test_map_texture_pack.py","tests/system/campus_texture_browser.mjs"),("plugin-isolation","campus-world")),
     (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_*.py","tests/test_campus_*.py"),
      ("campus-world",)),

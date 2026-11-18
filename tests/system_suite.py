@@ -142,6 +142,10 @@ def run(args, selected, reasons):
                 report["compose"]=output(["docker","compose","version","--short"],env)
                 checks={
                     "plugin-isolation":[test("test_map_texture_pack.py","-v"),
+                                        ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
+                                         "-e","ROS_LOCALHOST_ONLY=1","-e","ROS_LOG_DIR=/tmp/ros",
+                                         "--mount",f"type=bind,source={directory},target=/proof",image,"python3","-B",
+                                         "/opt/edge/tests/system/sensor_health_acceptance.py","--out","/proof/sensor-health.json"],
                                         ["node","--test",str(ROOT/"tests/map_planar.test.mjs"),str(ROOT/"tests/map_spatial.test.mjs")],
                                         test("system/map_model_isolation.py","--image",image,
                                              "--out",directory/"map-model-isolation.json"),

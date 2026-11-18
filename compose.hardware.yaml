@@ -15,6 +15,18 @@ x-runtime: &runtime
   stop_grace_period: 6s
   environment: *environment
 services:
+  sensor-health-init:
+    extends: {file: compose.sensor-health.yaml, service: sensor-health-init}
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+  sensor-health:
+    extends: {file: compose.sensor-health.yaml, service: sensor-health}
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    network_mode: host
+    ports: !reset []
+    environment:
+      EDGE_HEALTH_BIND: 127.0.0.1
+      EDGE_HEALTH_PORT: ${EDGE_HEALTH_PORT:-8136}
+    command: [python3,-B,/opt/edge/perception/sensor_health/provider.py]
   map3d-init:
     image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
     pull_policy: never

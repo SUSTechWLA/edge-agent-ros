@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>传感器巡检 · Edge Agent ROS</title>
+<style>
+:root{font-family:Inter,"Microsoft YaHei",sans-serif;color:#173934;background:#eff3ed}
+body{margin:0}header{background:#142f2b;color:#eff0d8;padding:15px 5vw;font-weight:600}
+main{max-width:1000px;margin:28px auto;padding:0 5vw}h1{font-size:32px;margin:0}#info,small{color:#516960}
+article{background:#fffef8;padding:16px;border:1px solid #cedbd0;border-left:4px solid #297264;border-radius:5px;overflow-wrap:anywhere}
+article[data-warn=true]{border-left-color:#b76319}#rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+h2{margin:0 0 4px;font-size:18px}p{margin:8px 0}summary{cursor:pointer;color:#1d584b}pre{white-space:pre-wrap;font-size:12px}a{color:#1d584b}
+</style>
+<header>Edge Agent ROS</header><main><h1>传感器巡检</h1><p id="info" role="status">连接中…</p><section id="rows"></section><p><a href="/status">查看结构化测量</a></p></main>
+<script>
+const titles={rgb:'彩色相机',depth:'深度相机',scan:'二维激光',points:'三维点云',imu:'惯性测量',match:'视觉前端匹配',lidar_match:'激光前端匹配'};
+const phases={waiting:'等待首帧',observed:'已观测',rechecking:'采样复核中',needs_attention:'需人工检查',recovered:'恢复已确认'};
+const text=(tag,value)=>{const e=document.createElement(tag);e.textContent=value;return e;};
+async function update(){
+  const info=document.getElementById('info');
+  try{
+    const response=await fetch('/status',{cache:'no-store',signal:AbortSignal.timeout(2200)});
+    if(!response.ok)throw Error();
+    const data=await response.json(), rows=document.getElementById('rows');
+    const open=new Set([...rows.querySelectorAll('details[open]')].map(e=>e.dataset.key));
+    const list=[];
+    for(const [k,row] of Object.entries(data.inputs)){
+      const a=document.createElement('article'),m=row.latest;
+      a.dataset.warn=String(['rechecking','needs_attention'].includes(row.state));
+      a.append(text('h2',titles[k]+' · '+phases[row.state]),text('small',row.topic+' · '+(m.frame_id||'等待 frame')));
+      a.append(text('p',row.code==='ok'?'已收到符合当前阈值的测量。':row.action));
+      const d=document.createElement('details');d.dataset.key=k;d.open=open.has(k);
+      d.append(text('summary','测量与证据'),text('pre',JSON.stringify({code:row.code,observation:m,event_id:row.event_id},null,2)));
+      a.append(d);list.push(a);
+    }
+    rows.replaceChildren(...list);
+    info.textContent='最近更新 '+ new Date().toLocaleTimeString()+' · '+(data.unconfigured.length?'未配置 '+data.unconfigured.map(k=>titles[k]).join('、'):'所有输入已配置');
+  }catch{info.textContent='巡检服务失联，当前保留最后一次读取的测量。';}
+  setTimeout(update,2000);
+}
+update();
+</script></html>

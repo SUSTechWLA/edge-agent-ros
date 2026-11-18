@@ -13,6 +13,10 @@ x-runtime: &runtime
     GZ_SIM_SYSTEM_PLUGIN_PATH: /opt/edge/lib/edge_sim
   stop_grace_period: 6s
 services:
+  sensor-health-init:
+    extends: {file: compose.sensor-health.yaml, service: sensor-health-init}
+  sensor-health:
+    extends: {file: compose.sensor-health.yaml, service: sensor-health}
   map3d-init:
     image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
     pull_policy: never

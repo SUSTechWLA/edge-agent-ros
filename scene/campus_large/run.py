@@ -186,7 +186,7 @@ def reload_campus(run, output, containers, fetch=read_local, check_children=guar
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["start", "map", "review", "status", "logs", "stop", "down", "reload"])
+    parser.add_argument("action", choices=["start", "map", "review", "sensor-health", "status", "logs", "stop", "down", "reload"])
     parser.add_argument("--with-lidar",action="store_true",help="also start the campus fixed ROS point-cloud station with map")
     parser.add_argument("--image", default=os.getenv("EDGE_CAMPUS_IMAGE") or os.getenv("EDGE_IMAGE") or "edge-agent-ros:v0.1")
     parser.add_argument("--assets-dir", type=Path, default=os.getenv("EDGE_CAMPUS_ASSETS_DIR") or ROOT / "artifacts/sim-assets")
@@ -230,6 +230,12 @@ def main():
             parser.error("campus console is offline; run campus start first")
         run("up","-d","--no-build","session")
         print("Campus task sessions: http://"+output("port","console","8080").strip()+"/#sessions")
+    elif args.action == "sensor-health":
+        env.update({k:v for k,v in os.environ.items() if k.startswith("EDGE_HEALTH_")})
+        run("up","-d","--no-build","sensor-health")
+        run("run","--rm","--no-deps","-T","--entrypoint","python3","plugin-admin",
+            "/opt/edge/client/register_sensor_health.py")
+        print("Campus sensor quality: http://"+output("port","sensor-health","8136").strip()+"/status")
     elif args.action == "map":
         if not output("ps", "--status", "running", "-q", "sim").strip():
             parser.error("campus simulation is offline; run campus start before installing its map")
@@ -243,7 +249,7 @@ def main():
     elif args.action == "logs":
         run("logs", "--tail", "60", "campus-build", "sim", "campus-capture", "campus-overview")
     elif args.action == "stop":
-        run("stop", *SERVICES, "map3d", "map3d-sensor")
+        run("stop", *SERVICES, "map3d", "map3d-sensor","sensor-health")
     else:
         run("down")
 

@@ -35,6 +35,10 @@ x-body-env: &body-env
   EDGE_TRACE_CONTENT: redacted
 
 services:
+  sensor-health:
+    environment:
+      EDGE_HEALTH_RGB_TOPIC: ${EDGE_HEALTH_RGB_TOPIC-/model/edge_rover/rgbd/image_raw}
+      EDGE_HEALTH_DEPTH_TOPIC: ${EDGE_HEALTH_DEPTH_TOPIC-/model/edge_rover/rgbd/depth/image_raw}
   campus-build:
     <<: *campus-tool
     network_mode: none
