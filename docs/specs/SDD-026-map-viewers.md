@@ -33,4 +33,15 @@
 
 2026-11-18，基于 `6aeb6be` 先登记两种地图的输入、交互边界、四项验收与回退方式。实测与验证范围随实现记录。
 
-同日根据用户对共享占据与语义层的要求补充纹理边界，地图插件升级为 1.2.0。实现位于 `perception/map3d`；两种视图复用 `web/grid.js`，各自拥有拾取和相机。Docker ROS 订阅、双相机几何及浏览器测试覆盖 AC-1 至 AC-4，详见[运行方式与输入限制](../../perception/map3d/README.md)。视觉验收发现来源选择器会被长名称挤出侧栏，已收紧其网格宽度并增加对应浏览器断言。
+同日根据用户对共享占据与语义层的要求补充纹理边界，地图插件升级为 1.2.0。实现位于 `perception/map3d`。两种视图复用 `web/grid.js`，各自拥有拾取和相机。视觉验收发现来源选择器会被长名称挤出侧栏，已修复并增加浏览器断言。[运行方式与输入限制](../../perception/map3d/README.md)
+
+在工作站部署代码 `eb2ba9b` 的 Docker 镜像，原有 20 个运行服务中仅地图插件更换容器。独立 DDS 订阅与 HTTP 取得同一 ROS 时刻的 14,400 格，逐格相同。实时语义输入有 3 个区域、9 个物体，主点云有 1,926 个体素。浏览器在 1440 和 390 像素宽度分别检查真实快照、冻结回放与可独立求值的标定场景。在原点旋转 90° 的样本上，两边读到第 2 列第 2 行的值 83。闭合图层、遮挡、丢失来源与视角保留另行验收。物理板卡渲染性能待测。[实测与镜像身份](../evidence/map-viewers.json) · [二维截图](../evidence/console/map-viewer-2d.png) · [三维截图](../evidence/console/map-viewer-3d.png)
+
+复测入口如下，浏览器输出目录须已存在。隔离 Gazebo 验收会自行创建与回收临时工程。
+
+```sh
+node --test tests/map_planar.test.mjs tests/map_spatial.test.mjs
+docker run --rm --network none edge-agent-ros:map-views-eb2ba9b python3 -B tests/test_map3d_ros.py -v
+node tests/system/console_browser.mjs http://127.0.0.1:8770 artifacts/verification/map-viewers-sdd026/browser.json --map3d
+python tests/system/map_model_isolation.py --image edge-agent-ros:map-views-eb2ba9b --out artifacts/verification/map-viewers-sdd026/isolation.json
+```

@@ -1,0 +1,184 @@
+{
+  "passed": true,
+  "scope": "Docker Gazebo, ROS Jazzy DDS, desktop and mobile-width headless Chromium",
+  "revision": "eb2ba9b",
+  "image": "edge-agent-ros:map-views-eb2ba9b",
+  "image_id": "sha256:1a78eed5d73b518d2d8d2171c2633b6bf5f586b1ddadbfe74bcbc814c53ee1ca",
+  "native_vs_http": {
+    "passed": true,
+    "topic": "/edge/perception/map",
+    "frame": "odom",
+    "stamp_s": 8538.376,
+    "grid_size": [
+      120,
+      120
+    ],
+    "resolution_m": 0.10000000149011612,
+    "cell_count": 14400,
+    "sha256_int8": "11f0a87e0f168448f4a04f807d39fbdbc400ff22df2e2b35e98c907a2efacfde",
+    "unknown": 9143,
+    "free": 4980,
+    "occupied": 277,
+    "points": 1926,
+    "semantic_features": 9,
+    "semantic_zones": 3
+  },
+  "existing_services": 20,
+  "changed_containers": [
+    "edge-agent-ros-map3d-1"
+  ],
+  "unchanged_services": 19,
+  "browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "document_width": 1425,
+        "canvas": [
+          58.59375,
+          138,
+          1014.8125,
+          584.796875
+        ],
+        "planar_layout": {
+          "document_width": 1425,
+          "canvas": [
+            58.59375,
+            138,
+            1014.8125,
+            584.796875
+          ]
+        },
+        "cloud_frame": "map3d_survey",
+        "point_count": 1926,
+        "top_projection": true,
+        "cloud_toggle": true,
+        "drag_orbit": true,
+        "wheel_zoom": true,
+        "shift_pan": true,
+        "planar_drag": true,
+        "planar_keyboard": true,
+        "planar_wheel": true,
+        "touch_pinch": false,
+        "independent_cameras": true,
+        "live_grid_status": "online",
+        "live_grid_pick": "X 0.00 m · Y 0.00 m ｜ 栅格 (59, 60) · 空闲 · 值 0",
+        "fixture_picks": {
+          "planar": "X 0.00 m · Y 0.00 m ｜ 栅格 (2, 2) · 占据概率 83% · 值 83",
+          "spatial": "占据栅格 · 列 2 行 2 · 占据概率 83% · 值 83 · X 0.00  Y 0.00  Z 0.00 m · odom",
+          "unknown": "X 0.00 m · Y 0.00 m ｜ 栅格 (2, 2) · 未知 · 值 -1",
+          "planar_semantic": "X 0.00 m · Y 0.00 m ｜ 栅格 (2, 2) · 未知 · 值 -1 ｜ 场景先验 · 教学楼门厅",
+          "spatial_semantic": "教学楼门厅 · X -0.60  Y -0.79  Z 1.50 m · odom",
+          "point": "实测点 · viewer-test-lidar · X 0.00  Y 0.00  Z 1.25 m · odom"
+        }
+      },
+      {
+        "width": 390,
+        "document_width": 375,
+        "canvas": [
+          17,
+          190,
+          341,
+          421.390625
+        ],
+        "planar_layout": {
+          "document_width": 375,
+          "canvas": [
+            17,
+            190,
+            341,
+            421.390625
+          ]
+        },
+        "cloud_frame": "map3d_survey",
+        "point_count": 1926,
+        "top_projection": true,
+        "cloud_toggle": true,
+        "drag_orbit": true,
+        "wheel_zoom": true,
+        "shift_pan": true,
+        "planar_drag": true,
+        "planar_keyboard": true,
+        "planar_wheel": true,
+        "touch_pinch": true,
+        "independent_cameras": true,
+        "live_grid_status": "online",
+        "live_grid_pick": "X 0.00 m · Y -0.01 m ｜ 栅格 (60, 59) · 空闲 · 值 0",
+        "fixture_picks": {
+          "planar": "X 0.00 m · Y 0.00 m ｜ 栅格 (2, 2) · 占据概率 83% · 值 83",
+          "spatial": "占据栅格 · 列 2 行 2 · 占据概率 83% · 值 83 · X 0.00  Y 0.00  Z 0.00 m · odom",
+          "unknown": "X 0.00 m · Y 0.00 m ｜ 栅格 (2, 2) · 未知 · 值 -1",
+          "planar_semantic": "X 0.00 m · Y 0.00 m ｜ 栅格 (2, 2) · 未知 · 值 -1 ｜ 场景先验 · 教学楼门厅",
+          "spatial_semantic": "教学楼门厅 · X -0.60  Y -0.79  Z 1.50 m · odom",
+          "point": "实测点 · viewer-test-lidar · X 0.00  Y 0.00  Z 1.25 m · odom"
+        }
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "isolated_gazebo": {
+    "passed": true,
+    "started_utc": "2026-11-18T08:55:06.408719+00:00",
+    "finished_utc": "2026-11-18T08:56:02.305400+00:00",
+    "sensor_removed": "stale",
+    "raw_and_map": {
+      "raw_size": [
+        160,
+        16
+      ],
+      "finite_source_returns": 2184,
+      "matched_within_one_voxel_per_axis": 2184,
+      "matched_min_max_z_m": [
+        -0.027087855339050337,
+        2.1802739024162294
+      ],
+      "voxel_m": 0.1,
+      "cloud_points": 1926,
+      "source_frame": "map3d_survey",
+      "witness_ros_stamp": [
+        7,
+        992000000
+      ]
+    },
+    "core_containers": {
+      "agent": [
+        "6e3a45954ecb",
+        "2026-11-18T08:55:07.731745285Z"
+      ],
+      "bridge": [
+        "e6723913bd2d",
+        "2026-11-18T08:55:08.561148608Z"
+      ],
+      "console": [
+        "918b8149e34a",
+        "2026-11-18T08:55:08.822075686Z"
+      ],
+      "core": [
+        "e65c967e3122",
+        "2026-11-18T08:55:09.12591602Z"
+      ],
+      "gateway": [
+        "79b19aea8799",
+        "2026-11-18T08:55:09.406058409Z"
+      ],
+      "perception": [
+        "7f8b55e9b7c6",
+        "2026-11-18T08:55:08.042970636Z"
+      ],
+      "scene": [
+        "5ec5ecd792ad",
+        "2026-11-18T08:55:09.664273929Z"
+      ],
+      "sim": [
+        "0e5b840431db",
+        "2026-11-18T08:55:09.894955044Z"
+      ],
+      "witness": [
+        "9370ecfbe3d9",
+        "2026-11-18T08:55:08.310436315Z"
+      ]
+    },
+    "image": "edge-agent-ros:map-views-eb2ba9b"
+  }
+}
