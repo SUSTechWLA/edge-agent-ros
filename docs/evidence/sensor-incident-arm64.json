@@ -1,0 +1,225 @@
+{
+  "spec": "SDD-037",
+  "date": "2026-11-19",
+  "runtime_commit": "9f6fbe7779e24dd6cf74f654275c4e12290006af",
+  "physical_board": false,
+  "fixture": "Docker Linux isolated --network none, synthetic ROS 2 Image samples, named journal volume, no application source bind",
+  "initial_arm64_attempt": {
+    "passed": false,
+    "last_stage": "two normal samples before first crash",
+    "original_file": "artifacts/verification/edge-board-sdd032/9f6fbe7/arm64-sensor-health-restart.attempt-1.json",
+    "sha256": "ffbeb668064fdc8c3860b4ba6979441c1f41d9e460e24ab7037323f1bb22933d"
+  },
+  "runs": {
+    "emulated_arm64": {
+      "report_path": "artifacts/verification/edge-board-sdd032/9f6fbe7/arm64-sensor-health-restart-verified.json",
+      "sha256": "a4718da99711a2d730d77175ba2d47e6e1e63eeb4ab7f7d4687987cf369af021",
+      "image": "edge-agent-ros/hardware:field-9f6fbe7-arm64",
+      "image_id": "sha256:d7b4cca50bd7ce8bc979d405c172fa0164e6601fcb208a74e8c2c99bffa89768",
+      "architecture": "arm64",
+      "first_crash": {
+        "pid": 7,
+        "parent_pid": 1,
+        "comm": "python3",
+        "argv": [
+          "/usr/bin/qemu-aarch64",
+          "/usr/bin/python3",
+          "python3",
+          "-B",
+          "/opt/edge/perception/sensor_health/provider.py"
+        ],
+        "signal": "SIGKILL"
+      },
+      "second_crash": {
+        "pid": 7,
+        "parent_pid": 1,
+        "comm": "python3",
+        "argv": [
+          "/usr/bin/qemu-aarch64",
+          "/usr/bin/python3",
+          "python3",
+          "-B",
+          "/opt/edge/perception/sensor_health/provider.py"
+        ],
+        "signal": "SIGKILL"
+      },
+      "before": {
+        "id": "7dd922f47c560ed9a8c30f2d9d9f80094f8576640025b381df9f78d148f948b9",
+        "boot": "2026-11-18T16:18:47.303173939Z",
+        "running": true,
+        "restart_count": 0,
+        "policy": "unless-stopped"
+      },
+      "after_auto_restart": {
+        "id": "7dd922f47c560ed9a8c30f2d9d9f80094f8576640025b381df9f78d148f948b9",
+        "boot": "2026-11-18T16:19:50.732572313Z",
+        "running": true,
+        "restart_count": 1,
+        "policy": "unless-stopped"
+      },
+      "open_event": "6aed15f131614c5c9d91ea45a647d597",
+      "resumed_event": "d35a50b54f7348c788fd640d60e7a9b2",
+      "resumed_parent": "6aed15f131614c5c9d91ea45a647d597",
+      "gap": "unobserved",
+      "before_crash_good": [
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 1,
+          "event_id": "6aed15f131614c5c9d91ea45a647d597",
+          "stamp_ns": 1795018786385271280
+        },
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 2,
+          "event_id": "6aed15f131614c5c9d91ea45a647d597",
+          "stamp_ns": 1795018786594564832
+        }
+      ],
+      "after_good": [
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 1,
+          "event_id": "d35a50b54f7348c788fd640d60e7a9b2",
+          "stamp_ns": 1795018840907508722
+        },
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 2,
+          "event_id": "d35a50b54f7348c788fd640d60e7a9b2",
+          "stamp_ns": 1795018841126460212
+        },
+        {
+          "state": "recovered",
+          "code": "ok",
+          "consecutive_good": 3,
+          "event_id": "bd857d91c43a4546be539c17296704f3",
+          "stamp_ns": 1795018841308294653
+        }
+      ],
+      "recovered_event": "bd857d91c43a4546be539c17296704f3",
+      "recovered_parent": "d35a50b54f7348c788fd640d60e7a9b2",
+      "closed_stayed_closed": true,
+      "operator_stopped": {
+        "id": "7dd922f47c560ed9a8c30f2d9d9f80094f8576640025b381df9f78d148f948b9",
+        "boot": "2026-11-18T16:20:45.223457204Z",
+        "running": false,
+        "restart_count": 2,
+        "policy": "unless-stopped"
+      },
+      "operator_stop_observation_s": 3,
+      "new_identity": {
+        "event": "sensor.source_detached",
+        "prior_robot": "robot-a",
+        "current_robot": "robot-b"
+      },
+      "passed": true
+    },
+    "native_amd64": {
+      "report_path": "artifacts/verification/edge-field/sensor-restart-native-crosscheck.json",
+      "sha256": "1d013b3f2cfec984171c8964c98ada2b1f2012c11d09e2989a2806eb7ef297ce",
+      "image": "edge-agent-ros:field-9f6fbe7",
+      "image_id": "sha256:0a8df92e42055debabb4940a70860e759d9031a52d9a6d8f5f2e06e883f178b2",
+      "architecture": "amd64",
+      "first_crash": {
+        "pid": 7,
+        "parent_pid": 1,
+        "comm": "python3",
+        "argv": [
+          "python3",
+          "-B",
+          "/opt/edge/perception/sensor_health/provider.py"
+        ],
+        "signal": "SIGKILL"
+      },
+      "second_crash": {
+        "pid": 7,
+        "parent_pid": 1,
+        "comm": "python3",
+        "argv": [
+          "python3",
+          "-B",
+          "/opt/edge/perception/sensor_health/provider.py"
+        ],
+        "signal": "SIGKILL"
+      },
+      "before": {
+        "id": "b086b553cc719b457d4ac8eabf6ee5b7d2874fc2ffe1bc7a350fab18deecda02",
+        "boot": "2026-11-18T16:18:47.320151916Z",
+        "running": true,
+        "restart_count": 0,
+        "policy": "unless-stopped"
+      },
+      "after_auto_restart": {
+        "id": "b086b553cc719b457d4ac8eabf6ee5b7d2874fc2ffe1bc7a350fab18deecda02",
+        "boot": "2026-11-18T16:18:55.225196356Z",
+        "running": true,
+        "restart_count": 1,
+        "policy": "unless-stopped"
+      },
+      "open_event": "ab968904f3ab47f7a058cd40f3b1bc4d",
+      "resumed_event": "c91eed793f1647f0926a5bafadb4dd4e",
+      "resumed_parent": "ab968904f3ab47f7a058cd40f3b1bc4d",
+      "gap": "unobserved",
+      "before_crash_good": [
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 1,
+          "event_id": "ab968904f3ab47f7a058cd40f3b1bc4d",
+          "stamp_ns": 1795018734231768817
+        },
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 2,
+          "event_id": "ab968904f3ab47f7a058cd40f3b1bc4d",
+          "stamp_ns": 1795018734400501633
+        }
+      ],
+      "after_good": [
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 1,
+          "event_id": "c91eed793f1647f0926a5bafadb4dd4e",
+          "stamp_ns": 1795018740487780040
+        },
+        {
+          "state": "needs_attention",
+          "code": "black_image",
+          "consecutive_good": 2,
+          "event_id": "c91eed793f1647f0926a5bafadb4dd4e",
+          "stamp_ns": 1795018740656805532
+        },
+        {
+          "state": "recovered",
+          "code": "ok",
+          "consecutive_good": 3,
+          "event_id": "319f4fdbf8c7426295d3d540b83b8698",
+          "stamp_ns": 1795018740824387858
+        }
+      ],
+      "recovered_event": "319f4fdbf8c7426295d3d540b83b8698",
+      "recovered_parent": "c91eed793f1647f0926a5bafadb4dd4e",
+      "closed_stayed_closed": true,
+      "operator_stopped": {
+        "id": "b086b553cc719b457d4ac8eabf6ee5b7d2874fc2ffe1bc7a350fab18deecda02",
+        "boot": "2026-11-18T16:19:01.911565323Z",
+        "running": false,
+        "restart_count": 2,
+        "policy": "unless-stopped"
+      },
+      "operator_stop_observation_s": 3,
+      "new_identity": {
+        "event": "sensor.source_detached",
+        "prior_robot": "robot-a",
+        "current_robot": "robot-b"
+      },
+      "passed": true
+    }
+  }
+}

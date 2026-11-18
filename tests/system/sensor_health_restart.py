@@ -31,13 +31,21 @@ def probe(action):
         # A Docker stop/kill API request would test an operator command instead.
         found=[]
         for path in Path("/proc").glob("[0-9]*/cmdline"):
-            try: args=path.read_bytes().split(b"\x00")
+            try:
+                args=path.read_bytes().rstrip(b"\x00").split(b"\x00")
+                # Fields following the final ')' are state and PPID. The guest's
+                # argv[0] can identify QEMU even when comm identifies Python.
+                ppid=int((path.parent/"stat").read_text().rsplit(")",1)[1].split()[1])
+                comm=(path.parent/"comm").read_text().strip()
             except (FileNotFoundError,ProcessLookupError): continue
-            if PROVIDER.encode() in args and Path(args[0].decode()).name=="python3":
-                found.append(int(path.parent.name))
-        assert len(found)==1 and found[0]!=1,found
-        os.kill(found[0],signal.SIGKILL)
-        return {"killed_provider_pid":found[0]}
+            if ppid==1 and comm=="python3" and args[-2:]==[b"-B",PROVIDER.encode()]:
+                found.append(dict(pid=int(path.parent.name),parent_pid=ppid,comm=comm,
+                                  argv=[os.fsdecode(a) for a in args],signal="SIGKILL"))
+        assert len(found)==1 and found[0]["pid"]!=1,found
+        # PID 1 can exit immediately after SIGKILL, taking this exec process with it.
+        print(json.dumps(found[0]),flush=True)
+        os.kill(found[0]["pid"],signal.SIGKILL)
+        sys.exit(0)
     import rclpy
     from rclpy.qos import qos_profile_sensor_data
     from sensor_msgs.msg import Image
@@ -88,7 +96,12 @@ def verify(image,out,source_dir=None):
         if check and p.returncode:raise RuntimeError(f"{args[:2]}: {p.stderr[-1500:]} {p.stdout[-500:]}")
         return p
     def call(action,check=True):
-        p=docker("exec",name,"/usr/local/bin/edge-entrypoint","python3","-B",PROBE,"--probe",action,check=check)
+        prefix=[] if action in {"status","events","crash"} else ["/usr/local/bin/edge-entrypoint"]
+        p=docker("exec",name,*prefix,"python3","-B",PROBE,"--probe",action,check=check)
+        if action=="crash":
+            if p.returncode not in (0,137) or not p.stdout.strip():
+                raise RuntimeError(f"crash injection failed ({p.returncode}): {p.stderr[-600:]}")
+            return json.loads(p.stdout)
         return json.loads(p.stdout) if p.returncode==0 and p.stdout.strip() else None
     def inspect():
         obj=json.loads(docker("inspect",name).stdout)[0]
@@ -129,7 +142,7 @@ def verify(image,out,source_dir=None):
         prior_good=call("two")
         assert [x["consecutive_good"] for x in prior_good]==[1,2]
         report.update(before=before,original_alarm=open_alarm,before_crash_good=prior_good)
-        call("crash",False)
+        report["crash_injection"]=call("crash",False)
         boot,alarm=await_start(before["restart_count"]+1)
         assert boot["id"]==before["id"] and boot["boot"]!=before["boot"]
         assert alarm["state"]=="needs_attention" and alarm["consecutive_good"]==0 and alarm["latest"]=={}
@@ -147,7 +160,7 @@ def verify(image,out,source_dir=None):
         assert closed["parent_event_id"]==resumed["event_id"]
         report.update(after_auto_restart=boot,resumed_event=resumed,continued_bad=after_bad,three_fresh=after,
                       recovery_event=closed)
-        call("crash",False)
+        report["closed_crash_injection"]=call("crash",False)
         post,zero=await_start(boot["restart_count"]+1)
         assert zero["state"]=="waiting" and call("normal")[0]["state"]=="observed"
         old=call("black")[-1]
@@ -164,6 +177,9 @@ def verify(image,out,source_dir=None):
         detached=next(e for e in call("events") if e["kind"]=="sensor.source_detached" and e["parent_event_id"]==old["event_id"])
         assert detached["data"]["prior_identity"]["robot"]=="robot-a" and detached["data"]["current_identity"]["robot"]=="robot-b"
         report.update(new_identity=detached,passed=True)
+    except Exception as error:
+        report["error"]=f"{type(error).__name__}: {error}"
+        raise
     finally:
         docker("rm","-f",name,check=False)
         docker("volume","rm",volume,check=False)
