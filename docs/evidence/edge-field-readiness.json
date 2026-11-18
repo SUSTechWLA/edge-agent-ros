@@ -1,0 +1,743 @@
+{
+  "runtime_image": "edge-agent-ros:field-9983c89",
+  "test_environment": "Docker Desktop Linux amd64 / ROS 2 Jazzy / Gazebo campus simulation",
+  "hardware_connected": false,
+  "runs": {
+    "campus-iteration1.json": {
+      "sha256": "854d6cdf981c5b341986b98232ad723bd93ba0cb058162aabac50798ac951f30",
+      "passed": false,
+      "error": "no moving wheel encoders"
+    },
+    "campus-iteration2.json": {
+      "sha256": "8436830bd6dd4ec99ff63623a8f2ebddcf8cdbe9aed11bf35c7cce367ffa91e6",
+      "passed": false,
+      "error": "前往教学楼门外: RECOVERY_REQUIRED campus-gate-7983c64e3f-continuation-2/step/1/waypoint/2 gateway: UNKNOWN: stop unconfirmed after braked at goal; gateway inhibited [code:navigation.stop_unconfirmed]"
+    },
+    "campus-iteration3.json": {
+      "sha256": "1ed242f6e7407aa7ec5b8f56374d2a48ec5703d2975e5b457ea898b61f4b2f29",
+      "passed": false,
+      "error": "mission failed: campus-gate-65e05939c1/step/1/waypoint/1 gateway: UNKNOWN: stop unconfirmed after braked at goal; gateway inhibited [code:navigation.stop_unconfirmed]"
+    },
+    "campus-round4.json": {
+      "sha256": "19c24f2b63578343791889b40b166e98b1957d294e405d5f68fe129810e657aa",
+      "passed": true
+    },
+    "workbench-tasks.json": {
+      "sha256": "71a38e490787541fd7c54ad9e5318389f67d0f6de4eaf4836044c58e109b50a3",
+      "passed": true
+    },
+    "stop-window-faults.json": {
+      "sha256": "445e9c97af0c9f63b968fc6719ddf38263ae0df136b6ec1a02acbc6fa42424dd",
+      "passed": true
+    }
+  },
+  "campus": {
+    "world_sha256": "691884bed21b79ef2c7205192504964a5ae9b1417b351918c807634c09d36e48",
+    "isolated_ros_domain": "179",
+    "mission": "campus-gate-e795f3e239",
+    "motion_truth_goal_error_m": 0.0652,
+    "drive_legs": [
+      "campus-gate-e795f3e239",
+      "campus-gate-e795f3e239-continuation-1",
+      "campus-gate-e795f3e239-continuation-2"
+    ],
+    "body_tasks": [
+      {
+        "id": "forms-9a93a54ea7-0",
+        "text": "无人机起飞",
+        "tool": "delegate.crazyflie"
+      },
+      {
+        "id": "forms-9a93a54ea7-1",
+        "text": "无人机降落",
+        "tool": "delegate.crazyflie"
+      },
+      {
+        "id": "forms-9a93a54ea7-2",
+        "text": "四足机器人屈腿",
+        "tool": "delegate.go1"
+      },
+      {
+        "id": "forms-9a93a54ea7-3",
+        "text": "四足机器人伸腿",
+        "tool": "delegate.go1"
+      },
+      {
+        "id": "forms-9a93a54ea7-4",
+        "text": "双足机器人举起左臂",
+        "tool": "delegate.g1"
+      },
+      {
+        "id": "forms-9a93a54ea7-5",
+        "text": "双足机器人放下左臂",
+        "tool": "delegate.g1"
+      }
+    ],
+    "rejected": {
+      "text": "双足机器人起飞",
+      "state": "BLOCKED",
+      "detail": "该机体支持：举起左臂、放下左臂"
+    },
+    "wheel_motion": {
+      "task_id": "campus-gate-e795f3e239",
+      "samples": 453,
+      "both_wheels_peak_rad_s": 3.2,
+      "start_ns": 1050000000,
+      "end_ns": 23650000000
+    },
+    "hover_height_m": 0.9724593215132175,
+    "down_range_m": 0.8733,
+    "range_span_m": [
+      0.0208,
+      0.8745
+    ],
+    "sources": {
+      "edge_rover.color": {
+        "topic": "/model/edge_rover/rgbd/image_raw",
+        "type": "Image",
+        "frame": "edge_rover/rgbd_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          134,
+          3118201682
+        ]
+      },
+      "edge_rover.depth": {
+        "topic": "/model/edge_rover/rgbd/depth/image_raw",
+        "type": "Image",
+        "frame": "edge_rover/rgbd_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          9280,
+          0.699
+        ]
+      },
+      "edge_rover.info": {
+        "topic": "/model/edge_rover/rgbd/camera_info",
+        "type": "CameraInfo",
+        "frame": "edge_rover/rgbd_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          130.483,
+          130.483
+        ]
+      },
+      "g1.color": {
+        "topic": "/model/g1/rgbd/image_raw",
+        "type": "Image",
+        "frame": "g1/rgbd_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          177,
+          2601736694
+        ]
+      },
+      "g1.depth": {
+        "topic": "/model/g1/rgbd/depth/image_raw",
+        "type": "Image",
+        "frame": "g1/rgbd_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          9852,
+          5.563
+        ]
+      },
+      "g1.info": {
+        "topic": "/model/g1/rgbd/camera_info",
+        "type": "CameraInfo",
+        "frame": "g1/rgbd_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          130.483,
+          130.483
+        ]
+      },
+      "crazyflie.color": {
+        "topic": "/model/crazyflie/front/image_raw",
+        "type": "Image",
+        "frame": "crazyflie/front_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          196,
+          2373929815
+        ]
+      },
+      "crazyflie.info": {
+        "topic": "/model/crazyflie/front/camera_info",
+        "type": "CameraInfo",
+        "frame": "crazyflie/front_optical",
+        "messages": 286,
+        "first_ns": 1004000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          160,
+          120,
+          130.483,
+          130.483
+        ]
+      },
+      "crazyflie.down": {
+        "topic": "/model/crazyflie/down/scan",
+        "type": "LaserScan",
+        "frame": "crazyflie/down_link",
+        "messages": 570,
+        "first_ns": 1004000000,
+        "last_ns": 72126000000,
+        "last_value": [
+          3,
+          3,
+          0.0565
+        ]
+      },
+      "go1.cloud": {
+        "topic": "/model/go1/lidar/points",
+        "type": "PointCloud2",
+        "frame": "go1/lidar_link",
+        "messages": 285,
+        "first_ns": 1004000000,
+        "last_ns": 72000000000,
+        "last_value": [
+          180,
+          16,
+          1932,
+          6.715
+        ]
+      },
+      "edge_rover.wheels": {
+        "topic": "/model/edge_rover/wheel_states",
+        "type": "JointState",
+        "frame": null,
+        "messages": 1426,
+        "first_ns": 24850000000,
+        "last_ns": 72300000000,
+        "last_value": [
+          0.0,
+          0.0
+        ]
+      },
+      "edge_rover.scan": {
+        "topic": "/scan",
+        "type": "LaserScan",
+        "frame": "laser_link",
+        "messages": 569,
+        "first_ns": 1126000000,
+        "last_ns": 72126000000,
+        "last_value": [
+          360,
+          118,
+          1.8151
+        ]
+      },
+      "edge_rover.imu": {
+        "topic": "/imu",
+        "type": "Imu",
+        "frame": "imu_link",
+        "messages": 3567,
+        "first_ns": 1020000000,
+        "last_ns": 72220000000,
+        "last_value": [
+          -0.0,
+          0.0,
+          9.8,
+          0.0,
+          -0.0,
+          -0.0
+        ]
+      },
+      "crazyflie.imu": {
+        "topic": "/model/crazyflie/imu",
+        "type": "Imu",
+        "frame": "crazyflie/imu_link",
+        "messages": 1426,
+        "first_ns": 1050000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          0.0,
+          0.0,
+          9.8,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "go1.imu": {
+        "topic": "/model/go1/imu",
+        "type": "Imu",
+        "frame": "go1/imu_link",
+        "messages": 1426,
+        "first_ns": 1050000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          0.0,
+          0.0,
+          9.8,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "g1.imu": {
+        "topic": "/model/g1/imu",
+        "type": "Imu",
+        "frame": "g1/imu_link",
+        "messages": 1426,
+        "first_ns": 1050000000,
+        "last_ns": 72250000000,
+        "last_value": [
+          0.0,
+          0.0,
+          9.8,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "fixed_frames": [
+      "edge_rover/rgbd_link",
+      "edge_rover/rgbd_optical",
+      "g1/rgbd_link",
+      "g1/rgbd_optical",
+      "crazyflie/front_link",
+      "crazyflie/front_optical",
+      "crazyflie/down_link",
+      "go1/lidar_link",
+      "laser_link",
+      "imu_link",
+      "crazyflie/imu_link",
+      "go1/imu_link",
+      "g1/imu_link"
+    ],
+    "paired_rgbd": {
+      "edge_rover": {
+        "paired_frames": 286,
+        "stamp_ns": 72250000000,
+        "color": [
+          160,
+          120,
+          134,
+          3118201682
+        ],
+        "depth": [
+          160,
+          120,
+          9280,
+          0.699
+        ],
+        "intrinsics": [
+          160,
+          120,
+          130.483,
+          130.483
+        ]
+      },
+      "g1": {
+        "paired_frames": 286,
+        "stamp_ns": 72250000000,
+        "color": [
+          160,
+          120,
+          177,
+          2601736694
+        ],
+        "depth": [
+          160,
+          120,
+          9852,
+          5.563
+        ],
+        "intrinsics": [
+          160,
+          120,
+          130.483,
+          130.483
+        ]
+      }
+    },
+    "bridge_interruption": {
+      "halted": {
+        "edge_rover.wheels": 1436,
+        "edge_rover.color": 287,
+        "crazyflie.down": 574,
+        "g1.depth": 287,
+        "go1.cloud": 287
+      },
+      "recovered": {
+        "edge_rover.wheels": 1453,
+        "edge_rover.color": 290,
+        "crazyflie.down": 581,
+        "g1.depth": 290,
+        "go1.cloud": 291
+      },
+      "independent_imu_advanced": 56
+    },
+    "guarded_reload": {
+      "previous_session": "01d9321817774b44b3b7505a996d21a0",
+      "new_session": "9e1836ee52284bca98f892ccd06f2919",
+      "old_task_id": "campus-gate-e795f3e239",
+      "old_evidence_preserved": true,
+      "task_id": "campus-gate-e795f3e239-after-reload",
+      "state": "SUCCEEDED",
+      "verified_count": 3,
+      "truth": [
+        14110000000,
+        3.2349,
+        0.0,
+        0.0
+      ],
+      "odom": [
+        14110000000,
+        3.2485,
+        0.0,
+        0.0
+      ]
+    },
+    "other_stack_clock_advanced": true
+  },
+  "task_session": {
+    "configured": {
+      "id": "field-health-ba68f5c15508",
+      "state": "SUCCEEDED",
+      "headline": "任务账本已记录成功。已完成步骤 1 / 1。",
+      "events": [
+        2099,
+        2097,
+        2096,
+        2095,
+        2094,
+        2093,
+        2092,
+        2091,
+        2090,
+        2089
+      ],
+      "steps": [
+        {
+          "tool": "diagnose_sensors",
+          "args": {
+            "scope": "导航"
+          },
+          "version": "1",
+          "binding": "007af59a2ef5289fc0eddf9017e0c0a1ec760985946ca517688c0b7f10b12f6d",
+          "status": "SUCCEEDED",
+          "verification": {
+            "required": []
+          },
+          "operation_id": "field-health-ba68f5c15508/step/1",
+          "started_at": 1795014203.572758,
+          "evidence": {
+            "summary": "已配置 4 个传感器或前端输入。当前输入均已取得正常观测。未配置 激光匹配统计、视觉匹配统计、三维点云。",
+            "scope": "current_observation",
+            "observations": [
+              {
+                "input": "rgb",
+                "topic": "/model/edge_rover/rgbd/image_raw",
+                "state": "observed",
+                "code": "ok",
+                "latest_code": "ok",
+                "stamp_ns": 48750000000,
+                "frame": "edge_rover/rgbd_optical",
+                "age_at_receipt_s": 0.064,
+                "silence_s": 0.29,
+                "metrics": {
+                  "samples": 832,
+                  "dark_fraction": 0.0,
+                  "bright_fraction": 0.0,
+                  "texture_edge_fraction": 0.1245,
+                  "evidence_type": "raw_image_proxy"
+                },
+                "interpretation": "查看样本及事件记录。",
+                "event_id": "9272502135164569bddaf385324662c8"
+              },
+              {
+                "input": "depth",
+                "topic": "/model/edge_rover/rgbd/depth/image_raw",
+                "state": "observed",
+                "code": "ok",
+                "latest_code": "ok",
+                "stamp_ns": 48750000000,
+                "frame": "edge_rover/rgbd_optical",
+                "age_at_receipt_s": 0.062,
+                "silence_s": 0.294,
+                "metrics": {
+                  "samples": 832,
+                  "invalid_fraction": 0.4712,
+                  "encoding": "32FC1"
+                },
+                "interpretation": "查看样本及事件记录。",
+                "event_id": "8346965d4a7349258567018248708026"
+              },
+              {
+                "input": "scan",
+                "topic": "/scan",
+                "state": "observed",
+                "code": "ok",
+                "latest_code": "ok",
+                "stamp_ns": 48750000000,
+                "frame": "laser_link",
+                "age_at_receipt_s": 0.11,
+                "silence_s": 0.231,
+                "metrics": {
+                  "samples": 360,
+                  "finite_returns": 232,
+                  "no_return": 128,
+                  "invalid": 0,
+                  "range_max_m": 8.0,
+                  "evidence_type": "raw_scan"
+                },
+                "interpretation": "查看样本及事件记录。",
+                "event_id": "ca72ce4682f048809855e39d9e90e78e"
+              },
+              {
+                "input": "imu",
+                "topic": "/imu",
+                "state": "observed",
+                "code": "ok",
+                "latest_code": "ok",
+                "stamp_ns": 49020000000,
+                "frame": "imu_link",
+                "age_at_receipt_s": 0.0,
+                "silence_s": 0.016,
+                "metrics": {
+                  "acceleration_norm": 9.8,
+                  "angular_speed": 0.0
+                },
+                "interpretation": "查看样本及事件记录。",
+                "event_id": "6e7c63807aed492d8cb59dd33e7b7c31"
+              }
+            ],
+            "unconfigured": [
+              "lidar_match",
+              "match",
+              "points"
+            ]
+          }
+        }
+      ]
+    },
+    "unknown": {
+      "id": "field-health-f9de537b40c6",
+      "state": "BLOCKED",
+      "headline": "任务已受阻。adapter HTTP 400: transport.http_400",
+      "events": [
+        2110,
+        2109,
+        2108,
+        2107,
+        2106,
+        2105,
+        2104,
+        2103,
+        2102,
+        2101
+      ],
+      "steps": [
+        {
+          "tool": "diagnose_sensors",
+          "args": {
+            "scope": "隔壁"
+          },
+          "version": "1",
+          "binding": "007af59a2ef5289fc0eddf9017e0c0a1ec760985946ca517688c0b7f10b12f6d",
+          "status": "RUNNING",
+          "verification": {
+            "required": []
+          },
+          "operation_id": "field-health-f9de537b40c6/step/1",
+          "started_at": 1795014204.402396
+        }
+      ]
+    }
+  },
+  "stop": [
+    {
+      "fault": "central_gap",
+      "code": "navigation.scan_invalid",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 350,
+        "quiet_acquisition_ms": 330,
+        "quiet_arrival_ms": 330,
+        "last_odom_age_ms": 8,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "sparse_obstacle",
+      "code": "navigation.path_blocked",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 13,
+        "quiet_samples": 13,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 400,
+        "quiet_acquisition_ms": 359,
+        "quiet_arrival_ms": 360,
+        "last_odom_age_ms": 18,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "too_close",
+      "code": "navigation.path_blocked",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 330,
+        "quiet_arrival_ms": 330,
+        "last_odom_age_ms": 8,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "bad_ranges",
+      "code": "navigation.scan_invalid",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 13,
+        "quiet_samples": 13,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 399,
+        "quiet_acquisition_ms": 360,
+        "quiet_arrival_ms": 359,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "bad_geometry",
+      "code": "navigation.scan_invalid",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 11,
+        "quiet_samples": 11,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 350,
+        "quiet_acquisition_ms": 300,
+        "quiet_arrival_ms": 300,
+        "last_odom_age_ms": 28,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "clock_ahead",
+      "code": "navigation.scan_time_mismatch",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 350,
+        "quiet_acquisition_ms": 330,
+        "quiet_arrival_ms": 330,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "duplicate",
+      "code": "navigation.scan_stale",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 329,
+        "quiet_arrival_ms": 329,
+        "last_odom_age_ms": 8,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "drop",
+      "code": "navigation.scan_stale",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 330,
+        "quiet_arrival_ms": 330,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "wrong_frame",
+      "code": "navigation.scan_stale",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 350,
+        "quiet_acquisition_ms": 329,
+        "quiet_arrival_ms": 329,
+        "last_odom_age_ms": 18,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "fault": "rewind",
+      "code": "navigation.stop_unconfirmed",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 0,
+        "quiet_samples": 0,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 3000,
+        "quiet_acquisition_ms": 0,
+        "quiet_arrival_ms": 0,
+        "last_odom_age_ms": 3918,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      },
+      "new_action_refused": true
+    }
+  ]
+}

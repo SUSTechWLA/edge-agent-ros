@@ -6,7 +6,7 @@
 
 ## 设计与契约
 
-由持有运动授权的 Gateway 给现有终态事件补充确认窗口统计。记录收到的有效制动后里程计样本数、连续静止样本数、采集和到达的连续静止时长、因观测间隙重置的次数、最后的线/角速度及样本年龄。仅补观察依据，执行器沿用原先的制动、300 ms 双时钟确认、3 秒限时及失败后抑制策略。EventBus 和工具回执沿用原 operation/task 链路。
+由持有运动授权的 Gateway 给现有终态事件补充确认窗口统计。`accepted_samples` 是发出制动请求后收到且通过校验的里程计包数。旧包可能延迟到达。用 `quiet_samples`、`quiet_acquisition_ms` 和 `quiet_arrival_ms` 分别读取连续静止样本数、采集跨度和到达跨度。`sample_gaps` 只在后一个有效包到达时才能累计。`last_odom_age_ms` 是最后一个有效包到达后经过的墙钟时间。窗口同时保留最后的线速度模长、偏航角速度绝对值。时间回退、错帧、非有限数和断流均可能导致零有效样本，区分原因需要传感器侧观测。网关沿用原有的制动、300 ms 双时钟确认、3 秒限时及失败后抑制策略。EventBus 和工具回执沿用原 operation/task 链路。
 
 ## 验收与证据
 
@@ -23,3 +23,5 @@
 ## 变更记录
 
 2026-11-18，根据校园连续三次穿门的第二轮异常登记。原始记录为 `artifacts/verification/edge-field/campus-iteration2.json`。
+
+同日，十项隔离 ROS 故障测试通过。现场任务 `field-live-rover-810d435cb158` 的 Gateway 终态事件 seq 2512 通过任务过滤与事件回放两种入口读得相同数据，11 个有效包、连续 10 帧静止、采集窗口 306 ms、到达窗口 402 ms。历史终态仍可读取。原故障的上游原因保留未定。[归档测量](../evidence/campus-live-physical.json) · [含时间回退的十组注入](../evidence/edge-field-readiness.json)

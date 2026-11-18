@@ -233,7 +233,7 @@ def run(args):
             (tmp/directory).mkdir()
         copy_shipped_contracts(tmp/"contracts")
         env={**os.environ,"EDGE_IMAGE":args.image,"EDGE_ROS_DOMAIN_ID":domain,"EDGE_CONSOLE_PORT":"0",
-             "EDGE_CAMPUS_CONSOLE_PORT":"0","EDGE_CAMPUS_OVERVIEW_PORT":"0",
+             "EDGE_CAMPUS_CONSOLE_PORT":"0","EDGE_CAMPUS_OVERVIEW_PORT":"0","EDGE_HEALTH_PORT":"0",
              "EDGE_OLLAMA_URL":"","EDGE_PLANNER_URL":"","EDGE_CONTRACTS_DIR":str(tmp/"contracts"),
              "EDGE_PLUGINS_DIR":str(tmp/"plugins"),"EDGE_OBSERVATIONS_DIR":str(tmp/"observations"),
              "EDGE_CAMPUS_ASSETS_DIR":str(args.assets.resolve())}
@@ -347,6 +347,18 @@ def run(args):
                                      if (s:=onboard()["counts"]) else None,"fresh measurements after restart",45)
                 sensors["bridge_restart"]={"halted":{k:last[k] for k in stopped_keys},"recovered":{k:refreshed[k] for k in stopped_keys},
                     "independent_imu_advanced":last["edge_rover.imu"]-first["edge_rover.imu"]}
+                dc("up","-d","--no-build","session","sensor-health")
+                dc("run","--rm","--no-deps","-T","--entrypoint","python3","plugin-admin",
+                   "/opt/edge/client/register_sensor_health.py")
+                health="http://"+dc("port","sensor-health","8136")
+                def health_ready():
+                    with http.open(health+"/status",timeout=4) as response:
+                        rows=json.load(response)["inputs"]
+                    return (all(rows[k]["latest"].get("stamp_ns") for k in ("rgb","depth","scan","imu")) and
+                            any(item["id"]=="diagnose_sensors" for item in api("/agent/capabilities")["capabilities"]))
+                await_fact(health_ready,"sensor diagnosis tool and four fresh body inputs",45)
+                from field_sensor_task import verify as verify_sensor_task
+                verify_sensor_task(base,report.setdefault("diagnostic_tasks",{}))
             viewer = "http://"+dc("port","campus-overview","8080")
             def assets():
                 with http.open(viewer+"/capture.json",timeout=3) as response:
@@ -470,6 +482,16 @@ def run(args):
             report["passed"]=True
         except Exception as error:
             report["error"]=str(error)[:1500]
+            # Retain the source measurements and terminal events before tearing down this isolated world.
+            if "key" in locals():
+                failed_ids=[key,*[leg["task_id"] for leg in report.get("continuous_navigation",{}).get("legs",[])]]
+                try:
+                    report["task_events"]={tid:api("/api/events?"+urlencode({"task_id":tid,"limit":150}))["events"]
+                                           for tid in failed_ids}
+                    sample=observed()
+                    report["last_pose_samples"]={k:sample[k][-35:] for k in ("truth","odom")}
+                except (ValueError,OSError,KeyError):
+                    pass
             try:
                 report["services"]=dc("ps","-a","--format","table {{.Service}} {{.Status}}")
                 report["diagnostic"]={name:dc("logs","--no-color","--tail","3",name)[-700:] for name in ("campus-build","sim","scene","agent","campus-audit-witness")}

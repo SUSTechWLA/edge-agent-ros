@@ -2,7 +2,7 @@
 
 **让机器人通过自然语言接受任务，通过插件扩展能力，通过证据解释执行结果。**
 
-项目面向部署在机器人计算单元上的单机 Agent：将用户目标转成工具调用，由 ROS 2 执行和验收，遇到故障保留原因、执行状态与恢复依据。目标是逐步支持不同机器人、软件任务和长期运行；当前可复现的基线是 **Docker 中的单台轮式机器人与室内外 Gazebo 场景**。
+项目面向部署在机器人计算单元上的单机 Agent。用户目标转成工具调用，由 ROS 2 执行和验收，遇到故障保留原因、执行状态与恢复依据。默认 Docker 场景提供单台轮式机器人，另有大型校园可复测轮式车、无人机、四足和双足的机载观测及各自支持的动作。
 
 架构借鉴 **dsh 的 Plugin / Service / Tool**，保留未来与 **SuperAgent 的 Router / Worker 角色**协作的空间。当前实现并非 dsh SDK，也尚未实现跨机器人调度。执行内核和网关使用 C++20，Agent 与多数独立服务使用 Python，观测台使用浏览器前端；插件按协议接入，可选择自己的实现语言。
 
@@ -13,6 +13,8 @@
 大型校园实验采用代尔夫特理工大学的测绘建筑和正射影像。教学训练楼、机器人广场、八道运动场、草地和林带通过一条约 777 米的步道接入真实校园街网。在[校园全景](http://127.0.0.1:8780/)打开路线叠加，在[三维地图](http://127.0.0.1:8773/?view=3d&place=campus)切换到具体机器人，可近看机体、传感器和动作。轮式车、无人机、四足和双足的仿真动力学与已验收能力各不相同。[校园安装与运行](scene/campus_large/README.md) · [四种机体的查看与复测](docs/testing/campus-robot-view.md) · [长程试验场规格](docs/specs/SDD-029-unified-campus.md)
 
 可选的三维点云地图、多相机预览、RGB-D 像素测距和模型适配器可以按需安装。同一规划入口已经分别通过本地 Qwen 和真实 DeepSeek 调用 ROS 状态工具。用工作台观察各插件的状态、输入和装卸边界，可以从[感知与模型插件快速上手](docs/perception-model-quickstart.md)开始。
+
+准备上机时，先在校园工作台下发“检查导航传感器”。同一任务的会话会保留当时的观测、采样时间和工具回执。四种机体故障演练、可自动处理的范围和上板顺序见[现场验收与升级记录](docs/testing/edge-field-readiness.md)。
 
 | 能力 | 可以亲自验证的行为 | 入口 |
 |---|---|---|
@@ -38,7 +40,7 @@ cd edge-agent-ros
 |---|---|
 | Windows PowerShell | `.\scripts\start.ps1` |
 | Linux / Ubuntu / macOS，启动仿真 | `sh scripts/deploy.sh sim up` |
-| Linux 实机，已有兼容 ROS 驱动和执行器 | `sh scripts/deploy.sh hardware up` |
+| Linux 实机，已安装板端镜像及 ROS 驱动 | 按[首次上板](docs/board-first-boot.md)设置机体身份与话题，运行 `sh scripts/deploy.sh hardware observe`、`sh scripts/deploy.sh hardware preflight` |
 
 启动脚本检查服务和仿真观测是否就绪。首次构建需要访问 Docker Hub、Ubuntu 和 ROS 软件源；使用 Docker Desktop 配置的 VPN / 代理。可通过 `EDGE_BASE_IMAGE` 选择含相同 SDK 的预装[基础镜像](docker/Dockerfile.base)。服务器访问、ARM64 与板卡验收条件见[部署矩阵](docs/deployment.md)；以上命令不表示所有平台都完成了实机验证。
 

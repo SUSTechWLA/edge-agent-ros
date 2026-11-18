@@ -222,7 +222,7 @@ def run(args, selected, reasons):
                     if assets or (ROOT / "artifacts/sim-assets/models/Pine Tree/model.sdf").is_file():
                         checks["campus-world"].append(test("system/campus_acceptance.py","--image",image,"--assets",
                                                        str((assets or ROOT/"artifacts/sim-assets").resolve()),
-                                                       "--verify-reload","--verify-texture","--out",directory/"campus-world.json"))
+                                                       "--verify-reload","--verify-texture","--verify-onboard","--out",directory/"campus-world.json"))
                     else:
                         skip("campus-world-assets","optional campus assets not installed; use scene/campus_large/fetch_assets.py")
                 for name, commands in checks.items():

@@ -17,6 +17,9 @@ def verify(api, observed, await_fact, terminal, original, report):
         api("/agent/tasks",{"id":key,"text":text,"trigger":{"kind":"user","source":"campus-audit","id":key}})
         task = await_fact(lambda:terminal(key),f"continuous campus leg {leg} completion",120)
         row.update(state=task["state"],trace_id=task.get("trace_id"),detail=task.get("detail"))
+        if task["state"]!="SUCCEEDED":
+            row["steps"]=task.get("steps",[])
+            row["events"]=api("/api/events?task_id="+key+"&limit=150")["events"]
         assert task["state"]=="SUCCEEDED",f"{text}: {task['state']} {task.get('detail')}"
         step = task["steps"][0]
         evidence = step["evidence"]
