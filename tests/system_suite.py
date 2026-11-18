@@ -141,7 +141,8 @@ def run(args, selected, reasons):
                 report["docker"]=output(["docker","version","--format","{{.Server.Version}}"],env)
                 report["compose"]=output(["docker","compose","version","--short"],env)
                 checks={
-                    "plugin-isolation":[test("system/map_model_isolation.py","--image",image,
+                    "plugin-isolation":[["node","--test",str(ROOT/"tests/map_planar.test.mjs"),str(ROOT/"tests/map_spatial.test.mjs")],
+                                        test("system/map_model_isolation.py","--image",image,
                                              "--out",directory/"map-model-isolation.json"),
                                         test("system/camera_acceptance.py","--image",image,"--out",directory/"camera.json"),
                                         test("system/sensor_plugin_isolation.py","--image",image,"--out",directory/"camera-lidar.json"),

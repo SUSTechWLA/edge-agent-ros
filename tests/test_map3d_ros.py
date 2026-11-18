@@ -1,5 +1,6 @@
 """ROS image test. Validate TF timestamps, clock epochs, stale input and source facts."""
 import json
+import math
 import os
 from pathlib import Path
 import struct
@@ -12,7 +13,7 @@ from unittest.mock import patch
 import rclpy
 from builtin_interfaces.msg import Time
 from geometry_msgs.msg import TransformStamped
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import OccupancyGrid, Odometry
 from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import PointCloud2, PointField
 from std_msgs.msg import String
@@ -131,6 +132,46 @@ class RosMap(unittest.TestCase):
         self.assertEqual(view["scene"]["features"][0]["xyz"],[0,1,2])
         self.assertEqual(view["pose"]["status"],"online")
         self.assertEqual(view["cloud"]["points"],[])
+
+    def test_grid_geometry_source_and_epoch(self):
+        grid = OccupancyGrid()
+        grid.header.frame_id = "odom"
+        grid.header.stamp = Time(sec=100)
+        grid.info.width, grid.info.height = 3, 2
+        grid.info.resolution = 0.5
+        origin = grid.info.origin
+        origin.position.x, origin.position.y, origin.position.z = 7.0, -1.0, 2.0
+        origin.orientation.z = origin.orientation.w = math.sqrt(.5)
+        grid.data = [-1, 0, 23, 100, 0, -1]
+        self.node.grid(grid)
+        layer = self.node.snapshot()["grid"]
+        self.assertEqual(layer["cells"], list(grid.data))
+        self.assertEqual(layer["origin"][:2], [7, -1])
+        self.assertAlmostEqual(layer["origin"][2], math.pi / 2)
+        self.assertEqual((layer["origin_z"], layer["status"], layer["topic"]),
+                         (2, "online", "/edge/perception/map"))
+        with patch("provider.time.monotonic", return_value=time.monotonic()+6):
+            self.node.grid(grid)
+            self.assertEqual(self.node.snapshot()["grid"]["status"], "stale")
+        for fault, expected in (("frame","grid_frame_mismatch"),("size","grid_size_invalid"),
+                                ("orientation","grid_orientation_invalid"),("value","grid_value_invalid"),
+                                ("resolution","grid_geometry_invalid"),("future","stamp_outside_window")):
+            from copy import deepcopy
+            bad = deepcopy(grid)
+            if fault == "frame": bad.header.frame_id = "map"
+            if fault == "size": bad.info.width = 1 << 20
+            if fault == "orientation": bad.info.origin.orientation.x = .2
+            if fault == "value": bad.data[0] = 101
+            if fault == "resolution": bad.info.resolution = 0.0
+            if fault == "future": bad.header.stamp = Time(sec=109)
+            with self.subTest(fault=fault):
+                self.node.grid(bad)
+                self.assertEqual(self.node.snapshot()["grid"]["error"], expected)
+        self.node.clock(Clock(clock=Time(sec=5)))
+        self.assertEqual(self.node.snapshot()["grid"]["cells"], [])
+        grid.header.stamp = Time(sec=5)
+        self.node.grid(grid)
+        self.assertEqual(self.node.snapshot()["grid"]["status"], "online")
 
 
 if __name__=="__main__":

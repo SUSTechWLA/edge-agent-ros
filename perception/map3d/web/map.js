@@ -1,143 +1,142 @@
+/* The shell owns the snapshot and layer switches. Each viewer owns its camera and input. */
 (() => {
   "use strict";
   const el = id => document.getElementById(id);
-  const canvas = el("viewport"), ctx = canvas.getContext("2d");
-  const checked = name => el("layer-"+name).checked;
   const statuses = {waiting:"等待", stale:"已过期", online:"新鲜", error:"输入异常"};
-  let data, connected=false, yaw=-.69, tilt=.67, zoom=1, pan=[0,0], drag, scheduled=false;
-  const mutedSources=new Set();
-  let sourceSignature=null;
+  const modes = {
+    spatial: {canvas:el("viewport"), factory:window.createSpatialRenderer, name:"三维透视",
+      hint:"拖动环绕 · Shift 或右键拖动平移 · 滚轮或双指缩放",
+      prompt:"点击可见的点、物体或地面，读取空间坐标。"},
+    planar: {canvas:el("planar-viewport"), factory:window.createPlanarRenderer, name:"二维平面 · XY",
+      hint:"拖动平移 · 滚轮或双指缩放 · 点击查询地面",
+      prompt:"点击地图，读取 XY 坐标、栅格和语义信息。"}
+  };
+  const mutedSources = new Set();
+  const layers = Object.fromEntries(["cloud","scene","roof","pose","grid"].map(key => [key, el("layer-"+key)]));
+  let active = new URLSearchParams(location.search).get("view")==="2d" ? "planar" : "spatial";
+  let data=null, connected=false, scheduled=false, sourceSignature=null;
 
-  function render() {
-    scheduled=false;
-    const w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(2,devicePixelRatio||1);
-    if (!w || !h) return;
-    if (canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)) {
-      canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
-    }
-    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-    const scene=data?.scene, cloud=data?.cloud, pose=data?.pose;
-    const clouds=[cloud,...Object.entries(data?.cloud_sources||{}).filter(([id])=>!mutedSources.has(id)).map(([,value])=>value)].filter(Boolean);
-    const points=clouds.flatMap(source=>source.points), boxes=scene?.features||[], zones=scene?.zones||[];
-    const xyz=pose?.xyz;
-    let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity,z0=Infinity,z1=-Infinity;
-    const bound=(x,y,z)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);z0=Math.min(z0,z);z1=Math.max(z1,z)};
-    for(const z of zones){const [a,b,c,d]=z.bounds;bound(a,b,0);bound(c,d,0)}
-    for(const p of points) bound(...p);
-    for(const b of boxes){const [x,y,z]=b.xyz,[dx,dy,dz]=b.size;bound(x-dx/2,y-dy/2,z);bound(x+dx/2,y+dy/2,z+dz)}
-    if(xyz)bound(...xyz);
-    if(!Number.isFinite(x0)){x0=y0=-3;x1=y1=3;z0=z1=0}
-    const cx=(x0+x1)/2,cy=(y0+y1)/2,cz=(z0+z1)/2;
-    const a=Math.cos(yaw),b=Math.sin(yaw),c=Math.cos(tilt),s=Math.sin(tilt);
-    const extentX=Math.abs(a)*(x1-x0)+Math.abs(b)*(y1-y0);
-    const extentY=(Math.abs(b)*(x1-x0)+Math.abs(a)*(y1-y0))*s+(z1-z0)*c;
-    const k=Math.min(w/Math.max(extentX+1,4),h/Math.max(extentY+1,4))*.88*zoom;
-    const proj=([x,y,z])=>[w/2+pan[0]+((x-cx)*a-(y-cy)*b)*k,
-      h/2+pan[1]+(-(x-cx)*b*s-(y-cy)*a*s-(z-cz)*c)*k];
-    function path(vertices,stroke,fill) {
-      ctx.beginPath();vertices.forEach((v,i)=>{const [x,y]=proj(v);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y)});
-      if (vertices.length>2)ctx.closePath();
-      if(fill){ctx.fillStyle=fill;ctx.fill()} if(stroke){ctx.strokeStyle=stroke;ctx.stroke()}
-    }
-    if(checked("scene"))for(const zone of zones){
-      const [x,y,u,v]=zone.bounds;
-      path([[x,y,0],[u,y,0],[u,v,0],[x,v,0]],"#6a949355",zone.kind==="outdoor"?"#65938935":"#718aa332");
-    }
-    const step=Math.max(1,10**Math.floor(Math.log10(Math.max(x1-x0,y1-y0,1)/5)));
-    const edge=[Math.floor(x0/step)*step,Math.ceil(x1/step)*step,Math.floor(y0/step)*step,Math.ceil(y1/step)*step];
-    ctx.lineWidth=1;
-    for(let i=edge[0];i<=edge[1];i+=step)path([[i,edge[2],0],[i,edge[3],0]],"#72949a42");
-    for(let i=edge[2];i<=edge[3];i+=step)path([[edge[0],i,0],[edge[1],i,0]],"#72949a42");
-    if(checked("scene")){
-      const faces=[];
-      for(const box of boxes){
-        if(box.kind==="roof" && !checked("roof"))continue;
-        const [x,y,z]=box.xyz,[dx,dy,dz]=box.size;
-        const base=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([u,v])=>[x+u*dx/2,y+v*dy/2,z]);
-        const top=base.map(([px,py])=>[px,py,z+dz]);
-        const polygons=[top,...base.map((p,i)=>[p,base[(i+1)%4],top[(i+1)%4],top[i]])];
-        for(const vertices of polygons){
-          const depth=vertices.reduce((d,[px,py,pz])=>d+(-px*b-py*a)*c+pz*s,0)/4;
-          faces.push({vertices,depth,fill:box.kind==="landmark"?"#78a78d35":"#8ea6b32e"});
-        }
+  function draw() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      const options = {connected, mutedSources};
+      for (const [key, input] of Object.entries(layers)) options[key] = input.checked;
+      const view = modes[active].renderer.render(data, options);
+      el("empty").hidden = !view.empty;
+      el("empty").textContent = data ? "当前可见图层没有可显示的数据" : "等待地图数据";
+      const hasHeight = active==="spatial" && options.cloud && Number.isFinite(view.zMin) && Number.isFinite(view.zMax);
+      el("height-key").hidden = !hasHeight;
+      if (hasHeight) {
+        el("z-min").textContent = view.zMin.toFixed(2);
+        el("z-max").textContent = view.zMax.toFixed(2);
       }
-      for(const face of faces.sort((p,q)=>p.depth-q.depth))path(face.vertices,"#a4bdc060",face.fill);
-    }
-    let lo=Infinity,hi=-Infinity;
-    for(const p of points){lo=Math.min(lo,p[2]);hi=Math.max(hi,p[2])}
-    if(checked("cloud")) {
-      for(const source of clouds) for(const p of source.points){
-        const live=connected && source.status==="online";
-        const t=(p[2]-lo)/Math.max(hi-lo,.01);
-        ctx.fillStyle=live?`hsl(${205-157*t} 76% ${68+t*4}%)`:"#91a4a6";
-        const [px,py]=proj(p);ctx.fillRect(px-1.25,py-1.25,2.5,2.5);
-      }
-    }
-    if(checked("pose") && xyz){
-      const [px,py]=proj(xyz);
-      ctx.fillStyle=connected&&pose.status==="online"?"#ffcd68":"#ae9e83";
-      ctx.beginPath();ctx.arc(px,py,6,0,2*Math.PI);ctx.fill();ctx.strokeStyle="#253630";ctx.stroke();
-      ctx.font="600 13px sans-serif";ctx.fillText("机器人",px+9,py-8);
-    }
-    el("empty").hidden=!!((checked("cloud") && points.length)||(checked("scene") && (boxes.length||zones.length))||(checked("pose") && xyz));
-    el("z-min").textContent=isFinite(lo)?lo.toFixed(2):"—";el("z-max").textContent=isFinite(hi)?hi.toFixed(2):"—";
+      el("grid-key").hidden = !options.grid || !EdgeGrid.usable(data?.grid,data?.frame);
+    });
   }
-  function draw(){if(!scheduled){scheduled=true;requestAnimationFrame(render)}}
-  function update(){
-    const extras=Object.entries(data.cloud_sources||{});
-    const picker=el("inspect-source");
-    const signature=JSON.stringify(extras.map(([id,v])=>[id,v.name,v.status,v.error]));
-    if(sourceSignature!==signature){
-      sourceSignature=signature;
-      const selected=picker.value;
-      picker.replaceChildren(new Option("主点云",""));
-      const list=el("lidar-sources");list.replaceChildren();
-      for(const [id,v] of extras){
-        picker.add(new Option(v.name,id));
-        const label=document.createElement("label"),check=document.createElement("input");
-        check.type="checkbox";check.checked=!mutedSources.has(id);label.className="sub";
-        check.onchange=()=>{if(check.checked)mutedSources.delete(id);else mutedSources.add(id);draw()};
-        label.append(check,document.createTextNode(v.name+" · "+(statuses[v.status]||v.status)));
-        list.append(label);
-      }
-      el("inspect-source-row").hidden=!extras.length;
-      picker.value=selected && data.cloud_sources?.[selected]?selected:
-          (!data.cloud.points.length && extras.length?extras[0][0]:"");
+  function showPick() {
+    const mode = modes[active];
+    el("pick-result").textContent = mode.pick || mode.prompt;
+    el("pick-result").classList.toggle("selected", !!mode.pick);
+  }
+  function clearPicks() {
+    for (const mode of Object.values(modes)) {
+      mode.renderer.clearPick?.();
+      mode.pick = "";
     }
-    const c=data.cloud_sources?.[picker.value] || data.cloud,s=data.scene,p=data.pose;
-    el("env").textContent=data.environment==="simulation"?"GAZEBO  /  ROS 2":"ROS 2  /  机器人";
-    el("frame").textContent=data.frame+" · m";
-    el("point-count").textContent=c.points.length.toLocaleString();
-    const ok=connected && c.status==="online";
-    el("cloud-status").dataset.ok=String(ok);
-    el("cloud-status").textContent=connected?(c.error==="no_valid_returns"&&c.status==="error"?"本帧无有效回波":statuses[c.status]||c.status):"快照";
-    el("sensor").textContent=data.environment==="simulation" && c.source_frame==="map3d_survey"?"固定仿真台站 · map3d_survey":c.source_frame||"等待点云";
-    el("topic").textContent=c.topic;el("sample").textContent=c.stamp_s?.toFixed(3)??"—";
-    el("resolution").textContent=(c.voxel_m*100).toFixed(0)+" cm";
-    el("sources").textContent="先验 "+(statuses[s.status]||"—")+(s.source?" · "+s.source:"")+"。融合位姿 "+(statuses[p.status]||"—")+"。"+(c.error?"点云诊断 "+c.error+"。":"")+(data.input_catalog_error?"清单目录 "+data.input_catalog_error:"");
+    showPick();
+  }
+  for (const [id, mode] of Object.entries(modes)) {
+    mode.pick = "";
+    mode.renderer = mode.factory(mode.canvas, {invalidate:draw, onPick(text) {
+      mode.pick = text;
+      if (active === id) showPick();
+    }});
+    el("mode-"+id).onclick = () => select(id);
+    new ResizeObserver(draw).observe(mode.canvas);
+  }
+  function select(id) {
+    active = id;
+    const planar = id==="planar", mode = modes[id];
+    for (const [key, entry] of Object.entries(modes)) {
+      entry.canvas.hidden = key!==id;
+      el("mode-"+key).setAttribute("aria-pressed", String(key===id));
+    }
+    el("view-name").textContent = mode.name;
+    el("gestures").textContent = mode.hint;
+    el("view-top").hidden = el("roof-row").hidden = planar;
+    el("cloud-label").textContent = planar ? "点云 XY 投影" : "实测点云";
+    showPick();
     draw();
   }
-  async function poll(){
+  el("view-top").onclick = () => modes.spatial.renderer.top();
+  el("orbit-reset").onclick = () => modes[active].renderer.reset();
+  el("zoom-in").onclick = () => modes[active].renderer.zoomBy(1.25);
+  el("zoom-out").onclick = () => modes[active].renderer.zoomBy(1/1.25);
+  for (const input of Object.values(layers)) input.onchange = () => {clearPicks(); draw();};
+
+  function updateSources(extras) {
+    const picker = el("inspect-source");
+    const signature = JSON.stringify(extras.map(([id,v]) => [id,v.name,v.status,v.error]));
+    if (sourceSignature === signature) return;
+    sourceSignature = signature;
+    for (const id of mutedSources) if (!Object.hasOwn(data.cloud_sources || {}, id)) mutedSources.delete(id);
+    const selected = picker.value, list = el("lidar-sources");
+    picker.replaceChildren(new Option("主点云",""));
+    list.replaceChildren();
+    for (const [id,v] of extras) {
+      picker.add(new Option(v.name,id));
+      const label=document.createElement("label"), input=document.createElement("input");
+      input.type="checkbox"; input.checked=!mutedSources.has(id); label.className="sub";
+      input.onchange=() => {
+        if (input.checked) mutedSources.delete(id); else mutedSources.add(id);
+        clearPicks();draw();
+      };
+      label.append(input,document.createTextNode(v.name+" · "+(statuses[v.status] || v.status)));
+      list.append(label);
+    }
+    el("inspect-source-row").hidden=!extras.length;
+    picker.value = selected && data.cloud_sources?.[selected] ? selected :
+      (!data.cloud.points.length && extras.length ? extras[0][0] : "");
+  }
+  function update() {
+    updateSources(Object.entries(data.cloud_sources || {}));
+    const c = data.cloud_sources?.[el("inspect-source").value] || data.cloud;
+    const g = data.grid, s = data.scene, p = data.pose;
+    el("env").textContent = data.environment==="simulation" ? "GAZEBO  /  ROS 2" : "ROS 2  /  机器人";
+    el("frame").textContent = data.frame+" · m";
+    el("grid-info").textContent = EdgeGrid.usable(g,data.frame) ?
+      "占据栅格 · "+g.width+" × "+g.height+" · "+Number((g.resolution*100).toFixed(2))+" cm/格 · "+(connected?statuses[g.status]:"断线快照") :
+      "占据栅格"+(g?.error?"异常 · "+g.error:"等待数据")+"。语义和点云可独立显示。";
+    el("point-count").textContent = c.points.length.toLocaleString();
+    el("cloud-status").dataset.ok = String(connected && c.status==="online");
+    el("cloud-status").textContent = connected ? (c.error==="no_valid_returns" && c.status==="error"?"本帧无有效回波":statuses[c.status] || c.status) : "快照";
+    el("sensor").textContent = data.environment==="simulation" && c.source_frame==="map3d_survey"?"固定仿真台站 · map3d_survey":c.source_frame || "等待点云";
+    el("topic").textContent = c.topic || "—";
+    el("sample").textContent = c.stamp_s?.toFixed(3) ?? "—";
+    el("resolution").textContent = (c.voxel_m*100).toFixed(0)+" cm";
+    el("sources").textContent = "语义 "+(statuses[s.status] || "—")+(s.source?" · "+s.source:"")+"。融合位姿 "+(statuses[p.status] || "—")+"。"+(c.error?"点云诊断 "+c.error+"。":"")+(data.input_catalog_error?"清单目录 "+data.input_catalog_error:"");
+    draw();
+  }
+  el("inspect-source").onchange=() => {if (data) update();};
+  async function poll() {
     try {
-      const res=await fetch("/api/map",{cache:"no-store",signal:AbortSignal.timeout(4500)});
-      if(!res.ok)throw Error(); data=await res.json();connected=true;
-    } catch {connected=false}
-    el("connection").dataset.ok=String(connected);el("connection").textContent=connected?"已连接":"连接中断";
-    if(data)update();else draw();
+      const response=await fetch("/api/map",{cache:"no-store",signal:AbortSignal.timeout(4500)});
+      if (!response.ok) throw Error();
+      const next = await response.json();
+      if (data && (data.frame!==next.frame || data.generation!==next.generation)) {
+        clearPicks();
+        for (const mode of Object.values(modes)) mode.renderer.reset();
+      }
+      data = next;
+      connected = true;
+    } catch { connected = false; }
+    el("connection").dataset.ok=String(connected);
+    el("connection").textContent=connected?"已连接":"连接中断";
+    if (data) update(); else draw();
     setTimeout(poll,1000);
   }
-  const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
-  el("inspect-source").onchange=()=>{if(data)update()};
-  function reset(){yaw=-.69;tilt=.67;zoom=1;pan=[0,0];draw()}
-  el("orbit-reset").onclick=reset;
-  el("view-top").onclick=()=>{yaw=0;tilt=Math.PI/2;pan=[0,0];draw()};
-  document.querySelectorAll('input[type=checkbox]').forEach(box=>box.onchange=draw);
-  canvas.onpointerdown=e=>{if(e.button!==0)return;canvas.setPointerCapture(e.pointerId);drag=[e.clientX,e.clientY];canvas.style.cursor="grabbing"};
-  canvas.onpointermove=e=>{if(!drag)return;const dx=e.clientX-drag[0],dy=e.clientY-drag[1];drag=[e.clientX,e.clientY];
-    if(e.shiftKey){pan[0]+=dx;pan[1]+=dy}else{yaw+=dx*.009;tilt=clamp(tilt+dy*.007,.08,Math.PI/2)}draw()};
-  canvas.onlostpointercapture=()=>{drag=null;canvas.style.cursor="grab"};
-  canvas.addEventListener("wheel",e=>{e.preventDefault();zoom=clamp(zoom*Math.exp(-Math.sign(e.deltaY)*.12),.25,8);draw()},{passive:false});
-  canvas.onkeydown=e=>{switch(e.key){case "ArrowLeft":yaw-=.1;break;case "ArrowRight":yaw+=.1;break;case "ArrowUp":tilt=clamp(tilt+.1,.08,Math.PI/2);break;case "ArrowDown":tilt=clamp(tilt-.1,.08,Math.PI/2);break;case "+":case "=":zoom=clamp(zoom*1.12,.25,8);break;case "-":zoom=clamp(zoom/1.12,.25,8);break;default:return}e.preventDefault();draw()};
-  new ResizeObserver(draw).observe(canvas);
+  select(active);
   poll();
 })();

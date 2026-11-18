@@ -44,6 +44,7 @@ services:
       EDGE_MAP3D_FRAME: ${EDGE_MAP3D_FRAME:-odom}
       ROS_LOG_DIR: /tmp/ros-logs
       EDGE_MAP3D_TOPIC: ${EDGE_MAP3D_TOPIC:-/edge/map3d/points}
+      EDGE_MAP3D_GRID_TOPIC: ${EDGE_MAP3D_GRID_TOPIC:-/edge/perception/map}
       EDGE_MAP3D_POSE: ${EDGE_MAP3D_POSE:-/edge/perception/pose}
     command: ["python3", "-B", "/opt/edge/perception/map3d/provider.py", "--ros-args", "-p", "use_sim_time:=true"]
     volumes:

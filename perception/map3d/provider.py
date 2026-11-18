@@ -10,9 +10,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 import rclpy
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import OccupancyGrid, Odometry
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from rclpy.time import Time
 from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import PointCloud2
@@ -26,7 +26,9 @@ from module_journal import ModuleJournal
 
 STATIC = Path(__file__).parent / "web"
 TTL = 3.0
-VERSION = "1.1.0"
+VERSION = "1.2.0"
+MAX_GRID_CELLS = 512 * 512
+GRID_TTL = 5.0
 CLOUD_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
 
 
@@ -35,6 +37,7 @@ class MapNode(Node):
         super().__init__("edge_map3d")
         self.frame = os.getenv("EDGE_MAP3D_FRAME", "odom")
         self.topic = os.getenv("EDGE_MAP3D_TOPIC", "/edge/map3d/points")
+        self.grid_topic = os.getenv("EDGE_MAP3D_GRID_TOPIC", "/edge/perception/map")
         self.simulated = os.getenv("EDGE_MAP3D_ENV") == "simulation"
         self.lock = threading.RLock()
         self.journal = ModuleJournal(os.getenv("EDGE_MAP3D_JOURNAL", "/journal/module-events.sqlite"))
@@ -50,6 +53,9 @@ class MapNode(Node):
         self.buffer = Buffer(node=self)
         self.tf = TransformListener(self.buffer, self)
         self.create_subscription(PointCloud2, self.topic, self.cloud, CLOUD_QOS)
+        grid_qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT,
+                              durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.create_subscription(OccupancyGrid, self.grid_topic, self.grid, grid_qos)
         self.create_subscription(Odometry, os.getenv("EDGE_MAP3D_POSE", "/edge/perception/pose"), self.pose, qos_profile_sensor_data)
         self.create_subscription(String, "/edge/semantic_map", self.scene, qos_profile_sensor_data)
         if self.simulated:
@@ -62,7 +68,8 @@ class MapNode(Node):
     @staticmethod
     def empty_layers():
         return {"cloud": {"source_frame": None, "stamp_s": None, "sample_points": 0},
-                "pose": {"xyz": None, "stamp_s": None}, "scene": {"features": [], "zones": []}}
+                "pose": {"xyz": None, "stamp_s": None}, "scene": {"features": [], "zones": []},
+                "grid": {"width": 0, "height": 0, "cells": [], "stamp_s": None}}
 
     def fact(self, layer, state, **fields):
         with self.journal.db:
@@ -220,6 +227,41 @@ class MapNode(Node):
                 layer["error"] = "no_valid_returns"
             self.transition(name)
 
+    def grid(self, msg):
+        info = msg.info
+        width, height = info.width, info.height
+        stamp = Time.from_msg(msg.header.stamp).nanoseconds
+        p, q = info.origin.position, info.origin.orientation
+        try:
+            if msg.header.frame_id != self.frame:
+                raise ValueError("grid_frame_mismatch")
+            self.valid_stamp(stamp, GRID_TTL)
+            if not (0 < width <= 4096 and 0 < height <= 4096 and width * height <= MAX_GRID_CELLS
+                    and len(msg.data) == width * height):
+                raise ValueError("grid_size_invalid")
+            if not (0 < info.resolution <= 1000 and
+                    all(math.isfinite(v) and abs(v) <= 1e6 for v in (p.x, p.y, p.z))):
+                raise ValueError("grid_geometry_invalid")
+            # The renderer supports a translated, yaw-rotated XY plane.
+            if not (abs(q.x) < 1e-6 and abs(q.y) < 1e-6 and abs(math.hypot(q.z, q.w) - 1) < 1e-5):
+                raise ValueError("grid_orientation_invalid")
+            if min(msg.data) < -1 or max(msg.data) > 100:
+                raise ValueError("grid_value_invalid")
+        except ValueError as exc:
+            self.error("grid", str(exc))
+            return
+        with self.lock:
+            prior = self.layers["grid"]["stamp_s"]
+            if prior is not None and stamp / 1e9 <= prior:
+                return
+            self.layers["grid"] = {
+                "received": time.monotonic(), "ttl_s": GRID_TTL, "stamp_s": stamp / 1e9,
+                "width": width, "height": height, "resolution": info.resolution,
+                "origin": [p.x, p.y, 2 * math.atan2(q.z, q.w)], "origin_z": p.z,
+                "frame": self.frame, "cells": list(msg.data),
+            }
+            self.transition("grid")
+
     def pose(self, msg):
         ns = Time.from_msg(msg.header.stamp).nanoseconds
         p = msg.pose.pose.position
@@ -259,7 +301,7 @@ class MapNode(Node):
                 bounds = zone["bounds"]
                 if len(bounds)!=4 or not all(math.isfinite(v) and abs(v)<=1e6 for v in bounds):
                     raise ValueError()
-                zones.append({"kind":str(zone.get("kind",""))[:96], "bounds":bounds})
+                zones.append({**{k:str(zone.get(k,""))[:96] for k in ("id","kind","label")}, "bounds":bounds})
             layer = {"received":time.monotonic(), "features":features, "zones":zones,
                      "source":str(data.get("source",""))[:128], "revision":str(data.get("revision",""))[:96]}
         except (AttributeError, ValueError, TypeError, KeyError, OverflowError, RecursionError):
@@ -292,6 +334,7 @@ class MapNode(Node):
                     data[name] = view
             data["cloud"].update(topic=self.topic, voxel_m=VOXEL_M, evictions=self.surface.evictions,
                                  points=list(self.surface.cells.values()))
+            data["grid"]["topic"] = self.grid_topic
             return data
 
 
@@ -325,8 +368,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
-        static = {"/":("index.html","text/html; charset=utf-8"), "/map.js":("map.js","text/javascript"),
-                  "/map.css":("map.css","text/css")}
+        static = {"/": ("index.html","text/html; charset=utf-8"), "/map.css": ("map.css","text/css")}
+        static.update({"/" + file: (file,"text/javascript") for file in ("map.js","grid.js","planar.js","spatial.js")})
         if path in ("/health", "/api/map"):
             obj = self.server.node.snapshot() if path=="/api/map" else self.server.node.identity
             raw, mime = json.dumps(obj, ensure_ascii=False, allow_nan=False, separators=(",",":")).encode(), "application/json"

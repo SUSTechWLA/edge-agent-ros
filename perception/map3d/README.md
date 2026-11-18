@@ -33,7 +33,21 @@ EDGE_MAP3D_TOPIC=/lidar/points EDGE_MAP3D_FRAME=map \
 docker compose -f compose.hardware.yaml --profile map3d up -d map3d
 ```
 
-地图只读订阅 PointCloud2、`EDGE_MAP3D_POSE`（默认 /edge/perception/pose）和 /edge/semantic_map。驱动提供 XYZ 浮点字段和有效的采样时间，TF 应覆盖该时间从传感器到固定 frame 的变换；已经在固定 frame 注册的点云无需 TF。机器人位姿与设计先验须使用同一固定 frame。硬件没有发布语义先验时，实测点云仍可用。安装新设备驱动、标定或解决位姿漂移需由相应所有者承担。
+地图只读订阅 PointCloud2、位姿（`EDGE_MAP3D_POSE`）、语义区域与物体（`/edge/semantic_map`），以及占据栅格（`EDGE_MAP3D_GRID_TOPIC`，默认 `/edge/perception/map`）。驱动提供 XYZ 浮点字段和有效的采样时间，TF 应覆盖该时间从传感器到固定 frame 的变换。位姿、栅格与语义先验使用同一固定 frame。每层可独立缺失。
+
+## 在同一个位置比较二维与三维
+
+打开地图地址（默认 `http://127.0.0.1:8770/`），选择“2D 平面地图”或“3D 空间地图”。也可直接以 `/?view=2d` 打开二维。图层开关共享，观察位置独立。切换回来可以继续检查刚才的位置。
+
+| 想知道什么 | 操作和读数 |
+|---|---|
+| 机器人附近哪格被占据，是哪片区域？ | 在二维拖动平移，以滚轮在指针位置缩放，点击读取 XY、列行、原始格值和已命名的语义区域。+X 向右、+Y 向上，原点带偏航的栅格仍与物体对齐。 |
+| 回波在地面、门框还是屋顶？ | 三维左键拖动环绕，Shift 或右键拖动平移，滚轮或双指缩放。点击可见回波或物体表面读取 XYZ；点击裸露地面可读同一占据单元。方向键、加减号、Home、Enter 可用于键盘检查。轨道相机手势参照 [Three.js OrbitControls](https://threejs.org/docs/pages/OrbitControls.html)。 |
+| 灰暗或空白的区域代表什么？ | 看图例和“地图查询”的来源状态。本项目编码以 −1 表示未知，0 表示空闲，100 表示占据；中间值按发布者的占据估计展示。点云只覆盖收到回波的位置，未观测区保持未知。 |
+
+当地图摆在训练场，地面可以同时属于“草坪”且当前格值为“占据”（例如有人站在上面）。占据回答空间观测，语义提供区域或物体含义。以后为草坪增加正射纹理，只需给外观图层提供图像、坐标基准、范围和采集版本。墙面纹理还需要立面几何与映射关系。同一纹理可用于两种观察角度，纹理内容不参与通行判定。[设计及后续纹理接口](../../docs/specs/SDD-026-map-viewers.md)
+
+占据订阅使用 transient local、best effort、深度 1，适用于本项目持续发布的融合地图。单轴最多 4096 格，总计最多 262144 格；平面可带绕 Z 的旋转和固定高度。新样本要求 ROS 时间在 5 秒窗口内，已接受的缓存变旧后显示上次观测。实际机器接入其他发布者时先核对话题、QoS、坐标系、时间来源及格值编码。快照 `grid.cells[row*width+col]` 使用 ROS 行主序，`origin=[x,y,yaw]`，高度另见 `origin_z`。[ROS 消息定义](https://github.com/ros2/common_interfaces/blob/jazzy/nav_msgs/msg/OccupancyGrid.msg)
 
 GET `/api/map` 是同源、只读的 JSON，字段 version、generation、frame 和 environment 描述地图世代与坐标。cloud 包含 topic、source_frame、stamp_s、status、age_s、sample_points、voxel_m、evictions 及 points；pose 的 xyz 单位米，scene 的 features 带底面中心 xyz 和 size。单次消息限 32 MiB，人为下采样最多 4,096 点，保留至多 8,192 个 10 cm 体素。一个体素保存最近接受的真实测量。静止环境的旧回波可能持续保留；动态障碍清除、自由空间、未知体积和碰撞安全性不能由此推断。此数据适合地图展示和只读分析，运动仍按原授权路径执行。
 

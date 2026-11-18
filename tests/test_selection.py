@@ -22,7 +22,7 @@ RULES = [
      ("planner", "observations", "board", "plugin-isolation")),
     (("model_provider/*", "compose.model-provider*.yaml", "tests/test_planner_model_selection.py"),
      ("planner", "model", "plugin-isolation")),
-    (("tests/system/map_model_isolation.py", "tests/system/map3d_browser.mjs", "tests/system/camera_acceptance.py",
+    (("tests/map_planar.test.mjs", "tests/map_spatial.test.mjs", "tests/system/map_model_isolation.py", "tests/system/map3d_browser.mjs", "tests/system/camera_acceptance.py",
       "tests/system/sensor_plugin_isolation.py", "tests/system/rgbd_acceptance.py", "tests/system/rgbd_browser.mjs"),
      ("plugin-isolation",)),
     (("console/web/view-plugins.js","console/web/view-plugins/*"), ("ui","plugin-isolation")),
@@ -129,6 +129,7 @@ class TestSelection(unittest.TestCase):
                          [R,"planner","observations","board","plugin-isolation"])
         self.assertEqual(selection(["model_provider/provider.py"])[0],[R,"planner","model","plugin-isolation"])
         self.assertEqual(selection(["tests/system/map_model_isolation.py"])[0],[R,"plugin-isolation"])
+        self.assertEqual(selection(["tests/map_planar.test.mjs","tests/map_spatial.test.mjs"])[0],[R,"plugin-isolation"])
         for plugin in ("compose.rgbd-hardware.yaml","perception/rgbd/pairs.py","map-inputs/points.json","perception/camera/frames.py"):
             self.assertEqual(selection([plugin])[0],[R,"planner","observations","board","plugin-isolation"])
 

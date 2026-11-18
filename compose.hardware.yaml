@@ -44,6 +44,7 @@ services:
       EDGE_MAP3D_ENV: hardware
       EDGE_MAP3D_BIND: 127.0.0.1
       EDGE_MAP3D_FRAME: ${EDGE_MAP3D_FRAME:-odom}
+      EDGE_MAP3D_GRID_TOPIC: ${EDGE_MAP3D_GRID_TOPIC:-/edge/perception/map}
       ROS_LOG_DIR: /tmp/ros-logs
       EDGE_MAP3D_TOPIC: ${EDGE_MAP3D_TOPIC:-/edge/map3d/points}
       EDGE_MAP3D_POSE: ${EDGE_MAP3D_POSE:-/edge/perception/pose}
