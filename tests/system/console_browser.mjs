@@ -10,12 +10,14 @@ import { checkReview } from './review_browser.mjs';
 import { checkSessions } from './session_browser.mjs';
 import { checkMap3D } from './map3d_browser.mjs';
 import { checkCampusTexture, checkCampusFallback } from './campus_texture_browser.mjs';
+import { checkCampusRoute } from './campus_route_browser.mjs';
 import { checkRgbd } from './rgbd_browser.mjs';
 
 const [url, output, screenshotOption] = process.argv.slice(2);
-if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus','--campus-texture','--campus-fallback'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus','--campus-texture','--campus-route','--campus-fallback'].includes(screenshotOption)) throw new Error('Unknown browser test option');
 const campusFallback = screenshotOption === '--campus-fallback';
-const campusTexture = screenshotOption === '--campus-texture';
+const campusRoute = screenshotOption === '--campus-route';
+const campusTexture = screenshotOption === '--campus-texture' || campusRoute;
 const campusOnly = screenshotOption === '--campus';
 const mapOnly = screenshotOption === '--map3d';
 const rgbdOnly = screenshotOption === '--rgbd';
@@ -108,7 +110,8 @@ try {
       continue;
     }
     if (campusTexture) {
-      viewports.push(await checkCampusTexture({url,width,output,evaluate,waitFor,send}));
+      const check=campusRoute?checkCampusRoute:checkCampusTexture;
+      viewports.push(await check({url,width,output,evaluate,waitFor,send}));
       continue;
     }
     if (campusOnly) {

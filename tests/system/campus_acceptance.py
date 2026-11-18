@@ -425,6 +425,9 @@ def run(args):
                 for viewport in report["texture_browser"]["viewports"]:
                     require(set(viewport["modes"]["spatial"]["bodies"])=={"edge_rover","crazyflie","go1","g1"},
                             "Missing a rendered robot body in browser evidence")
+                route_out=args.out.with_name(args.out.stem+"-route-browser.json")
+                cmd(["node",str(ROOT/"tests/system/console_browser.mjs"),map_url+"/?view=3d",str(route_out),"--campus-route"],timeout=180)
+                report["route_browser"]=json.loads(route_out.read_bytes())
             probes=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
                                  "/opt/audit/tests/system/campus_station_probe.py",timeout=150))
             require(probes,"Empty station fixture evidence")

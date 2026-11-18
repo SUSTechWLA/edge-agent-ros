@@ -134,7 +134,7 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
   async function setLayer(name,wanted) {
     await evaluate(`{const n=document.getElementById("layer-${name}");if(n.checked!==${wanted})n.click();}`);
   }
-  const initialLayers=await evaluate("Object.fromEntries(['grid','scene','pose','cloud'].map(n=>[n,document.getElementById('layer-'+n).checked]))");
+  const initialLayers=await evaluate("Object.fromEntries(['grid','scene','pose','cloud','route'].filter(n=>document.getElementById('layer-'+n)).map(n=>[n,document.getElementById('layer-'+n).checked]))");
   for(const [mode,canvas] of [['planar','planar-viewport'],['spatial','viewport']]) {
     await click('mode-'+mode);
     await waitFor(`document.getElementById("mode-${mode}").getAttribute('aria-pressed')==='true'`);

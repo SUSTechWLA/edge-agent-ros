@@ -12,17 +12,13 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 
-def install_route(world, directory):
-    """Publish the surveyed walk from the same building edition and SDF road segments."""
-    manifest = directory/"manifest.json"
-    meta = json.loads(manifest.read_bytes())
+def route_payload(world, meta):
+    """Register the surveyed walk against the same scene and SDF road segments."""
     overview = json.loads((world/"overview"/"manifest.json").read_bytes())
     layout = json.loads((world/"layout.json").read_bytes())
     graphs = [r for r in overview.get("routes",[]) if r.get("id")=="campus_walk"]
     if not graphs:
-        if meta.pop("route",None) is not None:
-            record(manifest,meta)
-        return
+        return None
     if (len(graphs)!=1 or overview["frame"]!=layout["frame"] or layout["frame"]!=meta["frame"]
             or overview.get("unit")!="m" or overview.get("scene_revision",layout["revision"])!=layout["revision"]
             or layout["revision"]!=meta["scene_revision"] or meta["world_sha256"]!=file_digest(world/"world.sdf")):
@@ -32,10 +28,13 @@ def install_route(world, directory):
     if not 2<=len(nodes)<=256 or len(edges)!=len(nodes)-1 or len({n["id"] for n in nodes})!=len(nodes):
         raise ValueError("campus walk is disconnected or exceeds its point budget")
     road = ET.parse(world/"world.sdf").find("./world/model[@name='road']")
+    if road is not None and any(any(float(v)!=0 for v in obj.findtext("pose","0 0 0 0 0 0").split())
+                                for obj in [road,*road.findall("link")]):
+        raise ValueError("campus walk is not in the expected world coordinates")
     visuals = {v.get("name"):v for v in road.findall("link/visual")} if road is not None else {}
     points = [n["xy"] for n in nodes]
     xmin,ymin,xmax,ymax = meta["bounds"]
-    if any(len(p)!=2 or not all(type(v) in (int,float) and math.isfinite(v) for v in p)
+    if any(not isinstance(p,list) or len(p)!=2 or not all(type(v) in (int,float) for v in p)
            or not (xmin<=p[0]<=xmax and ymin<=p[1]<=ymax) for p in points):
         raise ValueError("campus walk coordinate outside the atlas")
     length = 0.
@@ -53,10 +52,24 @@ def install_route(world, directory):
         length += math.dist(a,b)
     if length>10000:
         raise ValueError("campus walk exceeds the length budget")
-    overlay = dict(id=route["id"],frame=meta["frame"],scene_revision=layout["revision"],
-                   points=points,length_m=round(length,3))
-    if meta.get("route")!=overlay:
-        meta["route"]=overlay
+    return dict(id=route["id"],frame=meta["frame"],scene_revision=layout["revision"],
+                points=points,length_m=round(length,3))
+
+
+def install_route(world, directory):
+    manifest = directory/"manifest.json"
+    meta = json.loads(manifest.read_bytes())
+    previous = meta.get("route")
+    try:
+        overlay = route_payload(world,meta)
+    except (AttributeError, KeyError, OSError, TypeError, ValueError, ET.ParseError) as exc:
+        print(f"Skipping unregistered campus route: {exc}",file=sys.stderr)
+        overlay = None
+    if overlay!=previous:
+        if overlay is not None:
+            meta["route"]=overlay
+        else:
+            meta.pop("route",None)
         record(manifest,meta)
 
 

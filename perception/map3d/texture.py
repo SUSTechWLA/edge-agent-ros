@@ -3,6 +3,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import struct
 from urllib.parse import urlsplit
 
@@ -16,7 +17,8 @@ def bounds(value):
 
 
 def registered_route(route, info):
-    if (not isinstance(route,dict) or route.get("id")!="campus_walk"
+    if (not isinstance(route,dict) or not isinstance(route.get("id"),str)
+            or not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}",route["id"])
             or not info["scene_revision"] or route.get("scene_revision")!=info["scene_revision"]
             or route.get("frame")!=info["frame"]):
         raise ValueError("texture_route_registration_invalid")
@@ -24,9 +26,9 @@ def registered_route(route, info):
     xmin,ymin,xmax,ymax = info["bounds"]
     if (not isinstance(points,list) or not 2<=len(points)<=256
             or any(not isinstance(p,list) or len(p)!=2
-                   or not all(type(v) in (int,float) and math.isfinite(v) for v in p)
+                   or not all(type(v) in (int,float) for v in p)
                    or not (xmin<=p[0]<=xmax and ymin<=p[1]<=ymax) for p in points)
-            or type(length) not in (int,float) or not math.isfinite(length) or not 0<length<=10000):
+            or type(length) not in (int,float) or not 0<length<=10000):
         raise ValueError("texture_route_geometry_invalid")
     legs=[math.dist(a,b) for a,b in zip(points,points[1:])]
     if min(legs)<=0 or abs(sum(legs)-length)>.002:
