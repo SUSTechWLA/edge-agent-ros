@@ -29,6 +29,93 @@
     "stop-window-faults.json": {
       "sha256": "445e9c97af0c9f63b968fc6719ddf38263ae0df136b6ec1a02acbc6fa42424dd",
       "passed": true
+    },
+    "campus-sessions.json": {
+      "sha256": "718b7121043fd0de94575755f3ef3800df80ac7ebe62840ca226b5a282c2ef28",
+      "image": "edge-agent-ros:field-9983c89",
+      "passed": false,
+      "error": "['docker', 'compose', '-p'] returned 1: Traceback (most recent call last):\n  File \"/opt/audit/tests/system/campus_acceptance.py\", line 515, in <module>\n    live_geometry()\n  File \"/opt/audit/tests/system/campus_acceptance.py\", line 124, in live_geometry\n    response = await_fact(serialized_world, \"live expanded SDF\", 55)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/audit/tests/system/campus_acceptance.py\", line 53, in await_fact\n    raise AssertionError(f\"Timeout: {message}: {last}\")\nAssertionError: Timeout: live expanded SDF: None\n ",
+      "profile": "all sensors throughout navigation",
+      "mesh_export": null
+    },
+    "campus-integrated.json": {
+      "sha256": "1b9cf760f1e64fa951f0fcc2aaab9dac6383bd0e6309557cfd41114db1d46dbb",
+      "image": "edge-agent-ros:field-9983c89",
+      "passed": false,
+      "error": "mission failed: campus-gate-390b3f372e/step/1/waypoint/3 gateway: UNKNOWN: stop unconfirmed after braked at goal; gateway inhibited [code:navigation.stop_unconfirmed]",
+      "profile": "all sensors throughout navigation",
+      "mesh_export": [
+        {
+          "attempt": 1,
+          "elapsed_s": 22.448,
+          "success": true
+        }
+      ],
+      "stop": {
+        "accepted_samples": 27,
+        "quiet_samples": 7,
+        "sample_gaps": 3,
+        "wall_elapsed_ms": 3051,
+        "quiet_acquisition_ms": 204,
+        "quiet_arrival_ms": 464,
+        "last_odom_age_ms": 260,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      },
+      "task": "campus-gate-390b3f372e/step/1/waypoint/3"
+    },
+    "campus-release.json": {
+      "sha256": "39b77d6bd47e18188302b23ce50a9dd724ef76fa48b07982b4335b5ef60cba23",
+      "image": "edge-agent-ros:field-9f6fbe7",
+      "passed": false,
+      "error": "mission failed: campus-gate-f6542cdc8f/step/1/waypoint/2 gateway: UNKNOWN: stop unconfirmed after braked at goal; gateway inhibited [code:navigation.stop_unconfirmed]",
+      "profile": "all sensors throughout navigation",
+      "mesh_export": [
+        {
+          "attempt": 1,
+          "elapsed_s": 26.486,
+          "success": true
+        }
+      ],
+      "stop": {
+        "accepted_samples": 27,
+        "quiet_samples": 1,
+        "sample_gaps": 4,
+        "wall_elapsed_ms": 3059,
+        "quiet_acquisition_ms": 0,
+        "quiet_arrival_ms": 0,
+        "last_odom_age_ms": 16,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      },
+      "task": "campus-gate-f6542cdc8f/step/1/waypoint/2"
+    },
+    "campus-render4.json": {
+      "sha256": "389a3b193fea8a1cea51762799254e7bc4f2b1cb2292c743aabc9519df9c4f42",
+      "image": "edge-agent-ros:field-9f6fbe7",
+      "passed": false,
+      "error": "mission failed: campus-gate-ead8667899/step/1/waypoint/1 gateway: UNKNOWN: stop unconfirmed after braked at goal; gateway inhibited [code:navigation.stop_unconfirmed]",
+      "profile": "all sensors throughout navigation",
+      "mesh_export": [
+        {
+          "attempt": 1,
+          "elapsed_s": 26.162,
+          "success": true
+        }
+      ],
+      "llvmpipe_workers": 4,
+      "stop": {
+        "accepted_samples": 23,
+        "quiet_samples": 7,
+        "sample_gaps": 3,
+        "wall_elapsed_ms": 3047,
+        "quiet_acquisition_ms": 204,
+        "quiet_arrival_ms": 628,
+        "last_odom_age_ms": 203,
+        "last_linear_mps": 3.84447699320505e-19,
+        "last_angular_rad_s": 5.471167877959246e-19
+      },
+      "task": "campus-gate-ead8667899/step/1/waypoint/1"
     }
   },
   "campus": {
@@ -739,5 +826,178 @@
       },
       "new_action_refused": true
     }
-  ]
+  ],
+  "observer_soak": {
+    "duration_s": 300.0,
+    "samples": 61,
+    "http_errors": 0,
+    "stalled_sources": [],
+    "alerts": [],
+    "passed": true,
+    "inputs": [
+      "rgb",
+      "depth",
+      "scan",
+      "imu"
+    ],
+    "sha256": "33c10f5382237fcbac666aa8a645fcfe3514e5dbe804870904beb69b8b9d6b48"
+  },
+  "contract_regression": {
+    "passed": true,
+    "cases": 57,
+    "files": {
+      "test_module_journal.py": 7,
+      "test_watchdog.py": 6,
+      "test_board_preflight.py": 4,
+      "test_campus_deployment.py": 16,
+      "test_campus_capture.py": 4,
+      "test_campus_robot_assets.py": 2,
+      "test_campus_route_overlay.py": 3,
+      "test_campus_real_site.py": 4,
+      "test_campus_facilities.py": 5,
+      "test_campus_assets.py": 6
+    },
+    "sha256": "2f436270c62ec84209b5777158cf40c9883e3361ab2cec156a47a8ea690e267d"
+  },
+  "observer_hot_upgrade": {
+    "passed": true,
+    "before": {
+      "services": {
+        "sim": {
+          "id": "9ab8e00c17ce4c0225058ee33784b2d3da4cb8ba0b37397427dd110776ba7993",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:01.743641657Z"
+        },
+        "gateway": {
+          "id": "841991e93bc28aadf807ede343d56bffc103ccdc4c707141a038db4b650b2364",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:01:59.44742579Z"
+        },
+        "agent": {
+          "id": "adf9f26a56ead97bccf0cad31db5959f1612dce2d0d8e674fab871d76353b2ef",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:01.462481463Z"
+        },
+        "session": {
+          "id": "46d9681edf2e90c8be2e918d5559ee8ede3ad060517df7e9ec18c2482b18b3e6",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:00.055132558Z"
+        },
+        "camera": {
+          "id": "6e669b53af6c0a581d26a8b3b0c9820cc99e606e8dcb465126eabc530669573a",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:25.395527353Z"
+        },
+        "rgbd": {
+          "id": "09f6190cc23c9972abcc10e242dc1f4a4fd214c82142b584ac30bed31fb7c1bb",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:25.664837273Z"
+        },
+        "sensor-health": {
+          "id": "f78da4963d1cb0f75d94559fa2c34d497a72d980489fff486a564f28165c0e64",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:31.134984999Z"
+        }
+      },
+      "session": "1e3467acc0ee4436a6eda071c953cca8"
+    },
+    "after": {
+      "services": {
+        "sim": {
+          "id": "9ab8e00c17ce4c0225058ee33784b2d3da4cb8ba0b37397427dd110776ba7993",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:01.743641657Z"
+        },
+        "gateway": {
+          "id": "841991e93bc28aadf807ede343d56bffc103ccdc4c707141a038db4b650b2364",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:01:59.44742579Z"
+        },
+        "agent": {
+          "id": "adf9f26a56ead97bccf0cad31db5959f1612dce2d0d8e674fab871d76353b2ef",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:01.462481463Z"
+        },
+        "session": {
+          "id": "46d9681edf2e90c8be2e918d5559ee8ede3ad060517df7e9ec18c2482b18b3e6",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:00.055132558Z"
+        },
+        "camera": {
+          "id": "6e669b53af6c0a581d26a8b3b0c9820cc99e606e8dcb465126eabc530669573a",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:25.395527353Z"
+        },
+        "rgbd": {
+          "id": "09f6190cc23c9972abcc10e242dc1f4a4fd214c82142b584ac30bed31fb7c1bb",
+          "image": "edge-agent-ros:field-9983c89",
+          "started": "2026-11-18T15:02:25.664837273Z"
+        },
+        "sensor-health": {
+          "id": "6a8d06e00365b3b92dfd6a1d31b9dec60b61b9cf953c2f3d6f5e14477dd25324",
+          "image": "edge-agent-ros:field-9f6fbe7",
+          "started": "2026-11-18T15:42:38.12837085Z"
+        }
+      },
+      "session": "1e3467acc0ee4436a6eda071c953cca8"
+    },
+    "observer": "1.1.0",
+    "observations": {
+      "rgb": 1284000000000,
+      "depth": 1284000000000,
+      "scan": 1284000000000,
+      "imu": 1284060000000
+    },
+    "diagnostic_task": {
+      "id": "field-health-4ab931a30ece",
+      "state": "SUCCEEDED",
+      "trace": "field-health-4ab931a30ece",
+      "session_url": "http://127.0.0.1:8766/#sessions?task=field-health-4ab931a30ece"
+    }
+  },
+  "qualified_runtime": {
+    "revision": "9f6fbe7779e24dd6cf74f654275c4e12290006af",
+    "image": "edge-agent-ros:field-9f6fbe7",
+    "source_report": "artifacts/verification/edge-field/campus-qualified.json",
+    "sha256": "1dfeefdcd641dcdd2ff1d6554bcc364645163ef594e85c25bc59f29b4254014d",
+    "witness_profile": "per_task",
+    "checks": {
+      "registered_tool_api_session": true,
+      "four_bodies_physical_feedback": true,
+      "sixteen_sensor_streams": true,
+      "interrupt_bridge": true,
+      "reload_with_history": true,
+      "desktop_mobile_maps": true,
+      "three_scan_stations": true
+    },
+    "wheel": {
+      "task_id": "campus-gate-7ebb3b5b78",
+      "samples": 274,
+      "both_wheels_peak_rad_s": 3.2,
+      "start_ns": 1150000000,
+      "end_ns": 14800000000
+    },
+    "altitude_m": 0.9663169625304258,
+    "down_range_m": 0.8646,
+    "bridge": {
+      "halted": {
+        "edge_rover.wheels": 333,
+        "edge_rover.color": 67,
+        "crazyflie.down": 132,
+        "g1.depth": 67,
+        "go1.cloud": 66
+      },
+      "recovered": {
+        "edge_rover.wheels": 348,
+        "edge_rover.color": 70,
+        "crazyflie.down": 138,
+        "g1.depth": 70,
+        "go1.cloud": 69
+      },
+      "independent_imu_advanced": 26
+    },
+    "place_error_m": 0.0659,
+    "old_workbench_task": "field-live-rover-810d435cb158",
+    "fresh_sensor_task": "field-health-4ab931a30ece"
+  }
 }

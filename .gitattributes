@@ -5,3 +5,4 @@ Dockerfile* text eol=lf
 *.png binary
 # Preserve the published SHA-256 of the original Windows capture on every platform.
 artifacts/verification/unified-campus/final.json -text
+artifacts/verification/edge-field/campus-qualified.json -text

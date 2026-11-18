@@ -23,14 +23,21 @@
 | 运行中的工作台 | 车出门、返回，另三种机体各执行两个动作，共八次成功。“双足机器人起飞”受阻。同一查询 ID 的传感器读数可重读。“检查隔壁传感器”因没有请求的范围而受阻。解析自然语言使用本地注册能力，此项与下文单独调用 Qwen 的实验分开计数。 |
 | 停车故障专项 | 10 项覆盖扫描缺口、障碍、量程异常、跨源时钟、重复包、断流、错帧和时间倒退。倒退样例的有效采样为 0，3 秒到期后仍为 UNKNOWN，下一次运动申请被拒绝。正常返回任务的归档事件 2512 有 11 帧有效测量，末段 10 帧连续静止，采集跨度 306 ms、到达跨度 402 ms。 |
 | 修正过的测试记录 | 第一轮测试在全部动作完成之后才回看滚动缓存，漏掉运动中的轮速。已改成在导航结束时保存。第二、三轮分别在不同路点观测到停车未确认，并保留为异常结果。当时的数据不能唯一确定上游原因。第四轮的同一套安全门槛、机载传感器、桥中断、重载和桌面/手机地图全部通过。 |
+| 两轮连续任务和重启 | 隔离工作台共完成 116 个只读任务、232 次重复投递，核对 956 条任务事件。两次短时断流可自动续办。两次持续断流均耗尽三次重试，Agent 重启后仍保留待处理状态；获准续办后成功，再次续办返回 409。两轮共 100.921 秒，数小时板端耐久试验仍待开展。[逐轮审计](../evidence/edge-field-lifecycle.json) |
+| 日常观测与插件热升级 | 每 5 秒查一次工作台与四路巡检输入，连续 300 秒共 61 次，各路采集时间逐次前进，HTTP 错误、停滞和告警均为 0。将巡检升级至 1.1.0 时，Gazebo、网关、Agent、Session、相机和 RGB-D 的容器身份及启动时间保持一致，旧导航任务可读，新诊断任务成功。[新版诊断任务](http://127.0.0.1:8766/#sessions?task=field-health-4ab931a30ece) |
+
+**并行全量观测还有明确的性能边界。** 后续压力复测在同一台 Docker Desktop 同时运行日常校园、基础场景和独立验收校园。一次停车有 27 个有效里程计包，3 次采样间隙打断连续计数，最后 7 帧仅覆盖 204 ms 采集时间，未达到所需的 300 ms。将见证快照移入 Linux tmpfs 后，80 KB 写入耗时 p95 从 18.28 ms 降至 0.55 ms；另一次将私有仿真的软渲染工作线程设为 4，仍出现停车未确认。因此没有把这两个改动视为停车问题已消除。未取得足够证据时仍进入人工复核。四路/16 路采样的实际负载、驱动调度和里程计时序，应在目标板上分别测量。[原始测量与实验边界](../evidence/edge-field-witness-cost.json)
 
 阅读[归档数值与每轮 SHA-256](../evidence/edge-field-readiness.json)、[日常工作台八次动作](../evidence/campus-live-physical.json)、[可点击的导航会话](http://127.0.0.1:8766/#sessions?task=field-live-rover-810d435cb158)或[巡检工具的真实回执](http://127.0.0.1:8766/#sessions?task=field-health-ba68f5c15508)。机器可读摘要随仓库发布，本机完整运行在 `artifacts/verification/edge-field/`。
+
+交付镜像 `edge-agent-ros:field-9f6fbe7` 又完成一轮按任务订阅的整体验收。轮式车三次穿门，在第一段取得 274 帧轮速，最高 3.2 rad/s。接着见证者订阅全部 16 路输入，执行机体任务，实测无人机高度 0.966 m、向下测距 0.865 m。中断传感器桥期间独立 IMU 前进 26 帧。自然语言诊断、原会话回读、受控重载后的再次穿门、两种宽度的地图交互和三处场地激光测站全部通过。全量盯测另用 `--simultaneous-observation` 重现，对比时应保留测试方式与渲染负载。[最终验收原件](../../artifacts/verification/edge-field/campus-qualified.json) · [巡检进程崩溃实测](../evidence/sensor-incident-restart.json)
 
 已有校园资产和镜像的本机可运行以下命令。第一条创建独立的 Compose 项目、Gazebo 分区和 ROS 域。第二条在指定的校园工作台创建两个只读任务，验证会话与原始事件归档。
 
 ```sh
 python tests/system/campus_acceptance.py --image edge-agent-ros:field-ready --verify-onboard --verify-reload --verify-texture --out artifacts/verification/edge-field/campus-rerun.json
 python tests/system/field_sensor_task.py --console http://127.0.0.1:8766 --out artifacts/verification/edge-field/diagnosis-rerun.json
+python tests/system/field_observation_soak.py --seconds 300 --interval 5 --out artifacts/verification/edge-field/observer-rerun.json
 ```
 
 ## 升级影响和验证入口
@@ -39,6 +46,7 @@ python tests/system/field_sensor_task.py --console http://127.0.0.1:8766 --out a
 |---|---|
 | 校园机体和传感器桥 | 增加车载 RGB-D、两路车轮角速度、机载前视/向下测距、四足多线雷达和双足头部 RGB-D。Gazebo 生成原始读数，桥传输消息，固定外参通过 TF 提供。机载相机页面可以在运行中加装。[规格与话题验收](../specs/SDD-034-campus-onboard-sensors.md) |
 | Sensor Health | 独立只读 ROS 订阅、仪表页、持久事件以及可注册的 `diagnose_sensors` 工具。撤下工具不影响网关本身的制动规则。不同传感器与匹配前端按部署配置接入。[插件与安装](../../perception/sensor_health/README.md) |
+| 巡检崩溃与恢复 | 1.1.0 把未结束故障指针和状态事件写入同一事务。进程崩溃后，Docker 拉起同一来源，插件接回原告警，重新采集三帧才能确认恢复。机体、话题或坐标配置变化会另开观测。停机时间保留为观测空窗。[重启契约与验收](../specs/SDD-037-sensor-incident-restart.md) |
 | Agent、Session、Watchdog | 校园入口直接链接任务会话、复盘和原始事件。Agent 可以调用只读诊断；现有 Watchdog 处理巡检、重试预算和人工介入。对过去某次失败的归因，需要原事件满足同一机体、任务或操作关联条件。[工作台验收](../specs/SDD-031-campus-workbench-replay.md) · [巡检与恢复](../watchdog.md) |
 | 动作提供者、Gateway | 坏反馈和退出时的零控制由持有执行权的模块负责；终态事件新增停车测量窗口。两处均有源码改动和专项故障测试。[机体反馈](../specs/SDD-033-invalid-body-feedback.md) · [停车确认](../specs/SDD-036-stop-evidence.md) |
 | 现场部署 | `hardware observe` 仅开放观察，拒绝任务创建与重试。预检验证选择的话题、坐标系及连续采样。凭证、运行日志、镜像包按[目录约定](../README.md)管理。[部署与回退](../board-first-boot.md) |
@@ -51,6 +59,6 @@ python tests/system/field_sensor_task.py --console http://127.0.0.1:8766 --out a
 
 1. 从[首次上板指南](../board-first-boot.md)加载与源码版本相符的 ARM64 镜像。设置机体 ID、ROS domain、话题和 frame。先运行只读预检，用现场电源、镜头、时钟和驱动保存一组干净基线。
 2. 在车架或隔离台架上分别遮挡镜头、过曝、拔下传感器、延迟数据和恢复供电。对照同一机体的事件与恢复读数，记录检测延迟、误报、漏报和操作员实际需要做的动作。不同机体逐一建立阈值。
-3. 在机体侧验证急停、失联停车、限速及取消。验证负载变化下的里程计采集/到达间隔，再开放短距离自然语言任务。通过带独立物理观测的恢复测试后，才逐步拉长任务并测温度、功耗、存储增长和重启后的续办。
+3. 在机体侧验证急停、失联停车、限速及取消。如果使用本项目轮式仿真网关作适配参考，注意其中任意两帧有效里程计的采集间隔或到达间隔超过 200 ms 都会打断连续静止计数；低频驱动和积压后突发交付会影响停车确认。在目标硬件负载下实测这两条时间序列，再开放短距离自然语言任务。通过带独立物理观测的恢复测试后，逐步拉长任务并测温度、功耗、存储增长和重启后的续办。
 
 本轮校园的轮式车可以穿门并验证停稳。无人机验证垂直起降，四足和双足分别验证受控关节动作。完整自主飞行、步态导航、真实 SLAM 重定位及现场长期无故障时长仍需分别验收。

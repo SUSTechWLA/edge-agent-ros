@@ -53,15 +53,16 @@ def measure(msg,kind):
     return [round(v,4) for v in (acc.x,acc.y,acc.z,gyro.x,gyro.y,gyro.z)]
 
 
-def record(folder):
+def record(folder,wheels_only=False):
     import rclpy
     from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
     import sensor_msgs.msg as messages
     from tf2_msgs.msg import TFMessage
     rclpy.init()
-    node=rclpy.create_node("field_sensor_witness")
-    rows={k:deque(maxlen=950) for k in TOPICS}
-    counts={k:0 for k in TOPICS}
+    node=rclpy.create_node("field_wheel_witness" if wheels_only else "field_sensor_witness")
+    topics={"edge_rover.wheels":TOPICS["edge_rover.wheels"]} if wheels_only else TOPICS
+    rows={k:deque(maxlen=950) for k in topics}
+    counts={k:0 for k in topics}
     errors={}
     frames={}
     def receive(key,msg):
@@ -84,12 +85,13 @@ def record(folder):
             p,q=t.transform.translation,t.transform.rotation
             frames[t.child_frame_id]=[t.header.frame_id,[p.x,p.y,p.z],[q.x,q.y,q.z,q.w]]
     node.create_subscription(TFMessage,"/tf_static",static,QoSProfile(depth=10,durability=DurabilityPolicy.TRANSIENT_LOCAL))
-    for key,(topic,kind,_) in TOPICS.items():
+    for key,(topic,kind,_) in topics.items():
         node.create_subscription(getattr(messages,kind),topic,lambda msg,key=key:receive(key,msg),qos_profile_sensor_data)
+    name="wheels" if wheels_only else "onboard"
     def save():
-        path=folder/"onboard.tmp"
+        path=folder/(name+".tmp")
         path.write_text(json.dumps({"counts":counts,"errors":errors,"tf":frames,"rows":{k:list(v) for k,v in rows.items()}},allow_nan=False))
-        path.replace(folder/"onboard.json")
+        path.replace(folder/(name+".json"))
     node.create_timer(.4,save)
     rclpy.spin(node)
 
@@ -142,4 +144,4 @@ def validate(snapshot,wheel,forms):
 
 
 if __name__=="__main__":
-    record(Path(sys.argv[1]))
+    record(Path(sys.argv[1]),"--wheels-only" in sys.argv[2:])

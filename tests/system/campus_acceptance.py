@@ -117,17 +117,23 @@ def live_geometry():
     require(ok and scene.model, "active scene unavailable")
     config = SdfGeneratorConfig()
     config.global_entity_gen_config.expand_include_tags.data = True
-    # A newly started large world can publish scans before it can serialize all expanded meshes.
-    def serialized_world():
-        ok, result = node.request("/world/edge_lab/generate_world_sdf", config, SdfGeneratorConfig, StringMsg, 15000)
-        return result if ok and result.data else None
-    response = await_fact(serialized_world, "live expanded SDF", 55)
+    # The server can keep expanding meshes after a client timeout. Do not queue a new export every 15 s.
+    attempts = []
+    for attempt in range(2):
+        started = time.monotonic()
+        ok, response = node.request("/world/edge_lab/generate_world_sdf", config, SdfGeneratorConfig, StringMsg, 55000)
+        attempts.append({"attempt": attempt+1, "elapsed_s": round(time.monotonic()-started,3),
+                         "success": bool(ok and response.data)})
+        if attempts[-1]["success"]:
+            break
+        time.sleep(1)
+    require(attempts[-1]["success"], f"Gazebo could not export its live expanded SDF: {attempts}")
     world = ET.fromstring(response.data).find("world")
     require(world is not None and world.get("name") == "edge_lab", "unexpected world")
     models = {m.get("name"):m for m in world.findall("model")}
     visible = {m.name: m for m in scene.model}
     require("edge_rover" in visible, "robot missing from renderer")
-    report = {}
+    report = {"export_attempts":attempts}
     for name in AREAS:
         require(name in models and name in visible, f"{name} missing in live SDF or renderer; {list(models)[:20]}")
         m = models[name]
@@ -227,9 +233,11 @@ def run(args):
         return int(values.get("sec",0))*10**9+int(values.get("nsec",0))
     report={"passed":False,"project":project,"ros_domain":domain,"gazebo_partition":partition,
             "utc":datetime.now(timezone.utc).isoformat(),"image":args.image,"requested_text":"前往教学楼门外"}
+    if args.renderer_threads:
+        report["llvmpipe_workers"]=args.renderer_threads
     with tempfile.TemporaryDirectory(prefix="edge-campus-audit-") as name:
         tmp=Path(name)
-        for directory in ("audit","plugins","contracts","observations"):
+        for directory in ("plugins","contracts","observations"):
             (tmp/directory).mkdir()
         copy_shipped_contracts(tmp/"contracts")
         env={**os.environ,"EDGE_IMAGE":args.image,"EDGE_ROS_DOMAIN_ID":domain,"EDGE_CONSOLE_PORT":"0",
@@ -243,21 +251,31 @@ def run(args):
                 env["EDGE_CAMPUS_MAP_PORT"]=str(probe.getsockname()[1])
         overrides={svc:{"environment":{"GZ_PARTITION":partition,"ROS_DOMAIN_ID":domain}} for svc in
                    (*SERVICES,"campus-capture","campus-robot-bridge","campus-fleet")}
+        if args.renderer_threads:
+            overrides["sim"]["environment"]["LP_NUM_THREADS"]=str(args.renderer_threads)
         overrides["campus-audit-witness"]={"image":args.image,"pull_policy":"never","init":True,
             "environment":{"GZ_PARTITION":partition,"ROS_DOMAIN_ID":domain,"RMW_IMPLEMENTATION":"rmw_cyclonedds_cpp"},
             "command":["python3","-B","/opt/audit/tests/system/campus_acceptance.py","--ros-witness"],
+            "tmpfs":["/audit:rw,size=16m"],"ports":["127.0.0.1::8183"],
             "volumes":[{"type":"bind","source":str(Path(__file__).resolve()),"target":"/opt/audit/tests/system/campus_acceptance.py","read_only":True},
+                       {"type":"bind","source":str(Path(__file__).with_name("campus_sensor_probe.py").resolve()),"target":"/opt/audit/tests/system/campus_sensor_probe.py","read_only":True},
                        {"type":"bind","source":str(Path(__file__).with_name("campus_route_geometry.py").resolve()),"target":"/opt/audit/tests/system/campus_route_geometry.py","read_only":True},
                        {"type":"bind","source":str(Path(__file__).with_name("campus_station_probe.py").resolve()),"target":"/opt/audit/tests/system/campus_station_probe.py","read_only":True},
                        {"type":"bind","source":str(args.assets.resolve()),"target":"/assets","read_only":True},
-                       {"type":"volume","source":"campus-world","target":"/campus","read_only":True},
-                       {"type":"bind","source":str(tmp/"audit"),"target":"/audit"}]}
+                       {"type":"volume","source":"campus-world","target":"/campus","read_only":True}]}
         write(tmp/"isolate.json",{"services":overrides})
         compose=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.campus.yaml"),"-f",str(tmp/"isolate.json")]
         def dc(*params,timeout=140):
             return cmd([*compose,*params],env=env,timeout=timeout)
+        def serve_witness():
+            dc("exec","-d","-T","campus-audit-witness","python3","-m","http.server","8183","--directory","/audit")
+            return "http://"+dc("port","campus-audit-witness","8183")
+        def recorded(name):
+            # Keep high-frequency writes inside Linux; copy immutable snapshots across Docker only on demand.
+            with http.open(witness_url+"/"+name,timeout=4) as response:
+                return json.load(response)
         def observed():
-            return json.loads((tmp/"audit/ros.json").read_bytes())
+            return recorded("ros.json")
         def api(path,body=None):
             req=Request(base+path, data=json.dumps(body,ensure_ascii=False).encode() if body is not None else None,
                         headers={"Content-Type":"application/json"})
@@ -275,6 +293,7 @@ def run(args):
             require("sim" in small,"baseline project exists but has no running simulator")
             first_clock=small_clock(small)
             dc("up","-d","--no-build",*SERVICES,*FLEET_SERVICES,"campus-audit-witness","campus-capture","campus-overview",timeout=210)
+            witness_url=serve_witness()
             url=dc("port","console","8080")
             require(url.startswith("127.0.0.1:"),"console must bind to host loopback")
             base="http://"+url
@@ -285,18 +304,24 @@ def run(args):
             start=await_fact(ready,"Gazebo ROS streams and named-place capability",180)
             if args.verify_onboard:
                 from campus_sensor_probe import TOPICS,validate as validate_onboard,wheel_measurement
-                dc("exec","-d","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
-                   "/opt/edge/tests/system/campus_sensor_probe.py","/audit")
+                report["witness_profile"]="all_sensors_throughout" if args.simultaneous_observation else "per_task"
+                def start_probe(*options):
+                    dc("exec","-d","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
+                       "/opt/audit/tests/system/campus_sensor_probe.py","/audit",*options)
                 def onboard():
-                    return json.loads((tmp/"audit/onboard.json").read_bytes())
+                    return recorded("onboard.json")
                 def rig_ready():
                     s=onboard()
                     report["sensor_readiness"]={"counts":s["counts"],"errors":s["errors"],"tf":list(s["tf"])}
                     return s if not s["errors"] and all(len(s["rows"][key])>=3 for key in TOPICS) else None
-                await_fact(rig_ready,"all mounted ROS streams with valid frames and payloads",75)
+                if args.simultaneous_observation:
+                    start_probe()
+                    await_fact(rig_ready,"all mounted ROS streams with valid frames and payloads",75)
+                else:
+                    start_probe("--wheels-only")
+                    await_fact(lambda:recorded("wheels.json")["counts"]["edge_rover.wheels"]>=3,
+                               "fresh encoders before dispatch",45)
             require(math.dist(start["truth"][-1][1:3],(0,0))<.18,"mission must begin inside teaching lobby")
-            report["live_geometry"]=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
-                                     "/opt/audit/tests/system/campus_acceptance.py","--live-geometry",timeout=90))
             key="campus-gate-"+token
             api("/agent/tasks",{"id":key,"text":report["requested_text"],"trigger":{"kind":"user","source":"campus-audit","id":key}})
             def terminal(key=key):
@@ -327,9 +352,13 @@ def run(args):
             report["ros"]={"counts_start":start["counts"],"counts_end":end["counts"],"first_scan":start["scan"][-1],
                            "last_scan":end["scan"][-1],"clock_before_ns":start["stamps"]["clock"],"clock_after_ns":end["stamps"]["clock"]}
             if args.verify_onboard:
-                report["wheel_motion"]=wheel_measurement(onboard(),report["mission"])
+                wheel=onboard() if args.simultaneous_observation else recorded("wheels.json")
+                report["wheel_motion"]=wheel_measurement(wheel,report["mission"])
             from campus_round_trip import verify as verify_round_trip
             verify_round_trip(api,observed,await_fact,terminal,report["mission"],report.setdefault("continuous_navigation",{}))
+            if args.verify_onboard and not args.simultaneous_observation:
+                start_probe()
+                await_fact(rig_ready,"all mounted ROS streams with valid frames and payloads",75)
             from campus_forms import verify_forms
             verify_forms(api,dc,report.setdefault("robot_forms",{}))
             if args.verify_onboard:
@@ -359,6 +388,8 @@ def run(args):
                 await_fact(health_ready,"sensor diagnosis tool and four fresh body inputs",45)
                 from field_sensor_task import verify as verify_sensor_task
                 verify_sensor_task(base,report.setdefault("diagnostic_tasks",{}))
+            report["live_geometry"]=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
+                                     "/opt/audit/tests/system/campus_acceptance.py","--live-geometry",timeout=150))
             viewer = "http://"+dc("port","campus-overview","8080")
             def assets():
                 with http.open(viewer+"/capture.json",timeout=3) as response:
@@ -425,6 +456,8 @@ def run(args):
                 from scene.campus_large.run import reload_campus
                 old_session=api("/api/state")["session_id"]
                 reload_campus(dc,dc,lambda action,*ids:cmd(["docker",action,*ids],env=env))
+                # The managed reload stops the extra witness and its tmpfs before starting a new world.
+                witness_url=serve_witness()
                 base="http://"+dc("port","console","8080")
                 def fresh_origin():
                     witness=ready()
@@ -522,6 +555,10 @@ if __name__=="__main__":
         parser.add_argument("--verify-reload",action="store_true",help="cross the door again after guarded campus reload")
         parser.add_argument("--verify-texture",action="store_true",help="verify both map views on this isolated campus")
         parser.add_argument("--verify-onboard",action="store_true",help="compare mounted ROS measurements to physical tasks and interrupt the readout bridge")
+        parser.add_argument("--simultaneous-observation",action="store_true",
+                            help="with --verify-onboard, stress all sixteen readouts throughout rover navigation")
+        parser.add_argument("--renderer-threads",type=int,choices=range(1,33),metavar="1..32",
+                            help="limit Mesa software-renderer workers in this private simulator")
         parser.add_argument("--assets",type=Path,default=ROOT/"artifacts/sim-assets")
         parser.add_argument("--out",type=Path,required=True)
         run(parser.parse_args())
