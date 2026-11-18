@@ -68,6 +68,8 @@ sh scripts/deploy.sh hardware preflight odom
 
 **离线交付。** 可在同架构 Linux 构建机上运行上述 build，把同一代码版本和下述归档一起复制到板端。在构建机和板端均设置相同的 `EDGE_HARDWARE_IMAGE` 标签；板端保存任务账本的 Docker 卷独立于镜像。
 
+本开发机已保存经过双架构软件验收的 ARM64 现场包。把 `artifacts/deployment/field-7c16da6-arm64/` 整个目录复制到板端，按 `START-HERE.md` 操作。包内含硬件镜像、固定版本源码与 SHA-256 清单。[本机上板包说明](../artifacts/deployment/field-7c16da6-arm64/START-HERE.md) · [已核验的镜像身份与结果](evidence/board-preflight.json)
+
 ```sh
 docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{.Os}}/{{.Architecture}} {{.Id}}'
 docker save "$EDGE_HARDWARE_IMAGE" | gzip > edge-agent-hardware.tar.gz

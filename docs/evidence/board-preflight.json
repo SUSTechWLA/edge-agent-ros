@@ -71,15 +71,26 @@
         "imu.missing",
         "scan.missing"
       ]
+    },
+    "health_registration": {
+      "topic": "sensor.health",
+      "tool": "diagnose_sensors",
+      "effect": "read",
+      "url": "http://127.0.0.1:18957/diagnose",
+      "first_start": "installed",
+      "second_start": "unchanged",
+      "loopback_health_response_version": "1.0.0"
     }
   },
   "runs": {
     "amd64": {
       "arch": "x86_64",
       "emulation": false,
-      "image_id": "sha256:3bff34b51ed65d023ed0b196cf472de4260f71b1798ad780878889142588a935",
-      "source_label": "1c80e48-worktree-SDD032",
-      "raw_sha256": "2aa13d891d92c70acabf6bdaaa12ec0ccf8faa50286ad94f5da8fa79054bd2f3",
+      "image_id": "sha256:35c5fbba8ae27187d3ea2377bae6003fffc13377935d35ca9017cd77cf1a2eff",
+      "image": "edge-agent-ros/hardware:field-7c16da6-amd64",
+      "source_revision": "7c16da6f6e5db1c618d1c59bb6505174701f5427",
+      "raw_report": "artifacts/verification/edge-board-sdd032/amd64-final.json",
+      "raw_sha256": "a68cfae07997d23f1a8f3e3a030dddaf4fc02db36389634b6e8bc50463c4d860",
       "issues": {
         "without_drivers": [
           "odom.missing",
@@ -103,10 +114,10 @@
       "after_reconnect": {
         "source": "/fixture/odom",
         "frame": "fixture_odom",
-        "stamp_ns": 1795011303379028845,
+        "stamp_ns": 1795012535281433223,
         "stamp": {
-          "sec": 1795011303,
-          "nanosec": 379028845
+          "sec": 1795012535,
+          "nanosec": 281433223
         },
         "x": 0.375,
         "y": 0.0,
@@ -125,9 +136,11 @@
     "arm64": {
       "arch": "aarch64",
       "emulation": true,
-      "image_id": "sha256:4e0635dc3f8c608eee7fde64236d8d375169743e037f9432516d26d23a114f92",
-      "source_label": "1c80e48-worktree-SDD032",
-      "raw_sha256": "5f2bc6303c27dcc17c6bb3ba36d397787705a8413de26307156ac563d7198c87",
+      "image_id": "sha256:1d9b9cd72c1d11cd97b31e3f10443327921c5f67f7d513bcefaed18a7686d161",
+      "image": "edge-agent-ros/hardware:field-7c16da6-arm64",
+      "source_revision": "7c16da6f6e5db1c618d1c59bb6505174701f5427",
+      "raw_report": "artifacts/verification/edge-board-sdd032/arm64-final.json",
+      "raw_sha256": "9027d3b56bd8dc66a526c3b0de215f1b99b094faa3b8d6fce08d11f224ceaf58",
       "issues": {
         "without_drivers": [
           "odom.missing",
@@ -151,10 +164,10 @@
       "after_reconnect": {
         "source": "/fixture/odom",
         "frame": "fixture_odom",
-        "stamp_ns": 1795012043754177515,
+        "stamp_ns": 1795012939509603544,
         "stamp": {
-          "sec": 1795012043,
-          "nanosec": 754177515
+          "sec": 1795012939,
+          "nanosec": 509603544
         },
         "x": 0.375,
         "y": 0.0,
@@ -170,5 +183,15 @@
       },
       "operation_id_on_retry": "missing-odom/step/1"
     }
+  },
+  "offline_kit": {
+    "docker_load": "Loaded image: edge-agent-ros/hardware:field-7c16da6-arm64",
+    "directory": "artifacts/deployment/field-7c16da6-arm64",
+    "sha256": {
+      "edge-agent-ros-source.tar.gz": "2e565ee4cd6671c4bd6675d0e676f9a26a8eece43407bdca87de010a4662cf27",
+      "hardware-linux-arm64.tar.gz": "c10e2098b5e6633f1a8b0d9fbd20e18f9134d492b0dd9e5f773e61dbd150b192"
+    },
+    "image_bytes": 289664126,
+    "source_bytes": 14792388
   }
 }
