@@ -210,6 +210,37 @@ class ManagerRecovery(unittest.TestCase):
         self.assertEqual(self.events()[-1]["kind"],"plugin.supervisor.verified")
         self.assertEqual(self.submits,1)
 
+    def test_software_supervisor_requires_the_original_case_and_verifies_its_input(self):
+        self.s.poll()
+        self.succeed()
+        name = "计算相邻采样间隔的最大值"
+        text = name + " [100,103,111,115]"
+        definition = {"schema_version":2,"id":self.definition["id"],"description":name,
+                      "transforms":["diff"],"reduce":"max"}
+        args = {"series":"[100,103,111,115]"}
+        case = {"sample":args,"expected":{"value":8}}
+        rule = {"text":text,"semantic":{"transforms":["diff"],"reduce":"max"},"cases":[]}
+        self.write_policy(rule)
+        with self.assertRaisesRegex(manager.Review,"cases_failed"):
+            manager.rule_for(self.policy,text,definition)
+        rule["cases"].append(case)
+        self.write_policy(rule)
+        self.assertEqual(manager.rule_for(self.policy,text,definition),rule)
+        with self.assertRaisesRegex(manager.Review,"policy_denied"):
+            manager.rule_for(self.policy,text.replace("115","125"),definition)
+        task = self.followup
+        task["text"] = text
+        step = task["steps"][0]
+        version = manager.capability(definition)["version"]
+        step.update(version=version,args=args,evidence={**manager.evaluate(definition,args),"definition_version":version})
+        def verify(expected=8):
+            return manager.check_result(task,definition,task["id"],task["trigger"],request_text=text,expected_value=expected)
+        self.assertEqual(verify()["value"],8)
+        with self.assertRaisesRegex(manager.Review,"receipt_mismatch"):
+            verify(expected=42)
+        with patch.dict(step,args={"series":"[1,9]"}),self.assertRaisesRegex(manager.Review,"receipt_mismatch"):
+            verify()
+
     def test_disappeared_submitted_task_generates_review_without_post(self):
         self.s.poll()
         self.followup=None

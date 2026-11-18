@@ -1,0 +1,230 @@
+{
+  "passed": true,
+  "project": "edge-watchdog-0dbbc311694c",
+  "utc": "2026-11-18T02:37:48.663605+00:00",
+  "scope": "private Docker network, ROS Agent, Console, independent Watchdog, read Tool",
+  "image_id": "sha256:2f0df061d570f32b3a8a8f756dd728090f413cb4c48751c44a619157dfcb78c6",
+  "revision": "50b9344-sdd015-worktree",
+  "mirror_repair": {
+    "before": {
+      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "seq": 17
+    },
+    "after": {
+      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "seq": 51
+    },
+    "repaired_source_event": {
+      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "seq": 49,
+      "event_id": "23a6d8ecb3a74c14b362f174c8f73404",
+      "task_id": "unserved-during-console-outage",
+      "trace_id": "unserved-during-console-outage",
+      "code": "planner.not_configured"
+    },
+    "receipt": {
+      "archive_changed": false,
+      "archive_id": "a9c9689c7f3965dd59bd554d3be2d34e",
+      "cutoff": 51,
+      "from_seq": 17,
+      "pages": 1,
+      "retention_crossed": false,
+      "rows_copied": 1,
+      "rows_reused": 0,
+      "through_seq": 51
+    },
+    "missing_before_restart": true,
+    "proof_source": "Console public archive and Watchdog SQLite"
+  },
+  "incidents": {
+    "console": {
+      "trace_id": "watchdog-318921bb9748463996bf100d9df59e48",
+      "operation_id": "watchdog-318921bb9748463996bf100d9df59e48/sync",
+      "counts": {
+        "watchdog.detected": 1,
+        "watchdog.action_requested": 1,
+        "watchdog.action_attempt": 2,
+        "watchdog.action_unavailable": 2,
+        "watchdog.intervention_required": 1,
+        "watchdog.action_confirmed": 1,
+        "watchdog.recovered": 1
+      },
+      "human_reason": "http_503",
+      "steps": [
+        "查看 Console 容器状态和日志，核对监听地址、归档卷权限与磁盘空间。",
+        "恢复原归档卷并分别读取 /api/event-stats 与 /api/history，核对归档身份和游标。"
+      ],
+      "events": [
+        {
+          "seq": 19,
+          "kind": "watchdog.detected",
+          "event_id": "26609cd7ad01484a8b782267eb97cc1b",
+          "parent_event_id": null,
+          "source_seq": 3
+        },
+        {
+          "seq": 20,
+          "kind": "watchdog.action_requested",
+          "event_id": "edd75572c704406fa025d687b63e583d",
+          "parent_event_id": "26609cd7ad01484a8b782267eb97cc1b",
+          "source_seq": 4
+        },
+        {
+          "seq": 21,
+          "kind": "watchdog.action_attempt",
+          "event_id": "e9a9c679fd6442f1bc91e8c2f127d715",
+          "parent_event_id": "edd75572c704406fa025d687b63e583d",
+          "source_seq": 5
+        },
+        {
+          "seq": 22,
+          "kind": "watchdog.action_unavailable",
+          "event_id": "1001cab2965c4ef4909c3284ec466dde",
+          "parent_event_id": "e9a9c679fd6442f1bc91e8c2f127d715",
+          "source_seq": 6
+        },
+        {
+          "seq": 23,
+          "kind": "watchdog.action_attempt",
+          "event_id": "60a0837c947741a3b1c10303550faa8f",
+          "parent_event_id": "1001cab2965c4ef4909c3284ec466dde",
+          "source_seq": 7
+        },
+        {
+          "seq": 24,
+          "kind": "watchdog.action_unavailable",
+          "event_id": "80c5c1e4b9f2484d90c648214e1b1dd0",
+          "parent_event_id": "60a0837c947741a3b1c10303550faa8f",
+          "source_seq": 8
+        },
+        {
+          "seq": 25,
+          "kind": "watchdog.intervention_required",
+          "event_id": "bf2b714881c948a3af7245935234d2f7",
+          "parent_event_id": "80c5c1e4b9f2484d90c648214e1b1dd0",
+          "source_seq": 9
+        },
+        {
+          "seq": 53,
+          "kind": "watchdog.action_confirmed",
+          "event_id": "b9c4c4a337f2462391ce93b690fe7aa8",
+          "parent_event_id": "bf2b714881c948a3af7245935234d2f7",
+          "source_seq": 23
+        },
+        {
+          "seq": 54,
+          "kind": "watchdog.recovered",
+          "event_id": "0b2e915668554a909c919d42b2798bee",
+          "parent_event_id": "b9c4c4a337f2462391ce93b690fe7aa8",
+          "source_seq": 24
+        }
+      ]
+    },
+    "agent": {
+      "trace_id": "watchdog-dae18087ada247a8bbb8996219941eff",
+      "operation_id": "watchdog-dae18087ada247a8bbb8996219941eff/sync",
+      "counts": {
+        "watchdog.detected": 1,
+        "watchdog.action_requested": 1,
+        "watchdog.action_attempt": 2,
+        "watchdog.action_unavailable": 2,
+        "watchdog.intervention_required": 1,
+        "watchdog.action_confirmed": 1,
+        "watchdog.recovered": 1
+      },
+      "human_reason": "http_503",
+      "steps": [
+        "查看 Agent 容器状态和日志，核对端口、插件清单及任务账本挂载。",
+        "修复后分别读取 /agent/capabilities 与 /agent/plugins；按原操作 ID 核查已有任务。"
+      ],
+      "events": [
+        {
+          "seq": 26,
+          "kind": "watchdog.detected",
+          "event_id": "85e9797279e949beaf5b6765354cb2eb",
+          "parent_event_id": null,
+          "source_seq": 10
+        },
+        {
+          "seq": 27,
+          "kind": "watchdog.action_requested",
+          "event_id": "e0697d4349b84ee78088255bd4ecfc9b",
+          "parent_event_id": "85e9797279e949beaf5b6765354cb2eb",
+          "source_seq": 11
+        },
+        {
+          "seq": 28,
+          "kind": "watchdog.action_attempt",
+          "event_id": "10ab83149f424d95ace8d29b9f4a50dc",
+          "parent_event_id": "e0697d4349b84ee78088255bd4ecfc9b",
+          "source_seq": 12
+        },
+        {
+          "seq": 29,
+          "kind": "watchdog.action_unavailable",
+          "event_id": "a9ecadc5de0245db806074cd35fc9a76",
+          "parent_event_id": "10ab83149f424d95ace8d29b9f4a50dc",
+          "source_seq": 13
+        },
+        {
+          "seq": 30,
+          "kind": "watchdog.action_attempt",
+          "event_id": "a0ef0150703f45709807d2a8c8383de0",
+          "parent_event_id": "a9ecadc5de0245db806074cd35fc9a76",
+          "source_seq": 14
+        },
+        {
+          "seq": 31,
+          "kind": "watchdog.action_unavailable",
+          "event_id": "979f04a2e32842d1bc9c78bb67b451d6",
+          "parent_event_id": "a0ef0150703f45709807d2a8c8383de0",
+          "source_seq": 15
+        },
+        {
+          "seq": 32,
+          "kind": "watchdog.intervention_required",
+          "event_id": "8f4b9b8267c44e72bd4a939006f51442",
+          "parent_event_id": "979f04a2e32842d1bc9c78bb67b451d6",
+          "source_seq": 16
+        },
+        {
+          "seq": 35,
+          "kind": "watchdog.action_confirmed",
+          "event_id": "10bceefce8634a239479b0d43b60e86e",
+          "parent_event_id": "8f4b9b8267c44e72bd4a939006f51442",
+          "source_seq": 19
+        },
+        {
+          "seq": 36,
+          "kind": "watchdog.recovered",
+          "event_id": "db6c5d62c7e144a3b8922973434cef1d",
+          "parent_event_id": "10bceefce8634a239479b0d43b60e86e",
+          "source_seq": 20
+        }
+      ]
+    }
+  },
+  "independent_tool_calls": [
+    {
+      "path": "/heartbeat",
+      "operation_id": "control-before/step/1"
+    },
+    {
+      "path": "/heartbeat",
+      "operation_id": "control-without-console/step/1"
+    },
+    {
+      "path": "/heartbeat",
+      "operation_id": "control-after-unload/step/1"
+    }
+  ],
+  "readonly_mount_root": true,
+  "request_counts": {
+    "agent/GET//agent/capabilities": 20,
+    "console/GET//api/event-stats": 20,
+    "console/GET//api/events": 3,
+    "console/GET//api/history": 3,
+    "agent/GET//agent/plugins": 3
+  },
+  "archived_source_rows": 24
+}

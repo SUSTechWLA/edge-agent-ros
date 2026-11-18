@@ -124,6 +124,22 @@ class History:
             return self.db.execute("SELECT coalesce(max(source_seq),0) FROM events WHERE source_id=?",
                                    (source_id,)).fetchone()[0]
 
+    def journal_health(self):
+        """Restore observer-owned transitions once when opening an archive."""
+        with self.lock:
+            rows = self.db.execute("""
+                SELECT data,event_id FROM events WHERE seq IN (
+                    SELECT max(seq) FROM events
+                    WHERE source='edge_console' AND module='journal.ingress'
+                    AND kind IN ('module.journal_available','module.journal_unavailable')
+                    GROUP BY trace_id)
+            """).fetchall()
+        result = {}
+        for row in rows:
+            data = json.loads(row["data"])
+            result[data["journal"]] = (data["status"], row["event_id"])
+        return result
+
     def record(self, snapshot, *, kind, source, detail, level="info", mission_id=None,
                operation_id=None, data=None, event_utc=None, source_id=None,
                source_seq=None, source_cause=None, cause=None, trace=None, ingress_hash=None):

@@ -1,0 +1,270 @@
+{
+  "scope": "Fresh private Docker projects. Real HTTP Agent and EventBus. A deterministic author decline drives SDD-013. The coding agent fixture or the named local Ollama model supplies the text function, and independent samples determine acceptance.",
+  "runs": [
+    {
+      "project": "edge-software-d6aa6fce004b",
+      "passed": true,
+      "stages": {
+        "design_event": "191bf4f61b16427dbe550e42bfb7599c",
+        "design_task": "word-gap",
+        "trace_id": "word-gap",
+        "candidate_source": "def transform(text):\n    return text.casefold().split().count(\"robot\")\n",
+        "verify": {
+          "cases_sha256": "203b216ec133d7ab2448685d91fa508a94f2ebb81e406c110157dc34c8c78832",
+          "case_count": 4,
+          "version": "445c59b47e282f025ea7061b953f909ba47e895e0e628a3813892b52461f8698",
+          "declared_version": "e59c2f9ce98c1b50e83cb87d0f02bb2bd246832ed443a86ad2ce7d721a8f4fa2",
+          "design_id": "28b89626a6cbd9b954c36246dc660bfe120ae6094b037a74a8bdd4550f801a7d",
+          "source_sha256": "433a8e3a038bc275c7c4bbec1361785e7553ff618a4e60a82b94d539568f6656",
+          "provider_sha256": "ed3a51e7a2356f8c9ea8cbcada0c3ae3bddcdb5f8157cbdbfba6e5c3b6cb9e37",
+          "approval_sha256": "a493d4426025bc552a22d0f7708fb619c8366861b84ec937b0271aa15c347c54",
+          "event_id": "14cdae45a84a4462aa39ad5a1762b8d9"
+        },
+        "published": "8b95b66e3e834b6e9f9c7abb164a252d",
+        "removed": "5756ef96b3d34e1ead2847c5e60ccb66",
+        "old_task": "SUCCEEDED",
+        "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+        "value": 2,
+        "original_operation": "word-active/step/1",
+        "empty_value": 0,
+        "rejected": [
+          "software.approval_mismatch",
+          "software.case_mismatch",
+          "software.version_mismatch",
+          "software.input_invalid"
+        ],
+        "duplicate_publication_id": "8b95b66e3e834b6e9f9c7abb164a252d",
+        "software_events": [
+          {
+            "kind": "software.requested",
+            "event_id": "1b6d4bcca0c044a9bbe420a053576f93",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "software.candidate",
+            "event_id": "eea4a96669f14813a2bdb92e218b28de",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "software.verified",
+            "event_id": "14cdae45a84a4462aa39ad5a1762b8d9",
+            "parent": "eea4a96669f14813a2bdb92e218b28de"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "4efacf63af5c4cb9ab9417e8ca722b29",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "software.candidate",
+            "event_id": "2944d97a4a7045419c4f859a6f6597ca",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "software.rejected",
+            "event_id": "d32acaeeb2d3442f9ad68fca8b39cf32",
+            "parent": "2944d97a4a7045419c4f859a6f6597ca"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "447df8234cf840568eda1ff2d4d076d2",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "software.rejected",
+            "event_id": "164a66e42b79457b90e80a76880d5f6e",
+            "parent": "2944d97a4a7045419c4f859a6f6597ca"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "da501e7866bf4253b0a8106cec3f4991",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "plugin.release.requested",
+            "event_id": "9f0088bd60b249bcbdc0f829130ac21d",
+            "parent": "14cdae45a84a4462aa39ad5a1762b8d9"
+          },
+          {
+            "kind": "plugin.release.applied",
+            "event_id": "8b95b66e3e834b6e9f9c7abb164a252d",
+            "parent": "9f0088bd60b249bcbdc0f829130ac21d"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "5ff342744ad44d98b61cc7a90b16273c",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "a8c1734273c7469ba61d538bf0197f1f",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "plugin.release.requested",
+            "event_id": "ed9b9168455a4b52a653b7324c4a1718",
+            "parent": "191bf4f61b16427dbe550e42bfb7599c"
+          },
+          {
+            "kind": "plugin.release.applied",
+            "event_id": "5756ef96b3d34e1ead2847c5e60ccb66",
+            "parent": "ed9b9168455a4b52a653b7324c4a1718"
+          }
+        ]
+      },
+      "image": "edge-agent-ros:sdd014-check",
+      "candidate_author": "coding agent fixture",
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "image_id": "sha256:aeba5a73b81e02af6abf3815fcec24d7e03259e916d67192aa7be826d158aff4",
+      "report_sha256": "27a2b4fada20e62752b700fea31e6bc33e30f6cdc9ef334737886839d542c410"
+    },
+    {
+      "project": "edge-software-e4e36bc15e2f",
+      "passed": true,
+      "stages": {
+        "generation": {
+          "source_sha256": "1bedaa0b08b4bf0d8b614bc2ee24547289fd690d866b1426280a12b0389714a6",
+          "model": "qwen2.5:1.5b",
+          "response_sha256": "8673d139f2ce1bb418d2b47ed50a3e3722ca4e22e61b0ca60cdd7ab1891b4a7f",
+          "prompt_sha256": "846db34f95c3ce37e723dea0d79a72441bb8b3e851936b34360a07d924ea0641",
+          "event_id": "b0e7be4a7ab9402fad9f4e1dc4e73ced"
+        },
+        "design_event": "11648fe952b74b83aee49ebd7b2e3a6c",
+        "design_task": "word-gap",
+        "trace_id": "word-gap",
+        "candidate_source": "def transform(text):\n    return text.casefold().lower().strip().split().count('robot')\n",
+        "verify": {
+          "cases_sha256": "203b216ec133d7ab2448685d91fa508a94f2ebb81e406c110157dc34c8c78832",
+          "case_count": 4,
+          "version": "2b15f4f2c5421ffb8aed9b95c4154599853abbce6299d724fce6ed0621026207",
+          "declared_version": "843c86b9512c6ce282b4c5517a9722fe630a799d678da73bdd893253aae00a5d",
+          "design_id": "10c7f6a0a6a18eec8c47eeefbbd9ae55f44dd11722b6257c2a982abac682d846",
+          "source_sha256": "1bedaa0b08b4bf0d8b614bc2ee24547289fd690d866b1426280a12b0389714a6",
+          "provider_sha256": "ed3a51e7a2356f8c9ea8cbcada0c3ae3bddcdb5f8157cbdbfba6e5c3b6cb9e37",
+          "approval_sha256": "60572af6bdd8bf537067f955a95a7426f074f5832b4596cc47a728d5263fd9bd",
+          "event_id": "c393db7ef56449c6aa6ed572effe4400"
+        },
+        "published": "d2524681169240bd8e29c4ed6c9f1245",
+        "removed": "cddf400aeae44a8ab014bcc6bcf0adad",
+        "old_task": "SUCCEEDED",
+        "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
+        "value": 2,
+        "original_operation": "word-active/step/1",
+        "empty_value": 0,
+        "rejected": [
+          "software.approval_mismatch",
+          "software.case_mismatch",
+          "software.version_mismatch",
+          "software.input_invalid"
+        ],
+        "duplicate_publication_id": "d2524681169240bd8e29c4ed6c9f1245",
+        "software_events": [
+          {
+            "kind": "software.requested",
+            "event_id": "408a00099d3a4b81a11a20e7489638bb",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "software.generated",
+            "event_id": "b0e7be4a7ab9402fad9f4e1dc4e73ced",
+            "parent": "408a00099d3a4b81a11a20e7489638bb"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "993b99a32d1b46329f3e024d0f556ca6",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "software.candidate",
+            "event_id": "e38b3c0fd6054b439f17225142e21a55",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "software.verified",
+            "event_id": "c393db7ef56449c6aa6ed572effe4400",
+            "parent": "e38b3c0fd6054b439f17225142e21a55"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "e922400ec6474b30bf8d0901520c8e1c",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "software.candidate",
+            "event_id": "01f2961563f04d29996728d3041530ad",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "software.rejected",
+            "event_id": "9b7050c5fb394b2da184a7de5d0b6d65",
+            "parent": "01f2961563f04d29996728d3041530ad"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "f9005b1ff53e4480b2d80891ac64182a",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "software.rejected",
+            "event_id": "05902e77134c4929b3c1018f9b60e25b",
+            "parent": "01f2961563f04d29996728d3041530ad"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "bd4034e097da4a2589e02da0558ec3d9",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "plugin.release.requested",
+            "event_id": "7e9b5ceb75fc4b5ea77bd20a3b548f77",
+            "parent": "c393db7ef56449c6aa6ed572effe4400"
+          },
+          {
+            "kind": "plugin.release.applied",
+            "event_id": "d2524681169240bd8e29c4ed6c9f1245",
+            "parent": "7e9b5ceb75fc4b5ea77bd20a3b548f77"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "7b11ac178aa14264ba4bac93e3acd249",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "software.requested",
+            "event_id": "0af4af7db4124ffa925b78f30bdd89f6",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "plugin.release.requested",
+            "event_id": "d1e824c719f44d899e8e8a369832fbcf",
+            "parent": "11648fe952b74b83aee49ebd7b2e3a6c"
+          },
+          {
+            "kind": "plugin.release.applied",
+            "event_id": "cddf400aeae44a8ab014bcc6bcf0adad",
+            "parent": "d1e824c719f44d899e8e8a369832fbcf"
+          }
+        ]
+      },
+      "image": "edge-agent-ros:sdd014-check",
+      "candidate_author": "qwen2.5:1.5b",
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "image_id": "sha256:aeba5a73b81e02af6abf3815fcec24d7e03259e916d67192aa7be826d158aff4",
+      "report_sha256": "b3943c3fc0205d88b4678d5177a9857a0301e6388d4dc91ee780ea49e851fea8"
+    }
+  ],
+  "failed_first_attempts": [
+    {
+      "project": "edge-software-f7323d7a4a9f",
+      "passed": false,
+      "diagnosis": "Console was only on an internal bridge; add a separate reader bridge to its loopback-only HTTP port.",
+      "report_sha256": "6fe1e582b36588c10fa67fa089451d72650b2748d7309aa1b8a22bea6f6a6e9c"
+    },
+    {
+      "project": "edge-software-fe9511fb6e95",
+      "passed": false,
+      "diagnosis": "A generated file private to the author UID prevented the read-only non-root provider from opening it. Stage the candidate file read-only for its serving UID.",
+      "report_sha256": "b72b16985f5e698029d777605d194fb13c5da28869d7772b4203e8d74d6ddae1"
+    }
+  ]
+}

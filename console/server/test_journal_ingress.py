@@ -4,6 +4,7 @@ from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from history import History
 from journal_ingress import JournalIngress
@@ -107,7 +108,7 @@ class JournalIngressTest(unittest.TestCase):
         self.poll()
         self.t += 100
         self.poll()
-        self.assertEqual(self.rows(),[])
+        self.assertEqual(self.rows(module="journal.watchdog"),[])
         with db:
             db.execute("INSERT INTO module_bus_heartbeat VALUES(1,'old',4)")
         self.poll()
@@ -129,6 +130,86 @@ class JournalIngressTest(unittest.TestCase):
         self.t += 4
         self.poll()
         self.assertEqual(len(self.rows(kind="module.heartbeat_overdue")),2)
+
+    def test_gaps_are_durable_intervals_and_do_not_block_other_plugins(self):
+        camera = self.source("camera")
+        for event_id in ("first", "second", "third"):
+            self.publish(camera, "camera", event_id)
+        with camera:
+            camera.execute("UPDATE module_bus_events SET seq=seq+100")
+            camera.execute("UPDATE module_bus_events SET seq=109 WHERE seq=103")
+        self.publish(self.source("power"), "power", "battery")
+        self.poll()
+        source = "journal:camera:first"
+        rows = self.rows(trace_id=source, code="module.journal_gap", source="edge_console")
+        self.assertEqual([(r["data"]["missing_from"],r["data"]["missing_to"],
+                           r["data"]["next_source_seq"],r["source_seq"]) for r in rows],
+                         [(1,100,101,100),(103,108,109,108)])
+        self.assertTrue(all(r["module"]=="journal.ingress" and r["source_id"]==source for r in rows))
+        self.assertEqual(self.history.source_cursor(source),109)
+        self.assertEqual(len(self.rows(event_id="third")),1)
+        self.assertEqual(len(self.rows(event_id="battery")),1)
+        self.reset_reader()
+        self.poll()
+        self.assertEqual(self.rows(kind="module.journal_gap"),rows)
+
+    def test_archive_failure_after_gap_retries_actual_row_without_duplicate_diagnostic(self):
+        db = self.source("camera")
+        self.publish(db,"camera","reply")
+        with db:
+            db.execute("UPDATE module_bus_events SET seq=4")
+        record = self.history.record
+        def fail_on_actual_row(*args, **kwargs):
+            if kwargs["kind"] == "device.notice":
+                raise sqlite3.OperationalError("archive is unavailable")
+            return record(*args, **kwargs)
+        with patch.object(self.history,"record",side_effect=fail_on_actual_row):
+            with self.assertRaises(sqlite3.OperationalError):
+                self.poll()
+        self.assertEqual(self.history.source_cursor("journal:camera:first"),3)
+        self.assertFalse(self.rows(kind="module.journal_unavailable"))
+        self.history.close()
+        self.open_archive("archive")
+        self.reset_reader()
+        self.poll()
+        self.assertEqual(len(self.rows(kind="module.journal_gap")),1)
+        self.assertEqual(len(self.rows(event_id="reply")),1)
+
+    def test_journal_disappearance_and_recovery_across_console_restarts(self):
+        db = self.source("camera")
+        self.publish(db,"camera","first")
+        self.poll()
+        db.close()
+        folder = self.extra / "camera"
+        parked = self.root / "parked"
+        folder.rename(parked)
+        self.reset_reader()
+        self.poll()
+        self.poll()
+        self.history.close()
+        self.open_archive("archive")
+        self.reset_reader()
+        self.poll()
+        parked.rename(folder)
+        self.poll()
+        rows = self.rows(trace_id="journal.health:camera",module="journal.ingress",source="edge_console")
+        self.assertEqual([r["data"]["status"] for r in rows],["available","absent","available"])
+        self.assertEqual([r["parent_event_id"] for r in rows],[None,rows[0]["event_id"],rows[1]["event_id"]])
+        self.assertEqual(rows[2]["cause_seq"],rows[1]["seq"])
+        self.assertEqual(len(self.rows(event_id="first")),1)
+
+    def test_unreadable_mount_does_not_report_every_plugin_absent(self):
+        self.source("camera")
+        power = self.source("power")
+        self.poll()
+        with patch.object(Path,"iterdir",side_effect=PermissionError("private path")):
+            self.poll()
+        self.publish(power,"power","still-works")
+        self.poll()
+        rows = self.rows(kind="module.journal_unavailable")
+        self.assertEqual([(r["data"]["journal"],r["data"]["status"]) for r in rows],[("@sources","unreadable")])
+        self.assertNotIn("private path",json.dumps(rows))
+        self.assertEqual(len(self.rows(event_id="still-works")),1)
 
 
 if __name__ == "__main__":

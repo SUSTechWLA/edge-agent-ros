@@ -18,6 +18,7 @@ from event_sink import Sink
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"agent"))
 import author_tool
 from derived_tools import capability, evaluate, validate
+from series_tools import split_request
 from module_journal import ModuleJournal
 
 
@@ -27,7 +28,7 @@ ACTIONS = {
     "source_changed":"Inspect the original task and its terminal planner diagnosis.",
     "policy_invalid":"Repair the read-only deployment policy and validate its samples.",
     "policy_denied":"Review the requested intent and the deployment allowlist.",
-    "semantic_mismatch":"Compare the field, unit and predicate with the authorized rule.",
+    "semantic_mismatch":"Compare the proposed operations, inputs and outputs with the authorized rule.",
     "cases_failed":"Check the independent reference measurements before publication.",
     "release_conflict":"Inspect the live tool version and the release journal; reconcile the change manually.",
     "task_conflict":"Check the existing task identity, trigger and pinned tool.",
@@ -111,8 +112,19 @@ def rule_for(path, text, definition):
         require(rules,"policy_denied")
         require(len(rules)==1,"policy_invalid")
         rule = rules[0]
-        semantic = {k:definition[k] for k in ("field","unit","comparison") if k in definition}
-        require(text==definition["description"] and author_tool.json_bytes(semantic)==author_tool.json_bytes(rule["semantic"]),
+        description = text
+        if definition["schema_version"] == 2:
+            parsed = split_request(text)
+            require(parsed is not None, "semantic_mismatch")
+            description, arguments = parsed
+            # Freeze a site-supplied independent expectation for the original software input.
+            examples = [c for c in rule["cases"] if c["sample"] == arguments]
+            require(len(examples) == 1, "cases_failed")
+            keys = ("transforms", "reduce")
+        else:
+            keys = ("field", "unit", "comparison")
+        semantic = {k:definition[k] for k in keys if k in definition}
+        require(description==definition["description"] and author_tool.json_bytes(semantic)==author_tool.json_bytes(rule["semantic"]),
                 "semantic_mismatch")
         return rule
     except (KeyError,ValueError,TypeError,OSError,RecursionError) as exc:
@@ -143,10 +155,11 @@ def ensure_release(registry, proposal, definition, cases):
             return applied["event_id"]
 
 
-def check_result(task, definition, token, trigger):
+def check_result(task, definition, token, trigger, *, request_text=None, expected_value=None):
     version = capability(definition)["version"]
+    request_text = definition["description"] if request_text is None else request_text
     require(task["id"]==token and task["trigger"]==trigger and task["trace_id"]==trigger["trace_id"]
-            and task["text"]==definition["description"],"task_conflict")
+            and task["text"]==request_text,"task_conflict")
     if task["state"] in ("PLANNING","RUNNING","WAITING"):
         return None
     require(task["state"]=="SUCCEEDED","followup_failed")
@@ -156,9 +169,17 @@ def check_result(task, definition, token, trigger):
             and step.get("version")==version and step.get("operation_id")==token+"/step/1", "receipt_mismatch")
     try:
         receipt = step["evidence"]
-        field = definition["field"]
-        sample = {k:receipt[k] for k in ("source","frame","stamp_ns")}
-        sample[field] = receipt["raw_value"]
+        if definition["schema_version"] == 2:
+            parsed = split_request(request_text)
+            require(parsed and parsed[0] == definition["description"] and step.get("args") == parsed[1],
+                    "receipt_mismatch")
+            sample = parsed[1]
+            require(type(expected_value) in (float, int) and receipt["value"] == expected_value,
+                    "receipt_mismatch")
+        else:
+            field = definition["field"]
+            sample = {k:receipt[k] for k in ("source","frame","stamp_ns")}
+            sample[field] = receipt["raw_value"]
         expected = evaluate(definition, sample)
         require(receipt["definition_version"]==version and all(
             author_tool.json_bytes(receipt[k])==author_tool.json_bytes(v) for k,v in expected.items()),"receipt_mismatch")
@@ -167,8 +188,11 @@ def check_result(task, definition, token, trigger):
         require(last["kind"]=="verified" and last["task_id"]==token and last["operation_id"]==step["operation_id"]
                 and author_tool.public_reference(last["event_id"]) and last["event_id"]==trace["event_id"]
                 and trace["trace_id"]==task["trace_id"],"receipt_mismatch")
-        return {"field":field,"unit":expected["unit"],"value":expected["value"],
-                "stamp_ns":sample["stamp_ns"],"operation_id":step["operation_id"],"verified_event_id":last["event_id"]}
+        if definition["schema_version"] == 2:
+            summary = {key:expected[key] for key in ("input_sha256","input_count","output_count","value")}
+        else:
+            summary = {"field":field,"unit":expected["unit"],"value":expected["value"],"stamp_ns":sample["stamp_ns"]}
+        return {**summary, "operation_id":step["operation_id"],"verified_event_id":last["event_id"]}
     except (ValueError,KeyError,TypeError,OverflowError,IndexError) as exc:
         raise Review("receipt_mismatch") from exc
 
@@ -284,9 +308,13 @@ class Supervisor:
             require(ensure_release(self.registry,p,definition,rule["cases"])==release,"release_conflict")
             saved = {"definition":definition,"trigger":trigger,"cases_sha256":digest(author_tool.json_bytes(rule["cases"])),
                      "rule_sha256":digest(author_tool.json_bytes(rule)),"receipt_sha256":p["data"]["receipt_sha256"]}
+            if definition["schema_version"] == 2:
+                saved["request_text"] = rule["text"]
+                _, arguments = split_request(rule["text"])
+                saved["expected_value"] = next(c["expected"]["value"] for c in rule["cases"] if c["sample"] == arguments)
             with self.db:
                 self.db.execute("UPDATE supervisor_work SET dispatch=? WHERE id=?",(json.dumps(saved),p["event_id"]))
-            outcome = self.api("/agent/tasks",{"id":followup,"trigger":trigger,"text":definition["description"]})
+            outcome = self.api("/agent/tasks",{"id":followup,"trigger":trigger,"text":saved.get("request_text",definition["description"])})
         elif saved is None:
             # Old published/submitted rows did not retain the dispatch snapshot. Reconstruct
             # only from an immutable, content-addressed installed revision and the native task.
@@ -295,6 +323,7 @@ class Supervisor:
             require(re.fullmatch("[0-9a-f]{64}",pin["version"]),"receipt_mismatch")
             try:
                 definition = author_tool.read_definition(history)
+                require(definition["schema_version"] == 1, "receipt_mismatch")
             except (FileNotFoundError,ValueError) as exc:
                 raise Review("receipt_mismatch") from exc
             saved = {"definition":definition,"trigger":trigger,"legacy":True}
@@ -303,13 +332,15 @@ class Supervisor:
         definition = saved["definition"]
         require(capability(definition)["version"]==pin["version"] and definition["id"]==pin["id"]
                 and saved["trigger"]==trigger,"receipt_mismatch")
-        require(outcome.get("id")==followup and outcome.get("trigger")==trigger and outcome.get("text")==definition["description"]
+        request_text = saved.get("request_text",definition["description"])
+        require(outcome.get("id")==followup and outcome.get("trigger")==trigger and outcome.get("text")==request_text
                 and outcome.get("trace_id")==p["trace_id"],"task_conflict")
         if phase!="submitted":
             self.record(p,"submitted","submitted",release=release,evidence=binding)
             outcome = self.lookup(followup)
             require(outcome is not None,"followup_missing")
-        if (evidence:=check_result(outcome,definition,followup,trigger)) is None:
+        if (evidence:=check_result(outcome,definition,followup,trigger,request_text=request_text,
+                                   expected_value=saved.get("expected_value"))) is None:
             with self.db:
                 self.db.execute("UPDATE supervisor_work SET due=? WHERE id=?",(time.time()+1,p["event_id"]))
             return

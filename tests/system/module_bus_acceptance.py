@@ -227,6 +227,7 @@ def run(image, out):
             report["stages"]["archive_rebuild"] = {"new_archive": new_archive, "preserved_events": len(rebuilt)}
             test_publisher(compose, first, archived, report)
             first = test_heartbeat(compose, first, archived, report)
+            first = test_journal_coverage(compose, first, report)
             task_after = request(agent, "/agent/tasks?id=" + COUNTER_TASK)
             check(task_before["trace_id"] == task_after["trace_id"] and task_before["events"] == task_after["events"]
                   and calls_file.read_text(encoding="utf-8").splitlines() == calls, "replay changed the task or provider calls")
@@ -331,6 +332,66 @@ j.close()
     report["stages"]["watchdog"] = persistent_rows(state[:2])
     report["stages"]["late_parent"] = {"child_event_id": child["event_id"], "child_seq": child["seq"],
                                        "initial_cause": child["cause_seq"], "recovered_cause_seq": final[1]["cause_seq"]}
+    return console
+
+
+def test_journal_coverage(compose, console, report):
+    """Inject a known prefix gap and an unplug in a dedicated test volume."""
+    module = "demo.coverage"
+    script = """
+from module_journal import ModuleJournal
+from pathlib import Path
+import sys
+folder = Path('/sources/demo.coverage')
+parked = folder.with_name('.parked')
+if sys.argv[1] == 'publish':
+    j = ModuleJournal(folder / 'module-events.sqlite')
+    with j.db:
+        j.emit(dict(module='demo.coverage', kind='sample.notice', code='sample.notice',
+                    trace_id='coverage-sample', event_id='coverage-sample-7'))
+        j.db.execute('UPDATE module_bus_events SET seq=7')
+    j.close()
+elif sys.argv[1] == 'unplug':
+    folder.rename(parked)
+else:
+    parked.rename(folder)
+"""
+    def read(**filters):
+        return request(console, "/api/events?" + urlencode({"after":0, "limit":20, **filters}))["events"]
+
+    def health(count):
+        def fetch():
+            rows = read(source="edge_console",module="journal.ingress",trace_id="journal.health:"+module)
+            return rows if len(rows) >= count else None
+        return wait_for(fetch, f"source health history should contain {count} transitions")
+
+    compose("run", "--rm", "-T", "pulse", script, "publish")
+    wait_for(lambda: read(event_id="coverage-sample-7"), "producer event after missing prefix")
+    gaps = read(source="edge_console",module="journal.ingress",code="module.journal_gap")
+    matches = [r for r in gaps if r["data"]["journal"] == module]
+    check(len(matches)==1 and matches[0]["data"] == {"journal":module, "missing_from":1,
+          "missing_to":6, "next_source_seq":7}, "archive did not identify exactly the missing interval")
+    original = read(event_id="coverage-sample-7")[0]
+    gap = matches[0]
+    check(gap["source_id"] == original["source_id"] and gap["source_seq"] == 6
+          and original["source_seq"] == 7, "gap position does not match the producer epoch")
+    health(1)
+    compose("run", "--rm", "-T", "pulse", script, "unplug")
+    health(2)
+    compose("kill", "--signal", "SIGKILL", "console")
+    compose("start", "console")
+    console = "http://" + compose("port", "console", "8080")
+    health(2)
+    compose("run", "--rm", "-T", "pulse", script, "restore")
+    rows = health(3)
+    check([r["data"]["status"] for r in rows] == ["available", "absent", "available"],
+          "state changed without a source transition")
+    check(all(b["parent_event_id"] == a["event_id"] and b["cause_seq"] == a["seq"]
+              for a,b in zip(rows,rows[1:])), "missing outage or recovery cause")
+    check(read(event_id=original["event_id"]) == [original] and read(event_id=gap["event_id"]) == [gap],
+          "replay after restart rewrote or duplicated facts")
+    report["stages"]["source_coverage"] = {"gap":gap,"next_source_seq":original["source_seq"],
+                                           "health":persistent_rows(rows)}
     return console
 
 

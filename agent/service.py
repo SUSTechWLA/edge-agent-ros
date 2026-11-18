@@ -22,7 +22,7 @@ from geometry_msgs.msg import Point
 from edge_interfaces.srv import GetMission, SubmitMission
 from derived_tools import check_id, evaluate
 import runtime_plugins
-from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog,
+from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog, is_series,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
 
@@ -348,6 +348,12 @@ class Robot(Node):
         if step["tool"] == "status" and not cap.get("endpoint"):
             return self.odometry()
         if "derived" in cap and not cap.get("endpoint"):
+            if is_series(cap):
+                try:
+                    evidence = evaluate(cap["derived"], step["args"])
+                except ValueError as exc:
+                    raise failure(Refused, str(exc), "tool.series_invalid", "arguments.series") from exc
+                return {**evidence, "definition_version": cap["version"]}
             try:
                 evidence = evaluate(cap["derived"], self.odometry())
             except ValueError as exc:
@@ -416,11 +422,18 @@ class Robot(Node):
             raise remote_failure(Refused,result,"tool.provider_failed")
         if result.get("state")!="SUCCEEDED" or not result.get("evidence"):
             raise remote_failure(OutcomeUnknown,result,"tool.receipt_invalid")
+        evidence = result["evidence"]
+        if cap.get("verbatim_argument"):
+            text, = step["args"].values()
+            if (not isinstance(evidence,dict) or evidence.get("value") is None or
+                    evidence.get("definition_version") != step["version"] or
+                    evidence.get("input_sha256") != hashlib.sha256(text.encode("utf-8")).hexdigest()):
+                raise failure(OutcomeUnknown,"文本工具回执与原文、绑定版本或结果字段不符",
+                              "tool.receipt_invalid","provider")
         for outcome, field in cap.get("outcomes",{}).items():
-            evidence = result["evidence"]
             if not isinstance(evidence,dict) or field not in evidence or evidence[field] in (None,""):
                 raise OutcomeUnknown(f"插件缺少 {outcome} 要求的证据字段 {field}")
-        return result["evidence"]
+        return evidence
 
 
 class OperationCanceled(Exception):
@@ -514,9 +527,10 @@ def worker(journal,robot,planning,verifying=False):
                 t["retries"] = 0
                 journal.save(t, "RUNNING", "已保存工具候选结果，等待独立验收", kind="verification_pending",
                              op=op, tool_response=receipt)
+            provider = "http-adapter" if cap.get("endpoint") else "software" if is_series(cap) else "ros"
             result=exchange(trace,"tool",step["tool"],{"operation_id":op,"arguments":step["args"],"version":step["version"]},
                             lambda:robot.run(step,op,cap,trace,context),
-                            meta={"provider":"http-adapter" if cap.get("endpoint") else "ros","binding":binding(cap)},
+                            meta={"provider":provider,"binding":binding(cap)},
                             commit_candidate=save_candidate if step["verification"]["required"] else None)
             if result is None:
                 if time.time()-step.get("resumed_at",step["started_at"])>float(os.getenv("EDGE_STEP_TIMEOUT","1800")):

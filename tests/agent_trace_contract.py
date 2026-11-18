@@ -229,6 +229,24 @@ class TraceContracts(unittest.TestCase):
         profile.unlink()
         self.assertEqual(planning.planner_profile()["version"],"env")
 
+    def test_verbatim_tool_receipt_binds_original_text_and_version(self):
+        cap = {"endpoint":"http://provider","effect":"read","verbatim_argument":True}
+        step = {"tool":"word_count","version":"v1","args":{"text":" Ａ\t!"}}
+        receipt = {"value":0,"definition_version":"v1",
+                   "input_sha256":hashlib.sha256(step["args"]["text"].encode()).hexdigest()}
+        for evidence, valid in ((receipt,True),(dict(receipt,value=""),True),
+                                (dict(receipt,definition_version="v0"),False),
+                                (dict(receipt,input_sha256="other"),False),({"value":0},False),
+                                (dict(receipt,value=None),False),("success",False)):
+            reply = {"operation_id":"s1","state":"SUCCEEDED","evidence":evidence}
+            with self.subTest(evidence=evidence), patch("service.http_json",return_value=reply):
+                if valid:
+                    self.assertEqual(Robot.run(None,step,"s1",cap),evidence)
+                else:
+                    with self.assertRaises(planning.OutcomeUnknown) as caught:
+                        Robot.run(None,step,"s1",cap)
+                    self.assertEqual(caught.exception.code,"tool.receipt_invalid")
+
     def test_runtime_diagnostic_contract_preserves_remote_code(self):
         (self.config/"nav.json").write_text(json.dumps({"schema_version":1,"diagnostics":{
             "nav.path_blocked":{"version":"3","hint":"核对地图版本"}}}))

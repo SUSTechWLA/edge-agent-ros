@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "compose_version": "5.7.0",
+  "engine_version": "29.9.3",
+  "cases": [
+    {
+      "passed": true,
+      "compose": "compose.yaml",
+      "project": "edge-wdmount-3c05396e93",
+      "image_id": "sha256:a576c399f3a7d9e9070b4c985fcfed2d92de709dd18244bb5cf371150323e0fa",
+      "watchdog_subpath": "watchdog",
+      "services": [
+        "watchdog",
+        "watchdog-init"
+      ],
+      "source_id_before_after_restart": [
+        "b4d3a1f0e1fa143c352ea43d2602e878",
+        "b4d3a1f0e1fa143c352ea43d2602e878"
+      ],
+      "neighbor_visible": false,
+      "neighbor_writable": false
+    },
+    {
+      "passed": true,
+      "compose": "compose.hardware.yaml",
+      "project": "edge-wdmount-2825ff7f1f",
+      "image_id": "sha256:c0160389067e7f83542662fd541febfc42fe9aa040f7af48c1cea93ea2b8afc3",
+      "watchdog_subpath": "watchdog",
+      "services": [
+        "watchdog",
+        "watchdog-init"
+      ],
+      "source_id_before_after_restart": [
+        "02f60fb6964fec74aa250311bd31eeba",
+        "02f60fb6964fec74aa250311bd31eeba"
+      ],
+      "neighbor_visible": false,
+      "neighbor_writable": false
+    }
+  ]
+}

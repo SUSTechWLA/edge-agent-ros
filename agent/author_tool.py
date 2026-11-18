@@ -12,6 +12,7 @@ import sys
 import tempfile
 from urllib.request import Request, urlopen
 import uuid
+import series_tools
 
 from derived_tools import COMPARISON_OPS, MAX_BYTES, UNITS_BY_FIELD, capability, check_id, evaluate, parse_definition, validate
 from tracing import clean_text
@@ -80,9 +81,14 @@ def draft(args):
             raise ValueError("this failure needs recovery or diagnosis rather than a new definition")
         args.request = task["text"]
         source_task = {"task_id":task["id"], "trace_id":task["trace_id"], "reason_code":code}
-    if not isinstance(args.request,str) or not 1 <= len(args.request.strip()) <= 200:
-        raise ValueError("provide a user request of 1–200 characters")
-    description = clean_text(args.request.strip())
+    if not isinstance(args.request,str) or not 1 <= len(args.request.strip()) <= 4096:
+        raise ValueError("provide a user request of 1–4096 characters")
+    series = series_tools.split_request(args.request)
+    if series and not re.match(r"^\[\s*(?:-?[0-9]|\])", series[1]["series"]):
+        series = None  # Bracketed units such as [km/h] belong to the observation author.
+    if len(series[0] if series else args.request.strip()) > 200:
+        raise ValueError("provide a capability description of 1–200 characters")
+    description = clean_text(series[0] if series else args.request.strip())
     if not args.ollama_url:
         raise ValueError("configure EDGE_OLLAMA_URL or pass --ollama-url")
     schema = {"type":"object", "additionalProperties":False,
@@ -91,10 +97,15 @@ def draft(args):
                             "unit":{"enum":sorted({u for units in UNITS_BY_FIELD.values() for u in units} | {"none"})},
                             "op":{"enum":["read", *sorted(COMPARISON_OPS)]}, "threshold":{"type":"number"}}}
     context = {"request":description, "allowed_units":UNITS_BY_FIELD}
+    prompt = PROMPT
+    if series:
+        series_tools.values_from(series[1])
+        schema, prompt = series_tools.AUTHOR_SCHEMA, series_tools.PROMPT
+        context = {"request":description, "input_type":"integer series"}
     if source_task:
         context["reason_code"] = source_task["reason_code"]
     body = {"model":args.model, "stream":False, "format":schema, "options":{"temperature":0},
-            "messages":[{"role":"system","content":PROMPT},
+            "messages":[{"role":"system","content":prompt},
                         {"role":"user","content":json.dumps(context,ensure_ascii=False)}]}
     request = Request(args.ollama_url.rstrip("/")+"/api/chat", data=json_bytes(body),
                       headers={"Content-Type":"application/json"})
@@ -106,10 +117,12 @@ def draft(args):
     if args.record:
         args.record.parent.mkdir(parents=True, exist_ok=True)
         args.record.write_bytes(json_bytes({"author_protocol":"ollama.chat", "model":args.model, "id":args.id,
-            "request":description, "source_task":source_task, "prompt_sha256":hashlib.sha256(PROMPT.encode()).hexdigest(),
+            "request":description, "source_task":source_task, "prompt_sha256":hashlib.sha256(prompt.encode()).hexdigest(),
             "reply":reply, "response_sha256":hashlib.sha256(raw).hexdigest()}))
     if not isinstance(reply, dict) or set(reply)!=set(schema["required"]):
         raise ValueError("model returned an incomplete tool proposal")
+    if series:
+        return validate({"schema_version":2, "id":args.id, "description":description, **reply})
     if reply["field"]=="unsupported":
         raise ValueError("the requested capability requires another provider")
     result = {"schema_version":1, "id":args.id, "description":description,
@@ -125,7 +138,9 @@ def checked_definition(path, cases_path):
     if not isinstance(cases, list) or not 2 <= len(cases) <= 256:
         raise ValueError("provide 2–256 independently specified cases")
     comparison = "comparison" in definition
-    expected_keys = {"unit","value","matches"} if comparison else {"unit","value"}
+    expected_keys = {"value"} if definition["schema_version"] == 2 else {"unit","value"}
+    if comparison:
+        expected_keys.add("matches")
     values, outcomes = set(), set()
     for index, case in enumerate(cases, 1):
         if not isinstance(case, dict) or set(case)!={"sample","expected"}:
@@ -135,8 +150,11 @@ def checked_definition(path, cases_path):
             raise ValueError(f"case {index}: incorrect expectation fields")
         actual = evaluate(definition, case["sample"])
         number = expected["value"]
-        if (type(number) not in (float,int) or not math.isfinite(number) or expected["unit"]!=actual["unit"]
-                or not math.isclose(actual["value"], number, rel_tol=1e-9, abs_tol=1e-9)):
+        if type(number) not in (float,int) or not math.isfinite(number):
+            raise ValueError(f"case {index}: expected a finite measurement")
+        same = (actual["value"] == number if definition["schema_version"] == 2
+                else math.isclose(actual["value"], number, rel_tol=1e-9, abs_tol=1e-9))
+        if not same or expected.get("unit") != actual.get("unit"):
             raise ValueError(f"case {index}: measurement differs from expectation")
         values.add(actual["value"])
         if comparison:
@@ -215,7 +233,7 @@ class DerivedRelease:
 
     @staticmethod
     def check_graph(directory, name, definition):
-        # A derived tool reads a fixed odometry contract and has no registry dependencies.
+        # Declarations read built-in observation or argument contracts without registry dependencies.
         return None
 
 

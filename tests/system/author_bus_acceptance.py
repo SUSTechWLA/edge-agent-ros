@@ -31,6 +31,8 @@ class Handler(BaseHTTPRequestHandler):
         with Path("/audit/calls").open("a") as audit:
             audit.write("author-draft\\n")
         answer = {"field":"speed","unit":"km/h","op":"read","threshold":0}
+        if user.get("input_type") == "integer series":
+            answer = {"transforms":["diff"],"reduce":"max"}
         wire = json.dumps({"message":{"content":json.dumps(answer)}}).encode()
         self.send_response(200)
         self.send_header("Content-Length",str(len(wire)))

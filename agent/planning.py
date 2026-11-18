@@ -12,6 +12,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 from derived_tools import load_directory
 import runtime_plugins
+import series_tools
 from tracing import CODE, artifact, contract, exchange
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -155,6 +156,7 @@ def registry():
                      and item["effect"] in ("read","idempotent")
                      and isinstance(parameters,dict)
                      and isinstance(utterances,list) and all(valid_utterance(p,parameters) for p in utterances)
+                     and valid_verbatim_manifest(item)
                      and isinstance(outcomes,dict) and all(isinstance(k,str) and isinstance(v,str) and v
                                                          for k,v in outcomes.items())
                      and isinstance(terms,dict) and all(k in outcomes and isinstance(words,list)
@@ -179,7 +181,8 @@ def catalog(caps):
     for item in caps.values():
         entry = {k:v for k,v in item.items() if k in ("id","version","description","parameters","effect","outcomes")}
         if "derived" in item and not item.get("endpoint"):
-            entry["derived"] = {k:v for k,v in item["derived"].items() if k in ("field","unit","comparison")}
+            entry["derived"] = {k:v for k,v in item["derived"].items()
+                                if k in ("field","unit","comparison","transforms","reduce")}
         entries.append(entry)
     return entries
 
@@ -188,6 +191,8 @@ def binding(cap):
     fields = {key:cap.get(key) for key in ("id","version","parameters","effect","endpoint")}
     if cap.get("outcomes"):
         fields["outcomes"] = cap["outcomes"]
+    if cap.get("verbatim_argument"):
+        fields.update(verbatim_argument=True, utterances=cap["utterances"])
     return hashlib.sha256(json.dumps(fields,sort_keys=True).encode()).hexdigest()
 
 
@@ -224,9 +229,48 @@ def valid_utterance(pattern, parameters):
             and len(marker)<len(pattern)<=256)
 
 
-def match_utterances(request,caps):
-    matches=[]
+def valid_verbatim_manifest(cap):
+    flag = cap.get("verbatim_argument", False)
+    if flag is False:
+        return True
+    patterns = cap.get("utterances")
+    parameters = cap.get("parameters")
+    if (flag is not True or cap.get("effect") != "read" or cap.get("id") in BASE
+            or not isinstance(patterns, list) or not patterns or not isinstance(parameters, dict)
+            or not all(valid_utterance(pattern, parameters) for pattern in patterns)):
+        return False
+    marker = "{" + next(iter(parameters)) + "}"
+    return all(all(pattern.split(marker)) for pattern in patterns)
+
+
+def verbatim_step(text, caps):
+    """A complete read-tool invocation carries opaque user data between two literal delimiters."""
+    matches = []
     for cap in caps.values():
+        if not cap.get("verbatim_argument"):
+            continue
+        name, = cap["parameters"]
+        for pattern in cap["utterances"]:
+            prefix, suffix = pattern.split("{" + name + "}")
+            if len(text) >= len(prefix) + len(suffix) and text.startswith(prefix) and text.endswith(suffix):
+                step = {"tool":cap["id"], "args":{name:text[len(prefix):-len(suffix)]}}
+                if step not in matches:
+                    matches.append(step)
+    if len(matches) > 1:
+        raise Refused("原文输入匹配多个工具或多个参数范围，请明确选择")
+    return matches[0] if matches else None
+
+
+def match_utterances(request,caps, source_text=None):
+    matches=[]
+    series_request = series_tools.split_request(source_text if source_text is not None else request)
+    for cap in caps.values():
+        if cap.get("verbatim_argument"):
+            continue
+        if is_series(cap):
+            if series_request and series_request[0] == cap["description"]:
+                matches.append({"tool":cap["id"],"args":series_request[1]})
+            continue
         for pattern in cap.get("utterances",[]):
             name=next(iter(cap["parameters"]))
             prefix,suffix=normalized(pattern).split("{"+name+"}")
@@ -266,7 +310,7 @@ def local_plan(text, caps):
         if match.group(1):
             steps.append({"tool":"status","args":{}})
         return steps
-    return match_utterances(request,caps)
+    return match_utterances(request,caps, text)
 
 
 def plan(text, caps, trace=None):
@@ -290,13 +334,37 @@ def plan_read_only(text, caps, pin):
     if cap is None:
         raise failure(Unavailable, "已授权的只读声明尚未挂载，等待恢复原绑定",
                       "planner.approved_binding_unavailable", "registry")
-    if (cap["version"] != pin["version"] or cap.get("effect") != "read"
-            or "derived" not in cap or cap.get("endpoint") or cap["description"] != text):
+    if cap["version"] != pin["version"] or cap.get("effect") != "read" or "derived" not in cap or cap.get("endpoint"):
+        raise failure(Refused, "已授权的本地只读声明或版本未挂载，需复核发布记录",
+                      "planner.approved_binding_unavailable", "registry")
+    description, args = text, {}
+    if is_series(cap):
+        request = series_tools.split_request(text)
+        if not request:
+            raise failure(Refused, "任务缺少原始数列", "tool.series_invalid", "arguments.series")
+        description, args = request
+        validate_series_input(text, args, cap)
+    if cap["description"] != description:
         raise failure(Refused, "已授权的本地只读声明或版本未挂载，需复核发布记录",
                       "planner.approved_binding_unavailable", "registry")
     policy = runtime_plugins.load_policy()
-    return "local/pinned-derived", [{"tool":cap["id"], "args":{}, "version":cap["version"],
+    return "local/pinned-derived", [{"tool":cap["id"], "args":args, "version":cap["version"],
             "binding":binding(cap), "status":"PENDING", "verification":verification_plan(cap,policy)}]
+
+
+def is_series(cap):
+    return not cap.get("endpoint") and cap.get("derived", {}).get("schema_version") == 2
+
+
+def validate_series_input(text, args, cap):
+    request = series_tools.split_request(text)
+    try:
+        if not request or request[0] != cap["description"]:
+            raise ValueError("series capability must match the requested operation")
+        if series_tools.values_from(request[1]) != series_tools.values_from(args):
+            raise ValueError("series must match the array supplied in the task")
+    except ValueError as exc:
+        raise failure(Refused, str(exc), "tool.series_invalid", "arguments.series") from exc
 
 
 def verification_plan(cap, policy):
@@ -352,6 +420,11 @@ def build_plan(text, caps, diagnostic, trace=None):
     if trace:
         trace("planner.context",{"layer":"planner","module":"registry",
               "artifact":artifact([dict(item,binding=binding(caps[item["id"]])) for item in catalog(caps)])})
+    # Coordinates and action words inside the delimited string belong to the text tool.
+    exact = verbatim_step(text, caps)
+    if exact:
+        cap = caps[exact["tool"]]
+        return "local", [{**exact, "version":cap["version"], "binding":binding(cap), "status":"PENDING"}]
     required = requested_outcomes(text,caps)
     available = {key for cap in caps.values() for key in cap.get("outcomes",{})}
     missing = required - available
@@ -414,6 +487,8 @@ def build_plan(text, caps, diagnostic, trace=None):
         if not isinstance(step,dict) or not isinstance(step.get("tool"),str) or step["tool"] not in caps:
             raise Refused("计划包含未注册能力")
         cap = caps[step["tool"]]
+        if cap.get("verbatim_argument"):
+            raise failure(Refused, "此工具需要按原文边界提供参数", "tool.verbatim_argument_required", "planner")
         args = step.get("args")
         if not isinstance(args,dict) or set(args) != set(cap["parameters"]):
             raise Refused(f"{cap['id']} 参数与能力契约不一致")
@@ -433,6 +508,8 @@ def build_plan(text, caps, diagnostic, trace=None):
                 raise Refused(f"{name} 类型错误")
         if cap["effect"]!="read" and re.search(r"不要|禁止|别去|别动|不能|不得|不许|\b(?:not|never|unless|if)\b|如果|除非",text,re.I):
             raise Refused("含否定或条件的执行请求需要明确后再派发")
+        if is_series(cap):
+            validate_series_input(text, args, cap)
         if cap["id"]=="inspect" and not MOVE_TERMS.search(text):
             raise Refused("请求未明确要求移动或巡检")
         validated.append({"tool":cap["id"],"args":args,"version":cap["version"],"binding":binding(cap),"status":"PENDING"})

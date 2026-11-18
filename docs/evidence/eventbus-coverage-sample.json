@@ -1,0 +1,119 @@
+{
+  "passed": true,
+  "started_at": "2026-11-18T02:06:27.778274+00:00",
+  "finished_at": "2026-11-18T02:06:58.044905+00:00",
+  "project": "edge-module-bus-417c5ce818bb",
+  "image": "edge-agent-ros:sdd011-coverage-local",
+  "image_id": "sha256:d608b75ce3c6c495bdfe292fcad7a6abcbe03c9628d1d8dec9da893fc17e2256",
+  "revision": "50b9344-sdd011-working-tree",
+  "environment": "isolated Docker network, deterministic provider; no Gazebo or model",
+  "raw_report_sha256": "538ee26ca588056b3de03e8a0b2afc35eaf18ed26ac593caaa505c8a22dfdd85",
+  "base_image_id": "sha256:7eb9c67705a4112a65d4b01ede8f63b2b05d32e6b3e7668263e5b1054a2e99ca",
+  "covered_source_sha256": {
+    "console/server/journal_ingress.py": "00b6996ee6fd7e9870f4ac50b76b7f5e67b48636d3e5f3697bdc8d7d5ecf5441",
+    "console/server/history.py": "a1f3c5101f00b71b8e3945517511615b08433167008e41544994ca0921769eb3",
+    "console/server/test_journal_ingress.py": "b1ebe07bc412733674cc77ee28675b9765b4799532eb7f6d495b877e275aef72",
+    "tests/system/module_bus_acceptance.py": "c31a1e499ce6ee41240decbfc3003df3035bebfa8939c1298e2957f6bdc03f85"
+  },
+  "stages": {
+    "source_coverage": {
+      "gap": {
+        "seq": 40,
+        "utc": "2026-11-18T02:06:51.526+00:00",
+        "observed_at": 1794967611.5264876,
+        "kind": "module.journal_gap",
+        "level": "warn",
+        "source": "edge_console",
+        "session_id": "9a195fa98062482fab84575f8dde5ce9",
+        "mission_id": null,
+        "operation_id": null,
+        "detail": "插件事件源序号不连续，区间内事实未收录",
+        "data": {
+          "journal": "demo.coverage",
+          "missing_from": 1,
+          "missing_to": 6,
+          "next_source_seq": 7
+        },
+        "cause_seq": null,
+        "source_id": "journal:demo.coverage:1cec5b4ae445f5e450fa8ab1f0f85fc6",
+        "source_seq": 6,
+        "event_id": "efcf464f4d83432fafa84ac0abb66005",
+        "trace_id": "journal:demo.coverage:1cec5b4ae445f5e450fa8ab1f0f85fc6",
+        "parent_event_id": null,
+        "task_id": null,
+        "module": "journal.ingress",
+        "layer": null,
+        "code": "module.journal_gap",
+        "call_id": null,
+        "trigger_kind": null,
+        "trigger_id": null,
+        "trigger_source": null
+      },
+      "next_source_seq": 7,
+      "health": [
+        {
+          "event_id": "1d58a776e21f40e89ba8fa68dc78437a",
+          "trace_id": "journal.health:demo.coverage",
+          "parent_event_id": null,
+          "kind": "module.journal_available",
+          "code": "module.journal_available",
+          "module": "journal.ingress",
+          "source": "edge_console",
+          "utc": "2026-11-18T02:06:51.532+00:00",
+          "source_seq": null,
+          "level": "info",
+          "data": {
+            "journal": "demo.coverage",
+            "status": "available",
+            "previous": null
+          }
+        },
+        {
+          "event_id": "c3911517a8bc4073857b6870962d939d",
+          "trace_id": "journal.health:demo.coverage",
+          "parent_event_id": "1d58a776e21f40e89ba8fa68dc78437a",
+          "kind": "module.journal_unavailable",
+          "code": "module.journal_unavailable",
+          "module": "journal.ingress",
+          "source": "edge_console",
+          "utc": "2026-11-18T02:06:52.553+00:00",
+          "source_seq": null,
+          "level": "warn",
+          "data": {
+            "journal": "demo.coverage",
+            "status": "absent",
+            "previous": "available"
+          }
+        },
+        {
+          "event_id": "3703d8e316b643c5b697dcaa6edb8732",
+          "trace_id": "journal.health:demo.coverage",
+          "parent_event_id": "c3911517a8bc4073857b6870962d939d",
+          "kind": "module.journal_available",
+          "code": "module.journal_available",
+          "module": "journal.ingress",
+          "source": "edge_console",
+          "utc": "2026-11-18T02:06:55.006+00:00",
+          "source_seq": null,
+          "level": "info",
+          "data": {
+            "journal": "demo.coverage",
+            "status": "available",
+            "previous": "absent"
+          }
+        }
+      ]
+    },
+    "side_effects": {
+      "provider_calls": [
+        {
+          "path": "/heartbeat",
+          "operation_id": "bus-control-sample/step/1"
+        }
+      ],
+      "control_task": "SUCCEEDED",
+      "task_rows": 9
+    },
+    "cleanup": "isolated Compose services and named volumes removed"
+  }
+}

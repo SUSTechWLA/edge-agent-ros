@@ -14,6 +14,34 @@ import planning
 import tracing
 
 
+class VerbatimTool(unittest.TestCase):
+    cap = {"id":"word_count", "version":"1", "description":"word count", "effect":"read",
+           "endpoint":"http://provider/invoke", "parameters":{"text":"string"},
+           "verbatim_argument":True, "utterances":["数词【{text}】"]}
+
+    def test_literal_input_including_coordinates_is_opaque(self):
+        caps = {**planning.BASE, self.cap["id"]:self.cap}
+        for raw in ("", " Ａ 去 (1,2) 拍照！  ", "robot.\nＲＯＢＯＴ"):
+            provider, steps = planning.plan("数词【" + raw + "】", caps)
+            self.assertEqual(provider, "local")
+            self.assertEqual([(s["tool"],s["args"]) for s in steps],[("word_count",{"text":raw})])
+        other = dict(self.cap,id="other")
+        with self.assertRaises(planning.Refused):
+            planning.plan("数词【x】", {**caps,"other":other})
+
+    def test_contract_is_bound_and_model_cannot_supply_different_text(self):
+        self.assertTrue(planning.valid_verbatim_manifest(self.cap))
+        self.assertFalse(planning.valid_verbatim_manifest(dict(self.cap, effect="idempotent")))
+        self.assertFalse(planning.valid_verbatim_manifest(dict(self.cap, utterances=["数词{text}"])))
+        self.assertNotEqual(planning.binding(self.cap),planning.binding(dict(self.cap,utterances=["查词【{text}】"])))
+        proposal = {"steps":[{"tool":"word_count","args":{"text":"invented"}}]}
+        profile = {"protocol":"http-planner","url":"http://planner","version":"test"}
+        with patch.object(planning,"planner_profile",return_value=profile), patch.object(planning,"http_json",return_value=proposal):
+            with self.assertRaises(planning.Refused) as failure:
+                planning.plan("自由表述",{"word_count":self.cap})
+            self.assertEqual(failure.exception.code,"tool.verbatim_argument_required")
+
+
 class DeployedConfiguration(unittest.TestCase):
     """Read the same checked-in files as Compose, without contacting any provider."""
 

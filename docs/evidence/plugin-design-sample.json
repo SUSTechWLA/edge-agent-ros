@@ -1,0 +1,215 @@
+{
+  "spec": "SDD-013",
+  "scope": "Isolated deterministic blocked-task fixture and a real sampled Ollama design. Synthetic goal and trace are publishable.",
+  "checks": {
+    "draft_and_event_contract": "passed",
+    "independent_functional_plugin_acceptance": "not_run",
+    "semantic_quality": "review_required",
+    "final_open_questions": [
+      "Define the tool output schema",
+      "Use a known PNG width and height for acceptance",
+      "Specify removal and restoration of the registered provider"
+    ]
+  },
+  "run_sha256": "6189eaab93303b5c85c4ffebf01771e7764a6ed03c41b46a4ab72ed761988905",
+  "run": {
+    "passed": true,
+    "project": "edge-design-859f2ce1133f",
+    "goal": "Return the width and height of a PNG artifact in pixels.",
+    "model": "qwen2.5:1.5b",
+    "fixture": "Isolated single software task, deterministic odometry decline, real Console archive.",
+    "model_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+    "source_sha256": "50bcc7b57bfcab8e0bb16bb431cb669f2aca0694e1a283a4ce27b378f110ec2b",
+    "image_id": "sha256:7eb9c67705a4112a65d4b01ede8f63b2b05d32e6b3e7668263e5b1054a2e99ca",
+    "state": "BLOCKED",
+    "steps": 0,
+    "synthetic_test_draft": {
+      "design_id": "5bbb6b963d24369d96e6ac146966043f8916c01b242be2ea6cb6add471194051",
+      "development": {
+        "acceptance": [
+          "Reproduce this task on an isolated instance with the plugin absent.",
+          "Verify output against an independent expected value or observation.",
+          "Test loss, duplicates, version change, and unrelated tasks while draining."
+        ],
+        "guide": "docs/plugin-development.md",
+        "implementation": "Implement an independent provider. Declare consumers, dependency versions, error codes and timeouts. Document remaining questions.",
+        "permissions_granted": [],
+        "resources": "List input sources, units, freshness, privileges and resource ownership.",
+        "review_state": "unverified",
+        "rollback": "Withdraw new bindings, reconcile in-flight work by operation ID, restore the pinned version and verify independent consumer health.",
+        "selected_contract": "plugins/README.md — model chooses an operation. Define id, version, effect, parameters, outcomes and endpoint. HTTP receives operation_id/version/arguments and returns operation_id/state/evidence.",
+        "specification": "docs/specs/TEMPLATE.md",
+        "state_owner": "Provider owns plugin state. Agent owns the task outcome."
+      },
+      "goal": "Return the width and height of a PNG artifact in pixels.",
+      "interfaces": {
+        "Event consumer": "client/event_sink.py — consume GET /api/events by archive_id and seq. Persist the cursor with the outcome. Explicitly admit a separate task before any action.",
+        "Service": "agent/runtime_plugins.py — separate HTTP provider. Declare schema_version, id, version, endpoint, provides and requires in plugins/runtime/<id>.json. Define its request/response and all consumers.",
+        "Tool": "plugins/README.md — model chooses an operation. Define id, version, effect, parameters, outcomes and endpoint. HTTP receives operation_id/version/arguments and returns operation_id/state/evidence."
+      },
+      "model_design": {
+        "model": "qwen2.5:1.5b",
+        "prompt_sha256": "f349fb8aaafce365ce3fe30aef384cbfd201a47d191e7891e2124b0fc6238dc8",
+        "proposal": {
+          "behavior": "This plugin is designed to read a PNG artifact and return its width and height in pixels.",
+          "dependencies": "None",
+          "example_input": "A PNG artifact file named 'example.png'",
+          "expected_result": "The plugin should return the width and height of the PNG artifact in pixels.",
+          "inputs": "The plugin will read the PNG artifact file and return the width and height in pixels.",
+          "interface": "Tool",
+          "outputs": "None",
+          "permissions": "The plugin will read the PNG artifact file and return the width and height in pixels.",
+          "rollback": "The plugin will not change the state of the system."
+        },
+        "protocol": "ollama.chat",
+        "request_sha256": "76d36dd2a4f0fe6b1b30d3fcac42bf4dd9ce5dc29c1d7c6270d7f9234bf22150",
+        "response_sha256": "f31cad057a66800e00809223ae1bbf130b815106be98c69a82a97abde2a3a1f5",
+        "unresolved_fields": [
+          "outputs"
+        ]
+      },
+      "schema_version": 1,
+      "source": {
+        "archive_id": "f18b225bed1997e31e5e6aa9ac2bfdcf",
+        "decision_event_id": "cac2f69e2de14deba45ba1e0f4398a41",
+        "event_id": "c78c23b24d424989bd4d4bd868473d84",
+        "reason_code": "planner.not_configured",
+        "receipt_id": "a2561881853d4eee26cb744d80469606057579d0420c878851f499d09246638c",
+        "receipt_sha256": "8f40dfdc2ac239189da0ba2854d46adbddc8f1b84e92c6008e46144e8919f2c7",
+        "seq": 4,
+        "task_id": "png-dimensions",
+        "trace_id": "png-dimensions"
+      },
+      "status": "draft"
+    },
+    "events": [
+      {
+        "seq": 4,
+        "event_id": "c78c23b24d424989bd4d4bd868473d84",
+        "parent_event_id": "c244aeecc73d42e7bd32c9b9ae6503dc",
+        "trace_id": "png-dimensions",
+        "kind": "agent.blocked",
+        "source": "mission_agent/tasks",
+        "data": {
+          "source_seq": 3,
+          "task_id": "png-dimensions",
+          "journal_step": 0,
+          "delegated_operation_id": null,
+          "payload": {
+            "provider": null,
+            "prior_state": "PLANNING",
+            "state": "BLOCKED",
+            "retries": 0,
+            "diagnostic": {
+              "stage": "capability_check",
+              "code": "planner.not_configured",
+              "origin": "planner",
+              "error_type": "Refused",
+              "message": "本地策略无法解析这项请求。可输入明确坐标巡检、查询状态，或连接模型规划器并注册所需能力。",
+              "catalog": {
+                "id": "planner.not_configured",
+                "version": "1",
+                "sha256": "850533063ac0ca616f28d3559922b96ba4eab52791d8c7467582427a2fdce807",
+                "hint": "此句未匹配本地技能，核对模型服务地址或采用能力清单支持的指令。"
+              }
+            },
+            "trace": {
+              "schema_version": 1,
+              "module": "agent",
+              "layer": "planner",
+              "code": "planner.not_configured",
+              "diagnosis": {
+                "stage": "capability_check",
+                "code": "planner.not_configured",
+                "origin": "planner",
+                "error_type": "Refused",
+                "message": "本地策略无法解析这项请求。可输入明确坐标巡检、查询状态，或连接模型规划器并注册所需能力。",
+                "catalog": {
+                  "id": "planner.not_configured",
+                  "version": "1",
+                  "sha256": "850533063ac0ca616f28d3559922b96ba4eab52791d8c7467582427a2fdce807",
+                  "hint": "此句未匹配本地技能，核对模型服务地址或采用能力清单支持的指令。"
+                }
+              },
+              "event_id": "c78c23b24d424989bd4d4bd868473d84",
+              "trace_id": "png-dimensions",
+              "parent_event_id": "c244aeecc73d42e7bd32c9b9ae6503dc",
+              "trigger": {
+                "kind": "user",
+                "source": "user",
+                "id": "png-dimensions"
+              }
+            }
+          }
+        }
+      },
+      {
+        "seq": 7,
+        "event_id": "cac2f69e2de14deba45ba1e0f4398a41",
+        "parent_event_id": "c78c23b24d424989bd4d4bd868473d84",
+        "trace_id": "png-dimensions",
+        "kind": "plugin.author.declined",
+        "source": "journal:plugin.author",
+        "data": {
+          "action": "Review the requested measurement and available sensors; supply a suitable provider if needed.",
+          "archive_id": "f18b225bed1997e31e5e6aa9ac2bfdcf",
+          "receipt_id": "a2561881853d4eee26cb744d80469606057579d0420c878851f499d09246638c",
+          "receipt_sha256": "8f40dfdc2ac239189da0ba2854d46adbddc8f1b84e92c6008e46144e8919f2c7",
+          "source_seq": 4
+        }
+      },
+      {
+        "seq": 8,
+        "event_id": "2660f4eaf1394565af1ae1cb5ae83823",
+        "parent_event_id": "cac2f69e2de14deba45ba1e0f4398a41",
+        "trace_id": "png-dimensions",
+        "kind": "plugin.design.requested",
+        "source": "journal:plugin.design",
+        "data": {
+          "receipt_sha256": "8f40dfdc2ac239189da0ba2854d46adbddc8f1b84e92c6008e46144e8919f2c7"
+        }
+      },
+      {
+        "seq": 9,
+        "event_id": "e7fec88ea17f4879aa537f2d0744c02a",
+        "parent_event_id": "2660f4eaf1394565af1ae1cb5ae83823",
+        "trace_id": "png-dimensions",
+        "kind": "plugin.design.drafted",
+        "source": "journal:plugin.design",
+        "data": {
+          "design_id": "5bbb6b963d24369d96e6ac146966043f8916c01b242be2ea6cb6add471194051",
+          "draft_sha256": "0ee9cd973c64d9d4424c263409e077b2d90e93568114b6cde73b238075480bd0",
+          "receipt_sha256": "8f40dfdc2ac239189da0ba2854d46adbddc8f1b84e92c6008e46144e8919f2c7",
+          "review_state": "unverified",
+          "unresolved_fields": [
+            "outputs"
+          ]
+        }
+      }
+    ]
+  },
+  "previous_model_trial": {
+    "run_sha256": "4b7429b21f9a8fd8e73b84111e74299d39a58984f8ac322bc5d35be7e04ee8ef",
+    "project": "edge-design-e21df8ba93d7",
+    "model": "qwen2.5:1.5b",
+    "source_sha256": "d2b338d526ce0782010ddd697b185ccef5a59b9c5aca59008fbb9b63295efec9",
+    "observation": "Owner supplied a file. Model proposed an unverified ROS type and no independently checkable expected value.",
+    "model_design": {
+      "model": "qwen2.5:1.5b",
+      "prompt_sha256": "5e0e0b2a5a08a12985737a7b1308e5603c7cda722ba6dcf0b6d506f847bf7ef6",
+      "proposal": {
+        "acceptance": "The plugin will be implemented as a ROS node that subscribes to the `image` topic, processes the PNG image, and publishes the width and height as a ROS message.",
+        "behavior": "The node will read the PNG image, decode it, and then extract the width and height. It will then publish these dimensions as a `sensor_msgs/ImageDimension` message.",
+        "dependencies": "The plugin requires the `sensor_msgs` package for the image dimensions message.",
+        "inputs": "The plugin requires the `image` topic to be published by the ROS node that generates the PNG image.",
+        "interface": "Tool",
+        "outputs": "The plugin publishes the width and height as a `sensor_msgs/ImageDimension` message.",
+        "permissions": "The plugin requires the `image` topic to be published by the ROS node that generates the PNG image.",
+        "rollback": "If the plugin fails to publish the dimensions, it will publish an error message indicating the failure and the reason for the failure."
+      },
+      "protocol": "ollama.chat",
+      "request_sha256": "f564cd374cb9a66a0a4d36861b7bc5dc49e9563135c15f5498e79764019942f6",
+      "response_sha256": "0c95f692d448da473f84ae3be80a398956ef771211767f0b4dc5c28bc30beb95"
+    }
+  }
+}

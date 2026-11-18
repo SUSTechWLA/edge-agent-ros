@@ -6,6 +6,8 @@
 
 ## 1. 先决定谁需要这项能力
 
+两个实现可以直接参考。需要从运行中的系统补收失败事实，可新增独立巡检消费者，使用自己的事故、重试预算和持久游标。需要模型处理原文，可基于受限的文本代码候选，使用原文参数契约、独立测试数据、批准及热装流程。[Watchdog 手册](watchdog.md) · [文本插件开发示例](../examples/software-provider/README.md)
+
 **Plugin 是可独立交付的扩展单元，Tool 是模型可选择的操作。** 一个插件可以公开零个、一个或多个 Tool。函数、类、文件并不天然等于插件；只有具有明确消费者、资源和生命周期的功能，才需要独立装卸。
 
 | 需求 | 首选接入方式 | 现有入口与责任 |
@@ -13,7 +15,7 @@
 | 用户希望模型选择“读温度”“拍照”等动作 | **Tool**：语义名称、参数、effect、产物和提供者 | [工具契约](../plugins/README.md)，`plugins/*.json`，由 `agent/planning.py` 建目录，`agent/service.py` 执行和恢复 |
 | 一个或多个模块需要共享能力，模型不必主动选它 | **Service Provider**：先定义协议，再声明 `provides/requires` | `plugins/runtime/*.json`、`agent/runtime_plugins.py`；参考 `verify.image`、`session.read` |
 | 观察异常、导出日志、诊断或者根据事实提出后续工作 | **事件消费者**：独立读取并保存游标 | `client/event_sink.py`、[EventBus](module-eventbus.md)；触发执行另走任务入口 |
-| 已有里程计字段的单位换算、阈值判断 | **derived Tool**：现有受限解释器里的声明 | [作者手册](plugin-authoring.md)、`plugins/derived/`；独立样本通过后受管发布 |
+| 已有里程计字段的单位换算、阈值判断，或用户数列的只读计算 | **derived Tool**，由模型起草并组合现有算子 | [作者手册](plugin-authoring.md)、[软件工具规格](specs/SDD-012-authored-software-tools.md)、`plugins/derived/`。现场独立样本通过后受管发布。 |
 | 更换模型或提示 | **Model Adapter / 配置**：保持规划输入输出契约 | `contracts/planner-profile.json`、[Agent 接口](../agent/README.md)；配置变化与部署新代码分别处理 |
 | 新传感器订阅 | 已安装消息类型的观测清单 | [observations](../observations/README.md)；需要新消息包或融合算法时另行构建和验收 |
 

@@ -23,9 +23,9 @@
 
 日常任务的制动事件为 `#1850`，距离 **0.3952096700668335 m**。Session 串起目标、计划、制动、停稳与任务受阻；展开引用或调用取证工具时再看完整精度。
 
-![日常任务会话及提供者版本](../../artifacts/console/session-desktop.png)
+![日常任务会话及提供者版本](../evidence/console/session-desktop.png)
 
-[手机 390 px 实测页面](../../artifacts/console/session-mobile.png)。
+[手机 390 px 实测页面](../evidence/console/session-mobile.png)。
 
 ## 修复与负样本
 

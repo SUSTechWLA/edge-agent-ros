@@ -10,6 +10,8 @@
 
 ## 仿真或工作站
 
+运行中需要持续巡检时，在仿真或板端构建包含 Watchdog 的镜像，再单独启用 `watchdog` profile。Watchdog 的持久订阅使用 Docker 卷的子目录挂载。两份 Compose 的实际安装、停止、查事件与卷权限验证见[巡检手册](watchdog.md)。
+
 安装可运行 Linux 镜像的 Docker Engine 或 Docker Desktop，启用 Docker Compose 插件。本文命令从项目根目录执行。Windows 可以直接使用已提供的 PowerShell 脚本，不需要在宿主使用原生 WSL 开发环境。首次构建需要镜像和软件源网络，可使用 Docker Desktop 配置的 VPN/代理。基础镜像缓存后，常规任务可以离线运行。
 
 ```sh
@@ -54,15 +56,15 @@ docker compose -f compose.hardware.yaml exec -T perception /usr/local/bin/edge-e
 
 Linux 设备上用 `uname -m` 与 `docker info --format '{{.Architecture}}'` 核实架构，x86-64 对应 linux/amd64，aarch64 对应 linux/arm64。设备上直接构建会使用本机目标，无须指定仿真平台。可在兼容架构的构建机用 `sh scripts/deploy.sh hardware build`，再用 `docker save edge-agent-ros/hardware:v0.1 -o edge-hardware.tar` 转运镜像，在目标机用 `docker load -i edge-hardware.tar` 后执行 `sh scripts/deploy.sh hardware start`。两端使用同一项目版本及部署文件。构建机可用 buildx/QEMU 交叉构建；要评估执行延迟、功耗和散热，需在对应板卡上重复测试。
 
-本机已保留单独的 ARM64 镜像标签 `edge-agent-ros/hardware:arm64-check` 和 AMD64 标签 `edge-agent-ros/hardware:v0.1`。在当前开发机的项目根目录执行第一组命令可打包 ARM64 镜像；`artifacts/console` 已存在，按需导出约 1.35 GB 镜像。将 tar 复制到目标板上与开发机版本一致的项目目录，然后运行第二组命令。板端可以离线加载镜像。
+本机已保留单独的 ARM64 镜像标签 `edge-agent-ros/hardware:arm64-check` 和 AMD64 标签 `edge-agent-ros/hardware:v0.1`。在开发机的项目根目录创建本地 `artifacts/images/` 目录（PowerShell 可执行 `New-Item -Force -ItemType Directory artifacts/images`），执行第一组命令导出约 1.35 GB 镜像。将 tar 复制到目标板项目根目录下同名目录，然后运行第二组命令离线加载镜像。
 
 ```sh
 # 开发机（PowerShell 同样支持这两条 Docker 命令）
 docker image inspect edge-agent-ros/hardware:arm64-check --format '{{.Os}}/{{.Architecture}} {{.Id}}'
-docker save -o artifacts/console/edge-hardware-arm64.tar edge-agent-ros/hardware:arm64-check
+docker save -o artifacts/images/edge-hardware-arm64.tar edge-agent-ros/hardware:arm64-check
 
 # 板端，在项目根目录执行
-docker load -i artifacts/console/edge-hardware-arm64.tar
+docker load -i artifacts/images/edge-hardware-arm64.tar
 export EDGE_HARDWARE_IMAGE=edge-agent-ros/hardware:arm64-check
 sh scripts/deploy.sh hardware start
 ```
@@ -84,7 +86,7 @@ sh scripts/deploy.sh hardware start
 | 同一开发机上的 Linux/ARM64 指令模拟 | 从 ARM64 官方 ROS 镜像编译 `edge_interfaces` 和 `edge_core`，启动硬件部署中的四个服务。用 ROS 发布带采样时间与坐标系的轮式里程、IMU 与激光，查询 `/edge/get_mission`，通过工作台提交 `status` 任务 | 容器内 `uname -m` 为 `aarch64`。本轮匹配 48 帧扫描，丢弃 0 帧，得到 8 个占用格和 226 个空闲格。代理读取 `/robot37/odom` 的 `x=0.192 m`，状态为 `SUCCEEDED`，任务留下 `accepted → planned → dispatch → verified` 四项记录。 |
 | RK3588 / Jetson Orin 实机 | 接入板载驱动、真实时钟与控制器，重复观测和任务验收，采集温度、功耗和延迟 | 待实机测量。上述 ARM64 试验包含软件链路、合成 ROS 输入与指令模拟；传感器标定、物理运动或加速器驱动需在目标机验证。 |
 
-两种架构还执行了两次故障检验。没有相机能力时，请求“汇报状态并拍照”在 `capability_check` 阶段终止，执行步骤为零。将自动重试次数在测试中设为零，断开里程计后查询状态，任务进入 `RECOVERY_REQUIRED`；恢复里程计并续办后，两个平台都沿用同一个 `operation_id` 取得结果，各自只派发了一次。可以用镜像摘要和源码 SHA-256 核对这轮测试的采集 topic、融合结果、任务事件和原始时间戳。[跨平台实测记录](../artifacts/console/platforms.json)
+两种架构还执行了两次故障检验。没有相机能力时，请求“汇报状态并拍照”在 `capability_check` 阶段终止，执行步骤为零。将自动重试次数在测试中设为零，断开里程计后查询状态，任务进入 `RECOVERY_REQUIRED`；恢复里程计并续办后，两个平台都沿用同一个 `operation_id` 取得结果，各自只派发了一次。可以用镜像摘要和源码 SHA-256 核对这轮测试的采集 topic、融合结果、任务事件和原始时间戳。[跨平台实测记录](evidence/console/platforms.json)
 
 ## 留档与恢复
 

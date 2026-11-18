@@ -16,7 +16,8 @@
 | 观测与复盘 | 查看激光、融合地图、机器人状态；以可读 Session 查看目标、计划、反馈和结果，再按引用追查原始事件 | [Session 与取证](docs/sessions.md) |
 | 插件扩展 | 注册 HTTP Tool；添加不暴露 Tool 的共享 Service，例如独立结果验收器或 Session 提供者 | [插件开发规范](docs/plugin-development.md) |
 | 有界恢复 | 暂态错误退避重试；候选结果已保存时可续办验收；对未知物理结果保留待核查状态 | [任务账本与恢复](agent/README.md) |
-| 模型与能力演进 | 使用本地 Ollama 或 HTTP 规划器；为已有观测生成、验证并发布限定范围的只读工具 | [模型配置](docs/model.md) · [插件作者](docs/plugin-authoring.md) · [插件管理](docs/plugin-manager.md) |
+| 模型与能力演进 | 管理器可从里程计或用户数列任务的缺口自动发布受限只读工具并续办。需要新算法时，设计插件生成草案，编码 Agent 或本地 Ollama 可为纯文本 Tool 生成受限表达式，经独立样本验收与部署者批准后热装。 | [插件作者](docs/plugin-authoring.md) · [插件管理](docs/plugin-manager.md) · [源码候选的验收和发布](docs/specs/SDD-014-authored-software-provider.md) |
+| 运行巡检 | 可选的独立 Watchdog 直接读取 Agent 与 Console。归档失联期间保存事故，恢复后从持久游标补收任务受阻证据。重试预算耗尽时给出原因与人工步骤。 | [Watchdog 运行手册](docs/watchdog.md) · [架构评价与演进计划](docs/architecture/plugin-evolution.md) |
 
 具名地点任务有不依赖模型的解析路径；自由表述的能力取决于模型及已注册工具。当前 Agent 主要执行持久化步骤计划，尚不是任意任务都能完成的通用反馈循环。模型自写查询的实验也保留了失败记录，见 [Session 验收报告](docs/testing/session-evidence.md)。
 
@@ -123,8 +124,8 @@ Agent 拥有任务与步骤状态，运动内核拥有物理执行状态。Event
 | [sessions_plugin/](sessions_plugin/README.md)、[evidence/](evidence/README.md)、[console/](console/) | 如何从用户可读的 Session 追到任务和事件的原始事实？ |
 | [observations/](observations/README.md)、[examples/](examples/)、[client/](client/) | 如何接传感器、独立服务或事件消费者？ |
 | [scripts/](scripts/)、[docker/](docker/)、[compose.yaml](compose.yaml) | 如何启动、部署、管理版本与验证？ |
-| [docs/specs/](docs/specs/)、[docs/testing/](docs/testing/)、[docs/evidence/](docs/evidence/) | 为什么改、如何验收、哪些结论已有证据？ |
-| [tests/](tests/)、[artifacts/](artifacts/) | 在哪里复跑契约与仿真，查看已有样本？新全量运行产物位于 `.ci-results/system/runs/`。 |
+| [文档总目录](docs/README.md) | 按任务查部署、使用、架构、规格、验收报告及精选证据。 |
+| [tests/](tests/) | 复跑契约与仿真。系统套件写入 `.ci-results/system/runs/`，独立执行验收脚本写入 `artifacts/verification/`。 |
 
 [贡献与发布流程](CONTRIBUTING.md)说明分支、提交、SDD 和发布；[目标架构教材](docs/architecture/index.html)用于学习后续方向。判断当前能力时，以实现、相应 SDD 的验收记录及其版本为准，不能把目标图当作已交付能力。
 

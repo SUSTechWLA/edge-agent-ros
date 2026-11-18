@@ -17,6 +17,9 @@
 
 | 需要定位的问题 | 先查什么 | 可用验证 |
 |---|---|---|
+| 独立巡检报错、观察者重启或归档失联 | [Watchdog 手册](docs/watchdog.md)与 [SDD-015](docs/specs/SDD-015-independent-watchdog.md)。看归档身份、补收区间、原事故和恢复操作身份 | `tests/test_watchdog.py` 覆盖故障窗口，`tests/system/watchdog_acceptance.py` 在 Docker 中核对重启后的真实源事件 |
+| AI 编写了新的纯软件 Tool | [SDD-014](docs/specs/SDD-014-authored-software-provider.md)。验明设计来源、批准摘要、独立样本和请求原文字节，再查询受管发布收据 | `tests/test_software_provider.py` 与 `tests/system/software_provider_acceptance.py`。后者支持 `--model-cache` 实测 Ollama 生成的候选 |
+| 插件证据有断层，或要开发 AI 提议的软件能力 | [EventBus 缺口与恢复](docs/specs/SDD-011-eventbus-coverage.md)、[数列工具](docs/specs/SDD-012-authored-software-tools.md)、[插件设计草案](docs/specs/SDD-013-plugin-design.md)。从原生受阻任务查作者、受管发布、续办和原操作，私有草案只作开发输入 | 运行 `tests/test_series_tools.py`、`tests/test_plugin_design.py`。隔离系统入口包括 `module_bus_acceptance.py`、`plugin_manager_acceptance.py` 及 `plugin_design_acceptance.py`，均在 `tests/system/`。 |
 | 自然语言目标、工具绑定、插件收据 | `agent/planning.py`、`agent/service.py`、`plugins/README.md` | `python3 tests/planning_contract.py -v`，故障/重试见 `tests/console_resilience.py` |
 | 运动授权、结果未知、重复调度 | `src/edge_core`、`src/edge_gateway`、`src/edge_interfaces` | `scripts/verify.ps1` 在独立 Gazebo 实例中用世界真值验收 |
 | 原始传感器、融合、不新鲜的状态 | `perception/`、`observations/`、`console/server/observer.py` | 容器内运行 `python3 -m unittest discover -v -s /opt/edge/console/server` |

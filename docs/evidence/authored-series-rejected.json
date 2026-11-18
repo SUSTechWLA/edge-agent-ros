@@ -1,0 +1,56 @@
+{
+  "passed": false,
+  "project": "edge-series-e586073204c2",
+  "utc": "2026-11-18T02:12:27.849731+00:00",
+  "scope": "software-only ROS Agent, real model author, isolated task and registry",
+  "image": "edge-agent-ros:v0.1",
+  "model_image": "ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592",
+  "model": "qwen2.5:1.5b",
+  "image_id": "sha256:7eb9c67705a4112a65d4b01ede8f63b2b05d32e6b3e7668263e5b1054a2e99ca",
+  "source_sha256": {
+    "author_tool.py": "941660d3a454581346dd997eccce2ae7f6c69e161a501491f43912e7ef78e430",
+    "derived_tools.py": "f7be321a182a8e3a6ea453116978617722970aee5e8d6dde0dc66c52b9fbe169",
+    "module_journal.py": "ad92a438efbfab8e13cd6902c883ce3f82e57592a1d78ca82894b805011ece6a",
+    "planning.py": "ac831f4787efda0da06d587e90a499b4970c5217b6f32bb92e5b5769e0a08c7e",
+    "plugin_manager.py": "ae9a3493f0200bced5798d3e9779d03e73b123b4a61210222d910c517f7245b2",
+    "runtime_plugins.py": "6c08d3007799d5519bab7233d62ce345653811efefb7461e73e488511a0469d5",
+    "series_tools.py": "5999183287830cf0e40c24c1cca1d08c91eef847f5b5211e1e18f1e225f9fe5e",
+    "service.py": "7c3461f978dee38f082b19447fcd48786c12cdb05af068b0d9635e0aff712cbf",
+    "tracing.py": "4c1f0ad40eafc874ffdbcab96d275d2336bcd7a07ba6755ce608ed22fd18ca0e"
+  },
+  "model_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+  "before": "BLOCKED",
+  "author": {
+    "author_protocol": "ollama.chat",
+    "id": "derived.sample_gap",
+    "model": "qwen2.5:1.5b",
+    "prompt_sha256": "dc2752b8f8c5c28d97b5c24c50ab6caa5504d94d0013e5e81dbac5f10a3a018d",
+    "reply": {
+      "reduce": "max",
+      "transforms": [
+        "diff",
+        "abs",
+        "sort"
+      ]
+    },
+    "request": "计算相邻采样间隔的最大值",
+    "response_sha256": "db1f163ce69514bbb3aab56110d076453231775989e1f83ba130390d7019fa86",
+    "source_task": {
+      "reason_code": "planner.not_configured",
+      "task_id": "missing",
+      "trace_id": "missing"
+    }
+  },
+  "definition": {
+    "description": "计算相邻采样间隔的最大值",
+    "id": "derived.sample_gap",
+    "reduce": "max",
+    "schema_version": 2,
+    "transforms": [
+      "diff",
+      "abs",
+      "sort"
+    ]
+  },
+  "error": "case 2: measurement differs from expectation\n"
+}

@@ -10,6 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentContract(unittest.TestCase):
+    def test_run_outputs_are_local(self):
+        for directory in ("artifacts", ".ci-results"):
+            with self.subTest(directory=directory):
+                tracked = subprocess.check_output(["git", "ls-files", "--", directory], cwd=ROOT)
+                self.assertEqual(tracked, b"", f"Curate published evidence in docs/evidence: {tracked!r}")
+                check = subprocess.run(["git", "check-ignore", "-q", f"{directory}/future-run/result.json"], cwd=ROOT)
+                self.assertEqual(check.returncode, 0)
+
     def test_curated_evidence_has_a_real_result(self):
         evidence = ROOT/"docs/evidence"
         records = {path.name:json.loads(path.read_text(encoding="utf-8")) for path in evidence.glob("*.json")}

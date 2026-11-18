@@ -2,14 +2,7 @@ build/
 install/
 log/
 __pycache__/
-artifacts/verification/*
-!artifacts/verification/20261117-031103-3a9cc1/
-artifacts/verification/20261117-031103-3a9cc1/*
-!artifacts/verification/20261117-031103-3a9cc1/cancel.json
-!artifacts/verification/20261117-031532-ae63c8/
-artifacts/verification/20261117-031532-ae63c8/*
-!artifacts/verification/20261117-031532-ae63c8/cancel.json
-!artifacts/verification/20261117-031532-ae63c8/result.json
+/artifacts/
 .env
 .env.*
 !.env.example

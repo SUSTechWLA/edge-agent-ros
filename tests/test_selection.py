@@ -14,6 +14,14 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/series_tools.py",), (*AGENT,"observations","board")),
+    (("client/plugin_design.py","client/software_provider.py","client/software_release.py","examples/software-provider/*"), ("planner","agent-faults")),
+    (("client/watchdog.py",), ("planner","observations","board")),
+    (("tests/test_plugin_design.py","tests/test_series_tools.py","tests/test_watchdog.py","tests/test_software_provider.py"), ("planner",)),
+    (("tests/system/watchdog_acceptance.py",), ("observations",)),
+    (("tests/system/watchdog_mounts.py",), ("observations","board")),
+    (("tests/system/software_provider_acceptance.py",), ("agent-faults",)),
+    (("tests/system/series_author_acceptance.py","tests/system/plugin_design_acceptance.py"), ("agent-faults",)),
     (("sessions_plugin/*", "client/register_session.py"), ("planner","observations","ui","console-missions","board")),
     (("tests/system/session_plugin_acceptance.py",), ("ui","console-missions","places")),
     (("evidence/*", "client/register_evidence.py"), ("planner","observations","ui","console-missions","board")),
@@ -99,6 +107,15 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_evolution_consumers(self):
+        self.assertEqual(selection(["client/plugin_design.py"])[0],[R,"planner","agent-faults"])
+        self.assertEqual(selection(["client/software_provider.py"])[0],[R,"planner","agent-faults"])
+        self.assertEqual(selection(["client/watchdog.py"])[0],[R,"planner","observations","board"])
+        self.assertEqual(selection(["tests/system/watchdog_mounts.py"])[0],[R,"observations","board"])
+        chosen = selection(["agent/series_tools.py"])[0]
+        for stage in ("planner","agent-contracts","agent-faults","observations","model","board"):
+            self.assertIn(stage,chosen)
+
     def test_examples(self):
         self.assertEqual(selection(["docs/specs/example.md"])[0], [R])
         self.assertEqual(selection(["agent/contracts.json"])[0], [R,"planner","agent-contracts","agent-faults","model"])

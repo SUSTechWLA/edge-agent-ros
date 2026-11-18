@@ -1,4 +1,4 @@
-"""Pure read-only tools derived from one odometry sample. Declarations contain data only."""
+"""Read-only tools derived from an odometry sample or caller-supplied series."""
 import hashlib
 import json
 import logging
@@ -7,6 +7,7 @@ import operator
 from pathlib import Path
 import re
 import unicodedata
+import series_tools
 
 
 _FIELDS = {
@@ -43,12 +44,14 @@ def check_id(key):
 
 
 def validate(definition):
-    """Validate the complete v1 contract and return a new canonical definition."""
-    if not isinstance(definition, dict) or set(definition) not in (_REQUIRED, _REQUIRED | {"comparison"}):
-        raise ValueError("expected schema_version, id, description, field, unit and optional comparison")
-    version = definition["schema_version"]
-    if type(version) is not int or version != 1:
+    """Validate and canonicalize the complete versioned contract before registration."""
+    version = definition.get("schema_version") if isinstance(definition, dict) else None
+    if type(version) is not int or version not in (1, 2):
         raise ValueError("unsupported schema_version")
+    allowed = (_REQUIRED, _REQUIRED | {"comparison"}) if version == 1 else (
+        {"schema_version", "id", "description", "transforms", "reduce"},)
+    if set(definition) not in allowed:
+        raise ValueError("unexpected or missing fields for declared schema_version")
     key = check_id(definition["id"])
     description = definition["description"]
     if not isinstance(description, str):
@@ -56,6 +59,10 @@ def validate(definition):
     description = unicodedata.normalize("NFC", description.strip())
     if not 1 <= len(description) <= 256 or not description.isprintable():
         raise ValueError("description must contain 1 to 256 printable characters")
+    if version == 2:
+        if any(c in description for c in "[]{}") or len(description) > 240:
+            raise ValueError("series description may contain up to 240 characters without brackets or braces")
+        return {"schema_version": 2, "id": key, "description": description, **series_tools.pipeline(definition)}
     field, unit = definition["field"], definition["unit"]
     if not isinstance(field, str) or field not in _FIELDS:
         raise ValueError("unknown odometry field")
@@ -78,13 +85,18 @@ def capability(definition):
     """Pin the full declaration, including unit and predicate, in the tool version."""
     definition = validate(definition)
     data = json.dumps(definition, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-    return {"id": definition["id"], "version": hashlib.sha256(data).hexdigest(),
+    tool = {"id": definition["id"], "version": hashlib.sha256(data).hexdigest(),
             "description": definition["description"], "parameters": {}, "effect": "read", "derived": definition}
+    if definition["schema_version"] == 2:
+        tool["parameters"] = {"series": "string"}
+    return tool
 
 
 def evaluate(definition, sample):
-    """Apply a declaration to a caller-checked fresh sample in its original clock/frame."""
+    """Apply the versioned declaration to its authorized observation or arguments."""
     definition = validate(definition)
+    if definition["schema_version"] == 2:
+        return series_tools.evaluate(definition, sample)
     if not isinstance(sample, dict):
         raise ValueError("expected a measured odometry sample")
     for key in ("source", "frame"):

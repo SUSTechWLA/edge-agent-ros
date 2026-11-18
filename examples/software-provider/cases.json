@@ -1,0 +1,6 @@
+[
+  {"text":"ROBOT robot robot","expected":3},
+  {"text":"robotics robotica ROBOT.","expected":0},
+  {"text":"","expected":0},
+  {"text":"ｒｏｂｏｔ  ROBOT\trobot   ","expected":2}
+]

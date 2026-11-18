@@ -25,6 +25,8 @@ SUPERVISOR = "plugin.supervisor"
 MODEL_IMAGE = "ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592"
 MANIFEST = json.loads((SAMPLE / "manifests/image-check.json").read_text(encoding="utf-8"))
 POLICY = ROOT / "policies/plugin-recovery.json"
+SERIES_DESCRIPTION = "计算相邻采样间隔的最大值"
+SERIES_TASK = SERIES_DESCRIPTION + " [100,103,111,115]"
 
 
 def compact(row):
@@ -66,7 +68,7 @@ def stack_config(image, workspace, cache):
                     "volumes": [mounted(plugins,"/plugins",read_only=False), mounted(inputs,"/inputs")]},
         "odometry": {**common, "command":["python3","-c",PUBLISHER], "environment":ros("agent")},
         # Always available for public protocol probes, including when a real model is separately deployed.
-        "fixture": {**common, "read_only":True, "entrypoint":["python3","-c",author_model(ALLOWED,UNAUTHORIZED,SENSOR_REQUIRED)],
+        "fixture": {**common, "read_only":True, "entrypoint":["python3","-c",author_model(ALLOWED,UNAUTHORIZED,SENSOR_REQUIRED,SERIES_DESCRIPTION)],
                     "volumes":[mounted(audit,"/audit",read_only=False)]},
     }
     (plugins / "derived").mkdir()
@@ -232,6 +234,30 @@ def run(image, out, cache=None):
                       "unplugged manager changed execution contract")
                 report["stages"]["manager_detached"] = {"task":finished["id"], "version":version, "value":-1.8}
                 test_runtime(compose, api, events, folder/"inputs", report)
+            compose("stop","-t","2","odometry")
+            compose("start","author","supervisor")
+            original = api("/agent/tasks", {"id":"software-gap","text":SERIES_TASK})
+            trace = original["trace_id"]
+            verified = fact("plugin.supervisor.verified",trace_id=trace)
+            key = verified["data"]["followup_task_id"]
+            software = get_task(key)
+            blocked = fact("agent.blocked",task_id=original["id"])
+            proposal = fact("plugin.author.proposed",trace_id=trace)
+            published = fact("plugin.release.applied",module="plugin.publisher",trace_id=trace)
+            native = fact("agent.verified",task_id=key)
+            receipt = software["steps"][0]["evidence"]
+            check(get_task(original["id"])["state"] == "BLOCKED" and software["state"]=="SUCCEEDED"
+                  and proposal["parent_event_id"]==blocked["event_id"]
+                  and published["event_id"]==software["trigger"]["parent_event_id"]
+                  and native["event_id"]==verified["parent_event_id"]
+                  and software["trace_id"]==trace and software["text"]==SERIES_TASK
+                  and receipt["source"]=="arguments.series" and receipt["value"]==8
+                  and receipt["input_sha256"]==hashlib.sha256(b"[100,103,111,115]").hexdigest()
+                  and receipt["definition_version"]==published["data"]["observed_version"],
+                  "software follow-up lacks correct input, version, result or causal evidence")
+            report["stages"]["autonomous_software_recovery"] = {"source_task":original["id"],
+                "followup_task":key,"receipt":receipt,"user_mutating_calls":1,"odometry_producer":"stopped",
+                "events":[compact(row) for row in (blocked,proposal,published,native,verified)]}
             report["passed"] = True
         except Exception as exc:
             report["failure"] = f"{type(exc).__name__}: {exc}"

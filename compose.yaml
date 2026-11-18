@@ -116,6 +116,38 @@ services:
     entrypoint: ["python3", "/opt/edge/client/register_evidence.py"]
     volumes:
       - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins
+  watchdog-init:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["watchdog"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["/bin/mkdir", "-p", "/state/watchdog"]
+    volumes:
+      - module-sources:/state
+  watchdog:
+    <<: *runtime
+    profiles: ["watchdog"]
+    depends_on:
+      watchdog-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 32
+    mem_limit: 96m
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "/opt/edge/client/watchdog.py"]
+    command: ["--agent-url","http://agent:8090","--console-url","http://console:8080"]
+    volumes:
+      - type: volume
+        source: module-sources
+        target: /state/watchdog
+        volume:
+          subpath: watchdog
   plugin-author:
     image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
     pull_policy: never

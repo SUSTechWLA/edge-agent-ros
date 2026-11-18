@@ -1,0 +1,136 @@
+{
+  "passed": true,
+  "project": "edge-series-4342665dc948",
+  "utc": "2026-11-18T02:16:09.570960+00:00",
+  "scope": "software-only ROS Agent, real model author, isolated task and registry",
+  "image": "edge-agent-ros:v0.1",
+  "model_image": "ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592",
+  "model": "qwen2.5:1.5b",
+  "image_id": "sha256:7eb9c67705a4112a65d4b01ede8f63b2b05d32e6b3e7668263e5b1054a2e99ca",
+  "source_sha256": {
+    "author_tool.py": "941660d3a454581346dd997eccce2ae7f6c69e161a501491f43912e7ef78e430",
+    "derived_tools.py": "f7be321a182a8e3a6ea453116978617722970aee5e8d6dde0dc66c52b9fbe169",
+    "module_journal.py": "ad92a438efbfab8e13cd6902c883ce3f82e57592a1d78ca82894b805011ece6a",
+    "planning.py": "2e4aa677afba35ec855abce02c446760e95462a6272577cdf28a1985aa86494b",
+    "plugin_manager.py": "ae9a3493f0200bced5798d3e9779d03e73b123b4a61210222d910c517f7245b2",
+    "runtime_plugins.py": "6c08d3007799d5519bab7233d62ce345653811efefb7461e73e488511a0469d5",
+    "series_tools.py": "c66464da17bd9809f6735ddad1a48907aef541b04632b7853a32154f2099722e",
+    "service.py": "7c3461f978dee38f082b19447fcd48786c12cdb05af068b0d9635e0aff712cbf",
+    "tracing.py": "4c1f0ad40eafc874ffdbcab96d275d2336bcd7a07ba6755ce608ed22fd18ca0e"
+  },
+  "model_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+  "before": "BLOCKED",
+  "author": {
+    "author_protocol": "ollama.chat",
+    "id": "derived.sample_gap",
+    "model": "qwen2.5:1.5b",
+    "prompt_sha256": "372c735720b338abebfec58e53ad86cebdb350b485f946c0b22a8e8dd66e687f",
+    "reply": {
+      "reduce": "max",
+      "transforms": [
+        "diff"
+      ]
+    },
+    "request": "计算相邻采样间隔的最大值",
+    "response_sha256": "19a4a2f78ebdec722487861135f9cbc5a7c0e5fb0d3a0573249a58e056e70e9c",
+    "source_task": {
+      "reason_code": "planner.not_configured",
+      "task_id": "missing",
+      "trace_id": "missing"
+    }
+  },
+  "definition": {
+    "description": "计算相邻采样间隔的最大值",
+    "id": "derived.sample_gap",
+    "reduce": "max",
+    "schema_version": 2,
+    "transforms": [
+      "diff"
+    ]
+  },
+  "publish": {
+    "action": "publish",
+    "case_count": 3,
+    "cases_sha256": "d4fe97785270b0fea7efd5657c21e845311f386938019a5ec067223ca82a0720",
+    "change_id": "9a4cffbb0cd84f55a2a103f9ab81ca04",
+    "event_id": "058f654866404e38b3450c0232cb050f",
+    "id": "derived.sample_gap",
+    "previous": "absent",
+    "version": "08057c27d4249e4abb9bb4224a0a69d372289fa1e17c2f528701b5061248fa4d"
+  },
+  "execution": {
+    "task_id": "active",
+    "trace_id": "active",
+    "step": {
+      "tool": "derived.sample_gap",
+      "args": {
+        "series": "[100,103,111,115]"
+      },
+      "version": "08057c27d4249e4abb9bb4224a0a69d372289fa1e17c2f528701b5061248fa4d",
+      "binding": "21d74b33d5c85e35f5b2b600f50acc1e9f13f0e350461a1b8db4ec39a9e3447c",
+      "status": "SUCCEEDED",
+      "verification": {
+        "required": []
+      },
+      "operation_id": "active/step/1",
+      "started_at": 1794968175.8528237,
+      "evidence": {
+        "source": "arguments.series",
+        "input_sha256": "2a11abf59d13422fe429a404ad7daa0e8afbfc51eef50fd752354322a5132bba",
+        "input_count": 4,
+        "output_count": 3,
+        "value": 8,
+        "definition_version": "08057c27d4249e4abb9bb4224a0a69d372289fa1e17c2f528701b5061248fa4d"
+      }
+    },
+    "events": [
+      {
+        "event_id": "43a75195aab047bd92870aae4ddc56b9",
+        "operation_id": null,
+        "kind": "accepted"
+      },
+      {
+        "event_id": "6984a4c9a2a74c2891e4f1786ede57e8",
+        "operation_id": null,
+        "kind": "planner.context"
+      },
+      {
+        "event_id": "1f830ba4f196456ea5ad158b795f3161",
+        "operation_id": null,
+        "kind": "planned"
+      },
+      {
+        "event_id": "eaa8a7ed603f478d8df7480bd6e3fb2f",
+        "operation_id": "active/step/1",
+        "kind": "dispatch"
+      },
+      {
+        "event_id": "13e39f0519e34350be6e43af33c49114",
+        "operation_id": "active/step/1",
+        "kind": "tool.request"
+      },
+      {
+        "event_id": "f11f5b2c4e3847c8abb3a4911a07cce8",
+        "operation_id": "active/step/1",
+        "kind": "tool.response"
+      },
+      {
+        "event_id": "a67969eb83fe46979d6ea0d25c94722d",
+        "operation_id": "active/step/1",
+        "kind": "verified"
+      }
+    ]
+  },
+  "invalid": {
+    "state": "BLOCKED",
+    "detail": "series transform produced an empty sequence"
+  },
+  "remove": {
+    "action": "remove",
+    "change_id": "7e5248bc3a6b4d4f911e845ad3f5f235",
+    "event_id": "99d3155941974db38e7437a632325999",
+    "id": "derived.sample_gap",
+    "previous": "08057c27d4249e4abb9bb4224a0a69d372289fa1e17c2f528701b5061248fa4d"
+  },
+  "after": "BLOCKED"
+}

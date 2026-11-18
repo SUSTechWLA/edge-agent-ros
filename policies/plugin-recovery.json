@@ -2,6 +2,15 @@
   "schema_version": 1,
   "rules": [
     {
+      "text": "计算相邻采样间隔的最大值 [100,103,111,115]",
+      "semantic": {"transforms": ["diff"], "reduce": "max"},
+      "cases": [
+        {"sample": {"series": "[100,103,111,115]"}, "expected": {"value": 8}},
+        {"sample": {"series": "[10,7,2]"}, "expected": {"value": -3}},
+        {"sample": {"series": "[4,4,4]"}, "expected": {"value": 0}}
+      ]
+    },
+    {
       "text": "用千米每小时报告本机前向速度",
       "semantic": {"field": "speed", "unit": "km/h"},
       "cases": [
