@@ -1,0 +1,495 @@
+{
+  "date": "2026-11-18",
+  "specs": [
+    "SDD-003",
+    "SDD-008",
+    "SDD-015",
+    "SDD-033"
+  ],
+  "baseline": {
+    "image": "edge-agent-ros:tu-delft-x",
+    "image_id": "sha256:3d29ea1070458a60d64df44577bbc36f7a20043bd8cb792eae4415d22513f1d0",
+    "source_revision": "5064f2f"
+  },
+  "tested_fixes": "SDD-033 source mounted over the local base image for red/green and interprocess tests",
+  "daily": [
+    {
+      "url": "http://127.0.0.1:8766/#sessions?task=edge-field-c25ecfd01f-status",
+      "id": "edge-field-c25ecfd01f-status",
+      "trace": "edge-field-c25ecfd01f-status",
+      "state": "SUCCEEDED",
+      "count": 7,
+      "operations": [
+        "edge-field-c25ecfd01f-status/step/1"
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8766/#sessions?task=edge-field-c25ecfd01f-scene",
+      "id": "edge-field-c25ecfd01f-scene",
+      "trace": "edge-field-c25ecfd01f-scene",
+      "state": "SUCCEEDED",
+      "count": 9,
+      "operations": [
+        "edge-field-c25ecfd01f-scene/step/1"
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8766/#sessions?task=edge-field-c25ecfd01f-route",
+      "id": "edge-field-c25ecfd01f-route",
+      "trace": "edge-field-c25ecfd01f-route",
+      "state": "SUCCEEDED",
+      "count": 9,
+      "operations": [
+        "edge-field-c25ecfd01f-route/step/1"
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8766/#sessions?task=edge-field-c25ecfd01f-photo",
+      "id": "edge-field-c25ecfd01f-photo",
+      "trace": "edge-field-c25ecfd01f-photo",
+      "state": "BLOCKED",
+      "count": 3,
+      "operations": []
+    }
+  ],
+  "agent_cases": {
+    "existing_different_goal": true,
+    "existing_same_goal": true,
+    "truncated_receipt": true,
+    "socket_timeout": true,
+    "wrong_receipt_id": true,
+    "nonfinite_evidence": true,
+    "missing_evidence": true,
+    "planner_retry": true,
+    "invalid_model_tool": true,
+    "omitted_navigation": true,
+    "concurrent_trigger": true,
+    "multistep_restart": true,
+    "offline_and_missing_capability": true,
+    "replacement_core_ledger": true
+  },
+  "resilience_cases": [
+    "restart",
+    "contention",
+    "operator_resume",
+    "hotplug"
+  ],
+  "resource_order": {
+    "owner_release_seq": 10,
+    "next_owner_seq": 11,
+    "retries": 3
+  },
+  "lifecycle": {
+    "completed": 34,
+    "duplicate_trigger_submissions": 68,
+    "max_observed_displacement_m": 7.176214825113999e-09,
+    "elapsed_s": 49.031
+  },
+  "motion_sensor_cases": [
+    {
+      "case": "central_gap",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": 0.0503,
+      "passed": true
+    },
+    {
+      "case": "sparse_obstacle",
+      "expected_code": "navigation.path_blocked",
+      "brake_command_s": 0.0497,
+      "passed": true
+    },
+    {
+      "case": "too_close",
+      "expected_code": "navigation.path_blocked",
+      "brake_command_s": 0.0596,
+      "passed": true
+    },
+    {
+      "case": "bad_ranges",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": 0.0508,
+      "passed": true
+    },
+    {
+      "case": "bad_geometry",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": 0.0506,
+      "passed": true
+    },
+    {
+      "case": "clock_ahead",
+      "expected_code": "navigation.scan_time_mismatch",
+      "brake_command_s": 0.0514,
+      "passed": true
+    },
+    {
+      "case": "duplicate",
+      "expected_code": "navigation.scan_stale",
+      "brake_command_s": 1.05,
+      "passed": true
+    },
+    {
+      "case": "drop",
+      "expected_code": "navigation.scan_stale",
+      "brake_command_s": 0.9998,
+      "passed": true
+    },
+    {
+      "case": "wrong_frame",
+      "expected_code": "navigation.scan_stale",
+      "brake_command_s": 1.0003,
+      "passed": true
+    },
+    {
+      "case": "rewind",
+      "expected_code": "navigation.stop_unconfirmed",
+      "brake_command_s": 0.9011,
+      "passed": true
+    }
+  ],
+  "motion_world": {
+    "case": "central_gap",
+    "expected_code": "navigation.scan_invalid",
+    "brake_command_s": 0.1042,
+    "action_status": 6,
+    "receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]",
+    "passed": true,
+    "braking_event": {
+      "code": "navigation.scan_invalid",
+      "data": {
+        "front_range_m": 4.506089210510254,
+        "scan_stamp_ns": 1000000000,
+        "scan_geometry_valid": true,
+        "forward_gap_rad": 0.48869218677282333,
+        "odom_stamp_ns": 1054000000
+      }
+    },
+    "independent_topic": "/ground_truth",
+    "samples": 27,
+    "world_travel_m": 0.042,
+    "last_300ms_drift_m": 0.0
+  },
+  "clock": {
+    "passed": true,
+    "project": "edge-field-fault-433bf5a2",
+    "old_map_stamp_s": 17.376,
+    "new_map_stamp_s": 0.626,
+    "reset_seq": 35,
+    "clock_jump": {
+      "previous_stamp_s": 18.596,
+      "stamp_s": 0.0
+    },
+    "at_reset_map_available": false,
+    "at_reset_trail_count": 0
+  },
+  "archive_outage": {
+    "operation_id": "outage-f27b09972fef47f8a9a80ceaa051f1b7",
+    "event_id": "scene-252710143fa34ac5a3e3575ba41b2a08",
+    "trace_id": "parent-outage-f27b09972fef47f8a9a80ceaa051f1b7",
+    "module": "scene.navigation",
+    "code": "scene.place_unknown",
+    "source": "ros:/edge/events",
+    "utc": "2026-11-18T14:02:15.079190+00:00",
+    "pending_before_and_after_restart": true,
+    "same_receipt_on_retry": true,
+    "source_payload_unchanged": true,
+    "archive_rows_after_reconnect": 1,
+    "delivery_acknowledged": true
+  },
+  "source_gap": {
+    "journal": "demo.coverage",
+    "missing_from": 1,
+    "missing_to": 6,
+    "next_source_seq": 7
+  },
+  "watchdog": {
+    "console": {
+      "trace_id": "watchdog-24af292ddc5544b78f102acbb47dc704",
+      "operation_id": "watchdog-24af292ddc5544b78f102acbb47dc704/sync",
+      "counts": {
+        "watchdog.detected": 1,
+        "watchdog.action_requested": 1,
+        "watchdog.action_attempt": 2,
+        "watchdog.action_unavailable": 2,
+        "watchdog.intervention_required": 1,
+        "watchdog.action_confirmed": 1,
+        "watchdog.recovered": 1
+      },
+      "human_reason": "http_503",
+      "steps": [
+        "查看 Console 容器状态和日志，核对监听地址、归档卷权限与磁盘空间。",
+        "恢复原归档卷并分别读取 /api/event-stats 与 /api/history，核对归档身份和游标。"
+      ]
+    },
+    "agent": {
+      "trace_id": "watchdog-9cf7eb99250f4665adb961fcf316e06c",
+      "operation_id": "watchdog-9cf7eb99250f4665adb961fcf316e06c/sync",
+      "counts": {
+        "watchdog.detected": 1,
+        "watchdog.action_requested": 1,
+        "watchdog.action_attempt": 2,
+        "watchdog.action_unavailable": 2,
+        "watchdog.intervention_required": 1,
+        "watchdog.action_confirmed": 1,
+        "watchdog.recovered": 1
+      },
+      "human_reason": "http_503",
+      "steps": [
+        "查看 Agent 容器状态和日志，核对端口、插件清单及任务账本挂载。",
+        "修复后分别读取 /agent/capabilities 与 /agent/plugins；按原操作 ID 核查已有任务。"
+      ]
+    }
+  },
+  "model": "qwen2.5:1.5b",
+  "autonomous_recovery": {
+    "source_task": "speed-request",
+    "followup_task": "recover-89a4ffca9a96ceff80ac29a83543676eaff44504",
+    "events": [
+      {
+        "seq": 13,
+        "event_id": "337c1911c1cb45daa79dd8cf5c07fe43",
+        "parent_event_id": "55bcc9faee924916afc60ef0fcf888ce",
+        "cause_seq": 12,
+        "trace_id": "speed-request",
+        "kind": "agent.blocked",
+        "module": "agent",
+        "code": "planner.not_configured"
+      },
+      {
+        "seq": 14,
+        "event_id": "95dd3abf1b0648c2b46cb79a33d24a72",
+        "parent_event_id": "337c1911c1cb45daa79dd8cf5c07fe43",
+        "cause_seq": 13,
+        "trace_id": "speed-request",
+        "kind": "plugin.author.proposed",
+        "module": "plugin.author",
+        "code": "author.proposed"
+      },
+      {
+        "seq": 18,
+        "event_id": "e00e08aa188244369f813aadb14dc222",
+        "parent_event_id": "95dd3abf1b0648c2b46cb79a33d24a72",
+        "cause_seq": 14,
+        "trace_id": "speed-request",
+        "kind": "plugin.supervisor.approved",
+        "module": "plugin.supervisor",
+        "code": "supervisor.approved"
+      },
+      {
+        "seq": 16,
+        "event_id": "7e0f9ce127ad4cccacec0f369bb8111c",
+        "parent_event_id": "53992a4c9c9a463cae58b28cf168048b",
+        "cause_seq": 15,
+        "trace_id": "speed-request",
+        "kind": "plugin.release.applied",
+        "module": "plugin.publisher",
+        "code": "release.applied"
+      },
+      {
+        "seq": 19,
+        "event_id": "21fd02596d2c4995b8f4fbf172abc62b",
+        "parent_event_id": "7e0f9ce127ad4cccacec0f369bb8111c",
+        "cause_seq": 16,
+        "trace_id": "speed-request",
+        "kind": "plugin.supervisor.published",
+        "module": "plugin.supervisor",
+        "code": "supervisor.published"
+      },
+      {
+        "seq": 20,
+        "event_id": "b438c8dfb0e74ffdbf3b7f4a3e0e032c",
+        "parent_event_id": "7e0f9ce127ad4cccacec0f369bb8111c",
+        "cause_seq": 16,
+        "trace_id": "speed-request",
+        "kind": "plugin.supervisor.submitted",
+        "module": "plugin.supervisor",
+        "code": "supervisor.submitted"
+      },
+      {
+        "seq": 26,
+        "event_id": "9657db4762ed4587bc17214cb218ba79",
+        "parent_event_id": "5a8205bd1b0a4d66bca94602df0fbbe0",
+        "cause_seq": 25,
+        "trace_id": "speed-request",
+        "kind": "agent.verified",
+        "module": "agent",
+        "code": "agent.verified"
+      },
+      {
+        "seq": 27,
+        "event_id": "5c1814c9d220474296b6294ba2132faf",
+        "parent_event_id": "9657db4762ed4587bc17214cb218ba79",
+        "cause_seq": 26,
+        "trace_id": "speed-request",
+        "kind": "plugin.supervisor.verified",
+        "module": "plugin.supervisor",
+        "code": "supervisor.verified"
+      }
+    ],
+    "policy_path": "policies/plugin-recovery.json",
+    "native_verified_event_id": "9657db4762ed4587bc17214cb218ba79",
+    "tool": "derived.task_2d6819a6bf679843d696e5caa61f9887",
+    "version": "6feb4bd998ef3679e63c22a561541de3297641368795f353130ceaef23bc34ae",
+    "receipt": {
+      "source": "/fixture/odom",
+      "frame": "odom",
+      "stamp_ns": 1795011948051506770,
+      "field": "speed",
+      "raw_value": -0.5,
+      "raw_unit": "m/s",
+      "value": -1.8,
+      "unit": "km/h",
+      "definition_version": "6feb4bd998ef3679e63c22a561541de3297641368795f353130ceaef23bc34ae"
+    },
+    "cases": 3,
+    "user_mutating_calls": 1,
+    "model_reply": {
+      "field": "speed",
+      "op": "read",
+      "threshold": 0,
+      "unit": "km/h"
+    },
+    "response_sha256": "a78c8a93cef80cb9d89473e8c9cf8e322dafb74bf4312fe2ccfd55e2643ed20e"
+  },
+  "software_recovery": {
+    "source_task": "software-gap",
+    "followup_task": "recover-73c31cdfde0f880028985208f1f83da228d706e8",
+    "receipt": {
+      "source": "arguments.series",
+      "input_sha256": "2a11abf59d13422fe429a404ad7daa0e8afbfc51eef50fd752354322a5132bba",
+      "input_count": 4,
+      "output_count": 3,
+      "value": 8,
+      "definition_version": "7ea8da0605f975d31bea55e2bae6a56ad1fc945256ea151f332da572a1f8b48a"
+    },
+    "user_mutating_calls": 1,
+    "odometry_producer": "stopped",
+    "events": [
+      {
+        "seq": 30,
+        "event_id": "dd305703de574567ada41b7dcb63a632",
+        "parent_event_id": "397c3b2356174868b1573e37689af434",
+        "cause_seq": 29,
+        "trace_id": "software-gap",
+        "kind": "agent.blocked",
+        "module": "agent",
+        "code": "planner.not_configured"
+      },
+      {
+        "seq": 31,
+        "event_id": "767a1887d43d45e6af5843221a22bb4c",
+        "parent_event_id": "dd305703de574567ada41b7dcb63a632",
+        "cause_seq": 30,
+        "trace_id": "software-gap",
+        "kind": "plugin.author.proposed",
+        "module": "plugin.author",
+        "code": "author.proposed"
+      },
+      {
+        "seq": 35,
+        "event_id": "30a0f4a2d29a4cb5802df9749699fe2b",
+        "parent_event_id": "a57f37c45347461b885698e8619d6ee0",
+        "cause_seq": 32,
+        "trace_id": "software-gap",
+        "kind": "plugin.release.applied",
+        "module": "plugin.publisher",
+        "code": "release.applied"
+      },
+      {
+        "seq": 42,
+        "event_id": "4b25a631a8db495daf2bb495c670e6d6",
+        "parent_event_id": "d37f73003d4e4649a8d6bf1681928c6d",
+        "cause_seq": 41,
+        "trace_id": "software-gap",
+        "kind": "agent.verified",
+        "module": "agent",
+        "code": "agent.verified"
+      },
+      {
+        "seq": 43,
+        "event_id": "1f1a86c972df44b086ee35444d9a5770",
+        "parent_event_id": "4b25a631a8db495daf2bb495c670e6d6",
+        "cause_seq": 42,
+        "trace_id": "software-gap",
+        "kind": "plugin.supervisor.verified",
+        "module": "plugin.supervisor",
+        "code": "supervisor.verified"
+      }
+    ]
+  },
+  "prior_to_fix": {
+    "nan_height_command_mps": 0.35,
+    "sigterm_publish_error": "publisher's context is invalid"
+  },
+  "feedback": {
+    "passed": true,
+    "fixture": "Gazebo Transport + ROS 2 input; external ROS velocity witness; no simulated plant",
+    "before_vertical_mps": 0.35,
+    "last_vertical_mps": 0.0,
+    "bad_frame_status": {
+      "crazyflie": "waiting",
+      "go1": "online",
+      "g1": "online"
+    },
+    "denied": {
+      "go1": {
+        "operation_id": "invalid-go1",
+        "state": "BLOCKED",
+        "detail": "没有取得新鲜的机体位姿、板载 IMU 或关节反馈。 joints: 必需关节缺项、重复或角度无效",
+        "error": {
+          "code": "robot.feedback_missing",
+          "message": "没有取得新鲜的机体位姿、板载 IMU 或关节反馈。 joints: 必需关节缺项、重复或角度无效",
+          "invalid_sources": {
+            "joints": "必需关节缺项、重复或角度无效"
+          }
+        }
+      },
+      "g1": {
+        "operation_id": "invalid-g1",
+        "state": "BLOCKED",
+        "detail": "没有取得新鲜的机体位姿、板载 IMU 或关节反馈。 imu: 加速度含非有限数值",
+        "error": {
+          "code": "robot.feedback_missing",
+          "message": "没有取得新鲜的机体位姿、板载 IMU 或关节反馈。 imu: 加速度含非有限数值",
+          "invalid_sources": {
+            "imu": "加速度含非有限数值"
+          }
+        }
+      }
+    },
+    "flight_receipt": {
+      "operation_id": "nan-flight",
+      "state": "BLOCKED",
+      "detail": "crazyflie 没有连续取得新鲜的执行反馈，动作中断。 pose: 位姿含非有限数值或无效四元数",
+      "error": {
+        "code": "robot.feedback_missing",
+        "message": "crazyflie 没有连续取得新鲜的执行反馈，动作中断。 pose: 位姿含非有限数值或无效四元数",
+        "invalid_sources": {
+          "pose": "位姿含非有限数值或无效四元数"
+        }
+      }
+    },
+    "same_receipt_after_recovery": true,
+    "sigterm_exit_code": 0,
+    "stop_after_sigterm": true
+  },
+  "raw_reports_sha256": {
+    "agent.json": "8ad44b03c67608c342dcabff1858bf3da19c8239931ca2f6016e739230169f59",
+    "resilience.json": "08f9cc0653650d399f4963aaa1575615e356c534608f9f23be223b863ee000c1",
+    "resilience-initial.json": "0173d7ae202086882f00e3c5ddf73fd3b445c526d3909fd9f2bd024d78a8c087",
+    "clock.json": "3a41eb2042112e5b81de9386e3b802fec36f2e8c2bab5615c3ea6a367cbbb425",
+    "watchdog.json": "a6f84718cc750d29149737b77c346e398f3413bc15d87e43e52bf37fd0ba20d2",
+    "bus.json": "50b631366074dcb28a97d742c8389bd83baa96e30b72682d9e6464f1ee5c4220",
+    "motion-world.json": "e8b0539fad325cd8c5a414e2493e1b93c4d7a205479757830f1a4b2b14e58b81",
+    "motion-sensors.json": "44371e6b0be5c772db0dd90e54d3b054ee5913cfb12643c9139cb5cee9023875",
+    "outage.json": "c0fc8034603eb80c5e644f4bd5f8d16f66d707eaa51901817e0a86a6add43a3c",
+    "daily-requests.json": "3fb375ad398bf2e38b3771d100937578610a460df0eba97a38dbdc6096daaae4",
+    "evolution.json": "63a1e0b2994ce3cefd4730f79f1a03cd2043fbb16aa04144caaf8f0c9e7af8aa",
+    "evolution-qwen.json": "785a4a3414002c0dfe3b5e188706d68d5b21919b0d51c74a3d2b41280227f6b3",
+    "lifecycle/5eed4f3c6d21/summary.json": "877f2c1e58ef6493aeb1826a7ac698d9238427609402e22dda63371548595f14",
+    "middleware-feedback.json": "687040d357d56505ce500eab39349590b8ac0db87ce4efc7c0f7c825ef630ada",
+    "feedback-before.txt": "a9edb088f9fc0d74bb25c0b7e794f1e8aa9752668f4f16b487f64c2071a80a0f",
+    "feedback-after.txt": "4fd7b7b7a0805d2f533acc8dd6ed3bbbb8a992943589baed68bd242ecb47f557",
+    "sigterm-before.log": "fa24b015ad4adb89f6f61d72bfb5b64c331e90850391e04bd8f4381adf898a62"
+  }
+}

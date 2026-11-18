@@ -204,9 +204,15 @@ def run(args, selected, reasons):
                         "--out",directory/"software-author-auto-model.json"))
                 if "campus-world" in selected:
                     assets = args.campus_assets
+                    feedback_layout = directory / "feedback-layout.json"
+                    feedback_layout.write_text('{"revision":"invalid-feedback-fixture"}\n', encoding="utf-8")
                     checks["campus-world"] = [in_image("python3","-B","/opt/edge/tests/test_campus_texture.py","-v"),
                                               in_image("python3","-B","/opt/edge/tests/test_campus_mesh.py","-v"),
                                               in_image("python3","-B","/opt/edge/tests/test_campus_robot_feedback.py","-v"),
+                                              ["docker","run","--rm","--network","none","--tmpfs","/state",
+                                               "-e","GZ_PARTITION=edge_invalid_feedback_fixture","-e","GZ_IP=127.0.0.1",
+                                               "-e","ROS_DOMAIN_ID=171","-v",f"{feedback_layout}:/campus/layout.json:ro",
+                                               image,"python3","-B","/opt/edge/tests/system/campus_invalid_feedback.py"],
                                               test("test_campus_facilities.py","-v"),
                                               test("test_campus_real_site.py","-v"),
                                               test("test_campus_route_overlay.py","-v"),

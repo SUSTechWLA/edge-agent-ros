@@ -6,6 +6,7 @@ import math
 import os
 from pathlib import Path
 import re
+import signal
 import sqlite3
 import threading
 import time
@@ -17,6 +18,7 @@ from gz.transport13 import Node as GazeboNode
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
+from rclpy.signals import SignalHandlerOptions
 from sensor_msgs.msg import Imu, JointState
 from std_msgs.msg import Float64, String
 from tf2_ros import StaticTransformBroadcaster
@@ -27,11 +29,23 @@ def failed(code, text):
     return {"state":"BLOCKED","detail":text,"error":{"code":code,"message":text}}
 
 
+def missing_feedback(robot, faults, message):
+    required = ("joints","imu") if robot in JOINTS else ("pose","imu")
+    details = {src:faults[(robot,src)] for src in required if (robot,src) in faults}
+    if details:
+        message += " " + "；".join(f"{src}: {reason}" for src,reason in details.items())
+    result = failed("robot.feedback_missing",message)
+    if details:
+        result["error"]["invalid_sources"] = details
+    return result
+
+
 class Fleet(Node):
     def __init__(self):
         super().__init__("campus_robot_adapter")
         self.lock=threading.RLock()
         self.poses,self.joints,self.sensors={},{},{}
+        self.invalid_feedback={}
         self.commands={}
         self.active={}
         self.db=sqlite3.connect("/state/operations.sqlite",check_same_thread=False)
@@ -82,19 +96,34 @@ class Fleet(Node):
                 if p.name not in ROBOTS:
                     continue
                 pos,q=p.position,p.orientation
-                self.poses[p.name]=(time.monotonic(),stamp,[pos.x,pos.y,pos.z],[q.x,q.y,q.z,q.w])
+                xyz,orientation=[pos.x,pos.y,pos.z],[q.x,q.y,q.z,q.w]
+                if not all(math.isfinite(v) for v in (*xyz,*orientation)) or math.hypot(*orientation)<1e-8:
+                    self.poses.pop(p.name,None)
+                    self.invalid_feedback[(p.name,"pose")]="位姿含非有限数值或无效四元数"
+                    continue
+                self.invalid_feedback.pop((p.name,"pose"),None)
+                self.poses[p.name]=(time.monotonic(),stamp,xyz,orientation)
 
     def on_imu(self,key,msg):
         a=msg.linear_acceleration
-        if all(math.isfinite(v) for v in (a.x,a.y,a.z)):
-            with self.lock:
+        with self.lock:
+            if all(math.isfinite(v) for v in (a.x,a.y,a.z)):
+                self.invalid_feedback.pop((key,"imu"),None)
                 self.sensors[key]=(time.monotonic(),msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9)
+            else:
+                self.sensors.pop(key,None)
+                self.invalid_feedback[(key,"imu")]="加速度含非有限数值"
 
     def on_joints(self,key,msg):
         values={n:p for n,p in zip(msg.name,msg.position) if math.isfinite(p)}
-        if set(JOINTS[key])<=values.keys():
-            with self.lock:
+        with self.lock:
+            required=JOINTS[key]
+            if (len(msg.name)==len(msg.position) and all(n in values and msg.name.count(n)==1 for n in required)):
+                self.invalid_feedback.pop((key,"joints"),None)
                 self.joints[key]=(time.monotonic(),msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,values)
+            else:
+                self.joints.pop(key,None)
+                self.invalid_feedback[(key,"joints")]="必需关节缺项、重复或角度无效"
 
     def emit_states(self):
         rows=[]
@@ -138,7 +167,7 @@ class Fleet(Node):
                 return json.loads(row[2]) if row[2] else {"state":"RUNNING"}
             feedback=self.readings(key)
             if not feedback:
-                return failed("robot.feedback_missing","没有取得新鲜的机体位姿、板载 IMU 或关节反馈。")
+                return missing_feedback(key,self.invalid_feedback,"没有取得新鲜的机体位姿、板载 IMU 或关节反馈。")
             if key in self.active:
                 return failed("robot.busy","当前机器人正在执行其他操作。")
             with self.db:
@@ -154,11 +183,12 @@ class Fleet(Node):
                 reading=self.readings(key)
                 result=None
                 if reading is None:
+                    job["steady"]=0
                     if key=="crazyflie":
                         self.flight.publish(Twist())
                     missing=job.setdefault("missing_since",time.monotonic())
                     if time.monotonic()-missing>7:
-                        result=failed("robot.feedback_missing",f"{key} 没有连续取得新鲜的执行反馈，动作中断。")
+                        result=missing_feedback(key,self.invalid_feedback,f"{key} 没有连续取得新鲜的执行反馈，动作中断。")
                 elif time.monotonic()-job["start"]>50:
                     result=failed("robot.feedback_timeout",f"{key} 目标 {job['target']:.3f}，最后测量 {reading[1]}，稳定样本数 {job['steady']}。")
                 else:
@@ -249,13 +279,22 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__=="__main__":
-    rclpy.init()
+    stop=threading.Event()
+    for signum in (signal.SIGINT,signal.SIGTERM):
+        signal.signal(signum,lambda *_:stop.set())
+    # The default ROS signal handler invalidates the publisher before the final stop.
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     fleet=Fleet()
     server=ThreadingHTTPServer(("0.0.0.0",8119),Handler)
     server.fleet=fleet
     threading.Thread(target=server.serve_forever,daemon=True).start()
     try:
-        rclpy.spin(fleet)
+        while not stop.is_set() and rclpy.ok():
+            rclpy.spin_once(fleet,timeout_sec=.1)
     finally:
+        if rclpy.ok():
+            fleet.flight.publish(Twist())
         server.shutdown()
-        fleet.flight.publish(Twist())
+        server.server_close()
+        fleet.destroy_node()
+        rclpy.try_shutdown()
