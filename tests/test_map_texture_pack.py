@@ -3,6 +3,7 @@ import base64
 import hashlib
 import json
 from pathlib import Path
+import struct
 import sys
 import tempfile
 import unittest
@@ -50,6 +51,31 @@ class Appearance(unittest.TestCase):
         (self.root/"height.png").write_bytes(self.png)
         pack=self.pack(height_sha256=self.meta["sha256"],height_scale_m=.05,height_offset_m=0)
         self.assertIn(pack.info["height_url"],pack.files)
+
+    def test_mesh_pins_the_validated_bytes_and_preserves_planar_fallback(self):
+        # A complete binary glTF header and its JSON chunk. Scene content is checked in the browser test.
+        chunk = b'{"asset":{"version":"2.0"}} '
+        glb = struct.pack("<4sIIII",b"glTF",2,len(chunk)+20,len(chunk),0x4e4f534a)+chunk
+        digest = hashlib.sha256(glb).hexdigest()
+        path = self.root/"scene.glb"
+        path.write_bytes(glb)
+        area = dict(id="building",label="Tower",bounds=[0,0,8,10],
+                    camera=dict(eye=[6,2,4],target=[4,2,3]))
+        pack = self.pack(mesh_sha256=digest,areas=[area])
+        self.assertEqual(pack.info["areas"],[area])
+        url = pack.info["mesh_url"]
+        self.assertEqual(pack.files[url],glb)
+        path.write_bytes(glb[:-1]+b"?")
+        self.assertEqual(pack.files[url],glb)
+        for raw,reason in ((path.read_bytes(),"checksum_mismatch"),(b"old","format_invalid"),(None,"missing")):
+            if raw is None:
+                path.unlink()
+            else:
+                path.write_bytes(raw)
+            broken = self.pack(mesh_sha256=digest)
+            self.assertTrue(broken.info["mesh_error"].endswith(reason))
+            self.assertNotIn("mesh_url",broken.info)
+            self.assertIn(broken.info["url"],broken.files)
 
 
 if __name__=="__main__":

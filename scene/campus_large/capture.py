@@ -1,8 +1,9 @@
-"""Keep seven offline Gazebo stills tied to the world that actually rendered them."""
+"""Keep each campus viewpoint tied to the Gazebo world that rendered it."""
 import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from queue import Empty, Full, Queue
 import struct
@@ -33,6 +34,16 @@ def read_record(path):
         return {}
 
 
+def view_names(root):
+    places = read_record(root/"overview/manifest.json").get("areas")
+    if places is None:
+        return VIEWS  # Historical worlds and fixtures without an area registry.
+    names = ["overview"] + [place["id"] for place in places]
+    if len(set(names)) != len(names) or not all(re.fullmatch(r"[a-z][a-z0-9_]{0,47}", n) for n in names):
+        raise ValueError("Expected unique campus viewpoint IDs")
+    return names
+
+
 def atomic(path, data):
     output = tempfile.NamedTemporaryFile(dir=path.parent, prefix=".pending-", delete=False)
     tmp = Path(output.name)
@@ -58,14 +69,15 @@ def prepare(root, current):
     if not isinstance(views, dict):
         views = {}
     valid = {}
-    for name in VIEWS:
+    names = view_names(root)
+    for name in names:
         image = directory / (name + ".png")
         item = views.get(name)
         if isinstance(item, dict) and image.is_file() and file_digest(image) == item.get("sha256"):
             valid[name] = item
         else:
             image.unlink(missing_ok=True)
-    receipt = {"schema_version": 1, "world": current, "views": valid, "complete": len(valid) == len(VIEWS)}
+    receipt = {"schema_version": 1, "world": current, "views": valid, "complete": len(valid) == len(names)}
     record(manifest, receipt)
     return receipt
 
@@ -120,7 +132,7 @@ def photos(root, runtime, timeout=240):
     current = identity(root)
     receipt = prepare(root, current)
     if receipt["complete"]:
-        print("Verified seven cached campus images for this world.", flush=True)
+        print(f"Verified {len(receipt['views'])} cached campus images for this world.", flush=True)
         return
     deadline = time.monotonic() + timeout
     while read_record(runtime) != current:
@@ -128,7 +140,8 @@ def photos(root, runtime, timeout=240):
             raise TimeoutError("Gazebo is not running this campus revision. Recreate the campus sim service.")
         time.sleep(.25)
     node = Node()
-    for name in VIEWS:
+    names = view_names(root)
+    for name in names:
         if name in receipt["views"]:
             continue
         topic = f"/campus/view/{name}/image"
@@ -137,7 +150,7 @@ def photos(root, runtime, timeout=240):
             raise RuntimeError("campus world changed during capture")
         atomic(root / "overview" / (name + ".png"), png)
         receipt["views"][name] = {"topic": topic, **meta}
-        receipt["complete"] = len(receipt["views"]) == len(VIEWS)
+        receipt["complete"] = len(receipt["views"]) == len(names)
         record(root / "overview/capture.json", receipt)
         print(f"{name}: {meta['width']} x {meta['height']} from {topic} at {meta['stamp_ns']} ns", flush=True)
 

@@ -1,0 +1,4 @@
+*.obj text eol=lf
+*.mtl text eol=lf
+*.gz binary
+*.zip binary

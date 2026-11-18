@@ -24,7 +24,7 @@ import uuid
 from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
-AREAS = ("fuel_campus", "teaching", "woods", "road", "track", "lawn")
+AREAS = ("fuel_campus", "delft_surveyed_site", "teaching", "woods", "road", "track", "lawn")
 SERVICES = ("sim", "bridge", "witness", "gateway", "core", "perception", "scene", "agent", "console")
 
 
@@ -229,9 +229,13 @@ def live_geometry():
             largest=max(primitive_sizes, key=lambda entry: entry[1][0]*entry[1][1])
             report[name]["largest_box_size_m"] = largest
     require(report["fuel_campus"]["geometry_types"].get("mesh"), "upstream campus has no mesh")
+    surveyed = report["delft_surveyed_site"]
+    require(surveyed["geometry_types"].get("mesh",0)>=2 and surveyed["collisions"]>=1,
+            "Delft district lacks rendered terrain, surveyed buildings or physical collision")
     report["road_connection"] = road_connection(models)
     require(report["teaching"]["collisions"]>=2, "building cannot be physically sensed")
-    for area, length in (("track",75),("lawn",90),("woods",75),("road",200),("teaching",12)):
+    require(report["track"]["geometry_types"].get("mesh"), "sports markings missing from live Gazebo")
+    for area, length in (("lawn",90),("woods",75),("road",200),("teaching",12)):
         require(max(report[area]["largest_box_size_m"][1][:2])>=length, area+" is too small to represent campus scale")
     report["live_model_count"] = len(visible)
     report["pine_instances"] = len([name for name in visible if name.startswith("pine_")])
@@ -474,7 +478,7 @@ def run(args):
                 browser_out=args.out.with_name(args.out.stem+"-texture-browser.json")
                 cmd(["node",str(ROOT/"tests/system/console_browser.mjs"),map_url+"/?view=2d",str(browser_out),"--campus-texture"],timeout=120)
                 report["texture_browser"]=json.loads(browser_out.read_bytes())
-            dc("down","--volumes","--remove-orphans","--timeout","5")
+            dc("--profile","*","down","--volumes","--remove-orphans","--timeout","5")
             current=identities(project+"-small" if small_owned else args.baseline)
             require(all(current.get(svc)==cid for svc,cid in small.items()),"campus lifecycle replaced baseline services")
             clock_after=small_clock(current)
@@ -492,7 +496,7 @@ def run(args):
             raise
         finally:
             try:
-                dc("down","--volumes","--remove-orphans","--timeout","5")
+                dc("--profile","*","down","--volumes","--remove-orphans","--timeout","5")
             finally:
                 if small_owned:
                     cmd(baseline_dc+["down","--volumes","--timeout","5"],env=small_env)

@@ -14,7 +14,7 @@
   const mutedSources = new Set();
   let placesKey = null;
   const query = new URLSearchParams(location.search);
-  let initialPlace = query.get("place");
+  let initialPlace = query.get("place") || (query.get("view")!=="2d"?"campus":null);
   const texture = window.createMapTexture(() => {updateTextureControls(); draw();});
   const layers = Object.fromEntries(["cloud","scene","roof","pose","grid"].map(key => [key, el("layer-"+key)]));
   let active = query.get("view")==="2d" ? "planar" : "spatial";
@@ -29,6 +29,14 @@
       for (const [key, input] of Object.entries(layers)) options[key] = input.checked;
       options.texture = el("layer-texture").checked ? texture.current : null;
       const view = modes[active].renderer.render(data, options);
+      if(options.texture && active==="spatial"){
+        const message={ready:"已显示 · 三维网格",loading:"正在加载三维网格，暂显正射高度图",
+          unavailable:"WebGL 2 不可用 · 已显示正射高度图",failed:"三维网格读取失败 · 已显示正射高度图",
+          absent:"已显示 · 正射高度图"};
+        el("texture-info").textContent=(message[view.modelState]||"已显示 · 正射高度图")+
+          (view.triangles?" · "+view.triangles.toLocaleString()+" 个三角面":"");
+        if(view.modelState==="ready")el("gestures").textContent="拖动环绕 · 右键平移 · 滚轮缩放 · W/A/S/D 漫游 · Q/E 升降";
+      }
       el("empty").hidden = !view.empty;
       el("empty").textContent = data ? "当前可见图层没有可显示的数据" : "等待地图数据";
       const hasHeight = active==="spatial" && options.cloud && Number.isFinite(view.zMin) && Number.isFinite(view.zMax);
@@ -91,19 +99,36 @@
     el("robot-fit").disabled = !data?.pose?.xyz || data.pose.status!=="online";
     el("place-fit").disabled=!available;
     el("campus-fit").disabled=!available;
-    el("texture-info").textContent = ready ?
-      (available ? "已显示" : "已隐藏")+" · Gazebo 静态模型外观" :
+    if(!available || active==="planar" || !el("texture-info").textContent)
+      el("texture-info").textContent = ready ?
+      (available ? "已显示" : "已隐藏")+" · 仿真正射图" :
       ({loading:"正在加载校园纹理…",texture_waiting_for_scene:"等待校园场景身份",texture_frame_mismatch:"纹理坐标系不匹配",
         texture_scene_mismatch:"纹理与当前场景不匹配",download_error:"纹理解码或下载失败，正在重试"}[state] || "纹理不可用 · "+state);
+    el("map-attribution").hidden=!available || !ready?.attribution?.length;
+    for(const button of el("landmarks").children)button.disabled=!available;
     if (placesKey !== (ready?.key || null)) {
       placesKey=ready?.key || null;
       el("place-fit").replaceChildren(new Option("选择地点",""));
+      el("landmarks").replaceChildren();
+      el("map-attribution").replaceChildren();
+      for(const {label,url} of ready?.attribution||[]){
+        const anchor=document.createElement("a");
+        anchor.textContent=label;anchor.href=url;anchor.target="_blank";anchor.rel="noopener noreferrer";
+        el("map-attribution").append(anchor);
+      }
       for (const a of ready?.areas || []) el("place-fit").add(new Option(a.label,a.id));
+      for(const [id,label] of [["campus","实景楼群"],["teaching","教学楼"],["track","田径场"]]){
+        const place=ready?.areas.find(a=>a.id===id);
+        if(!place?.camera)continue;
+        const button=document.createElement("button");button.type="button";button.textContent=label;
+        button.onclick=()=>modes[active].renderer.focusBounds(place.bounds,place.camera);
+        el("landmarks").append(button);
+      }
       if (ready && initialPlace) {
         const place = ready.areas.find(a => a.id === initialPlace);
         initialPlace = null;
         // Allow both the backing canvas and the new texture to acquire their dimensions.
-        if (place) { draw(); requestAnimationFrame(() => modes[active].renderer.focusBounds(place.bounds)); }
+        if (place) { draw(); requestAnimationFrame(() => modes[active].renderer.focusBounds(place.bounds,place.camera)); }
       }
     }
   }
@@ -118,7 +143,7 @@
   };
   el("place-fit").onchange = () => {
     const place = texture.current?.areas.find(a => a.id===el("place-fit").value);
-    if (place) modes[active].renderer.focusBounds(place.bounds);
+    if (place) modes[active].renderer.focusBounds(place.bounds,place.camera);
     el("place-fit").value="";
   };
 

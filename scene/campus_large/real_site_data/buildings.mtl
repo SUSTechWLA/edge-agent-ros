@@ -1,0 +1,19 @@
+newmtl ortho
+Ka 0.30 0.30 0.30
+Kd 1.0 1.0 1.0
+Ks 0 0 0
+map_Kd ortho.png
+newmtl brick
+Ka 0.30 0.30 0.30
+Kd 1.0 1.0 1.0
+Ks 0 0 0
+map_Kd brick.png
+newmtl glass
+Ka 0.30 0.30 0.30
+Kd 1.0 1.0 1.0
+Ks 0 0 0
+map_Kd glass.png
+newmtl base
+Ka 0.30 0.30 0.30
+Kd 0.38 0.37 0.35
+Ks 0 0 0

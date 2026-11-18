@@ -5,7 +5,7 @@
   <title>环境地图 · Edge Agent ROS</title>
   <link rel="stylesheet" href="/map.css">
   <script defer src="/grid.js"></script><script defer src="/planar.js"></script>
-  <script defer src="/spatial.js"></script><script defer src="/texture.js"></script><script defer src="/map.js"></script>
+  <script defer src="/mesh.js"></script><script defer src="/spatial.js"></script><script defer src="/texture.js"></script><script defer src="/map.js"></script>
 </head>
 <body>
 <header><div class="brand"><i aria-hidden="true">⬡</i> Edge Agent <b>ROS</b></div><span class="bar"></span><span>感知工作台</span></header>
@@ -22,6 +22,7 @@
       <div class="view-head"><span id="view-name">三维透视</span><code id="frame">坐标系 —</code></div>
       <div class="map-places" id="map-places" hidden>
         <button id="campus-fit" type="button">全校</button>
+        <span id="landmarks"></span>
         <button id="robot-fit" type="button">机器人附近</button>
         <label for="place-fit">地点</label><select id="place-fit" aria-label="按校园地点取景"></select>
       </div>
@@ -31,6 +32,7 @@
         <div id="empty" role="status">等待地图数据</div>
         <div class="height" id="height-key"><small>点云高度 · m</small><i></i><div><span id="z-min">—</span><span id="z-max">—</span></div></div>
         <div id="grid-key" class="grid-key" hidden><span><i class="unknown"></i>未知</span><span><i class="free"></i>空闲</span><span><i class="occupied"></i>占据</span></div>
+        <div id="map-attribution" hidden></div>
       </div>
       <div class="foot">
         <span id="gestures"></span><div class="buttons">
@@ -45,7 +47,7 @@
         <p id="grid-info"></p>
       </section>
       <section class="panel"><h2>可见图层</h2>
-        <label id="texture-row" hidden><input type="checkbox" id="layer-texture" checked><i class="key texture"></i>校园仿真纹理</label>
+        <label id="texture-row" hidden><input type="checkbox" id="layer-texture" checked><i class="key texture"></i>校园仿真外观</label>
         <p id="texture-info" hidden role="status"></p>
         <label><input type="checkbox" id="layer-grid" checked><i class="key grid"></i>占据栅格</label>
         <label><input type="checkbox" id="layer-scene" checked><i class="key scene"></i>语义地图</label>

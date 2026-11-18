@@ -20,6 +20,12 @@
 .map-places select {max-width:12em;background:#25454a;border:1px solid #587174;border-radius:6px;color:#e5f0e9;padding:5px;font:inherit}
 .map-places label {margin-left:auto;color:#bad0cb}
 .map-places button:disabled,.map-places select:disabled {opacity:.55;cursor:default}
+#landmarks {display:contents}
+#map-attribution {position:absolute;bottom:4px;right:4px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:0 7px;
+  padding:2px 5px;max-width:calc(100% - 8px);border-radius:2px;background:#fafcf6e8;font:10px/1.45 system-ui}
+#map-attribution[hidden] {display:none}
+#map-attribution a {color:#34463c}
+#viewport[data-surface="mesh"] {background:linear-gradient(#a3bdcc,#e3e9de 67%,#c9d0b9)}
 #texture-info {margin:5px 0 2px 26px;line-height:1.5}
 #inspect-source-row {display:grid; grid-template-columns:auto minmax(0,1fr)}
 #inspect-source {min-width:0; width:100%; max-width:100%; font:inherit}

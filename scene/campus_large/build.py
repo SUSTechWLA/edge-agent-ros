@@ -1,11 +1,17 @@
 """Build a self-contained Harmonic world from pinned Fuel models and local training grounds."""
 import argparse
+import hashlib
 import json
 import math
 import random
 import shutil
 from pathlib import Path
 from xml.etree import ElementTree as ET
+
+if __package__:
+    from .athletics import PITCH_LENGTH, playing_surface
+else:
+    from athletics import PITCH_LENGTH, playing_surface
 
 
 def tag(parent, name, value):
@@ -70,21 +76,73 @@ def teaching(world):
     def wall(name, x, y, length, width, height=4.0, base=0, shade=BRICK):
         shape(room,name,"box",(x,y,base+height/2),(length,width,height),shade,True)
         features.append(dict(id=name,kind="wall",label="教学楼结构",xy=[x,y],size=[length,width,height],base_z=base))
+    brick = (.63,.36,.27)
+    frame = (.27,.33,.34)
+    limestone = (.83,.79,.70)
+    roof = (.35,.39,.40)
+    def band(name, axis, fixed, mid, length, depth, base, height, color, solid=False):
+        xy, dims = ((mid,fixed),(length,depth)) if axis == "x" else ((fixed,mid),(depth,length))
+        shape(room,name,"box",(*xy,base+height/2),(*dims,height),color,solid)
+        if solid and base < .5:
+            features.append(dict(id=name,kind="wall",label="教学楼外墙",xy=list(xy),
+                                 size=[*dims,height],base_z=base))
+
+    def glazing(name, axis, fixed, outside, start, end, bays, base):
+        # Deep masonry reveals surround a recessed ribbon window. Each floor has
+        # its own wall and glazing; the volumes between opposing windows are hollow.
+        width, mid = end-start, (end+start)/2
+        bay = width/bays
+        band(name+"_sill",axis,fixed,mid,width,.38,base,1.0,brick,True)
+        band(name+"_header",axis,fixed,mid,width,.38,base+3.13,.55,limestone,True)
+        band(name+"_sunshade",axis,fixed+outside*.21,mid,width,.59,base+3.11,.1,limestone)
+        band(name+"_glass",axis,fixed-outside*.13,mid,width,.12,base+1.,2.13,GLASS,True)
+        band(name+"_transom",axis,fixed,mid,width,.15,base+2.6,.065,frame)
+        for i in range(bays+1):
+            # End piers sit inside the wall span so the entrance stays 2.20 m wide.
+            pos = min(end-.15,max(start+.15,start+i*bay))
+            band(name+f"_pier_{i}",axis,fixed+outside*.08,pos,.30,.53,base+1.,2.13,CONCRETE,True)
+        for i in range(bays):
+            band(name+f"_mullion_{i}",axis,fixed,start+(i+.5)*bay,.073,.16,base+1.,2.13,frame)
+
     shape(room,"tile_floor","box",(-7.7,0,.005),(18.6,18,.01),(.74,.70,.58))
-    wall("back",-17,0,.25,18)
-    wall("north",-7.7,9,18.8,.25)
-    wall("south",-7.7,-9,18.8,.25)
-    for side in (-1,1):
-        wall("door_side_"+str(side),1.6,side*5.05,.25,7.9)
+    # A four-storey classroom block and a shorter set-back studio wing. The
+    # east portal remains at (1.6,0), level with the mission's odometry origin.
+    for wing,x0,x1,y0,y1,floors in (("hall",-17,1.6,-9,9,4),("studio",-40,-17,-6,8,3)):
+        for floor in range(floors):
+            base = floor*3.68
+            prefix = f"{wing}_{floor}"
+            for y, sign in ((y0,-1),(y1,1)):
+                glazing(prefix+f"_side_{sign}","x",y,sign,x0,x1,5,base)
+            for x, sign in ((x0,-1),(x1,1)):
+                if wing=="studio" and sign==1:
+                    continue  # This interior face meets the classroom block.
+                if wing=="hall" and sign==-1 and floor<3:
+                    continue
+                if wing=="hall" and sign==1 and floor==0:
+                    glazing("portal_south","y",x,sign,y0,-1.1,2,base)
+                    glazing("portal_north","y",x,sign,1.1,y1,2,base)
+                else:
+                    glazing(prefix+f"_end_{sign}","y",x,sign,y0,y1,4,base)
+            top = base+3.68
+            slab = "roof" if floor==floors-1 else "floor"
+            shape(room,prefix+"_"+slab,"box",((x0+x1)/2,(y0+y1)/2,top),
+                  (x1-x0+.48,y1-y0+.48,.20),roof if slab=="roof" else limestone,True)
+        for y in (y0,y1):
+            band(wing+"_parapet_"+str(y),"x",y,(x0+x1)/2,x1-x0+.36,.27,floors*3.68,.48,limestone,True)
+        for x in (x0,x1):
+            band(wing+"_end_parapet_"+str(x),"y",x,(y0+y1)/2,y1-y0,.27,floors*3.68,.48,limestone,True)
+    # Close the two exposed strips where the recessed studio meets the larger hall.
+    wall("junction_south",-17,-7.5,.35,3,11.04,shade=brick)
+    wall("junction_north",-17,8.5,.35,1,11.04,shade=brick)
+    wall("stair_enclosure",-30,4.7,5.2,4.5,2.4,11.14,limestone)
+    shape(room,"stair_cap","box",(-30,4.7,13.62),(5.5,4.8,.2),roof,True)
+    for i in range(5):
+        shape(room,f"stair_louver_{i}","box",(-30,2.42,11.6+i*.27),(3.8,.12,.12),frame)
+    for x in (-15., -11.7):
+        shape(room,"roof_vent_"+str(x),"box",(x,5.,15.22),(2.5,1.6,.8),(.64,.67,.63),True)
+        for i in range(5):
+            shape(room,f"vent_grille_{x}_{i}","box",(x-.8+i*.40,4.17,15.26),(.19,.08,.49),frame)
     wall("lintel",1.6,0,.25,2.2,1.3,2.7,CONCRETE)
-    wall("ceiling",-7.7,0,19.1,18.6,.16,4,CONCRETE)
-    # Upstairs is a facade. The ground floor has two classrooms with genuine doorways.
-    wall("upper_facade",-7.7,0,18.6,18,5.5,4.16)
-    for col in range(7):
-        x=-15+col*2.45
-        for y in (-9.14,9.14):
-            for z in (2.1,6.5,8.4):
-                shape(room,f"window_{col}_{y}_{z}","box",(x,y,z),(1.65,.14,1.02),GLASS)
     for y in (-3.7,3.7):
         wall(f"partition_back_{y}",-12,y,9.8,.14,3.8,shade=CONCRETE)
         wall(f"partition_front_{y}",-1.7,y,6.4,.14,3.8,shade=CONCRETE)
@@ -109,45 +167,70 @@ def teaching(world):
     shape(room,"noticeboard","box",(.9,2.9,1.45),(.10,2.45,1.12),(.13,.36,.27),True)
     for y in (-2.1,2.1):
         shape(room,"porch_post"+str(y),"cylinder",(3.9,y,1.55),(.15,3.1),CONCRETE,True)
-    shape(room,"porch","box",(2.7,0,3.16),(3.0,5.1,.22),CONCRETE,True)
+    shape(room,"porch","box",(3.0,0,3.16),(3.6,5.5,.22),limestone,True)
+    shape(room,"porch_fascia","box",(4.77,0,3.24),(.14,5.55,.38),frame)
+    for y in (-1.13,1.13):
+        shape(room,"portal_jamb_"+str(y),"box",(1.79,y,1.36),(.15,.06,2.72),frame,True)
     return features
 
 
-def stadium(world):
-    field=static(world,"track")
-    cx,cy=-103,72
-    red=(.62,.245,.124)
-    pale=(.95,.86,.68)
-    for idx,(radius,color,z) in enumerate(((40,red,.014),(33,GREEN,.028))):
-        shape(field,"center"+str(idx),"box",(cx,cy,z),(84.4,2*radius,.012),color)
-        for side in (-1,1):
-            shape(field,f"bend_{idx}_{side}","cylinder",(cx+side*42.2,cy,z),(radius,.012),color)
-    for lane in range(7):
-        radius=33+lane*1.10
-        for side in (-1,1):
-            line(field,f"straight_{lane}_{side}",(cx-42.2,cy+side*radius),(cx+42.2,cy+side*radius),.14,.045,pale)
-            for j in range(24):
-                a=math.pi*(-.5+j/24) + (0 if side==1 else math.pi)
-                b=a+math.pi/24
-                ox=cx+side*42.2
-                line(field,f"curve_{lane}_{side}_{j}",(ox+radius*math.cos(a),cy+radius*math.sin(a)),
-                     (ox+radius*math.cos(b),cy+radius*math.sin(b)),.18,.045,pale)
-    for y in (-26,26):
-        line(field,"touchline"+str(y),(cx-50,cy+y),(cx+50,cy+y),.18,.048,WHITE)
-    for x in (-50,0,50):
-        line(field,"endline"+str(x),(cx+x,cy-26),(cx+x,cy+26),.18,.048,WHITE)
-    for i in range(32):
-        a=i*math.tau/32
-        b=(i+1)*math.tau/32
-        line(field,"center_circle"+str(i),(cx+8*math.cos(a),cy+8*math.sin(a)),(cx+8*math.cos(b),cy+8*math.sin(b)),.16,.049,WHITE)
+def stadium(world, output):
+    field = static(world, "track")
+    cx, cy = -103, 72
+    # A single mesh draws continuous lane boundaries around both bends. The
+    # continuous physics floor also supports the turf and running surface.
+    path = playing_surface().write(output/"meshes")
+    visual = ET.SubElement(field, "visual", name="running_track_and_pitch")
+    tag(visual, "pose", values((cx,cy,0,0,0,0)))
+    mesh = ET.SubElement(ET.SubElement(visual, "geometry"), "mesh")
+    tag(mesh, "uri", path.relative_to(output).as_posix())
+    shape(field,"pitch_foundation","box",(cx,cy,.006),(105,68,.012),(.24,.48,.26))
+    net, alloy = (.74,.78,.72), (.42,.47,.47)
+    # The opening is measured between the inside edges and below the crossbar.
     for side in (-1,1):
-        gx=cx+side*50
-        for y in (-3.66,3.66):
-            shape(field,f"goal_{side}_{y}","cylinder",(gx,cy+y,1.22),(.07,2.44),WHITE,True)
-        shape(field,"crossbar"+str(side),"box",(gx,cy,2.44),(.13,7.45,.13),WHITE,True)
-        for row in range(4):
-            height=(row+1)*.42
-            shape(field,f"stands_{side}_{row}","box",(cx,cy+side*(43+row*.82),height/2),(43,.82,height),CONCRETE,True)
+        gx, rear = cx + side*PITCH_LENGTH/2, cx + side*(PITCH_LENGTH/2+2)
+        for sign in (-1,1):
+            y = cy + sign*3.71
+            shape(field,f"goal_post_{side}_{sign}","box",(gx,y,1.22),(.10,.10,2.44),WHITE,True)
+            shape(field,f"goal_rear_{side}_{sign}","box",(rear,y,1.22),(.07,.07,2.44),alloy,True)
+            for z in (.09,2.47):
+                shape(field,f"goal_support_{side}_{sign}_{z}","box",((gx+rear)/2,y,z),(2,.07,.07),WHITE,True)
+            for i in range(1,5):
+                shape(field,f"goal_side_net_{side}_{sign}_{i}","box",((gx+rear)/2,y,i*.48),(2,.028,.028),net)
+        shape(field,f"crossbar_{side}","box",(gx,cy,2.49),(.10,7.52,.10),WHITE,True)
+        for i in range(17):
+            shape(field,f"net_warp_{side}_{i}","box",(rear,cy-3.68+i*.46,1.22),(.028,.028,2.44),net)
+        for i in range(6):
+            shape(field,f"net_weft_{side}_{i}","box",(rear,cy,.08+i*.47),(.028,7.42,.028),net)
+    # Split the grandstand at the entrance axis. The aisle connects the training
+    # road to the south track edge without a fence or step in the middle.
+    for side,rows in ((-1,4),(1,7)):
+        for block in (-1,1):
+            mid = cx + block*20.5
+            for row in range(rows):
+                height = .45 + row*.43
+                y = cy + side*(48.3 + row*.85)
+                shape(field,f"terrace_{side}_{block}_{row}","box",(mid,y,height/2),
+                      (36,.86,height),CONCRETE,True)
+                for bank in (-1,1):
+                    shade = (.22,.40,.49) if (row//2)%2 == 0 else (.32,.52,.62)
+                    shape(field,f"seat_{side}_{block}_{row}_{bank}","box",
+                          (mid+bank*9.1,y,height+.10),(16.7,.48,.20),shade,True)
+            if side == 1:
+                shape(field,f"stand_roof_{block}","box",(mid,cy+51.2,6.3),(37.1,7.5,.28),(.61,.67,.68),True)
+                for dx in (-16,0,16):
+                    shape(field,f"stand_roof_post_{block}_{dx}","cylinder",
+                          (mid+dx,cy+54,3.08),(.16,6.16),alloy,True)
+                    shape(field,f"stand_spar_{block}_{dx}","box",
+                          (mid+dx,cy+51.2,6.04),(.16,7.45,.25),alloy)
+    for sx in (-1,1):
+        for sy in (-1,1):
+            x,y = cx+sx*45,cy+sy*47
+            shape(field,f"floodlight_mast_{sx}_{sy}","cylinder",(x,y,8),(.20,16),alloy,True)
+            shape(field,f"floodlight_rack_{sx}_{sy}","box",(x,y,15.8),(3.6,.44,1.04),(.27,.32,.33),True)
+            for i in range(4):
+                shape(field,f"floodlight_{sx}_{sy}_{i}","box",(x-1.35+i*.9,y-sy*.26,15.8),
+                      (.65,.14,.70),(.91,.91,.81))
 
 
 def road_lawn(world):
@@ -168,7 +251,7 @@ def road_lawn(world):
             t2=t1+.15
             dash=[tuple(a[j]+(b[j]-a[j])*t for j in (0,1)) for t in (t1,t2)]
             line(road,f"north_divider_{i}_{part}",*dash,.15,.035,(.89,.72,.28))
-    line(road,"track_entrance",(-104,14),(-104,34),3.2,.02,CONCRETE)
+    line(road,"track_entrance",(-103,14),(-103,25.6),3.2,.02,CONCRETE)
     line(road,"trail_entrance",(18.5,-66),(24,-66),2.8,.025,(.58,.48,.31))
     line(road,"lawn_entrance",(4,-10),(9.3,-8),2.6,.03,(.71,.61,.44))
     for i in range(10):
@@ -239,9 +322,43 @@ def mesh_extent(model_dir):
     return lo,hi,vertices
 
 
-def area(id_,label,bounds,origin,description):
+def area(id_,label,bounds,origin,description,eye=None,target=None):
     x0,y0,x1,y1=bounds
-    return dict(id=id_,label=label,bounds=bounds,center=[(x0+x1)/2,(y0+y1)/2],origin=origin,description=description)
+    result = dict(id=id_,label=label,bounds=bounds,center=[(x0+x1)/2,(y0+y1)/2],origin=origin,description=description)
+    if eye is not None:
+        result["camera"] = {"eye":eye,"target":target}
+    return result
+
+
+def scene_revision(world, output, layout):
+    """Bind sensor/map alignment to the navigation graph, SDF and its local geometry."""
+    digest = hashlib.sha256(json.dumps(layout,sort_keys=True,ensure_ascii=False).encode())
+    digest.update((output/"world.sdf").read_bytes())
+    digest.update(Path(__file__).with_name("asset-lock.json").read_bytes())
+    dependencies = set()
+    for node in world.findall(".//geometry/mesh/uri"):
+        uri = node.text.removeprefix("file:///campus/")
+        model = output/uri
+        if model.suffix.lower() != ".obj" or not model.resolve().is_relative_to(output.resolve()):
+            raise ValueError(f"Unexpected generated campus model path {uri}")
+        if model not in dependencies:
+            dependencies.add(model)
+            with model.open(encoding="utf-8") as source:
+                for row in source:
+                    if row.startswith("mtllib "):
+                        dependencies.add(model.parent/row[7:].strip())
+    for material in tuple(p for p in dependencies if p.suffix.lower()==".mtl"):
+        if not material.resolve().is_relative_to(output.resolve()):
+            raise ValueError(f"Campus material outside world directory: {material.name}")
+        for row in material.read_text(encoding="utf-8").splitlines():
+            if row.startswith("map_Kd "):
+                dependencies.add(material.parent/row[7:].strip())
+    for path in sorted(dependencies):
+        if not path.resolve().is_relative_to(output.resolve()):
+            raise ValueError(f"Campus material outside world directory: {path.name}")
+        digest.update(path.relative_to(output).as_posix().encode())
+        digest.update(path.read_bytes())
+    return "2."+digest.hexdigest()[:16]
 
 
 def viewpoints(world, total, areas):
@@ -268,19 +385,22 @@ def viewpoints(world, total, areas):
     altitude=max(x1-x0,(y1-y0)*1000/650)*.85
     # Facing north with optical down. The north-up overview is also the coordinate reference for the map.
     camera("overview",(*center,altitude),(center[0],center[1]+.001,0))
-    orig=areas[0]
-    cx,cy=orig["center"]
-    length=max(orig["bounds"][2]-orig["bounds"][0],orig["bounds"][3]-orig["bounds"][1])
-    camera("campus",(cx+length*.28,cy-length*.64,max(20,length*.34)),(cx,cy,4))
-    camera("teaching",(-15.8,-7.9,1.65),(-5.6,-4.1,1.25))
-    camera("track",(-33,24,35),(-112,80,0))
-    camera("woods",(22,-68,6.7),(78,-51,3))
-    camera("road",(9.8,-21,3.1),(14,25,1.5))
-    camera("lawn",(-134,-81,9),(-65,-44,0))
+    for place in areas:
+        if "camera" not in place:
+            cx,cy=place["center"]
+            x0,y0,x1,y1=place["bounds"]
+            length=max(x1-x0,y1-y0)
+            place["camera"]={"eye":[cx+length*.28,cy-length*.64,max(20,length*.34)],"target":[cx,cy,4]}
+        view = place["camera"]
+        camera(place["id"],view["eye"],view["target"])
     return {"center":center,"view_width":2*altitude*math.tan(1.18/2),"aspect":1000/650}
 
 
 def build(assets, base, output):
+    if __package__:
+        from .real_site import append_site
+    else:
+        from real_site import append_site
     if not all((assets/"models"/n/"model.sdf").is_file() for n in ("Campus","Pine Tree")):
         raise SystemExit("Missing pinned campus assets. Run python scene/campus_large/fetch_assets.py from the repository root.")
     tree=ET.parse(base)
@@ -291,7 +411,10 @@ def build(assets, base, output):
     lo,hi,vertices=mesh_extent(assets/"models"/"Campus")
     tx,ty=22-lo[0],23-lo[1]
     orig=[22,23,hi[0]+tx,hi[1]+ty]
-    total=[-198,-110,max(118,orig[2]+4),max(155,orig[3]+4)]
+    output.mkdir(parents=True,exist_ok=True)
+    surveyed=append_site(world,output)
+    dx0,dy0,dx1,dy1=surveyed["bounds"]
+    total=[min(-198,dx0-4),min(-110,dy0-4),max(orig[2],dx1)+4,max(155,orig[3]+4,dy1+4)]
     size=max(abs(n) for n in total)*3+100
     for plane in world.findall("./model[@name='floor']//plane/size"):
         plane.text=values((size,size))
@@ -301,21 +424,29 @@ def build(assets, base, output):
     # Lift the source so road paint and grass remain above the new continuous physics floor.
     include(world,"fuel_campus","model://Campus",(tx,ty,.265))
     features=teaching(world)
-    stadium(world)
+    stadium(world,output)
     road_lawn(world)
     trees=forest(world)
-    areas=[area("campus","原始校园建筑群",orig,"Gazebo Fuel · NCS_robotmanager / Campus v2","上游发布的带材质校园网格，视觉与碰撞共用其原始几何。"),
-           area("teaching","教师楼与教学楼门厅",[-17.2,-9.2,4.2,9.2],"本项目训练区","一楼有教室、桌椅、走廊和可通过的门廊。机器人从楼内出发。"),
-           area("track","田径场与足球场",[-186,25,-20,119],"本项目训练区","弯道、六条跑道、足球场线、球门和看台。"),
-           area("woods","混合树林与林道",[22,-97,112,-11],"本项目训练区 · OpenRobotics / Pine Tree v6",f"{trees} 棵疏密不同的松树与阔叶树，土路斜穿林地。"),
-           area("road","校园车道",[9,-106,40,203],"本项目训练区","双向车道和人行横道，北段弯道接入原校园道路。"),
-           area("lawn","开阔草坪",[-133,-77,-25,-11],"本项目训练区","开阔草地、边缘长椅和一条通向建筑的步道。")]
+    areas=[surveyed,
+           area("teaching","教学楼与主入口",[-41,-10,5,10],"本项目教学训练区","四层教学楼接三层侧翼。东侧雨棚下是可通行门廊，首层两间教室临走廊布置。",
+                [31,-39,12],[-12,0,6]),
+           area("track","田径场与足球场",[-194,17,-12,127],"本项目体育训练区","八道 400 米跑道包围 105 × 68 米足球场。可观察罚球区、角球弧、球门和分区看台。",
+                [-73,-66,104],[-103,72,0]),
+           area("fuel_campus","NCS 单层校园",orig,"Gazebo Fuel · NCS_robotmanager / Campus v2","保留原模型的道路、低墙、室内家具与绿化。源网格最高点为 3.49 米。"),
+           area("teaching_interior","教学楼一层教室",[-17,-9,1.6,9],"本项目教学训练区","近距离观察桌椅、教室分隔与窗带；机器人出生点位于中间走廊。",
+                [-15.8,-7.9,1.65],[-5.6,-4.1,1.25]),
+           area("woods","混合树林与林道",[22,-97,112,-11],"本项目训练区 · OpenRobotics / Pine Tree v6",f"{trees} 棵疏密不同的松树与阔叶树，土路斜穿林地。",
+                [22,-68,6.7],[78,-51,3]),
+           area("road","校园车道",[9,-106,40,203],"本项目训练区","双向车道和人行横道，北段弯道接入 NCS 校园道路。",
+                [9.8,-21,3.1],[14,25,1.5]),
+           area("lawn","开阔草坪",[-133,-77,-25,-11],"本项目训练区","开阔草地、边缘长椅和一条通向建筑的步道。",
+                [-134,-81,9],[-65,-44,0])]
     projection=viewpoints(world,total,areas)
     out_web=output/"overview"
     out_web.mkdir(parents=True,exist_ok=True)
     tree.write(output/"world.sdf",encoding="utf-8",xml_declaration=True)
-    layout={"schema_version":1,"id":"campus_large","revision":"1.0","frame":"odom",
-            "source":"Gazebo Fuel NCS Campus v2 与具名训练区","alignment":"教学楼内机器人出生点为 odom 原点",
+    layout={"schema_version":1,"id":"campus_large","frame":"odom",
+            "source":"代尔夫特实测建筑、Gazebo Fuel NCS Campus v2 与本项目训练区","alignment":"教学楼内机器人出生点为 odom 原点",
             "clearance_m":.32,"features":features,"zones":[
                {"id":"lobby","label":"教学楼一层","kind":"indoor","bounds":[-17,-9,1.59,9]},
                {"id":"door","label":"教学楼门廊","kind":"transition","bounds":[1.59,-1.1,2.5,1.1]},
@@ -324,6 +455,7 @@ def build(assets, base, output):
                      {"id":"teaching_door","label":"教学楼门口","zone":"door","xy":[1.7,0]},
                      {"id":"teaching_exit","label":"教学楼门外","zone":"entry","xy":[3.3,0],"aliases":["教学楼外","教师楼门外"]}],
             "edges":[["teaching_lobby","teaching_door"],["teaching_door","teaching_exit"]]}
+    layout["revision"]=scene_revision(world,output,layout)
     manifest={"bounds":total,"unit":"m","frame":"odom","areas":areas,"source_vertices":vertices,"trees":trees,
               "projection":projection,"spawn":[0,0],"source_file":"models/Campus/model.sdf"}
     for path,obj in ((output/"layout.json",layout),(out_web/"manifest.json",manifest)):

@@ -4,6 +4,7 @@ import json
 import math
 from pathlib import Path
 import struct
+from urllib.parse import urlsplit
 
 
 def bounds(value):
@@ -16,8 +17,12 @@ def bounds(value):
 
 def bounded_read(path, budget):
     with path.open("rb") as file:
-        raw = file.read(budget + 1)
-    if not 0 < len(raw) <= budget:
+        size = file.seek(0, 2)
+        if not 0 < size <= budget:
+            raise ValueError("texture_size_invalid")
+        file.seek(0)
+        raw = file.read(size)
+    if len(raw) != size:
         raise ValueError("texture_size_invalid")
     return raw
 
@@ -55,12 +60,27 @@ class TexturePack:
         info.update(bounds=bounds(meta["bounds"]),width=width,height=height)
         info["scene_revision"] = str(meta.get("scene_revision",""))[:64]
         info["areas"] = []
+        attribution = meta.get("attribution",[])
+        if (not isinstance(attribution,list) or len(attribution)>10 or
+                not all(isinstance(item,dict) and isinstance(item.get("label"),str)
+                        and 0<len(item["label"])<=150 and isinstance(item.get("url"),str)
+                        and len(item["url"])<=512 and urlsplit(item["url"]).scheme=="https"
+                        and urlsplit(item["url"]).hostname for item in attribution)):
+            raise ValueError("texture_attribution_invalid")
+        info["attribution"] = [{"label":item["label"],"url":item["url"]} for item in attribution]
         areas = meta.get("areas",[])
         if not isinstance(areas,list) or len(areas) > 64:
             raise ValueError("texture_areas_invalid")
         for item in areas:
-            info["areas"].append({"id":str(item["id"])[:64], "label":str(item["label"])[:96],
-                                  "bounds":bounds(item["bounds"])})
+            area = {"id":str(item["id"])[:64], "label":str(item["label"])[:96],
+                    "bounds":bounds(item["bounds"])}
+            if "camera" in item:
+                camera = {k:item["camera"][k] for k in ("eye","target")}
+                if not all(isinstance(v,list) and len(v)==3 and all(type(c) in (int,float)
+                           and math.isfinite(c) and abs(c)<=1e6 for c in v) for v in camera.values()) or camera["eye"]==camera["target"]:
+                    raise ValueError("texture_camera_invalid")
+                area["camera"] = camera
+            info["areas"].append(area)
         # The URL identifies the registration as well as both payload hashes.
         key = hashlib.sha256(raw).hexdigest()
         base = "/texture/" + key + "/"
@@ -73,6 +93,19 @@ class TexturePack:
             files[base+"height.png"] = image(root,"height.png",meta["height_sha256"],width,height)
             info.update(height_url=base+"height.png",height_scale_m=scale,height_offset_m=offset,
                         height_sha256=meta["height_sha256"])
+        if "mesh_sha256" in meta:
+            # Pin the validated edition in memory, just like the PNGs. An independent
+            # scene rebuild may atomically replace scene.glb while requests are in flight.
+            try:
+                glb = bounded_read(root / "scene.glb", 128 * 1024**2)
+                if len(glb)<20 or struct.unpack_from("<4sII",glb)!=(b"glTF",2,len(glb)):
+                    raise ValueError("texture_mesh_format_invalid")
+                if hashlib.sha256(glb).hexdigest()!=meta["mesh_sha256"]:
+                    raise ValueError("texture_mesh_checksum_mismatch")
+                files[base+"scene.glb"] = glb
+                info.update(mesh_url=base+"scene.glb", mesh_sha256=meta["mesh_sha256"], mesh_bytes=len(glb))
+            except (OSError, ValueError) as exc:
+                info["mesh_error"] = str(exc) if isinstance(exc,ValueError) else "texture_mesh_missing"
         self.info, self.files = info, files
 
     def for_map(self, snapshot):

@@ -46,6 +46,22 @@ def pose(element):
     return x, y, z, yaw
 
 
+def compose(parent, child):
+    x,y,z,yaw = parent
+    dx,dy,dz,turn = child
+    co,si = math.cos(yaw),math.sin(yaw)
+    return x+co*dx-si*dy, y+si*dx+co*dy, z+dz, yaw+turn
+
+
+def local_mesh(world_dir, uri):
+    # Gazebo in Compose uses /campus even when an offline bake uses a different directory.
+    relative = uri.removeprefix("file:///campus/")
+    path = (world_dir / relative).resolve()
+    if not path.is_relative_to(world_dir.resolve()) or path.suffix.lower() != ".obj":
+        raise ValueError(f"Expected local campus OBJ, got {uri}")
+    return path
+
+
 class Atlas:
     def __init__(self, bounds, width, ground):
         self.bounds = np.array(bounds, dtype=np.float64)
@@ -57,8 +73,8 @@ class Atlas:
         self.rgb[:] = np.uint8(np.array(ground[:3])*255)
         self.z = np.zeros((self.height, width), dtype=np.float32)
 
-    def primitive(self, v):
-        x, y, z, yaw = pose(v)
+    def primitive(self, v, parent=(0.,0.,0.,0.)):
+        x, y, z, yaw = compose(parent, pose(v))
         geom = v.find("geometry")[0]
         if geom.tag == "box":
             a, b, c = [n/2 for n in numbers(geom.findtext("size"))]
@@ -144,6 +160,13 @@ def bake(assets, world_dir, output, width=2048):
         parts = [source_hash,sha(world_dir/"layout.json"),sha(world_dir/"overview/manifest.json"),
                  sha(Path(__file__)),sha(Path(__file__).with_name("texture_mesh.cpp")),
                  sha(Path(__file__).with_name("asset-lock.json")),str(width)]
+        # OBJ, MTL and image bytes can change without the visual's URI changing.
+        mesh_dirs = {local_mesh(world_dir,node.text).parent for node in
+                     world.findall("./model/link/visual/geometry/mesh/uri")}
+        for directory in sorted(mesh_dirs):
+            for item in sorted(directory.iterdir()):
+                if item.suffix.lower() in {".obj",".mtl",".png",".jpg",".jpeg"}:
+                    parts += [str(item.relative_to(world_dir.resolve())),sha(item)]
         revision = hashlib.sha256("/".join(parts).encode()).hexdigest()[:20]
         path = output/"manifest.json"
         if path.is_file():
@@ -183,19 +206,33 @@ def bake(assets, world_dir, output, width=2048):
             for model in world.findall("model"):
                 if model.get("name") in ("floor","edge_rover","campus_viewpoints"):
                     continue
-                if any(pose(model)): raise ValueError("Expected generated geometry in world coordinates")
                 for link in model.findall("link"):
-                    if any(pose(link)): raise ValueError("Expected generated geometry in world coordinates")
-                    for visual in link.findall("visual"): atlas.primitive(visual)
+                    parent = compose(pose(model),pose(link))
+                    for visual in link.findall("visual"):
+                        obj = visual.find("geometry/mesh")
+                        if obj is None:
+                            atlas.primitive(visual,parent)
+                            continue
+                        if numbers(obj.findtext("scale","1 1 1")) != (1.,1.,1.):
+                            raise ValueError("Expected metric campus OBJ")
+                        path = local_mesh(world_dir,obj.findtext("uri"))
+                        placement = np.array(compose(parent,pose(visual)))
+                        if mesh(os.fsencode(path),os.fsencode(path.parent),0,placement,width,atlas.height,
+                                atlas.bounds,atlas.rgb,atlas.z):
+                            raise RuntimeError(f"Failed to render {path.name}")
             atlas.shade()
             highest = float(atlas.z.max())
             scale = max(1,math.ceil(highest/255*100))/100
             png(stage/"texture.png",atlas.rgb)
             png(stage/"height.png",np.uint8(np.clip(np.rint(atlas.z/scale),0,255)))
             result = dict(name="校园",scene_id=layout["id"],scene_revision=layout["revision"],frame=layout["frame"],
-                          bounds=bounds,width=width,height=atlas.height,revision=revision,source="Gazebo 校园世界正射烘焙 · Fuel Campus v2 / Pine Tree v6 与 SDF 场地材质",
+                          bounds=bounds,width=width,height=atlas.height,revision=revision,source="Gazebo 校园世界 · 米制场景几何与材质",
                           world_sha256=source_hash,areas=overview["areas"],height_scale_m=scale,height_offset_m=0.,
                           height_max_m=highest,sha256=sha(stage/"texture.png"),height_sha256=sha(stage/"height.png"))
+            if world.find("./model[@name='delft_surveyed_site']") is not None:
+                result["attribution"] = [
+                    {"label":"© 3DBAG by tudelft3d and 3DGI","url":"https://docs.3dbag.nl/en/copyright/"},
+                    {"label":"Luchtfoto © Beeldmateriaal / PDOK","url":"https://www.pdok.nl/ogc-webservices/-/article/pdok-luchtfoto-rgb-open-"}]
             (stage/"manifest.json").write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n")
             for name in ("texture.png","height.png","manifest.json"):
                 os.replace(stage/name,output/name)

@@ -79,5 +79,31 @@ class TestOrthoAtlas(unittest.TestCase):
         self.assertEqual(atlas.z[21,32],1)
         self.assertEqual(atlas.z[32,21],0)
 
+    def test_generated_obj_parent_pose_material_and_cache_revision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/"overview").mkdir()
+            models=root/"meshes"
+            models.mkdir()
+            (models/"room.obj").write_text("mtllib room.mtl\nv 0 0 2\nv 4 0 2\nv 0 2 2\nusemtl roof\nf 1 2 3\n")
+            material=models/"room.mtl"
+            material.write_text("newmtl roof\nKd 1 0 0\n")
+            (root/"world.sdf").write_text("""<sdf><world>
+                <model name="floor"><link><visual><material><diffuse>0 0 0 1</diffuse></material></visual></link></model>
+                <model name="hall"><pose>7 4 1 0 0 1.57079632679</pose><link><pose>1 0 0 0 0 0</pose>
+                <visual><geometry><mesh><uri>file:///campus/meshes/room.obj</uri></mesh></geometry></visual>
+                </link></model></world></sdf>""")
+            (root/"overview/manifest.json").write_text('{"bounds":[0,0,16,16],"frame":"odom","areas":[]}')
+            (root/"layout.json").write_text('{"id":"campus_large","frame":"odom","revision":"test"}')
+            out=root/"out"
+            before=texture.bake(root,root,out,width=64)
+            # Inside the rotated roof in world metres at (6.625, 5.875), not near (0,0).
+            self.assertGreater(samples(out/"texture.png")(26,40)[0],200)
+            self.assertEqual(samples(out/"height.png")(26,40)[0]*before["height_scale_m"],3.)
+            material.write_text("newmtl roof\nKd 0 1 0\n")
+            after=texture.bake(root,root,out,width=64)
+            self.assertNotEqual(before["revision"],after["revision"])
+            self.assertGreater(samples(out/"texture.png")(26,40)[1],200)
+
 if __name__=="__main__":
     unittest.main()

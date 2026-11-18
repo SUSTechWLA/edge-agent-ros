@@ -30,7 +30,8 @@ if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture) {
   if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
 }
 const profile = mkdtempSync(join(tmpdir(), 'edge-browser-test-'));
-const browser = spawn(binary, ['--headless=new','--disable-gpu','--no-first-run','--disable-extensions',
+const renderFlags = campusTexture ? ['--use-angle=swiftshader','--enable-unsafe-swiftshader'] : ['--disable-gpu'];
+const browser = spawn(binary, ['--headless=new',...renderFlags,'--no-first-run','--disable-extensions',
   '--no-sandbox','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],
   {stdio:['ignore','ignore','pipe'],windowsHide:true});
 let diagnostics = '';
@@ -106,9 +107,11 @@ try {
       continue;
     }
     if (campusOnly) {
-      await waitFor("document.querySelectorAll('.choices button').length === 7","seven campus views");
+      const response = await fetch(new URL('/manifest.json',url));
+      const ids = ['overview',...(await response.json()).areas.map(area=>area.id)];
+      await waitFor("document.querySelectorAll('.choices button').length === "+ids.length,"all declared campus views");
       const imageWidths = {};
-      for (const id of ['campus','teaching','track','woods','road','lawn','overview']) {
+      for (const id of ids) {
         await evaluate(`document.querySelector('button[data-id="${id}"]').click()`);
         await waitFor(`!document.querySelector('#shot').hidden && new URL(document.querySelector('#shot').src).pathname.endsWith('/${id}.png') && document.querySelector('#shot').naturalWidth >= 300`);
         imageWidths[id] = await evaluate("document.querySelector('#shot').naturalWidth");

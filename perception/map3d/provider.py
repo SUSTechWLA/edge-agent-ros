@@ -27,7 +27,7 @@ from module_journal import ModuleJournal
 
 STATIC = Path(__file__).parent / "web"
 TTL = 3.0
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 MAX_GRID_CELLS = 512 * 512
 GRID_TTL = 5.0
 CLOUD_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
@@ -370,14 +370,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlsplit(self.path).path
         static = {"/": ("index.html","text/html; charset=utf-8"), "/map.css": ("map.css","text/css")}
-        static.update({"/" + file: (file,"text/javascript") for file in ("map.js","grid.js","planar.js","spatial.js","texture.js")})
+        static.update({"/" + file: (file,"text/javascript") for file in ("map.js","grid.js","planar.js","spatial.js","texture.js","mesh.js")})
         if path in ("/health", "/api/map"):
             obj = self.server.node.snapshot() if path=="/api/map" else self.server.node.identity
             if path == "/api/map" and self.server.texture.info:
                 obj["texture"] = self.server.texture.for_map(obj)
             raw, mime = json.dumps(obj, ensure_ascii=False, allow_nan=False, separators=(",",":")).encode(), "application/json"
         elif path in self.server.texture.files:
-            raw, mime = self.server.texture.files[path], "image/png"
+            raw = self.server.texture.files[path]
+            mime = "model/gltf-binary" if path.endswith(".glb") else "image/png"
         elif path in static:
             file, mime = static[path]
             raw = (STATIC/file).read_bytes()
@@ -386,7 +387,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.send_response(200)
         self.send_header("Content-Type",mime)
-        self.send_header("Cache-Control","public, max-age=31536000, immutable" if mime=="image/png" else "no-store")
+        self.send_header("Cache-Control","public, max-age=31536000, immutable" if path in self.server.texture.files else "no-store")
         self.send_header("X-Content-Type-Options","nosniff")
         if path == "/health":
             self.send_header("Access-Control-Allow-Origin","*")
@@ -408,6 +409,8 @@ def main():
     if server.texture.info:
         info = server.texture.info
         node.fact("texture", info["status"], reason=info.get("error"), revision=info.get("revision"))
+        if info.get("mesh_error"):
+            node.fact("mesh", "error", reason=info["mesh_error"], revision=info.get("revision"))
     thread = threading.Thread(target=server.serve_forever,daemon=True)
     thread.start()
     try:

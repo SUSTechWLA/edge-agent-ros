@@ -18,6 +18,8 @@ RULES = [
     (("tests/test_map_texture_pack.py","tests/system/campus_texture_browser.mjs"),("plugin-isolation","campus-world")),
     (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_acceptance.py","tests/test_campus_*.py"),
      ("campus-world",)),
+    (("perception/map3d/web/*","perception/map3d/texture.py","perception/map3d/provider.py"),
+     ("planner","observations","board","plugin-isolation","campus-world")),
     (("perception/map3d/*", "perception/sim_station.py", "map-inputs/*", "tests/test_map3d_ros.py", "tests/test_map3d.py", "tests/test_lidar_inputs_ros.py",
       "perception/camera/*", "compose.camera*.yaml", "perception/rgbd/*", "compose.rgbd*.yaml", "tests/test_rgbd.py"),
      ("planner", "observations", "board", "plugin-isolation")),
@@ -127,7 +129,8 @@ def selection(files=None):
 class TestSelection(unittest.TestCase):
     def test_map_and_model_plugin_consumers(self):
         self.assertEqual(selection(["perception/map3d/provider.py"])[0],
-                         [R,"planner","observations","board","plugin-isolation"])
+                         [R,"planner","observations","board","plugin-isolation","campus-world"])
+        self.assertIn("campus-world", selection(["perception/map3d/web/mesh.js"])[0])
         self.assertEqual(selection(["model_provider/provider.py"])[0],[R,"planner","model","plugin-isolation"])
         self.assertEqual(selection(["tests/system/map_model_isolation.py"])[0],[R,"plugin-isolation"])
         self.assertEqual(selection(["tests/map_planar.test.mjs","tests/map_spatial.test.mjs"])[0],[R,"plugin-isolation"])

@@ -8,6 +8,7 @@ h1{font-size:clamp(28px,4.4vw,56px);margin:22px 0 0;letter-spacing:-.04em}#summa
 .layout{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(245px,1fr);gap:14px}figure,aside{margin:0;background:var(--paper);border:1px solid var(--edge);border-radius:12px;overflow:hidden}
 .stage{position:relative;aspect-ratio:1000/650;background:#263c34;min-width:0}.stage img,.stage svg{position:absolute;inset:0;width:100%;height:100%}.stage svg{pointer-events:none}
 .stage svg g{pointer-events:auto;cursor:pointer}svg circle{fill:#ffda72;stroke:#233b33;stroke-width:2}svg text{fill:white;font-size:16px;font-weight:bold;paint-order:stroke;stroke:#20392d;stroke-width:4px}
+.credit{position:absolute;bottom:0;right:0;padding:2px 8px;background:#f8faf1dc;font:10px/1.5 sans-serif;color:#24332e}.credit a{color:inherit}
 .pending{position:absolute;inset:43% 0 auto;color:#f1efe2;text-align:center}figcaption{padding:15px 18px}h2{font-size:20px;line-height:1.3;margin:0 0 5px}figcaption p{margin:3px 0;color:var(--dim)}#position{font-size:12px;font-family:monospace}
 aside{padding:16px}button{font:inherit}.choices{display:grid;gap:5px}button.area{border:1px solid transparent;background:#ecf0e6;color:var(--ink);padding:8px 10px;display:flex;gap:10px;align-items:center;text-align:left;border-radius:5px;cursor:pointer}
 button.area[aria-pressed=true]{background:var(--green);color:white}button.area:focus-visible{outline:3px solid #b47230}button.area span{font-family:monospace;font-size:13px;opacity:.77}button.area b{font-weight:600}
@@ -15,10 +16,10 @@ button.area[aria-pressed=true]{background:var(--green);color:white}button.area:f
 @media(max-width:800px){.layout{grid-template-columns:1fr}.choices{grid-template-columns:repeat(2,minmax(0,1fr))}aside{padding:12px}h1{margin-top:14px}#summary{margin-bottom:13px}}@media(max-width:450px){header{font-size:12px;gap:6px}header strong{font-size:15px}}
 </style></head><body><main><header><strong>Edge Agent ROS</strong>机器人仿真<span>GAZEBO HARMONIC</span></header><h1>校园仿真实验场</h1>
 <p id="summary">正在读取场景范围…</p>
-<div class="layout"><figure><div class="stage"><img id="shot" hidden alt=""><div id="pending" class="pending" role="status">等待 Gazebo 渲染快照</div><svg viewBox="0 0 1000 650" id="markers" aria-hidden="true"></svg></div>
+<div class="layout"><figure><div class="stage"><img id="shot" hidden alt=""><div id="pending" class="pending" role="status">等待 Gazebo 渲染快照</div><svg viewBox="0 0 1000 650" id="markers" aria-hidden="true"></svg><div id="credit" class="credit"><a href="https://docs.3dbag.nl/en/copyright/">© 3DBAG by tudelft3d and 3DGI</a> · <a href="https://www.pdok.nl/ogc-webservices/-/article/pdok-luchtfoto-rgb-open-">Luchtfoto © Beeldmateriaal / PDOK</a></div></div>
 <figcaption><h2 id="label">校园全景</h2><p id="desc">选择地点可查看 Gazebo 中对应位置的实景快照。</p><p id="position"></p></figcaption></figure>
 <aside><h2>实验地点</h2><div id="choices" class="choices"></div><a id="map-link" hidden>打开校园纹理地图 ↗</a><p class="note">点全景标记或地点名切换视角。机器人出生在教学楼一层，可在工作台下发“前往教学楼门外”。</p></aside></div>
-<footer>原始校园由 NCS_robotmanager 提供，松树由 OpenRobotics 提供，均使用 CC0。项目补建的区域在各地点注明。图像由本地仿真首帧生成。 <a href="https://app.gazebosim.org/NCS_robotmanager/fuel/models/Campus">校园资产</a> · <a href="https://app.gazebosim.org/OpenRobotics/fuel/models/Pine%20Tree">松树资产</a> · <a href="manifest.json">场景坐标清单</a></footer>
+<footer>各图由本地 Gazebo 相机采集。代尔夫特建筑由 3DBAG 数据裁剪、重定位并贴图（<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）。屋顶与地表采用 2025 正射影像，窗面材质、教学训练楼与运动场为项目补建。 <a href="https://app.gazebosim.org/NCS_robotmanager/fuel/models/Campus">NCS 单层校园</a> · <a href="https://app.gazebosim.org/OpenRobotics/fuel/models/Pine%20Tree">松树（Gazebo Fuel，CC0）</a> · <a href="manifest.json">场景坐标清单</a></footer>
 </main><script>
 const byId=id=>document.getElementById(id);
 const label=byId("label"), desc=byId("desc"), img=byId("shot"), marks=byId("markers");
@@ -26,9 +27,10 @@ let active="overview", meta, retry, request=0;
 async function change(id) {
   active=id; const version=++request; clearTimeout(retry);
   const place=meta.areas.find(a=>a.id===id); const named=Boolean(place);
+  byId("credit").hidden=named&&id!=="campus";
   for(const b of document.querySelectorAll("button.area")) b.setAttribute("aria-pressed",String(b.dataset.id===id));
   marks.style.display=named?"none":"block"; label.textContent=named?place.label:"校园全景";
-  desc.textContent=named?place.description:"俯视全场，北向上、东向右。黄色标记对应右侧的六处实验地点。";
+  desc.textContent=named?place.description:"俯视全场，北向上、东向右。选择地点可近看建筑、田径设施或教室内部。";
   byId("position").textContent=named?place.origin+"  ·  区域中心 ("+place.center.map(v=>v.toFixed(1)).join(", ")+") m":"原点 (0, 0) m 在教学楼门厅";
   img.hidden=true; byId("pending").hidden=false;
   function load(){
@@ -48,17 +50,20 @@ async function linkMap(){
   if(!response.ok)return;
   const {port}=await response.json();
   if(!Number.isInteger(port)||port<1||port>65535)return;
-  const target=new URL("/?view=2d",location.origin);
+  const target=new URL("/?view=3d&place=campus",location.origin);
   target.port=String(port);
   const link=byId("map-link");link.href=target.href;link.hidden=false;
 }
 linkMap().catch(()=>{});
 (async()=>{const res=await fetch("manifest.json",{cache:"no-store"});if(!res.ok)throw Error("manifest");
-meta=await res.json();const [x0,y0,x1,y1]=meta.bounds;byId("summary").textContent=Math.round(x1-x0)+" × "+Math.round(y1-y0)+" 米 · 6 个实验地点 · "+meta.trees+" 棵新增林木";
+meta=await res.json();const [x0,y0,x1,y1]=meta.bounds;byId("summary").textContent=Math.round(x1-x0)+" × "+Math.round(y1-y0)+" 米 · "+meta.areas.length+" 处地点 · "+meta.trees+" 棵新增林木";
 addButton("overview","◎","校园全景");
+const placed=[];
 for(const [i,area] of meta.areas.entries()){
   const index=String(i+1).padStart(2,"0");addButton(area.id,index,area.label);
   const p=meta.projection,x=500+(area.center[0]-p.center[0])*1000/p.view_width,y=325-(area.center[1]-p.center[1])*1000/p.view_width;
+  if(placed.some(([px,py])=>Math.hypot(x-px,y-py)<18)) continue;
+  placed.push([x,y]);
   const g=svgTag("g");g.setAttribute("transform","translate("+x+" "+y+")");const circle=svgTag("circle");circle.setAttribute("r","8");const text=svgTag("text");text.setAttribute("x","11");text.setAttribute("y","5");text.textContent=index;g.append(circle,text);g.onclick=()=>change(area.id);marks.append(g);
 }await change("overview")})().catch(()=>byId("pending").textContent="场景配置读取失败，请检查 campus-build 的运行记录。");
 </script></body></html>

@@ -37,6 +37,18 @@ async function verifyFiles(url,texture) {
   }
   assert.equal(evidence.color.sha256,texture.sha256);
   assert.equal(evidence.height.sha256,texture.height_sha256);
+  assert.ok(texture.mesh_url?.startsWith('/texture/'+texture.key+'/'),'registered native campus geometry');
+  const response=await fetch(new URL(texture.mesh_url,url));
+  assert.equal(response.headers.get('content-type'),'model/gltf-binary');
+  assert.match(response.headers.get('cache-control'),/immutable/);
+  const bytes=Buffer.from(await response.arrayBuffer());
+  assert.equal(bytes.toString('ascii',0,4),'glTF');
+  assert.equal(bytes.readUInt32LE(8),bytes.length);
+  const document=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
+  evidence.geometry={sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length,
+    meshes:document.meshes.length,materials:document.materials.length};
+  assert.equal(evidence.geometry.sha256,texture.mesh_sha256);
+  assert.ok(evidence.geometry.meshes>=3 && evidence.geometry.materials>=8);
   return evidence;
 }
 
@@ -65,6 +77,7 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
     await click('mode-'+mode);
     await waitFor(`document.getElementById("mode-${mode}").getAttribute('aria-pressed')==='true'`);
     await click('campus-fit');
+    if(mode==='spatial') await waitFor("document.querySelector('#viewport').dataset.surface==='mesh'",'native 3D scene has painted');
     await paint();
     const layout=await evaluate(`(()=>{const plot=document.getElementById("${canvas}").getBoundingClientRect();return {page:document.documentElement.scrollWidth,plot_width:plot.width,plot_height:plot.height,height:document.documentElement.scrollHeight}})()`);
     assert.ok(layout.page<=width+1 && layout.plot_width>=200 && layout.plot_height>=220,
@@ -114,7 +127,24 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
     await click('campus-fit');
     await paint();
     assert.equal((await pixels()).signature,atlas.signature,'whole-campus fit restores world extent');
-    outcomes[mode]={layout,screenshot,atlas,hidden,track,robot,zoom,track_pick:trackPick};
+    const landmarks={};
+    if(mode==='spatial') {
+      for(const id of ['campus','teaching','track']) {
+        const option=texture.areas.find(a=>a.id===id);
+        assert.equal(option.camera.eye.length,3);
+        await evaluate(`{const select=document.getElementById('place-fit');select.value=${JSON.stringify(id)};select.dispatchEvent(new Event('change'));}`);
+        await paint();
+        assert.equal(await evaluate("document.querySelector('#viewport').dataset.surface"),'mesh');
+        const px=await pixels();
+        assert.ok(px.colors>=25 && px.opaque>850,'discernible street geometry: '+id+' '+JSON.stringify(px));
+        const filename='campus-geometry-'+id+'-'+width+'.png';
+        const {data}=await send('Page.captureScreenshot',{format:'png'});
+        writeFileSync(join(dirname(output),filename),Buffer.from(data,'base64'));
+        landmarks[id]={...px,camera:option.camera,screenshot:filename};
+      }
+      assert.equal(new Set(Object.values(landmarks).map(p=>p.signature)).size,3);
+    }
+    outcomes[mode]={layout,screenshot,atlas,hidden,track,robot,zoom,landmarks,track_pick:trackPick};
     for(const [name,value] of Object.entries(initialLayers)) await setLayer(name,value);
     await paint();
   }

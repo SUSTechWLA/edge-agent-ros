@@ -206,9 +206,10 @@
 
   window.createSpatialRenderer = (canvas,{invalidate,onPick}) => {
     const surface=new Surface(canvas), pointers=new Map();
+    const world=window.createCampusMesh?.(invalidate);
     let yaw=-.65, pitch=.65, distance=8, target=[0,0,0], autoFit=true, scaleRadius=1;
     let right,up,out, items=[], frame="", selected=null, selectedName="", readout="", renderedCamera=null;
-    let lastTexture=null, mesh=null, activeTexture=null, requestedBounds=null;
+    let lastTexture=null, mesh=null, activeTexture=null, requestedBounds=null, requestedCamera=null;
     canvas.style.touchAction="none";
     function axes(){
       const c=Math.cos(yaw),s=Math.sin(yaw),h=Math.cos(pitch),v=Math.sin(pitch);
@@ -322,13 +323,21 @@
       const tex=options.texture?.frame===snapshot?.frame ? options.texture : null;
       if(activeTexture && !tex)autoFit=false;
       activeTexture=tex;
+      world?.configure(tex);
       if(tex) {
         if(tex!==lastTexture) {mesh=appearanceMesh(tex); lastTexture=tex;}
         geometry.empty=false;
       } else {mesh=null;lastTexture=null;}
       if(!surface.begin())return {empty:geometry.empty};
       axes();surface.focal=surface.h/(2*Math.tan(halfFov));
-      if(requestedBounds){
+      if(requestedCamera){
+        const {eye,target:look}=requestedCamera;
+        const direction=eye.map((v,i)=>v-look[i]);
+        distance=Math.hypot(...direction);target=look.slice();
+        yaw=Math.atan2(direction[0],-direction[1]);
+        pitch=Math.asin(clamp(direction[2]/distance,-1,1));axes();
+        scaleRadius=Math.max(1,distance);autoFit=false;requestedBounds=null;requestedCamera=null;
+      }else if(requestedBounds){
         const [a,b,c,d]=requestedBounds;
         fit([a,b,0],[c,d,Math.min(4,.1*Math.max(c-a,d-b))]);requestedBounds=null;autoFit=false;
       }else if(autoFit && tex){
@@ -338,7 +347,14 @@
       renderedCamera={right,up,out,target,distance};
       const near=Math.max(.0001,distance*.003);
       items=[null];frame=snapshot?.frame||"";
-      if(tex)drawTexture(near);
+      let modelDrawn=false;
+      if(tex?.mesh_url && world?.state==="ready"){
+        const id=record("仿真外观 · 三维模型");
+        items[id].texture=tex;items[id].source="Gazebo 世界三维几何";
+        modelDrawn=world.paint(surface,renderedCamera,near,id);
+      }
+      if(tex && !modelDrawn)drawTexture(near);
+      if(canvas.dataset)canvas.dataset.surface=modelDrawn?"mesh":tex?"relief":"none";
       const groundZ=geometry.groundZ;
       const staleGrid=!options.connected || geometry.grid?.status==="stale";
       const staleScene=!options.connected || snapshot?.scene?.status==="stale";
@@ -407,7 +423,9 @@
           }
         }
       }
-      return {empty:geometry.empty,zMin:Number.isFinite(geometry.zMin)?geometry.zMin:undefined,
+      const modelState=modelDrawn?"ready":tex?.mesh_error?"failed":tex?.mesh_url?(world?.state||"unavailable"):"absent";
+      return {empty:geometry.empty,modelState,triangles:modelDrawn?world.triangles:0,
+        zMin:Number.isFinite(geometry.zMin)?geometry.zMin:undefined,
         zMax:Number.isFinite(geometry.zMax)?geometry.zMax:undefined};
     }
     function publish(item) {
@@ -419,7 +437,7 @@
       if(item.texture){
         const area=(item.texture.areas||[]).filter(({bounds:[a,b,c,d]})=>selected[0]>=a && selected[0]<=c && selected[1]>=b && selected[1]<=d)
           .sort((p,q)=>{const size=({bounds:[a,b,c,d]})=>(c-a)*(d-b);return size(p)-size(q);})[0];
-        appearance=(area?" · "+area.label:"")+" · "+item.texture.source;
+        appearance=(area?" · "+area.label:"")+" · "+(item.source||item.texture.source);
       }
       const next=item.name+appearance+gridInfo+" · "+position+" m"+(frame?" · "+frame:"")+(item.stale?" · 上次观测":"");
       if(next!==readout){readout=next;onPick(next);}
@@ -465,9 +483,12 @@
       if(!Number.isFinite(factor)||factor<=0)return;
       autoFit=false;distance=clamp(distance/factor,Math.max(.01,.005*scaleRadius),Math.max(32,80*scaleRadius));invalidate();
     }
-    function reset(){yaw=-.65;pitch=.65;requestedBounds=null;autoFit=true;clearPick();}
-    function focusBounds(bounds){requestedBounds=bounds;clearPick();}
-    function top(){yaw=0;pitch=Math.PI/2;autoFit=true;invalidate();}
+    function reset(){yaw=-.65;pitch=.65;requestedBounds=null;requestedCamera=null;autoFit=true;clearPick();}
+    function focusBounds(bounds,view){
+      requestedCamera=xyz(view?.eye)&&xyz(view?.target)&&Math.hypot(...view.eye.map((v,i)=>v-view.target[i]))>.1?view:null;
+      requestedBounds=bounds;clearPick();
+    }
+    function top(){yaw=0;pitch=Math.PI/2;requestedCamera=null;requestedBounds=null;autoFit=true;invalidate();}
     const center=([a,b])=>[(a.x+b.x)/2,(a.y+b.y)/2];
     const gap=([a,b])=>Math.hypot(a.x-b.x,a.y-b.y);
     canvas.addEventListener("pointerdown",e=>{
@@ -509,6 +530,12 @@
       const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]};
       if(directions[e.key]){
         const [dx,dy]=directions[e.key];if(e.shiftKey)pan(dx*18,-dy*18);else orbit(dx*14,dy*14);
+      }else if(/^[wasdqe]$/i.test(e.key) && activeTexture?.mesh_url){
+        const key=e.key.toLowerCase(), speed=(e.shiftKey?3:1)*clamp(distance*.04,.4,6);
+        const forward=[-Math.sin(yaw),Math.cos(yaw),0], lateral=[Math.cos(yaw),Math.sin(yaw),0];
+        const axis=key==="w"||key==="s"?forward:key==="a"||key==="d"?lateral:[0,0,1];
+        const sign=key==="s"||key==="a"||key==="q"?-1:1;
+        target=target.map((n,i)=>n+sign*speed*axis[i]);autoFit=false;invalidate();
       }else if(e.key==="+"||e.key==="=")zoomBy(1.15);
       else if(e.key==="-")zoomBy(1/1.15);
       else if(e.key==="Home")reset();

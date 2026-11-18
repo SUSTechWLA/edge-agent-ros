@@ -10,7 +10,7 @@
 
 ## 现在可以做什么
 
-校园实验可单独安装带材质和碰撞网格的 Gazebo Fuel 校园，配有教学楼室内、田径场、树林、车道和草坪，用独立工作台运行。原有小场景继续用于短程回归。[校园安装与运行](scene/campus_large/README.md) · [场景与感知的插件边界](docs/testing/campus-plugin.md)
+大型校园实验将代尔夫特理工大学一片真实建筑群接入 Gazebo，旁边设有可穿门的教学训练楼、八道运动场、林地和 NCS 单层校园。开发者可在浏览器里查看测绘屋顶、立面、正射地面影像和实时机器人观测。原有小场景用于短程回归。[校园安装与运行](scene/campus_large/README.md) · [三维场景规格](docs/specs/SDD-028-campus-geometry.md)
 
 可选的三维点云地图、多相机预览、RGB-D 像素测距和模型适配器可以按需安装。同一规划入口已经分别通过本地 Qwen 和真实 DeepSeek 调用 ROS 状态工具。用工作台观察各插件的状态、输入和装卸边界，可以从[感知与模型插件快速上手](docs/perception-model-quickstart.md)开始。
 

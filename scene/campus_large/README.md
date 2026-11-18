@@ -12,7 +12,7 @@ python scene/campus_large/run.py start
 python scene/campus_large/run.py status
 ```
 
-校园网页默认使用 [8780 总览](http://127.0.0.1:8780/)，机器人工作台使用 [8766 工作台](http://127.0.0.1:8766/)。两者绑定在本机回环地址。首次启动后图像会陆续出现。`campus-build` 在生成成功后退出，`campus-capture` 在七个视角全部取得后退出，这两个服务显示 `Exited (0)` 是预期结果。ROS 传感器持续更新可以在工作台确认。
+校园网页默认使用 [8780 总览](http://127.0.0.1:8780/)，机器人工作台使用 [8766 工作台](http://127.0.0.1:8766/)。两者绑定在本机回环地址。首次启动后图像会陆续出现。`campus-build` 在生成成功后退出，`campus-capture` 在所有已登记视角取得图像后退出，这两个服务显示 `Exited (0)` 是预期结果。ROS 传感器持续更新可以在工作台确认。
 
 已有镜像使用其他标签时，加 `--image <本地仿真镜像>`。例如从项目根目录运行 `python scene/campus_large/run.py start --image edge-agent-ros:v0.1`。端口冲突时可加 `--console-port 8866 --overview-port 8880`。其他电脑上没有本项目镜像时，先按现有流程构建或导入仿真镜像。[项目部署指南](../../docs/deployment.md)
 
@@ -20,7 +20,8 @@ python scene/campus_large/run.py status
 
 | 输入 | 标识与作者 | 在世界中的用途 |
 |---|---|---|
-| Gazebo Fuel Campus v2 | NCS_robotmanager / Wan Yi，CC0-1.0，下载 71,816,347 字节 | 带材质的校园建筑群及场地网格。[原始模型](https://app.gazebosim.org/NCS_robotmanager/fuel/models/Campus) |
+| 代尔夫特理工大学校园局部 | 3DBAG LoD2.2 与 PDOK 2025 正射影像。随场景离线分发 | 152 栋建筑保留原有相对摆放、米制轮廓与屋顶。垂直墙面使用示意材质。[3DBAG 数据说明](https://docs.3dbag.nl/en/) · [PDOK 航片](https://www.pdok.nl/ogc-webservices/-/article/pdok-luchtfoto-rgb-open-) |
+| Gazebo Fuel Campus v2 | NCS_robotmanager / Wan Yi，CC0-1.0，下载 71,816,347 字节 | 带材质的单层片区、车道与家具模型，最高源顶点 3.49 米。[原始模型](https://app.gazebosim.org/NCS_robotmanager/fuel/models/Campus) |
 | Gazebo Fuel Pine Tree v6 | OpenRobotics / Louise Poubel，CC0-1.0，下载 877,470 字节 | 林区中的松树模型。[原始模型](https://app.gazebosim.org/OpenRobotics/fuel/models/Pine%20Tree) |
 | 项目训练区 | 本仓库的米制场景生成器 | 门厅、教室、门廊与门口、田径场、林道、车道、过街线和草坪。[生成器](build.py) |
 
@@ -35,15 +36,15 @@ Windows 也可直接传入带引号的绝对路径，例如 `"D:\robot-data\sim-
 
 ## 2　分清校园范围、导航许可和观测范围
 
-已启动校园时，在仓库根目录执行 `python scene/campus_large/run.py map --image <包含地图插件1.3的本地镜像>`，可独立安装或刷新 [校园二维地图](http://127.0.0.1:8773/?view=2d)。首次在 Docker 中离线生成外观，复用源模型、UV 材质与当前世界 SDF，默认输出 2048 × 1493 像素。重新发布此前生成的世界时，再运行一次 map 使外观与新世界匹配。使用 `--map-port` 可以改用其他回环端口。
+已启动校园时，在仓库根目录执行 `python scene/campus_large/run.py map --image <包含地图插件1.4的本地镜像>`，可独立安装或刷新地图。Docker 在本地生成原生三维网格和宽 2048 像素的二维正射图。重新发布世界后，再运行一次 map 使外观与新世界匹配。使用 `--map-port` 可以改用其他回环端口。
 
-想看跑道和校园布局可以打开全校二维图，想看树冠起伏可以直接打开 [三维林区](http://127.0.0.1:8773/?view=3d&place=woods)。页面上方的“地点”可定位教学楼、操场等六处场地。“机器人附近”定位到当前 ROS 位姿。在教学楼内，可以关闭校园仿真纹理查看局部栅格和传感器观测。三维使用彩色正射图与每个 XY 位置的最高可见表面；室内与建筑立面的原生相机画面可在[校园总览](http://127.0.0.1:8780/)中查看。选择地点只改变观察视角。
+先从[代尔夫特建筑群](http://127.0.0.1:8773/?view=3d&place=campus)辨认高层、低层和不同的屋顶轮廓，再切到[教学楼主入口](http://127.0.0.1:8773/?view=3d&place=teaching)、[一层教室](http://127.0.0.1:8773/?view=3d&place=teaching_interior)和[田径场](http://127.0.0.1:8773/?view=3d&place=track)检查局部细节。二维图用于核对道路和场区间距。“机器人附近”定位到当前 ROS 位姿。也可以将三维透视与 Gazebo 的对应固定相机图像并排比较。选择地点只改变相机。[校园二维地图](http://127.0.0.1:8773/?view=2d) · [Gazebo 相机总览](http://127.0.0.1:8780/)
 
 地图可与已有固定激光台站同时运行。给 `run.py map` 加 `--with-lidar` 即可在同一校园网络及 ROS 域启动 `map3d-sensor`。纹理来自仿真资产，局部占据、点云和位姿来自 ROS。两者的来源与范围可以通过图层开关、坐标和拾取读数核查。[设计与验收](../../docs/specs/SDD-027-campus-texture.md)
 
 | 在哪里看 | 读到的内容 | 适用的任务 |
 |---|---|---|
-| 8780 总览 | 米制场地边界与七个 Gazebo 固定视角。生成的边界为 x 约 −198 至 379 m、y 约 −110 至 311 m。 | 选择实验区域、观察建筑外形或比较道路和林区的视线。 |
+| 8780 总览 | 米制场地边界与 Gazebo 固定视角。组合世界约 1.25 × 0.89 千米，实测片区覆盖 650 × 760 米。 | 选择实验区域、观察建筑外形或比较道路和林区的视线。 |
 | 工作台语义场景 | `odom` 原点在教学楼门厅。已登记的导航点是门厅 (0, 0)、门口 (1.7, 0)、门外 (3.3, 0)。 | 在任务框发“前往教学楼门外”。查看路线、运动终态，再对比 `/odom` 与 `/ground_truth`。[具名导航](../plugins/navigate-place.json) |
 | 工作台实时感知 | `/scan`、`/imu`、`/odom` 随机器人更新，原有局部栅格在机器人起点附近建图。 | 核对穿门前后位置、激光量测与动作结果。 |
 
@@ -51,7 +52,7 @@ Windows 也可直接传入带引号的绝对路径，例如 `"D:\robot-data\sim-
 
 ## 3　照片怎样取得，何时会更新
 
-首次进入总览时，采集服务依次订阅 `/campus/view/<视角>/image`。七个视角分别为全校、校园资产、教学楼、运动场、树林、车道与草坪。每处收到首个带有效仿真时间戳的 RGB8 帧后，将原像素编码为 PNG，随即退订。照片是固定视角的仿真快照。查看机器人的当前位置和实时传感器时应打开工作台。
+首次进入总览时，采集服务依次订阅 `/campus/view/<视角>/image`。取景包括全校、代尔夫特建筑群、NCS 单层区、教学楼外观与教室、运动场、树林、车道和草坪。每处收到首个带有效仿真时间戳的 RGB8 帧后，将原像素编码为 PNG，随即退订。照片是固定视角的仿真快照。查看机器人的当前位置和实时传感器时应打开工作台。
 
 图像可追溯到源话题、像素尺寸、采样时间戳和 PNG 的 SHA-256。复用前还会比对世界 SDF 与语义布局摘要。同一世界的完整照片可用于下次打开；照片损坏或缺失时仅重新采集相应视角。世界或语义布局换版会撤下旧图，待新世界提供有效采样后再展示。[当前照片采集清单](http://127.0.0.1:8780/capture.json)
 
