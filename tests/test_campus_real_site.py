@@ -98,6 +98,49 @@ class DelftCampus(unittest.TestCase):
             self.assertEqual(image[:8],b"\x89PNG\r\n\x1a\n")
             self.assertEqual(struct.unpack(">II",image[16:24]),(1560,1824))
 
+    def test_street_camera_is_outdoors_and_sees_the_measured_ewi_tower(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            camera = site.append_site(ET.Element("world"), Path(tmp))["street_camera"]
+        east, north = site.SITE_XY
+        eye = camera["eye"]
+        origin = (eye[0]-east, eye[1]-north, eye[2])
+        self.assertGreaterEqual(eye[2],2.4)
+        self.assertLessEqual(eye[2],4)
+        look = camera["target"]
+        dx, dy = look[0]-eye[0], look[1]-eye[1]
+        rays = [(0,0,1), (0,0,-1), (dx,dy,look[2]-eye[2]), (dx,dy,75-eye[2])]
+        nearest = [(math.inf,None)]*len(rays)
+        vertices = []
+
+        def cross(a,b):
+            return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0])
+
+        def dot(a,b):
+            return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+
+        for line in gzip.decompress((site.DATA/"buildings.obj.gz").read_bytes()).decode().splitlines():
+            kind,*args = line.split()
+            if kind == "v":
+                vertices.append(tuple(map(float,args)))
+            elif kind == "g":
+                building = args[0]
+            elif kind == "f":
+                a,b,c = (vertices[int(corner.split("/")[0])-1] for corner in args)
+                e1 = tuple(y-x for x,y in zip(a,b))
+                e2 = tuple(y-x for x,y in zip(a,c))
+                offset = tuple(y-x for x,y in zip(a,origin))
+                q = cross(offset,e1)
+                for i,direction in enumerate(rays):
+                    h = cross(direction,e2)
+                    det = dot(e1,h)
+                    if abs(det)<1e-9:
+                        continue
+                    u,v,t = dot(offset,h)/det,dot(direction,q)/det,dot(e2,q)/det
+                    if 0<=u and 0<=v and u+v<=1 and 0<t<nearest[i][0]:
+                        nearest[i] = t,building
+        self.assertEqual([name for _,name in nearest[:2]],[None,None])
+        self.assertEqual([name for _,name in nearest[2:]],["NL_IMBAG_Pand_0503100000030264"]*2)
+
 
 if __name__ == "__main__":
     unittest.main()

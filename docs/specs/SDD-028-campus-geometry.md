@@ -25,3 +25,17 @@
 ## 变更记录
 
 2026-11-18，复核旧 NCS 模型边界及地图渲染路径。源 OBJ 顶点最高 3.485012 米，原页面“原始校园建筑群”标签误导读者。登记 AC-1 至 AC-5。
+
+### 现场检查
+
+- **数据来源。** 实景片区为代尔夫特的 650 × 760 米选区。152 个建筑登记对象使用 35,123 个 LoD2.2 三角面。屋顶和地面按同一坐标系统映射 2025 航片，窗格、门和室内细节的精度各自标注。原始响应、加工脚本和输入输出摘要可离线复核。[来源与复现](../../scene/campus_large/real_site_data/README.md)
+- **训练设施。** 东侧门洞净宽 2.20 米、高 2.70 米。400 米跑道的第一道按距内沿 0.30 米的测量线计算，八条道宽各为 1.22 米。足球场为 105 × 68 米，两端球门内侧间距 7.32 米。生成器和设施测试共同约束尺寸。[设施依据与测试](../../scene/campus_large/ASSETS.md)
+- **三维检查。** 导出器复用静态 SDF 视觉项、位置变换、材质、贴图及三角面。传感器与机器人位姿在浏览器按同一坐标系单独绘制。含四边形的源 mesh 可同时带三角形和多边形标志，原生导入现在保留这类几何。地面与航片相距仅 2.5 厘米，远景渲染采用能区分水平表面的深度计算。
+- **物理验证。** 第一次导入时，缺少显式法线的建筑外壳触发 Gazebo 物理引擎退出。修复导入器后，对每个碰撞三角形检查法线索引，并在独立 Docker 工程用实际机器人穿门。对应的 Gazebo 原始相机与浏览器截图支持逐项比较。
+
+从仓库根目录可用以下命令在隔离环境复测。浏览器故障注入只影响其临时测试页。
+
+```sh
+python tests/system/campus_acceptance.py --image <验收镜像> --assets artifacts/sim-assets --verify-reload --verify-texture --out artifacts/verification/campus-geometry-sdd028/integration.json
+node tests/system/console_browser.mjs http://127.0.0.1:8773/ artifacts/verification/campus-geometry-sdd028/fallback.json --campus-fallback
+```
