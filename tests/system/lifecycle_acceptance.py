@@ -1,5 +1,6 @@
 """Run continuous read-only tasks and sensor outages in a fresh, isolated Gazebo deployment."""
 import argparse
+from collections import Counter
 import json
 import math
 import os
@@ -21,6 +22,59 @@ TERMINAL = {"SUCCEEDED", "BLOCKED", "RECOVERY_REQUIRED", "CANCELED"}
 def check(value, reason):
     if not value:
         raise AssertionError(reason)
+
+
+def audit_evidence(directory, report):
+    """Check the exported task chains and the independent escalation subscriber after teardown."""
+    tasks = [json.loads(line) for line in (directory/"tasks.ndjson").read_text(encoding="utf-8").splitlines()]
+    task_ids, traces, operations, events = set(), set(), set(), set()
+    counts = Counter()
+    attempts = {}
+    for task in tasks:
+        key, trace = task["id"], task["trace_id"]
+        check(key and trace and key not in task_ids and trace not in traces, "missing or duplicate task/trace")
+        check(task["state"] == "SUCCEEDED" and not task["events_has_more"], "task incomplete or event page truncated")
+        check(len(task["steps"]) == 1 and task["steps"][0]["evidence"], "missing step or evidence")
+        op = task["steps"][0]["operation_id"]
+        check(op and op not in operations, "operation identity reused across tasks")
+        task_ids.add(key)
+        traces.add(trace)
+        operations.add(op)
+        local_events = set()
+        kinds = Counter()
+        for event in task["events"]:
+            meta = json.loads(event["payload"])["trace"]
+            parent, eid, kind = meta.get("parent_event_id"), event["event_id"], event["kind"]
+            check(meta["trace_id"] == trace and event["task_id"] == key, "cross-task evidence")
+            check(eid and eid == meta["event_id"] and eid not in events, "missing or duplicate event ID")
+            check(parent in local_events if local_events else parent is None, "missing or out-of-order parent")
+            if event["operation_id"] is not None:
+                check(event["operation_id"] == op, "retry changed operation identity")
+            local_events.add(eid)
+            events.add(eid)
+            kinds[kind] += 1
+        for kind in ("accepted", "dispatch", "tool.response", "verified"):
+            check(kinds[kind] == 1, f"{key}: expected exactly one {kind}")
+        check(kinds["tool.request"] == 1 + kinds["tool.error"], "unexplained tool attempt")
+        if kinds["tool.request"] > 1:
+            attempts[key] = kinds["tool.request"]
+        counts.update(kinds)
+    faults = report["faults"]
+    expected_ids = {t["id"] for t in report["tasks"]} | {f["id"] for f in faults.values()}
+    check(task_ids == expected_ids and len(task_ids) == report["completed"], "missing original task")
+    check(attempts.keys() == {f["id"] for f in faults.values()}, "healthy task retried or fault not exercised")
+    exhausted = faults["persistent_outage"]
+    with sqlite3.connect((directory/"events.db").resolve().as_uri()+"?mode=ro", uri=True) as db:
+        alerts = [json.loads(row[0]) for row in db.execute("SELECT event FROM events")]
+    check(len(alerts) == 1 and alerts[0]["event_id"] == exhausted["observer_event_id"]
+          and alerts[0]["trace_id"] == exhausted["trace_id"]
+          and alerts[0]["operation_id"] == exhausted["operation_id"], "independent escalation missing or duplicated")
+    output = {"tasks":len(task_ids), "unique_traces":len(traces), "unique_operations":len(operations),
+              "unique_task_events":len(events), "operator_alerts":len(alerts), "event_counts":dict(counts),
+              "fault_tool_attempts":{name:attempts[f["id"]] for name,f in faults.items()},
+              "duplicate_ids":0, "missing_parent_events":0, "unexpected_tool_retries":0}
+    (directory/"trace-audit.json").write_text(json.dumps(output,indent=2)+"\n",encoding="utf-8")
+    return output
 
 
 def wait_for(call, label, seconds=40):
@@ -203,6 +257,7 @@ def exercise(image, count, out_root):
         check(watcher.poll() is None, "archive observer stopped")
         report["completed"]=len(original_requests)
         report["duplicate_trigger_submissions"]=2*len(original_requests)
+        audit_evidence(directory, report)
         report["passed"]=True
     finally:
         if watcher:
@@ -224,7 +279,13 @@ if __name__=="__main__":
     parser.add_argument("--image",default="edge-agent-ros:v0.1")
     parser.add_argument("--tasks",type=int,default=36)
     parser.add_argument("--out-root",type=Path,default=ROOT/".ci-results/system/lifecycle")
+    parser.add_argument("--audit-run",type=Path,help="check an existing run's task export and subscriber database")
     args=parser.parse_args()
     if not 2<=args.tasks<=500:
         parser.error("--tasks must be between 2 and 500")
-    exercise(args.image,args.tasks,args.out_root)
+    if args.audit_run:
+        report = json.loads((args.audit_run/"summary.json").read_text(encoding="utf-8"))
+        check(report["passed"], "only completed runs can be audited")
+        print(json.dumps(audit_evidence(args.audit_run, report), indent=2))
+    else:
+        exercise(args.image,args.tasks,args.out_root)

@@ -36,6 +36,22 @@
 
 采用确定性作者协议替身，单独复测了权限与容错边界。未获批准的请求进入人工复核，撤下传感器后无法取得测量，新旧插件版本冲突时保留原发布记录。事件和回执证明的是可审核的只读能力安装；未知执行结果、动力硬件和任意源码升级各有独立授权和验收要求。策略与撤回原始验收 `evolution.json`
 
+## 跨重启的任务回溯是否完整
+
+两次从空 Docker 项目启动 ROS 2 和 Gazebo，用 HTTP 交替提交“报告当前位置”和“只规划到庭院的路线”。另外各暂停、恢复 ROS 桥接两次，分别制造短暂和持续断流，在持续故障耗尽重试后重启 Agent。每个请求在受理后和本轮结束时分别重投一次。两轮使用独立的触发 ID 前缀，任务种类和故障顺序固定，规划器使用确定性的本地实现。[逐轮计数与告警证据](../evidence/edge-field-lifecycle.json) · [可重复运行的黑盒和审计入口](../../tests/system/lifecycle_acceptance.py)
+
+| 项目 | 5eed4f3c6d21 / 5064f2f | 3b51c6905a88 / 9983c89 |
+|---|---:|---:|
+| 普通任务 + 含故障任务 | 32 + 2 | 80 + 2 |
+| 额外重复投递 / 独立 trace / 独立 operation | 68 / 34 / 34 | 164 / 82 / 82 |
+| 任务事件 / 工具请求 / 最终成功工具响应 | 286 / 39 / 34 | 670 / 87 / 82 |
+| Agent 重启 / 独立订阅者收到的耗尽告警 | 1 / 1 | 1 / 1 |
+| 用时（含容器启动与清理） | 49.031 秒 | 51.890 秒 |
+
+116 个原始任务均有一次受理、一次派发、一次成功响应和一次验收。956 条任务事件的 ID 逐条核验，各自的父事件都能在同一任务中找到，跨两轮也没有 ID 碰撞。每轮只在两次故障中增加了工具请求。短时断流第 2 次调用成功，未请求人工续办。持续断流经历首次调用及 3 次失败重试，保留错误码 `tool.odom_stale`；重启后保持 `RECOVERY_REQUIRED`。恢复驱动并显式续办时第 5 次在原操作 ID 下成功，再次续办返回 HTTP 409。实验覆盖只读任务、传感器恢复及有界重试。连续运行总计约 101 秒，板载数小时运行、温升、内存增长以及对运动执行器的重复副作用仍有各自的实机验收。
+
+日常校园的工作台还能直接查询巡检插件记录。取样时按模块查到 19 条事件，其中 4 条为超时复查，4 条为恢复。轮式车彩色图像的一次恢复记录为序号 2062，来源 `journal:sensor.health`，关联 `sensor.health.rgb`。按父事件 ID 找到同一话题的超时复查，按序号回放得到与列表一致的测量、3 份恢复样本和阈值。[日常巡检事件](http://127.0.0.1:8766/api/events?module=sensor.health&limit=100) · [本机恢复事件回放](http://127.0.0.1:8766/api/replay?at=2062) · [可在新环境查看的摘录](../evidence/edge-field-lifecycle.json)
+
 ## 三种机体如何区分视野变化、传感器故障和恢复
 
 从运行中的校园 Gazebo 只读采集 Crazyflie 前视图、Go1 三维点云、G1 深度图，每台各五帧。保存订阅到的原始 ROS 2 序列化消息、话题、坐标系、仿真时间和 SHA-256。在与校园断网的 Docker 容器中，三个独立的 `sensor.health` 进程分别订阅各自机体的话题，独立写日志。回放时保留测量和坐标系，将消息时间戳换为回放时刻；故障阶段只修改指定机体的数据。恢复阶段重新发布校园原始测量。[验收脚本](../../tests/system/campus_sensor_replay.py) · [三条事件链及原帧哈希](../evidence/edge-field-sensor-replay.json)
@@ -61,6 +77,8 @@ python tests/system/module_bus_acceptance.py --image <镜像> --out artifacts/ve
 python tests/system/watchdog_acceptance.py --image <镜像> --out artifacts/verification/field-repeat/watchdog.json
 python tests/system/plugin_manager_acceptance.py --image <镜像> --ollama-cache-volume edge-agent-ros_models --out artifacts/verification/field-repeat/evolution-qwen.json
 python tests/system/field_readonly_acceptance.py --url http://127.0.0.1:8766 --out artifacts/verification/field-repeat/requests.json
+python tests/system/lifecycle_acceptance.py --image <镜像> --tasks 80 --out-root artifacts/verification/field-repeat/lifecycle
+python tests/system/lifecycle_acceptance.py --audit-run artifacts/verification/field-repeat/lifecycle/<运行号>
 ```
 
 中间件故障测试已纳入系统套件的 `campus-world` 阶段。测试容器独立挂载空的执行器账本、测试布局，使用 `--network none`。试验生成的速度消息只能在该容器内被观察。[故障工装](../../tests/system/campus_invalid_feedback.py) · [套件入口](../../tests/system_suite.py)

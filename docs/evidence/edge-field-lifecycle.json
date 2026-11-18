@@ -1,0 +1,256 @@
+{
+  "specs": [
+    "SDD-004",
+    "SDD-035"
+  ],
+  "scene": "isolated ROS 2 / Gazebo via Docker Compose, independent read-only tasks",
+  "planner": "local deterministic planner",
+  "workload": "alternating status and route preview, short and persistent bridge outages; independent UUID namespaces",
+  "runs": [
+    {
+      "id": "5eed4f3c6d21",
+      "started_at": "2026-11-18T14:04:29.026388+00:00",
+      "revision": "5064f2f",
+      "image_id": "sha256:3d29ea1070458a60d64df44577bbc36f7a20043bd8cb792eae4415d22513f1d0",
+      "elapsed_s": 49.031,
+      "agent_restarts": 1,
+      "trigger_replays": 68,
+      "single_step_tools": {
+        "status": 18,
+        "preview_route": 16
+      },
+      "audit": {
+        "tasks": 34,
+        "unique_traces": 34,
+        "unique_operations": 34,
+        "unique_task_events": 286,
+        "operator_alerts": 1,
+        "event_counts": {
+          "accepted": 34,
+          "planner.context": 34,
+          "planned": 34,
+          "dispatch": 34,
+          "tool.request": 39,
+          "tool.response": 34,
+          "verified": 34,
+          "adapter.request": 16,
+          "adapter.response": 16,
+          "tool.error": 5,
+          "retry": 4,
+          "retry_exhausted": 1,
+          "retry_requested": 1
+        },
+        "fault_tool_attempts": {
+          "brief_outage": 2,
+          "persistent_outage": 5
+        },
+        "duplicate_ids": 0,
+        "missing_parent_events": 0,
+        "unexpected_tool_retries": 0
+      },
+      "faults": {
+        "brief_outage": {
+          "id": "f4d9bfeff7244ce89146fd1ad0631b91",
+          "state": "SUCCEEDED",
+          "operation_id": "f4d9bfeff7244ce89146fd1ad0631b91/step/1",
+          "retry_events": 1,
+          "operator_retry_calls": 0
+        },
+        "persistent_outage": {
+          "id": "fb3d64f707144dafa11f2b5ee92f0a65",
+          "trace_id": "fb3d64f707144dafa11f2b5ee92f0a65",
+          "operation_id": "fb3d64f707144dafa11f2b5ee92f0a65/step/1",
+          "cause": "tool.odom_stale",
+          "operator_hint": "核对里程计最近一次采样时间、驱动与话题映射。",
+          "paused_state": "RECOVERY_REQUIRED",
+          "can_retry": true,
+          "after_agent_restart": "RECOVERY_REQUIRED",
+          "observer_kind": "agent.retry_exhausted",
+          "observer_event_id": "f3ee9d87d6ed478aabfe31575bbecb3f",
+          "observer_delivery": "local polling event sink",
+          "recovery_request": "POST /agent/retry",
+          "resumed": "SUCCEEDED",
+          "second_retry_http": 409
+        }
+      },
+      "world_truth_samples": 34,
+      "max_observed_displacement_m": 7.176214825113999e-09,
+      "files_sha256": {
+        "summary.json": "877f2c1e58ef6493aeb1826a7ac698d9238427609402e22dda63371548595f14",
+        "tasks.ndjson": "312c58bea3514a832390775c8928858cd0954ac18ccfe9072e140776d4d09f2d",
+        "trace-audit.json": "748149dee71d360f1118ec2d9e8d3efde8885c54422df6842b03c9114f9cd015",
+        "compose.log": "f82ec4b2ce07728ed3e421e1aef3ae563e2c1e7082794eb5857805895524f663"
+      }
+    },
+    {
+      "id": "3b51c6905a88",
+      "started_at": "2026-11-18T15:13:50.618510+00:00",
+      "revision": "9983c89",
+      "image_id": "sha256:40f99d29241819d38d6a892a932ad9f3cc0c8ce2409701d6cd60633f13dd9eb6",
+      "elapsed_s": 51.89,
+      "agent_restarts": 1,
+      "trigger_replays": 164,
+      "single_step_tools": {
+        "status": 42,
+        "preview_route": 40
+      },
+      "audit": {
+        "tasks": 82,
+        "unique_traces": 82,
+        "unique_operations": 82,
+        "unique_task_events": 670,
+        "operator_alerts": 1,
+        "event_counts": {
+          "accepted": 82,
+          "planner.context": 82,
+          "planned": 82,
+          "dispatch": 82,
+          "tool.request": 87,
+          "tool.response": 82,
+          "verified": 82,
+          "adapter.request": 40,
+          "adapter.response": 40,
+          "tool.error": 5,
+          "retry": 4,
+          "retry_exhausted": 1,
+          "retry_requested": 1
+        },
+        "fault_tool_attempts": {
+          "brief_outage": 2,
+          "persistent_outage": 5
+        },
+        "duplicate_ids": 0,
+        "missing_parent_events": 0,
+        "unexpected_tool_retries": 0
+      },
+      "faults": {
+        "brief_outage": {
+          "id": "c7a8ad9636d24eb0beb4971f0db525b1",
+          "state": "SUCCEEDED",
+          "operation_id": "c7a8ad9636d24eb0beb4971f0db525b1/step/1",
+          "retry_events": 1,
+          "operator_retry_calls": 0
+        },
+        "persistent_outage": {
+          "id": "bbffbbacd65f4a14b4b4eb2d578fc22c",
+          "trace_id": "bbffbbacd65f4a14b4b4eb2d578fc22c",
+          "operation_id": "bbffbbacd65f4a14b4b4eb2d578fc22c/step/1",
+          "cause": "tool.odom_stale",
+          "operator_hint": "核对里程计最近一次采样时间、驱动与话题映射。",
+          "paused_state": "RECOVERY_REQUIRED",
+          "can_retry": true,
+          "after_agent_restart": "RECOVERY_REQUIRED",
+          "observer_kind": "agent.retry_exhausted",
+          "observer_event_id": "b23b4835519f45fa92cf9f3ec2097f15",
+          "observer_delivery": "local polling event sink",
+          "recovery_request": "POST /agent/retry",
+          "resumed": "SUCCEEDED",
+          "second_retry_http": 409
+        }
+      },
+      "world_truth_samples": 82,
+      "max_observed_displacement_m": 8.436559874611488e-09,
+      "files_sha256": {
+        "summary.json": "fe5fc1a7272b23c48eefd6ca849611b1c51d5b6b8b0f74407cdb183377c8c6a4",
+        "tasks.ndjson": "bc5ad5fee1610b81fce62aac6ca3eee47e99c2d1e6ffe612f93bc24858c07b9a",
+        "trace-audit.json": "12065886d40dfc55df5e5752f77aaa213fb7a3b1e87e122ca65db730fc55781d",
+        "compose.log": "fe066fd72208998ae1f1604de34af6366cd7b919a19dc46fe105c8a2773cb486"
+      }
+    }
+  ],
+  "combined": {
+    "tasks": 116,
+    "traces": 116,
+    "operations": 116,
+    "task_events": 956,
+    "duplicate_trigger_submissions": 232,
+    "agent_restarts": 2,
+    "elapsed_s": 100.921
+  },
+  "workbench_sensor_archive": {
+    "sampled_at": "2026-11-18T15:16:29.777052+00:00",
+    "url": "/api/events?module=sensor.health&limit=100",
+    "returned": 19,
+    "event_kinds": {
+      "sensor.observed": 8,
+      "sensor.health.started": 3,
+      "sensor.recovered": 4,
+      "sensor.rechecking": 4
+    },
+    "transition": [
+      {
+        "seq": 2044,
+        "event_id": "7904eb708fdb42799861327f77fefa99",
+        "parent_event_id": null,
+        "source": "journal:sensor.health",
+        "trace_id": "sensor.health.rgb",
+        "kind": "sensor.rechecking",
+        "code": "sensor.stream_timeout",
+        "utc": "2026-11-18T15:02:12.069313+00:00",
+        "data": {
+          "consecutive_good": 0,
+          "elapsed_s": 0.0,
+          "input": "rgb",
+          "max_age_s": 1.5,
+          "observation": {},
+          "phase": "rechecking",
+          "recheck_budget_s": 6.0,
+          "sample_timeout_s": 3.0,
+          "topic": "/model/edge_rover/rgbd/image_raw"
+        }
+      },
+      {
+        "seq": 2062,
+        "event_id": "2f716af7ab964d7eb55567b36fe16a37",
+        "parent_event_id": "7904eb708fdb42799861327f77fefa99",
+        "source": "journal:sensor.health",
+        "trace_id": "sensor.health.rgb",
+        "kind": "sensor.recovered",
+        "code": "sensor.ok",
+        "utc": "2026-11-18T15:02:14.016510+00:00",
+        "data": {
+          "consecutive_good": 3,
+          "elapsed_s": 1.947,
+          "input": "rgb",
+          "max_age_s": 1.5,
+          "observation": {
+            "age_s": 0.068,
+            "frame_id": "edge_rover/rgbd_optical",
+            "measurement_code": "ok",
+            "metrics": {
+              "bright_fraction": 0.0,
+              "dark_fraction": 0.0,
+              "evidence_type": "raw_image_proxy",
+              "samples": 832,
+              "texture_edge_fraction": 0.1245
+            },
+            "ros_now_ns": 568000000,
+            "stamp_ns": 500000000
+          },
+          "phase": "recovered",
+          "recheck_budget_s": 6.0,
+          "sample_timeout_s": 3.0,
+          "topic": "/model/edge_rover/rgbd/image_raw"
+        }
+      }
+    ],
+    "replay_url": "/api/replay?at=2062",
+    "replayed_data_equal": true
+  },
+  "audit_self_check": {
+    "scope": "separate delivery check, excluded from the two run totals",
+    "after_teardown_audited": true,
+    "run": "aaaabc07f31e",
+    "elapsed_s": 42.875,
+    "tasks": 4,
+    "events": 46,
+    "suite_passed": true,
+    "summary_sha256": "829c1c4300c789f89c94ff113ff635d064ab40935ef40882dd3a3d1eb787e5da",
+    "tampered_exports_rejected": [
+      "orphan parent",
+      "duplicate task/trace",
+      "missing original task",
+      "unexplained tool attempt"
+    ]
+  }
+}
