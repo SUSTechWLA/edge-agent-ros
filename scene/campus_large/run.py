@@ -186,17 +186,19 @@ def reload_campus(run, output, containers, fetch=read_local, check_children=guar
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["start", "map", "review", "sensor-health", "status", "logs", "stop", "down", "reload"])
+    parser.add_argument("action", choices=["start", "map", "review", "sensors", "sensor-health", "status", "logs", "stop", "down", "reload"])
     parser.add_argument("--with-lidar",action="store_true",help="also start the campus fixed ROS point-cloud station with map")
     parser.add_argument("--image", default=os.getenv("EDGE_CAMPUS_IMAGE") or os.getenv("EDGE_IMAGE") or "edge-agent-ros:v0.1")
     parser.add_argument("--assets-dir", type=Path, default=os.getenv("EDGE_CAMPUS_ASSETS_DIR") or ROOT / "artifacts/sim-assets")
     parser.add_argument("--console-port", type=int, default=os.getenv("EDGE_CAMPUS_CONSOLE_PORT") or 8766)
     parser.add_argument("--overview-port", type=int, default=os.getenv("EDGE_CAMPUS_OVERVIEW_PORT") or 8780)
     parser.add_argument("--map-port", type=int, default=os.getenv("EDGE_CAMPUS_MAP_PORT") or 8773)
+    parser.add_argument("--camera-port", type=int, default=os.getenv("EDGE_CAMPUS_CAMERA_PORT") or 8782)
+    parser.add_argument("--rgbd-port", type=int, default=os.getenv("EDGE_CAMPUS_RGBD_PORT") or 8783)
     args = parser.parse_args()
     if args.with_lidar and args.action != "map":
         parser.error("--with-lidar is used with the map action")
-    ports = [args.console_port, args.overview_port, args.map_port]
+    ports = [args.console_port, args.overview_port, args.map_port, args.camera_port, args.rgbd_port]
     if len(set(ports)) != len(ports) or not all(1 <= port <= 65535 for port in ports):
         parser.error("select distinct TCP ports in the range 1 through 65535")
     assets = args.assets_dir.expanduser().resolve()
@@ -206,6 +208,11 @@ def main():
                EDGE_CAMPUS_ASSETS_DIR=str(assets), EDGE_CAMPUS_CONSOLE_PORT=str(args.console_port),
                EDGE_CAMPUS_OVERVIEW_PORT=str(args.overview_port), EDGE_CAMPUS_MAP_PORT=str(args.map_port))
     compose = ["docker", "compose", "-p", PROJECT, "-f", "compose.yaml", "-f", "compose.campus.yaml"]
+    if args.action in ("sensors", "status", "stop", "down"):
+        compose.extend(["-f","compose.camera.yaml","-f","compose.rgbd.yaml"])
+        config = ROOT / "scene/campus_large/sensor_views"
+        env.update(EDGE_CAMERA_PORT=str(args.camera_port), EDGE_RGBD_PORT=str(args.rgbd_port),
+                   EDGE_CAMERA_CONFIG_DIR=str(config/"camera"), EDGE_RGBD_CONFIG_DIR=str(config/"rgbd"))
     def run(*params):
         subprocess.run([*compose, *params], cwd=ROOT, env=env, check=True)
     def output(*params):
@@ -230,6 +237,14 @@ def main():
             parser.error("campus console is offline; run campus start first")
         run("up","-d","--no-build","session")
         print("Campus task sessions: http://"+output("port","console","8080").strip()+"/#sessions")
+    elif args.action == "sensors":
+        if not output("ps","--status","running","-q","sim").strip():
+            parser.error("campus simulation is offline; run campus start first")
+        run("up","-d","--no-build","camera","rgbd")
+        run("run","--rm","--no-deps","-T","--entrypoint","python3","campus-texture",
+            "-B","/opt/edge/scene/campus_large/install_map.py","--sensor-views",str(args.camera_port),str(args.rgbd_port))
+        print("Rover, Crazyflie and G1 cameras: http://"+output("port","camera","8771").strip()+"/")
+        print("Rover RGB-D and pixel depth: http://"+output("port","rgbd","8772").strip()+"/")
     elif args.action == "sensor-health":
         env.update({k:v for k,v in os.environ.items() if k.startswith("EDGE_HEALTH_")})
         run("up","-d","--no-build","sensor-health")
@@ -249,7 +264,7 @@ def main():
     elif args.action == "logs":
         run("logs", "--tail", "60", "campus-build", "sim", "campus-capture", "campus-overview")
     elif args.action == "stop":
-        run("stop", *SERVICES, "map3d", "map3d-sensor","sensor-health")
+        run("stop", *SERVICES, "map3d", "map3d-sensor","sensor-health","camera","rgbd")
     else:
         run("down")
 

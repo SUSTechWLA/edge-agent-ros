@@ -1,0 +1,7 @@
+{
+  "id": "campus-rover-rgbd",
+  "alignment": "gazebo_shared_optical_projection",
+  "color_topic": "/model/edge_rover/rgbd/image_raw",
+  "aligned_depth_topic": "/model/edge_rover/rgbd/depth/image_raw",
+  "info_topic": "/model/edge_rover/rgbd/camera_info"
+}

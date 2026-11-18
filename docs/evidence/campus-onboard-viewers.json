@@ -1,0 +1,127 @@
+{
+  "passed": true,
+  "viewports": [
+    {
+      "width": 1440,
+      "links": {
+        "camera": "http://127.0.0.1:8782/",
+        "rgbd": "http://127.0.0.1:8783/"
+      },
+      "frames": {
+        "edge_rover": "当前画面 · edge_rover/rgbd_optical · 1418500000000 ns",
+        "crazyflie": "当前画面 · crazyflie/front_optical · 1418750000000 ns",
+        "g1": "当前画面 · g1/rgbd_optical · 1419250000000 ns"
+      },
+      "pair": {
+        "status": "online",
+        "reason": "aligned",
+        "pair_id": "a3ff205ff5ab44a3954f5eac300cae0c-805",
+        "sources": {
+          "id": "campus-rover-rgbd",
+          "alignment": "gazebo_shared_optical_projection",
+          "color_topic": "/model/edge_rover/rgbd/image_raw",
+          "aligned_depth_topic": "/model/edge_rover/rgbd/depth/image_raw",
+          "info_topic": "/model/edge_rover/rgbd/camera_info"
+        },
+        "ttl_s": 2,
+        "max_skew_ms": 20,
+        "width": 160,
+        "height": 120,
+        "frame": "edge_rover/rgbd_optical",
+        "depth_encoding": "32FC1",
+        "intrinsics": {
+          "fx": 130.48331390130113,
+          "fy": 130.48331390130116,
+          "cx": 80,
+          "cy": 60
+        },
+        "color_stamp_ns": 1419500000000,
+        "depth_stamp_ns": 1419500000000,
+        "info_stamp_ns": 1419500000000,
+        "stamp_ns_text": {
+          "color": "1419500000000",
+          "depth": "1419500000000",
+          "info": "1419500000000"
+        },
+        "skew_ms": 0
+      },
+      "measured": "(80, 102) · 0.602 m · RGB 220, 213, 191",
+      "sample": {
+        "u": 80,
+        "v": 102,
+        "pair_id": "a3ff205ff5ab44a3954f5eac300cae0c-805",
+        "rgb": [
+          220,
+          213,
+          191
+        ],
+        "depth_m": 0.601756751537323
+      },
+      "noReturn": "(80, 50) · 无有效回波"
+    },
+    {
+      "width": 390,
+      "links": {
+        "camera": "http://127.0.0.1:8782/",
+        "rgbd": "http://127.0.0.1:8783/"
+      },
+      "frames": {
+        "edge_rover": "当前画面 · edge_rover/rgbd_optical · 1420500000000 ns",
+        "crazyflie": "当前画面 · crazyflie/front_optical · 1420750000000 ns",
+        "g1": "当前画面 · g1/rgbd_optical · 1421000000000 ns"
+      },
+      "pair": {
+        "status": "online",
+        "reason": "aligned",
+        "pair_id": "a3ff205ff5ab44a3954f5eac300cae0c-812",
+        "sources": {
+          "id": "campus-rover-rgbd",
+          "alignment": "gazebo_shared_optical_projection",
+          "color_topic": "/model/edge_rover/rgbd/image_raw",
+          "aligned_depth_topic": "/model/edge_rover/rgbd/depth/image_raw",
+          "info_topic": "/model/edge_rover/rgbd/camera_info"
+        },
+        "ttl_s": 2,
+        "max_skew_ms": 20,
+        "width": 160,
+        "height": 120,
+        "frame": "edge_rover/rgbd_optical",
+        "depth_encoding": "32FC1",
+        "intrinsics": {
+          "fx": 130.48331390130113,
+          "fy": 130.48331390130116,
+          "cx": 80,
+          "cy": 60
+        },
+        "color_stamp_ns": 1421250000000,
+        "depth_stamp_ns": 1421250000000,
+        "info_stamp_ns": 1421250000000,
+        "stamp_ns_text": {
+          "color": "1421250000000",
+          "depth": "1421250000000",
+          "info": "1421250000000"
+        },
+        "skew_ms": 0
+      },
+      "measured": "(80, 102) · 0.602 m · RGB 220, 213, 191",
+      "sample": {
+        "u": 80,
+        "v": 102,
+        "pair_id": "a3ff205ff5ab44a3954f5eac300cae0c-812",
+        "rgb": [
+          220,
+          213,
+          191
+        ],
+        "depth_m": 0.601756751537323
+      },
+      "noReturn": "(80, 50) · 无有效回波"
+    }
+  ],
+  "errors": [],
+  "writeRequests": [],
+  "simulation_container_and_start": {
+    "before": "170d8fda963f252767417c6628d9c7a3b793b49990e776c2fa4112648c1ae287 2026-11-18T14:21:35.745212635Z",
+    "after": "170d8fda963f252767417c6628d9c7a3b793b49990e776c2fa4112648c1ae287 2026-11-18T14:21:35.745212635Z"
+  }
+}

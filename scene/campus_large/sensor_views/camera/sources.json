@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {"id":"edge_rover","label":"轮式车 · 前向 RGB-D 彩色通道","topic":"/model/edge_rover/rgbd/image_raw","info_topic":"/model/edge_rover/rgbd/camera_info","type":"Image","ttl_s":5},
+    {"id":"crazyflie","label":"Crazyflie 无人机 · 前向相机","topic":"/model/crazyflie/front/image_raw","info_topic":"/model/crazyflie/front/camera_info","type":"Image","ttl_s":5},
+    {"id":"g1","label":"G1 双足 · 头部 RGB-D 彩色通道","topic":"/model/g1/rgbd/image_raw","info_topic":"/model/g1/rgbd/camera_info","type":"Image","ttl_s":5}
+  ]
+}

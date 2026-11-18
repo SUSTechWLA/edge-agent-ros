@@ -100,17 +100,21 @@ def install_mesh(world, directory, models):
         record(manifest,meta)
 
 
-def register(directory, views_file, port):
-    if not 1 <= port <= 65535:
-        raise ValueError("invalid campus map port")
+def register_views(views_file, additions):
+    if any(not 1 <= item["port"] <= 65535 for item in additions):
+        raise ValueError("invalid campus view port")
     entries = json.loads(views_file.read_bytes()) if views_file.exists() else []
     if not isinstance(entries, list) or not all(isinstance(entry, dict) for entry in entries):
         raise ValueError("invalid campus view registry")
-    registered = [entry for entry in entries if entry.get("id") != "map3d"]
-    if len(registered) >= 16:
+    replaced = {item["id"] for item in additions}
+    registered = [entry for entry in entries if entry.get("id") not in replaced]+additions
+    if len(registered) > 16:
         raise ValueError("the campus workbench has reached its 16-view limit")
-    registered.append({"id":"map3d", "label":"校园纹理地图", "slot":"map", "port":port})
     atomic(views_file, (json.dumps(registered, ensure_ascii=False, indent=2)+"\n").encode())
+
+
+def register(directory, views_file, port):
+    register_views(views_file,[{"id":"map3d","label":"校园纹理地图","slot":"map","port":port}])
     record(directory/"map-link.json", {"port":port})
     atomic(directory/"index.html", Path(__file__).with_name("overview.html").read_bytes())
 
@@ -119,6 +123,11 @@ def main():
     import fcntl
     with (WORLD/".map-install.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
+        if len(sys.argv)==4 and sys.argv[1]=="--sensor-views":
+            register_views(Path("/views/views.json"),[
+                {"id":"camera","label":"三台机载彩色相机","slot":"sensor","port":int(sys.argv[2])},
+                {"id":"rgbd","label":"轮式车 RGB-D 像素深度","slot":"sensor","port":int(sys.argv[3])}])
+            return
         active = identity(WORLD)
         if read_record(RUNTIME) != active:
             raise RuntimeError("campus assets and the running world differ; use the guarded campus reload")

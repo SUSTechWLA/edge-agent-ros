@@ -12,10 +12,11 @@ import { checkMap3D } from './map3d_browser.mjs';
 import { checkCampusTexture, checkCampusFallback } from './campus_texture_browser.mjs';
 import { checkCampusRoute } from './campus_route_browser.mjs';
 import { checkCampusReview } from './campus_review_browser.mjs';
+import { checkCampusSensors } from './campus_sensor_browser.mjs';
 import { checkRgbd } from './rgbd_browser.mjs';
 
 const [url, output, screenshotOption] = process.argv.slice(2);
-if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus','--campus-texture','--campus-route','--campus-fallback','--campus-review'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus','--campus-texture','--campus-route','--campus-fallback','--campus-review','--campus-sensors'].includes(screenshotOption)) throw new Error('Unknown browser test option');
 const campusReview=screenshotOption==='--campus-review';
 const campusFallback = screenshotOption === '--campus-fallback';
 const campusRoute = screenshotOption === '--campus-route';
@@ -107,6 +108,10 @@ try {
   }
   for (const width of campusFallback ? [980] : [1440,390]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:860,deviceScaleFactor:1,mobile:false});
+    if(screenshotOption==='--campus-sensors'){
+      viewports.push(await checkCampusSensors({url,width,output,evaluate,waitFor,send}));
+      continue;
+    }
     if (campusReview) {
       viewports.push(await checkCampusReview({url,width,output,evaluate,waitFor,send}));
       continue;
