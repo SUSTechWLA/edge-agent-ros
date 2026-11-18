@@ -50,6 +50,12 @@ class CampusRobotAssets(unittest.TestCase):
             self.assertEqual(len(drivers),4 if name=="go1" else 1)
             for p in drivers:
                 self.assertEqual(p.findtext("topic"),f"/model/{name}/joint/{p.findtext('joint_name')}/cmd_pos")
+            if name=="go1":
+                for joint in model.findall("joint[@type='revolute']"):
+                    lo=float(joint.findtext("axis/limit/lower"))
+                    hi=float(joint.findtext("axis/limit/upper"))
+                    self.assertLessEqual(lo,.15-.1)
+                    self.assertGreaterEqual(hi,.65+.1)
             self.assertEqual(model.findtext("plugin[@name='gz::sim::systems::JointStatePublisher']/topic"),
                              f"/model/{name}/joint_state")
             self.assertEqual(model.findtext("joint[@name='bench_mount']/parent"),"world")

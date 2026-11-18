@@ -315,6 +315,8 @@ def run(args):
                                "evidence":evidence,"paths":paths,"row_units":["stamp_ns","x_m","y_m","v_mps"]}
             report["ros"]={"counts_start":start["counts"],"counts_end":end["counts"],"first_scan":start["scan"][-1],
                            "last_scan":end["scan"][-1],"clock_before_ns":start["stamps"]["clock"],"clock_after_ns":end["stamps"]["clock"]}
+            from campus_round_trip import verify as verify_round_trip
+            verify_round_trip(api,observed,await_fact,terminal,report["mission"],report.setdefault("continuous_navigation",{}))
             from campus_forms import verify_forms
             verify_forms(api,dc,report.setdefault("robot_forms",{}))
             viewer = "http://"+dc("port","campus-overview","8080")

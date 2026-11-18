@@ -1,38 +1,36 @@
-# 大学校园与树模型的来源和维护
+# TU Delft X 校园试验场的资产、坐标与测试
 
-校园插件在首次准备时下载 Gazebo Fuel 的两个固定版本。默认缓存为仓库内 `artifacts/sim-assets/`，容器将此目录挂为 `/assets`。运行中的 Gazebo 从 `/assets/models` 解析模型；下载器与模型源文件不参与机器人的在线决策。
+本场地把教学楼、机器人实验广场、运动场与林带放在同一张代尔夫特校园航片上。沿步道可以从门厅走到体育园并接入 Mekelweg 西侧人行道。打开“校园试验场”可从同一个斜视镜头定位这些设施；“全校”提供北向俯视。[场景构建器](build.py) · [可视化及导航入口](README.md)
 
-| 模型 | 作者与版本 | 原始 ZIP | 解包 | 入口 |
-|---|---|---:|---:|---|
-| SIT 校园 | 模型署名 Wan Yi，由 NCS_robotmanager 发布，Fuel v2 | 71,816,347 B | 126,117,050 B，51 个文件 | `models/Campus/model.sdf` |
-| Pine Tree | Louise Poubel，OpenRobotics，Fuel v6 | 877,470 B | 955,728 B，13 个文件 | `models/Pine Tree/model.sdf` |
+## 场地如何复现
 
-两者在 Gazebo Fuel 元数据中均标注 CC0-1.0。仓库记录作者、版本、原始下载 URL、字节数、整包 SHA-256 和引用的模型入口。首次传输遇到大文件超时后，校园改为用 HTTP Range 请求，再按顺序还原上游 ZIP。固定版本的整包散列为 `ef37e069a89e24c3908c3c86918ecbcca8d07314612fc11215081864c84194fb`，树的整包散列为 `d436a44229321314e79e4c2ba709dc926e833a5b5d90d16c5d085c2a74576e25`。[校园原始项](https://app.gazebosim.org/NCS_robotmanager/fuel/models/Campus) · [树原始项](https://app.gazebosim.org/OpenRobotics/fuel/models/Pine%20Tree) · [CC0](https://creativecommons.org/publicdomain/zero/1.0/) · [版本锁](asset-lock.json)
+| 内容 | 来源与处理 | 可用于检验 |
+|---|---|---|
+| 545 × 1,170 米的地面与 187 个完整 BAG 建筑对象 | 荷兰 3DBAG LoD2.2、PDOK 2025 正射影像与 Kadaster BGT 人行道。建筑保留原朝向、轮廓和屋顶。场地以米为单位，东向为 X，北向为 Y；`odom` 原点对应 RD New (85610, 445601)。 | 校园布局、建筑遮挡、外形与街网配准。立面窗格采用示意材质；航片中的车、树和行人只有颜色。 [源数据、授权及离线复建](real_site_data/README.md) |
+| 四层教学楼、三层侧翼、实验广场 | 项目在体育园的训练用地构建，层高 3.68 m。砖铺广场位于教学楼东侧，连接有行道树、长椅和灯杆的步道。 | 门厅到门外的路线、室内近障、开门后的观测变化与多机器人动作反馈。[机器人资产、控制方式及限制](robots/README.md) |
+| 体育场 | 以 (−234, 61) 为中心，对齐原有球场，长轴由东方向逆时针转 20°。八道跑道由 84.39 m 直道和内沿半径 36.50 m 的弯道组成，道宽 1.22 m。第一道沿内沿外侧 0.30 m 计长约 400.001 m。内场为 105 × 68 m，球门净宽 7.32 m、净高 2.44 m。 | 开阔区域激光观测、平面定位与细线展示；球门、看台及灯塔有实体几何。尺寸参照 [World Athletics 设施手册](https://worldathletics.org/about-iaaf/documents/technical-information) 和 [IFAB 场地规则](https://www.theifab.com/laws/latest/the-field-of-play/)。 |
+| 林带与道路 | 林道沿可见林冠从西南伸向东北。程序生成阔叶树、植树行列和步道；部分松树采用 Gazebo Fuel OpenRobotics / Pine Tree v6，原模型高约 5.08 m、冠幅约 3.17 m。Mekelweg 街口落在 BGT 的实际人行道面内。 | 林下遮挡、树干回波、校园步道与测绘区域的衔接。[布局与路线](landscape.py) · [原始松树](https://app.gazebosim.org/OpenRobotics/fuel/models/Pine%20Tree) |
 
-## 哪些内容来自校园模型
+旧版 NCS / SIT 校园的 OBJ 最高顶点为 3.49 m，包含道路、家具与低墙。移除这块单层场景后，教学与体育设施在同一片体育园内共享航片、坐标与街口。历史版本仍可从 Git 复现。[原 NCS 模型](https://app.gazebosim.org/NCS_robotmanager/fuel/models/Campus)
 
-原始 SDF 把视觉与碰撞都绑定到 `meshes/Campus_world.obj`，局部 Z 坐标偏移 −0.25 m。OBJ 在该偏移之前的边界为 X [−171.791458, 181.617828]、Y [−171.876160, 112.102425]、Z [−1.000000, 3.485012] m。其水平跨度约 353.4 × 284.0 m。模型共有 477,187 个顶点、405,658 个多边形面，按面顶点数展开约 724,102 个三角形。合并后的校园网格使用 50 种材质，包含道路、路缘、人行道、草坪、灌木、地毯、桌椅、投影幕与白板。上游预览可以辨认有分隔的室内区域。穿门、进教室、碰撞和任务可达性应在本项目具体运动区域验证。[原始 SDF](https://fuel.gazebosim.org/1.0/NCS_robotmanager/models/Campus/2/files/model.sdf) · [上游总览图](https://fuel.gazebosim.org/1.0/NCS_robotmanager/models/Campus/2/files/thumbnails/campus_sim.png)
+## 从一次穿门到长期测试
 
-原包内的 `Campus_world.mtl` 引用的全部漫反射贴图均存在。材质同时引用三张未随包分发的可选法线贴图，分别是 `CoffeeTable_Normal.png`、`PottedPlant1_Normal.png` 与 `PottedPlant2_Normal.png`。实务上需区分法线细节缺失与基础几何或漫反射贴图加载失败。仅一种盆栽材质就包含 115,710 个面，完整网格参与碰撞，在 Jetson 或 RK3588 部署前，应单独测量实时率、内存和局部导航性能。
+| 任务 | 关键证据 |
+|---|---|
+| **连续往返**。从 (0, 0) 发“前往教学楼门外”，停车后发“回到教学楼门厅”，再发“前往教学楼门外”。三次单程名义长度合计 9.9 m，第二次穿门需要转向。 | `navigate_place` 的三个 trace、同一仿真会话/场景摘要、独立 `/ground_truth` 和 `/odom` 的门内、门洞、门外与停稳样本。入口位于 (1.6, 0)，净宽 2.20 m、净高 2.70 m。[连续往返核验](../../tests/system/campus_round_trip.py) |
+| **整条步道核查**。从教学楼东侧出发，经过看台入口、草坪、林带，最后进入 Mekelweg 人行道。 | `overview/manifest.json` 的 `routes` 逐段列出坐标、宽度、SDF 路面名称。独立核查对 25 段共 776.82 m 的中心线投影车体高度范围内的障碍，并拿原始 BGT 面复核街口 (65.5, 14)。[物理几何核查](../../tests/system/campus_route_geometry.py) |
+| **分站感知**。在球场中圈、林间步道与教学楼外对比同一台轮式机器人的激光。 | 使用 Gazebo 测试工装单独摆位，等待带新仿真时间戳且位置匹配的扫描，再比较有效回波。该实验测试各环境的可感知性，站间行驶需要另行验收。[观测工装](../../tests/system/campus_station_probe.py) |
 
-原始树模型的 DAE 使用 Z 朝上，节点附带 0.0254 的缩放。应用节点变换后的树高约 5.08 m、冠幅约 3.17 m。教学验证区、成片树林的布置、车道和运动场由本项目构建器组织，具体位置以生成后的场地说明为准。[原始树模型 SDF](https://fuel.gazebosim.org/1.0/OpenRobotics/models/Pine%20Tree/6/files/model.sdf) · [校园生成器](build.py)
+将整条步道开放为自然语言导航还需要与场景绑定的许可区域、逐段限时、位置丢失时的停车与恢复、跨段任务日志。目前导航网关逐轴校验目标在 ±4 m 内，单段直行的命令速度上限为 0.32 m/s。按该速度完成 776.82 m 单算平移也需约 40.5 分钟仿真时间，转弯、停车和核验会进一步增加耗时。可先在真实执行的门厅往返中反复验证会话连续性，再逐段开放到广场和林道。[动作网关](../../src/edge_gateway/src/edge_gateway_node.cpp)
 
-## 教学楼与运动场怎样建模
+## 缓存与离线测试
 
-这两处由项目按米制设计。教学楼的主楼为四层，侧翼为三层，层高 3.68 m。每层分别生成楼板、墙裙、凹入的窗带和窗间柱。东侧入口位于 (1.6, 0)，门洞宽 2.20 m、高 2.70 m。走廊、教室、雨棚和看台均在 Gazebo 中有实体几何。当前导航验收覆盖首层门厅到门外的路线。楼层数量和教室风格属于训练场设计。[教学区生成器](build.py) · [设施几何测试](../../tests/test_campus_facilities.py)
+校园测绘数据和机器人模型已随代码固定版本。外部 Fuel 松树模型缓存于 `artifacts/sim-assets/`，容器中对应 `/assets/models/Pine Tree/`。Pine Tree v6 由 Louise Poubel / OpenRobotics 发布，采用 CC0-1.0。ZIP 大小为 877,470 字节；下载器核对 SHA-256、文件清单和入口，可从完整缓存离线恢复缺失文件。[版本锁](asset-lock.json) · [松树授权](https://creativecommons.org/publicdomain/zero/1.0/)
 
-体育场中心位于 (−103, 72)。跑道由两段 84.39 m 直线与半径 36.50 m 的两个半圆接成，八条跑道各宽 1.22 m。按内沿外侧 0.30 m 计算，第一道一圈为 400.001 m。草坪球场取 105 × 68 m，具有中圈、禁区、球门区、罚球点与弧线、四个角球区。两门柱内缘相距 7.32 m，横梁下缘距地面 2.44 m。表面颜色和标线写入一份共享网格，球门与分区看台单独建模以提供可感知的碰撞体。这些尺寸用于仿真，完整竞赛标志和场馆认证另有要求。[运动场生成器](athletics.py) · [World Athletics 400 米标准场地尺寸](https://worldathletics.org/about-iaaf/documents/technical-information) · [IFAB 场地规则](https://www.theifab.com/laws/latest/the-field-of-play/)
-
-## 准备、恢复与测试
-
-从项目根目录执行。两个原包共约 72.7 MB，加上模型展开后的约 127.1 MB。首次分段下载与安装暂存还需额外空间。终端中的 `restored_files` 表示从经校验的原包安装或恢复了多少个源文件。
+从项目根目录运行。
 
 ```bash
 python scene/campus_large/fetch_assets.py
 python scene/campus_large/fetch_assets.py --offline
-python tests/test_campus_assets.py
-# 已安装 pytest 的开发环境也可执行
-python -m pytest -q tests/test_campus_assets.py
+python -m unittest discover -s tests -p test_campus_facilities.py -v
 ```
-
-断网状态下可以使用完整的原包修复展开后丢失或被改过的文件。已经完整的缓存重复执行，两个模型均返回 `restored_files: 0`。若 ZIP 本身损坏，离线模式报告待恢复的路径，联网运行会重新获取候选包，校验通过才替换。首次安装先验证所有成员并写入临时目录，最后发布模型目录。脚本使用 `--root PATH` 可选择其他专用缓存。测试覆盖断网、重复执行、同长度损坏、原包损坏、分段重试、拒绝异常文件路径与重复成员。[获取脚本](fetch_assets.py) · [独立测试](../../tests/test_campus_assets.py)

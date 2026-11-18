@@ -153,7 +153,7 @@ class TestSelection(unittest.TestCase):
     def test_examples(self):
         self.assertEqual(selection(["tests/system/campus_texture_browser.mjs"])[0],[R,"plugin-isolation","campus-world"])
         self.assertEqual(selection(["scene/campus_large/build.py","compose.campus.yaml"])[0],[R,"campus-world"])
-        for name in ("campus_route_geometry","campus_station_probe","campus_forms"):
+        for name in ("campus_route_geometry","campus_station_probe","campus_forms","campus_round_trip"):
             self.assertEqual(selection(["tests/system/"+name+".py"])[0],[R,"campus-world"])
         self.assertEqual(selection(["docs/specs/example.md"])[0], [R])
         self.assertEqual(selection(["agent/contracts.json"])[0], [R,"planner","agent-contracts","agent-faults","model"])

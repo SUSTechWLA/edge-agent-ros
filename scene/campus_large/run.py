@@ -1,12 +1,15 @@
 """Manage only the campus Compose project, independently of the workstation's active robot."""
 import argparse
+from contextlib import closing
 import http.client
 import json
 import math
 import os
 from pathlib import Path
 import re
+import sqlite3
 import subprocess
+import sys
 import time
 
 
@@ -15,6 +18,7 @@ PROJECT = "edge-agent-campus"
 SERVICES = ("sim", "bridge", "witness", "gateway", "core", "perception", "scene", "agent", "console",
             "campus-capture", "campus-overview","campus-robot-bridge","campus-fleet",
             "crazyflie-agent","go1-agent","g1-agent")
+CHILDREN = ("crazyflie", "go1", "g1")
 
 
 class ReloadBlocked(RuntimeError):
@@ -72,7 +76,46 @@ def idle_stamp(get):
         raise ReloadBlocked("incomplete campus task, ledger or velocity evidence") from exc
 
 
-def reload_campus(run, output, containers, fetch=read_local):
+def child_work(root):
+    """Inspect durable state even after agent ingress has closed. Never create databases."""
+    pending = []
+    for robot in CHILDREN:
+        path = root/robot/"tasks.db"
+        with closing(sqlite3.connect(path.as_uri()+"?mode=ro",uri=True,timeout=2)) as db:
+            row = db.execute("""SELECT id,state FROM tasks WHERE state IS NULL OR
+                state NOT IN ('SUCCEEDED','FAILED','CANCELED','BLOCKED') ORDER BY rowid LIMIT 1""").fetchone()
+        if row:
+            pending.append(f"{robot} task {row[0]!r} ({row[1]})")
+    with closing(sqlite3.connect((root/"fleet"/"operations.sqlite").as_uri()+"?mode=ro",uri=True,timeout=2)) as db:
+        row = db.execute("SELECT robot,op FROM receipts WHERE result IS NULL ORDER BY rowid LIMIT 1").fetchone()
+    if row:
+        pending.append(f"{row[0]} actuator operation {row[1]!r}")
+    return pending
+
+
+def guard_children(output):
+    # The isolated stack may have a generated Compose project name. Resolve the
+    # actual volume names rather than accidentally inspecting the user's live fleet.
+    try:
+        volumes = json.loads(output("config","--format","json"))["volumes"]
+        mounts = []
+        for source, target in [*((r+"-tasks",r) for r in CHILDREN),("campus-fleet-state","fleet")]:
+            name = volumes[source]["name"]
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*",name):
+                raise ValueError("invalid Compose volume name")
+            mounts.extend(["--volume",f"{name}:/verify/{target}:ro"])
+        data = output("run","--rm","--no-deps","-T","--entrypoint","python3",*mounts,"campus-build",
+                      "-B","/opt/edge/scene/campus_large/run.py","--guard-child-ledgers")
+        pending = json.loads(data)
+        if not isinstance(pending,list) or not all(isinstance(item,str) for item in pending):
+            raise ValueError("invalid child ledger response")
+    except (OSError, KeyError, TypeError, ValueError, subprocess.SubprocessError, RuntimeError) as exc:
+        raise ReloadBlocked("cannot verify the campus child task journals and outstanding actuator operations") from exc
+    if pending:
+        raise ReloadBlocked("unfinished campus work: "+", ".join(pending))
+
+
+def reload_campus(run, output, containers, fetch=read_local, check_children=guard_children):
     # Compose includes project orphans here, such as optional ROS sensors from an extra overlay.
     members = {}
     for line in output("ps","--status","running","--format","{{.Service}} {{.ID}}").splitlines():
@@ -91,11 +134,32 @@ def reload_campus(run, output, containers, fetch=read_local):
         if not binding:
             raise ReloadBlocked("cannot identify the running campus console's loopback port")
         port = int(binding[1])
+        body_agents = tuple(r+"-agent" for r in CHILDREN)
+        fleet = {"campus-fleet",*body_agents}
+        # A fully legacy campus has no child journals. A partially stopped fleet
+        # can still have pending work; stop early instead of treating it as legacy.
+        installed = set(output("ps","--all","--format","{{.Service}}").split())
+        has_children = bool(fleet & (installed | members.keys()))
+        if not has_children:
+            try:
+                declared = output("exec","-T","sim","python3","-c",
+                    "import json; print(json.dumps(bool(json.load(open('/campus/layout.json')).get('robots'))))")
+                expected_fleet = json.loads(declared)
+                if type(expected_fleet) is not bool:
+                    raise ValueError()
+                has_children = expected_fleet
+            except (OSError, ValueError, subprocess.SubprocessError, RuntimeError) as exc:
+                raise ReloadBlocked("cannot establish whether the running campus requires child robot agents") from exc
+        if has_children and not fleet.issubset(members):
+            raise ReloadBlocked("campus robot control stack is incomplete; restore it before a guarded reload")
+        admission = ("agent",*body_agents) if has_children else ("agent",)
         def get(path):
             return fetch(port,path)
         previous = idle_stamp(get)
-        run("stop","agent")
+        if has_children:
+            check_children(output)
         try:
+            run("stop",*admission)
             if extras:
                 containers("stop",*extras)
             deadline = time.monotonic() + 6
@@ -103,15 +167,17 @@ def reload_campus(run, output, containers, fetch=read_local):
                 if time.monotonic() >= deadline:
                     raise ReloadBlocked("the campus clock did not advance to a second verified standstill sample")
                 time.sleep(.15)
+            if has_children:
+                check_children(output)
         except BaseException:
             # Restore task admission on uncertainty; Gazebo and motion owners are still running.
             try:
                 if extras:
                     containers("start",*extras)
             finally:
-                run("start","agent")
+                run("start",*admission)
             raise
-        run("stop",*(service for service in SERVICES if service != "agent" and service in members))
+        run("stop",*(service for service in SERVICES if service not in admission and service in members))
     run("up","-d","--no-build",*SERVICES)
     if extras:
         containers("start",*extras)
@@ -178,4 +244,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:]==["--guard-child-ledgers"]:
+        print(json.dumps(child_work(Path("/verify"))))
+    else:
+        main()

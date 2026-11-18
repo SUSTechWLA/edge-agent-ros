@@ -167,7 +167,10 @@ def convert(name, folder, mjcf, blobs):
         joint_axis=ET.SubElement(joint,"axis")
         element(joint_axis,"xyz",vector(axis))
         limit=ET.SubElement(joint_axis,"limit")
-        for tag,value in {"lower":-1.4 if name=="g1" else -.5,"upper":.5 if name=="g1" else .65,
+        # .65 rad is a commanded thigh pose. At the campus 2 ms time step
+        # hitting a coincident mechanical limit can lock the simulated joint.
+        # The +.90 stop is within the source hip travel from its +.90 home.
+        for tag,value in {"lower":-1.4 if name=="g1" else -.5,"upper":.5 if name=="g1" else .90,
                           "velocity":2,"effort":60}.items():
             element(limit,tag,value)
         element(ET.SubElement(joint_axis,"dynamics"),"damping",.15)
