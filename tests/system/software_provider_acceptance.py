@@ -27,6 +27,8 @@ GOAL = "Count exact whitespace-separated words equal to robot ignoring case in s
 UPPER_GOAL = "Given literal text, return the same text in uppercase as one string. Preserve whitespace and punctuation. The input and output are text values."
 UPPER_CASES = [{"text":"Straße", "expected":"STRASSE"}, {"text":"", "expected":""},
                {"text":" A\tb  ", "expected":" A\tB  "}, {"text":"Café!", "expected":"CAFÉ!"}]
+# Each resident worker may use three 90-second model requests plus retry and archive delivery time.
+MODEL_TERMINAL_SECONDS = 320
 
 
 def automatic_services(services,common,root,args):
@@ -186,7 +188,7 @@ def run(args):
             def design_outcome():
                 events=fetch(source="journal:plugin.design",task_id="word-gap")
                 return next((e for e in events if e["kind"] in ("plugin.design.drafted","plugin.design_watch.intervention_required")),None)
-            origin=wait_for(design_outcome,"archive design",110)
+            origin=wait_for(design_outcome,"archive design",MODEL_TERMINAL_SECONDS if args.model_cache else 110)
             check(origin["kind"]=="plugin.design.drafted","design needs operator intervention: "+str(origin["data"].get("reason")))
             if args.automatic:
                 ident=origin["data"]["design_id"]
@@ -200,7 +202,7 @@ def run(args):
                     report["automatic"]["coding_events"]=[{k:e.get(k) for k in ("seq","event_id","trace_id","parent_event_id","kind","data")} for e in facts]
                     return next((e for e in facts if e["kind"] in ("plugin.software_author.authored",
                                  "plugin.software_author.skipped","plugin.software_author.intervention_required")),None)
-                result=wait_for(candidate,"code candidate or review",130)
+                result=wait_for(candidate,"code candidate or review",MODEL_TERMINAL_SECONDS if args.model_cache else 130)
                 if result["kind"]!="plugin.software_author.authored":
                     report["automatic"].update(intake_final_state=done("word-gap")["state"],
                         active_manifests=len(list((root/"registry").glob("*.json"))),
@@ -304,6 +306,9 @@ def run(args):
             report["error"]=str(exc)
             targets=["agent","console","provider"]+(["legacy","design","coder"] if args.automatic else [])
             report["diagnostic_tail"]=compose("logs","--no-color","--tail","8",*targets)[-3000:]
+            if args.model_cache:
+                report["model_http"]= [line for line in compose("logs","--no-color","--tail","30","model").splitlines()
+                                       if "/api/chat" in line][-8:]
             raise
         finally:
             stub.shutdown()

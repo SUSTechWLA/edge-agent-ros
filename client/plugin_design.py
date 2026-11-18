@@ -213,15 +213,31 @@ def run(event_path, decision_path, output, journal, url=None, model=None, *, req
                 "SELECT json_extract(event,'$.data.draft_sha256'),event_id,json_extract(event,'$.call_id') FROM module_bus_events "
                 "WHERE json_extract(event,'$.data.design_id')=? AND json_extract(event,'$.kind')="
                 "'plugin.design.drafted' LIMIT 1", (key,)).fetchone()
+            preparation_key = "draft-prepared/" + request_id
             if path.exists():
                 if path.is_symlink():
                     raise DesignError("draft_conflict")
                 with path.open("rb") as stream:
                     stored = stream.read(131073)
-                if len(stored) > 131072 or previous and previous[0] != sha(stored):
+                expected = previous[0] if previous else None
+                if not previous:
+                    # The file can outlive a crash before drafted. Trust only an independent pre-write fact.
+                    preparation = journal.db.execute(
+                        "SELECT event FROM module_bus_events WHERE json_extract(event,'$.data.design_id')=? "
+                        "AND json_extract(event,'$.kind')='plugin.design.prepared' ORDER BY seq DESC LIMIT 1",
+                        (key,)).fetchone()
+                    if preparation:
+                        fact = json.loads(preparation[0])
+                        data = fact["data"]
+                        if (fact["task_id"] == task_id and fact["trace_id"] == trace_id
+                                and data["receipt_sha256"] == source["receipt_sha256"]
+                                and data["contracts_sha256"] == fingerprint):
+                            expected = data["draft_sha256"]
+                if len(stored) > 131072 or expected != sha(stored):
                     raise DesignError("draft_conflict")
                 draft = json.loads(stored)
-                if not isinstance(draft, dict) or draft.get("source") != source or draft.get("design_id") != key:
+                if (not isinstance(draft, dict) or draft.get("source") != source or draft.get("design_id") != key
+                        or draft.get("goal") != goal):
                     raise DesignError("draft_conflict")
                 if (stored != json_bytes(draft) or draft.get("contracts_sha256") != fingerprint
                         or design_contracts.fingerprint(draft.get("interfaces")) != fingerprint):
@@ -232,7 +248,8 @@ def run(event_path, decision_path, output, journal, url=None, model=None, *, req
             else:
                 if previous:
                     raise DesignError("draft_missing")
-                if recover_only:
+                if recover_only or journal.db.execute("SELECT 1 FROM module_bus_events WHERE event_key=?",
+                                                      (sha(preparation_key.encode()),)).fetchone():
                     raise DesignError("attempt_interrupted")
                 if interfaces is None:
                     interfaces = (read_json(Path(output)/".contexts"/(fingerprint+".json"),131072)
@@ -257,6 +274,9 @@ def run(event_path, decision_path, output, journal, url=None, model=None, *, req
                                                         "Test loss, duplicates, version change, and unrelated tasks while draining."],
                                          "rollback": "Withdraw new bindings, reconcile in-flight work by operation ID, restore "
                                                      "the pinned version and verify independent consumer health."}}
+                emit(journal,"prepared",request_id,trace_id,started,task_id,"prepared",key=preparation_key,
+                     design_id=key,draft_sha256=sha(json_bytes(draft)),receipt_sha256=source["receipt_sha256"],
+                     contracts_sha256=fingerprint)
                 write_atomic(path, draft)
             digest = sha(json_bytes(draft))
             completed = emit(journal, "drafted", request_id, trace_id, started, task_id, "drafted",

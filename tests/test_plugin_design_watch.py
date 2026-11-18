@@ -120,6 +120,44 @@ class TestDesignWatch(unittest.TestCase):
             self.assertEqual(len(self.events(kind)),2,kind)
         self.assertFalse(self.events("plugin.design_watch.intervention_required"))
 
+    def test_only_precommitted_exact_bytes_can_recover_an_unacknowledged_draft(self):
+        options={"attempts":1,"model_url":self.source.url,"model":"fixture"}
+        self.open(**options)
+        emit=design.emit
+        def lose_fact(journal,stage,*args,**kwargs):
+            if stage=="drafted":
+                raise Interrupted()
+            return emit(journal,stage,*args,**kwargs)
+        result={"proposal":{"interface":"Tool","behavior":"inspect"},"unresolved_fields":[]}
+        with patch.object(design,"propose",return_value=result) as model:
+            cases=("goal","model","permissions","legacy-orphan","unchanged")
+            for name in cases:
+                self.add(name)
+                with patch.object(design,"emit",side_effect=lose_fact),self.assertRaises(Interrupted):
+                    self.watch.poll()
+                prepared=self.events("plugin.design.prepared")[-1]
+                path=self.root/"private/drafts"/(prepared["data"]["design_id"]+".json")
+                self.assertEqual(prepared["data"]["draft_sha256"],design.sha(path.read_bytes()))
+                draft=json.loads(path.read_bytes())
+                if name=="goal":
+                    draft["goal"]="different valid goal"
+                if name=="model":
+                    draft["model_design"]["proposal"]["behavior"]="changed"
+                if name=="permissions":
+                    draft["development"]["permissions_granted"]=["unexpected"]
+                if name=="legacy-orphan":
+                    with self.watch.journal.db:
+                        self.watch.journal.db.execute("DELETE FROM module_bus_events WHERE event_id=?",
+                                                      (prepared["event_id"],))
+                path.write_bytes(design.json_bytes(draft))
+                self.open(**options)
+                self.drain()
+            self.assertEqual(model.call_count,len(cases))
+        self.assertEqual([e["task_id"] for e in self.events("plugin.design.drafted")],["unchanged"])
+        failures=self.events("plugin.design_watch.intervention_required")
+        self.assertEqual([e["task_id"] for e in failures],list(cases[:-1]))
+        self.assertTrue(all(e["data"]["reason"]=="draft_conflict" for e in failures))
+
     def test_legacy_queue_survives_two_readers_using_one_state_directory(self):
         self.open()
         self.add("legacy")

@@ -52,12 +52,18 @@ class PluginDesign(unittest.TestCase):
         self.assertIsNone(draft["model_design"])
         self.assertEqual(draft["development"]["permissions_granted"], [])
         self.assertEqual(draft["source"]["event_id"], "blocked-blocked-task")
-        requested, generated = self.events()
+        requested, prepared, generated = self.events()
         self.assertEqual(requested["parent_event_id"], self.row["event_id"])
+        self.assertEqual(prepared["kind"],"plugin.design.prepared")
+        self.assertEqual(prepared["parent_event_id"],requested["event_id"])
+        self.assertEqual(prepared["data"]["draft_sha256"],generated["data"]["draft_sha256"])
         self.assertEqual(generated["parent_event_id"], requested["event_id"])
         self.assertEqual(generated["data"]["draft_sha256"], hashlib.sha256(path.read_bytes()).hexdigest())
         self.assertEqual(generated["trace_id"], self.row["trace_id"])
         self.assertNotIn("power down", json.dumps(self.events()))
+        # Older completed CLI runs have only a requested→drafted chain.
+        with self.journal.db:
+            self.journal.db.execute("DELETE FROM module_bus_events WHERE event_id=?",(prepared["event_id"],))
         self.assertEqual(self.execute()["draft_sha256"], result["draft_sha256"])
         draft["goal"] = "changed"
         path.write_bytes(json_bytes(draft))
