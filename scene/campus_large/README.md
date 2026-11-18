@@ -8,13 +8,14 @@
 
 ```sh
 python scene/campus_large/fetch_assets.py
-python scene/campus_large/run.py start
+python scene/campus_large/run.py start --image edge-agent-ros:tu-delft-x
+python scene/campus_large/run.py map --image edge-agent-ros:tu-delft-x --with-lidar
 python scene/campus_large/run.py status
 ```
 
 校园网页默认使用 [8780 总览](http://127.0.0.1:8780/)，机器人工作台使用 [8766 工作台](http://127.0.0.1:8766/)。两者绑定在本机回环地址。首次启动后图像会陆续出现。`campus-build` 在生成成功后退出，`campus-capture` 在所有已登记视角取得图像后退出，这两个服务显示 `Exited (0)` 是预期结果。ROS 传感器持续更新可以在工作台确认。
 
-已有镜像使用其他标签时，加 `--image <本地仿真镜像>`。例如从项目根目录运行 `python scene/campus_large/run.py start --image edge-agent-ros:v0.1`。端口冲突时可加 `--console-port 8866 --overview-port 8880`。其他电脑上没有本项目镜像时，先按现有流程构建或导入仿真镜像。[项目部署指南](../../docs/deployment.md)
+`edge-agent-ros:tu-delft-x` 是本次在开发机上保留的校园镜像标签。新机器准备好项目基础镜像后，在仓库根目录运行 `docker build -f docker/Dockerfile -t edge-agent-ros:tu-delft-x .` 即可得到同名镜像。后续 `start`、`map` 或 `reload` 均可传 `--image` 指定标签，或在 PowerShell 先设置 `$env:EDGE_CAMPUS_IMAGE='edge-agent-ros:tu-delft-x'`。端口冲突时可加 `--console-port 8866 --overview-port 8880`。[项目部署指南](../../docs/deployment.md)
 
 ### 输入资产与离线缓存
 

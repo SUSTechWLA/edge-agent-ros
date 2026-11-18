@@ -1,0 +1,414 @@
+{
+  "date": "2026-11-18",
+  "specs": [
+    "SDD-029",
+    "SDD-030"
+  ],
+  "full_acceptance_passed": true,
+  "full_acceptance_image": "edge-agent-ros:campus-forms-14dc41b",
+  "deployed_map_image": "edge-agent-ros:campus-forms-5064f2f",
+  "raw_report": "artifacts/verification/unified-campus/final.json",
+  "raw_sha256": "4dbda78b11d82b6ef0b3b7af98c640367c4b72eca285970a0d61859656a54518",
+  "scene_revision": "3.6e7cba8f9d258e39",
+  "world_sha256": "8132c0875d90618b421d4ea753ff14971fd2d820e844d568ffe3dcad73cd2c35",
+  "map": {
+    "source": "TU Delft X, LoD2.2 / PDOK 2025 aerial; authored training facilities",
+    "survey_extent_m": [
+      545,
+      1170
+    ],
+    "complete_buildings": 187,
+    "perimeter_objects_omitted": 46,
+    "boundary": "whole LoD2.2 shells only, 3 m inset",
+    "portable_mesh_sha256": "05a08b134867ca62b44278425e94d2c8a05907976e81ed2b8d539bf9e2f96deb",
+    "portable_mesh_bytes": 20682976
+  },
+  "walk": {
+    "check": "on generated SDF and running Gazebo; separate BGT street geometry",
+    "nodes": 26,
+    "segments": 25,
+    "length_m": 776.823,
+    "minimum_centerline_to_static_obstacle_m": 1.705,
+    "rover_radius_m": 0.32,
+    "height_interval_m": [
+      0.065,
+      0.6
+    ],
+    "survey_path_samples": 39,
+    "street_join_xy_m": [
+      65.5,
+      14
+    ]
+  },
+  "wheel": {
+    "first_outbound": "campus-gate-02089324a3",
+    "first_outbound_final_error_m": 0.0667,
+    "continuous_session": "79ee5b0e30264514bbe549f16afd651f",
+    "additional_distance_m": 6.369,
+    "following_tasks": [
+      {
+        "id": "campus-gate-02089324a3-continuation-1",
+        "text": "回到教学楼门厅",
+        "state": "SUCCEEDED",
+        "trace_id": "campus-gate-02089324a3-continuation-1",
+        "goal_error_m": 0.0592
+      },
+      {
+        "id": "campus-gate-02089324a3-continuation-2",
+        "text": "前往教学楼门外",
+        "state": "SUCCEEDED",
+        "trace_id": "campus-gate-02089324a3-continuation-2",
+        "goal_error_m": 0.0725
+      }
+    ]
+  },
+  "other_robots": [
+    {
+      "task_id": "forms-7020a13100-0",
+      "trace_id": "forms-7020a13100-0",
+      "text": "无人机起飞",
+      "tool": "delegate.crazyflie",
+      "feedback": {
+        "robot_id": "crazyflie",
+        "action": "起飞",
+        "target": 1.0,
+        "measured": [
+          0.976931897365135
+        ],
+        "before": [
+          0.08
+        ],
+        "units": "m",
+        "topic": "/world/edge_lab/dynamic_pose/info",
+        "stamp_s": 60.792,
+        "before_stamp_s": 57.674,
+        "imu_stamp_s": 60.8,
+        "settled_samples": 4,
+        "scene_revision": "3.6e7cba8f9d258e39",
+        "child_task_id": "dispatch-69b32246e3b3e00a28acf92b2a5a2a37",
+        "child_trace_id": "forms-7020a13100-0"
+      },
+      "independent_gazebo_measurement": {
+        "stamp_s": 62.496,
+        "value": {
+          "altitude": 0.9775858142223331
+        }
+      }
+    },
+    {
+      "task_id": "forms-7020a13100-1",
+      "trace_id": "forms-7020a13100-1",
+      "text": "无人机降落",
+      "tool": "delegate.crazyflie",
+      "feedback": {
+        "robot_id": "crazyflie",
+        "action": "降落",
+        "target": 0.075,
+        "measured": [
+          0.10602348009390733
+        ],
+        "before": [
+          0.9775858142223331
+        ],
+        "units": "m",
+        "topic": "/world/edge_lab/dynamic_pose/info",
+        "stamp_s": 65.756,
+        "before_stamp_s": 62.86,
+        "imu_stamp_s": 65.75,
+        "settled_samples": 4,
+        "scene_revision": "3.6e7cba8f9d258e39",
+        "child_task_id": "dispatch-51f894166f5caa3aef2eacbe94f6469a",
+        "child_trace_id": "forms-7020a13100-1"
+      },
+      "independent_gazebo_measurement": {
+        "stamp_s": 67.294,
+        "value": {
+          "altitude": 0.10587667786719812
+        }
+      }
+    },
+    {
+      "task_id": "forms-7020a13100-2",
+      "trace_id": "forms-7020a13100-2",
+      "text": "四足机器人屈腿",
+      "tool": "delegate.go1",
+      "feedback": {
+        "robot_id": "go1",
+        "action": "屈腿",
+        "target": 0.65,
+        "measured": [
+          0.65,
+          0.65,
+          0.65,
+          0.65
+        ],
+        "before": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "units": "rad",
+        "topic": "/model/go1/joint_state",
+        "stamp_s": 68.25,
+        "before_stamp_s": 67.65,
+        "imu_stamp_s": 68.25,
+        "settled_samples": 4,
+        "scene_revision": "3.6e7cba8f9d258e39",
+        "child_task_id": "dispatch-a711f99c244378181297492138a347f7",
+        "child_trace_id": "forms-7020a13100-2"
+      },
+      "independent_gazebo_measurement": {
+        "stamp_s": 69.6,
+        "value": {
+          "FR_thigh_joint": 0.65,
+          "FL_thigh_joint": 0.65,
+          "RR_thigh_joint": 0.65,
+          "RL_thigh_joint": 0.65
+        }
+      }
+    },
+    {
+      "task_id": "forms-7020a13100-3",
+      "trace_id": "forms-7020a13100-3",
+      "text": "四足机器人伸腿",
+      "tool": "delegate.go1",
+      "feedback": {
+        "robot_id": "go1",
+        "action": "伸腿",
+        "target": 0.15,
+        "measured": [
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ],
+        "before": [
+          0.65,
+          0.65,
+          0.65,
+          0.65
+        ],
+        "units": "rad",
+        "topic": "/model/go1/joint_state",
+        "stamp_s": 70.4,
+        "before_stamp_s": 69.9,
+        "imu_stamp_s": 70.4,
+        "settled_samples": 4,
+        "scene_revision": "3.6e7cba8f9d258e39",
+        "child_task_id": "dispatch-b2549be6bfd720620a634fa80643b987",
+        "child_trace_id": "forms-7020a13100-3"
+      },
+      "independent_gazebo_measurement": {
+        "stamp_s": 72.15,
+        "value": {
+          "FR_thigh_joint": 0.15,
+          "FL_thigh_joint": 0.15,
+          "RR_thigh_joint": 0.15,
+          "RL_thigh_joint": 0.15
+        }
+      }
+    },
+    {
+      "task_id": "forms-7020a13100-4",
+      "trace_id": "forms-7020a13100-4",
+      "text": "双足机器人举起左臂",
+      "tool": "delegate.g1",
+      "feedback": {
+        "robot_id": "g1",
+        "action": "举起左臂",
+        "target": -0.85,
+        "measured": [
+          -0.85
+        ],
+        "before": [
+          0.0
+        ],
+        "units": "rad",
+        "topic": "/model/g1/joint_state",
+        "stamp_s": 73.45,
+        "before_stamp_s": 72.65,
+        "imu_stamp_s": 73.45,
+        "settled_samples": 4,
+        "scene_revision": "3.6e7cba8f9d258e39",
+        "child_task_id": "dispatch-a881094bce6b42b4e105f5c1dee0c5da",
+        "child_trace_id": "forms-7020a13100-4"
+      },
+      "independent_gazebo_measurement": {
+        "stamp_s": 74.85,
+        "value": {
+          "left_shoulder_pitch_joint": -0.85
+        }
+      }
+    },
+    {
+      "task_id": "forms-7020a13100-5",
+      "trace_id": "forms-7020a13100-5",
+      "text": "双足机器人放下左臂",
+      "tool": "delegate.g1",
+      "feedback": {
+        "robot_id": "g1",
+        "action": "放下左臂",
+        "target": 0.0,
+        "measured": [
+          0.0
+        ],
+        "before": [
+          -0.85
+        ],
+        "units": "rad",
+        "topic": "/model/g1/joint_state",
+        "stamp_s": 76.2,
+        "before_stamp_s": 75.35,
+        "imu_stamp_s": 76.2,
+        "settled_samples": 4,
+        "scene_revision": "3.6e7cba8f9d258e39",
+        "child_task_id": "dispatch-53e1b3d2bfaa1d3049687a2f4d2e480e",
+        "child_trace_id": "forms-7020a13100-5"
+      },
+      "independent_gazebo_measurement": {
+        "stamp_s": 77.55,
+        "value": {
+          "left_shoulder_pitch_joint": 0.0
+        }
+      }
+    }
+  ],
+  "rejected_action": {
+    "text": "双足机器人起飞",
+    "state": "BLOCKED",
+    "detail": "该机体支持：举起左臂、放下左臂"
+  },
+  "lidar_stations": [
+    {
+      "id": "pitch_centre",
+      "xy_m": [
+        -234,
+        61
+      ],
+      "rays_per_scan": 360,
+      "range_max_m": 8.0,
+      "returns": [
+        0,
+        0,
+        0
+      ],
+      "nearest_m": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "woodland_trail",
+      "xy_m": [
+        -151,
+        -80
+      ],
+      "rays_per_scan": 360,
+      "range_max_m": 8.0,
+      "returns": [
+        9,
+        9,
+        9
+      ],
+      "nearest_m": [
+        4.1,
+        4.1,
+        4.1
+      ]
+    },
+    {
+      "id": "teaching_forecourt",
+      "xy_m": [
+        7.8,
+        0.7
+      ],
+      "rays_per_scan": 360,
+      "range_max_m": 8.0,
+      "returns": [
+        69,
+        69,
+        69
+      ],
+      "nearest_m": [
+        3.919,
+        3.919,
+        3.919
+      ]
+    }
+  ],
+  "test_rover_restored": true,
+  "guarded_reload": {
+    "previous_session": "79ee5b0e30264514bbe549f16afd651f",
+    "new_session": "fb9fc580c7bf409da0cccc6edd3907b1",
+    "old_task_id": "campus-gate-02089324a3",
+    "old_evidence_preserved": true,
+    "task_id": "campus-gate-02089324a3-after-reload",
+    "state": "SUCCEEDED",
+    "verified_count": 3,
+    "truth": [
+      14008000000,
+      3.2362,
+      0.0,
+      0.0
+    ],
+    "odom": [
+      14008000000,
+      3.2498,
+      0.0,
+      0.0
+    ]
+  },
+  "other_sim_preserved": [
+    "agent",
+    "bridge",
+    "camera",
+    "camera-sensor",
+    "console",
+    "evidence",
+    "map3d",
+    "map3d-sensor",
+    "model",
+    "model-provider",
+    "perception",
+    "plugin-author",
+    "plugin-manager",
+    "rgbd",
+    "rgbd-sensor",
+    "scene",
+    "session",
+    "sim",
+    "watchdog",
+    "witness"
+  ],
+  "browsers": {
+    "widths": [
+      1440,
+      390
+    ],
+    "geometry_passed": true,
+    "route_passed": true,
+    "native_camera_views": [
+      "overview",
+      "campus",
+      "teaching",
+      "robots",
+      "track",
+      "lawn",
+      "woods",
+      "road",
+      "teaching_interior",
+      "campus_street",
+      "delft"
+    ]
+  },
+  "focused_tests": {
+    "scene-map-tests.txt": 46,
+    "deployment-tests.txt": 16
+  },
+  "limits": [
+    "The 776.823 m walk has been checked geometrically, with lidar station placement. A full autonomous traversal has not been run.",
+    "Rover goal coordinates are restricted to +/-4 m. Go1 and G1 are fixed-base joint fixtures. Crazyflie uses simulated vertical velocity control."
+  ]
+}
