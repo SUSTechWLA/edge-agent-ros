@@ -1,0 +1,140 @@
+{
+  "recorded_at": "2026-11-18T15:38:59.212665+00:00",
+  "scope": "read-only scheduler sample from daily sim, no extra Gazebo or dynamics; isolated Docker filesystem and EGL probes",
+  "image": "edge-agent-ros:field-9983c89",
+  "failed_acceptance": {
+    "file": "campus-integrated.json",
+    "sha256": "1b9cf760f1e64fa951f0fcc2aaab9dac6383bd0e6309557cfd41114db1d46dbb",
+    "operation_id": "campus-gate-390b3f372e/step/1/waypoint/3",
+    "event_id": "gateway-ff3d300a-557c9e8e-23d39793-b5f8928b-9",
+    "stop_evidence": {
+      "accepted_samples": 27,
+      "quiet_samples": 7,
+      "sample_gaps": 3,
+      "wall_elapsed_ms": 3051,
+      "quiet_acquisition_ms": 204,
+      "quiet_arrival_ms": 464,
+      "last_odom_age_ms": 260,
+      "last_linear_mps": 0.0,
+      "last_angular_rad_s": 0.0
+    }
+  },
+  "witness": {
+    "ros_interval_s": 0.22,
+    "sensor_interval_s": 0.4,
+    "ros_max_rows_per_pose_stream": 900,
+    "sensor_streams": 16,
+    "sensor_max_rows_each": 950,
+    "mount": "Docker Desktop Windows host temp bind vs container tmpfs; alternating order 40 trials + 6 discarded warmup; UTF-8 temp write, close, same-directory rename; no fsync",
+    "fixture": "ROS coordinates reuse the last 35 odom and truth rows; capped payloads use repeated pose rows and synthetic range/rig summaries, not a measurement of actual failed snapshot size",
+    "timings": {
+      "ros_900": {
+        "bytes": 80387,
+        "n": 40,
+        "timings": {
+          "serialization": {
+            "median_ms": 2.685,
+            "p95_ms": 3.687,
+            "max_ms": 3.844
+          },
+          "/ram": {
+            "median_ms": 0.405,
+            "p95_ms": 0.55,
+            "max_ms": 1.783
+          },
+          "/hosttmp": {
+            "median_ms": 14.736,
+            "p95_ms": 18.284,
+            "max_ms": 26.276
+          }
+        }
+      },
+      "onboard_100_each": {
+        "bytes": 61474,
+        "n": 40,
+        "timings": {
+          "serialization": {
+            "median_ms": 1.236,
+            "p95_ms": 2.303,
+            "max_ms": 2.809
+          },
+          "/ram": {
+            "median_ms": 0.277,
+            "p95_ms": 0.728,
+            "max_ms": 2.184
+          },
+          "/hosttmp": {
+            "median_ms": 11.134,
+            "p95_ms": 17.78,
+            "max_ms": 22.157
+          }
+        }
+      },
+      "onboard_950_each": {
+        "bytes": 578274,
+        "n": 40,
+        "timings": {
+          "serialization": {
+            "median_ms": 7.455,
+            "p95_ms": 10.134,
+            "max_ms": 11.028
+          },
+          "/ram": {
+            "median_ms": 0.662,
+            "p95_ms": 0.983,
+            "max_ms": 1.948
+          },
+          "/hosttmp": {
+            "median_ms": 12.955,
+            "p95_ms": 15.791,
+            "max_ms": 17.076
+          }
+        }
+      }
+    }
+  },
+  "scheduler_sample": {
+    "container": "edge-agent-campus-sim-1",
+    "samples_s": 5.012,
+    "threads": {
+      "other": {
+        "threads": 54,
+        "run_cpu_s": 8.028607430000001,
+        "runqueue_wait_s": 11.420924984000001
+      },
+      "llvmpipe": {
+        "threads": 16,
+        "run_cpu_s": 1.101578397,
+        "runqueue_wait_s": 3.6470338249999994
+      }
+    },
+    "host_logical_cpus": 16,
+    "dri_exists": false,
+    "cgroup_cpu_max": "max 100000"
+  },
+  "isolated_same_image_egl": [
+    {
+      "setting": "default",
+      "renderer": "llvmpipe (LLVM 20.1.2, 256 bits)",
+      "llvmpipe_threads": 16,
+      "total_threads": 35
+    },
+    {
+      "setting": "4",
+      "renderer": "llvmpipe (LLVM 20.1.2, 256 bits)",
+      "llvmpipe_threads": 4,
+      "total_threads": 10
+    },
+    {
+      "setting": "8",
+      "renderer": "llvmpipe (LLVM 20.1.2, 256 bits)",
+      "llvmpipe_threads": 8,
+      "total_threads": 18
+    }
+  ],
+  "scope_limits": [
+    "Each percentile describes one operation in a synthetic file microbenchmark. It does not measure subscriber lag or the cause of the failing stop.",
+    "Runqueue waits sum over threads and may exceed wall-clock time. The scheduler sample is separate from the failure; it does not establish CPU starvation then.",
+    "EGL probe establishes the worker setting is supported, not sensor frame rate or navigation quality under a changed Mesa setting."
+  ]
+}
