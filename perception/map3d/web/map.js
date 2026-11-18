@@ -2,6 +2,16 @@
 (() => {
   "use strict";
   const el = id => document.getElementById(id);
+  const workbench=el("workbench");
+  if(workbench.dataset.port){
+    const url=new URL("/",location.href);
+    url.port=workbench.dataset.port;
+    for(const link of workbench.querySelectorAll("a")){
+      url.hash=link.dataset.view;
+      link.href=url.href;
+    }
+    workbench.hidden=false;
+  }
   const statuses = {waiting:"等待", stale:"已过期", online:"新鲜", error:"输入异常"};
   const modes = {
     spatial: {canvas:el("viewport"), factory:window.createSpatialRenderer, name:"三维透视",

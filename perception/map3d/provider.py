@@ -27,7 +27,7 @@ from module_journal import ModuleJournal
 
 STATIC = Path(__file__).parent / "web"
 TTL = 3.0
-VERSION = "1.6.0"
+VERSION = "1.7.0"
 MAX_GRID_CELLS = 512 * 512
 GRID_TTL = 5.0
 CLOUD_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
@@ -412,6 +412,10 @@ class Handler(BaseHTTPRequestHandler):
         elif path in static:
             file, mime = static[path]
             raw = (STATIC/file).read_bytes()
+            if file=="index.html":
+                port=os.getenv("EDGE_MAP_CONSOLE_PORT","")
+                valid=port.isascii() and port.isdigit() and len(port)<=5 and 1<=int(port)<=65535
+                raw=raw.replace(b"__CONSOLE_PORT__",port.encode("ascii") if valid else b"")
         else:
             self.send_error(404)
             return

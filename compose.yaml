@@ -40,6 +40,7 @@ services:
     environment:
       <<: *environment
       EDGE_MAP3D_ENV: simulation
+      EDGE_MAP_CONSOLE_PORT: ${EDGE_CONSOLE_PORT:-8765}
       EDGE_MAP3D_BIND: 0.0.0.0
       EDGE_MAP3D_FRAME: ${EDGE_MAP3D_FRAME:-odom}
       ROS_LOG_DIR: /tmp/ros-logs

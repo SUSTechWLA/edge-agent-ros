@@ -42,6 +42,7 @@ services:
     environment:
       <<: *environment
       EDGE_MAP3D_ENV: hardware
+      EDGE_MAP_CONSOLE_PORT: ${EDGE_CONSOLE_PORT:-8765}
       EDGE_MAP3D_BIND: 127.0.0.1
       EDGE_MAP3D_FRAME: ${EDGE_MAP3D_FRAME:-odom}
       EDGE_MAP3D_GRID_TOPIC: ${EDGE_MAP3D_GRID_TOPIC:-/edge/perception/map}

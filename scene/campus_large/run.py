@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PROJECT = "edge-agent-campus"
 SERVICES = ("sim", "bridge", "witness", "gateway", "core", "perception", "scene", "agent", "console",
             "campus-capture", "campus-overview","campus-robot-bridge","campus-fleet",
-            "crazyflie-agent","go1-agent","g1-agent")
+            "crazyflie-agent","go1-agent","g1-agent","session")
 CHILDREN = ("crazyflie", "go1", "g1")
 
 
@@ -186,7 +186,7 @@ def reload_campus(run, output, containers, fetch=read_local, check_children=guar
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["start", "map", "status", "logs", "stop", "down", "reload"])
+    parser.add_argument("action", choices=["start", "map", "review", "status", "logs", "stop", "down", "reload"])
     parser.add_argument("--with-lidar",action="store_true",help="also start the campus fixed ROS point-cloud station with map")
     parser.add_argument("--image", default=os.getenv("EDGE_CAMPUS_IMAGE") or os.getenv("EDGE_IMAGE") or "edge-agent-ros:v0.1")
     parser.add_argument("--assets-dir", type=Path, default=os.getenv("EDGE_CAMPUS_ASSETS_DIR") or ROOT / "artifacts/sim-assets")
@@ -225,6 +225,11 @@ def main():
             run("up", "-d", "--no-build", *SERVICES)
         print(f"Campus overview: http://127.0.0.1:{args.overview_port}/")
         print(f"Robot console: http://127.0.0.1:{args.console_port}/")
+    elif args.action == "review":
+        if not output("ps","--status","running","-q","console").strip():
+            parser.error("campus console is offline; run campus start first")
+        run("up","-d","--no-build","session")
+        print("Campus task sessions: http://"+output("port","console","8080").strip()+"/#sessions")
     elif args.action == "map":
         if not output("ps", "--status", "running", "-q", "sim").strip():
             parser.error("campus simulation is offline; run campus start before installing its map")

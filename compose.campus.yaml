@@ -129,6 +129,15 @@ services:
       - "127.0.0.1:${EDGE_CAMPUS_EVIDENCE_PORT:-8126}:8125"
   session:
     profiles: [campus-session]
+    depends_on:
+      campus-session-init:
+        condition: service_completed_successfully
+  campus-session-init:
+    <<: *campus-tool
+    profiles: [campus-session]
+    network_mode: none
+    volumes: [campus-plugins:/plugins]
+    entrypoint: ["python3","-B","/opt/edge/client/register_session.py","--if-missing"]
   evidence-admin:
     volumes: [campus-plugins:/plugins]
   session-admin:
@@ -186,6 +195,7 @@ services:
         condition: service_completed_successfully
     environment:
       EDGE_MAP_TEXTURE_DIR: /campus/texture
+      EDGE_MAP_CONSOLE_PORT: ${EDGE_CAMPUS_CONSOLE_PORT:-8766}
       EDGE_MAP_ROBOTS_TOPIC: /edge/robot_states
     volumes:
       - campus-world:/campus:ro
