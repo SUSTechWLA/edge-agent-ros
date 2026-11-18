@@ -107,7 +107,8 @@ async function verifyFiles(url,texture) {
   assert.equal(bytes.readUInt32LE(8),bytes.length);
   const document=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
   evidence.geometry={sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length,
-    meshes:document.meshes.length,materials:document.materials.length};
+    meshes:document.meshes.length,materials:document.materials.length,
+    robot_templates:document.scenes.flatMap(scene=>scene.extras?.robot_model?[scene.extras.robot_model]:[])};
   assert.equal(evidence.geometry.sha256,texture.mesh_sha256);
   assert.ok(evidence.geometry.meshes>=3 && evidence.geometry.materials>=8);
   return evidence;
@@ -180,7 +181,9 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
       await evaluate('document.getElementById("planar-viewport").focus({preventScroll:true})');
       await send('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'Enter',code:'Enter'});
       await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter'});
-      await waitFor("document.getElementById('pick-result').textContent.includes('田径场')","georeferenced ground under center of track");
+      const fieldLabel=texture.areas.find(area=>area.id==="track").label;
+      await waitFor("document.getElementById('pick-result').textContent.includes("+JSON.stringify(fieldLabel)+")",
+        "georeferenced ground under center of track");
       trackPick=await evaluate("document.getElementById('pick-result').textContent");
       assert.match(trackPick,/仿真外观/);
       assert.doesNotMatch(trackPick,/实测点/);

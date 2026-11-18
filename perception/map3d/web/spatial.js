@@ -353,6 +353,9 @@
         distance=Math.hypot(...direction);target=look.slice();
         yaw=Math.atan2(direction[0],-direction[1]);
         pitch=Math.asin(clamp(direction[2]/distance,-1,1));axes();
+        if(requestedCamera.referenceAspect){
+          distance*=Math.max(1,requestedCamera.referenceAspect/(surface.w/surface.h));
+        }
         if(requestedCamera.frameGround && requestedBounds){
           // Fit the full playing surface on both landscape and portrait displays.
           // Keep the Gazebo camera direction so near/far stands stay recognizable.

@@ -160,6 +160,16 @@ def live_geometry():
         require(a["surface"]==b["surface"] and abs(a["length_m"]-b["length_m"])<.035 and
                 abs(a["width_m"]-b["width_m"])<.035,"Simulator changed published route "+a["surface"])
     report["route"]={"assembled":built,"gazebo":live}
+    report["robot_models"]={}
+    for body in ("edge_rover","crazyflie","go1","g1"):
+        check_model=models.get(body)
+        require(check_model is not None and body in visible,"Missing active simulator body "+body)
+        links=check_model.findall("link")
+        report["robot_models"][body]={"links":len(links),"visuals":sum(len(l.findall("visual")) for l in links),
+                                     "sensors":[s.get("type") for l in links for s in l.findall("sensor")],
+                                     "physical_collisions":sum(len(l.findall("collision")) for l in links)}
+        require(report["robot_models"][body]["visuals"] and report["robot_models"][body]["sensors"],
+                "Unobservable physics model "+body)
     require(report["teaching"]["collisions"]>=2, "building cannot be physically sensed")
     require(report["track"]["geometry_types"].get("mesh"), "sports markings missing from live Gazebo")
     report["live_model_count"] = len(visible)
@@ -188,7 +198,7 @@ def direct_render():
                 samples[name] = {"sha256":hashlib.sha256(sample_bytes).hexdigest(),"rgb":base64.b64encode(sample_bytes).decode(),
                                  "width":msg.width,"height":msg.height,"stamp_ns":msg.header.stamp.sec*10**9+msg.header.stamp.nsec}
         return accept
-    views=("campus","campus_street","teaching","track","woods")
+    views=("campus","campus_street","teaching","track","woods","robots")
     for name in views:
         require(gz.subscribe(Image,"/campus/view/"+name+"/image",collect(name)),"Gazebo camera subscription failed")
     await_fact(lambda:len(samples)==len(views),"independent live rendered RGB",70)
@@ -306,7 +316,7 @@ def run(args):
             report["ros"]={"counts_start":start["counts"],"counts_end":end["counts"],"first_scan":start["scan"][-1],
                            "last_scan":end["scan"][-1],"clock_before_ns":start["stamps"]["clock"],"clock_after_ns":end["stamps"]["clock"]}
             from campus_forms import verify_forms
-            report["robot_forms"]=verify_forms(api,dc)
+            verify_forms(api,dc,report.setdefault("robot_forms",{}))
             viewer = "http://"+dc("port","campus-overview","8080")
             def assets():
                 with http.open(viewer+"/capture.json",timeout=3) as response:
@@ -402,12 +412,17 @@ def run(args):
                 def mapped():
                     with http.open(map_url+"/api/map",timeout=3) as response:
                         data=json.load(response)
-                    return data.get("texture",{}).get("status")=="ready" and data["pose"]["status"]=="online"
-                await_fact(mapped,"registered campus appearance and current robot pose",45)
+                    bodies={r["id"] for r in data.get("robots",[]) if r.get("status")=="online" and r.get("xyz")}
+                    return (data.get("texture",{}).get("status")=="ready" and data["pose"]["status"]=="online" and
+                            {"edge_rover","crazyflie","go1","g1"}<=bodies)
+                await_fact(mapped,"registered campus appearance and four current robot poses",90)
                 args.out.parent.mkdir(parents=True,exist_ok=True)
                 browser_out=args.out.with_name(args.out.stem+"-texture-browser.json")
-                cmd(["node",str(ROOT/"tests/system/console_browser.mjs"),map_url+"/?view=2d",str(browser_out),"--campus-texture"],timeout=120)
+                cmd(["node",str(ROOT/"tests/system/console_browser.mjs"),map_url+"/?view=2d",str(browser_out),"--campus-texture"],timeout=180)
                 report["texture_browser"]=json.loads(browser_out.read_bytes())
+                for viewport in report["texture_browser"]["viewports"]:
+                    require(set(viewport["modes"]["spatial"]["bodies"])=={"edge_rover","crazyflie","go1","g1"},
+                            "Missing a rendered robot body in browser evidence")
             probes=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
                                  "/opt/audit/tests/system/campus_station_probe.py",timeout=150))
             require(probes,"Empty station fixture evidence")

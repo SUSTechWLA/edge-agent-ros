@@ -42,8 +42,8 @@ def witness(robot):
     print(json.dumps(topics,allow_nan=False))
 
 
-def verify_forms(api,dc):
-    tasks=[]
+def verify_forms(api,dc,report):
+    tasks=report.setdefault("tasks",[])
     token=uuid.uuid4().hex[:10]
     def run(text):
         key="forms-"+token+"-"+str(len(tasks))
@@ -60,6 +60,7 @@ def verify_forms(api,dc):
                        ("g1","双足机器人举起左臂"),("g1","双足机器人放下左臂")):
         task=run(text)
         if task["state"]!="SUCCEEDED":
+            report["failed"]={k:task.get(k) for k in ("id","text","state","trace_id","detail","steps")}
             raise AssertionError(f"{text}: {task.get('state')} {task.get('detail')}")
         step=task["steps"][0]
         proof=step["evidence"]
@@ -75,7 +76,7 @@ def verify_forms(api,dc):
                           evidence=proof,independent_gazebo=observation))
     rejected=run("双足机器人起飞")
     assert rejected["state"] in {"FAILED","BLOCKED"} and not rejected["steps"][0].get("evidence"),rejected
-    return dict(tasks=tasks,rejected=dict(text=rejected["text"],state=rejected["state"],detail=rejected["detail"]))
+    report["rejected"]=dict(text=rejected["text"],state=rejected["state"],detail=rejected["detail"])
 
 
 if __name__=="__main__" and len(sys.argv)==3 and sys.argv[1]=="--witness":

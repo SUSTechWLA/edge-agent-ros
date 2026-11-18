@@ -94,7 +94,8 @@
 
   function focusPlace(place) {
     activeRobot=null;updateRobots();
-    const view=place.id==="track" && place.camera?{...place.camera,frameGround:true}:place.camera;
+    const view=place.id==="track" && place.camera?{...place.camera,frameGround:true}:
+      place.id==="campus" && place.camera?{...place.camera,referenceAspect:1000/650}:place.camera;
     modes[active].renderer.focusBounds(place.bounds,view);
   }
 

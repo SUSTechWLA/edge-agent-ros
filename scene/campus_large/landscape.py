@@ -13,6 +13,8 @@ else:
 
 TRACK_CENTER = (-234,61)
 TRACK_YAW = math.radians(20)
+CAMPUS_EYE = [-145,-295,145]
+CAMPUS_TARGET = [-128,55,6]
 
 
 def field_xy(x,y):

@@ -10,11 +10,11 @@ from xml.etree import ElementTree as ET
 if __package__:
     from .athletics import PITCH_LENGTH, playing_surface
     from .sdf import tag, values, static, shape
-    from .landscape import TRACK_CENTER, TRACK_YAW, SENSOR_STATIONS, field_xy, pedestrian_grounds, trees
+    from .landscape import CAMPUS_EYE, CAMPUS_TARGET, TRACK_CENTER, TRACK_YAW, SENSOR_STATIONS, field_xy, pedestrian_grounds, trees
 else:
     from athletics import PITCH_LENGTH, playing_surface
     from sdf import tag, values, static, shape
-    from landscape import TRACK_CENTER, TRACK_YAW, SENSOR_STATIONS, field_xy, pedestrian_grounds, trees
+    from landscape import CAMPUS_EYE, CAMPUS_TARGET, TRACK_CENTER, TRACK_YAW, SENSOR_STATIONS, field_xy, pedestrian_grounds, trees
 
 
 BRICK=(.65,.41,.28)
@@ -307,7 +307,7 @@ def build(assets, base, output):
     areas=[
         area("campus","TU Delft X · 校园试验场",[-355,-137,92,165],"代尔夫特市 TU Delft X 体育园 · 本项目训练设施",
              "从南面俯瞰体育园。林带紧邻运动场，步道经过教学楼广场，与东侧 Mekelweg 街网相连。后方为实测校园楼群。",
-             [-137,-252,143],[-123,60,3]),
+             CAMPUS_EYE,CAMPUS_TARGET),
         area("teaching","教学楼与主入口",[-41,-10,5,10],"体育园训练区",
              "教学楼首层走廊通向东侧雨棚。穿过门洞即可到铺砖广场，行道树引向操场。",
              [35,-32,10],[-10,1,5.5]),

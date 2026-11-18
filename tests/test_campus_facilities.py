@@ -1,5 +1,6 @@
 """SDD-028. Check the metric training facilities from the same geometry Gazebo reads."""
 import math
+import itertools
 import sys
 import tempfile
 import unittest
@@ -10,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scene/campus_large"))
 import athletics
 import build
+import landscape
 
 
 def numbers(element, path):
@@ -24,6 +26,44 @@ def face_bounds(surface, name):
 
 
 class FacilitiesTest(unittest.TestCase):
+    def test_panorama_keeps_the_training_sites_and_tower_in_frame(self):
+        eye, target = landscape.CAMPUS_EYE, landscape.CAMPUS_TARGET
+        def unit(v):
+            return [n/math.sqrt(sum(x*x for x in v)) for n in v]
+        def dot(a,b):
+            return sum(x*y for x,y in zip(a,b))
+        def cross(a,b):
+            return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]
+        forward=unit([a-b for a,b in zip(target,eye)])
+        right=unit(cross(forward,[0,0,1])); up=cross(right,forward)
+        points=[(*landscape.field_xy(x,y),z) for x,y,z in itertools.product((-89,89),(-55,55),(0,16))]
+        points+=list(itertools.product((-41,23),(-14,12),(0,16)))
+        points.extend([(-260,-96,0),(-248,-129,0),(-73,-74,9),(-80,-39,9),(65.5,14,0),(-225,490,96)])
+        for p in points:
+            delta=[v-w for v,w in zip(p,eye)]
+            half_width=dot(delta,forward)*math.tan(1.18/2)
+            self.assertGreater(half_width,0,p)
+            self.assertLess(abs(dot(delta,right)),.92*half_width,p)
+            self.assertLess(abs(dot(delta,up)),.92*half_width*.65,p)
+
+    def test_training_walk_follows_the_ground_and_opens_into_the_stands(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            world, root = ET.Element("world"), Path(tmp)
+            route=landscape.pedestrian_grounds(world,root)
+            build.stadium(world,root)
+            nodes={n["id"]:n["xy"] for n in route["nodes"]}
+            self.assertEqual(nodes["teaching_exit"],[3.3,0])
+            self.assertEqual(nodes["track_gate"],list(landscape.field_xy(0,-46.6)))
+            self.assertEqual(nodes["street_join"],[65.5,14])
+            for edge in route["edges"]:
+                vis=world.find(f"./model[@name='{edge['model']}']/link/visual[@name='{edge['visual']}']")
+                length,width,_=numbers(vis,"geometry/box/size")
+                self.assertAlmostEqual(length,math.dist(nodes[edge["from"]],nodes[edge["to"]]),delta=.002)
+                self.assertAlmostEqual(width,edge["width_m"])
+            field=world.find("./model[@name='track']")
+            self.assertAlmostEqual(numbers(field,"pose")[5],math.radians(20),places=6)
+            self.assertEqual(numbers(field,"pose")[:2],[-234,61])
+
     def test_hollow_building_and_two_metre_portal(self):
         world = ET.Element("world")
         features = build.teaching(world)

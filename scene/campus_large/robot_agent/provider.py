@@ -3,6 +3,7 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
+import os
 from pathlib import Path
 import re
 import sqlite3
@@ -38,6 +39,7 @@ class Fleet(Node):
             self.db.execute("UPDATE receipts SET result=? WHERE result IS NULL",
                 (json.dumps(failed("robot.runtime_restarted","控制器已重启，需核对原操作。")),))
         self.scene=json.loads(Path("/campus/layout.json").read_bytes())["revision"]
+        self.overview_port=int(os.getenv("EDGE_CAMPUS_OVERVIEW_PORT","0"))
         self.telemetry=self.create_publisher(String,"/edge/robot_states",2)
         self.gz=GazeboNode()
         self.gz_callback=self.on_poses
@@ -91,6 +93,8 @@ class Fleet(Node):
                     item["joints"]=self.joints[key][2]
                 if key in self.sensors:
                     item["imu_stamp_s"]=self.sensors[key][1]
+                if self.overview_port:
+                    item["camera_url"]=f"http://127.0.0.1:{self.overview_port}/"+("teaching_interior" if key=="edge_rover" else "robots")+".png"
                 rows.append(item)
         self.telemetry.publish(String(data=json.dumps(dict(scene_revision=self.scene,robots=rows),allow_nan=False)))
 
@@ -99,8 +103,10 @@ class Fleet(Node):
         sensor=self.sensors.get(key)
         joint=self.joints.get(key)
         now=time.monotonic()
-        if (not pose or not sensor or now-min(pose[0],sensor[0])>2.5 or
-                key in JOINTS and (not joint or now-joint[0]>2.5)):
+        # A fixed-base fixture may no longer appear in Gazebo's *dynamic* pose
+        # stream once it settles. Its joint encoder and IMU are independent sensors.
+        control = joint if key in JOINTS else pose
+        if not control or not sensor or now-min(control[0],sensor[0])>3:
             return None
         if key=="crazyflie":
             return pose[1],[pose[2][2]],sensor[1]
@@ -130,9 +136,16 @@ class Fleet(Node):
             for key,job in list(self.active.items()):
                 reading=self.readings(key)
                 result=None
-                if reading is None or time.monotonic()-job["start"]>40:
-                    result=failed("robot.feedback_timeout","反馈丢失或动作在时间预算内未达到目标。")
+                if reading is None:
+                    if key=="crazyflie":
+                        self.flight.publish(Twist())
+                    missing=job.setdefault("missing_since",time.monotonic())
+                    if time.monotonic()-missing>7:
+                        result=failed("robot.feedback_missing",f"{key} 没有连续取得新鲜的执行反馈，动作中断。")
+                elif time.monotonic()-job["start"]>50:
+                    result=failed("robot.feedback_timeout",f"{key} 目标 {job['target']:.3f}，最后测量 {reading[1]}，稳定样本数 {job['steady']}。")
                 else:
+                    job.pop("missing_since",None)
                     stamp,values,imu=reading
                     target=job["target"]
                     if key=="crazyflie":

@@ -108,7 +108,9 @@ services:
     <<: *campus-tool
     depends_on: *campus-ready
     restart: unless-stopped
-    environment: *robot-ros
+    environment:
+      <<: *robot-ros
+      EDGE_CAMPUS_OVERVIEW_PORT: ${EDGE_CAMPUS_OVERVIEW_PORT:-8780}
     volumes: [campus-world:/campus:ro, campus-fleet-state:/state]
     command: ["python3","-B","/opt/edge/scene/campus_large/robot_agent/provider.py"]
 

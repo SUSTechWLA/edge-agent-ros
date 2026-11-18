@@ -23,7 +23,8 @@ class DelftCampus(unittest.TestCase):
         self.manifest = json.loads((site.DATA/"manifest.json").read_bytes())
 
     def test_pinned_sources_cover_the_extent_and_include_landmarks(self):
-        source_ids, rectangles = set(), []
+        source_ids, complete, rectangles = set(), set(), []
+        west,south,east,north = self.manifest["bbox_rd_m"]
         with ZipFile(site.DATA/"sources.zip") as archive:
             for name, digest in self.manifest["cityjson_pages"].items():
                 raw = archive.read(name)
@@ -34,14 +35,27 @@ class DelftCampus(unittest.TestCase):
                     self.assertTrue(page["metadata"]["metadata"]["referenceSystem"].endswith("/7415"))
                 rectangles.append(tuple(map(int, Path(name).stem.split("_"))))
                 source_ids.update(feature["id"] for feature in page["features"])
+                for feature in page["features"]:
+                    parts = [g for obj in feature["CityObjects"].values() for g in obj.get("geometry",[])
+                             if g["lod"]=="2.2" and g["type"]=="Solid"]
+                    indices = {i for part in parts for shell in part["boundaries"] for surface in shell
+                               for ring in surface for i in ring}
+                    if not indices:
+                        continue
+                    tr = page["metadata"]["transform"]
+                    xy = [(feature["vertices"][i][0]*tr["scale"][0]+tr["translate"][0],
+                           feature["vertices"][i][1]*tr["scale"][1]+tr["translate"][1]) for i in indices]
+                    if all(west+3<=x<=east-3 and south+3<=y<=north-3 for x,y in xy):
+                        complete.add(feature["id"])
             self.assertEqual(hashlib.sha256(archive.read("ortho.source")).hexdigest(), self.manifest["wms_sha256"])
-        west,south,east,north = self.manifest["bbox_rd_m"]
         self.assertEqual(sum((r-l)*(t-b) for l,b,r,t in rectangles), (east-west)*(north-south))
         for i,(l,b,r,t) in enumerate(rectangles):
             self.assertTrue(west <= l < r <= east and south <= b < t <= north)
             for x,y,u,v in rectangles[:i]:
                 self.assertTrue(min(r,u) <= max(l,x) or min(t,v) <= max(b,y))
         included = set(self.manifest["source_building_ids"])
+        self.assertEqual(included,complete)
+        self.assertFalse(included.intersection(self.manifest["omitted_perimeter_ids"]))
         self.assertTrue(included <= source_ids)
         self.assertEqual(len(included), self.manifest["buildings"])
         self.assertIn("NL.IMBAG.Pand.0503100000030264", included)
