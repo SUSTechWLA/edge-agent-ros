@@ -24,6 +24,7 @@ RULES = [
       "tests/test_series_tools.py","tests/test_watchdog.py","tests/test_software_provider.py"), ("planner",)),
     (("tests/system/watchdog_acceptance.py",), ("observations",)),
     (("tests/system/watchdog_mounts.py","tests/system/evolution_mounts.py"), ("observations","board")),
+    (("tests/system/event_backlog_probe.py",), ("observations",)),
     (("tests/system/software_provider_acceptance.py","tests/system/software_author_fixture.py"), ("agent-faults",)),
     (("tests/system/series_author_acceptance.py","tests/system/plugin_design_acceptance.py"), ("agent-faults",)),
     (("sessions_plugin/*", "client/register_session.py"), ("planner","observations","ui","console-missions","board")),
@@ -119,6 +120,7 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["client/software_provider.py"])[0],[R,"planner","agent-faults"])
         self.assertEqual(selection(["client/watchdog.py"])[0],[R,"planner","observations","board"])
         self.assertEqual(selection(["tests/system/watchdog_mounts.py"])[0],[R,"observations","board"])
+        self.assertEqual(selection(["tests/system/event_backlog_probe.py"])[0],[R,"observations"])
         chosen = selection(["agent/series_tools.py"])[0]
         for stage in ("planner","agent-contracts","agent-faults","observations","model","board"):
             self.assertIn(stage,chosen)

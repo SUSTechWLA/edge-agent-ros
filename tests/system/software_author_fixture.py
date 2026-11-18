@@ -19,9 +19,15 @@ class Adapter(BaseHTTPRequestHandler):
                     "permissions":"Read supplied text only.","dependencies":"The installed text provider.",
                     "example_input":"ROBOT robotics robot","expected_result":"2",
                     "rollback":"Remove manifest by current digest; retain completed task history."}
-        elif self.path=="/code/api/chat":
+        elif self.path in ("/code/api/chat","/code-correction/api/chat"):
             answer={"description":"Count exact robot words ignoring case","prefix":"Count robot words",
                     "expression":"text.casefold().split().count('robot')"}
+            if self.path=="/code-correction/api/chat":
+                failure=json.loads(body["messages"][-1]["content"]).get("previous_failure") or {}
+                corrected=(failure.get("attempt")==1 and failure.get("reason")=="software.expression"
+                           and failure.get("expression")=="text.reverse()" and bool(failure.get("diagnostic","").strip()))
+                if not corrected:
+                    answer["expression"]="text.reverse()"
         else:
             return self.send_error(404)
         wire=json.dumps({"done":True,"message":{"content":json.dumps(answer)}}).encode()

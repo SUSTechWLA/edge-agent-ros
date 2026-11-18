@@ -1,4 +1,5 @@
 {
+  "verified_commit": "9c75bbe5972c6db4b528aaa59c0c81b23440be8c",
   "spec": "SDD-019",
   "tested_on": "2026-11-18",
   "environment": "Windows host / Docker Desktop Linux, ROS 2 Jazzy Agent with real HTTP Console and SQLite journals; isolated Compose projects and registries.",
@@ -22,187 +23,187 @@
   },
   "verified_automatic_cases": [
     {
-      "run": "edge-software-8794bd0a8ebc",
-      "image_id": "sha256:6fee2257adf8e4fd8b020845453956cef87388a40018bcc5050d30685e434206",
-      "report_file": ".ci-results/system/runs/sdd019-author/fixture-verified.json",
-      "report_sha256": "02aca9dc51cddbf0c2a635471c85482dac964f2271c00b2125c96a87ece8654b",
+      "run": "edge-software-cdff12c8ff05",
+      "image_id": "sha256:0deae44e56015a103257c015b14452de224c1c380861f6fd49af32610d0a4acb",
+      "report_file": ".ci-results/system/runs/sdd019-author/fixture-9c75bbe.json",
+      "report_sha256": "48ef6a9433ef5cfc444dda0097ba1b82e6620cdf5769f452db436d5089ea467c",
       "passed": true,
       "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
       "candidate_author": "deterministic Ollama protocol fixture",
       "intake": {
         "task": "word-gap",
         "state_at_end": "BLOCKED",
-        "planning_blocked": "f0e8efe64ae3445da2b79dd61a073bcf",
-        "author_declined": "2d7e4e84cb9b4ec3a0e6d28746d59bd3",
-        "design_drafted": "077443361c8143c8a593edc281409ac2",
-        "design_id": "28c443268178c8934ea94819a09ab0bb37b7097c68fcde2047f2945adf5e40b6",
+        "planning_blocked": "248b617cc3194cd583286d060547f6be",
+        "author_declined": "35b4d95433d747ab8c0f66449eb8f03c",
+        "design_drafted": "a56c3eb3a289403a984fade86b9d3d98",
+        "design_id": "dcf33e37072e2267ef094c0bc677f1e7b2892ad79f07cea2011bf972fccc5f3c",
         "selected_interface": "text-transform"
       },
       "candidate": {
-        "tool_id": "software.t_28c443268178c8934ea94819a09ab0bb",
+        "tool_id": "software.t_dcf33e37072e2267ef094c0bc677f1e7",
         "review_state": "unverified",
-        "request_sha256": "ff7389599a3f05c4bf7ca13ffa6ba0ea54b890fa759e69442d2e1bbcfd02a1a0",
+        "request_sha256": "3e314ce7af18b19b0031cc645956476427e2e1f87f5103d1165a39dd411cbdac",
         "response_sha256": "78e8ef698db9c079eedb48ccd02a4dd4ec95b78bfa0e12026748390808711350",
-        "draft_sha256": "264ebe55bf0d8e3c029fe81f62ab968f832603991bdff1a7bc3abe387e283f47",
+        "draft_sha256": "7248710977a5d5451ebdfb62e5371bfecd714c6a35ce562ae23436a380b77b26",
         "source_sha256": "5f0b4cd86defe9f55b7bfafea64dd32cccd4f3bf5a77c970194bc33baf83987d",
         "implementation": "def transform(text):\n    return text.casefold().split().count('robot')\n",
         "causal_chain": [
-          "f57fd9ad40ee40919925dd048c80c498",
-          "800a599ae2904ca4b54db7874e7f84d8",
-          "8fc11d0361aa4d9d9d1e3b2f1caa55dd",
-          "8f121325141240b4b141f793ea24060b",
-          "077443361c8143c8a593edc281409ac2",
-          "42473841ba3f43a6b129db908d2f8783",
-          "2d7e4e84cb9b4ec3a0e6d28746d59bd3",
-          "f0e8efe64ae3445da2b79dd61a073bcf",
-          "79ed442e74734cf2b9948b54873d82fb",
-          "986dbd90cdca430ca0a32d88c16e4d78"
+          "e7a315b50b64421a99e998eade3a845b",
+          "17dd202a748f4834ab1fc8523d330e22",
+          "b91a6dc6d2664401a7946d6ab02bca80",
+          "d73fcb36d93a465fa07d65c2e65ebe23",
+          "a56c3eb3a289403a984fade86b9d3d98",
+          "71cdbf27867f437ca642671e617a238d",
+          "35b4d95433d747ab8c0f66449eb8f03c",
+          "248b617cc3194cd583286d060547f6be",
+          "2f6d644ba5194ab9ab78704a3f93f431",
+          "dba2c49df5254201861affcab92244e5"
         ],
         "events": [
           [
             "plugin.software_author.queued",
-            "86a157b91cc1621e3797fcf648cf389be65b2389b17616b4186ffe76ca5d4fde"
+            "daf21beb15f5aa09bdab8562a7e4a8356d1e50d1c22a53c49484caa49d7ab7e6"
           ],
           [
             "plugin.software_author.attempt",
-            "a8c7d9e9126c200821eecb41342a0a29049f9a60d08e30d7fda736530cb613da"
+            "436889850349d261c407676e4f4e8ccdd714f5aeeda526fe3e290868275f48ec"
           ],
           [
             "plugin.software_author.model_requested",
-            "8f121325141240b4b141f793ea24060b"
+            "d73fcb36d93a465fa07d65c2e65ebe23"
           ],
           [
             "plugin.software_author.model_replied",
-            "8fc11d0361aa4d9d9d1e3b2f1caa55dd"
+            "b91a6dc6d2664401a7946d6ab02bca80"
           ],
           [
             "plugin.software_author.prepared",
-            "800a599ae2904ca4b54db7874e7f84d8"
+            "17dd202a748f4834ab1fc8523d330e22"
           ],
           [
             "plugin.software_author.authored",
-            "f57fd9ad40ee40919925dd048c80c498"
+            "e7a315b50b64421a99e998eade3a845b"
           ],
           [
             "plugin.software_author.completed",
-            "1838c7fb2d5186d8b0a3d925e6b7890b363b29049e3b4bd66307124c285141b9"
+            "6f1e0ea70a7e2b83c59a626d4447230fdc25e877e3330cdead858c5c1db62a54"
           ]
         ]
       },
       "verification": {
         "case_count": 4,
         "cases_sha256": "203b216ec133d7ab2448685d91fa508a94f2ebb81e406c110157dc34c8c78832",
-        "approval_sha256": "4cb834ec8f2dd8f7cea73039c3fcd1505c93e9bef93e4f55bd03468de8d0ebe8",
-        "event_id": "22bdc6be8c2944bda3100c8105c9caaa"
+        "approval_sha256": "fee5d354aa8442d556d67f7147bcf019fcf46f457fc2e971181aa630bbce5d8f",
+        "event_id": "84dd7b021162498daf3a0b3b63f26da5"
       },
       "release_and_execution": {
-        "published": "a35b1ce973f94779b21dd385e03d6ee8",
+        "published": "eaada7689d1b46a493955aa3015bb293",
         "execution_task": "word-active",
         "original_operation": "word-active/step/1",
         "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
         "value": 2,
         "empty_value": 0,
-        "duplicate_publication_id": "a35b1ce973f94779b21dd385e03d6ee8",
-        "removed": "7a1ebd63efbe4654bb77b047919535c2",
+        "duplicate_publication_id": "eaada7689d1b46a493955aa3015bb293",
+        "removed": "ff1ce341a4f74a6394e65fac4b14ee38",
         "rejected": [
           "software.approval_mismatch",
           "software.case_mismatch",
           "software.version_mismatch",
           "software.input_invalid"
         ],
-        "declared_version": "351ea9413637f01482e8dbfed86b738983d86a75b5a2940084abaff92a80da8c"
+        "declared_version": "aef4c80e6f205513af6ba86055d3c780e2f845231af96911482030d5a1b34c20"
       }
     },
     {
-      "run": "edge-software-faf2c2857461",
-      "image_id": "sha256:6fee2257adf8e4fd8b020845453956cef87388a40018bcc5050d30685e434206",
-      "report_file": ".ci-results/system/runs/sdd019-author/ollama-uppercase-verified.json",
-      "report_sha256": "1667fb3037e6316db45376a244f06a6ba289a97f00ae48d020de13f00eadb3da",
+      "run": "edge-software-2f8a486d9aa8",
+      "image_id": "sha256:0deae44e56015a103257c015b14452de224c1c380861f6fd49af32610d0a4acb",
+      "report_file": ".ci-results/system/runs/sdd019-author/qwen-uppercase-9c75bbe.json",
+      "report_sha256": "eb60a984e3c33913bca465f059dd5297b9ebe7b56f05c0e0b5a1898f636fb0b4",
       "passed": true,
       "goal": "Given literal text, return the same text in uppercase as one string. Preserve whitespace and punctuation. The input and output are text values.",
       "candidate_author": "qwen2.5:1.5b",
       "intake": {
         "task": "word-gap",
         "state_at_end": "BLOCKED",
-        "planning_blocked": "387ab1741ddb425abba635bd103659bf",
-        "author_declined": "0669e1ab1c1c4a9da85634d152f8eec3",
-        "design_drafted": "d2482281817f45cc9d31b0e61878d532",
-        "design_id": "e89907e55c28ae5ad2ed13f3c21048022ce4068dcc6a437cf9b763919f254cf7",
+        "planning_blocked": "d0f56378f2b14ba4a792eb46dd9f7e30",
+        "author_declined": "7cf6a5884dba4250b5bd77f943c4fa68",
+        "design_drafted": "37d4e01ed63045ef9c7bff2317f19702",
+        "design_id": "26090f21ce074fe7467d7070345afc44fa1d82bf05b8546e6b9525e13570d830",
         "selected_interface": "text-transform"
       },
       "candidate": {
-        "tool_id": "software.t_e89907e55c28ae5ad2ed13f3c2104802",
+        "tool_id": "software.t_26090f21ce074fe7467d7070345afc44",
         "review_state": "unverified",
-        "request_sha256": "2fa5fd6aa234d6b5137c2eef1aeb6013a773112f43e71dd4a7d673bebedb901f",
-        "response_sha256": "8141d7fa3169ae898637295fcc56882aabe3ccc94939abbf250304c00ffde657",
-        "draft_sha256": "3058df86ba6d145617c74efbd7c425aec96f3e93b87ae689667cfb1056c031b9",
+        "request_sha256": "f96ef51949f5c45f973f8d35204206ade9e992e1fbad269ebbd5a0b83a23d40a",
+        "response_sha256": "be91f1dfadb8b01230c4192f810b2cc8d068420abe05e6c5e3f414266c7548a4",
+        "draft_sha256": "dd1e9a72260b94eb8c5b001eb5282e4ad71aedfdfee8840ac3b506e2f6020a9d",
         "source_sha256": "249dffac0694d655d66f077ec5e087b2a202bc6383dccc479cb96f02316b0067",
         "implementation": "def transform(text):\n    return text.upper()\n",
         "causal_chain": [
-          "27289357f9644e76a6c9a08f0a2e8249",
-          "fead933380234a3090991d559e4d2a55",
-          "fec4bfacfc68490399cebd0451b4aac4",
-          "0eac8a66d5344f4781ea81d6efe5277a",
-          "d2482281817f45cc9d31b0e61878d532",
-          "bbbbc0308cba470d80ebaa19ed9de39a",
-          "0669e1ab1c1c4a9da85634d152f8eec3",
-          "387ab1741ddb425abba635bd103659bf",
-          "9bef72ea21e94918a6e9c03cde34eb7d",
-          "fb7f534bb73b42efb90b519007dcb381"
+          "9f56b319597b40e9ad1df81a103aec19",
+          "318c2fff0e4a4c81bbf48d882c3892cb",
+          "9afbb31c757e445b8b0c819b5758e599",
+          "3d8ed88621cd4fd5b4243c3dabe268ec",
+          "37d4e01ed63045ef9c7bff2317f19702",
+          "e4ae52bd085a45398a6bbad3eb225d68",
+          "7cf6a5884dba4250b5bd77f943c4fa68",
+          "d0f56378f2b14ba4a792eb46dd9f7e30",
+          "b5a55d2bf7fb428a8e093d771461c4bc",
+          "718926dedb4348da861b7a495d2e8225"
         ],
         "events": [
           [
             "plugin.software_author.queued",
-            "32c7f466eb772b146fbec2b6b38e167ec7d08b3362f88311145aae4773dc655c"
+            "4c1f8b535194dac6fedf8501cc7d6e1e33c87394ed0ed8c9340ef02f49356e70"
           ],
           [
             "plugin.software_author.attempt",
-            "8f02489fd5f29c15a21c4c8f2277923387c8d29478f9c164d43e081d7d254503"
+            "f736ab128bbce13bfc5a05aba021d04608b3cad77e0413853b835b5586fd5743"
           ],
           [
             "plugin.software_author.model_requested",
-            "0eac8a66d5344f4781ea81d6efe5277a"
+            "3d8ed88621cd4fd5b4243c3dabe268ec"
           ],
           [
             "plugin.software_author.model_replied",
-            "fec4bfacfc68490399cebd0451b4aac4"
+            "9afbb31c757e445b8b0c819b5758e599"
           ],
           [
             "plugin.software_author.prepared",
-            "fead933380234a3090991d559e4d2a55"
+            "318c2fff0e4a4c81bbf48d882c3892cb"
           ],
           [
             "plugin.software_author.authored",
-            "27289357f9644e76a6c9a08f0a2e8249"
+            "9f56b319597b40e9ad1df81a103aec19"
           ],
           [
             "plugin.software_author.completed",
-            "b02f280314ad05c4ed711d5fce9852ec3ee816b8029412fba59113057805ed30"
+            "acd30a777f3d57321d2ddd7e348f212f73681e0fea0ea4894c0ed9f537ed249b"
           ]
         ]
       },
       "verification": {
         "case_count": 4,
         "cases_sha256": "66d5787ef89a4b4cfed3063b47c91f9698fef4cb52d8d7618486be5e50530382",
-        "approval_sha256": "6850352bf27b02d0197b47ff6d3831d95d6826062866cc44f3b4ad0de2c8feb2",
-        "event_id": "400e0cb11a0a48ebb2a7f91ffe6df09c"
+        "approval_sha256": "be4a98ba114d9a259823bac9609207156366bb6b7e7a5aec00684860ad69b296",
+        "event_id": "c2bf013d3145417db31489a1f158617f"
       },
       "release_and_execution": {
-        "published": "0b41af1e82d444afb695da317e9b965f",
+        "published": "5cb72284c3a6486e95154bc9dab50bc2",
         "execution_task": "word-active",
         "original_operation": "word-active/step/1",
         "input_sha256": "f990581428e151c49526f1bb2ca34a1e8e8370f57714e5623928b2b462dca4eb",
         "value": "ＲＯＢＯＴ  ROBOT\tROBOT   ",
         "empty_value": "",
-        "duplicate_publication_id": "0b41af1e82d444afb695da317e9b965f",
-        "removed": "c084ccd8c4fc477daa677102f42d4eaf",
+        "duplicate_publication_id": "5cb72284c3a6486e95154bc9dab50bc2",
+        "removed": "29352511e4464631bc12f8f42c566a31",
         "rejected": [
           "software.approval_mismatch",
           "software.case_mismatch",
           "software.version_mismatch",
           "software.input_invalid"
         ],
-        "declared_version": "4c99db6758708dc62440e54518f804e7f63b9ad17af332f311331222d0474b4e"
+        "declared_version": "ead9c0ee09354b58075131516cf20c62b612dc0ae71283c4eb5980767b42b34f"
       }
     }
   ],
@@ -262,7 +263,8 @@
           "reason": "other_interface"
         }
       },
-      "retries": []
+      "retries": [],
+      "attempt_evidence": []
     },
     {
       "run": "edge-software-d675f60437d5",
@@ -288,7 +290,8 @@
           "reason": "other_interface"
         }
       },
-      "retries": []
+      "retries": [],
+      "attempt_evidence": []
     },
     {
       "run": "edge-software-ba19ac20b228",
@@ -317,8 +320,181 @@
           "attempt": 1,
           "reason": "model_unavailable"
         }
+      ],
+      "attempt_evidence": [
+        {
+          "event_id": "fbe6abdbed4b48ac91b721a744a9028e",
+          "stage": "model_requested"
+        },
+        {
+          "event_id": "16353c478b494de38f30bf9e77e109ed",
+          "stage": "model_requested"
+        }
+      ]
+    },
+    {
+      "run": "edge-software-53b8694386c9",
+      "image_id": "sha256:6fee2257adf8e4fd8b020845453956cef87388a40018bcc5050d30685e434206",
+      "report_file": ".ci-results/system/runs/sdd019-author/ollama-word-verified.json",
+      "report_sha256": "6cf390ccd91bdd7fd3e2cd958ac566d9db8ad9029c95d720746b4cba004940a9",
+      "passed": false,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "model": "qwen2.5:1.5b",
+      "selected_interface": "text-transform",
+      "design_event": "086b195759084d94afa2dd13cd914c5d",
+      "design_prompt_sha256": "5095b5496a0ba656179999172f5b77a76dfb8b716ab93dbcb63f2d7ade8c253d",
+      "fixture": "The quick brown fox jumps over the lazy dog.",
+      "model_expected": "4",
+      "test_error": "No candidate: plugin.software_author.intervention_required model_unavailable",
+      "last_event": {
+        "kind": "plugin.software_author.intervention_required",
+        "event_id": "a919bb6889576c6df04b076f39e6ded64c4fd031bc50d14302ca434982eff394",
+        "data": {
+          "attempt": 3,
+          "budget": 3,
+          "design_event_id": "5338039c1ded4d52abec9679407e9c6f",
+          "reason": "model_unavailable",
+          "request_id": "cdfd4916078fc824ff8a1a188221cb16fb6d2bd120e195d6e7a40622e7a628a2",
+          "steps": [
+            "检查授权编码模型进程、地址和可用模型。"
+          ]
+        }
+      },
+      "retries": [
+        {
+          "attempt": 1,
+          "reason": "model_unavailable"
+        },
+        {
+          "attempt": 2,
+          "reason": "model_unavailable"
+        }
+      ],
+      "attempt_evidence": [
+        {
+          "event_id": "5926d23cd6874fc195abe1a77dbd5d88",
+          "stage": "model_requested"
+        },
+        {
+          "event_id": "fc8c95aee06b45a68ea1f84d97669ed3",
+          "stage": "model_requested"
+        },
+        {
+          "event_id": "5338039c1ded4d52abec9679407e9c6f",
+          "stage": "model_requested"
+        }
+      ],
+      "active_manifests": 0,
+      "intake_final_state": "BLOCKED",
+      "private_package_present": false,
+      "model_http_status_and_time": [
+        "500 1m20s"
+      ]
+    },
+    {
+      "run": "edge-software-637f4fedc3ff",
+      "image_id": "sha256:0deae44e56015a103257c015b14452de224c1c380861f6fd49af32610d0a4acb",
+      "report_file": ".ci-results/system/runs/sdd019-author/qwen-word-9c75bbe.json",
+      "report_sha256": "f86d1e37a85e60dd4b98928530e39889bb8385f0aec576d82da4b51430a88d89",
+      "passed": false,
+      "goal": "Count exact whitespace-separated words equal to robot ignoring case in supplied text.",
+      "model": "qwen2.5:1.5b",
+      "selected_interface": "text-transform",
+      "design_event": "6d498c80d26e415cac3e5969777f8b65",
+      "design_prompt_sha256": "5095b5496a0ba656179999172f5b77a76dfb8b716ab93dbcb63f2d7ade8c253d",
+      "fixture": "The quick brown fox jumps over the lazy dog.",
+      "model_expected": "4",
+      "test_error": "No candidate: plugin.software_author.intervention_required model_reply_invalid",
+      "last_event": {
+        "kind": "plugin.software_author.intervention_required",
+        "event_id": "ba6c8b763370bb0aef7456f928b39567ada210ca4d3bfe04c3c24127a6f93237",
+        "data": {
+          "attempt": 3,
+          "budget": 3,
+          "design_event_id": "ff8a4c7698814207963c1b6f017ccd77",
+          "reason": "model_reply_invalid",
+          "request_id": "3e0901736f6093470a29b3c30f25227a1c999202eb68fb02302d2fe55f93fe84",
+          "steps": [
+            "复核原事件、私有输入与已持久化工件，再交接研发审查。"
+          ]
+        }
+      },
+      "retries": [
+        {
+          "attempt": 1,
+          "reason": "model_reply_invalid"
+        },
+        {
+          "attempt": 2,
+          "reason": "model_reply_invalid"
+        }
+      ],
+      "attempt_evidence": [
+        {
+          "event_id": "cbaf2eaae07443a0ba593e80f0f0eefc",
+          "stage": "model_requested",
+          "num_predict": 384
+        },
+        {
+          "event_id": "7c6884a7fce74e4ba2ac52deaedb91c4",
+          "stage": "model_replied",
+          "eval_count": 196,
+          "done_reason": "stop"
+        },
+        {
+          "event_id": "eb076ec35b284c5e9fe8069b87fbd9dc",
+          "stage": "candidate_rejected",
+          "source_sha256": "aa2e9afd65502098df8def4095128d1f95eff38016460fd8516e1e57abee594b",
+          "reason": "software.expression"
+        },
+        {
+          "event_id": "c69f670d60b449799ff263e1a9b5cd36",
+          "stage": "model_requested",
+          "num_predict": 384
+        },
+        {
+          "event_id": "e1df4009ec624b98ac4cc839a59efe2b",
+          "stage": "model_replied",
+          "eval_count": 188,
+          "done_reason": "stop"
+        },
+        {
+          "event_id": "6dabee08ed84494aba7ecc9e137c5bc8",
+          "stage": "candidate_rejected",
+          "source_sha256": "2e363f061a808e10592c3904f638a37e1c5f3e5f9768b77ce6511caeb121a542",
+          "reason": "software.expression"
+        },
+        {
+          "event_id": "ef48fa3305654d87a6808bcb0bc57ce6",
+          "stage": "model_requested",
+          "num_predict": 384
+        },
+        {
+          "event_id": "e0f029903adb486dbf6c7e4027d650f1",
+          "stage": "model_replied",
+          "eval_count": 188,
+          "done_reason": "stop"
+        },
+        {
+          "event_id": "ff8a4c7698814207963c1b6f017ccd77",
+          "stage": "candidate_rejected",
+          "source_sha256": "2e363f061a808e10592c3904f638a37e1c5f3e5f9768b77ce6511caeb121a542",
+          "reason": "software.expression"
+        }
+      ],
+      "active_manifests": 0,
+      "intake_final_state": "BLOCKED",
+      "private_package_present": false,
+      "model_http_status_and_time": [
+        "200 4.75s",
+        "200 4.84s"
       ]
     }
   ],
-  "interpretation": "The protocol fixture establishes deterministic control-flow and release behavior. The uppercase case demonstrates real local-model selection, generation and execution of one text tool. A small collection of synthetic tasks does not establish general model quality or hardware safety."
+  "interpretation": "The protocol fixture establishes deterministic control-flow and release behavior. The uppercase case demonstrates real local-model selection, generation and execution of one text tool. A small collection of synthetic tasks does not establish general model quality or hardware safety.",
+  "probe_notes": [
+    "The first two word-count runs did not select the supported interface. Each worker recorded its skipped reason.",
+    "The early role-prompt run was cut off by the test at 130 s during retry, before a terminal outcome. The test now allows 320 s per worker for three 90 s requests plus backoff.",
+    "With the expanded test window and without the model output cap, the author exhausted three attempts as model_unavailable. In the final build each coding reply has a 384-token budget. The final evidence distinguishes a replied request plus rejected expression from a missing reply."
+  ]
 }

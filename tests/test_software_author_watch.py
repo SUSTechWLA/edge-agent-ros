@@ -154,6 +154,7 @@ class TestCodeWatch(unittest.TestCase):
         self.assertEqual(self.events("model_requested")[0]["data"]["num_predict"],384)
         self.assertEqual(self.events("model_replied")[0]["data"]["done_reason"],"length")
         self.assertEqual([e["task_id"] for e in self.events("authored")],["healthy"])
+        self.assertEqual(self.watch.db.execute("SELECT count(*) FROM software_feedback").fetchone()[0],0)
         self.assertFalse((self.root/"private/packages"/design.sha(b"long")).exists())
 
     def test_schema_field_lengths_are_enforced_for_unconstrained_endpoints(self):
@@ -166,6 +167,110 @@ class TestCodeWatch(unittest.TestCase):
         self.assertEqual(len(self.events("intervention_required")),3)
         self.assertTrue(all(e["data"]["reason"]=="model_reply_invalid" for e in self.events("intervention_required")))
         self.assertFalse(self.events("prepared"))
+
+    def test_rejected_candidate_can_be_corrected_after_restart_without_leaking_across_tasks(self):
+        self.open(attempts=2)
+        _,path=self.add("repair")
+        self.add("independent")
+        bad="text.reverse()"
+        flush=self.watch.flush
+        def stop_before_publication():
+            if self.watch.db.execute("SELECT 1 FROM software_feedback").fetchone():
+                raise Interrupted()
+            flush()
+        with patch.object(code,"http_bytes",return_value=self.answer(dict(self.fields,expression=bad))) as first, \
+                patch.object(self.watch,"flush",side_effect=stop_before_publication), self.assertRaises(Interrupted):
+            self.watch.poll()
+        self.assertEqual(first.call_count,1)
+        self.assertFalse(self.events("candidate_rejected"))
+        self.assertEqual(self.watch.db.execute("SELECT expression FROM software_feedback").fetchone()[0],bad)
+        self.open(attempts=8)
+        calls=[]
+        def respond(url,wire,*_):
+            messages=json.loads(wire)["messages"]
+            context=json.loads(messages[1]["content"])
+            calls.append(context)
+            if len(calls)==1:  # a separate, already queued task
+                self.assertNotIn("previous_failure",context)
+                return self.answer()
+            prior=context["previous_failure"]
+            self.assertEqual(set(prior),{"attempt","reason","diagnostic","expression"})
+            self.assertEqual((prior["attempt"],prior["reason"],prior["expression"]),(1,"software.expression",bad))
+            self.assertIn("chain",prior["diagnostic"])
+            self.assertIn("untrusted",messages[0]["content"])
+            return self.answer()  # this model supplies the correction only when given the real rejected expression
+        with patch.object(code,"http_bytes",side_effect=respond):
+            self.drain()
+            self.open()
+            self.drain()
+        rejected,=self.events("candidate_rejected")
+        requests=[e for e in self.events("model_requested") if e["task_id"]=="repair"]
+        self.assertEqual(len(requests),2)
+        self.assertNotIn("feedback_event_id",requests[0]["data"])
+        used=requests[1]["data"]
+        self.assertEqual((used["attempt"],used["feedback_attempt"],used["feedback_event_id"]),(2,1,rejected["event_id"]))
+        self.assertEqual(used["feedback_sha256"],design.sha(design.json_bytes(calls[1]["previous_failure"])))
+        self.assertEqual(used["feedback_sha256"],rejected["data"]["feedback_sha256"])
+        self.assertEqual(rejected["data"]["expression_sha256"],design.sha(bad.encode()))
+        public=str(self.watch.journal.db.execute("SELECT event FROM module_bus_events").fetchall())
+        self.assertNotIn(bad,public)
+        self.assertNotIn("private text goal",public)
+        self.assertEqual(len(self.events("completed")),2)
+        source,_,_=provider.package(self.root/"private/packages"/path.stem)
+        self.assertEqual(provider.evaluate(provider.program(source),"Robot robotics ROBOT"),2)
+
+    def test_feedback_identity_and_integrity_gate_the_next_model_request(self):
+        self.open(attempts=2)
+        original,_=self.add("same-task")
+        invalid=dict(self.fields,expression="text.title()")
+        with patch.object(code,"http_bytes",return_value=self.answer(invalid)):
+            self.watch.poll()
+        with self.watch.db:
+            self.watch.db.execute("UPDATE software_feedback SET expression='text.swapcase()'")
+        with patch.object(code,"http_bytes",side_effect=AssertionError("tampered feedback sent to model")):
+            self.drain()
+        self.assertEqual(self.events("intervention_required")[0]["data"]["reason"],"feedback_conflict")
+        # Same design, task, and trace, but a distinct design source event must start without prior feedback.
+        self.source.events.append(dict(original,event_id="redraft",seq=2))
+        with patch.object(code,"http_bytes",return_value=self.answer()) as model:
+            self.drain()
+        self.assertEqual(model.call_count,1)
+        self.assertNotIn("previous_failure",json.loads(json.loads(model.call_args.args[1])["messages"][1]["content"]))
+
+    def test_each_failed_attempt_is_private_and_only_latest_is_sent_until_original_budget_expires(self):
+        self.open(attempts=3)
+        self.add("three")
+        expressions=["text.title()","text.split()","text.capitalize()"]
+        seen=[]
+        def rejected(url,wire,*args):
+            context=json.loads(json.loads(wire)["messages"][1]["content"])
+            seen.append(context.get("previous_failure"))
+            return self.answer(dict(self.fields,expression=expressions[len(seen)-1]))
+        with patch.object(code,"http_bytes",side_effect=rejected):
+            self.drain()
+        self.assertEqual(seen[0],None)
+        self.assertEqual([(f["attempt"],f["reason"],f["expression"]) for f in seen[1:]],
+                         [(1,"software.expression",expressions[0]),(2,"software.result_type",expressions[1])])
+        self.assertEqual(self.watch.db.execute("SELECT expression FROM software_feedback ORDER BY attempt").fetchall(),
+                         [(expr,) for expr in expressions])
+        self.assertEqual(self.events("intervention_required")[0]["data"]["attempt"],3)
+        self.open(attempts=8)
+        with patch.object(code,"http_bytes",side_effect=AssertionError("budget reset after restart")):
+            self.drain()
+        self.assertFalse(self.events("authored"))
+
+    def test_configuration_change_cannot_send_prior_feedback_to_another_model(self):
+        self.open(attempts=2)
+        self.add("different-model")
+        with patch.object(code,"http_bytes",return_value=self.answer(dict(self.fields,expression="text.title()"))):
+            self.watch.poll()
+        self.watch.close()
+        self.watch=code.SoftwareAuthor(self.source.url,self.drafts,self.root/"private",
+                                      self.root/"public/plugin.software_author/module-events.sqlite",
+                                      self.source.url,"different-model",self.contract,attempts=2,retry_delay=0)
+        with patch.object(code,"http_bytes",side_effect=AssertionError("previous model feedback leaked")):
+            self.drain()
+        self.assertEqual(self.events("intervention_required")[0]["data"]["reason"],"configuration_changed")
 
     def test_reconcile_prepared_result_and_lost_ack_without_model_on_last_attempt(self):
         self.add("prepared")

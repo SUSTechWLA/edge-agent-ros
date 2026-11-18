@@ -36,6 +36,7 @@ def automatic_services(services,common,root,args):
         (root/folder).mkdir()
     fixture="http://fixture:8131"
     model="http://model:11434"
+    code_fixture=fixture+("/code-correction" if args.scenario=="word-count-correction" else "/code")
     author=root/"private-author"
     design_state=root/"private-design"
     for service,script,module,options,mounts in (
@@ -49,7 +50,7 @@ def automatic_services(services,common,root,args):
          [mounted(author,"/author"),mounted(design_state,"/state",read_only=False),mounted(ROOT/"contracts/design","/contracts")]),
         ("coder","software_author_watch","plugin.software_author",
          ["--drafts","/design/drafts","--state","/state","--journal","/e/module-events.sqlite",
-          "--contract","/contracts/text-transform.json","--ollama-url",model if args.model_cache else fixture+"/code",
+          "--contract","/contracts/text-transform.json","--ollama-url",model if args.model_cache else code_fixture,
           "--model",args.model if args.model_cache else "code-fixture","--interval",".25"],
          [mounted(design_state,"/design"),mounted(root/"private-code","/state",read_only=False),
           mounted(ROOT/"contracts/design","/contracts")])):
@@ -66,6 +67,8 @@ def run(args):
     uppercase = args.scenario == "uppercase"
     if uppercase and not (args.automatic and args.model_cache):
         raise ValueError("uppercase evaluation requires --automatic and --model-cache")
+    if args.scenario=="word-count-correction" and (not args.automatic or args.model_cache):
+        raise ValueError("word-count-correction is an --automatic protocol fixture; run a real model with --scenario word-count")
     goal = UPPER_GOAL if uppercase else GOAL
     expected_value = BODY.upper() if uppercase else 2
     expected_empty = "" if uppercase else 0
@@ -209,6 +212,19 @@ def run(args):
                         private_package_present=(root/"private-code/packages"/ident).is_dir())
                 check(result["kind"]=="plugin.software_author.authored",
                       "No candidate: "+result["kind"]+" "+str(result["data"].get("reason")))
+                if args.scenario=="word-count-correction":
+                    coding=report["automatic"]["coding_events"]
+                    rejection,=[e for e in coding if e["kind"]=="plugin.software_author.candidate_rejected"]
+                    initial,correction=[e["data"] for e in coding if e["kind"]=="plugin.software_author.model_requested"]
+                    first_failure=rejection["data"]
+                    check(first_failure["reason"]=="software.expression" and first_failure["attempt"]==1
+                          and initial["attempt"]==1 and "feedback_event_id" not in initial
+                          and correction["attempt"]==2 and correction["feedback_attempt"]==1
+                          and correction["feedback_event_id"]==rejection["event_id"]
+                          and correction["feedback_sha256"]==first_failure["feedback_sha256"]
+                          and initial["request_sha256"]!=correction["request_sha256"],"correction lacks the original validator evidence")
+                    check(first_failure["expression_sha256"]==digest(b"text.reverse()")
+                          and "text.reverse()" not in json.dumps(coding),"public rejection exposed or mismatched the expression")
                 check(result["trace_id"]==origin["trace_id"]==refusal["trace_id"]==blocked["trace_id"] and
                       result["data"]["design_id"]==ident,"candidate does not match mission and design")
                 package_dir=root/"private-code/packages"/ident
@@ -327,6 +343,6 @@ if __name__=="__main__":
     parser.add_argument("--out",required=True,type=Path)
     parser.add_argument("--model-cache")
     parser.add_argument("--model",default="qwen2.5:1.5b")
-    parser.add_argument("--scenario",choices=("word-count","uppercase"),default="word-count")
+    parser.add_argument("--scenario",choices=("word-count","word-count-correction","uppercase"),default="word-count")
     parser.add_argument("--automatic",action="store_true",help="Verify resident author, design and code plugins before explicit release")
     run(parser.parse_args())
