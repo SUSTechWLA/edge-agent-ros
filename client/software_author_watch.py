@@ -15,9 +15,11 @@ from software_release import http_bytes
 from author_tool import sync_directory
 
 
-FIELDS = ("description","prefix","expression")
-SCHEMA = {"type":"object","properties":{k:{"type":"string"} for k in FIELDS},
-          "required":list(FIELDS),"additionalProperties":False}
+FIELD_LIMITS = {"description":160,"prefix":160,"expression":512}
+OUTPUT_TOKENS = 384
+SCHEMA = {"type":"object","properties":{k:{"type":"string","minLength":1,"maxLength":limit}
+                                        for k,limit in FIELD_LIMITS.items()},
+          "required":list(FIELD_LIMITS),"additionalProperties":False}
 PROMPT = ("Design a pure text Tool. Return only the description, a short natural-language invocation prefix,"
           " and one Python expression. The prefix will be followed by 【user text】. The expression starts at text"
           " and may chain up to eight operations: casefold(), lower(), upper(), strip(), split(), count('literal')."
@@ -70,10 +72,11 @@ class SoftwareAuthor(EventWorkWatch):
     selector = {"source":"journal:plugin.design","kind":"plugin.design.drafted","module":"plugin.design","code":"design.drafted"}
     namespace = source_module = "plugin.software_author"
     code_prefix = "software_author"
-    retryable = {"design_missing","attempt_interrupted","model_unavailable","model_reply_invalid"}
+    retryable = {"design_missing","attempt_interrupted","model_unavailable","model_reply_invalid","model_output_limit"}
     steps = {"design_missing":"核对 SDD-017 私有草案卷并恢复原设计文件。",
              "contract_unapproved":"比对部署者授权的 text-transform 契约和原设计绑定的完整快照。",
              "model_unavailable":"检查授权编码模型进程、地址和可用模型。",
+             "model_output_limit":"检查编码模型是否支持按 schema 简短作答，复核原目标和输出 token 数后再处理。",
              "design_incomplete":"交接设计负责人补充待决输入与预期结果。"}
 
     def __init__(self,url,drafts,state,journal,model_url,model,contract,**kwargs):
@@ -98,21 +101,36 @@ class SoftwareAuthor(EventWorkWatch):
     def generate(self,row,draft,request_id):
         context = {"goal":draft["goal"],"design":draft["model_design"]["proposal"],
                    "contract":draft["interfaces"]["text-transform"]}
-        wire = design.json_bytes({"model":self.model,"stream":False,"options":{"temperature":0},"format":SCHEMA,
+        wire = design.json_bytes({"model":self.model,"stream":False,
+             "options":{"temperature":0,"num_predict":OUTPUT_TOKENS},"format":SCHEMA,
              "messages":[{"role":"system","content":PROMPT},{"role":"user","content":json.dumps(context,ensure_ascii=False)}]})
         requested = self.fact(row,"model_requested","model-request/"+request_id,row["event_id"],request_id,
-                              request_sha256=design.sha(wire),model_sha256=design.sha(self.model.encode()))
+                              request_sha256=design.sha(wire),model_sha256=design.sha(self.model.encode()),
+                              num_predict=OUTPUT_TOKENS)
         try:
             raw = http_bytes(self.model_url.rstrip("/")+"/api/chat",wire,65536,90)
         except (OSError,HTTPException,provider.Invalid) as exc:
             raise design.DesignError("model_unavailable",event_id=requested) from exc
-        reply = self.fact(row,"model_replied","model-reply/"+request_id,requested,request_id,
-                          response_sha256=design.sha(raw),response_bytes=len(raw))
         try:
             body=json.loads(raw)
+        except (ValueError,RecursionError):
+            body=None
+        usage={}
+        if isinstance(body,dict):
+            if body.get("done_reason") in ("stop","length"):
+                usage["done_reason"]=body["done_reason"]
+            if type(body.get("eval_count")) is int and 0<=body["eval_count"]<=2**31-1:
+                usage["eval_count"]=body["eval_count"]
+        reply = self.fact(row,"model_replied","model-reply/"+request_id,requested,request_id,
+                          response_sha256=design.sha(raw),response_bytes=len(raw),**usage)
+        if usage.get("done_reason")=="length" or usage.get("eval_count",0)>OUTPUT_TOKENS:
+            raise design.DesignError("model_output_limit",event_id=reply)
+        try:
+            if not isinstance(body,dict) or body.get("done") is not True:
+                raise ValueError("incomplete")
             fields=json.loads(body["message"]["content"],object_pairs_hook=design_contracts.unique_keys)
-            if (body.get("done") is not True or not isinstance(fields,dict) or set(fields)!=set(FIELDS)
-                    or not all(isinstance(v,str) and 1<=len(v)<=512 for v in fields.values())):
+            if (not isinstance(fields,dict) or fields.keys()!=FIELD_LIMITS.keys()
+                    or not all(isinstance(fields[k],str) and 1<=len(fields[k])<=limit for k,limit in FIELD_LIMITS.items())):
                 raise ValueError("schema")
         except (KeyError,TypeError,ValueError,RecursionError) as exc:
             raise design.DesignError("model_reply_invalid",event_id=reply) from exc

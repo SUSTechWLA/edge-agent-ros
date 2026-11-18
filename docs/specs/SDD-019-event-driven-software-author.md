@@ -6,7 +6,7 @@ SDD-017 的自动设计能描述新能力。已有 SDD-014 要求另外准备语
 
 ## 设计与契约
 
-作为独立的事件消费者复用 SDD-017 的持久队列、输入游标、预算、对账与事件发件箱。只读订阅 `journal:plugin.design` 的 `plugin.design.drafted`。校验源、父事件、task/trace、私有设计的原始 SHA-256、设计 ID、契约快照摘要与登记的模型接口。仅在设计选中了 `text-transform`、且该接口的全部字段与操作者挂载的 `--contract` 文件等同时调用编码模型。其他合法设计保存跳过原因。未获批准、仍有未决字段的设计需要人工复核。
+作为独立的事件消费者复用 SDD-017 的持久队列、输入游标、预算、对账与事件发件箱。只读订阅 `journal:plugin.design` 的 `plugin.design.drafted`。校验源、父事件、task/trace、私有设计的原始 SHA-256、设计 ID、契约快照摘要与登记的模型接口。仅在设计选中了 `text-transform`、且该接口的全部字段与操作者挂载的 `--contract` 文件等同时调用编码模型。其他合法设计保存跳过原因。契约尚未获授权或建议标有未决字段时进入人工复核。
 
 输入模型的是有界的原目标、选中的设计及允许的纯文本操作。模型只可提供 description、prefix 和 expression 三个字段。消费者基于设计 ID 派生 Tool ID，用 SDD-014 相同的 `program` 解析和类型检查、`package` 校验语义清单及计算提供者版本。前缀、类型、代码体积与受限操作通过后，在同一卷原子交付 `<state>/packages/<design_id>/`。该目录包含 candidate.py、contract.json、origin.json 以及下游可直接使用的受信任公开来源 design-event.json。私有设计仍在 SDD-017 的 drafts 目录中。包的 `review_state` 为 `unverified`。自动作者无 Docker、设备或注册目录权限。
 
@@ -14,7 +14,7 @@ SDD-017 的自动设计能描述新能力。已有 SDD-014 要求另外准备语
 
 ## 接入与复盘
 
-服务启动参数为 `--url <Console> --drafts <017 的 drafts 目录> --contract <部署方的 text-transform.json> --state <私有工作目录> --journal <公开事件源文件> --ollama-url <授权模型> --model <模型名>`，支持 `--once` 和独立的重试参数。以 `kind=plugin.software_author.authored` 查询实际生成的候选，以 `trace_id` 串起生成请求、模型答复、预备收据、交付及司职接手。遇到 `candidate_rejected`，其 reason 是受限程序解析器或清单校验器给出的原因码。遇到 `skipped`，先检查设计实际选择的接口；例如选择通用 Tool 而非已授权 text-transform 的设计交给研发审查。对 id 已知的候选，部署方可将私有包目录、其 design-event.json、原 017 私有草案及外部维护的期望样本提供给 [SDD-014 发布流程](SDD-014-authored-software-provider.md)。
+服务启动参数为 `--url <Console> --drafts <017 的 drafts 目录> --contract <部署方的 text-transform.json> --state <私有工作目录> --journal <公开事件源文件> --ollama-url <授权模型> --model <模型名>`，支持 `--once` 和独立的重试参数。以 `kind=plugin.software_author.authored` 查询实际生成的候选，以 `trace_id` 串起生成请求、模型答复、预备收据、交付及工作确认。遇到 `candidate_rejected`，其 reason 是受限程序解析器或清单校验器给出的原因码。遇到 `skipped`，先检查设计实际选择的接口；例如选择通用 Tool 而非已授权 text-transform 的设计交给研发审查。对 id 已知的候选，部署方可将私有包目录、其 design-event.json、原 017 私有草案及外部维护的期望样本提供给 [SDD-014 发布流程](SDD-014-authored-software-provider.md)。
 
 ## 验收与证据
 
@@ -23,6 +23,7 @@ SDD-017 的自动设计能描述新能力。已有 SDD-014 要求另外准备语
 - AC-3 重启、归档重放、无响应、预算耗尽和工件写入后丢确认。只认领同一物理事实一次，私有包与公开证据一致，终态冲突需要人工介入。有证据可证明每次模型尝试的身份和配置。
 - AC-4 已有 014 发布流程能接手包，用外部期望样本在隔离环境验证，按候选摘要批准安装，仍可在实际 Agent 执行及卸载后核查旧结果。
 - AC-5 用同一事件订阅基类覆盖 017/019 并保证已有 017 SQLite 任务按原表与状态继续；停止独立服务即停止新工作，保留事件和私有卷。物理硬件、任意 Python、任意代码自行发布须另设权限与验收条件。
+- AC-6 单次编码模型请求固定 `num_predict=384`。description、prefix 各限 1–160 个字符，expression 限 1–512 个字符，模型看到的 schema 和本地解析使用相同限制。模型报告 `done_reason=length` 时，此次尝试记录 `model_output_limit`、返回摘要和提供方可用的输出 token 数；即使文本恰好可解析也不会生成候选。重试和重启共用原工作预算，其他待办可继续。
 
 ## 迁移与回退
 
@@ -33,3 +34,5 @@ SDD-017 的自动设计能描述新能力。已有 SDD-014 要求另外准备语
 2026-11-18 实现前记录自动软件开发的适用范围、输入输出、稳定身份、来源验真、交付条件与 AC-1 至 AC-5。
 
 2026-11-18 `python tests/test_software_author_watch.py -v` 四组契约检验由真实格式的公开源与私有设计生成新的清单与源码、权威来源的公开导出、失效和其他接口、权限契约热改、模型超时、受限语法错误，以及最后一次尝试中“持久化配方后尚未发布目录”与“发布成功事件后尚未确认工作”两个故障窗口。程序复用 `software_provider.package/program` 作静态校验；测试由独立用例计算实际结果。模型生成了语法合规的候选，仍须用独立期望检验语义并批准。热装、撤回与过往记录的实际 Agent 验收沿用隔离 Docker 测试。
+
+2026-11-18 独立 Docker 黑盒记录了两条发布链。受控模型生成完整单词 robot 的计数工具，Agent 返回两次匹配并在空输入上返回零。另一次使用本地 Qwen2.5 1.5B 模型生成 Unicode 文本大写工具，通过四个外部验收样本后，按摘要批准、在运行中的 Agent 调用并撤回。真实词频任务还观察到模型选择其他设计接口的情况，当前证据可对照各次输入、样本、模型身份、工具结果和父链。[隔离 Docker 验收记录](../evidence/software-author-acceptance.json)

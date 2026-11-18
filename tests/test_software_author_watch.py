@@ -83,6 +83,9 @@ class TestCodeWatch(unittest.TestCase):
         self.assertEqual(model.call_count,1)
         prompt=json.loads(model.call_args.args[1])
         self.assertEqual(set(prompt["format"]["required"]),{"description","prefix","expression"})
+        self.assertEqual(prompt["options"]["num_predict"],384)
+        self.assertEqual({key:(spec["minLength"],spec["maxLength"]) for key,spec in prompt["format"]["properties"].items()},
+                         {"description":(1,160),"prefix":(1,160),"expression":(1,512)})
         authored,=self.events("authored")
         completed,=self.events("completed")
         self.assertEqual(completed["parent_event_id"],authored["event_id"])
@@ -128,6 +131,41 @@ class TestCodeWatch(unittest.TestCase):
         self.assertEqual(self.events("candidate_rejected")[0]["data"]["reason"],"software.expression")
         self.assertFalse(self.events("authored"))
         self.assertEqual(list((self.root/"private/packages").iterdir()),[])
+
+    def test_output_limits_charge_attempts_across_restart_and_preserve_following_work(self):
+        self.open(attempts=2)
+        self.add("long")
+        done=json.loads(self.answer())
+        limited=design.json_bytes(dict(done,done_reason="length",eval_count=384))
+        with patch.object(code,"http_bytes",return_value=limited):
+            self.watch.poll()
+        self.assertEqual(self.events("retry")[0]["data"]["reason"],"model_output_limit")
+        self.open(attempts=8)
+        over=design.json_bytes(dict(done,done_reason="stop",eval_count=2901))
+        with patch.object(code,"http_bytes",side_effect=[over,self.answer()]) as model:
+            self.drain()
+            self.add("healthy")
+            self.drain()
+        self.assertEqual(model.call_count,2)
+        final,=self.events("intervention_required")
+        self.assertEqual((final["data"]["reason"],final["data"]["budget"],final["data"]["attempt"]),
+                         ("model_output_limit",2,2))
+        self.assertEqual([e["data"]["eval_count"] for e in self.events("model_replied")[:2]],[384,2901])
+        self.assertEqual(self.events("model_requested")[0]["data"]["num_predict"],384)
+        self.assertEqual(self.events("model_replied")[0]["data"]["done_reason"],"length")
+        self.assertEqual([e["task_id"] for e in self.events("authored")],["healthy"])
+        self.assertFalse((self.root/"private/packages"/design.sha(b"long")).exists())
+
+    def test_schema_field_lengths_are_enforced_for_unconstrained_endpoints(self):
+        for key,limit in code.FIELD_LIMITS.items():
+            self.add(key)
+            value=dict(self.fields)
+            value[key]="a"*(limit+1)
+            with patch.object(code,"http_bytes",return_value=self.answer(value)):
+                self.drain()
+        self.assertEqual(len(self.events("intervention_required")),3)
+        self.assertTrue(all(e["data"]["reason"]=="model_reply_invalid" for e in self.events("intervention_required")))
+        self.assertFalse(self.events("prepared"))
 
     def test_reconcile_prepared_result_and_lost_ack_without_model_on_last_attempt(self):
         self.add("prepared")
