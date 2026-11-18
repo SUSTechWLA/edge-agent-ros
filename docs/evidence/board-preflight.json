@@ -1,6 +1,6 @@
 {
   "spec": "SDD-032",
-  "date": "2026-11-18",
+  "date": "2026-11-19",
   "hardware_connected": false,
   "fixture": "Ubuntu Linux Docker, isolated loopback ROS 2 Jazzy and synthetic odometry, IMU and planar laser",
   "before_proxy_spy": {
@@ -79,18 +79,19 @@
       "url": "http://127.0.0.1:18957/diagnose",
       "first_start": "installed",
       "second_start": "unchanged",
-      "loopback_health_response_version": "1.0.0"
+      "loopback_health_response_version": "1.0.0",
+      "fixture_note": "Historical registration exercise on the 1.0.0 observer; the delivered runtime carries observer 1.1.0."
     }
   },
   "runs": {
     "amd64": {
       "arch": "x86_64",
       "emulation": false,
-      "image_id": "sha256:35c5fbba8ae27187d3ea2377bae6003fffc13377935d35ca9017cd77cf1a2eff",
-      "image": "edge-agent-ros/hardware:field-7c16da6-amd64",
-      "source_revision": "7c16da6f6e5db1c618d1c59bb6505174701f5427",
-      "raw_report": "artifacts/verification/edge-board-sdd032/amd64-final.json",
-      "raw_sha256": "a68cfae07997d23f1a8f3e3a030dddaf4fc02db36389634b6e8bc50463c4d860",
+      "image_id": "sha256:3e93ed5871636c3712c91e78a20ae4366d5961c8fcf5c45cfd1ba0596ab8ed59",
+      "image": "edge-agent-ros/hardware:field-9f6fbe7-amd64",
+      "source_revision": "9f6fbe7779e24dd6cf74f654275c4e12290006af",
+      "raw_report": "artifacts/verification/edge-board-sdd032/9f6fbe7/amd64.json",
+      "raw_sha256": "a917530f39a5a2400a14a0a0f3885de196941a5d440771eaf0f997f9ca6a23b2",
       "issues": {
         "without_drivers": [
           "odom.missing",
@@ -114,10 +115,10 @@
       "after_reconnect": {
         "source": "/fixture/odom",
         "frame": "fixture_odom",
-        "stamp_ns": 1795012535281433223,
+        "stamp_ns": 1795016515503520393,
         "stamp": {
-          "sec": 1795012535,
-          "nanosec": 281433223
+          "sec": 1795016515,
+          "nanosec": 503520393
         },
         "x": 0.375,
         "y": 0.0,
@@ -136,11 +137,11 @@
     "arm64": {
       "arch": "aarch64",
       "emulation": true,
-      "image_id": "sha256:1d9b9cd72c1d11cd97b31e3f10443327921c5f67f7d513bcefaed18a7686d161",
-      "image": "edge-agent-ros/hardware:field-7c16da6-arm64",
-      "source_revision": "7c16da6f6e5db1c618d1c59bb6505174701f5427",
-      "raw_report": "artifacts/verification/edge-board-sdd032/arm64-final.json",
-      "raw_sha256": "9027d3b56bd8dc66a526c3b0de215f1b99b094faa3b8d6fce08d11f224ceaf58",
+      "image_id": "sha256:d7b4cca50bd7ce8bc979d405c172fa0164e6601fcb208a74e8c2c99bffa89768",
+      "image": "edge-agent-ros/hardware:field-9f6fbe7-arm64",
+      "source_revision": "9f6fbe7779e24dd6cf74f654275c4e12290006af",
+      "raw_report": "artifacts/verification/edge-board-sdd032/9f6fbe7/arm64.json",
+      "raw_sha256": "08f0ef68d0ce1273096a7d07d58bdf29c70baa2897713a726134e6bf207aae79",
       "issues": {
         "without_drivers": [
           "odom.missing",
@@ -164,10 +165,10 @@
       "after_reconnect": {
         "source": "/fixture/odom",
         "frame": "fixture_odom",
-        "stamp_ns": 1795012939509603544,
+        "stamp_ns": 1795016559580972294,
         "stamp": {
-          "sec": 1795012939,
-          "nanosec": 509603544
+          "sec": 1795016559,
+          "nanosec": 580972294
         },
         "x": 0.375,
         "y": 0.0,
@@ -185,13 +186,62 @@
     }
   },
   "offline_kit": {
-    "docker_load": "Loaded image: edge-agent-ros/hardware:field-7c16da6-arm64",
-    "directory": "artifacts/deployment/field-7c16da6-arm64",
+    "source_revision": "9f6fbe7779e24dd6cf74f654275c4e12290006af",
+    "directory": "artifacts/deployment/field-9f6fbe7-arm64",
+    "image_bytes": 289671410,
+    "source_bytes": 14864204,
     "sha256": {
-      "edge-agent-ros-source.tar.gz": "2e565ee4cd6671c4bd6675d0e676f9a26a8eece43407bdca87de010a4662cf27",
-      "hardware-linux-arm64.tar.gz": "c10e2098b5e6633f1a8b0d9fbd20e18f9134d492b0dd9e5f773e61dbd150b192"
+      "hardware-linux-arm64.tar.gz": "4994653bbb83c39a1ae74d652c9c6a88f9867d162ac90127c80e631f7f5e85ad",
+      "edge-agent-ros-source.tar.gz": "cc756bb91d980c1bb0e51bb7ce9389552443ffdaee599970f50eacfd0bd6de18",
+      "IMAGE": "9b26541b9d7f65e802ed854098ce6c81de80aa763a8b40a38e9a0e585d514a1d",
+      "REVISION": "2478f1fa1140ed72af91ddeac94d97db00009b210e6fda1e82d35bc973b92c33",
+      "START-HERE.md": "c9233f05d8225e57085369178324b123ab245cc2e52538330a03fcc25bde838b"
     },
-    "image_bytes": 289664126,
-    "source_bytes": 14792388
+    "docker_load": "Loaded image: edge-agent-ros/hardware:field-9f6fbe7-arm64",
+    "post_load": {
+      "mode": "observe",
+      "services": [
+        "console",
+        "perception"
+      ],
+      "architecture": "aarch64",
+      "observed": [
+        "odom.missing",
+        "imu.missing",
+        "scan.missing"
+      ],
+      "report": "artifacts/verification/edge-board-sdd032/9f6fbe7/post-load.json",
+      "sha256": "ab8e583e959362f7e3c4974946a82bb762f16ce3b13b5360275a6cc8daf04fc6"
+    },
+    "cold_boot_trials": [
+      {
+        "passed": false,
+        "stage": "The Compose services started; the 30-attempt local HTTP readiness check ended with ECONNREFUSED. The first trial lacks application logs and startup timing; exact upstream cause unresolved.",
+        "file": "artifacts/verification/edge-board-sdd032/9f6fbe7/post-load-observe.attempt-1.log",
+        "sha256": "b0e2cda42e10271136fdd2a0719b1850535a49aabbab6de1cc6c8d21efa39a57"
+      },
+      {
+        "passed": true,
+        "stage": "Fresh serial startup of the same archive; only perception and console running; confirmed listener on :18958 and preflight returned three missing drivers.",
+        "file": "artifacts/verification/edge-board-sdd032/9f6fbe7/post-load.json",
+        "sha256": "ab8e583e959362f7e3c4974946a82bb762f16ce3b13b5360275a6cc8daf04fc6"
+      },
+      {
+        "passed": true,
+        "stage": "Independent serial cold boot from the verified source archive; separate project and :18966, only read-only services, no drivers. Temp stack removed after this trial.",
+        "duration_observe_s": 19.281,
+        "session": "12a94e5582334c58923fd82b5aa7c6e6",
+        "file": "artifacts/verification/edge-board-sdd032/9f6fbe7/post-load.repeat.json",
+        "sha256": "684899b1a3344ae680cb740bc62844df9b95f116acbcfe1904938595b0c04517"
+      }
+    ],
+    "observer_crash_evidence": "docs/evidence/sensor-incident-arm64.json"
+  },
+  "prior_candidate": {
+    "revision": "9983c893347108a954b3bab5dfa8ffdb6cfebdcb",
+    "both_software_platforms_passed": true,
+    "from_archive_observe_passed": true,
+    "report": "artifacts/verification/edge-board-sdd032/9983c89/package.json",
+    "reason": "previous accepted baseline before the persisted sensor incident change"
   }
 }

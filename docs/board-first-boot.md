@@ -36,6 +36,17 @@ sh scripts/deploy.sh hardware preflight > "artifacts/verification/field/$(date -
 
 退出码 0 表示选定话题、坐标系和连续采样达到现场预检条件。只接里程计时可以先运行 `sh scripts/deploy.sh hardware preflight odom`。查看故障与时钟偏差的解释，请从解压后的源码打开 `docs/deployment.md`。
 
+如果 `observe` 最后显示 `Connection refused`，记下当时的端口、机体 ID 和版本，保留容器与数据卷。在同一目录、同一组环境变量下运行以下指令，区分容器退出、工作台仍在启动、端口未监听和传感器缺失。
+
+```sh
+sh scripts/deploy.sh hardware status
+sh scripts/deploy.sh hardware logs console perception
+sh scripts/deploy.sh hardware observe
+sh scripts/deploy.sh hardware preflight
+```
+
+看到 `Console ready` 后，再查看预检报告中的 `task_proxy_mode`、`robot_id`、`ros_domain_id` 与 `issues`。例如在未连接驱动的台架上，工作台就绪后仍应报告 `odom.missing`、`imu.missing` 和 `scan.missing`。在确认身份和输入前保持只读。
+
 ## 3　启用任务与退回观察
 
 1. 核对机器人 ID、在途任务账本和实际 ROS 域。保持机体执行器未使能，运行 `sh scripts/deploy.sh hardware start`，向工作台下发“报告当前位置”。比对 ROS 里程计与任务 Session 的采样时间、frame、位置和 trace。

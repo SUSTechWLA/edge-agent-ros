@@ -68,7 +68,7 @@ sh scripts/deploy.sh hardware preflight odom
 
 **离线交付。** 可在同架构 Linux 构建机上运行上述 build，把同一代码版本和下述归档一起复制到板端。在构建机和板端均设置相同的 `EDGE_HARDWARE_IMAGE` 标签；板端保存任务账本的 Docker 卷独立于镜像。
 
-本开发机的版本化现场包位于 `artifacts/deployment/`。按本轮交付的目录名选择版本，把整个目录复制到板端，按包内 `START-HERE.md` 操作。包内含硬件镜像、固定提交源码与 SHA-256 清单。当前运行结果记录在版本化证据中。[首次上板步骤](board-first-boot.md) · [已核验的镜像身份与结果](evidence/board-preflight.json)
+本开发机在 `artifacts/deployment/CURRENT` 记录本轮验收的 ARM64 现场包目录名。将 `artifacts/deployment/` 下同名目录整体复制到板端，按包内 `START-HERE.md` 从只读观察开始。清单覆盖硬件镜像、固定提交的源码、版本信息和操作指南。跟踪证据保留了镜像指纹、双架构结果和导入后的复验记录。[首次上板步骤](board-first-boot.md) · [已核验的镜像身份与结果](evidence/board-preflight.json)
 
 ```sh
 docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{.Os}}/{{.Architecture}} {{.Id}}'
