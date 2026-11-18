@@ -81,6 +81,7 @@
     el("view-top").hidden = el("roof-row").hidden = planar;
     el("cloud-label").textContent = planar ? "点云 XY 投影" : "实测点云";
     showPick();
+    if (data) updateTextureControls();
     draw();
   }
   el("view-top").onclick = () => modes.spatial.renderer.top();
@@ -88,6 +89,11 @@
   el("zoom-in").onclick = () => modes[active].renderer.zoomBy(1.25);
   el("zoom-out").onclick = () => modes[active].renderer.zoomBy(1/1.25);
   for (const input of Object.values(layers)) input.onchange = () => {clearPicks(); draw();};
+
+  function focusPlace(place) {
+    const view=place.id==="track" && place.camera?{...place.camera,frameGround:true}:place.camera;
+    modes[active].renderer.focusBounds(place.bounds,view);
+  }
 
   function updateTextureControls() {
     const meta = data?.texture, ready = texture.current, state = texture.state;
@@ -121,14 +127,14 @@
         const place=ready?.areas.find(a=>a.id===id);
         if(!place?.camera)continue;
         const button=document.createElement("button");button.type="button";button.textContent=label;
-        button.onclick=()=>modes[active].renderer.focusBounds(place.bounds,place.camera);
+        button.onclick=()=>focusPlace(place);
         el("landmarks").append(button);
       }
       if (ready && initialPlace) {
         const place = ready.areas.find(a => a.id === initialPlace);
         initialPlace = null;
         // Allow both the backing canvas and the new texture to acquire their dimensions.
-        if (place) { draw(); requestAnimationFrame(() => modes[active].renderer.focusBounds(place.bounds,place.camera)); }
+        if (place) { draw(); requestAnimationFrame(() => focusPlace(place)); }
       }
     }
   }
@@ -143,7 +149,7 @@
   };
   el("place-fit").onchange = () => {
     const place = texture.current?.areas.find(a => a.id===el("place-fit").value);
-    if (place) modes[active].renderer.focusBounds(place.bounds,place.camera);
+    if (place) focusPlace(place);
     el("place-fit").value="";
   };
 

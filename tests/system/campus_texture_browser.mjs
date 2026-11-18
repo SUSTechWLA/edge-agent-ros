@@ -5,7 +5,7 @@ import {dirname, join} from 'node:path';
 
 // Sample the actual rendered canvas; the inspection layers are disabled for the
 // comparison so unrelated ROS updates cannot account for the measured change.
-function readCanvas(canvasId) {
+function readCanvas(canvasId, comparison) {
   const canvas=document.getElementById(canvasId);
   const reduced=document.createElement('canvas');
   reduced.width=120; reduced.height=84;
@@ -21,7 +21,68 @@ function readCanvas(canvasId) {
     }
     for(let k=0;k<4;k++) hash=Math.imul(hash^pixels[p+k],16777619);
   }
-  return {signature:hash>>>0, opaque, colors:colors.size};
+  const result={signature:hash>>>0,opaque,colors:colors.size,width:canvas.width,height:canvas.height};
+  if(comparison==='save')window.__campusReferencePixels=new Uint8Array(pixels);
+  if(comparison==='compare'){
+    const before=window.__campusReferencePixels;
+    let alphaChanged=0,colorDifference=0,visible=0;
+    for(let p=0;p<pixels.length;p+=4){
+      if((before[p+3]>220)!==(pixels[p+3]>220))alphaChanged++;
+      if(before[p+3]>220 && pixels[p+3]>220){
+        for(let c=0;c<3;c++)colorDifference+=Math.abs(before[p+c]-pixels[p+c]);
+        visible++;
+      }
+    }
+    result.maskDifference=alphaChanged/(pixels.length/4);
+    result.meanChannelError=colorDifference/(3*Math.max(1,visible));
+  }
+  return result;
+}
+
+export async function checkCampusFallback({url,output,evaluate,waitFor,send}) {
+  const {texture,scene,grid,environment}=await (await fetch(new URL('/api/map',url))).json();
+  assert.equal(environment,'simulation');
+  assert.ok(texture.mesh_url && texture.frame===grid.frame && texture.scene_id===scene.id,'verified mesh for this campus');
+  const page=new URL('/?view=3d&place=campus',url).href;
+  const outcomes={scene_revision:texture.scene_revision,geometry:texture.mesh_url};
+  const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
+  async function inspect(name,surface,message,canvas) {
+    const condition=canvas==='viewport' ? "document.querySelector('#viewport')?.dataset.surface === "+JSON.stringify(surface)
+      : "document.querySelector('#mode-planar')?.getAttribute('aria-pressed')==='true'";
+    await waitFor("document.querySelector('#texture-info')?.textContent.includes("+JSON.stringify(message)+") && "+condition,
+                  name,75000);
+    const pixels=await evaluate('('+readCanvas.toString()+')('+JSON.stringify(canvas)+')');
+    assert.ok(pixels.colors>15 && pixels.opaque>200,name+' has a usable rendered surface');
+    const status=await evaluate("document.getElementById('texture-info').textContent");
+    const {data}=await send('Page.captureScreenshot',{format:'png'});
+    const screenshot='campus-fallback-'+name+'.png';
+    writeFileSync(join(dirname(output),screenshot),Buffer.from(data,'base64'));
+    return {status,surface,pixels,screenshot};
+  }
+  // Only the disposable test page receives this platform failure; Canvas2D is untouched.
+  await send('Page.enable');
+  const {identifier}=await send('Page.addScriptToEvaluateOnNewDocument',{source:
+    "(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){return kind==='webgl2' ? null : original.call(this,kind,...args)}})();"});
+  await send('Page.navigate',{url:page});
+  await waitFor("document.querySelector('#mode-spatial') && !document.createElement('canvas').getContext('webgl2')",
+                'WebGL2 unavailable in fault-injected document');
+  outcomes.noWebGL=await inspect('no-webgl','relief','WebGL 2 不可用','viewport');
+  await click('mode-planar');
+  outcomes.planar=await inspect('planar','planar','已显示 · 仿真正射图','planar-viewport');
+  await send('Page.removeScriptToEvaluateOnNewDocument',{identifier});
+  await send('Network.setCacheDisabled',{cacheDisabled:true});
+  await send('Network.setBlockedURLs',{urls:['*/scene.glb']});
+  // A new document gets the real WebGL2 implementation, with its GLB request blocked.
+  await send('Page.reload',{ignoreCache:true});
+  await waitFor("document.querySelector('#mode-spatial')", 'map UI after document reload');
+  await click('mode-spatial');
+  outcomes.blocked=await inspect('glb-blocked','relief','三维网格读取失败','viewport');
+  const started=Date.now();
+  await send('Network.setBlockedURLs',{urls:[]});
+  // Leave the existing page mounted so recovery exercises the production 30 s retry.
+  outcomes.recovered=await inspect('recovered','mesh','已显示 · 三维网格','viewport');
+  outcomes.recovery_ms=Date.now()-started;
+  return outcomes;
 }
 
 async function verifyFiles(url,texture) {
@@ -88,8 +149,18 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
     writeFileSync(join(dirname(output),screenshot),Buffer.from(image,'base64'));
     for(const name of Object.keys(initialLayers)) await setLayer(name,false);
     await paint();
-    const pixels=()=>evaluate('('+readCanvas.toString()+')('+JSON.stringify(canvas)+')');
-    const atlas=await pixels();
+    const pixels=comparison=>evaluate('('+readCanvas.toString()+')('+JSON.stringify(canvas)+','+JSON.stringify(comparison||null)+')');
+    const atlas=await pixels('save');
+    const assertRestored=async label=>{
+      const result=await pixels('compare');
+      // Chromium can resample the same image differently after zoom/readback.
+      // Compare the full silhouette and all visible RGB samples across the viewport.
+      assert.equal(result.width,atlas.width,label);
+      assert.equal(result.height,atlas.height,label);
+      assert.ok(result.maskDifference<.003 && result.meanChannelError<5,
+        label+' '+JSON.stringify(result));
+      return result;
+    };
     assert.ok(atlas.colors>=18 && atlas.opaque>600,'textured pixels and distinct materials for '+mode+': '+JSON.stringify(atlas));
     await setLayer('texture',false);
     await waitFor("document.getElementById('texture-info').textContent.includes('已隐藏')");
@@ -99,7 +170,7 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
     await setLayer('texture',true);
     await click('campus-fit');
     await paint();
-    assert.equal((await pixels()).signature,atlas.signature,'campus texture recovered: '+mode);
+    await assertRestored('campus texture recovered: '+mode);
     await evaluate("{const select=document.getElementById('place-fit'); select.value='track'; select.dispatchEvent(new Event('change'));}");
     await paint();
     const track=await pixels();
@@ -126,10 +197,10 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
     assert.notEqual(robot.signature,track.signature,'robot and track viewpoints differ');
     await click('campus-fit');
     await paint();
-    assert.equal((await pixels()).signature,atlas.signature,'whole-campus fit restores world extent');
+    const restored=await assertRestored('whole-campus fit restores world extent: '+mode);
     const landmarks={};
     if(mode==='spatial') {
-      for(const id of ['campus','teaching','track']) {
+      for(const id of ['campus','campus_street','teaching','track']) {
         const option=texture.areas.find(a=>a.id===id);
         assert.equal(option.camera.eye.length,3);
         await evaluate(`{const select=document.getElementById('place-fit');select.value=${JSON.stringify(id)};select.dispatchEvent(new Event('change'));}`);
@@ -142,9 +213,9 @@ export async function checkCampusTexture({url,width,output,evaluate,waitFor,send
         writeFileSync(join(dirname(output),filename),Buffer.from(data,'base64'));
         landmarks[id]={...px,camera:option.camera,screenshot:filename};
       }
-      assert.equal(new Set(Object.values(landmarks).map(p=>p.signature)).size,3);
+      assert.equal(new Set(Object.values(landmarks).map(p=>p.signature)).size,4);
     }
-    outcomes[mode]={layout,screenshot,atlas,hidden,track,robot,zoom,landmarks,track_pick:trackPick};
+    outcomes[mode]={layout,screenshot,atlas,restored,hidden,track,robot,zoom,landmarks,track_pick:trackPick};
     for(const [name,value] of Object.entries(initialLayers)) await setLayer(name,value);
     await paint();
   }

@@ -27,7 +27,7 @@ let active="overview", meta, retry, request=0;
 async function change(id) {
   active=id; const version=++request; clearTimeout(retry);
   const place=meta.areas.find(a=>a.id===id); const named=Boolean(place);
-  byId("credit").hidden=named&&id!=="campus";
+  byId("credit").hidden=named&&id!=="campus"&&id!=="campus_street";
   for(const b of document.querySelectorAll("button.area")) b.setAttribute("aria-pressed",String(b.dataset.id===id));
   marks.style.display=named?"none":"block"; label.textContent=named?place.label:"校园全景";
   desc.textContent=named?place.description:"俯视全场，北向上、东向右。选择地点可近看建筑、田径设施或教室内部。";

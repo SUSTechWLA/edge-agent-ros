@@ -451,6 +451,11 @@ def build(assets, base, output):
                 [9.8,-21,3.1],[14,25,1.5]),
            area("lawn","开阔草坪",[-133,-77,-25,-11],"本项目训练区","开阔草地、边缘长椅和一条通向建筑的步道。",
                 [-134,-81,9],[-65,-44,0])]
+    street=surveyed.pop("street_camera")
+    x,y,_=street["eye"]
+    areas.insert(1,area("campus_street","Mekelweg 街面 · EWI 塔楼",[x-20,y-20,x+20,y+20],
+                        surveyed["origin"],"从 Mekelweg 的街面朝向 EWI 塔楼。相机高 3.2 米。"
+                        "地面为配准航片，窗格为示意材质。",street["eye"],street["target"]))
     projection=viewpoints(world,total,areas)
     out_web=output/"overview"
     out_web.mkdir(parents=True,exist_ok=True)

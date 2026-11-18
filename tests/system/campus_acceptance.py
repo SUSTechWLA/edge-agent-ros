@@ -263,7 +263,7 @@ def direct_render():
                 samples[name] = {"sha256":hashlib.sha256(sample_bytes).hexdigest(),"rgb":base64.b64encode(sample_bytes).decode(),
                                  "width":msg.width,"height":msg.height,"stamp_ns":msg.header.stamp.sec*10**9+msg.header.stamp.nsec}
         return accept
-    views=("track","woods")
+    views=("campus","campus_street","teaching","track","woods")
     for name in views:
         require(gz.subscribe(Image,"/campus/view/"+name+"/image",collect(name)),"Gazebo camera subscription failed")
     await_fact(lambda:len(samples)==len(views),"independent live rendered RGB",70)

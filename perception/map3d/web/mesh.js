@@ -9,6 +9,7 @@
   uniform mat4 model, lightSpace;
   uniform vec3 eye, right, up, away;
   uniform vec2 focal;
+  uniform vec4 sheetBounds;
   uniform float nearZ;
   uniform bool shadowPass;
   out vec2 texcoord;
@@ -24,7 +25,9 @@
     gl_Position = shadowPass ? light : vec4(dot(delta,right)*focal.x,
       dot(delta,up)*focal.y, depth-2.*nearZ, depth);
     worldNormal = transpose(inverse(mat3(model))) * normal;
-    shadowCoord = .5 + .5*light.xyz; texcoord = uv; tint = color;
+    shadowCoord = .5 + .5*light.xyz;
+    texcoord = sheetBounds.z>0. ? (position.xy-sheetBounds.xy)/sheetBounds.zw : uv;
+    tint = color;
   }`;
   const fragment = `#version 300 es
   precision highp float;
@@ -73,13 +76,14 @@
   const identity = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
   const dot=(a,b)=>a.reduce((s,n,i)=>s+n*b[i],0);
   const unit=a=>a.map(v=>v/Math.hypot(...a));
-  function program(gl) {
+  function program(gl,vert=vertex,frag=fragment,location=null) {
     const p=gl.createProgram();
-    for(const [type,src] of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){
+    for(const [type,src] of [[gl.VERTEX_SHADER,vert],[gl.FRAGMENT_SHADER,frag]]){
       const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
       if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));
       gl.attachShader(p,s); gl.deleteShader(s);
     }
+    if(location!==null)gl.bindAttribLocation(p,location,"position");
     gl.linkProgram(p);
     if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));
     gl.useProgram(p);
@@ -156,7 +160,7 @@
       const doc=file.doc;
       const p=this.p=program(gl);this.resources.push(["deleteProgram",p]);
       this.u={};this.a={};
-      for(const name of ["model","lightSpace","eye","right","up","away","focal","framebufferSize","nearZ","shadowPass","diffuse","albedo","shadows","cutoff"])
+      for(const name of ["model","lightSpace","eye","right","up","away","focal","sheetBounds","framebufferSize","nearZ","shadowPass","diffuse","albedo","shadows","cutoff"])
         this.u[name]=gl.getUniformLocation(p,name);
       for(const name of ["position","normal","uv","color"])this.a[name]=gl.getAttribLocation(p,name);
       this.white=this.resource("Texture");
@@ -207,6 +211,7 @@
           tex:tex?this.images[doc.textures[tex.index].source]:this.white,color:material.baseColorFactor,
           cutoff:mat.alphaMode==="MASK"?(mat.alphaCutoff??.5):0,box:doc.accessors[prim.attributes.POSITION]};
       }));
+      for(const primitives of meshes)this.bakePlanarPaint(primitives);
       // The exporter normalizes the scene under one glTF Y-up root. Its children
       // are already complete ROS-world matrices, used by overlays and the camera.
       const root=doc.nodes[doc.scenes[doc.scene].nodes[0]];
@@ -235,6 +240,61 @@
       this.shadowMap(bounds);
       this.state="ready";this.invalidate();
     }
+    // Thin field markings and other layered, horizontal paint can be narrower
+    // than one display pixel. Bake the source triangles in local XY once so GPU
+    // mipmaps preserve their average coverage instead of producing dotted lines.
+    bakePlanarPaint(prims){
+      if(prims.length<2 || prims.some(p=>p.tex!==this.white))return;
+      const lo=[0,1,2].map(i=>Math.min(...prims.map(p=>p.box.min[i])));
+      const hi=[0,1,2].map(i=>Math.max(...prims.map(p=>p.box.max[i])));
+      const size=hi.map((v,i)=>v-lo[i]);
+      if(Math.min(size[0],size[1])<2 || size[2]>.15 || size[2]>.002*Math.min(size[0],size[1]))return;
+      const gl=this.gl,limit=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE),4096);
+      const scale=limit/Math.max(size[0],size[1]),width=Math.ceil(size[0]*scale),height=Math.ceil(size[1]*scale);
+      const bounds=[lo[0],lo[1],size[0],size[1]],texture=this.resource("Texture");
+      gl.bindTexture(gl.TEXTURE_2D,texture);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+      const fb=gl.createFramebuffer(),zbuf=gl.createRenderbuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER,fb);gl.bindRenderbuffer(gl.RENDERBUFFER,zbuf);
+      gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,width,height);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,zbuf);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,texture,0);
+      const vert=`#version 300 es
+        in vec3 position;
+        uniform vec4 bounds;
+        uniform vec2 heights;
+        void main(){gl_Position=vec4(2.*(position.xy-bounds.xy)/bounds.zw-1.,
+          .9-1.8*(position.z-heights.x)/heights.y,1.);}`;
+      const frag=`#version 300 es
+        precision highp float;
+        uniform vec4 diffuse;
+        out vec4 color;
+        void main(){color=diffuse;}`;
+      let p;
+      try{
+        if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)return;
+        p=program(gl,vert,frag,this.a.position);
+        gl.uniform4fv(gl.getUniformLocation(p,"bounds"),bounds);
+        gl.uniform2f(gl.getUniformLocation(p,"heights"),lo[2],Math.max(.001,size[2]));
+        const diffuse=gl.getUniformLocation(p,"diffuse");
+        gl.viewport(0,0,width,height);gl.enable(gl.DEPTH_TEST);
+        gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+        for(const prim of prims){
+          gl.uniform4fv(diffuse,prim.color);gl.bindVertexArray(prim.vao);
+          gl.drawElements(gl.TRIANGLES,prim.count,prim.mode,prim.offset);
+        }
+        gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+        gl.bindTexture(gl.TEXTURE_2D,texture);gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+        for(const k of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE);
+        const af=gl.getExtension("EXT_texture_filter_anisotropic");
+        if(af)gl.texParameterf(gl.TEXTURE_2D,af.TEXTURE_MAX_ANISOTROPY_EXT,Math.min(8,gl.getParameter(af.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+        for(const prim of prims){prim.sheet=bounds;prim.color=[1,1,1,1];prim.tex=texture;}
+      }finally{
+        gl.bindVertexArray(null);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.deleteFramebuffer(fb);gl.deleteRenderbuffer(zbuf);
+        if(p)gl.deleteProgram(p);gl.useProgram(this.p);
+      }
+    }
     drawModels(shadow,cam=null){
       const gl=this.gl,u=this.u;
       gl.uniform1i(u.shadowPass,+shadow);gl.activeTexture(gl.TEXTURE0);
@@ -249,6 +309,7 @@
              Math.abs(dot(delta,cam.up))>z*cam.tanY+radius*Math.hypot(1,cam.tanY))continue;
         }
         gl.uniformMatrix4fv(u.model,false,matrix); gl.uniform4fv(u.diffuse,prim.color);
+        gl.uniform4fv(u.sheetBounds,prim.sheet||[0,0,0,0]);
         gl.uniform1f(u.cutoff,prim.cutoff);gl.bindTexture(gl.TEXTURE_2D,prim.tex);
         gl.bindVertexArray(prim.vao);gl.drawElements(gl.TRIANGLES,prim.count,prim.mode,prim.offset);
       }

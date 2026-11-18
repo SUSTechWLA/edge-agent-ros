@@ -9,11 +9,12 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { checkReview } from './review_browser.mjs';
 import { checkSessions } from './session_browser.mjs';
 import { checkMap3D } from './map3d_browser.mjs';
-import { checkCampusTexture } from './campus_texture_browser.mjs';
+import { checkCampusTexture, checkCampusFallback } from './campus_texture_browser.mjs';
 import { checkRgbd } from './rgbd_browser.mjs';
 
 const [url, output, screenshotOption] = process.argv.slice(2);
-if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus','--campus-texture'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus','--campus-texture','--campus-fallback'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+const campusFallback = screenshotOption === '--campus-fallback';
 const campusTexture = screenshotOption === '--campus-texture';
 const campusOnly = screenshotOption === '--campus';
 const mapOnly = screenshotOption === '--map3d';
@@ -25,12 +26,12 @@ const binary = [process.env.CHROME_PATH, '/usr/bin/google-chrome', '/usr/bin/chr
   join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe')]
   .find(file => file && existsSync(file));
 if (!binary) throw new Error('Set CHROME_PATH to an installed Chrome or Edge browser.');
-if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture) {
+if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture && !campusFallback) {
   const state = await (await fetch(new URL('/api/state', url))).json();
   if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
 }
 const profile = mkdtempSync(join(tmpdir(), 'edge-browser-test-'));
-const renderFlags = campusTexture ? ['--use-angle=swiftshader','--enable-unsafe-swiftshader'] : ['--disable-gpu'];
+const renderFlags = campusTexture || campusFallback ? ['--use-angle=swiftshader','--enable-unsafe-swiftshader'] : ['--disable-gpu'];
 const browser = spawn(binary, ['--headless=new',...renderFlags,'--no-first-run','--disable-extensions',
   '--no-sandbox','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],
   {stdio:['ignore','ignore','pipe'],windowsHide:true});
@@ -72,8 +73,8 @@ async function evaluate(expression) {
   if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || expression);
   return r.result.value;
 }
-async function waitFor(expression, label=expression) {
-  const deadline = Date.now()+20000;
+async function waitFor(expression, label=expression, timeoutMs=20000) {
+  const deadline = Date.now()+timeoutMs;
   while (Date.now()<deadline) {
     if (await evaluate(expression)) return;
     await delay(150);
@@ -95,13 +96,17 @@ try {
   session = (await send('Target.attachToTarget',{targetId:target.targetId,flatten:true})).sessionId;
   await send('Runtime.enable');
   await send('Network.enable');
-  await send('Page.navigate',{url});
-  if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture) {
+  if (!campusFallback) await send('Page.navigate',{url});
+  if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture && !campusFallback) {
     await waitFor("document.querySelector('#sessions') && !document.querySelector('#sessions').hidden",
                   'Readable sessions are the default landing page');
   }
-  for (const width of [1440,390]) {
+  for (const width of campusFallback ? [980] : [1440,390]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:860,deviceScaleFactor:1,mobile:false});
+    if (campusFallback) {
+      viewports.push(await checkCampusFallback({url,output,evaluate,waitFor,send}));
+      continue;
+    }
     if (campusTexture) {
       viewports.push(await checkCampusTexture({url,width,output,evaluate,waitFor,send}));
       continue;

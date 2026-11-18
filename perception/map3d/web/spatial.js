@@ -336,6 +336,18 @@
         distance=Math.hypot(...direction);target=look.slice();
         yaw=Math.atan2(direction[0],-direction[1]);
         pitch=Math.asin(clamp(direction[2]/distance,-1,1));axes();
+        if(requestedCamera.frameGround && requestedBounds){
+          // Fit the full playing surface on both landscape and portrait displays.
+          // Keep the Gazebo camera direction so near/far stands stay recognizable.
+          const [west,south,east,north]=requestedBounds;
+          distance=0;
+          for(const x of [west,east])for(const y of [south,north]){
+            const v=[x-target[0],y-target[1],-target[2]];
+            const margin=surface.focal*Math.max(Math.abs(dot(v,right))/(surface.w*.475),
+              Math.abs(dot(v,up))/(surface.h*.44));
+            distance=Math.max(distance,dot(v,out)+margin);
+          }
+        }
         scaleRadius=Math.max(1,distance);autoFit=false;requestedBounds=null;requestedCamera=null;
       }else if(requestedBounds){
         const [a,b,c,d]=requestedBounds;

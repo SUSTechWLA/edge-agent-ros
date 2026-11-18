@@ -38,4 +38,5 @@ def append_site(world, output):
         "origin": "荷兰 3DBAG LoD2.2 + PDOK 2025 正射影像",
         "description": f"{manifest['buildings']} 栋建筑，保留实测重建的屋顶、轮廓和高度。地面与屋顶采用航片，立面窗格为示意材质。",
         "camera": {"eye": [980, 82, 115], "target": [757, 330, 18]},
+        "street_camera": {"eye": [724, 455, 3.2], "target": [751, 257, 39]},
     }
