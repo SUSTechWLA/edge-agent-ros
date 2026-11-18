@@ -283,6 +283,17 @@ def run(args):
                 return (o if min(o["counts"].values())>=4 and o["scan"] and o["truth"] and o["odom"]
                         and any(c["id"]=="navigate_place" for c in api("/agent/capabilities")["capabilities"]) else None)
             start=await_fact(ready,"Gazebo ROS streams and named-place capability",180)
+            if args.verify_onboard:
+                from campus_sensor_probe import TOPICS,validate as validate_onboard
+                dc("exec","-d","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
+                   "/opt/edge/tests/system/campus_sensor_probe.py","/audit")
+                def onboard():
+                    return json.loads((tmp/"audit/onboard.json").read_bytes())
+                def rig_ready():
+                    s=onboard()
+                    report["sensor_readiness"]={"counts":s["counts"],"errors":s["errors"],"tf":list(s["tf"])}
+                    return s if not s["errors"] and all(len(s["rows"][key])>=3 for key in TOPICS) else None
+                await_fact(rig_ready,"all mounted ROS streams with valid frames and payloads",75)
             require(math.dist(start["truth"][-1][1:3],(0,0))<.18,"mission must begin inside teaching lobby")
             report["live_geometry"]=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
                                      "/opt/audit/tests/system/campus_acceptance.py","--live-geometry",timeout=90))
@@ -319,6 +330,21 @@ def run(args):
             verify_round_trip(api,observed,await_fact,terminal,report["mission"],report.setdefault("continuous_navigation",{}))
             from campus_forms import verify_forms
             verify_forms(api,dc,report.setdefault("robot_forms",{}))
+            if args.verify_onboard:
+                sensors=report["onboard"]=validate_onboard(onboard(),report["mission"],report["robot_forms"])
+                dc("stop","campus-robot-bridge")
+                time.sleep(1.8)
+                first=onboard()["counts"]
+                time.sleep(1.6)
+                last=onboard()["counts"]
+                stopped_keys=["edge_rover.wheels","edge_rover.color","crazyflie.down","g1.depth","go1.cloud"]
+                require(all(last[k]==first[k] for k in stopped_keys),"sensor bridge still producing after stop")
+                require(last["edge_rover.imu"]>first["edge_rover.imu"],"original IMU also stopped with optional bridge")
+                dc("start","campus-robot-bridge")
+                refreshed=await_fact(lambda: (s if all(s[k]>=last[k]+3 for k in stopped_keys) else None)
+                                     if (s:=onboard()["counts"]) else None,"fresh measurements after restart",45)
+                sensors["bridge_restart"]={"halted":{k:last[k] for k in stopped_keys},"recovered":{k:refreshed[k] for k in stopped_keys},
+                    "independent_imu_advanced":last["edge_rover.imu"]-first["edge_rover.imu"]}
             viewer = "http://"+dc("port","campus-overview","8080")
             def assets():
                 with http.open(viewer+"/capture.json",timeout=3) as response:
@@ -471,6 +497,7 @@ if __name__=="__main__":
         parser.add_argument("--baseline",default="edge-agent-ros")
         parser.add_argument("--verify-reload",action="store_true",help="cross the door again after guarded campus reload")
         parser.add_argument("--verify-texture",action="store_true",help="verify both map views on this isolated campus")
+        parser.add_argument("--verify-onboard",action="store_true",help="compare mounted ROS measurements to physical tasks and interrupt the readout bridge")
         parser.add_argument("--assets",type=Path,default=ROOT/"artifacts/sim-assets")
         parser.add_argument("--out",type=Path,required=True)
         run(parser.parse_args())

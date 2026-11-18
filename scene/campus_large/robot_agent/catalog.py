@@ -48,6 +48,8 @@ def install(world, defaults):
         if robot in JOINTS:
             connect("/model/"+robot+"/joint_state","sensor_msgs/msg/JointState","gz.msgs.Model","GZ_TO_ROS")
     connect("/model/crazyflie/cmd_vel","geometry_msgs/msg/Twist","gz.msgs.Twist","ROS_TO_GZ")
+    if (world/"sensor-rig.json").is_file():
+        bridge.extend(json.loads((world/"sensor-rig.json").read_bytes())["bridges"])
     (world/"robot-bridge.yaml").write_text(json.dumps(bridge,indent=2)+"\n",encoding="utf-8")
 
 

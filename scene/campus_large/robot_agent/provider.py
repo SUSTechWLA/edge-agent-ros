@@ -11,7 +11,7 @@ import threading
 import time
 from urllib.request import Request, build_opener, ProxyHandler
 
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TransformStamped, Twist
 from gz.msgs10.pose_v_pb2 import Pose_V
 from gz.transport13 import Node as GazeboNode
 import rclpy
@@ -19,6 +19,7 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Imu, JointState
 from std_msgs.msg import Float64, String
+from tf2_ros import StaticTransformBroadcaster
 from catalog import ACTIONS, JOINTS, NAMES, ROBOTS
 
 
@@ -39,6 +40,22 @@ class Fleet(Node):
             self.db.execute("UPDATE receipts SET result=? WHERE result IS NULL",
                 (json.dumps(failed("robot.runtime_restarted","控制器已重启，需核对原操作。")),))
         self.scene=json.loads(Path("/campus/layout.json").read_bytes())["revision"]
+        rig_path=Path("/campus/sensor-rig.json")
+        if rig_path.is_file():
+            self.static_tf=StaticTransformBroadcaster(self)
+            transforms=[]
+            for mount in json.loads(rig_path.read_bytes())["transforms"]:
+                msg=TransformStamped()
+                msg.header.frame_id,msg.child_frame_id=mount["parent"],mount["child"]
+                p,q=msg.transform.translation,msg.transform.rotation
+                p.x,p.y,p.z=map(float,mount["xyz"])
+                roll,pitch,yaw=(v/2 for v in mount["rpy"])
+                cr,cp,cy=map(math.cos,(roll,pitch,yaw))
+                sr,sp,sy=map(math.sin,(roll,pitch,yaw))
+                q.x,q.y,q.z,q.w=(sr*cp*cy-cr*sp*sy,cr*sp*cy+sr*cp*sy,
+                                 cr*cp*sy-sr*sp*cy,cr*cp*cy+sr*sp*sy)
+                transforms.append(msg)
+            self.static_tf.sendTransform(transforms)
         self.overview_port=int(os.getenv("EDGE_CAMPUS_OVERVIEW_PORT","0"))
         self.telemetry=self.create_publisher(String,"/edge/robot_states",2)
         self.gz=GazeboNode()

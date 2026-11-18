@@ -276,9 +276,11 @@ def build(assets, base, output):
     if __package__:
         from .real_site import append_site
         from .robots import append_robots
+        from .robot_sensors import append_instruments
     else:
         from real_site import append_site
         from robots import append_robots
+        from robot_sensors import append_instruments
     if not (assets/"models"/"Pine Tree"/"model.sdf").is_file():
         raise SystemExit("Missing pine model. Run python scene/campus_large/fetch_assets.py.")
     tree=ET.parse(base)
@@ -300,6 +302,7 @@ def build(assets, base, output):
     walk=pedestrian_grounds(world,output)
     tree_count=trees(world)
     robots=append_robots(world,output)
+    instruments=append_instruments(world,output)
     street=surveyed.pop("street_camera")
     surveyed["id"]="delft"
     cx,cy=TRACK_CENTER
@@ -349,7 +352,7 @@ def build(assets, base, output):
     layout["revision"]=scene_revision(world,output,layout)
     manifest={"bounds":total,"unit":"m","frame":"odom","areas":areas,"trees":tree_count,
               "routes":[walk],"scene_revision":layout["revision"],"sensor_stations":SENSOR_STATIONS,"robots":robots,
-              "projection":projection,"spawn":[0,0],"source_file":"real_site/buildings.obj"}
+              "instruments":instruments,"projection":projection,"spawn":[0,0],"source_file":"real_site/buildings.obj"}
     for path,obj in ((output/"layout.json",layout),(out_web/"manifest.json",manifest)):
         path.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     shutil.copyfile(Path(__file__).with_name("overview.html"),out_web/"index.html")
