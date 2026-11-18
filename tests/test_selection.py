@@ -6,7 +6,7 @@ import unittest
 STAGES = ("repository", "planner", "agent-contracts", "observations", "scene-contracts",
           "core", "motion-sensors", "motion-world", "agent-faults", "resilience",
           "console-missions", "places", "scene-binding", "scene-outage", "clock-reset", "ui", "model", "board",
-          "plugin-isolation")
+          "plugin-isolation", "campus-world")
 R = "repository"
 AGENT = ("planner", "agent-contracts", "agent-faults", "resilience", "console-missions",
          "places", "scene-binding", "ui", "model")
@@ -15,6 +15,8 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_acceptance.py","tests/test_campus_*.py"),
+     ("campus-world",)),
     (("perception/map3d/*", "perception/sim_station.py", "map-inputs/*", "tests/test_map3d_ros.py", "tests/test_map3d.py", "tests/test_lidar_inputs_ros.py",
       "perception/camera/*", "compose.camera*.yaml", "perception/rgbd/*", "compose.rgbd*.yaml", "tests/test_rgbd.py"),
      ("planner", "observations", "board", "plugin-isolation")),
@@ -144,6 +146,7 @@ class TestSelection(unittest.TestCase):
             self.assertIn(stage,chosen)
 
     def test_examples(self):
+        self.assertEqual(selection(["scene/campus_large/build.py","compose.campus.yaml"])[0],[R,"campus-world"])
         self.assertEqual(selection(["docs/specs/example.md"])[0], [R])
         self.assertEqual(selection(["agent/contracts.json"])[0], [R,"planner","agent-contracts","agent-faults","model"])
         for path in ("src/edge_interfaces/srv/GetMission.srv","unclassified/kernel.rs",

@@ -1,0 +1,134 @@
+{
+  "observed_at_utc": "2026-11-18T08:13:28.439307+00:00",
+  "project": "edge-agent-campus",
+  "overview_url": "http://127.0.0.1:8780/",
+  "console_url": "http://127.0.0.1:8766/",
+  "photo_receipt": {
+    "complete": true,
+    "schema_version": 1,
+    "views": {
+      "campus": {
+        "height": 650,
+        "sha256": "98c971ef4b1f75a5674c4e08b92f3887d1dbb1cf800540b23ee6af3d1f1951de",
+        "stamp_ns": 6000000,
+        "topic": "/campus/view/campus/image",
+        "width": 1000
+      },
+      "lawn": {
+        "height": 650,
+        "sha256": "0f3f32c0112b4b4a3827a17ae2b9e695d8e3ed8b3994688db5d00aee9d593185",
+        "stamp_ns": 750000000,
+        "topic": "/campus/view/lawn/image",
+        "width": 1000
+      },
+      "overview": {
+        "height": 650,
+        "sha256": "54543207968db26d61881d73ac2a52aa7730d3d51530e3736c47d5b95f27644c",
+        "stamp_ns": 4000000,
+        "topic": "/campus/view/overview/image",
+        "width": 1000
+      },
+      "road": {
+        "height": 650,
+        "sha256": "941001a27def32ebfe235fb6d5244a9079e293f087b6bd42cc769d42379e66e1",
+        "stamp_ns": 626000000,
+        "topic": "/campus/view/road/image",
+        "width": 1000
+      },
+      "teaching": {
+        "height": 650,
+        "sha256": "9a315ab0ab4e10f3e2e71a6c6d01d0e780462a179e6c9075aae3b0a8a2f89887",
+        "stamp_ns": 250000000,
+        "topic": "/campus/view/teaching/image",
+        "width": 1000
+      },
+      "track": {
+        "height": 650,
+        "sha256": "f89b9d3c4a15694b02978293a640570b6bcd205e4bc37f0b673ea3226840f19c",
+        "stamp_ns": 376000000,
+        "topic": "/campus/view/track/image",
+        "width": 1000
+      },
+      "woods": {
+        "height": 650,
+        "sha256": "404490c213fb2a6503d5cf8e4b205f9e1e0e167f25d9351772d97809b312ecac",
+        "stamp_ns": 500000000,
+        "topic": "/campus/view/woods/image",
+        "width": 1000
+      }
+    },
+    "world": {
+      "layout_sha256": "bfa6bcc9dbc7485542838524bc4448b574b15b04abf3288b9d7a9421eadc13dc",
+      "world_sha256": "8f04d25553433aacc2e198343e5cc27177deb9993d398b4ea8fcecac5a8be6bd"
+    }
+  },
+  "browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "imageWidths": {
+          "campus": 1000,
+          "teaching": 1000,
+          "track": 1000,
+          "woods": 1000,
+          "road": 1000,
+          "lawn": 1000,
+          "overview": 1000
+        },
+        "document_width": 1425
+      },
+      {
+        "width": 390,
+        "imageWidths": {
+          "campus": 1000,
+          "teaching": 1000,
+          "track": 1000,
+          "woods": 1000,
+          "road": 1000,
+          "lawn": 1000,
+          "overview": 1000
+        },
+        "document_width": 375
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "tasks": [
+    {
+      "task_id": "campus-demo-275b4a5f37",
+      "state": "SUCCEEDED",
+      "text": "前往教学楼门外",
+      "tool": "navigate_place",
+      "scene": "campus_large",
+      "path": [
+        "teaching_lobby",
+        "teaching_door",
+        "teaching_exit"
+      ],
+      "observed_xy": [
+        3.249566888877382,
+        1.2456510656328478e-13
+      ]
+    },
+    {
+      "task_id": "campus-demo-ccce60b6d3",
+      "state": "SUCCEEDED",
+      "text": "前往教学楼门厅",
+      "tool": "navigate_place",
+      "scene": "campus_large",
+      "path": [
+        "teaching_exit",
+        "teaching_door",
+        "teaching_lobby"
+      ],
+      "observed_xy": [
+        0.051315405695278656,
+        7.655637637685701e-05
+      ]
+    }
+  ],
+  "sim_resources_sample": "2.106GiB / 19.53GiB; 100.58%",
+  "resource_note": "Desktop Docker single observation after photo capture, not a board benchmark."
+}

@@ -1,0 +1,161 @@
+"""Keep seven offline Gazebo stills tied to the world that actually rendered them."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+from queue import Empty, Full, Queue
+import struct
+import tempfile
+import time
+import zlib
+
+
+VIEWS = ("overview", "campus", "teaching", "track", "woods", "road", "lawn")
+WORLD = Path("/campus")
+RUNTIME = Path("/run/campus/world.json")
+
+
+def file_digest(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def identity(root):
+    return {"world_sha256": file_digest(root / "world.sdf"), "layout_sha256": file_digest(root / "layout.json")}
+
+
+def read_record(path):
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (FileNotFoundError, ValueError, UnicodeError):
+        return {}
+
+
+def atomic(path, data):
+    output = tempfile.NamedTemporaryFile(dir=path.parent, prefix=".pending-", delete=False)
+    tmp = Path(output.name)
+    try:
+        with output:
+            output.write(data)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def record(path, data):
+    atomic(path, (json.dumps(data, indent=2, sort_keys=True) + "\n").encode())
+
+
+def prepare(root, current):
+    directory = root / "overview"
+    manifest = directory / "capture.json"
+    before = read_record(manifest)
+    views = before.get("views", {}) if before.get("world") == current else {}
+    if not isinstance(views, dict):
+        views = {}
+    valid = {}
+    for name in VIEWS:
+        image = directory / (name + ".png")
+        item = views.get(name)
+        if isinstance(item, dict) and image.is_file() and file_digest(image) == item.get("sha256"):
+            valid[name] = item
+        else:
+            image.unlink(missing_ok=True)
+    receipt = {"schema_version": 1, "world": current, "views": valid, "complete": len(valid) == len(VIEWS)}
+    record(manifest, receipt)
+    return receipt
+
+
+def chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+
+def encode(frame):
+    w, h, pitch = frame.width, frame.height, frame.step
+    pixels = frame.data
+    # gz.msgs.PixelFormatType.RGB_INT8 is the wire enum value 3.
+    if (frame.pixel_format_type != 3 or not 1 <= w <= 4096 or not 1 <= h <= 2160 or
+            pitch < w * 3 or len(pixels) != pitch * h or len(pixels) > 32 * 1024 * 1024):
+        raise ValueError("unsupported Gazebo RGB8 layout")
+    stamp = frame.header.stamp.sec * 1_000_000_000 + frame.header.stamp.nsec
+    if stamp <= 0:
+        raise ValueError("waiting for a stamped frame")
+    rows = [b"\x00" + pixels[y * pitch:y * pitch + w * 3] for y in range(h)]
+    ihdr = struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(b"".join(rows), 3)) + chunk(b"IEND", b"")
+    return png, {"width": w, "height": h, "stamp_ns": stamp, "sha256": hashlib.sha256(png).hexdigest()}
+
+
+def capture(node, message_type, topic, deadline):
+    frames = Queue(maxsize=1)
+    def receive(message):
+        try:
+            frames.put_nowait(message)
+        except Full:
+            pass
+    if not node.subscribe(message_type, topic, receive):
+        raise RuntimeError(f"cannot subscribe to {topic}")
+    try:
+        problem = "no sample"
+        while time.monotonic() < deadline:
+            try:
+                return encode(frames.get(timeout=min(1., max(.01, deadline - time.monotonic()))))
+            except Empty:
+                continue
+            except ValueError as exc:
+                problem = str(exc)
+        raise TimeoutError(f"timed out waiting for {topic}: {problem}")
+    finally:
+        node.unsubscribe(topic)
+
+
+def photos(root, runtime, timeout=240):
+    from gz.msgs10.image_pb2 import Image
+    from gz.transport13 import Node
+
+    current = identity(root)
+    receipt = prepare(root, current)
+    if receipt["complete"]:
+        print("Verified seven cached campus images for this world.", flush=True)
+        return
+    deadline = time.monotonic() + timeout
+    while read_record(runtime) != current:
+        if time.monotonic() >= deadline:
+            raise TimeoutError("Gazebo is not running this campus revision. Recreate the campus sim service.")
+        time.sleep(.25)
+    node = Node()
+    for name in VIEWS:
+        if name in receipt["views"]:
+            continue
+        topic = f"/campus/view/{name}/image"
+        png, meta = capture(node, Image, topic, deadline)
+        if read_record(runtime) != current or identity(root) != current:
+            raise RuntimeError("campus world changed during capture")
+        atomic(root / "overview" / (name + ".png"), png)
+        receipt["views"][name] = {"topic": topic, **meta}
+        receipt["complete"] = len(receipt["views"]) == len(VIEWS)
+        record(root / "overview/capture.json", receipt)
+        print(f"{name}: {meta['width']} x {meta['height']} from {topic} at {meta['stamp_ns']} ns", flush=True)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=["prepare", "world", "photos"])
+    args = parser.parse_args()
+    if args.action == "world":
+        record(RUNTIME, identity(WORLD))
+        os.execlp("gz", "gz", "sim", "-s", "-r", "--headless-rendering", str(WORLD / "world.sdf"))
+    else:
+        # Both writers run in Linux containers, including on Docker Desktop. Repeated
+        # compose up/run commands must not delete a photo between its PNG and receipt writes.
+        import fcntl
+        with (WORLD / ".capture.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if args.action == "prepare":
+                prepare(WORLD, identity(WORLD))
+            else:
+                photos(WORLD, RUNTIME)

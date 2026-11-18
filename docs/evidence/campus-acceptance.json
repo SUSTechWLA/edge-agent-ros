@@ -1,0 +1,532 @@
+{
+  "passed": true,
+  "project": "edge-campus-audit-8e869a4d73",
+  "ros_domain": "166",
+  "gazebo_partition": "campus_audit_8e869a4d73",
+  "utc": "2026-11-18T07:49:54.546133+00:00",
+  "image": "edge-agent-ros:perception-75bd27e",
+  "requested_text": "前往教学楼门外",
+  "live_geometry": {
+    "fuel_campus": {
+      "world_pose": [
+        "193.791",
+        "194.876",
+        "0.26500000000000001"
+      ],
+      "visuals": 1,
+      "collisions": 1,
+      "geometry_types": {
+        "mesh": 1
+      },
+      "mesh_uri_samples": [
+        "file:///assets/models/Campus/meshes/Campus_world.obj"
+      ]
+    },
+    "teaching": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 157,
+      "collisions": 114,
+      "geometry_types": {
+        "box": 155,
+        "cylinder": 2
+      },
+      "mesh_uri_samples": [],
+      "largest_box_size_m": [
+        "ceiling",
+        [
+          19.1,
+          18.6,
+          0.16
+        ]
+      ]
+    },
+    "woods": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 316,
+      "collisions": 90,
+      "geometry_types": {
+        "box": 2,
+        "cylinder": 90,
+        "ellipsoid": 224
+      },
+      "mesh_uri_samples": [],
+      "largest_box_size_m": [
+        "forest_floor",
+        [
+          89.0,
+          85.0,
+          0.016
+        ]
+      ]
+    },
+    "road": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 61,
+      "collisions": 0,
+      "geometry_types": {
+        "box": 58,
+        "cylinder": 3
+      },
+      "mesh_uri_samples": [],
+      "largest_box_size_m": [
+        "campus_drive",
+        [
+          260.0,
+          8.0,
+          0.014
+        ]
+      ]
+    },
+    "track": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 407,
+      "collisions": 14,
+      "geometry_types": {
+        "box": 399,
+        "cylinder": 8
+      },
+      "mesh_uri_samples": [],
+      "largest_box_size_m": [
+        "center0",
+        [
+          84.4,
+          80.0,
+          0.012
+        ]
+      ]
+    },
+    "lawn": {
+      "world_pose": [
+        "0",
+        "0",
+        "0"
+      ],
+      "visuals": 6,
+      "collisions": 4,
+      "geometry_types": {
+        "box": 6
+      },
+      "mesh_uri_samples": [],
+      "largest_box_size_m": [
+        "grass",
+        [
+          107.0,
+          66.0,
+          0.016
+        ]
+      ]
+    },
+    "road_connection": {
+      "segment_names": [
+        "north_link_0",
+        "north_link_1",
+        "north_link_2"
+      ],
+      "first_xy_m": [
+        14.000053165739706,
+        151.00001213542322
+      ],
+      "tip_xy_m": [
+        36.55001792743717,
+        202.63001383672022
+      ],
+      "junction_gaps_m": [
+        9.806132265989333e-05,
+        2.5496272880944425e-05
+      ],
+      "obj_face_line": 1479415,
+      "material": "Road",
+      "triangle_vertex_indices": [
+        19,
+        376,
+        375
+      ],
+      "barycentric_weights": [
+        0.4931053623020265,
+        0.0810662314182634,
+        0.4258284062797101
+      ],
+      "mesh_surface_z_m": 0.015000000000000013,
+      "connector_top_z_m": 0.023,
+      "ground_z_m": 0.0
+    },
+    "live_model_count": 25,
+    "pine_instances": 16,
+    "world_sdf_sha256": "037337833453923be7eb2f320f86068d68719ddd1a245c5e086330579498bc66"
+  },
+  "mission": {
+    "task_id": "campus-gate-8e869a4d73",
+    "trace_id": "campus-gate-8e869a4d73",
+    "state": "SUCCEEDED",
+    "tool": "navigate_place",
+    "evidence": {
+      "scene": "campus_large",
+      "revision": "1.0",
+      "digest": "bfa6bcc9dbc7485542838524bc4448b574b15b04abf3288b9d7a9421eadc13dc",
+      "frame": "odom",
+      "path": [
+        "teaching_lobby",
+        "teaching_door",
+        "teaching_exit"
+      ],
+      "waypoints": [
+        [
+          0,
+          0
+        ],
+        [
+          1.7,
+          0
+        ],
+        [
+          3.3,
+          0
+        ]
+      ],
+      "start_xy": [
+        -1.2477089673789688e-09,
+        -5.943781216934875e-30
+      ],
+      "start_zone": "lobby",
+      "destination_id": "teaching_exit",
+      "distance_m": 3.300000001247709,
+      "place": "教学楼门外",
+      "observed_xy": [
+        3.250617815805039,
+        -6.622092599173368e-14
+      ],
+      "verified_count": 3,
+      "mission_id": "campus-gate-8e869a4d73/step/1"
+    },
+    "paths": {
+      "truth": {
+        "start": [
+          442000000,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "inside_door": [
+          15538000000,
+          1.6292,
+          -0.0,
+          0.0763
+        ],
+        "end": [
+          22576000000,
+          3.237,
+          0.0,
+          0.0
+        ],
+        "goal_error_m": 0.063,
+        "samples": 218
+      },
+      "odom": {
+        "start": [
+          442000000,
+          -0.0,
+          -0.0,
+          0.0
+        ],
+        "inside_door": [
+          15538000000,
+          1.6361,
+          0.0,
+          0.0763
+        ],
+        "end": [
+          22576000000,
+          3.2506,
+          -0.0,
+          0.0
+        ],
+        "goal_error_m": 0.0494,
+        "samples": 218
+      }
+    },
+    "row_units": [
+      "stamp_ns",
+      "x_m",
+      "y_m",
+      "v_mps"
+    ]
+  },
+  "ros": {
+    "counts_start": {
+      "clock": 242,
+      "odom": 14,
+      "truth": 14,
+      "scan": 4
+    },
+    "counts_end": {
+      "clock": 11298,
+      "odom": 665,
+      "truth": 665,
+      "scan": 181
+    },
+    "first_scan": {
+      "stamp_ns": 376000000,
+      "frame": "laser_link",
+      "rays": 360,
+      "returns": 228,
+      "min_m": 1.777,
+      "max_m": 6.0103
+    },
+    "last_scan": {
+      "stamp_ns": 22500000000,
+      "frame": "laser_link",
+      "rays": 360,
+      "returns": 118,
+      "min_m": 1.9391,
+      "max_m": 7.7137
+    },
+    "clock_before_ns": 486000000,
+    "clock_after_ns": 22626000000
+  },
+  "renders": {
+    "world_digest": {
+      "layout_sha256": "bfa6bcc9dbc7485542838524bc4448b574b15b04abf3288b9d7a9421eadc13dc",
+      "world_sha256": "8f04d25553433aacc2e198343e5cc27177deb9993d398b4ea8fcecac5a8be6bd"
+    },
+    "views": {
+      "overview": {
+        "height": 650,
+        "sha256": "54543207968db26d61881d73ac2a52aa7730d3d51530e3736c47d5b95f27644c",
+        "stamp_ns": 4000000,
+        "topic": "/campus/view/overview/image",
+        "width": 1000,
+        "sampled_color_count": 459
+      },
+      "campus": {
+        "height": 650,
+        "sha256": "98c971ef4b1f75a5674c4e08b92f3887d1dbb1cf800540b23ee6af3d1f1951de",
+        "stamp_ns": 6000000,
+        "topic": "/campus/view/campus/image",
+        "width": 1000,
+        "sampled_color_count": 1021
+      },
+      "teaching": {
+        "height": 650,
+        "sha256": "9a315ab0ab4e10f3e2e71a6c6d01d0e780462a179e6c9075aae3b0a8a2f89887",
+        "stamp_ns": 250000000,
+        "topic": "/campus/view/teaching/image",
+        "width": 1000,
+        "sampled_color_count": 743
+      },
+      "track": {
+        "height": 650,
+        "sha256": "f89b9d3c4a15694b02978293a640570b6bcd205e4bc37f0b673ea3226840f19c",
+        "stamp_ns": 376000000,
+        "topic": "/campus/view/track/image",
+        "width": 1000,
+        "sampled_color_count": 181,
+        "independent_gz": {
+          "sha256": "bd231945fd9c651904ae667fcba0fcc428b892a0cb2f80eebe317d5200ece46f",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 24000000000,
+          "matching_sample_fraction": 1.0
+        }
+      },
+      "woods": {
+        "height": 650,
+        "sha256": "404490c213fb2a6503d5cf8e4b205f9e1e0e167f25d9351772d97809b312ecac",
+        "stamp_ns": 500000000,
+        "topic": "/campus/view/woods/image",
+        "width": 1000,
+        "sampled_color_count": 846,
+        "independent_gz": {
+          "sha256": "0d04bd50cb614a3fc0f328f816065df2213e52fa1dbb4d762740b13612b1eaa8",
+          "width": 1000,
+          "height": 650,
+          "stamp_ns": 24000000000,
+          "matching_sample_fraction": 1.0
+        }
+      },
+      "road": {
+        "height": 650,
+        "sha256": "941001a27def32ebfe235fb6d5244a9079e293f087b6bd42cc769d42379e66e1",
+        "stamp_ns": 626000000,
+        "topic": "/campus/view/road/image",
+        "width": 1000,
+        "sampled_color_count": 312
+      },
+      "lawn": {
+        "height": 650,
+        "sha256": "0f3f32c0112b4b4a3827a17ae2b9e695d8e3ed8b3994688db5d00aee9d593185",
+        "stamp_ns": 750000000,
+        "topic": "/campus/view/lawn/image",
+        "width": 1000,
+        "sampled_color_count": 423
+      }
+    },
+    "declared_areas": [
+      {
+        "id": "campus",
+        "label": "原始校园建筑群",
+        "bounds": [
+          22,
+          23,
+          375.409286,
+          306.978585
+        ],
+        "center": [
+          198.704643,
+          164.9892925
+        ],
+        "origin": "Gazebo Fuel · NCS_robotmanager / Campus v2",
+        "description": "上游发布的带材质校园网格，视觉与碰撞共用其原始几何。"
+      },
+      {
+        "id": "teaching",
+        "label": "教师楼与教学楼门厅",
+        "bounds": [
+          -17.2,
+          -9.2,
+          4.2,
+          9.2
+        ],
+        "center": [
+          -6.5,
+          0.0
+        ],
+        "origin": "本项目训练区",
+        "description": "一楼有教室、桌椅、走廊和可通过的门廊。机器人从楼内出发。"
+      },
+      {
+        "id": "track",
+        "label": "田径场与足球场",
+        "bounds": [
+          -186,
+          25,
+          -20,
+          119
+        ],
+        "center": [
+          -103.0,
+          72.0
+        ],
+        "origin": "本项目训练区",
+        "description": "弯道、六条跑道、足球场线、球门和看台。"
+      },
+      {
+        "id": "woods",
+        "label": "混合树林与林道",
+        "bounds": [
+          22,
+          -97,
+          112,
+          -11
+        ],
+        "center": [
+          67.0,
+          -54.0
+        ],
+        "origin": "本项目训练区 · OpenRobotics / Pine Tree v6",
+        "description": "83 棵疏密不同的松树与阔叶树，土路斜穿林地。"
+      },
+      {
+        "id": "road",
+        "label": "校园车道",
+        "bounds": [
+          9,
+          -106,
+          40,
+          203
+        ],
+        "center": [
+          24.5,
+          48.5
+        ],
+        "origin": "本项目训练区",
+        "description": "双向车道和人行横道，北段弯道接入原校园道路。"
+      },
+      {
+        "id": "lawn",
+        "label": "开阔草坪",
+        "bounds": [
+          -133,
+          -77,
+          -25,
+          -11
+        ],
+        "center": [
+          -79.0,
+          -44.0
+        ],
+        "origin": "本项目训练区",
+        "description": "开阔草地、边缘长椅和一条通向建筑的步道。"
+      }
+    ],
+    "bounds_m": [
+      -198,
+      -110,
+      379.409286,
+      310.978585
+    ],
+    "fuel_vertices": 477187
+  },
+  "viewer_restart": {
+    "unchanged": [
+      "sim",
+      "gateway",
+      "agent"
+    ],
+    "before_ns": {
+      "clock": 24468000000,
+      "scan": 24376000000,
+      "truth": 24446000000,
+      "odom": 24446000000
+    },
+    "after_ns": {
+      "clock": 25334000000,
+      "scan": 25250000000,
+      "truth": 25330000000,
+      "odom": 25330000000
+    }
+  },
+  "baseline": {
+    "owned_fixture": false,
+    "services_unchanged": [
+      "agent",
+      "bridge",
+      "camera",
+      "camera-sensor",
+      "console",
+      "evidence",
+      "map3d",
+      "map3d-sensor",
+      "model",
+      "model-provider",
+      "perception",
+      "plugin-author",
+      "plugin-manager",
+      "rgbd",
+      "rgbd-sensor",
+      "scene",
+      "session",
+      "sim",
+      "watchdog",
+      "witness"
+    ],
+    "sim_id": "dede99c55ce3d7a9720e8d47d5ff09172a8fc384744c9d3afd04a3597d2da2a6",
+    "clock_before_ns": 4382058000000,
+    "clock_after_ns": 4441634000000
+  }
+}

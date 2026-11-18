@@ -12,7 +12,8 @@ import { checkMap3D } from './map3d_browser.mjs';
 import { checkRgbd } from './rgbd_browser.mjs';
 
 const [url, output, screenshotOption] = process.argv.slice(2);
-if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+const campusOnly = screenshotOption === '--campus';
 const mapOnly = screenshotOption === '--map3d';
 const rgbdOnly = screenshotOption === '--rgbd';
 const sensorViews = screenshotOption === '--sensor-views';
@@ -22,7 +23,7 @@ const binary = [process.env.CHROME_PATH, '/usr/bin/google-chrome', '/usr/bin/chr
   join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe')]
   .find(file => file && existsSync(file));
 if (!binary) throw new Error('Set CHROME_PATH to an installed Chrome or Edge browser.');
-if (!mapOnly && !rgbdOnly) {
+if (!mapOnly && !rgbdOnly && !campusOnly) {
   const state = await (await fetch(new URL('/api/state', url))).json();
   if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
 }
@@ -92,12 +93,29 @@ try {
   await send('Runtime.enable');
   await send('Network.enable');
   await send('Page.navigate',{url});
-  if (!mapOnly && !rgbdOnly) {
+  if (!mapOnly && !rgbdOnly && !campusOnly) {
     await waitFor("document.querySelector('#sessions') && !document.querySelector('#sessions').hidden",
                   'Readable sessions are the default landing page');
   }
   for (const width of [1440,390]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:860,deviceScaleFactor:1,mobile:false});
+    if (campusOnly) {
+      await waitFor("document.querySelectorAll('.choices button').length === 7","seven campus views");
+      const imageWidths = {};
+      for (const id of ['campus','teaching','track','woods','road','lawn','overview']) {
+        await evaluate(`document.querySelector('button[data-id="${id}"]').click()`);
+        await waitFor(`!document.querySelector('#shot').hidden && new URL(document.querySelector('#shot').src).pathname.endsWith('/${id}.png') && document.querySelector('#shot').naturalWidth >= 300`);
+        imageWidths[id] = await evaluate("document.querySelector('#shot').naturalWidth");
+      }
+      const content = await evaluate('document.documentElement.scrollWidth');
+      if (content > width+1) throw new Error('campus horizontal overflow at '+width);
+      if (width === 1440) {
+        const screenshot = await send('Page.captureScreenshot',{format:'png'});
+        writeFileSync(join(dirname(output),'campus-overview.png'), Buffer.from(screenshot.data,'base64'));
+      }
+      viewports.push({width, imageWidths, document_width:content});
+      continue;
+    }
     if (mapOnly) {
       viewports.push(await checkMap3D({url,width,output,evaluate,waitFor,send}));
       continue;

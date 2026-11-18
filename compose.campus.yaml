@@ -1,0 +1,124 @@
+# Optional campus stack. The default project name keeps its networks and state volumes separate.
+name: edge-agent-campus
+
+x-campus-tool: &campus-tool
+  image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+  pull_policy: never
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: [/tmp]
+  init: true
+
+x-campus-assets: &campus-assets
+  type: bind
+  source: ${EDGE_CAMPUS_ASSETS_DIR:-./artifacts/sim-assets}
+  target: /assets
+  read_only: true
+
+x-campus-ready: &campus-ready
+  campus-build:
+    condition: service_completed_successfully
+
+services:
+  campus-build:
+    <<: *campus-tool
+    network_mode: none
+    volumes:
+      - ./scene/campus_large:/opt/edge/scene/campus_large:ro
+      - *campus-assets
+      - campus-world:/campus
+    command:
+      - sh
+      - -ec
+      - |
+        python3 -B /opt/edge/scene/campus_large/build.py --assets /assets --base /opt/edge/sim/world.sdf --output /campus
+        exec python3 -B /opt/edge/scene/campus_large/capture.py prepare
+
+  sim:
+    depends_on: *campus-ready
+    environment:
+      EDGE_SCENE_FILE: /campus/layout.json
+      GZ_SIM_RESOURCE_PATH: /assets/models:/assets:/campus
+    volumes:
+      - ./scene/campus_large:/opt/edge/scene/campus_large:ro
+      - *campus-assets
+      - campus-world:/campus:ro
+      - campus-runtime:/run/campus
+    command: ["python3","-B","/opt/edge/scene/campus_large/capture.py","world"]
+
+  scene:
+    depends_on: *campus-ready
+    environment:
+      EDGE_SCENE_FILE: /campus/layout.json
+    volumes:
+      - campus-world:/campus:ro
+
+  agent:
+    environment:
+      EDGE_OLLAMA_URL: ""
+      EDGE_PLANNER_URL: ""
+      EDGE_TRACE_CONTENT: redacted
+      EDGE_EXTRA_PLUGIN_DIR: /opt/edge/scene/plugins
+    volumes:
+      - campus-plugins:/etc/edge/plugins:ro
+      - campus-contracts:/etc/edge/contracts:ro
+
+  console:
+    ports: !override
+      - "127.0.0.1:${EDGE_CAMPUS_CONSOLE_PORT:-8766}:8080"
+    volumes:
+      - campus-plugins:/etc/edge/plugins:ro
+      - campus-observations:/etc/edge/observations:ro
+      - campus-views:/opt/edge/console/web/view-plugins:ro
+
+  # These optional roles have their own campus registries when explicitly enabled.
+  evidence:
+    profiles: [campus-evidence]
+    ports: !override
+      - "127.0.0.1:${EDGE_CAMPUS_EVIDENCE_PORT:-8126}:8125"
+  session:
+    profiles: [campus-session]
+  evidence-admin:
+    volumes: [campus-plugins:/plugins]
+  session-admin:
+    volumes: [campus-plugins:/plugins]
+  plugin-admin:
+    volumes: [campus-plugins:/plugins]
+  plugin-manager:
+    volumes: !override
+      - author-proposals:/proposals:ro
+      - supervisor-state:/var/lib/edge-supervisor
+      - campus-plugins:/plugins
+      - ./policies/plugin-recovery.json:/etc/edge-policy/plugin-recovery.json:ro
+  campus-capture:
+    <<: *campus-tool
+    depends_on:
+      <<: *campus-ready
+      sim:
+        condition: service_started
+    environment:
+      GZ_PARTITION: edge_v1
+      GZ_HOMEDIR: /tmp
+    volumes:
+      - ./scene/campus_large:/opt/edge/scene/campus_large:ro
+      - campus-world:/campus
+      - campus-runtime:/run/campus:ro
+    command: ["python3","-B","/opt/edge/scene/campus_large/capture.py","photos"]
+
+  campus-overview:
+    <<: *campus-tool
+    depends_on: *campus-ready
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${EDGE_CAMPUS_OVERVIEW_PORT:-8780}:8080"
+    volumes: [campus-world:/campus:ro]
+    command: ["python3","-B","-m","http.server","8080","--bind","0.0.0.0","--directory","/campus/overview"]
+
+volumes:
+  campus-world:
+  campus-runtime:
+  campus-plugins:
+  campus-contracts:
+  campus-observations:
+  campus-views:

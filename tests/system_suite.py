@@ -195,6 +195,16 @@ def run(args, selected, reasons):
                     checks["agent-faults"].append(test("system/software_provider_acceptance.py","--automatic","--image",image,
                         "--model-cache",args.ollama_cache_volume,"--scenario","uppercase",
                         "--out",directory/"software-author-auto-model.json"))
+                if "campus-world" in selected:
+                    assets = args.campus_assets
+                    checks["campus-world"] = [test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
+                                              test("test_campus_capture.py","-v")]
+                    if assets or (ROOT / "artifacts/sim-assets/models/Campus/model.sdf").is_file():
+                        checks["campus-world"].append(test("system/campus_acceptance.py","--image",image,"--assets",
+                                                       str((assets or ROOT/"artifacts/sim-assets").resolve()),
+                                                       "--out",directory/"campus-world.json"))
+                    else:
+                        skip("campus-world-assets","optional campus assets not installed; use scene/campus_large/fetch_assets.py")
                 for name, commands in checks.items():
                     if name in selected:
                         stage(name,commands)
@@ -298,6 +308,7 @@ if __name__=="__main__":
     parser.add_argument("--plan",action="store_true",help="print selected stages and reasons without running")
     parser.add_argument("--out-root",type=Path,default=ROOT/".ci-results/system/runs")
     parser.add_argument("--base-image",help="preinstalled ROS/Gazebo SDK image")
+    parser.add_argument("--campus-assets",type=Path,help="installed Gazebo Fuel campus cache for the offline world test")
     parser.add_argument("--ollama-cache-volume",help="existing Ollama home volume; mounts the model cache read-only in the isolated project")
     args=parser.parse_args()
     stages,why=selection(changed_paths(args.changed_since,ROOT) if args.changed_since else None)
