@@ -197,8 +197,11 @@ def live_geometry():
     require(ok and scene.model, "active scene unavailable")
     config = SdfGeneratorConfig()
     config.global_entity_gen_config.expand_include_tags.data = True
-    ok, response = node.request("/world/edge_lab/generate_world_sdf", config, SdfGeneratorConfig, StringMsg, 10000)
-    require(ok and response.data, "live SDF unavailable")
+    # A newly started large world can publish scans before it can serialize all expanded meshes.
+    def serialized_world():
+        ok, result = node.request("/world/edge_lab/generate_world_sdf", config, SdfGeneratorConfig, StringMsg, 15000)
+        return result if ok and result.data else None
+    response = await_fact(serialized_world, "live expanded SDF", 55)
     world = ET.fromstring(response.data).find("world")
     require(world is not None and world.get("name") == "edge_lab", "unexpected world")
     models = {m.get("name"):m for m in world.findall("model")}
@@ -339,7 +342,7 @@ def run(args):
             start=await_fact(ready,"Gazebo ROS streams and named-place capability",180)
             require(math.dist(start["truth"][-1][1:3],(0,0))<.18,"mission must begin inside teaching lobby")
             report["live_geometry"]=json.loads(dc("exec","-T","campus-audit-witness","/usr/local/bin/edge-entrypoint","python3","-B",
-                                     "/opt/audit/tests/system/campus_acceptance.py","--live-geometry",timeout=35))
+                                     "/opt/audit/tests/system/campus_acceptance.py","--live-geometry",timeout=90))
             key="campus-gate-"+token
             api("/agent/tasks",{"id":key,"text":report["requested_text"],"trigger":{"kind":"user","source":"campus-audit","id":key}})
             def terminal(key=key):

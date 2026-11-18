@@ -1,0 +1,499 @@
+{
+  "passed": true,
+  "utc": "2026-11-18T09:35:21.764244+00:00",
+  "plugin_version": "1.3.0",
+  "image": "edge-agent-ros:campus-map-42c9adb",
+  "scene": "campus_large",
+  "texture": {
+    "name": "校园",
+    "scene_id": "campus_large",
+    "revision": "044251b08cfaa78180ab",
+    "frame": "odom",
+    "source": "Gazebo 校园世界正射烘焙 · Fuel Campus v2 / Pine Tree v6 与 SDF 场地材质",
+    "bounds": [
+      -198,
+      -110,
+      379.409286,
+      310.978585
+    ],
+    "width": 2048,
+    "height": 1493,
+    "scene_revision": "1.0",
+    "areas": [
+      {
+        "id": "campus",
+        "label": "原始校园建筑群",
+        "bounds": [
+          22,
+          23,
+          375.409286,
+          306.978585
+        ]
+      },
+      {
+        "id": "teaching",
+        "label": "教师楼与教学楼门厅",
+        "bounds": [
+          -17.2,
+          -9.2,
+          4.2,
+          9.2
+        ]
+      },
+      {
+        "id": "track",
+        "label": "田径场与足球场",
+        "bounds": [
+          -186,
+          25,
+          -20,
+          119
+        ]
+      },
+      {
+        "id": "woods",
+        "label": "混合树林与林道",
+        "bounds": [
+          22,
+          -97,
+          112,
+          -11
+        ]
+      },
+      {
+        "id": "road",
+        "label": "校园车道",
+        "bounds": [
+          9,
+          -106,
+          40,
+          203
+        ]
+      },
+      {
+        "id": "lawn",
+        "label": "开阔草坪",
+        "bounds": [
+          -133,
+          -77,
+          -25,
+          -11
+        ]
+      }
+    ],
+    "status": "ready",
+    "key": "deb07c44440b9da7983ab4e1e346851e6e258beb685e7e4b1dcc0a3eb4225abd",
+    "url": "/texture/deb07c44440b9da7983ab4e1e346851e6e258beb685e7e4b1dcc0a3eb4225abd/texture.png",
+    "sha256": "934028a1fbd4d2570e1f092d2002577e9fe8f2cd2c3400732e009c4d5a83bc25",
+    "height_url": "/texture/deb07c44440b9da7983ab4e1e346851e6e258beb685e7e4b1dcc0a3eb4225abd/height.png",
+    "height_scale_m": 0.05,
+    "height_offset_m": 0.0,
+    "height_sha256": "ce2688bd797bb0c62d5aa8d7a8599e9ebb7eb22ed4ce82f1ab958d81ed410b9d"
+  },
+  "ros": {
+    "frame": "odom",
+    "grid_dimensions": [
+      120,
+      120
+    ],
+    "grid_stamp_s": 4999.0,
+    "pose": [
+      0.051175438738488926,
+      0.006262518315327784,
+      0.0
+    ],
+    "retained_station_voxels": 2167,
+    "cloud_stamp_s": 4999.662
+  },
+  "same_existing_container_ids": 30,
+  "direct_gazebo_control_points": {
+    "track": {
+      "xy": [
+        -102,
+        109
+      ],
+      "native_xy": [
+        238,
+        313
+      ],
+      "atlas_xy": [
+        340,
+        716
+      ],
+      "native_rgb": [
+        173,
+        113,
+        80
+      ],
+      "atlas_rgb": [
+        158,
+        62,
+        31
+      ],
+      "channel_order_matches": true
+    },
+    "field": {
+      "xy": [
+        -86,
+        84
+      ],
+      "native_xy": [
+        260,
+        347
+      ],
+      "atlas_xy": [
+        397,
+        804
+      ],
+      "native_rgb": [
+        99,
+        146,
+        102
+      ],
+      "atlas_rgb": [
+        45,
+        107,
+        51
+      ],
+      "channel_order_matches": true
+    },
+    "lawn": {
+      "xy": [
+        -74,
+        -51
+      ],
+      "native_xy": [
+        276,
+        530
+      ],
+      "atlas_xy": [
+        439,
+        1283
+      ],
+      "native_rgb": [
+        195,
+        181,
+        154
+      ],
+      "atlas_rgb": [
+        181,
+        155,
+        112
+      ],
+      "channel_order_matches": true
+    },
+    "drive": {
+      "xy": [
+        12,
+        -25
+      ],
+      "native_xy": [
+        393,
+        495
+      ],
+      "atlas_xy": [
+        744,
+        1191
+      ],
+      "native_rgb": [
+        106,
+        111,
+        112
+      ],
+      "atlas_rgb": [
+        48,
+        53,
+        56
+      ],
+      "channel_order_matches": true
+    },
+    "teaching_roof": {
+      "xy": [
+        -6.0,
+        0.0
+      ],
+      "native_xy": [
+        366,
+        463
+      ],
+      "atlas_xy": [
+        681,
+        1102
+      ],
+      "native_rgb": [
+        188,
+        152,
+        125
+      ],
+      "atlas_rgb": [
+        165,
+        104,
+        71
+      ],
+      "channel_order_matches": true
+    },
+    "forest_trail": {
+      "xy": [
+        75.0,
+        -52.4
+      ],
+      "native_xy": [
+        478,
+        532
+      ],
+      "atlas_xy": [
+        968,
+        1288
+      ],
+      "native_rgb": [
+        178,
+        163,
+        131
+      ],
+      "atlas_rgb": [
+        104,
+        86,
+        56
+      ],
+      "channel_order_matches": true
+    },
+    "Fuel_grass": {
+      "xy": [
+        161.0,
+        139.0
+      ],
+      "native_xy": [
+        595,
+        272
+      ],
+      "atlas_xy": [
+        1273,
+        609
+      ],
+      "native_rgb": [
+        168,
+        173,
+        149
+      ],
+      "atlas_rgb": [
+        130,
+        140,
+        104
+      ],
+      "channel_order_matches": true
+    }
+  },
+  "browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "scene": "campus_large",
+        "frame": "odom",
+        "revision": "044251b08cfaa78180ab",
+        "dimensions": [
+          2048,
+          1493
+        ],
+        "files": {
+          "color": {
+            "sha256": "934028a1fbd4d2570e1f092d2002577e9fe8f2cd2c3400732e009c4d5a83bc25",
+            "bytes": 1539706
+          },
+          "height": {
+            "sha256": "ce2688bd797bb0c62d5aa8d7a8599e9ebb7eb22ed4ce82f1ab958d81ed410b9d",
+            "bytes": 83511
+          }
+        },
+        "areas": [
+          "campus",
+          "teaching",
+          "track",
+          "woods",
+          "road",
+          "lawn"
+        ],
+        "modes": {
+          "planar": {
+            "layout": {
+              "page": 1425,
+              "plot_width": 1014.8125,
+              "plot_height": 584.796875,
+              "height": 941
+            },
+            "screenshot": "campus-texture-2d-1440.png",
+            "atlas": {
+              "signature": 1888700427,
+              "opaque": 6542,
+              "colors": 316
+            },
+            "hidden": {
+              "signature": 2159984925,
+              "opaque": 6,
+              "colors": 6
+            },
+            "track": {
+              "signature": 27914055,
+              "opaque": 10080,
+              "colors": 125
+            },
+            "robot": {
+              "signature": 440086896,
+              "opaque": 10080,
+              "colors": 72
+            },
+            "zoom": {
+              "signature": 1092927535,
+              "opaque": 10080,
+              "colors": 104
+            },
+            "track_pick": "X -103.00 m · Y 72.00 m ｜ 仿真外观 · 田径场与足球场 · Gazebo 校园世界正射烘焙 · Fuel Campus v2 / Pine Tree v6 与 SDF 场地材质 ｜ 无可见占据栅格"
+          },
+          "spatial": {
+            "layout": {
+              "page": 1425,
+              "plot_width": 1014.8125,
+              "plot_height": 584.796875,
+              "height": 964
+            },
+            "screenshot": "campus-texture-3d-1440.png",
+            "atlas": {
+              "signature": 2385512026,
+              "opaque": 1737,
+              "colors": 184
+            },
+            "hidden": {
+              "signature": 307108805,
+              "opaque": 0,
+              "colors": 0
+            },
+            "track": {
+              "signature": 927136981,
+              "opaque": 7832,
+              "colors": 312
+            },
+            "robot": {
+              "signature": 2257625720,
+              "opaque": 10080,
+              "colors": 86
+            },
+            "zoom": {
+              "signature": 39821089,
+              "opaque": 8980,
+              "colors": 292
+            }
+          }
+        }
+      },
+      {
+        "width": 390,
+        "scene": "campus_large",
+        "frame": "odom",
+        "revision": "044251b08cfaa78180ab",
+        "dimensions": [
+          2048,
+          1493
+        ],
+        "files": {
+          "color": {
+            "sha256": "934028a1fbd4d2570e1f092d2002577e9fe8f2cd2c3400732e009c4d5a83bc25",
+            "bytes": 1539706
+          },
+          "height": {
+            "sha256": "ce2688bd797bb0c62d5aa8d7a8599e9ebb7eb22ed4ce82f1ab958d81ed410b9d",
+            "bytes": 83511
+          }
+        },
+        "areas": [
+          "campus",
+          "teaching",
+          "track",
+          "woods",
+          "road",
+          "lawn"
+        ],
+        "modes": {
+          "planar": {
+            "layout": {
+              "page": 375,
+              "plot_width": 341,
+              "plot_height": 421.390625,
+              "height": 1499
+            },
+            "screenshot": "campus-texture-2d-390.png",
+            "atlas": {
+              "signature": 3119732053,
+              "opaque": 5188,
+              "colors": 326
+            },
+            "hidden": {
+              "signature": 2897397427,
+              "opaque": 36,
+              "colors": 22
+            },
+            "track": {
+              "signature": 2460304909,
+              "opaque": 10080,
+              "colors": 150
+            },
+            "robot": {
+              "signature": 2596961502,
+              "opaque": 10080,
+              "colors": 97
+            },
+            "zoom": {
+              "signature": 1361830541,
+              "opaque": 10080,
+              "colors": 141
+            },
+            "track_pick": "X -103.00 m · Y 72.00 m ｜ 仿真外观 · 田径场与足球场 · Gazebo 校园世界正射烘焙 · Fuel Campus v2 / Pine Tree v6 与 SDF 场地材质 ｜ 无可见占据栅格"
+          },
+          "spatial": {
+            "layout": {
+              "page": 375,
+              "plot_width": 341,
+              "plot_height": 421.390625,
+              "height": 1530
+            },
+            "screenshot": "campus-texture-3d-390.png",
+            "atlas": {
+              "signature": 1782319162,
+              "opaque": 1973,
+              "colors": 251
+            },
+            "hidden": {
+              "signature": 307108805,
+              "opaque": 0,
+              "colors": 0
+            },
+            "track": {
+              "signature": 570744639,
+              "opaque": 7826,
+              "colors": 286
+            },
+            "robot": {
+              "signature": 87590230,
+              "opaque": 10080,
+              "colors": 116
+            },
+            "zoom": {
+              "signature": 3997183637,
+              "opaque": 8952,
+              "colors": 295
+            }
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "isolated": {
+    "passed": true,
+    "texture_browser": true,
+    "navigation": "SUCCEEDED",
+    "truth_goal_error_m": 0.0658,
+    "project": "edge-campus-audit-67d0fb585e"
+  },
+  "initial_isolated_probe": "The first expanded-world SDF request timed out during startup. The bounded read-only retry was exercised on a fresh campus; all assertions then passed."
+}

@@ -120,12 +120,15 @@ def reload_campus(run, output, containers, fetch=read_local):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["start", "map", "status", "logs", "stop", "down", "reload"])
+    parser.add_argument("--with-lidar",action="store_true",help="also start the campus fixed ROS point-cloud station with map")
     parser.add_argument("--image", default=os.getenv("EDGE_CAMPUS_IMAGE") or os.getenv("EDGE_IMAGE") or "edge-agent-ros:v0.1")
     parser.add_argument("--assets-dir", type=Path, default=os.getenv("EDGE_CAMPUS_ASSETS_DIR") or ROOT / "artifacts/sim-assets")
     parser.add_argument("--console-port", type=int, default=os.getenv("EDGE_CAMPUS_CONSOLE_PORT") or 8766)
     parser.add_argument("--overview-port", type=int, default=os.getenv("EDGE_CAMPUS_OVERVIEW_PORT") or 8780)
     parser.add_argument("--map-port", type=int, default=os.getenv("EDGE_CAMPUS_MAP_PORT") or 8773)
     args = parser.parse_args()
+    if args.with_lidar and args.action != "map":
+        parser.error("--with-lidar is used with the map action")
     ports = [args.console_port, args.overview_port, args.map_port]
     if len(set(ports)) != len(ports) or not all(1 <= port <= 65535 for port in ports):
         parser.error("select distinct TCP ports in the range 1 through 65535")
@@ -160,13 +163,15 @@ def main():
             parser.error("campus simulation is offline; run campus start before installing its map")
         # The viewer pins its immutable texture pack at process start.
         run("up", "-d", "--no-build", "--force-recreate", "map3d")
+        if args.with_lidar:
+            run("up","-d","--no-deps","--no-build","map3d-sensor")
         print(f"Campus map: http://127.0.0.1:{args.map_port}/?view=2d")
     elif args.action == "status":
         run("ps", "-a")
     elif args.action == "logs":
         run("logs", "--tail", "60", "campus-build", "sim", "campus-capture", "campus-overview")
     elif args.action == "stop":
-        run("stop", *SERVICES, "map3d")
+        run("stop", *SERVICES, "map3d", "map3d-sensor")
     else:
         run("down")
 
