@@ -201,6 +201,7 @@ def run(args, selected, reasons):
                     assets = args.campus_assets
                     checks["campus-world"] = [in_image("python3","-B","/opt/edge/tests/test_campus_texture.py","-v"),
                                               in_image("python3","-B","/opt/edge/tests/test_campus_mesh.py","-v"),
+                                              in_image("python3","-B","/opt/edge/tests/test_campus_robot_feedback.py","-v"),
                                               test("test_campus_facilities.py","-v"),
                                               test("test_campus_real_site.py","-v"),
                                               test("test_campus_robot_assets.py","-v"),

@@ -103,6 +103,15 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     ctx.restore();
   }
 
+  function drawRoute() {
+    if(!options.route)return;
+    const points=options.route.points.map(screen);
+    ctx.save();ctx.beginPath();ctx.moveTo(...points[0]);
+    for(const p of points.slice(1))ctx.lineTo(...p);
+    ctx.lineJoin="round";ctx.lineCap="round";
+    ctx.lineWidth=5;ctx.strokeStyle="#0f3b48";ctx.stroke();
+    ctx.lineWidth=2.8;ctx.strokeStyle="#22dfe9";ctx.stroke();ctx.restore();
+  }
   function drawAreaNames() {
     if (!texture || !options.scene) return;
     ctx.save(); ctx.font="600 13px system-ui"; ctx.textAlign="center";
@@ -241,7 +250,7 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     if (requestedBounds) {frameBounds(requestedBounds); requestedBounds=null; interacted=true;}
     else if (!camera || (!interacted && (fitSource!==source || resized))) fit();
     fitSource=source;
-    drawAppearance(); drawRaster(); drawSemantic(); drawAreaNames(); drawCloudAndPose(); drawScale(); markSelection(); publishPick();
+    drawAppearance(); drawRaster(); drawSemantic(); drawRoute(); drawAreaNames(); drawCloudAndPose(); drawScale(); markSelection(); publishPick();
     return {empty:source==="none"};
   }
 

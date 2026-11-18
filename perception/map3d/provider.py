@@ -27,7 +27,7 @@ from module_journal import ModuleJournal
 
 STATIC = Path(__file__).parent / "web"
 TTL = 3.0
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 MAX_GRID_CELLS = 512 * 512
 GRID_TTL = 5.0
 CLOUD_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)

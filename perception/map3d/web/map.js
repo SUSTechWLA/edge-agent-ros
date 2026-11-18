@@ -16,7 +16,7 @@
   const query = new URLSearchParams(location.search);
   let initialPlace = query.get("place") || (query.get("view")!=="2d"?"campus":null);
   const texture = window.createMapTexture(() => {updateTextureControls(); draw();});
-  const layers = Object.fromEntries(["cloud","scene","roof","pose","grid"].map(key => [key, el("layer-"+key)]));
+  const layers = Object.fromEntries(["cloud","scene","roof","pose","grid","route"].map(key => [key, el("layer-"+key)]));
   let active = query.get("view")==="2d" ? "planar" : "spatial";
   let data=null, connected=false, scheduled=false, sourceSignature=null;
   let activeRobot=null,pendingRobot=query.get("robot"),robotSignature=null;
@@ -30,6 +30,7 @@
       for (const [key, input] of Object.entries(layers)) options[key] = input.checked;
       options.texture = el("layer-texture").checked ? texture.current : null;
       options.appearancePack=texture.current;
+      options.route = options.route ? currentRoute() : null;
       const view = modes[active].renderer.render(data, options);
       if(options.texture && active==="spatial"){
         const message={ready:"已显示 · 三维网格",loading:"正在加载三维网格，暂显正射高度图",
@@ -92,16 +93,37 @@
   el("zoom-out").onclick = () => modes[active].renderer.zoomBy(1/1.25);
   for (const input of Object.values(layers)) input.onchange = () => {clearPicks(); draw();};
 
+  function currentRoute() {
+    const route=data?.texture?.route;
+    return data?.texture?.status==="ready" && route?.frame===data.frame &&
+      route?.scene_revision && route.scene_revision===data.scene?.revision ? route : null;
+  }
+  el("route-fit").onclick=()=>{
+    const route=currentRoute();
+    if(!route)return;
+    const xs=route.points.map(p=>p[0]),ys=route.points.map(p=>p[1]);
+    const bounds=[Math.min(...xs)-7,Math.min(...ys)-7,Math.max(...xs)+7,Math.max(...ys)+7];
+    layers.route.checked=true;activeRobot=null;updateRobots();
+    const cx=(bounds[0]+bounds[2])/2,cy=(bounds[1]+bounds[3])/2;
+    const span=Math.max(bounds[2]-bounds[0],bounds[3]-bounds[1]);
+    modes[active].renderer.focusBounds(bounds,{eye:[cx,cy-span*.52,span*.72],
+      target:[cx,cy,0],referenceAspect:1000/650,frameGround:true});
+    draw();
+  };
+
   function focusPlace(place) {
     activeRobot=null;updateRobots();
     const view=place.id==="track" && place.camera?{...place.camera,frameGround:true}:
-      place.id==="campus" && place.camera?{...place.camera,referenceAspect:1000/650}:place.camera;
+      ["campus","robots"].includes(place.id) && place.camera?{...place.camera,referenceAspect:1000/650}:place.camera;
     modes[active].renderer.focusBounds(place.bounds,view);
   }
 
   function updateTextureControls() {
     const meta = data?.texture, ready = texture.current, state = texture.state;
     const available = !!ready && el("layer-texture").checked;
+    const route=currentRoute();
+    el("route-row").hidden=el("route-fit").hidden=!route;
+    if(route)el("route-label").textContent="已核查测试步道 · "+Math.round(route.length_m)+" m";
     el("texture-row").hidden=el("texture-info").hidden=!meta;
     el("map-places").hidden=!ready;
     el("map-title").textContent = ready ? ready.name+"环境地图" : "环境地图";

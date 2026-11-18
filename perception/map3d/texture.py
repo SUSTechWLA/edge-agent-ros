@@ -15,6 +15,25 @@ def bounds(value):
     return value
 
 
+def registered_route(route, info):
+    if (not isinstance(route,dict) or route.get("id")!="campus_walk"
+            or not info["scene_revision"] or route.get("scene_revision")!=info["scene_revision"]
+            or route.get("frame")!=info["frame"]):
+        raise ValueError("texture_route_registration_invalid")
+    points,length = route.get("points"),route.get("length_m")
+    xmin,ymin,xmax,ymax = info["bounds"]
+    if (not isinstance(points,list) or not 2<=len(points)<=256
+            or any(not isinstance(p,list) or len(p)!=2
+                   or not all(type(v) in (int,float) and math.isfinite(v) for v in p)
+                   or not (xmin<=p[0]<=xmax and ymin<=p[1]<=ymax) for p in points)
+            or type(length) not in (int,float) or not math.isfinite(length) or not 0<length<=10000):
+        raise ValueError("texture_route_geometry_invalid")
+    legs=[math.dist(a,b) for a,b in zip(points,points[1:])]
+    if min(legs)<=0 or abs(sum(legs)-length)>.002:
+        raise ValueError("texture_route_length_invalid")
+    return {k:route[k] for k in ("id","frame","scene_revision","points","length_m")}
+
+
 def bounded_read(path, budget):
     with path.open("rb") as file:
         size = file.seek(0, 2)
@@ -59,6 +78,11 @@ class TexturePack:
             raise ValueError("texture_metadata_invalid")
         info.update(bounds=bounds(meta["bounds"]),width=width,height=height)
         info["scene_revision"] = str(meta.get("scene_revision",""))[:64]
+        if "route" in meta:
+            try:
+                info["route"] = registered_route(meta["route"], info)
+            except ValueError as exc:
+                info["route_error"] = str(exc)
         info["areas"] = []
         attribution = meta.get("attribution",[])
         if (not isinstance(attribution,list) or len(attribution)>10 or

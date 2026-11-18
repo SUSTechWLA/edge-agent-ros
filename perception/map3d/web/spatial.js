@@ -134,7 +134,7 @@
       const polygon=clippedFace(vertices,near).map(v=>this.project(v));
       for (let i=2; i<polygon.length; i++) this.triangle(polygon[0],polygon[i-1],polygon[i],color,id,null,opacity);
     }
-    line(a,b,near,color) {
+    line(a,b,near,color,radius=0) {
       if(a[2]<near && b[2]<near) return;
       if(a[2]<near || b[2]<near) {
         const t=(near-a[2])/(b[2]-a[2]);
@@ -153,9 +153,14 @@
       const steps=Math.max(1,Math.ceil((hi-lo)*Math.max(Math.abs(dx),Math.abs(dy))));
       for(let i=0;i<=steps;i++){
         const t=lo+(hi-lo)*i/steps;
-        const p=Math.round(a[1]+t*dy)*this.w+Math.round(a[0]+t*dx);
-        // Grid lines decorate the ground, retaining the pickable surface ID.
-        if(a[2]+t*(b[2]-a[2])>=this.depth[p]*.99999)this.pixels[p]=color;
+        const x=Math.round(a[0]+t*dx),y=Math.round(a[1]+t*dy),z=a[2]+t*(b[2]-a[2]);
+        // Decals keep the underlying pick ID and disappear behind closer surfaces.
+        for(let row=Math.max(0,y-radius);row<=Math.min(this.h-1,y+radius);row++){
+          for(let col=Math.max(0,x-radius);col<=Math.min(this.w-1,x+radius);col++){
+            const p=row*this.w+col;
+            if(z>=this.depth[p]*.99999)this.pixels[p]=color;
+          }
+        }
       }
     }
     marker(camera, near, radius, color, id) {
@@ -427,6 +432,12 @@
           surface.face([base[i],base[j],top[j],top[i]],near,palette[i%2],id);
         }
         surface.face(top,near,palette[2],id);
+      }
+      if(options.route){
+        const points=options.route.points.map(([x,y])=>camera([x,y,.13]));
+        for(const [color,radius] of [[rgb(15,59,72),2],[rgb(34,223,233),1]]){
+          for(let i=1;i<points.length;i++)surface.line(points[i-1],points[i],near,color,radius);
+        }
       }
       const range=Math.max(.01,geometry.zMax-geometry.zMin);
       for(const source of geometry.clouds){

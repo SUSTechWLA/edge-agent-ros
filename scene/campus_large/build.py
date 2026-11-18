@@ -348,7 +348,7 @@ def build(assets, base, output):
             "edges":[["teaching_lobby","teaching_door"],["teaching_door","teaching_exit"]]}
     layout["revision"]=scene_revision(world,output,layout)
     manifest={"bounds":total,"unit":"m","frame":"odom","areas":areas,"trees":tree_count,
-              "routes":[walk],"sensor_stations":SENSOR_STATIONS,"robots":robots,
+              "routes":[walk],"scene_revision":layout["revision"],"sensor_stations":SENSOR_STATIONS,"robots":robots,
               "projection":projection,"spawn":[0,0],"source_file":"real_site/buildings.obj"}
     for path,obj in ((output/"layout.json",layout),(out_web/"manifest.json",manifest)):
         path.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
