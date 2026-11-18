@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 import time
 import sys
+import fcntl
 
 import rclpy
 from rclpy.node import Node
@@ -18,9 +19,10 @@ from std_msgs.msg import String
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"agent"))
 from module_journal import ModuleJournal
+import incidents
 from quality import match, measure_cloud, measure_image, measure_imu, measure_scan
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 SOURCES={"rgb":(Image,measure_image),"depth":(Image,lambda m:measure_image(m,depth=True)),
          "scan":(LaserScan,measure_scan),"points":(PointCloud2,measure_cloud),"imu":(Imu,measure_imu),
          "match":(String,match),"lidar_match":(String,match)}
@@ -49,18 +51,29 @@ class Monitor(Node):
     def __init__(self):
         super().__init__("edge_sensor_health")
         self.lock=threading.RLock()
-        self.journal=ModuleJournal(os.getenv("EDGE_HEALTH_JOURNAL","/journal/module-events.sqlite"))
+        path=Path(os.getenv("EDGE_HEALTH_JOURNAL","/journal/module-events.sqlite"))
+        path.parent.mkdir(parents=True,exist_ok=True)
+        self.writer=path.with_name(path.name+".lock").open("a")
+        fcntl.flock(self.writer,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        self.journal=ModuleJournal(path)
         self.timeout=positive_setting("EDGE_HEALTH_TIMEOUT_S",3.)
         self.max_age=positive_setting("EDGE_HEALTH_MAX_AGE_S",1.5)
         self.budget=positive_setting("EDGE_HEALTH_RECHECK_S",6.)
         self.states={}
         self.previous_clock=None
+        self.boot_ros_ns=self.get_clock().now().nanoseconds
+        robot=os.getenv("EDGE_HEALTH_ROBOT_ID") or self.journal.source_id
+        if len(robot)>128 or not robot.isprintable():
+            raise ValueError("invalid EDGE_HEALTH_ROBOT_ID")
         now=time.monotonic()
         for key,(kind,measure) in SOURCES.items():
             topic=os.getenv("EDGE_HEALTH_"+key.upper()+"_TOPIC","")
             if not topic:
                 continue
-            self.states[key]={"topic":topic,"expected_frame":os.getenv("EDGE_HEALTH_"+key.upper()+"_FRAME",""),
+            frame=os.getenv("EDGE_HEALTH_"+key.upper()+"_FRAME","")
+            ident=dict(robot=robot,domain=self.context.get_domain_id(),sim_time=bool(self.get_parameter("use_sim_time").value),
+                       input=key,topic=self.resolve_topic_name(topic),expected_frame=frame,journal=self.journal.source_id)
+            self.states[key]={"topic":topic,"expected_frame":frame,"identity":ident,
                 "state":"waiting","code":"waiting","consecutive_good":0,"latest":{},"last_rx":now,
                 "last_stamp":0,"since":None,"event_id":None}
             self.create_subscription(kind,topic,lambda m,k=key,f=measure:self.observe(k,m,f),qos_profile_sensor_data)
@@ -70,6 +83,7 @@ class Monitor(Node):
             self.boot_event=self.journal.emit({"module":"sensor.health","kind":"sensor.health.started",
                 "code":"sensor.health.started","trace_id":"sensor.health.lifecycle","level":"info",
                 "detail":"传感器巡检启动","data":{"version":VERSION,"inputs":list(self.states)}})
+            incidents.restore(self.journal,self.states,now,self.boot_event)
         self.steady=Clock(clock_type=ClockType.STEADY_TIME)
         self.create_timer(.5,self.tick,clock=self.steady)
 
@@ -86,7 +100,11 @@ class Monitor(Node):
                 "data":{"input":key,"topic":row["topic"],"phase":phase,"observation":row["latest"],
                         "elapsed_s":round(now-row["since"],3) if row["since"] is not None else 0,
                         "consecutive_good":row["consecutive_good"],"sample_timeout_s":self.timeout,
-                        "max_age_s":self.max_age,"recheck_budget_s":self.budget}})
+                        "max_age_s":self.max_age,"recheck_budget_s":self.budget,"identity":row["identity"]}})
+            if phase in ("rechecking","needs_attention"):
+                incidents.remember(self.journal.db,key,row)
+            else:
+                incidents.forget(self.journal.db,key)
 
     def assess(self,key,code,now):
         r=self.states[key]
@@ -120,6 +138,7 @@ class Monitor(Node):
             age=None
             ros_ns=self.get_clock().now().nanoseconds
             if self.previous_clock is not None and ros_ns<self.previous_clock:
+                self.boot_ros_ns=ros_ns
                 for name,stream in self.states.items():
                     stream["last_stamp"]=0
                     self.assess(name,"clock_reset",now)
@@ -143,7 +162,24 @@ class Monitor(Node):
                     code="future_stamp"
                 elif age>self.max_age:
                     code="late_stamp"
-                elif stamp<=row["last_stamp"]:
+                elif row.get("prior_frame") and not row["expected_frame"] and frame!=row["prior_frame"]:
+                    with self.journal.db:
+                        incidents.boundary(self.journal,key,row["event_id"],"source_detached","重启后测量的坐标系已改变。",
+                            {"prior_frame":row["prior_frame"],"current_frame":frame,"identity":row["identity"]})
+                        incidents.forget(self.journal.db,key)
+                    row.update(state="waiting",code="waiting",since=None,event_id=None,consecutive_good=0,last_stamp=stamp)
+                    row.pop("prior_frame")
+                elif "prior_frame" in row and ros_ns < row["last_stamp"]-100_000_000:
+                    # A reset simulation clock cannot establish continuity across two ROS epochs.
+                    with self.journal.db:
+                        row["event_id"]=incidents.boundary(self.journal,key,row["event_id"],"clock_epoch_changed",
+                            "重启前后的 ROS 时钟不连续，重新建立样本时间基线。",
+                            {"prior_stamp_ns":row["last_stamp"],"current_ros_ns":ros_ns,"identity":row["identity"]})
+                        row["last_stamp"]=0
+                        incidents.remember(self.journal.db,key,row)
+                    self.boot_ros_ns=ros_ns
+                    code="clock_reset"
+                elif stamp<=row["last_stamp"] or row["since"] is not None and stamp<self.boot_ros_ns:
                     code="repeated_stamp"
                 else:
                     row["last_stamp"]=stamp
@@ -156,6 +192,8 @@ class Monitor(Node):
             row["latest"]=dict(stamp_ns=stamp,frame_id=frame[:200],ros_now_ns=ros_ns,age_s=round(age,4) if age is not None else None,
                                measurement_code=code,metrics=values)
             self.assess(key,code,now)
+            if row["since"] is None:
+                row.pop("prior_frame",None)
 
     def tick(self):
         now=time.monotonic()
@@ -262,5 +300,6 @@ if __name__=="__main__":
         thread.join()
         server.server_close()
         node.journal.close()
+        node.writer.close()
         node.destroy_node()
         rclpy.try_shutdown()

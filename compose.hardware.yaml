@@ -25,6 +25,7 @@ services:
     ports: !reset []
     environment:
       EDGE_HEALTH_BIND: 127.0.0.1
+      EDGE_HEALTH_ROBOT_ID: ${EDGE_HEALTH_ROBOT_ID:-${EDGE_ROBOT_ID:-hardware-edge}}
       EDGE_HEALTH_PORT: ${EDGE_HEALTH_PORT:-8136}
     command: [python3,-B,/opt/edge/perception/sensor_health/provider.py]
   map3d-init:
