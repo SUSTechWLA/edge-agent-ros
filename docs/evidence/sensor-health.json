@@ -1,0 +1,267 @@
+{
+  "passed": true,
+  "source_sha256": "e741c6b2e5df5773a9f655f06756bcc26806967cb56279db4d287c902e15970b",
+  "environment": "separate ROS 2 processes, localhost DDS in a disconnected Docker container; synthetic faults and independent image patch matcher",
+  "checkpoints": 31,
+  "journal_events": 52,
+  "accepted_scopes": [
+    "导航",
+    "本机",
+    "当前"
+  ],
+  "rejected_scope": "其他机器",
+  "unconfigured": [
+    "lidar_match"
+  ],
+  "measured_patch_matching": {
+    "translation": {
+      "matches": 36,
+      "inliers": 36
+    },
+    "scattered": {
+      "matches": 36,
+      "inliers": 1
+    }
+  },
+  "persistent_faults": {
+    "black_image": {
+      "topic": "/quality_test/rgb",
+      "frame": "test_frame",
+      "stamp_ns": 1795012075423912206,
+      "metrics": {
+        "samples": 256,
+        "dark_fraction": 1.0,
+        "bright_fraction": 0.0,
+        "texture_edge_fraction": 0.0,
+        "evidence_type": "raw_image_proxy"
+      },
+      "alert_event": "50138cf6838840cdb6cd08ad63067b28",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012075850617886,
+      "confirmed_event": "9dc046bfaaa94989ae7f640deef0643f",
+      "consecutive_fresh_samples": 3
+    },
+    "overexposed": {
+      "topic": "/quality_test/rgb",
+      "frame": "test_frame",
+      "stamp_ns": 1795012076562429690,
+      "metrics": {
+        "samples": 256,
+        "dark_fraction": 0.0,
+        "bright_fraction": 1.0,
+        "texture_edge_fraction": 0.0,
+        "evidence_type": "raw_image_proxy"
+      },
+      "alert_event": "ae70329e17a84f318d01193090ed41e0",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012076988352642,
+      "confirmed_event": "3801e2e9e0e0416eae825b57d3edd055",
+      "consecutive_fresh_samples": 3
+    },
+    "weak_texture": {
+      "topic": "/quality_test/rgb",
+      "frame": "test_frame",
+      "stamp_ns": 1795012077698030528,
+      "metrics": {
+        "samples": 256,
+        "dark_fraction": 0.0,
+        "bright_fraction": 0.0,
+        "texture_edge_fraction": 0.0,
+        "evidence_type": "raw_image_proxy"
+      },
+      "alert_event": "8ca93cf33121459aadccec7cb4e51649",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012078123412068,
+      "confirmed_event": "f35633a124ac4c2c8c76f4946838c719",
+      "consecutive_fresh_samples": 3
+    },
+    "unsupported_encoding": {
+      "topic": "/quality_test/rgb",
+      "frame": "test_frame",
+      "stamp_ns": 1795012078832086540,
+      "metrics": {},
+      "alert_event": "37a0e35fe4a14deabbee6b651fe4b537",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012079257518853,
+      "confirmed_event": "d5cae089e67e4d5aafe4abd517f48a54",
+      "consecutive_fresh_samples": 3
+    },
+    "depth_holes": {
+      "topic": "/quality_test/depth",
+      "frame": "test_frame",
+      "stamp_ns": 1795012079966559480,
+      "metrics": {
+        "samples": 64,
+        "invalid_fraction": 1.0,
+        "encoding": "16UC1"
+      },
+      "alert_event": "0ae0d9150bad48af974501f9a7b9469f",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012080392265246,
+      "confirmed_event": "20b9087ad5b549feb2faf2fa084e0ed5",
+      "consecutive_fresh_samples": 3
+    },
+    "invalid_cloud_points": {
+      "topic": "/quality_test/points",
+      "frame": "test_frame",
+      "stamp_ns": 1795012081102267255,
+      "metrics": {
+        "samples": 64,
+        "points": 64,
+        "valid_samples": 0,
+        "evidence_type": "raw_cloud"
+      },
+      "alert_event": "b567e7c7e6994aabb76e22705afaf91f",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012081527658842,
+      "confirmed_event": "a89b77cee3e1469db01706b7f9bf8443",
+      "consecutive_fresh_samples": 3
+    },
+    "invalid_ranges": {
+      "topic": "/quality_test/scan",
+      "frame": "test_frame",
+      "stamp_ns": 1795012082236380384,
+      "metrics": {
+        "samples": 120,
+        "finite_returns": 0,
+        "no_return": 0,
+        "invalid": 120,
+        "range_max_m": 8.0,
+        "evidence_type": "raw_scan"
+      },
+      "alert_event": "9c69ac27388840fa9b413dfa44de48f5",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012082661770177,
+      "confirmed_event": "bba2732aaf5743779a5b5b4c125bf08f",
+      "consecutive_fresh_samples": 3
+    },
+    "imu_nonfinite": {
+      "topic": "/quality_test/imu",
+      "frame": "test_frame",
+      "stamp_ns": 1795012083371150737,
+      "metrics": {
+        "finite_axes": 5
+      },
+      "alert_event": "39daebc5917342649cd252d8e369fdf7",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012083799039074,
+      "confirmed_event": "a3738bbdaf3e4996bb6f523b79421cf9",
+      "consecutive_fresh_samples": 3
+    },
+    "low_match_inliers": {
+      "topic": "/quality_test/match",
+      "frame": "test_frame",
+      "stamp_ns": 1795012084507745507,
+      "metrics": {
+        "matches": 36,
+        "inliers": 1,
+        "inlier_ratio": 0.0278,
+        "evidence_type": "frontend_report"
+      },
+      "alert_event": "475b2a17a85c4afc8783bf35039fd964",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012084933404734,
+      "confirmed_event": "c65eecdc246b4e7c99f7d7e597a20b19",
+      "consecutive_fresh_samples": 3
+    },
+    "frame_mismatch": {
+      "topic": "/quality_test/rgb",
+      "frame": "other_frame",
+      "stamp_ns": 1795012085642068852,
+      "metrics": {
+        "samples": 256,
+        "dark_fraction": 0.0,
+        "bright_fraction": 0.0,
+        "texture_edge_fraction": 1.0,
+        "evidence_type": "raw_image_proxy"
+      },
+      "alert_event": "4a4c9f1a1865499690eca2f49980e7a9",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012086068020473,
+      "confirmed_event": "ca165de979994fa28f0fda9b82f596a9",
+      "consecutive_fresh_samples": 3
+    },
+    "late_stamp": {
+      "topic": "/quality_test/rgb",
+      "frame": "test_frame",
+      "stamp_ns": 1795012082777201624,
+      "metrics": {
+        "samples": 256,
+        "dark_fraction": 0.0,
+        "bright_fraction": 0.0,
+        "texture_edge_fraction": 1.0,
+        "evidence_type": "raw_image_proxy"
+      },
+      "alert_event": "e98231f74aba424f8677267c3148687b",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012087202016748,
+      "confirmed_event": "39d2fd868ae74b3280c50d42072c764a",
+      "consecutive_fresh_samples": 3
+    },
+    "future_stamp": {
+      "topic": "/quality_test/imu",
+      "frame": "test_frame",
+      "stamp_ns": 1795012091911821840,
+      "metrics": {
+        "acceleration_norm": 9.8,
+        "angular_speed": 0.02
+      },
+      "alert_event": "126efdd2684a4ed59d5bf9e98c8385e5",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012088337112100,
+      "confirmed_event": "42ea4b82e55340e086e38d18495a2438",
+      "consecutive_fresh_samples": 3
+    },
+    "repeated_stamp": {
+      "topic": "/quality_test/rgb",
+      "frame": "test_frame",
+      "stamp_ns": 1795012088478742309,
+      "metrics": {
+        "samples": 256,
+        "dark_fraction": 0.0,
+        "bright_fraction": 0.0,
+        "texture_edge_fraction": 1.0,
+        "evidence_type": "raw_image_proxy"
+      },
+      "alert_event": "8a0071df43974b519da1ca5caa4594ff",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012089613474893,
+      "confirmed_event": "96dcabb69f344cc8bc1b60af25c3f3a7",
+      "consecutive_fresh_samples": 3
+    },
+    "stream_timeout": {
+      "topic": "/quality_test/scan",
+      "frame": "test_frame",
+      "stamp_ns": 1795012089613903705,
+      "metrics": {
+        "samples": 120,
+        "finite_returns": 120,
+        "no_return": 0,
+        "invalid": 0,
+        "range_max_m": 8.0,
+        "evidence_type": "raw_scan"
+      },
+      "alert_event": "2461c49d67c04b9c93650b5daa048718",
+      "confirmed": "recovered",
+      "confirmed_stamp_ns": 1795012091459333906,
+      "confirmed_event": "68d7f8a64db94f99aacc18a13fd0309e",
+      "consecutive_fresh_samples": 3
+    }
+  },
+  "informational": {
+    "few_returns": {
+      "samples": 120,
+      "finite_returns": 0,
+      "no_return": 120,
+      "invalid": 0,
+      "range_max_m": 8.0,
+      "evidence_type": "raw_scan"
+    },
+    "few_points": {
+      "samples": 8,
+      "points": 8,
+      "valid_samples": 8,
+      "evidence_type": "raw_cloud"
+    }
+  }
+}
