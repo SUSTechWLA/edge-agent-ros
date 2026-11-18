@@ -68,7 +68,7 @@ sh scripts/deploy.sh hardware preflight odom
 
 **离线交付。** 可在同架构 Linux 构建机上运行上述 build，把同一代码版本和下述归档一起复制到板端。在构建机和板端均设置相同的 `EDGE_HARDWARE_IMAGE` 标签；板端保存任务账本的 Docker 卷独立于镜像。
 
-本开发机已保存经过双架构软件验收的 ARM64 现场包。把 `artifacts/deployment/field-7c16da6-arm64/` 整个目录复制到板端，按 `START-HERE.md` 操作。包内含硬件镜像、固定版本源码与 SHA-256 清单。[本机上板包说明](../artifacts/deployment/field-7c16da6-arm64/START-HERE.md) · [已核验的镜像身份与结果](evidence/board-preflight.json)
+本开发机的版本化现场包位于 `artifacts/deployment/`。按本轮交付的目录名选择版本，把整个目录复制到板端，按包内 `START-HERE.md` 操作。包内含硬件镜像、固定提交源码与 SHA-256 清单。当前运行结果记录在版本化证据中。[首次上板步骤](board-first-boot.md) · [已核验的镜像身份与结果](evidence/board-preflight.json)
 
 ```sh
 docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{.Os}}/{{.Architecture}} {{.Id}}'
@@ -93,20 +93,9 @@ docker load -i edge-agent-hardware.tar.gz
 
 为板卡准备镜像前，可以先在开发机重放缺失里程计与恢复任务的场景。报告给出了同一程序分配 384、512、768 和 1536 MiB 时的原生 AMD64 与模拟 ARM64 结果，以及上机仍需测的项目。[单机实测与资源限额复演](testing/sdd-003-results.md)
 
-Linux 设备上用 `uname -m` 与 `docker info --format '{{.Architecture}}'` 核实架构，x86-64 对应 linux/amd64，aarch64 对应 linux/arm64。设备上直接构建会使用本机目标，无须指定仿真平台。可在兼容架构的构建机用 `sh scripts/deploy.sh hardware build`，再用 `docker save edge-agent-ros/hardware:v0.1 -o edge-hardware.tar` 转运镜像，在目标机用 `docker load -i edge-hardware.tar` 后执行 `sh scripts/deploy.sh hardware start`。两端使用同一项目版本及部署文件。构建机可用 buildx/QEMU 交叉构建；要评估执行延迟、功耗和散热，需在对应板卡上重复测试。
+**选哪一种镜像。** 在板端依次执行 `uname -m` 和 `docker info --format '{{.OSType}}/{{.Architecture}}'`。aarch64 的 RK3588 或 Jetson/Orin 使用同一份 linux/arm64 CPU 镜像。x86_64 Linux 工控机应构建 linux/amd64 镜像。两种镜像均通过 ROS 或 HTTP 接入设备。板型特定的内核、传感器驱动、GPU/NPU 运行时由板端提供。软件验收在 amd64 原生容器和 arm64 指令模拟中完成，真实板卡仍须验证采样、散热、负载与时延。
 
-本机已保留单独的 ARM64 镜像标签 `edge-agent-ros/hardware:arm64-check` 和 AMD64 标签 `edge-agent-ros/hardware:v0.1`。在开发机的项目根目录创建本地 `artifacts/images/` 目录（PowerShell 可执行 `New-Item -Force -ItemType Directory artifacts/images`），执行第一组命令导出约 1.35 GB 镜像。将 tar 复制到目标板项目根目录下同名目录，然后运行第二组命令离线加载镜像。
-
-```sh
-# 开发机（PowerShell 同样支持这两条 Docker 命令）
-docker image inspect edge-agent-ros/hardware:arm64-check --format '{{.Os}}/{{.Architecture}} {{.Id}}'
-docker save -o artifacts/images/edge-hardware-arm64.tar edge-agent-ros/hardware:arm64-check
-
-# 板端，在项目根目录执行
-docker load -i artifacts/images/edge-hardware-arm64.tar
-export EDGE_HARDWARE_IMAGE=edge-agent-ros/hardware:arm64-check
-sh scripts/deploy.sh hardware start
-```
+**从任务模式退回观察。** 先在工作台检查未完成/待恢复的任务，让机体控制器执行取消或停机，再用机体速度、执行器使能状态及现场反馈独立确认停稳。随后在仓库根目录执行 `sh scripts/deploy.sh hardware stop core agent`，再执行 `sh scripts/deploy.sh hardware observe`。二次开机再次确认设备标识与历史账本归属，避免恢复另一机体的在途任务。单独关闭 Docker 服务无法替代机体的制动与急停。
 
 - RK3588 使用整板厂商提供的 BSP、内核和设备驱动。当前工作台、地图与任务内核可以在 CPU 上工作。要使用 NPU，在独立推理服务中安装与驱动配套的 RKNN/RKLLM 用户态组件并验证模型支持范围。[Rockchip RKNN 工具链](https://github.com/airockchip/rknn-toolkit2)
 - Jetson Orin 使用与载板兼容的 JetPack/L4T。需要 GPU 推理时，在单独的推理容器中配置匹配宿主驱动的 NVIDIA 运行时与库；例如 JetPack 6.2.1 对应 Jetson Linux 36.4.4。主项目容器通过 ROS 或 HTTP 与这些服务交互。[NVIDIA JetPack 6.2.1](https://developer.nvidia.com/embedded/jetpack-sdk-621)
