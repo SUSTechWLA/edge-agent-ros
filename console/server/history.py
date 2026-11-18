@@ -87,6 +87,8 @@ class History:
         with self.db:
             self.prune(time.time())
         self.earliest, self.cursor = self.db.execute("SELECT coalesce(min(seq),0),coalesce(max(seq),0) FROM events").fetchone()
+        # A restart may expire the newest sample, including the last retained row.
+        self.cursor = max(self.cursor, self.pruned_through)
 
     def prune(self, now):
         # Keep any sample referenced by an audit event, including those from older

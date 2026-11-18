@@ -77,7 +77,10 @@ class Watch:
                     self.sink.db.execute("INSERT INTO intake VALUES(0)")
             path = os.environ.get("EDGE_AUTHOR_EVENT_DB") or self.out / "module-events.sqlite"
             self.journal = ModuleJournal(path)
+            self.sink.bind_journal(self.journal,"plugin.author")
         except BaseException:
+            if hasattr(self, "journal"):
+                self.journal.close()
             if hasattr(self, "sink"):
                 self.sink.close()
             self.lock.close()

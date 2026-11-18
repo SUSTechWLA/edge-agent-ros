@@ -9,6 +9,7 @@
 | 看懂任务执行、资源占用、停车与重启 | [ROS 接口](v1/interfaces.md) · [任务内核](v1/core.md) · [执行网关](v1/gateway.md) |
 | 给已有系统增加 Tool、Service 或事件消费者 | [插件开发指南](plugin-development.md) · [术语和已实现的扩展点](harness-extensions.md) |
 | 让 Agent 提出工具，检查谁能发布、如何续办原任务 | [插件作者](plugin-authoring.md) · [插件管理](plugin-manager.md) |
+| 让运行中的 Agent 把能力缺口交给设计与编码插件，查每一步为何继续或停止 | [Compose 安装、暂停与取证](plugin-evolution-operations.md) · [设计订阅](specs/SDD-017-plugin-design-watch.md) · [接口快照](specs/SDD-018-design-contracts.md) · [软件编码候选](specs/SDD-019-event-driven-software-author.md) |
 | 让新插件记录异常和版本变化，按来源追查事实 | [模块事件总线](module-eventbus.md) · [ROS 消息与归档读取](module-events.md) |
 | 运行巡检、查看人工介入原因或核对失联后的补收 | [Watchdog 手册](watchdog.md) · [故障窗口的实际记录](evidence/watchdog-acceptance.json) |
 | 把 AI 提出的新算法做成可以热装的文本 Tool | [设计草案](specs/SDD-013-plugin-design.md) · [候选、验收和批准发布](specs/SDD-014-authored-software-provider.md) |

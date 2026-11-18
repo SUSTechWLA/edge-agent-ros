@@ -17,6 +17,7 @@
 
 | 需要定位的问题 | 先查什么 | 可用验证 |
 |---|---|---|
+| 能力缺口为什么没有触发设计、编码或发布 | 顺着[运行手册](docs/plugin-evolution-operations.md)查源事件、私有收据、已选接口、独立样本和批准摘要。订阅新事实时复用带持久游标和重试预算的消费者，并由新插件持有自己的状态 | `tests/test_plugin_design_watch.py`、`tests/test_software_author_watch.py` 覆盖中断与重投，`tests/system/software_provider_acceptance.py --automatic` 检验原请求至热装、运行及撤回 |
 | 独立巡检报错、观察者重启或归档失联 | [Watchdog 手册](docs/watchdog.md)与 [SDD-015](docs/specs/SDD-015-independent-watchdog.md)。看归档身份、补收区间、原事故和恢复操作身份 | `tests/test_watchdog.py` 覆盖故障窗口，`tests/system/watchdog_acceptance.py` 在 Docker 中核对重启后的真实源事件 |
 | AI 编写了新的纯软件 Tool | [SDD-014](docs/specs/SDD-014-authored-software-provider.md)。验明设计来源、批准摘要、独立样本和请求原文字节，再查询受管发布收据 | `tests/test_software_provider.py` 与 `tests/system/software_provider_acceptance.py`。后者支持 `--model-cache` 实测 Ollama 生成的候选 |
 | 插件证据有断层，或要开发 AI 提议的软件能力 | [EventBus 缺口与恢复](docs/specs/SDD-011-eventbus-coverage.md)、[数列工具](docs/specs/SDD-012-authored-software-tools.md)、[插件设计草案](docs/specs/SDD-013-plugin-design.md)。从原生受阻任务查作者、受管发布、续办和原操作，私有草案只作开发输入 | 运行 `tests/test_series_tools.py`、`tests/test_plugin_design.py`。隔离系统入口包括 `module_bus_acceptance.py`、`plugin_manager_acceptance.py` 及 `plugin_design_acceptance.py`，均在 `tests/system/`。 |

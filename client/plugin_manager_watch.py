@@ -207,6 +207,7 @@ class Supervisor:
             self.lock.execute("BEGIN IMMEDIATE")
             self.sink = Sink(self.state/"input.sqlite",self.url,{"kind":"plugin.author.proposed","source":"journal:plugin.author"})
             self.journal = ModuleJournal(self.state/"module-events.sqlite")
+            self.sink.bind_journal(self.journal,"plugin.supervisor")
             self.next_pulse = 0
             self.db = self.journal.db
             with self.db:

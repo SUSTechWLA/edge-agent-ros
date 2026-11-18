@@ -15,12 +15,16 @@ MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults"
           "places", "scene-binding", "scene-outage")
 RULES = [
     (("agent/series_tools.py",), (*AGENT,"observations","board")),
-    (("client/plugin_design.py","client/software_provider.py","client/software_release.py","examples/software-provider/*"), ("planner","agent-faults")),
+    (("client/plugin_design_watch.py","client/design_contracts.py","client/plugin_design.py",
+      "client/software_author_watch.py","client/bounded_http.py","contracts/design/*"),
+     ("planner","observations","agent-faults","board")),
+    (("client/software_provider.py","client/software_release.py","examples/software-provider/*"), ("planner","agent-faults")),
     (("client/watchdog.py",), ("planner","observations","board")),
-    (("tests/test_plugin_design.py","tests/test_series_tools.py","tests/test_watchdog.py","tests/test_software_provider.py"), ("planner",)),
+    (("tests/test_plugin_design.py","tests/test_plugin_design_watch.py","tests/test_software_author_watch.py",
+      "tests/test_series_tools.py","tests/test_watchdog.py","tests/test_software_provider.py"), ("planner",)),
     (("tests/system/watchdog_acceptance.py",), ("observations",)),
-    (("tests/system/watchdog_mounts.py",), ("observations","board")),
-    (("tests/system/software_provider_acceptance.py",), ("agent-faults",)),
+    (("tests/system/watchdog_mounts.py","tests/system/evolution_mounts.py"), ("observations","board")),
+    (("tests/system/software_provider_acceptance.py","tests/system/software_author_fixture.py"), ("agent-faults",)),
     (("tests/system/series_author_acceptance.py","tests/system/plugin_design_acceptance.py"), ("agent-faults",)),
     (("sessions_plugin/*", "client/register_session.py"), ("planner","observations","ui","console-missions","board")),
     (("tests/system/session_plugin_acceptance.py",), ("ui","console-missions","places")),
@@ -58,7 +62,7 @@ RULES = [
     (("console/server/*", "perception/*", "observations/*.json"), (*OBS,"board")),
     (("console/web/review.*","tests/system/review_browser.mjs"), ("ui","console-missions","places")),
     (("console/web/*", "tests/system/console_browser.mjs"), ("ui","console-missions")),
-    (("client/event_sink.py",), ("observations","planner")),
+    (("client/event_sink.py",), ("planner","observations","agent-faults","board")),
     (("sim/bridge.yaml","sim/witness.yaml","sim/world.sdf"), (*MOTION,*OBS)),
     (("src/edge_core/*",), (*MOTION,"board")),
     (("src/edge_gateway/*","sim/*"), MOTION),
@@ -108,7 +112,10 @@ def selection(files=None):
 
 class TestSelection(unittest.TestCase):
     def test_evolution_consumers(self):
-        self.assertEqual(selection(["client/plugin_design.py"])[0],[R,"planner","agent-faults"])
+        for name in ("client/plugin_design.py","client/plugin_design_watch.py","client/event_sink.py",
+                     "contracts/design/ros-observation.json","client/design_contracts.py","client/bounded_http.py",
+                     "client/software_author_watch.py"):
+            self.assertEqual(selection([name])[0],[R,"planner","observations","agent-faults","board"])
         self.assertEqual(selection(["client/software_provider.py"])[0],[R,"planner","agent-faults"])
         self.assertEqual(selection(["client/watchdog.py"])[0],[R,"planner","observations","board"])
         self.assertEqual(selection(["tests/system/watchdog_mounts.py"])[0],[R,"observations","board"])

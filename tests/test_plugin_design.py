@@ -7,6 +7,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "client"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -37,8 +38,8 @@ class PluginDesign(unittest.TestCase):
         self.addCleanup(self.journal.close)
         self.private = self.root / "drafts"
 
-    def execute(self, *args):
-        return run(self.event, self.decision, self.private, self.journal, *args)
+    def execute(self, *args, **kwargs):
+        return run(self.event, self.decision, self.private, self.journal, *args, **kwargs)
 
     def events(self):
         return [json.loads(row[0]) for row in self.journal.db.execute("SELECT event FROM module_bus_events ORDER BY seq")]
@@ -65,6 +66,59 @@ class PluginDesign(unittest.TestCase):
         path.unlink()
         with self.assertRaisesRegex(DesignError, "draft_missing"):
             self.execute()
+
+    def test_hot_contract_and_recovery_use_the_exact_original_snapshot(self):
+        config = self.root/"context"
+        config.mkdir()
+        sample = Path(__file__).resolve().parents[1]/"contracts/design/result-verifier.json"
+        target = config/"verify.json"
+        target.write_bytes(sample.read_bytes())
+        first = self.execute(contracts_dir=config, request_id="attempt-1")
+        original = Path(first["path"]).read_bytes()
+        draft = json.loads(original)
+        self.assertEqual(draft["interfaces"]["result-verifier"]["version"], "1")
+        snapshot = json.dumps(draft["interfaces"],sort_keys=True,ensure_ascii=False,separators=(",",":")).encode()
+        self.assertEqual(draft["contracts_sha256"], hashlib.sha256(snapshot).hexdigest())
+        self.assertEqual(self.events()[-1]["data"]["contracts_sha256"], draft["contracts_sha256"])
+        updated = {**json.loads(target.read_bytes()),"version":"2"}
+        target.write_bytes(json_bytes(updated))
+        resumed = self.execute(contracts_dir=config, request_id="attempt-1", recover_only=True)
+        self.assertEqual(resumed["event_id"],first["event_id"])
+        self.assertEqual(Path(resumed["path"]).read_bytes(),original)
+        next_design = self.execute(contracts_dir=config)
+        self.assertNotEqual(first["design_id"],next_design["design_id"])
+        self.assertEqual(json.loads(Path(next_design["path"]).read_bytes())["interfaces"]["result-verifier"],updated)
+        target.unlink()
+        last = self.execute(contracts_dir=config)
+        self.assertNotIn("result-verifier",json.loads(Path(last["path"]).read_bytes())["interfaces"])
+        observed = [e for e in self.events() if e["kind"] == "plugin.design.contracts_observed"]
+        self.assertEqual(len(observed),3)
+        for old, new in zip(observed,observed[1:]):
+            self.assertEqual(new["parent_event_id"],old["event_id"])
+            self.assertEqual(new["data"]["previous_sha256"],old["data"]["contracts_sha256"])
+        self.assertEqual(json.loads((self.private/".contexts"/(draft["contracts_sha256"]+".json")).read_bytes()),
+                         draft["interfaces"])
+
+    def test_invalid_contract_fails_before_inference_and_emits_only_public_diagnosis(self):
+        config = self.root/"context"
+        config.mkdir()
+        source = Path(__file__).resolve().parents[1]/"contracts/design/ros-observation.json"
+        contract = json.loads(source.read_bytes())
+        target = config/"ros.json"
+        with patch("plugin_design.bounded_http.read") as model:
+            for data, code in ((dict(contract, reference="../private.txt"), "contract_invalid"),
+                               (dict(contract, owner="private"*850), "contract_budget")):
+                target.write_bytes(json_bytes(data))
+                with self.assertRaisesRegex(DesignError,code):
+                    self.execute("http://model","test",contracts_dir=config)
+                self.assertEqual(self.events()[-1]["code"],"design."+code)
+                self.assertNotIn("private.txt",json.dumps(self.events()))
+            target.write_bytes(source.read_bytes())
+            (config/"duplicate.json").write_bytes(source.read_bytes())
+            with self.assertRaisesRegex(DesignError,"contract_conflict"):
+                self.execute("http://model","test",contracts_dir=config)
+            model.assert_not_called()
+            self.assertFalse(list(self.private.glob("*.json")))
 
     def test_untrusted_event_missing_goal_and_modified_receipt(self):
         for field, value, reason in (("source", "ros:/edge/events", "source_ineligible"),
@@ -131,6 +185,28 @@ class PluginDesign(unittest.TestCase):
         with self.assertRaisesRegex(DesignError, "model_unavailable"):
             self.execute(url, "another-model")
         self.assertEqual(self.events()[-1]["code"], "design.model_unavailable")
+
+    def test_model_choice_is_bound_to_installed_contracts(self):
+        from plugin_design import DESIGN_FIELDS
+        config = self.root/"contracts"
+        config.mkdir()
+        sample = Path(__file__).resolve().parents[1]/"contracts/design/ros-observation.json"
+        (config/sample.name).write_bytes(sample.read_bytes())
+        choice = {key:"documented sample" for key in DESIGN_FIELDS}
+        choice["interface"] = "ros-observation"
+        def response(*args, **kwargs):
+            return json_bytes({"done":True,"message":{"content":json.dumps(choice)}})
+        with patch("plugin_design.bounded_http.read",side_effect=response) as endpoint:
+            result = self.execute("http://model","fixture",contracts_dir=config)
+            body = json.loads(endpoint.call_args.args[1])
+            draft = json.loads(Path(result["path"]).read_bytes())
+            self.assertEqual(json.loads(body["messages"][1]["content"])["contracts"],draft["interfaces"])
+            self.assertIn("ros-observation",body["format"]["properties"]["interface"]["enum"])
+            self.assertEqual(draft["development"]["selected_contract"],json.loads(sample.read_bytes()))
+            self.assertEqual(draft["development"]["permissions_granted"],[])
+            (config/sample.name).unlink()
+            with self.assertRaisesRegex(DesignError,"model_reply_invalid"):
+                self.execute("http://model","fixture",contracts_dir=config)
 
 
 if __name__ == "__main__":

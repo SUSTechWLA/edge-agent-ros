@@ -96,6 +96,8 @@ def run(args, selected, reasons):
         if "planner" in selected:
             stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
                              test("test_series_tools.py","-v"),test("test_plugin_design.py","-v"),
+                             test("test_plugin_design_watch.py","-v"),
+                             test("test_software_author_watch.py","-v"),
                              test("test_software_provider.py","-v"),test("test_watchdog.py","-v"),
                              test("test_runtime_plugins.py","-v"),
                              test("test_module_journal.py","-v"),test("test_author_eventbus.py","-v"),
@@ -139,6 +141,8 @@ def run(args, selected, reasons):
                     "core":[script("verify.ps1","-SkipBuild")],
                     "motion-sensors":[in_image("python3","/opt/edge/tests/system/motion_faults.py","--out","/evidence/motion-sensors.json")],
                     "agent-faults":[test("system/agent_faults.py","--image",image,"--out",directory/"agent-faults.json"),
+                                    test("system/software_provider_acceptance.py","--automatic","--image",image,
+                                         "--out",directory/"software-author-auto.json"),
                                     test("system/plugin_design_acceptance.py","--image",image,"--out",directory/"plugin-design.json"),
                                     test("system/software_provider_acceptance.py","--image",image,"--out",directory/"software-provider.json"),
                                     test("system/plugin_manager_acceptance.py","--image",image,"--out",directory/"plugin-manager.json"),
@@ -149,15 +153,22 @@ def run(args, selected, reasons):
                     "resilience":[test("console_resilience.py")],
                 }
                 if board_built:
+                    checks["observations"].append(test("system/evolution_mounts.py","--image",image,
+                        "--hardware-image",board_image,"--out",directory/"evolution-mounts.json"))
                     checks["observations"].append(test("system/watchdog_mounts.py","--image",image,
                         "--hardware-image",board_image,"--out",directory/"watchdog-mounts.json"))
                 if effective_model:
+                    checks["agent-faults"].append(test("system/plugin_design_acceptance.py","--image",image,
+                        "--cache",args.ollama_cache_volume,"--out",directory/"plugin-design-model.json"))
                     checks["agent-faults"].append(test("system/software_provider_acceptance.py","--image",image,
                         "--model-cache",args.ollama_cache_volume,"--out",directory/"software-provider-model.json"))
                     checks["agent-faults"].append(test("system/series_author_acceptance.py","--image",image,
                         "--cache",args.ollama_cache_volume,"--out",directory/"authored-series.json"))
                     checks["agent-faults"].append(test("system/plugin_manager_acceptance.py","--image",image,
                         "--ollama-cache-volume",args.ollama_cache_volume,"--out",directory/"plugin-manager-model.json"))
+                    checks["agent-faults"].append(test("system/software_provider_acceptance.py","--automatic","--image",image,
+                        "--model-cache",args.ollama_cache_volume,"--scenario","uppercase",
+                        "--out",directory/"software-author-auto-model.json"))
                 for name, commands in checks.items():
                     if name in selected:
                         stage(name,commands)

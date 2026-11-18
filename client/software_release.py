@@ -1,19 +1,18 @@
 """Prepare, verify and explicitly release a text Tool from an SDD-013 design."""
 import argparse
-from concurrent.futures import Future
 from contextlib import closing
-from http.client import HTTPConnection, HTTPSConnection, HTTPException
+from http.client import HTTPException
 import json
 import os
 from pathlib import Path
 import re
-import socket
 import sys
 import tempfile
-import threading
 from time import monotonic
 import uuid
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import urlencode
+
+import bounded_http
 
 from plugin_design import json_bytes, ModuleJournal, public_reference, read_json, writer_lock
 import author_tool
@@ -27,65 +26,14 @@ PROMPT = ("Write a Python expression rooted in the variable text. Chain up to ei
 
 
 VERIFY_BUDGET_SECONDS = 15
-_transport_slots = threading.BoundedSemaphore(4)
 
 
 def http_bytes(url, body, limit, timeout):
-    target = urlsplit(url)
-    if target.scheme not in ("http", "https") or not target.hostname or target.username or target.fragment:
-        raise Invalid("software.endpoint_invalid")
-    connection_type = HTTPSConnection if target.scheme == "https" else HTTPConnection
-    connection = connection_type(target.hostname, target.port, timeout=timeout)
-    path = target.path or "/"
-    if target.query:
-        path += "?" + target.query
-    if not _transport_slots.acquire(blocking=False):
-        raise Invalid("software.transport_busy")
-    result = Future()
-    abandoned = threading.Event()
-    sockets = []
-
-    def receive():
-        try:
-            connection.connect()
-            sockets.append(connection.sock)
-            if abandoned.is_set():
-                return
-            connection.request("GET" if body is None else "POST", path, body=body,
-                               headers={"Content-Type": "application/json"} if body is not None else {})
-            with connection.getresponse() as reply:
-                if reply.status != 200:
-                    raise Invalid("software.endpoint_status")
-                declared = reply.getheader("Content-Length")
-                if declared is not None and not 0 <= int(declared) <= limit:
-                    raise Invalid("software.reply_size")
-                data = reply.read(limit + 1)
-                if len(data) > limit or declared is not None and len(data) != int(declared):
-                    raise Invalid("software.reply_size")
-                result.set_result(data)
-        except Exception as exc:
-            result.set_exception(exc)
-        finally:
-            connection.close()
-            _transport_slots.release()
-
     try:
-        threading.Thread(target=receive, daemon=True, name="software-release-http").start()
-    except RuntimeError as exc:
-        _transport_slots.release()
-        raise Invalid("software.transport_busy") from exc
-    try:
-        return result.result(timeout)
-    except TimeoutError as exc:
-        # DNS can outlive the caller's budget. A late resolution closes immediately;
-        # an established connection is shut down even while headers/body are arriving.
-        abandoned.set()
-        if sockets:
-            try:
-                sockets[0].shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass
-        raise Invalid("software.deadline") from exc
+        return bounded_http.read(url,body,limit,timeout)
+    except bounded_http.TransportError as exc:
+        reason = "reply_size" if exc.reason in ("incomplete_reply","invalid_length") else exc.reason
+        raise Invalid("software."+reason) from exc
 
 
 def send(url, body, limit=32768, timeout=5):

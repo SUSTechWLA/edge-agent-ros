@@ -169,7 +169,7 @@ class TimeBudgetTest(unittest.TestCase):
                 entered.set()
                 finish.wait(5)
             def close(self): closed.set()
-        with patch.object(release,"HTTPConnection",PendingConnection):
+        with patch.object(release.bounded_http,"HTTPConnection",PendingConnection):
             try:
                 with self.assertRaisesRegex(provider.Invalid,"software.deadline"):
                     release.http_bytes("http://local/test",None,1024,0.1)

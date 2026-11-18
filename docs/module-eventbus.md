@@ -38,6 +38,21 @@ dsh 的 Cordis 插件可以提供服务、监听类型化事件，并在卸载�
 
 ## 2. 一次真实调用涉及哪些模块
 
+### 从总线上区分事实、工作和授权
+
+例如收到“统计输入正文里完整单词 robot 的次数”。这个软件请求和“去指定位置巡检”从同一任务入口进入。运行时需要分清下面四次交接。
+
+| 从哪个模块到哪个模块 | 输入与身份 | 消费者可以做什么 | 怎样验证交接 |
+|---|---|---|---|
+| 任务 Agent → 作者 | 原生 `agent.blocked`，带 task、trace 和规划故障原因。作者从任务所有者取回未派发的原请求 | 判断现有声明能否表达目标，提出工具或提交有据可查的拒绝 | 规划失败与动作已受理分开记录。在途设备操作按原 operation 对账 |
+| 作者 → 设计插件 | 已归档的 `plugin.author.declined` 和只读决策收据；实际目标、原归档、序号、故障父事件与收据摘要需要匹配 | 按持久工作身份绑定接口快照，生成私有设计。超出预算时给出原因和人工步骤 | 用同一任务追查 requested、context_bound、drafted、completed。重新挂载旧归档后核对同一份工件 |
+| 设计插件 → 编码插件 | `plugin.design.drafted`，私有草案及现场批准用于编码的 `text-transform` 接口定义 | 选择了该接口且满足条件时，产生有界文本 Tool 的代码候选、语义清单及来源。其他目标保留设计或进入复核 | 比对原草案、模型及代码的摘要。关闭编码插件不影响 Agent 处理已有工具 |
+| 编码插件 → 验收、发布与任务 Agent | 候选包是研发工件。发布者另有独立的输入与期望、当前版本及部署授权。硬件操作还需相应的资源控制权 | 独立检验后热装固定版本。运行时以原文、版本、操作 ID 和证据确认请求结果 | 对照发布前后、卸载、重投和无关任务。持续动作还要使用设备端反馈及独立观测 |
+
+dsh 通过 Cordis 组合带类型的服务、实时事件和可撤销的插件效果，用持久 Session 记录已完成的交互。单机 Edge 进一步要求设备副作用和各个进程的持久账本可分别对账。实时传感器流仍走 ROS，针对具体能力的调用走 Tool/Service，订阅端只对通过校验的归档页提交游标。[上游 dsh 的职责划分](https://github.com/deepseek-ai/deepseek-harness/blob/ca33fd6843b205e279c7ccb6cb73a472c78f5760/docs/architecture.md) · [Edge 单机能力与迭代顺序](architecture/plugin-evolution.md)
+
+### 按所有者寻找证据
+
 | 提问 | 权威来源 | 用哪个标识查 | 得到的证据 |
 |---|---|---|---|
 | 用户想要什么，为什么选了这个工具？ | Agent 任务账本及模型交换记录 | `task_id`、`trace_id`、`call_id` | 任务、规划、模型收到的可记录上下文、工具调用或诊断；内容可按现场策略脱敏。 |
@@ -110,6 +125,17 @@ journal.close()
 4. 用同样的自然语言发起一个**新的验收任务**，在任务回执中核对定义版本、里程计输入和结果。单独调用发布 CLI 会在发布回执处结束。启用 SDD-008 的插件管理模块后，符合现场契约的候选可以自动完成发布和这项验收。两步各有独立的证据。[作者和发布者操作命令](plugin-authoring.md) · [插件管理与自主恢复](plugin-manager.md)
 
 ## 6. 长程运行的故障边界
+
+当插件要根据事件创建工作，先把 HTTP 页存进自己的 `Sink`。源 URL、筛选器和输入库由部署方配置。作者订阅 `agent.blocked`，管理器同时限定 `plugin.author.proposed` 和 `journal:plugin.author`。每个消费者在创建自己的 ModuleJournal 后执行 `sink.bind_journal(journal, module_name)`。从下一次 `sink.copy()` 起，校验通过的事实和游标同事务提交。业务消费者再从本地镜像认领工作，独立保存其操作和授权。读到故障事件本身不触发设备动作。[消费者规格](specs/SDD-016-event-consumer-integrity.md)
+
+| 消费者记录的 kind | 含义与定位 |
+|---|---|
+| `subscription.blocked` | 当前订阅无法取得可提交的一页。查看 `data.reason`、`archive_id` 和读取起点 `after_seq`。同一位置冲突或不符合精确选择器时，另附 `failed_seq`。已确认游标保留。 |
+| `subscription.restored` | 同一订阅在提交有效页后恢复。通过 `parent_event_id` 查此前的阻塞记录。 |
+| `subscription.retention` | 从旧游标到裁剪水位之间可能缺少被删除的行。页中的留存事实照常复制。筛选订阅里未命中的序号间隙是正常现象。 |
+| `subscription.archive_changed` | API 切换了归档。新归档使用自己的游标；重新挂回旧归档时沿用该归档已提交的位置。 |
+
+这些诊断先写入消费者本地 `subscription_notices`，再用原事件 ID 写入消费者的 ModuleJournal。在向源日志写成功、私库还来不及确认时重启，重新投递使用同一身份。普通独立 Sink 未配置 ModuleJournal 时也可在本机查询 notices。公开查询示例为 `GET /api/events?kind=subscription.blocked&source=journal%3Aplugin.author`。消费者日志证明自己观测的故障，请结合网络、Console 与生产者账本判断根因。
 
 **发生缺样时，怎样读懂复盘结果？** 假设一次插件发布的源库下一条可用记录是 7，而归档从未见过该源。归档先写 `module.journal_gap`，标明 `missing_from=1, missing_to=6, next_source_seq=7`，随后导入第 7 条。第 7 条能证明其具体事实；“之前从未发生发布失败”则需要完整的源记录才能判定。检查缺口使用 `GET /api/events?source=edge_console&module=journal.ingress&code=module.journal_gap`，按缺口的 `source_id` 与实际行核对同一源世代。缺口诊断保留的 `source_seq` 是此次确认的缺失区间末位，诊断的作者为 Console。归档重启会从该位置继续读取。[SDD-011](specs/SDD-011-eventbus-coverage.md)
 

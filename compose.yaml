@@ -148,6 +148,88 @@ services:
         target: /state/watchdog
         volume:
           subpath: watchdog
+  plugin-design-init:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["plugin-design"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["/bin/mkdir", "-p", "/sources/plugin.design", "/author/decisions"]
+    volumes:
+      - module-sources:/sources
+      - author-proposals:/author
+  plugin-design:
+    <<: *runtime
+    profiles: ["plugin-design"]
+    depends_on:
+      plugin-design-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 32
+    mem_limit: 128m
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "-B", "/opt/edge/client/plugin_design_watch.py"]
+    command: ["--url", "http://console:8080", "--decisions", "/decisions", "--state", "/private",
+              "--journal", "/journal/module-events.sqlite", "--contracts-dir", "/contracts",
+              "--ollama-url", "${EDGE_DESIGN_MODEL_URL:-http://model:11434}", "--model", "${EDGE_DESIGN_MODEL:-qwen2.5:1.5b}"]
+    volumes:
+      - type: volume
+        source: author-proposals
+        target: /decisions
+        read_only: true
+        volume: {subpath: decisions}
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: plugin.design}
+      - design-private:/private
+      - ${EDGE_DESIGN_CONTRACTS_DIR:-./contracts/design}:/contracts:ro
+  software-author-init:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["software-author"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["/bin/mkdir", "-p", "/sources/plugin.software_author", "/design/drafts"]
+    volumes:
+      - module-sources:/sources
+      - design-private:/design
+  software-author:
+    <<: *runtime
+    profiles: ["software-author"]
+    depends_on:
+      software-author-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 32
+    mem_limit: 128m
+    tmpfs: [/tmp]
+    entrypoint: ["python3", "-B", "/opt/edge/client/software_author_watch.py"]
+    command: ["--url", "http://console:8080", "--drafts", "/drafts", "--state", "/private",
+              "--journal", "/journal/module-events.sqlite", "--contract", "/contract.json",
+              "--ollama-url", "${EDGE_CODE_MODEL_URL:-http://model:11434}", "--model", "${EDGE_CODE_MODEL:-qwen2.5:1.5b}"]
+    volumes:
+      - type: volume
+        source: design-private
+        target: /drafts
+        read_only: true
+        volume: {subpath: drafts}
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: plugin.software_author}
+      - software-author-private:/private
+      - ${EDGE_CODE_CONTRACT:-./contracts/design/text-transform.json}:/contract.json:ro
   plugin-author:
     image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
     pull_policy: never
@@ -230,6 +312,8 @@ services:
       - ${EDGE_EVIDENCE_DIR:-./artifacts/verification}:/evidence
     command: ["python3", "/opt/edge/tests/verify.py", "mission"]
 volumes:
+  software-author-private:
+  design-private:
   supervisor-state:
   author-events:
   module-sources:
