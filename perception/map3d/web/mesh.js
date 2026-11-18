@@ -14,12 +14,13 @@
   out vec2 texcoord;
   out vec3 worldNormal, shadowCoord;
   out vec4 tint;
-  out float depth;
+  out float depth, altitude;
   void main() {
     vec4 world = model * vec4(position, 1.);
     vec4 light = lightSpace * world;
     vec3 delta = world.xyz - eye;
     depth = -dot(delta, away);
+    altitude = world.z;
     gl_Position = shadowPass ? light : vec4(dot(delta,right)*focal.x,
       dot(delta,up)*focal.y, depth-2.*nearZ, depth);
     worldNormal = transpose(inverse(mat3(model))) * normal;
@@ -31,11 +32,13 @@
   in vec2 texcoord;
   in vec3 worldNormal, shadowCoord;
   in vec4 tint;
-  in float depth;
+  in float depth, altitude;
   uniform vec4 diffuse;
-  uniform sampler2D albedo, shadows;
+  uniform highp sampler2D albedo, shadows;
   uniform bool shadowPass;
   uniform float cutoff;
+  uniform vec3 eye, up, away;
+  uniform vec2 framebufferSize, focal;
   layout(location=0) out vec4 paint;
   layout(location=1) out vec4 recordedDepth;
   void main() {
@@ -58,8 +61,13 @@
     vec3 light=vec3(.65,.69,.73)+vec3(.39,.36,.29)*lambert*(1.-shadow*.90);
     paint=vec4(color.rgb*light,1.);
     // Log depth keeps millimetre-scale field lines visible at campus-wide distances.
-    gl_FragDepth=log2(1.+depth)/20.;
-    uint bits=floatBitsToUint(1./depth);
+    // Large coplanar quads clipped by the near plane may lose centimetres in
+    // interpolated depth. Intersect level surfaces with the camera ray exactly.
+    float rayZ=-away.z+up.z*(2.*gl_FragCoord.y/framebufferSize.y-1.)/focal.y;
+    bool level=abs(dFdx(altitude))+abs(dFdy(altitude))<.00001 && abs(n.z)>.9999;
+    float exactDepth=level && abs(rayZ)>.000001 ? (altitude-eye.z)/rayZ : depth;
+    gl_FragDepth=log2(1.+exactDepth)/20.;
+    uint bits=floatBitsToUint(1./exactDepth);
     recordedDepth=vec4(uvec4(bits,bits>>8,bits>>16,bits>>24)&255u)/255.;
   }`;
   const identity = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
@@ -148,7 +156,7 @@
       const doc=file.doc;
       const p=this.p=program(gl);this.resources.push(["deleteProgram",p]);
       this.u={};this.a={};
-      for(const name of ["model","lightSpace","eye","right","up","away","focal","nearZ","shadowPass","diffuse","albedo","shadows","cutoff"])
+      for(const name of ["model","lightSpace","eye","right","up","away","focal","framebufferSize","nearZ","shadowPass","diffuse","albedo","shadows","cutoff"])
         this.u[name]=gl.getUniformLocation(p,name);
       for(const name of ["position","normal","uv","color"])this.a[name]=gl.getAttribLocation(p,name);
       this.white=this.resource("Texture");
@@ -207,13 +215,18 @@
       for(const id of root.children){
         const node=doc.nodes[id], matrix=node.matrix||identity;
         for(const prim of meshes[node.mesh]){
-          this.draws.push({prim,matrix});
-          if(node.name==="floor")continue;
+          const low=[Infinity,Infinity,Infinity],high=[-Infinity,-Infinity,-Infinity];
           for(const x of [prim.box.min[0],prim.box.max[0]])for(const y of [prim.box.min[1],prim.box.max[1]])for(const z of [prim.box.min[2],prim.box.max[2]]){
             for(let i=0;i<3;i++){
               const v=matrix[i]*x+matrix[4+i]*y+matrix[8+i]*z+matrix[12+i];
-              bounds[0][i]=Math.min(bounds[0][i],v);bounds[1][i]=Math.max(bounds[1][i],v);
+              low[i]=Math.min(low[i],v);high[i]=Math.max(high[i],v);
             }
+          }
+          const middle=low.map((v,i)=>(v+high[i])/2);
+          this.draws.push({prim,matrix,middle,radius:Math.hypot(...low.map((v,i)=>v-middle[i])),
+            castsShadow:high[2]-low[2]>.12});
+          if(node.name!=="floor")for(let i=0;i<3;i++){
+            bounds[0][i]=Math.min(bounds[0][i],low[i]);bounds[1][i]=Math.max(bounds[1][i],high[i]);
           }
         }
       }
@@ -222,12 +235,19 @@
       this.shadowMap(bounds);
       this.state="ready";this.invalidate();
     }
-    drawModels(shadow){
+    drawModels(shadow,cam=null){
       const gl=this.gl,u=this.u;
       gl.uniform1i(u.shadowPass,+shadow);gl.activeTexture(gl.TEXTURE0);
       // Generic values apply to disabled arrays in the bound VAOs.
       gl.vertexAttrib2f(this.a.uv,0,0);gl.vertexAttrib4f(this.a.color,1,1,1,1);
-      for(const {prim,matrix} of this.draws){
+      for(const {prim,matrix,middle,radius,castsShadow} of this.draws){
+        if(shadow && !castsShadow)continue;
+        if(cam){
+          // Reject whole materials/instances outside the eye frustum before submitting triangles.
+          const delta=middle.map((v,i)=>v-cam.target[i]),z=cam.distance-dot(delta,cam.out);
+          if(z+radius<=0 || Math.abs(dot(delta,cam.right))>z*cam.tanX+radius*Math.hypot(1,cam.tanX) ||
+             Math.abs(dot(delta,cam.up))>z*cam.tanY+radius*Math.hypot(1,cam.tanY))continue;
+        }
         gl.uniformMatrix4fv(u.model,false,matrix); gl.uniform4fv(u.diffuse,prim.color);
         gl.uniform1f(u.cutoff,prim.cutoff);gl.bindTexture(gl.TEXTURE_2D,prim.tex);
         gl.bindVertexArray(prim.vao);gl.drawElements(gl.TRIANGLES,prim.count,prim.mode,prim.offset);
@@ -296,8 +316,9 @@
           gl.uniform3fv(u.eye,cam.target.map((n,i)=>n+cam.distance*cam.out[i]));
           gl.uniform3fv(u.right,cam.right);gl.uniform3fv(u.up,cam.up);gl.uniform3fv(u.away,cam.out);
           gl.uniform2f(u.focal,2*surface.focal/w,2*surface.focal/h);gl.uniform1f(u.nearZ,near);
+          gl.uniform2f(u.framebufferSize,w,h);
           gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,this.shadow);
-          this.drawModels(false);
+          this.drawModels(false,{...cam,tanX:w/(2*surface.focal),tanY:h/(2*surface.focal)});
           gl.readBuffer(gl.COLOR_ATTACHMENT0);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,this.rgba);
           gl.readBuffer(gl.COLOR_ATTACHMENT1);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,this.packed);
           for(let j=0;j<h;j++){

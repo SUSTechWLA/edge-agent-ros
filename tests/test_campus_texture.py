@@ -97,6 +97,8 @@ class TestOrthoAtlas(unittest.TestCase):
             (root/"layout.json").write_text('{"id":"campus_large","frame":"odom","revision":"test"}')
             out=root/"out"
             before=texture.bake(root,root,out,width=64)
+            (models/"older-generated-surface.obj").write_text("v 0 0 0\n")
+            self.assertEqual(texture.bake(root,root,out,width=64),before)
             # Inside the rotated roof in world metres at (6.625, 5.875), not near (0,0).
             self.assertGreater(samples(out/"texture.png")(26,40)[0],200)
             self.assertEqual(samples(out/"height.png")(26,40)[0]*before["height_scale_m"],3.)

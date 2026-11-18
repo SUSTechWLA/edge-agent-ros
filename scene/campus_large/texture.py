@@ -15,6 +15,11 @@ import zlib
 
 import numpy as np
 
+if __package__:
+    from .build import generated_mesh_files, local_mesh
+else:
+    from build import generated_mesh_files, local_mesh
+
 
 def sha(path):
     with path.open("rb") as stream:
@@ -51,15 +56,6 @@ def compose(parent, child):
     dx,dy,dz,turn = child
     co,si = math.cos(yaw),math.sin(yaw)
     return x+co*dx-si*dy, y+si*dx+co*dy, z+dz, yaw+turn
-
-
-def local_mesh(world_dir, uri):
-    # Gazebo in Compose uses /campus even when an offline bake uses a different directory.
-    relative = uri.removeprefix("file:///campus/")
-    path = (world_dir / relative).resolve()
-    if not path.is_relative_to(world_dir.resolve()) or path.suffix.lower() != ".obj":
-        raise ValueError(f"Expected local campus OBJ, got {uri}")
-    return path
 
 
 class Atlas:
@@ -161,12 +157,8 @@ def bake(assets, world_dir, output, width=2048):
                  sha(Path(__file__)),sha(Path(__file__).with_name("texture_mesh.cpp")),
                  sha(Path(__file__).with_name("asset-lock.json")),str(width)]
         # OBJ, MTL and image bytes can change without the visual's URI changing.
-        mesh_dirs = {local_mesh(world_dir,node.text).parent for node in
-                     world.findall("./model/link/visual/geometry/mesh/uri")}
-        for directory in sorted(mesh_dirs):
-            for item in sorted(directory.iterdir()):
-                if item.suffix.lower() in {".obj",".mtl",".png",".jpg",".jpeg"}:
-                    parts += [str(item.relative_to(world_dir.resolve())),sha(item)]
+        for item in generated_mesh_files(world, world_dir):
+            parts += [item.relative_to(world_dir.resolve()).as_posix(), sha(item)]
         revision = hashlib.sha256("/".join(parts).encode()).hexdigest()[:20]
         path = output/"manifest.json"
         if path.is_file():

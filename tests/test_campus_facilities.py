@@ -95,6 +95,8 @@ class FacilitiesTest(unittest.TestCase):
             self.assertEqual(athletics.playing_surface().write(path.parent),path)
             (root/"world.sdf").write_bytes(ET.tostring(world))
             before = build.scene_revision(world,root,{"frame":"odom"})
+            (path.parent/"old-version.mtl").write_text("newmtl unused\n")
+            self.assertEqual(build.scene_revision(world,root,{"frame":"odom"}),before)
             material.write_text(material.read_text()+"# changed\n")
             self.assertNotEqual(build.scene_revision(world,root,{"frame":"odom"}),before)
 

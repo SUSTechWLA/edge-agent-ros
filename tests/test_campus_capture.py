@@ -10,7 +10,7 @@ import unittest
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scene/campus_large"))
-from capture import VIEWS, capture, encode, identity, prepare, record
+from capture import VIEWS, capture, encode, identity, prepare, record, view_names
 
 
 def sample():
@@ -19,6 +19,23 @@ def sample():
 
 
 class CaptureChecks(unittest.TestCase):
+    def test_each_registered_bookmark_requires_its_own_frame(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            views = root/"overview"
+            views.mkdir()
+            record(views/"manifest.json",{"areas":[{"id":"campus"},{"id":"fuel_campus"}]})
+            self.assertEqual(view_names(root),["overview","campus","fuel_campus"])
+            png, meta = encode(sample())
+            for name in ("overview","campus"):
+                (views/(name+".png")).write_bytes(png)
+            identity = {"world_sha256":"fixture"}
+            record(views/"capture.json",{"world":identity,"views":dict.fromkeys(("overview","campus"),meta)})
+            self.assertFalse(prepare(root,identity)["complete"])
+            record(views/"manifest.json",{"areas":[{"id":"../outside"}]})
+            with self.assertRaises(ValueError):
+                view_names(root)
+
     def test_rgb8_pixels_without_padding_and_original_stamp(self):
         png, meta = encode(sample())
         offset = png.index(b"IDAT")

@@ -135,7 +135,7 @@ class Exporter:
             raw = Path(uri.removeprefix("file://"))
             candidates = [base/raw]
             if raw.is_absolute() and raw.parts[1:2]==("campus",):
-                candidates.append(self.world.parent.joinpath(*raw.parts[2:]))
+                candidates.insert(0,self.world.parent.joinpath(*raw.parts[2:]))
         for path in candidates:
             if path.exists():
                 return path.resolve()

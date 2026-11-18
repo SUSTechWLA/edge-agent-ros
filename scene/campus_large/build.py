@@ -330,33 +330,43 @@ def area(id_,label,bounds,origin,description,eye=None,target=None):
     return result
 
 
+def local_mesh(world_dir, uri):
+    # file:///campus/ is the world volume in Compose, also supported by offline builds.
+    path = (world_dir / uri.removeprefix("file:///campus/")).resolve()
+    if not path.is_relative_to(world_dir.resolve()) or path.suffix.lower() != ".obj":
+        raise ValueError(f"Expected local campus OBJ, got {uri}")
+    return path
+
+
+def generated_mesh_files(world, output):
+    """Resolve generated OBJ → mtllib → diffuse map references within this world."""
+    root = output.resolve()
+    models = {local_mesh(root,node.text) for node in world.findall(".//geometry/mesh/uri")}
+    def referenced(files, keyword):
+        found = set()
+        for path in files:
+            with path.open(encoding="utf-8") as source:
+                for row in source:
+                    key, _, value = row.strip().partition(" ")
+                    if key != keyword:
+                        continue
+                    asset = (path.parent/value.strip()).resolve()
+                    if not asset.is_relative_to(root):
+                        raise ValueError(f"Campus material outside world directory: {asset.name}")
+                    found.add(asset)
+        return found
+    materials = referenced(models,"mtllib")
+    images = referenced(materials,"map_Kd")
+    return sorted(models | materials | images)
+
+
 def scene_revision(world, output, layout):
     """Bind sensor/map alignment to the navigation graph, SDF and its local geometry."""
     digest = hashlib.sha256(json.dumps(layout,sort_keys=True,ensure_ascii=False).encode())
     digest.update((output/"world.sdf").read_bytes())
     digest.update(Path(__file__).with_name("asset-lock.json").read_bytes())
-    dependencies = set()
-    for node in world.findall(".//geometry/mesh/uri"):
-        uri = node.text.removeprefix("file:///campus/")
-        model = output/uri
-        if model.suffix.lower() != ".obj" or not model.resolve().is_relative_to(output.resolve()):
-            raise ValueError(f"Unexpected generated campus model path {uri}")
-        if model not in dependencies:
-            dependencies.add(model)
-            with model.open(encoding="utf-8") as source:
-                for row in source:
-                    if row.startswith("mtllib "):
-                        dependencies.add(model.parent/row[7:].strip())
-    for material in tuple(p for p in dependencies if p.suffix.lower()==".mtl"):
-        if not material.resolve().is_relative_to(output.resolve()):
-            raise ValueError(f"Campus material outside world directory: {material.name}")
-        for row in material.read_text(encoding="utf-8").splitlines():
-            if row.startswith("map_Kd "):
-                dependencies.add(material.parent/row[7:].strip())
-    for path in sorted(dependencies):
-        if not path.resolve().is_relative_to(output.resolve()):
-            raise ValueError(f"Campus material outside world directory: {path.name}")
-        digest.update(path.relative_to(output).as_posix().encode())
+    for path in generated_mesh_files(world, output):
+        digest.update(path.relative_to(output.resolve()).as_posix().encode())
         digest.update(path.read_bytes())
     return "2."+digest.hexdigest()[:16]
 
