@@ -1,0 +1,325 @@
+{
+  "passed": true,
+  "image": "sha256:1b48496f5f54fd9fb6ef27ff7e3aadf166a9f7de1391a99072c381382cb21f5e",
+  "capture_domain": "73",
+  "replay_domain": "182",
+  "phases": 11,
+  "sensor_events": 13,
+  "manifest_sha256": "72d2b79a96fcf40409c178fa39fa44ac90f3dd5f2ec507120ade87fec221cfb5",
+  "result_sha256": "c226dd7fb7629d2cac270e55d4bda00768c98b05ef46b7dec6592037d583fbd9",
+  "source": "five distinct original ROS 2 CDR frames per robot from running Gazebo campus",
+  "replay": "DDS loopback only; sensor payloads original except named injected faults; stamps retimed",
+  "robots": {
+    "crazyflie": {
+      "topic": "/model/crazyflie/front/image_raw",
+      "frame": "crazyflie/front_optical",
+      "stamp_range_ns": [
+        1518000000000,
+        1519000000000
+      ],
+      "source_samples": {
+        "crazyflie-1.cdr": "a078471f9ca475817dcd4526ee2cdc0df20694e6855a645db25607eebca01278",
+        "crazyflie-2.cdr": "9fcf11d2702a34e04a01a4b137a19a9379118cd7f17bf2aa4dd6adcd5a44499d",
+        "crazyflie-3.cdr": "ecfbf560d8b920d7c1af0c612336d968824eb765c20d50078981575407794257",
+        "crazyflie-4.cdr": "dec010a5eed73ba9fa2bd13428ec4132937469379a9139e89db8dfa5cc64ec1f",
+        "crazyflie-5.cdr": "9299c85c9be01a11623501ebb992d82510290cdc7fb63e51bcef83e279b98dfc"
+      },
+      "transitions": [
+        {
+          "seq": 2,
+          "event_id": "b274d1202f0d4f1f98231084236313bc",
+          "parent": null,
+          "utc": "2026-11-18T14:55:49.207070+00:00",
+          "state": "observed",
+          "code": "sensor.ok",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.1351
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "crazyflie-4.cdr",
+            "payload": "original"
+          }
+        },
+        {
+          "seq": 3,
+          "event_id": "2420cc1717724e6f8db8e905aeee005a",
+          "parent": "b274d1202f0d4f1f98231084236313bc",
+          "utc": "2026-11-18T14:55:49.463513+00:00",
+          "state": "rechecking",
+          "code": "sensor.black_image",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 1.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0
+          },
+          "elapsed_s": 0.0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "crazyflie-1.cdr",
+            "payload": "occluded"
+          }
+        },
+        {
+          "seq": 4,
+          "event_id": "7e1cbb7799c642d8b687d73208bee503",
+          "parent": "2420cc1717724e6f8db8e905aeee005a",
+          "utc": "2026-11-18T14:55:50.284399+00:00",
+          "state": "needs_attention",
+          "code": "sensor.black_image",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 1.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.0
+          },
+          "elapsed_s": 0.821,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "crazyflie-2.cdr",
+            "payload": "occluded"
+          }
+        },
+        {
+          "seq": 5,
+          "event_id": "baa3876e02e9491f9e5254f6d6efc6a4",
+          "parent": "7e1cbb7799c642d8b687d73208bee503",
+          "utc": "2026-11-18T14:55:50.683754+00:00",
+          "state": "recovered",
+          "code": "sensor.ok",
+          "metrics": {
+            "bright_fraction": 0.0,
+            "dark_fraction": 0.0,
+            "evidence_type": "raw_image_proxy",
+            "samples": 832,
+            "texture_edge_fraction": 0.1351
+          },
+          "elapsed_s": 1.22,
+          "consecutive_good": 3,
+          "input": {
+            "filename": "crazyflie-5.cdr",
+            "payload": "original"
+          }
+        }
+      ]
+    },
+    "go1": {
+      "topic": "/model/go1/lidar/points",
+      "frame": "go1/lidar_link",
+      "stamp_range_ns": [
+        1518000000000,
+        1519000000000
+      ],
+      "source_samples": {
+        "go1-1.cdr": "e55dcc0e44b3e15c2e8ff63f88877d18008a57372b551319c8a8690e23f7b235",
+        "go1-2.cdr": "2b98c77fca18f7d39f4158314b731d3a0061e242f8edcf827796a1ef736727ce",
+        "go1-3.cdr": "2ee9360529b84c51ed5065766c2b52ab0bda066e957c2d54573c9c687c0c1758",
+        "go1-4.cdr": "8efff2afdd1dbe3f88aaca1f9ba5cfb54cf069f117b50b5746c8dee7329c0b50",
+        "go1-5.cdr": "5942c583e6e847652c290b8a6a861b1185b6230e1030e25d06f122128a663017"
+      },
+      "transitions": [
+        {
+          "seq": 2,
+          "event_id": "a437725424ee469b8d519abef5b4521c",
+          "parent": null,
+          "utc": "2026-11-18T14:55:49.216241+00:00",
+          "state": "observed",
+          "code": "sensor.ok",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 405
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-4.cdr",
+            "payload": "original"
+          }
+        },
+        {
+          "seq": 3,
+          "event_id": "704f76af58ba425193b9506a53953990",
+          "parent": "a437725424ee469b8d519abef5b4521c",
+          "utc": "2026-11-18T14:55:50.817335+00:00",
+          "state": "observed",
+          "code": "sensor.few_points",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 8,
+            "samples": 8,
+            "valid_samples": 8
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-1.cdr",
+            "payload": "sparse"
+          }
+        },
+        {
+          "seq": 4,
+          "event_id": "0e3f51b21ed041108073ec6bd2f8f30c",
+          "parent": "704f76af58ba425193b9506a53953990",
+          "utc": "2026-11-18T14:55:50.952985+00:00",
+          "state": "rechecking",
+          "code": "sensor.invalid_cloud_points",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 0
+          },
+          "elapsed_s": 0.0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-2.cdr",
+            "payload": "nan"
+          }
+        },
+        {
+          "seq": 5,
+          "event_id": "c9c8bf915aaa4c19944e6f3660132fa6",
+          "parent": "0e3f51b21ed041108073ec6bd2f8f30c",
+          "utc": "2026-11-18T14:55:51.798566+00:00",
+          "state": "needs_attention",
+          "code": "sensor.invalid_cloud_points",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 0
+          },
+          "elapsed_s": 0.846,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "go1-3.cdr",
+            "payload": "nan"
+          }
+        },
+        {
+          "seq": 6,
+          "event_id": "ecb43304fec24ecc9efd49b5d2be7e82",
+          "parent": "c9c8bf915aaa4c19944e6f3660132fa6",
+          "utc": "2026-11-18T14:55:52.197342+00:00",
+          "state": "recovered",
+          "code": "sensor.ok",
+          "metrics": {
+            "evidence_type": "raw_cloud",
+            "points": 2880,
+            "samples": 600,
+            "valid_samples": 405
+          },
+          "elapsed_s": 1.244,
+          "consecutive_good": 3,
+          "input": {
+            "filename": "go1-1.cdr",
+            "payload": "original"
+          }
+        }
+      ]
+    },
+    "g1": {
+      "topic": "/model/g1/rgbd/depth/image_raw",
+      "frame": "g1/rgbd_optical",
+      "stamp_range_ns": [
+        1518000000000,
+        1519000000000
+      ],
+      "source_samples": {
+        "g1-1.cdr": "e4fd4e409ca263cdf8fb97424a00fa8f6d9ddf78e7107b2c2cf948e00ba23b08",
+        "g1-2.cdr": "62f34b857fe1601d0edffed72993e0ba91a8ffe275f1cac8b0b5e38fff5e4228",
+        "g1-3.cdr": "05bcfb09d1dc72c4c0906259e397f44f43ed1a4e4224f3328b9dc553a00df310",
+        "g1-4.cdr": "35c09d7a3959679fc8970f36b8e0a1f32c2438e19715b8aa3e0a5a7f6c4f8149",
+        "g1-5.cdr": "e8753111e99f2a96adcc953bb982644cdef6c58412809626a05edd3fc43f7c45"
+      },
+      "transitions": [
+        {
+          "seq": 2,
+          "event_id": "23d86142692a4e5d9ffa3ddf4f0f6416",
+          "parent": null,
+          "utc": "2026-11-18T14:55:49.331454+00:00",
+          "state": "observed",
+          "code": "sensor.ok",
+          "metrics": {
+            "encoding": "32FC1",
+            "invalid_fraction": 0.488,
+            "samples": 832
+          },
+          "elapsed_s": 0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "g1-5.cdr",
+            "payload": "original"
+          }
+        },
+        {
+          "seq": 3,
+          "event_id": "265c512ead9343cb93f15ed7edd6ee1f",
+          "parent": "23d86142692a4e5d9ffa3ddf4f0f6416",
+          "utc": "2026-11-18T14:55:52.330512+00:00",
+          "state": "rechecking",
+          "code": "sensor.depth_holes",
+          "metrics": {
+            "encoding": "32FC1",
+            "invalid_fraction": 1.0,
+            "samples": 832
+          },
+          "elapsed_s": 0.0,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "g1-2.cdr",
+            "payload": "depth_holes"
+          }
+        },
+        {
+          "seq": 4,
+          "event_id": "43470e0dc7ec4d99a60c1aa38a2cda2c",
+          "parent": "265c512ead9343cb93f15ed7edd6ee1f",
+          "utc": "2026-11-18T14:55:53.161004+00:00",
+          "state": "needs_attention",
+          "code": "sensor.depth_holes",
+          "metrics": {
+            "encoding": "32FC1",
+            "invalid_fraction": 1.0,
+            "samples": 832
+          },
+          "elapsed_s": 0.831,
+          "consecutive_good": 0,
+          "input": {
+            "filename": "g1-3.cdr",
+            "payload": "depth_holes"
+          }
+        },
+        {
+          "seq": 5,
+          "event_id": "56e2150986194c0b9433711e71136a4b",
+          "parent": "43470e0dc7ec4d99a60c1aa38a2cda2c",
+          "utc": "2026-11-18T14:55:53.559704+00:00",
+          "state": "recovered",
+          "code": "sensor.ok",
+          "metrics": {
+            "encoding": "32FC1",
+            "invalid_fraction": 0.488,
+            "samples": 832
+          },
+          "elapsed_s": 1.229,
+          "consecutive_good": 3,
+          "input": {
+            "filename": "g1-1.cdr",
+            "payload": "original"
+          }
+        }
+      ]
+    }
+  }
+}
