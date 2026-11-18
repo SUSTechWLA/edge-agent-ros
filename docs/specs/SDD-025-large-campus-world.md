@@ -23,6 +23,8 @@
 
 ## 变更记录
 
+2026-11-18 在独立 Gazebo 工程验证 AC-6。同一句“前往教学楼门外”在重载前后以两个任务 ID 分别完成 3 个航点。以独立世界真值核对，停车误差分别为 6.38 cm 和 6.46 cm。重新启动后的 Console 会话标识改变，原任务的逐项证据保持一致。另一个小场景的 20 个服务容器身份保持一致、仿真时钟继续推进。[重载专项报告](../evidence/campus-reload.json)
+
 2026-11-18，先定义下载、离线加载、校园要素、ROS 运行和插件隔离的验收条件。
 
 已安装并验证 CC0 的 NCS Campus v2（71,816,347 字节）与 OpenRobotics Pine Tree v6。校园公开包、53 项 ZIP 条目、逐文件完整性和离线恢复见[资产手册](../../scene/campus_large/ASSETS.md)。通过世界真值、ROS、Gazebo Transport 与桌面/移动浏览器验证场景和局部任务的过程见[插件边界与实测](../testing/campus-plugin.md)。

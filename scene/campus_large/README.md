@@ -70,3 +70,5 @@ Compose 覆盖文件、截图回归和部署隔离检查均可独立阅读。[�
 ```sh
 python tests/system/campus_acceptance.py --verify-reload --image edge-agent-ros:v0.1 --out .ci-results/system/campus-reload.json
 ```
+
+本次独立运行两次均完成 3 个航点。重载后可查到此前相同的逐点回执，第二次停车的 Gazebo 真值距目标 6.46 cm。两轮均在仿真执行。[两次任务与独立量测](../../docs/evidence/campus-reload.json)

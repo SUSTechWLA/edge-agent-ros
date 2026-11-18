@@ -1,0 +1,179 @@
+{
+  "spec": "SDD-025 AC-6",
+  "passed": true,
+  "started_at": "2026-11-18T08:10:06.849670+00:00",
+  "project": "edge-campus-audit-fd1d1c8d6e",
+  "ros_domain": "168",
+  "gazebo_partition": "campus_audit_fd1d1c8d6e",
+  "image": "edge-agent-ros:perception-75bd27e",
+  "requested_text": "前往教学楼门外",
+  "image_id": "sha256:f6afd5a4c5d329fb4a9286461178cca75180374cbda54f305e5ff073275964eb",
+  "scope": "Two user tasks in a temporary Gazebo campus on Docker Desktop. No physical hardware.",
+  "source_report_sha256": "eec99ed1759d028ad01f4b3b2de109eab46a42bcb6f6ae406708948e2f2140dd",
+  "reproduce": "python tests/system/campus_acceptance.py --verify-reload --image edge-agent-ros:perception-75bd27e --out .ci-results/system/sdd025/campus-reload/full.json",
+  "rendered_world": {
+    "layout_sha256": "bfa6bcc9dbc7485542838524bc4448b574b15b04abf3288b9d7a9421eadc13dc",
+    "world_sha256": "8f04d25553433aacc2e198343e5cc27177deb9993d398b4ea8fcecac5a8be6bd"
+  },
+  "observation_row_units": [
+    "stamp_ns",
+    "x_m",
+    "y_m",
+    "v_mps"
+  ],
+  "before_reload": {
+    "console_session": "0cc3902c519a4798acf76bbde7df5006",
+    "task_id": "campus-gate-fd1d1c8d6e",
+    "trace_id": "campus-gate-fd1d1c8d6e",
+    "tool": "navigate_place",
+    "state": "SUCCEEDED",
+    "evidence": {
+      "scene": "campus_large",
+      "revision": "1.0",
+      "digest": "bfa6bcc9dbc7485542838524bc4448b574b15b04abf3288b9d7a9421eadc13dc",
+      "frame": "odom",
+      "path": [
+        "teaching_lobby",
+        "teaching_door",
+        "teaching_exit"
+      ],
+      "waypoints": [
+        [
+          0,
+          0
+        ],
+        [
+          1.7,
+          0
+        ],
+        [
+          3.3,
+          0
+        ]
+      ],
+      "start_xy": [
+        -1.2477089665955303e-09,
+        -5.9437788944908874e-30
+      ],
+      "start_zone": "lobby",
+      "destination_id": "teaching_exit",
+      "distance_m": 3.300000001247709,
+      "place": "教学楼门外",
+      "observed_xy": [
+        3.2498382260296212,
+        1.1108756310344745e-13
+      ],
+      "verified_count": 3,
+      "mission_id": "campus-gate-fd1d1c8d6e/step/1"
+    },
+    "paths": {
+      "truth": {
+        "start": [
+          748000000,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "inside_door": [
+          17578000000,
+          1.6249,
+          -0.0,
+          0.0794
+        ],
+        "end": [
+          24616000000,
+          3.2362,
+          -0.0,
+          0.0
+        ],
+        "goal_error_m": 0.0638,
+        "samples": 235
+      },
+      "odom": {
+        "start": [
+          748000000,
+          -0.0,
+          -0.0,
+          0.0
+        ],
+        "inside_door": [
+          17578000000,
+          1.6318,
+          0.0,
+          0.0794
+        ],
+        "end": [
+          24616000000,
+          3.2498,
+          0.0,
+          0.0
+        ],
+        "goal_error_m": 0.0502,
+        "samples": 235
+      }
+    }
+  },
+  "reload": {
+    "new_console_session": "9f6a55370d594964be98485c8b6b4f1e",
+    "old_task_evidence_equal_after_restart": true,
+    "ros_readiness_verified": [
+      "/edge/submit_mission",
+      "/edge/get_mission",
+      "/edge/cancel_mission",
+      "/edge/navigate_to",
+      "/odom",
+      "/ground_truth"
+    ]
+  },
+  "after_reload": {
+    "task_id": "campus-gate-fd1d1c8d6e-after-reload",
+    "state": "SUCCEEDED",
+    "verified_count": 3,
+    "world_truth_end": [
+      14926000000,
+      3.2354,
+      -0.0,
+      0.0
+    ],
+    "odom_end": [
+      14926000000,
+      3.249,
+      0.0,
+      0.0
+    ],
+    "goal_xy_m": [
+      3.3,
+      0
+    ],
+    "world_truth_goal_error_m": 0.0646,
+    "odom_goal_error_m": 0.051
+  },
+  "small_world": {
+    "owned_fixture": false,
+    "services_unchanged": [
+      "agent",
+      "bridge",
+      "camera",
+      "camera-sensor",
+      "console",
+      "evidence",
+      "map3d",
+      "map3d-sensor",
+      "model",
+      "model-provider",
+      "perception",
+      "plugin-author",
+      "plugin-manager",
+      "rgbd",
+      "rgbd-sensor",
+      "scene",
+      "session",
+      "sim",
+      "watchdog",
+      "witness"
+    ],
+    "sim_id": "dede99c55ce3d7a9720e8d47d5ff09172a8fc384744c9d3afd04a3597d2da2a6",
+    "clock_before_ns": 5535608000000,
+    "clock_after_ns": 5640558000000
+  }
+}
