@@ -2,7 +2,8 @@ build/
 install/
 log/
 __pycache__/
-/artifacts/
+/artifacts/*
+!/artifacts/verification/
 .env
 .env.*
 !.env.example

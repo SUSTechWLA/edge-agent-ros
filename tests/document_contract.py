@@ -10,13 +10,27 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentContract(unittest.TestCase):
-    def test_run_outputs_are_local(self):
-        for directory in ("artifacts", ".ci-results"):
-            with self.subTest(directory=directory):
-                tracked = subprocess.check_output(["git", "ls-files", "--", directory], cwd=ROOT)
-                self.assertEqual(tracked, b"", f"Curate published evidence in docs/evidence: {tracked!r}")
-                check = subprocess.run(["git", "check-ignore", "-q", f"{directory}/future-run/result.json"], cwd=ROOT)
-                self.assertEqual(check.returncode, 0)
+    def test_run_outputs_and_published_verification_files(self):
+        def tracked(directory):
+            raw = subprocess.check_output(["git","ls-files","-z","--",directory],cwd=ROOT)
+            return [path for path in raw.decode().split("\0") if path]
+
+        def ignored(path):
+            result = subprocess.run(["git","check-ignore","--no-index","-q","--",path],cwd=ROOT)
+            self.assertIn(result.returncode,(0,1))
+            return result.returncode == 0
+
+        root = "artifacts/verification/"
+        self.assertEqual(tracked("docs/evidence/verification"),[])
+        self.assertEqual(tracked(".ci-results"),[])
+        published = tracked("artifacts")
+        self.assertIn(root + "README.md",published)
+        for path in published:
+            self.assertTrue(path.startswith(root) and not ignored(path),path)
+        for path in (root+"new-run/result.json",root+"new-run/trace.ndjson",
+                     root+"20261117-031532-ae63c8/private.log","artifacts/images/export.tar",
+                     ".ci-results/system/runs/new-run/summary.json"):
+            self.assertTrue(ignored(path),path)
 
     def test_curated_evidence_has_a_real_result(self):
         evidence = ROOT/"docs/evidence"

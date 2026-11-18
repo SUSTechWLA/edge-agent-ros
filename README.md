@@ -125,7 +125,7 @@ Agent 拥有任务与步骤状态，运动内核拥有物理执行状态。Event
 | [observations/](observations/README.md)、[examples/](examples/)、[client/](client/) | 如何接传感器、独立服务或事件消费者？ |
 | [scripts/](scripts/)、[docker/](docker/)、[compose.yaml](compose.yaml) | 如何启动、部署、管理版本与验证？ |
 | [文档总目录](docs/README.md) | 按任务查部署、使用、架构、规格、验收报告及精选证据。 |
-| [tests/](tests/) | 复跑契约与仿真。系统套件写入 `.ci-results/system/runs/`，独立执行验收脚本写入 `artifacts/verification/`。 |
+| [tests/](tests/) | 复跑契约与仿真。系统套件写入 `.ci-results/system/runs/`。独立验收的精选原件和本机完整日志按运行号保存在 [artifacts/verification/](artifacts/verification/README.md)。 |
 
 [贡献与发布流程](CONTRIBUTING.md)说明分支、提交、SDD 和发布；[目标架构教材](docs/architecture/index.html)用于学习后续方向。判断当前能力时，以实现、相应 SDD 的验收记录及其版本为准，不能把目标图当作已交付能力。
 

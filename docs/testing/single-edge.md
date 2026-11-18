@@ -65,7 +65,7 @@ python tests/system_suite.py --ollama-cache-volume edge-agent-ros_models
 | `src/*/test/`、`console/server/test_*.py` | 与模块一起维护的契约和回归 |
 | `.ci-results/system/runs/<运行号>/summary.json` | 本次 Git 版本、镜像 ID、运行阶段、时长和结果。同目录保存逐阶段日志、世界轨迹、导出记录和机器可读结果 |
 | `docs/evidence/` | 经过核对的有限实测样例，用于评审与复盘 |
-| `docs/evidence/releases/v0.1/`、`docs/evidence/console/`、`docs/evidence/verification/` | 既有发布、观测台及停车故障样本，保留原版本和运行编号。独立执行 `scripts/verify.ps1` 时，完整新运行写入本机 `artifacts/verification/` |
+| `docs/evidence/releases/v0.1/`、`docs/evidence/console/`、[独立验收记录](../../artifacts/verification/README.md) | 已发布的版本材料和观测台样本在文档目录；停车故障的精选记录与 `scripts/verify.ps1` 的完整输出都按运行号保存在 `artifacts/verification/` |
 
 判定故障先读失败阶段的日志，再对照输入、源时间、世界位姿、稳定错误码和终态。看见 `passed_with_skips` 时展开 `stages`。每项高风险变更至少保留一个旧版失败和同条件修复后通过的例子；以发布门槛判定通过，原始观测作为证据保留。
 

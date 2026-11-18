@@ -33,4 +33,4 @@
 
 排障从现场版本和任务 ID 开始。用 `git show <sha>:<path>` 读取当时行为，用 `git log --follow -- <规格路径>` 查契约演变。将故障转成可复跑用例，保留修复前后的结果。公开证据使用可分发的测试输入，不复制现场密钥或私有运行数据。
 
-提交前运行 `python scripts/check_sdd.py --base <目标分支>` 和 `git diff --check`。保持项目目录结构：提供者有独立模块目录与 README，规格在 `docs/specs/`，测试报告在 `docs/testing/`，脱敏证据在 `docs/evidence/`，完整本机运行产物按既有 runner 存入 `.ci-results/system/runs/`。不在仓库根目录堆放临时说明、日志或重复的架构规范。
+提交前运行 `python scripts/check_sdd.py --base <目标分支>` 和 `git diff --check`。提供者有独立模块目录与 README，规格在 `docs/specs/`，测试报告在 `docs/testing/`，脱敏摘要在 `docs/evidence/`。完整系统套件产物存入 `.ci-results/system/runs/`。独立验收原始记录统一写入 [artifacts/verification/](artifacts/verification/README.md)，从对应运行目录逐文件选择可分发证据，报告直接链接原件。

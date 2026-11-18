@@ -24,10 +24,10 @@
 | 使用手册、架构和公共契约 | `docs/*.md`、`docs/architecture/`；首版模块手册在 `docs/v1/` | 入口、行为或设计改变时更新对应手册。模块目录的 README 维护实现和安装细节 |
 | 开发规格与验收标准 | `docs/specs/SDD-*.md` | 开工前写输入和预期，验收后补实测与变更记录 |
 | 对测试结果的解释 | `docs/testing/` | 标出版本、运行号、环境、命令、结果及待验范围，链接对应样本 |
-| 随版本交付的证据 | `docs/evidence/` | 从运行目录选取可分发样本，保留原始观测和版本。界面截图和数值来自同一次实验时放在一起 |
+| 随版本交付的证据 | `docs/evidence/` 保存界面、发布证据和验收摘要；独立验收的精选原件保存在 [artifacts/verification/](../artifacts/verification/README.md) 对应运行号下 | 报告直接引用原件。界面截图和数值来自同一次实验时放在一起 |
 | 教材插图和示意图 | `docs/assets/` 或所属教材目录 | 图与正文同步维护 |
-| 本机的完整日志、轨迹、镜像包 | 系统套件写入 `.ci-results/system/runs/<运行号>/`，独立验收写入 `artifacts/verification/<运行号>/`，手工导出镜像写入 `artifacts/images/` | 由运行工具或部署者生成，Git 忽略这两个本机产物根目录 |
+| 本机的完整日志、轨迹、镜像包 | 系统套件写入 `.ci-results/system/runs/<运行号>/`，独立验收写入 `artifacts/verification/<运行号>/`，手工导出镜像写入 `artifacts/images/` | 运行工具生成，本地默认保留。需要分发独立验收原件时按运行号逐文件纳入 Git |
 
-例如复盘 v0.1 的一次停车回弹，先读[联合验收报告](v1/console-validation.md)，再由报告打开[原失败样本](evidence/verification/20261117-031103-3a9cc1/cancel.json)和[修复后的对照](evidence/verification/20261117-031532-ae63c8/cancel.json)。保留两个运行号，可以分别检索当时的版本和本机完整日志。
+例如复盘 v0.1 的一次停车回弹，先读[联合验收报告](v1/console-validation.md)，再打开[原失败样本](../artifacts/verification/20261117-031103-3a9cc1/cancel.json)和[修复后的对照](../artifacts/verification/20261117-031532-ae63c8/cancel.json)。同一运行号的其他本机日志就在原件旁边。
 
-早期版本在 `artifacts/console/`、`artifacts/releases/`、`artifacts/verification/` 跟踪的精选样本，现分别位于 [evidence/console/](evidence/console/)、[evidence/releases/](evidence/releases/) 和 [evidence/verification/](evidence/verification/)。运行号与文件名沿用原记录。查看旧提交时，使用该提交对应的路径。
+早期版本的观测台与发布材料现分别位于 [evidence/console/](evidence/console/) 和 [evidence/releases/](evidence/releases/)。运行号与文件名沿用原记录。查看旧提交时，使用该提交对应的路径。
