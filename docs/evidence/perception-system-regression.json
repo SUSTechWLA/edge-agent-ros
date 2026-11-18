@@ -1,0 +1,278 @@
+{
+  "run_id": "20261118T065833Z-12f66e4f",
+  "started_at": "2026-11-18T06:58:33.671578+00:00",
+  "finished_at": "2026-11-18T07:19:41.392665+00:00",
+  "revision": "75bd27ea9c7198aa0ef251644d698024cb419763",
+  "dirty": false,
+  "platform": "Docker Linux containers",
+  "status": "passed",
+  "image_id": "sha256:f6afd5a4c5d329fb4a9286461178cca75180374cbda54f305e5ff073275964eb",
+  "image_revision": "75bd27ea9c7198aa0ef251644d698024cb419763",
+  "docker": "29.9.3",
+  "compose": "5.7.0",
+  "stages": [
+    {
+      "name": "repository",
+      "status": "passed",
+      "duration_s": 6.02
+    },
+    {
+      "name": "planner",
+      "status": "passed",
+      "duration_s": 30.89
+    },
+    {
+      "name": "board-build",
+      "status": "passed",
+      "duration_s": 3.14
+    },
+    {
+      "name": "board",
+      "status": "passed",
+      "duration_s": 10.91
+    },
+    {
+      "name": "build",
+      "status": "passed",
+      "duration_s": 4.42
+    },
+    {
+      "name": "plugin-isolation",
+      "status": "passed",
+      "duration_s": 158.25
+    },
+    {
+      "name": "agent-contracts",
+      "status": "passed",
+      "duration_s": 4.28
+    },
+    {
+      "name": "observations",
+      "status": "passed",
+      "duration_s": 236.55
+    },
+    {
+      "name": "scene-contracts",
+      "status": "passed",
+      "duration_s": 1.17
+    },
+    {
+      "name": "core",
+      "status": "passed",
+      "duration_s": 86.97
+    },
+    {
+      "name": "motion-sensors",
+      "status": "passed",
+      "duration_s": 18.12
+    },
+    {
+      "name": "agent-faults",
+      "status": "passed",
+      "duration_s": 507.58
+    },
+    {
+      "name": "resilience",
+      "status": "passed",
+      "duration_s": 45.59
+    },
+    {
+      "name": "motion-world",
+      "status": "passed",
+      "duration_s": 6.97
+    },
+    {
+      "name": "motion-cleanup",
+      "status": "passed",
+      "duration_s": 1.03
+    },
+    {
+      "name": "session-register",
+      "status": "passed",
+      "duration_s": 0.97
+    },
+    {
+      "name": "model-cache",
+      "status": "passed",
+      "duration_s": 1.75
+    },
+    {
+      "name": "simulation-start",
+      "status": "passed",
+      "duration_s": 6.17
+    },
+    {
+      "name": "model-ready",
+      "status": "passed",
+      "duration_s": 0.34
+    },
+    {
+      "name": "console-missions",
+      "status": "passed",
+      "duration_s": 23.47
+    },
+    {
+      "name": "places",
+      "status": "passed",
+      "duration_s": 59.45
+    },
+    {
+      "name": "scene-binding",
+      "status": "passed",
+      "duration_s": 2.53
+    },
+    {
+      "name": "scene-outage",
+      "status": "passed",
+      "duration_s": 14.08
+    },
+    {
+      "name": "clock-reset",
+      "status": "passed",
+      "duration_s": 1.66
+    },
+    {
+      "name": "ui",
+      "status": "passed",
+      "duration_s": 15.7
+    },
+    {
+      "name": "session-evidence",
+      "status": "passed",
+      "duration_s": 1.31
+    },
+    {
+      "name": "session-plugin",
+      "status": "passed",
+      "duration_s": 7.64
+    },
+    {
+      "name": "model",
+      "status": "passed",
+      "duration_s": 4.94
+    },
+    {
+      "name": "simulation-cleanup",
+      "status": "passed",
+      "duration_s": 4.0
+    },
+    {
+      "name": "image-cleanup",
+      "status": "passed",
+      "duration_s": 0.08
+    },
+    {
+      "name": "board-cleanup",
+      "status": "passed",
+      "duration_s": 0.09
+    }
+  ],
+  "workbench": {
+    "tested_utc": "2026-11-18T07:02:50.703306+00:00",
+    "image_tag": "edge-agent-ros:perception-75bd27e",
+    "image_id": "sha256:f6afd5a4c5d329fb4a9286461178cca75180374cbda54f305e5ff073275964eb",
+    "views": {
+      "camera": {
+        "id": "camera",
+        "version": "1.0.1",
+        "started_event": "074386464af24d36b9b9339672c0fad3",
+        "config_status": "ok"
+      },
+      "rgbd": {
+        "id": "rgbd",
+        "version": 1,
+        "started_event": "ca5dff2dcc064cb88b7195d1e4bbc968"
+      },
+      "map3d": {
+        "id": "map3d",
+        "version": "1.1.0",
+        "started_event": "454d9711f11f4e3483d57d5d8124b877"
+      }
+    },
+    "map_points": {
+      "primary": {
+        "status": "online",
+        "topic": "/edge/map3d/points",
+        "source_frame": "map3d_survey",
+        "voxel_count": 1926
+      },
+      "gazebo-rgbd-points": {
+        "status": "online",
+        "topic": "/edge/rgbd/points",
+        "source_frame": "edge_rgbd_link",
+        "voxel_count": 1389
+      }
+    },
+    "rgbd_sample": {
+      "u": 160,
+      "v": 120,
+      "pair_id": "9583b6faa3bf4ee98fddfa43e0f35d0b-302",
+      "rgb": [
+        81,
+        79,
+        75
+      ],
+      "depth_m": 3.1100001335144043
+    },
+    "aligned_stamp_ns": 1691974000000,
+    "optical_frame": "camera_color_optical_frame",
+    "registered_skew_ms": 0.0,
+    "camera_sources": [
+      "front"
+    ],
+    "planner_alias": "deepseek-flash",
+    "console_ui": {
+      "passed": true,
+      "viewports": [
+        {
+          "width": 1440,
+          "links": {
+            "map3d": "http://127.0.0.1:8770/",
+            "camera": "http://127.0.0.1:8771/",
+            "rgbd": "http://127.0.0.1:8772/"
+          },
+          "document_width": 1425
+        },
+        {
+          "width": 390,
+          "links": {
+            "map3d": "http://127.0.0.1:8770/",
+            "camera": "http://127.0.0.1:8771/",
+            "rgbd": "http://127.0.0.1:8772/"
+          },
+          "document_width": 375
+        }
+      ],
+      "errors": [],
+      "writeRequests": []
+    },
+    "rgbd_ui": {
+      "passed": true,
+      "viewports": [
+        {
+          "width": 1440,
+          "document_width": 1425,
+          "readings": {
+            "depth-image": "(160, 120) · 3.110 m · RGB 81, 79, 75",
+            "color-image": "(160, 120) · 3.110 m · RGB 81, 79, 75"
+          }
+        },
+        {
+          "width": 390,
+          "document_width": 375,
+          "readings": {
+            "depth-image": "(160, 120) · 3.110 m · RGB 81, 79, 75",
+            "color-image": "(160, 120) · 3.110 m · RGB 81, 79, 75"
+          }
+        }
+      ],
+      "errors": [],
+      "writeRequests": []
+    }
+  },
+  "rerun": {
+    "previous_run": "20261118T064644Z-27098e79",
+    "failed_stage": "plugin-isolation",
+    "diagnosis": "camera_acceptance.py invoked python3 via compose exec without sourcing ROS; the isolated image did not have rclpy on that process path. The fixed check explicitly invokes edge-entrypoint. All stages were rerun."
+  }
+}

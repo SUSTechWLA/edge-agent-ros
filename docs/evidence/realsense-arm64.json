@@ -1,0 +1,128 @@
+{
+  "image": "edge-agent-ros/hardware:arm64-perception-75bd27e",
+  "image_id": "sha256:58366be5b4ba5476feb0f68d6608a96eb07c77b8c9f39c7a59755c8d99fb23a1",
+  "image_architecture": "linux/arm64",
+  "baked_import": true,
+  "ROS_DOMAIN_ID": 178,
+  "wall_clock": true,
+  "no_usb": true,
+  "overlays": [
+    "compose.hardware.yaml",
+    "compose.rgbd.yaml",
+    "compose.rgbd-hardware.yaml"
+  ],
+  "tested_at": "2026-11-18T07:00:32.126074+00:00",
+  "cameras": {
+    "realsense-d4xx": {
+      "sources": {
+        "id": "realsense-d4xx",
+        "alignment": "driver_aligned_to_color",
+        "color_topic": "/camera/camera/color/image_raw",
+        "aligned_depth_topic": "/camera/camera/aligned_depth_to_color/image_raw",
+        "info_topic": "/camera/camera/color/camera_info"
+      },
+      "frame": "camera_color_optical_frame",
+      "width": 4,
+      "height": 3,
+      "start_event": "922789f41b42474f843e0bf07869de0f",
+      "ROS_subscriber": "edge_rgbd_measurement",
+      "source_stamp_ns": 1794985256385178909,
+      "depth_encoding": "16UC1",
+      "skew_ms": 0.0,
+      "input_depth_mm": 1217,
+      "pixel": {
+        "u": 2,
+        "v": 1,
+        "pair_id": "95350a64cb554578994d49abe911ef78-1",
+        "rgb": [
+          2,
+          35,
+          153
+        ],
+        "depth_m": 1.217
+      }
+    },
+    "realsense-rear": {
+      "sources": {
+        "id": "realsense-rear",
+        "alignment": "driver_aligned_to_color",
+        "color_topic": "/rear/camera/color/image_raw",
+        "aligned_depth_topic": "/rear/camera/aligned_depth_to_color/image_raw",
+        "info_topic": "/rear/camera/color/camera_info"
+      },
+      "frame": "rear_color_optical_frame",
+      "width": 4,
+      "height": 3,
+      "start_event": "0440e78249c844e1b0b3b767c3bf65a1",
+      "ROS_subscriber": "edge_rgbd_rear",
+      "source_stamp_ns": 1794985256564414046,
+      "depth_encoding": "16UC1",
+      "skew_ms": 0.0,
+      "input_depth_mm": 2217,
+      "pixel": {
+        "u": 2,
+        "v": 1,
+        "pair_id": "506fb65f901743eab2b9ba0c1d54da09-1",
+        "rgb": [
+          3,
+          35,
+          153
+        ],
+        "depth_m": 2.217
+      }
+    }
+  },
+  "execution": {
+    "host_engine": "x86_64 linux Docker Desktop",
+    "guest": "linux/arm64 under emulation; Python platform.machine() = aarch64",
+    "validation_scope": "ARM64 application loading, ROS Jazzy DDS, pixel/geometry correctness and independent two-source registration. Physical SoC throughput, USB, firmware, optical accuracy and thermal performance require a physical board and camera.",
+    "base_image": "edge-agent-ros/hardware:sdd008-arm64",
+    "base_image_id": "sha256:3d9ea526882a37bb2e710718845175ed7864dd28d273617d5124999df4ce329c",
+    "base_source_revision": "e79e8a60fc88c5db235930db33119b1f48990182",
+    "application_revision": "75bd27ea9c7198aa0ef251644d698024cb419763",
+    "build_scope": "The full clean hardware Compose build with build.network=none had no cache hit on its apt layer and exited 100. The tested image reused the installed local ARM64 ROS and C++ layers without downloads, then copied the current application sources into the image. git diff --exit-code between these revisions for src/edge_interfaces, src/edge_core and docker/entrypoint.sh returned 0. Official runtime overlays mount camera and rgbd source directories read-only; the standalone import and numeric/ROS suites used baked implementations."
+  },
+  "test_results": {
+    "rgbd_unit": {
+      "test": "tests/test_rgbd.py",
+      "passed": 7,
+      "failed": 0
+    },
+    "map_ros": {
+      "test": "tests/test_map3d_ros.py",
+      "passed": 4,
+      "failed": 0,
+      "includes": "848 × 480 × 32-byte registered XYZRGB PointCloud2, 13,025,280 bytes"
+    },
+    "two_camera_dds": {
+      "test": "tests/system/realsense_board.py",
+      "passed": true,
+      "source": "Synthetic standards-compatible ROS 2 publisher on actual DDS. Two independent software instances, no physical cameras."
+    }
+  },
+  "reproduce": {
+    "directory": "Run from repository root at application_revision; base_image must already be available locally. Docker must support linux/arm64 emulation on an amd64 host.",
+    "dockerfile": [
+      "FROM edge-agent-ros/hardware:sdd008-arm64",
+      "WORKDIR /opt/edge",
+      "COPY client client",
+      "COPY console console",
+      "COPY perception perception",
+      "COPY agent agent",
+      "COPY evidence evidence",
+      "COPY sessions_plugin sessions_plugin",
+      "ARG EDGE_REVISION",
+      "ENV EDGE_REVISION=$EDGE_REVISION",
+      "LABEL org.opencontainers.image.revision=$EDGE_REVISION"
+    ],
+    "commands": [
+      "Save the dockerfile lines above to a temporary file; substitute its path for <Dockerfile>.",
+      "docker buildx build --platform linux/arm64 --network none --load --build-arg EDGE_REVISION=75bd27ea9c7198aa0ef251644d698024cb419763 -t edge-agent-ros/hardware:arm64-perception-75bd27e -f <Dockerfile> .",
+      "Set DOCKER_DEFAULT_PLATFORM=linux/arm64 in the calling shell.",
+      "docker run --rm --pull=never --platform linux/arm64 --network none --mount type=bind,source=<absolute-repository-path>/tests,target=/opt/edge/tests,readonly edge-agent-ros/hardware:arm64-perception-75bd27e python3 -B /opt/edge/tests/test_rgbd.py -v",
+      "Repeat the previous command with /opt/edge/tests/test_map3d_ros.py for the ROS geometry suite.",
+      "python tests/system/realsense_board.py --image edge-agent-ros/hardware:arm64-perception-75bd27e --out artifacts/verification/realsense-arm64-repeat.json"
+    ]
+  },
+  "passed": true
+}
