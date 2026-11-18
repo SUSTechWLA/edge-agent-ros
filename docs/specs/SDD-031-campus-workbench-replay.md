@@ -20,3 +20,5 @@
 ## 回退与证据
 
 地图链接可随地图镜像回退。根据需要在校园执行已有的 Session 卸载操作。测试记录放在 `artifacts/verification/`，部署与排障入口写入校园运行手册。
+
+2026-11-18，Chromium 在 1440 px 和 390 px 两个视口，从运行中的校园地图进入三种记录页，成功读取“拍一张照片”并核对 Markdown 中的相同目标。另在一次性 Compose 环境重现缺少绑定、补装、重复补装、服务离线、恢复全过程。同一故障任务在恢复后有 2 个原始事件引用，隔离环境的 Agent 与 Console 容器 ID 相同。详见[验收摘录](../evidence/campus-workbench-replay.json)与[可重跑的离线测试](../../tests/system/campus_review_acceptance.py)。

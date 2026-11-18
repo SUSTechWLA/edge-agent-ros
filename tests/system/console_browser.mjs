@@ -30,7 +30,7 @@ const binary = [process.env.CHROME_PATH, '/usr/bin/google-chrome', '/usr/bin/chr
   join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe')]
   .find(file => file && existsSync(file));
 if (!binary) throw new Error('Set CHROME_PATH to an installed Chrome or Edge browser.');
-if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture && !campusFallback) {
+if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture && !campusFallback && !campusReview) {
   const state = await (await fetch(new URL('/api/state', url))).json();
   if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
 }

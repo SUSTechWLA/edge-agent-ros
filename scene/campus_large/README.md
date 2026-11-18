@@ -59,6 +59,8 @@ Windows 也可直接传入带引号的绝对路径，例如 `"D:\robot-data\sim-
 
 ## 4　独立运维与故障定位
 
+从地图页头直接选择“任务会话”“运行复盘”或“原始事件”。读一次任务优先打开会话，里面的证据链接可以定位到同一归档中的原始事件。如果工作台显示 `session.service_missing`，为当前校园执行 `python scene/campus_large/run.py review --image <当前校园镜像>` 即可补装。已经有绑定但提供者离线时，查看 Session 容器日志，期间仍可使用其他两种记录页。[任务会话](http://127.0.0.1:8766/#sessions) · [验收记录](../../docs/evidence/campus-workbench-replay.json)
+
 ```sh
 python scene/campus_large/run.py logs
 python scene/campus_large/run.py stop

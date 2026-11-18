@@ -1,0 +1,57 @@
+{
+  "browser": {
+    "passed": true,
+    "viewports": [
+      {
+        "width": 1440,
+        "destinations": {
+          "sessions": "http://127.0.0.1:8766/#sessions",
+          "review": "http://127.0.0.1:8766/#review",
+          "events": "http://127.0.0.1:8766/#events"
+        },
+        "task": {
+          "id": "edge-field-c25ecfd01f-photo",
+          "goal": "拍一张照片"
+        }
+      },
+      {
+        "width": 390,
+        "destinations": {
+          "sessions": "http://127.0.0.1:8766/#sessions",
+          "review": "http://127.0.0.1:8766/#review",
+          "events": "http://127.0.0.1:8766/#events"
+        },
+        "task": {
+          "id": "edge-field-c25ecfd01f-photo",
+          "goal": "拍一张照片"
+        }
+      }
+    ],
+    "errors": [],
+    "writeRequests": []
+  },
+  "session_outage": {
+    "image": "edge-agent-ros:field-08c8f19",
+    "project": "edge-review-4dcbd36e63d1",
+    "passed": true,
+    "task": "sdd031-518d2447420c4a1b",
+    "before": "session.service_missing",
+    "outage": "session.transport",
+    "scope": {
+      "task_id": "sdd031-518d2447420c4a1b",
+      "trace_id": "sdd031-518d2447420c4a1b"
+    },
+    "binding": {
+      "service": "session.read",
+      "plugin_id": "session.default",
+      "plugin_version": "1",
+      "binding": "60de4217fa55a0e34244ac77a5c69c6d181211f1b40eceaae70cad5b7571ac18"
+    },
+    "references": 2,
+    "unchanged": [
+      "console",
+      "agent"
+    ],
+    "review_and_events_during_outage": true
+  }
+}
