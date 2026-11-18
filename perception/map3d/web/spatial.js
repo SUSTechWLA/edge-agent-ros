@@ -29,6 +29,35 @@
     const tint=base=>rgb(...channels.map((c,k)=>Math.round(c*.77+base[k]*.23)));
     return [rgb(...channels),tint([75,121,161]),tint([83,151,97])];
   });
+  function blend(base, over, opacity) {
+    if (!base || opacity>=1) return over;
+    if (opacity<=0) return base;
+    // Both packed values use native RGBA byte order and solid alpha.
+    const mix=shift=>Math.round(((base>>>shift)&255)*(1-opacity)+((over>>>shift)&255)*opacity);
+    return (mix(24)<<24 | mix(16)<<16 | mix(8)<<8 | mix(0))>>>0;
+  }
+
+  // An orthophoto plus top-surface heights describes one visible skin per XY.
+  // Limit tessellation independently of the source image resolution; the color
+  // sampler below still uses the original pixels for every visible triangle.
+  function appearanceMesh(texture) {
+    const [xmin,ymin,xmax,ymax]=texture.bounds, hasHeight=!!texture.heights;
+    const stride=Math.max(1,Math.max(texture.width,texture.height)/160);
+    const cols=hasHeight?Math.ceil(texture.width/stride):1;
+    const rows=hasHeight?Math.ceil(texture.height/stride):1;
+    const vertices=[];
+    let zMin=Infinity,zMax=-Infinity;
+    for (let j=0;j<=rows;j++) for (let i=0;i<=cols;i++) {
+      const u=i/cols, v=j/rows;
+      const pixel=Math.min(texture.height-1,Math.floor(v*texture.height))*texture.width+
+                  Math.min(texture.width-1,Math.floor(u*texture.width));
+      const z=hasHeight ? texture.height_offset_m+texture.heights[pixel*4]*texture.height_scale_m : 0;
+      vertices.push([xmin+u*(xmax-xmin),ymax-v*(ymax-ymin),z,u*texture.width,v*texture.height]);
+      zMin=Math.min(zMin,z); zMax=Math.max(zMax,z);
+    }
+    return {vertices,cols,rows,zMin,zMax,width:texture.width,height:texture.height,
+      colors:new Uint32Array(texture.pixels.buffer,texture.pixels.byteOffset,texture.pixels.length/4)};
+  }
 
   // Sutherland–Hodgman clipping before the perspective divide. A face crossing
   // the camera must stay visible, even if one or more corners are behind it.
@@ -38,7 +67,7 @@
     for (const vertex of face) {
       if ((previous[2] >= near) !== (vertex[2] >= near)) {
         const t = (near-previous[2]) / (vertex[2]-previous[2]);
-        result.push([previous[0]+t*(vertex[0]-previous[0]), previous[1]+t*(vertex[1]-previous[1]), near]);
+        const cut=previous.map((n,i)=>n+t*(vertex[i]-n)); cut[2]=near; result.push(cut);
       }
       if (vertex[2] >= near) result.push(vertex);
       previous = vertex;
@@ -75,12 +104,13 @@
     }
     // Reciprocal camera depth is linear in screen space. Per-pixel interpolation
     // handles long wall faces occluding points on one end but not the other.
-    triangle(a, b, c, color, id) {
+    triangle(a, b, c, color, id, texture=null, opacity=1) {
       const bx=b[0]-a[0], by=b[1]-a[1], cx=c[0]-a[0], cy=c[1]-a[1];
       const det=bx*cy-by*cx;
       if (Math.abs(det)<1e-6) return;
       const x0=Math.max(0,Math.floor(Math.min(a[0],b[0],c[0]))), x1=Math.min(this.w-1,Math.ceil(Math.max(a[0],b[0],c[0])));
       const y0=Math.max(0,Math.floor(Math.min(a[1],b[1],c[1]))), y1=Math.min(this.h-1,Math.ceil(Math.max(a[1],b[1],c[1])));
+      if(x0>x1 || y0>y1)return;
       const du=cy/det, dv=-by/det, db=b[2]-a[2], dc=c[2]-a[2];
       for (let y=y0; y<=y1; y++) {
         const dx=x0+.5-a[0], dy=y+.5-a[1];
@@ -88,15 +118,21 @@
         for (let x=x0, p=y*this.w+x0; x<=x1; x++,p++,u+=du,v+=dv) {
           if (u < -1e-8 || v < -1e-8 || u+v > 1.00000001) continue;
           const z=a[2]+u*db+v*dc;
-          if (z >= this.depth[p]) {
-            this.depth[p]=z; this.ids[p]=id; this.pixels[p]=color;
+          if (z >= this.depth[p]*(texture ? 1 : .9999998)) {
+            if (texture) {
+              // Interpolate U/Z and V/Z, then undo the perspective divide.
+              const tx=clamp(Math.floor((a[3]+u*(b[3]-a[3])+v*(c[3]-a[3]))/z),0,texture.width-1);
+              const ty=clamp(Math.floor((a[4]+u*(b[4]-a[4])+v*(c[4]-a[4]))/z),0,texture.height-1);
+              color=texture.colors[ty*texture.width+tx];
+            }
+            this.depth[p]=z; this.ids[p]=id; this.pixels[p]=blend(this.pixels[p],color,opacity);
           }
         }
       }
     }
-    face(vertices, near, color, id) {
+    face(vertices, near, color, id, opacity=1) {
       const polygon=clippedFace(vertices,near).map(v=>this.project(v));
-      for (let i=2; i<polygon.length; i++) this.triangle(polygon[0],polygon[i-1],polygon[i],color,id);
+      for (let i=2; i<polygon.length; i++) this.triangle(polygon[0],polygon[i-1],polygon[i],color,id,null,opacity);
     }
     line(a,b,near,color) {
       if(a[2]<near && b[2]<near) return;
@@ -172,6 +208,7 @@
     const surface=new Surface(canvas), pointers=new Map();
     let yaw=-.65, pitch=.65, distance=8, target=[0,0,0], autoFit=true, scaleRadius=1;
     let right,up,out, items=[], frame="", selected=null, selectedName="", readout="", renderedCamera=null;
+    let lastTexture=null, mesh=null, activeTexture=null, requestedBounds=null;
     canvas.style.touchAction="none";
     function axes(){
       const c=Math.cos(yaw),s=Math.sin(yaw),h=Math.cos(pitch),v=Math.sin(pitch);
@@ -227,20 +264,81 @@
           if(col<0||row<0||col>=grid.width||row>=grid.height)continue;
           const value=grid.cells[Math.floor(row)*grid.width+Math.floor(col)];
           const zone=items[surface.ids[p]];
-          const tint=zone?.kind==="outdoor"?2:zone?1:0;
-          surface.pixels[p]=occupancy[value+1][tint];surface.depth[p]=invDepth;
+          if(activeTexture && surface.depth[p]>invDepth*1.000001)continue;
+          const tint=zone?.kind==="outdoor"?2:zone?.kind?1:0;
+          const opacity=activeTexture && surface.pixels[p] ? (value<0?0:.27+value*.007) : 1;
+          surface.pixels[p]=blend(surface.pixels[p],occupancy[value+1][tint],opacity);surface.depth[p]=invDepth;
           surface.ids[p]=zone?.gridId||id;
         }
       }
     }
+    function drawTexture(near) {
+      const id=record("仿真外观");
+      items[id].texture=activeTexture;
+      const projectUV=point=>{
+        const projected=surface.project(point), inv=projected[2];
+        projected.push(point[3]*inv,point[4]*inv);return projected;
+      };
+      const projected=[], transformed=[];
+      for(const vertex of mesh.vertices){
+        const point=camera(vertex);point.push(vertex[3],vertex[4]);transformed.push(point);
+        projected.push(point[2]>=near ? projectUV(point) : null);
+      }
+      function paint(i,j,k) {
+        const a=projected[i],b=projected[j],c=projected[k];
+        if(a && b && c){ surface.triangle(a,b,c,0,id,mesh);return; }
+        if(!a && !b && !c)return;
+        const poly=clippedFace([transformed[i],transformed[j],transformed[k]],near).map(projectUV);
+        for(let n=2;n<poly.length;n++)surface.triangle(poly[0],poly[n-1],poly[n],0,id,mesh);
+      }
+      const step=mesh.cols+1;
+      for(let j=0;j<mesh.rows;j++)for(let i=0,p=j*step;i<mesh.cols;i++,p++){
+        paint(p,p+1,p+step);paint(p+step,p+1,p+step+1);
+      }
+    }
+    function drawAreaNames(texture,near) {
+      const ctx=surface.ctx, placed=[], scale=surface.scale;
+      const [xmin,ymin,xmax,ymax]=texture.bounds;
+      ctx.save();ctx.textAlign="center";ctx.font="600 "+Math.max(10,13*scale)+"px system-ui";
+      ctx.lineWidth=3*scale;ctx.strokeStyle="#1b322be0";ctx.fillStyle="#fffbe7";
+      for(const area of texture.areas || []){
+        const [a,b,c,d]=area.bounds, x=(a+c)/2,y=(b+d)/2;
+        const col=clamp(Math.floor((x-xmin)*texture.width/(xmax-xmin)),0,texture.width-1);
+        const row=clamp(Math.floor((ymax-y)*texture.height/(ymax-ymin)),0,texture.height-1);
+        const z=texture.heights ? texture.height_offset_m+texture.heights[4*(row*texture.width+col)]*texture.height_scale_m : 0;
+        const spot=camera([x,y,z]);
+        if(spot[2]<=near)continue;
+        const [u,v,depth]=surface.project(spot), width=ctx.measureText(area.label).width;
+        if(u-width/2<2 || u+width/2>surface.w-2 || v<26*scale || v>surface.h-20*scale)continue;
+        const drawnDepth=surface.depth[Math.floor(v)*surface.w+Math.floor(u)];
+        if(depth < drawnDepth*.98)continue;
+        if(placed.some(p=>Math.abs(u-p.u)<(width+p.width)/2+4 && Math.abs(v-p.v)<17*scale))continue;
+        ctx.strokeText(area.label,u,v);ctx.fillText(area.label,u,v);placed.push({u,v,width});
+      }
+      ctx.restore();
+    }
     function render(snapshot,options){
       const geometry=boundsFor(snapshot,options);
+      const tex=options.texture?.frame===snapshot?.frame ? options.texture : null;
+      if(activeTexture && !tex)autoFit=false;
+      activeTexture=tex;
+      if(tex) {
+        if(tex!==lastTexture) {mesh=appearanceMesh(tex); lastTexture=tex;}
+        geometry.empty=false;
+      } else {mesh=null;lastTexture=null;}
       if(!surface.begin())return {empty:geometry.empty};
       axes();surface.focal=surface.h/(2*Math.tan(halfFov));
-      if(autoFit)fit(geometry.min,geometry.max);
+      if(requestedBounds){
+        const [a,b,c,d]=requestedBounds;
+        fit([a,b,0],[c,d,Math.min(4,.1*Math.max(c-a,d-b))]);requestedBounds=null;autoFit=false;
+      }else if(autoFit && tex){
+        const [a,b,c,d]=tex.bounds;
+        fit([a,b,mesh.zMin],[c,d,mesh.zMax]);
+      }else if(autoFit)fit(geometry.min,geometry.max);
       renderedCamera={right,up,out,target,distance};
       const near=Math.max(.0001,distance*.003);
       items=[null];frame=snapshot?.frame||"";
+      if(tex)drawTexture(near);
       const groundZ=geometry.groundZ;
       const staleGrid=!options.connected || geometry.grid?.status==="stale";
       const staleScene=!options.connected || snapshot?.scene?.status==="stale";
@@ -253,10 +351,10 @@
           items[items[id].gridId].grid=geometry.grid;
         }
         surface.face([[x,y,groundZ],[u,y,groundZ],[u,v,groundZ],[x,v,groundZ]].map(camera),
-          near,kind==="outdoor"?colors.outdoor:colors.indoor,id);
+          near,kind==="outdoor"?colors.outdoor:colors.indoor,id,tex ? .15 : 1);
       }
       if(geometry.grid)gridPlane(geometry.grid,groundZ,near,staleGrid);
-      else if(options.grid!==false&&!geometry.empty){
+      else if(options.grid!==false&&!geometry.empty&&!tex){
         const [a,b]=geometry.min,[c,d]=geometry.max;
         const step=10**Math.floor(Math.log10(Math.max(1,c-a,d-b)/4));
         const x0=Math.floor(a/step)*step,x1=Math.ceil(c/step)*step,y0=Math.floor(b/step)*step,y1=Math.ceil(d/step)*step;
@@ -292,6 +390,7 @@
         surface.marker(camera(p),near,6,live?colors.pose:colors.stalePose,record("机器人位姿",p,!live));
       }
       surface.ctx.putImageData(surface.image,0,0);
+      if(tex && options.scene && tex.areas?.length)drawAreaNames(tex,near);
       if(selected){
         const current=items.find(item=>item && item.name===selectedName &&
           (!item.position || item.position.every((n,i)=>n===selected[i])));
@@ -316,7 +415,13 @@
       const cell=item.grid&&window.EdgeGrid.cellAt(item.grid,selected[0],selected[1]);
       if(item.grid&&!cell){clearPick();return;}
       const gridInfo=cell?" · 列 "+cell.col+" 行 "+cell.row+" · "+window.EdgeGrid.describe(cell.value)+" · 值 "+cell.value:"";
-      const next=item.name+gridInfo+" · "+position+" m"+(frame?" · "+frame:"")+(item.stale?" · 上次观测":"");
+      let appearance="";
+      if(item.texture){
+        const area=(item.texture.areas||[]).filter(({bounds:[a,b,c,d]})=>selected[0]>=a && selected[0]<=c && selected[1]>=b && selected[1]<=d)
+          .sort((p,q)=>{const size=({bounds:[a,b,c,d]})=>(c-a)*(d-b);return size(p)-size(q);})[0];
+        appearance=(area?" · "+area.label:"")+" · "+item.texture.source;
+      }
+      const next=item.name+appearance+gridInfo+" · "+position+" m"+(frame?" · "+frame:"")+(item.stale?" · 上次观测":"");
       if(next!==readout){readout=next;onPick(next);}
     }
     function clearPick(){selected=null;selectedName="";readout="";onPick("");invalidate();}
@@ -360,7 +465,8 @@
       if(!Number.isFinite(factor)||factor<=0)return;
       autoFit=false;distance=clamp(distance/factor,Math.max(.01,.005*scaleRadius),Math.max(32,80*scaleRadius));invalidate();
     }
-    function reset(){yaw=-.65;pitch=.65;autoFit=true;clearPick();}
+    function reset(){yaw=-.65;pitch=.65;requestedBounds=null;autoFit=true;clearPick();}
+    function focusBounds(bounds){requestedBounds=bounds;clearPick();}
     function top(){yaw=0;pitch=Math.PI/2;autoFit=true;invalidate();}
     const center=([a,b])=>[(a.x+b.x)/2,(a.y+b.y)/2];
     const gap=([a,b])=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -412,6 +518,6 @@
       }else return;
       e.preventDefault();
     });
-    return {render,reset,top,zoomBy,clearPick};
+    return {render,reset,top,zoomBy,focusBounds,clearPick};
   };
 })();

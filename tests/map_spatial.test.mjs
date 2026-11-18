@@ -16,7 +16,7 @@ function viewer() {
   const context={
     createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),
     putImageData:image=>{pixels=image.data;},
-    beginPath(){},arc(){},stroke(){}
+    beginPath(){},arc(){},stroke(){},save(){},restore(){},strokeText(){},fillText(){},measureText:s=>({width:s.length*10})
   };
   const canvas={clientWidth:180,clientHeight:180,style:{},getContext:()=>context,
     addEventListener:(name,fn)=>{listeners[name]=fn;},focus(){},setPointerCapture(){},
@@ -74,6 +74,29 @@ test('keyboard inspection can find an isolated point, and clear it',()=>{
   v.press('Enter');
   assert.match(v.readout,/实测点 · \/points.*Z 1\.25 m/);
   v.press('Escape');assert.equal(v.readout,'');
+});
+
+test('north-up UV, relief depth and survey provenance survive perspective and toggles',()=>{
+  const v=viewer(),size=16,pixels=new Uint8ClampedArray(4*size*size),heights=new Uint8ClampedArray(pixels.length);
+  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+    const k=4*(y*size+x);
+    pixels.set(y<8?[40,170,70,255]:[160,60,40,255],k);
+    heights[k]=x>=5&&x<=11&&y>=5&&y<=11 ? 8 : 0;
+  }
+  const texture={frame:'odom',bounds:[-8,-8,8,8],width:size,height:size,pixels,heights,
+    height_scale_m:.5,height_offset_m:0,source:'Gazebo',areas:[{label:'教学楼',bounds:[-3,-3,3,3]}]};
+  const map={frame:'odom',grid:{frame:'odom',status:'online',origin:[-8,-8,0],resolution:1,
+    width:16,height:16,cells:Array(256).fill(-1)}};
+  v.renderer.top();v.draw(map,{texture});
+  assert.match(v.click(90,90),/仿真外观.*教学楼.*Gazebo.*Z 4\.00/);
+  assert.deepEqual(v.pixel(90,49),[40,170,70]);
+  assert.deepEqual(v.pixel(90,130),[160,60,40]);
+  assert.match(v.click(90,49),/未知 · 值 -1.*Z 0\.00/);
+  assert.equal(v.draw({frame:'map'},{texture}).empty,true);
+  v.draw(map,{texture:null});assert.match(v.click(90,90),/未知 · 值 -1/);
+  v.renderer.focusBounds([-.5,-.5,.5,.5]);v.draw({frame:'odom'},{texture});
+  v.renderer.reset();v.draw({frame:'odom'},{texture});
+  assert.match(v.click(90,90),/仿真外观/);
 });
 
 test('failed pose and semantic inputs disappear, retained measurements are marked as historical',()=>{

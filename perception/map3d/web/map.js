@@ -12,8 +12,12 @@
       prompt:"点击地图，读取 XY 坐标、栅格和语义信息。"}
   };
   const mutedSources = new Set();
+  let placesKey = null;
+  const query = new URLSearchParams(location.search);
+  let initialPlace = query.get("place");
+  const texture = window.createMapTexture(() => {updateTextureControls(); draw();});
   const layers = Object.fromEntries(["cloud","scene","roof","pose","grid"].map(key => [key, el("layer-"+key)]));
-  let active = new URLSearchParams(location.search).get("view")==="2d" ? "planar" : "spatial";
+  let active = query.get("view")==="2d" ? "planar" : "spatial";
   let data=null, connected=false, scheduled=false, sourceSignature=null;
 
   function draw() {
@@ -23,6 +27,7 @@
       scheduled = false;
       const options = {connected, mutedSources};
       for (const [key, input] of Object.entries(layers)) options[key] = input.checked;
+      options.texture = el("layer-texture").checked ? texture.current : null;
       const view = modes[active].renderer.render(data, options);
       el("empty").hidden = !view.empty;
       el("empty").textContent = data ? "当前可见图层没有可显示的数据" : "等待地图数据";
@@ -76,6 +81,47 @@
   el("zoom-out").onclick = () => modes[active].renderer.zoomBy(1/1.25);
   for (const input of Object.values(layers)) input.onchange = () => {clearPicks(); draw();};
 
+  function updateTextureControls() {
+    const meta = data?.texture, ready = texture.current, state = texture.state;
+    const available = !!ready && el("layer-texture").checked;
+    el("texture-row").hidden=el("texture-info").hidden=!meta;
+    el("map-places").hidden=!ready;
+    el("map-title").textContent = ready ? ready.name+"环境地图" : "环境地图";
+    el("layer-texture").disabled=!ready;
+    el("robot-fit").disabled = !data?.pose?.xyz || data.pose.status!=="online";
+    el("place-fit").disabled=!available;
+    el("campus-fit").disabled=!available;
+    el("texture-info").textContent = ready ?
+      (available ? "已显示" : "已隐藏")+" · Gazebo 静态模型外观" :
+      ({loading:"正在加载校园纹理…",texture_waiting_for_scene:"等待校园场景身份",texture_frame_mismatch:"纹理坐标系不匹配",
+        texture_scene_mismatch:"纹理与当前场景不匹配",download_error:"纹理解码或下载失败，正在重试"}[state] || "纹理不可用 · "+state);
+    if (placesKey !== (ready?.key || null)) {
+      placesKey=ready?.key || null;
+      el("place-fit").replaceChildren(new Option("选择地点",""));
+      for (const a of ready?.areas || []) el("place-fit").add(new Option(a.label,a.id));
+      if (ready && initialPlace) {
+        const place = ready.areas.find(a => a.id === initialPlace);
+        initialPlace = null;
+        // Allow both the backing canvas and the new texture to acquire their dimensions.
+        if (place) { draw(); requestAnimationFrame(() => modes[active].renderer.focusBounds(place.bounds)); }
+      }
+    }
+  }
+  el("layer-texture").onchange = () => {clearPicks();updateTextureControls();draw();};
+  el("campus-fit").onclick = () => modes[active].renderer.reset();
+  el("robot-fit").onclick = () => {
+    const p = data?.pose;
+    if (p?.status==="online" && p.xyz) {
+      const [x,y]=p.xyz;
+      modes[active].renderer.focusBounds([x-7,y-7,x+7,y+7]);
+    }
+  };
+  el("place-fit").onchange = () => {
+    const place = texture.current?.areas.find(a => a.id===el("place-fit").value);
+    if (place) modes[active].renderer.focusBounds(place.bounds);
+    el("place-fit").value="";
+  };
+
   function updateSources(extras) {
     const picker = el("inspect-source");
     const signature = JSON.stringify(extras.map(([id,v]) => [id,v.name,v.status,v.error]));
@@ -101,6 +147,8 @@
       (!data.cloud.points.length && extras.length ? extras[0][0] : "");
   }
   function update() {
+    texture.update(data.texture);
+    updateTextureControls();
     updateSources(Object.entries(data.cloud_sources || {}));
     const c = data.cloud_sources?.[el("inspect-source").value] || data.cloud;
     const g = data.grid, s = data.scene, p = data.pose;

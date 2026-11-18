@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import Mock
 
@@ -27,6 +28,7 @@ class CampusDeployment(unittest.TestCase):
             return json.loads(subprocess.check_output([*base,*files,"config","--format","json"],cwd=ROOT,env=env))
         cls.normal = compose([])
         cls.campus = compose(["-f","compose.campus.yaml"])
+        cls.map_services = compose(["-f","compose.campus.yaml","--profile","map3d"])["services"]
 
     def test_existing_project_and_world_have_separate_identity(self):
         self.assertEqual((self.normal["name"],self.campus["name"]), ("edge-agent-ros","edge-agent-campus"))
@@ -53,6 +55,35 @@ class CampusDeployment(unittest.TestCase):
             self.assertTrue(all(v["type"]=="volume" for v in active[key]["volumes"]))
         for name, port in [("console","8766"), ("campus-overview","8780")]:
             self.assertEqual([(p["host_ip"],str(p["published"])) for p in active[name]["ports"]], [("127.0.0.1",port)])
+
+    def test_map_installs_against_campus_without_controlling_world(self):
+        viewer, bake = (self.map_services[name] for name in ("map3d","campus-texture"))
+        self.assertEqual(set(viewer["depends_on"]), {"map3d-init","campus-texture"})
+        self.assertNotIn("depends_on", bake)
+        self.assertEqual(bake["network_mode"], "none")
+        self.assertEqual(viewer["environment"]["EDGE_MAP_TEXTURE_DIR"], "/campus/texture")
+        self.assertEqual(viewer["ports"][0]["host_ip"], "127.0.0.1")
+        self.assertEqual(str(viewer["ports"][0]["published"]), "8773")
+        volumes = {v["target"]:v for v in viewer["volumes"]}
+        self.assertEqual(volumes["/campus"]["source"], "campus-world")
+        self.assertTrue(volumes["/campus"]["read_only"])
+        self.assertEqual(volumes["/etc/edge/map3d-inputs"]["source"], "campus-map-inputs")
+        self.assertEqual(volumes["/journal"]["source"], "module-sources")
+
+    def test_install_links_use_published_port_and_preserve_other_views(self):
+        sys.path.insert(0,str(ROOT/"scene/campus_large"))
+        self.addCleanup(sys.path.pop,0)
+        from install_map import register
+        with tempfile.TemporaryDirectory() as name:
+            mount=Path(name)
+            file=mount/"views.json"
+            camera={"id":"camera","port":8888,"label":"校园相机","slot":"sensor"}
+            file.write_text(json.dumps([{"id":"map3d","port":8770},camera]),encoding="utf-8")
+            for port in (8851,8852):
+                register(mount,file,port)
+                views=json.loads(file.read_bytes())
+                self.assertEqual(views,[camera,{"id":"map3d","port":port,"label":"校园纹理地图","slot":"map"}])
+                self.assertEqual(json.loads((mount/"map-link.json").read_bytes()),{"port":port})
 
 
 def state(stamp, *, speed=(0.,0.,0.), yaw=0., mission=None, operation=None, fresh=True):

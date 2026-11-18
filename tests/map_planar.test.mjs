@@ -17,6 +17,8 @@ function view() {
   const canvas={clientWidth:400,clientHeight:400,getContext:()=>context,
     getBoundingClientRect:()=>({left:0,top:0}),setPointerCapture:noOp,
     addEventListener:(name,fn)=>handlers.set(name,fn)};
+  const paints=[];
+  context.drawImage=(...args)=>paints.push(args);
   const sandbox={window:{},document:{createElement:()=>({getContext:()=>context})}};
   for(const file of ["grid.js","planar.js"]) {
     runInNewContext(readFileSync(new URL("../perception/map3d/web/"+file,import.meta.url),"utf8"),sandbox);
@@ -30,7 +32,7 @@ function view() {
     return readout;
   };
   const opts={grid:true,cloud:true,scene:true,pose:true,connected:true};
-  return {draw:(map,options)=>renderer.render(map,{...opts,...options}),click,input,get readout(){return readout;}};
+  return {draw:(map,options)=>renderer.render(map,{...opts,...options}),click,input,paints,renderer,get readout(){return readout;}};
 }
 
 function fixture() {
@@ -49,6 +51,25 @@ test("rotated occupancy cells, anchored wheel zoom, and keyboard reset retain me
   assert.equal(v.click(88,88),anchor);
   v.input("keydown",{key:"Home"});v.draw(data);v.input("keydown",{key:"Enter"});
   assert.match(v.readout,/X 3.50 m · Y 2.50 m.*值 67/);
+});
+
+test("registered orthophoto uses northwest image origin and keeps local pick provenance",()=>{
+  const v=view(),snapshot={frame:"odom",generation:1},image={width:30,height:10};
+  const texture={frame:"odom",bounds:[100,50,130,60],image,source:"Gazebo",
+    areas:[{bounds:[110,53,118,58],label:"草坪"}]};
+  assert.equal(v.draw(snapshot,{texture}).empty,false);
+  const [paintImage,x,y,width,height]=v.paints.at(-1);
+  assert.equal(paintImage,image);
+  assert.ok(Math.abs(x-12)<1e-8 && Math.abs(width-376)<1e-8);
+  assert.ok(Math.abs(y-(200-height/2))<1e-8 && height>0);
+  assert.match(v.click(x+1,y+1),/X 100\.08 m · Y 59\.92 m.*仿真外观/);
+  assert.match(v.click(200,200),/X 115\.00 m · Y 55\.00 m.*草坪.*Gazebo.*无可见占据栅格/);
+  v.renderer.focusBounds([111,53,113,55]);v.draw(snapshot,{texture});
+  assert.match(v.click(200,200),/X 112\.00 m · Y 54\.00 m/);
+  assert.equal(v.draw(snapshot,{texture:null}).empty,true);
+  assert.match(v.click(200,200),/X 112\.00 m · Y 54\.00 m/);
+  assert.doesNotMatch(v.readout,/Gazebo/);
+  assert.equal(v.draw({...snapshot,frame:"map"},{texture}).empty,true);
 });
 
 test("picks follow cell updates and freshness; generation changes and frame mismatch remove stale facts",()=>{

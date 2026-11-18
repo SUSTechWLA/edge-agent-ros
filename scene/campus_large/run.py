@@ -119,20 +119,22 @@ def reload_campus(run, output, containers, fetch=read_local):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["start", "status", "logs", "stop", "down", "reload"])
+    parser.add_argument("action", choices=["start", "map", "status", "logs", "stop", "down", "reload"])
     parser.add_argument("--image", default=os.getenv("EDGE_CAMPUS_IMAGE") or os.getenv("EDGE_IMAGE") or "edge-agent-ros:v0.1")
     parser.add_argument("--assets-dir", type=Path, default=os.getenv("EDGE_CAMPUS_ASSETS_DIR") or ROOT / "artifacts/sim-assets")
     parser.add_argument("--console-port", type=int, default=os.getenv("EDGE_CAMPUS_CONSOLE_PORT") or 8766)
     parser.add_argument("--overview-port", type=int, default=os.getenv("EDGE_CAMPUS_OVERVIEW_PORT") or 8780)
+    parser.add_argument("--map-port", type=int, default=os.getenv("EDGE_CAMPUS_MAP_PORT") or 8773)
     args = parser.parse_args()
-    if not (1 <= args.console_port <= 65535 and 1 <= args.overview_port <= 65535) or args.console_port == args.overview_port:
-        parser.error("select two distinct TCP ports in the range 1 through 65535")
+    ports = [args.console_port, args.overview_port, args.map_port]
+    if len(set(ports)) != len(ports) or not all(1 <= port <= 65535 for port in ports):
+        parser.error("select distinct TCP ports in the range 1 through 65535")
     assets = args.assets_dir.expanduser().resolve()
     env = {key: value for key, value in os.environ.items()
            if not key.upper().startswith(("COMPOSE_", "EDGE_", "DEEPSEEK_"))}
     env.update(COMPOSE_DISABLE_ENV_FILE="1", EDGE_IMAGE=args.image, EDGE_ROS_DOMAIN_ID="73",
                EDGE_CAMPUS_ASSETS_DIR=str(assets), EDGE_CAMPUS_CONSOLE_PORT=str(args.console_port),
-               EDGE_CAMPUS_OVERVIEW_PORT=str(args.overview_port))
+               EDGE_CAMPUS_OVERVIEW_PORT=str(args.overview_port), EDGE_CAMPUS_MAP_PORT=str(args.map_port))
     compose = ["docker", "compose", "-p", PROJECT, "-f", "compose.yaml", "-f", "compose.campus.yaml"]
     def run(*params):
         subprocess.run([*compose, *params], cwd=ROOT, env=env, check=True)
@@ -153,12 +155,18 @@ def main():
             run("up", "-d", "--no-build", *SERVICES)
         print(f"Campus overview: http://127.0.0.1:{args.overview_port}/")
         print(f"Robot console: http://127.0.0.1:{args.console_port}/")
+    elif args.action == "map":
+        if not output("ps", "--status", "running", "-q", "sim").strip():
+            parser.error("campus simulation is offline; run campus start before installing its map")
+        # The viewer pins its immutable texture pack at process start.
+        run("up", "-d", "--no-build", "--force-recreate", "map3d")
+        print(f"Campus map: http://127.0.0.1:{args.map_port}/?view=2d")
     elif args.action == "status":
         run("ps", "-a")
     elif args.action == "logs":
         run("logs", "--tail", "60", "campus-build", "sim", "campus-capture", "campus-overview")
     elif args.action == "stop":
-        run("stop", *SERVICES)
+        run("stop", *SERVICES, "map3d")
     else:
         run("down")
 

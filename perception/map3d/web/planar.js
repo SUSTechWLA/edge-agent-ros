@@ -6,7 +6,7 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
   const gridMath = window.EdgeGrid;
   const pointers = new Map();
   let snapshot, options, grid, camera, selection, lastReadout = "";
-  let bitmap, bitmapSource, frameKey, fitSource, interacted = false;
+  let bitmap, bitmapSource, bitmapOverTexture, texture, frameKey, fitSource, requestedBounds, interacted = false;
   let width = 1, height = 1;
   let clouds = [], zones = [], features = [], robot = null;
   const ready = layer => layer && layer.status !== "error" && layer.status !== "waiting" && !layer.error;
@@ -19,6 +19,9 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
   function layers(data, opt) {
     snapshot = data;
     options = opt;
+    const nextTexture = opt.texture?.frame === data?.frame ? opt.texture : null;
+    if (texture && !nextTexture) interacted=true;
+    texture=nextTexture;
     grid = opt.grid && gridMath.usable(data?.grid, data?.frame) ? data.grid : null;
     const scene = opt.scene && ready(data?.scene) ? data.scene : null;
     zones = scene?.zones || [];
@@ -29,7 +32,15 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     robot = opt.pose && ready(data?.pose) && xy(data.pose.xyz) ? data.pose : null;
   }
 
+  function frameBounds([xmin,ymin,xmax,ymax]) {
+    camera={x:(xmin+xmax)/2, y:(ymin+ymax)/2,
+      scale:Math.min(width*.94/Math.max(xmax-xmin,1),height*.90/Math.max(ymax-ymin,1))};
+  }
+  function focusBounds(bounds) {
+    requestedBounds=bounds; selection=null; pointers.clear(); publishPick(); invalidate();
+  }
   function fit() {
+    if (texture) {frameBounds(texture.bounds); return;}
     let xmin=Infinity, xmax=-Infinity, ymin=Infinity, ymax=-Infinity;
     function include(x,y) {
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;
@@ -58,14 +69,18 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     const context=image.getContext("2d"), pixels=context.createImageData(image.width,image.height);
     for (let i=0; i<source.cells.length; ++i) {
       const offset=4*i, rgb=gridMath.color(source.cells[i]);
-      pixels.data[offset]=rgb[0]; pixels.data[offset+1]=rgb[1]; pixels.data[offset+2]=rgb[2]; pixels.data[offset+3]=255;
+      pixels.data[offset]=rgb[0]; pixels.data[offset+1]=rgb[1]; pixels.data[offset+2]=rgb[2];
+      const value=source.cells[i];
+      pixels.data[offset+3]=texture ? (value<0 ? 0 : 68+value*1.8) : 255;
     }
     context.putImageData(pixels,0,0);
     return image;
   }
   function drawRaster() {
     if (!grid) { bitmap=null; bitmapSource=null; return; }
-    if (bitmapSource !== grid) { bitmap=rasterize(grid); bitmapSource=grid; }
+    if (bitmapSource !== grid || bitmapOverTexture !== !!texture) {
+      bitmap=rasterize(grid); bitmapSource=grid; bitmapOverTexture=!!texture;
+    }
     const pixel=grid.resolution*camera.scale;
     ctx.save();
     ctx.translate(...screen(grid.origin));
@@ -76,6 +91,31 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     ctx.drawImage(bitmap,0,0);
     ctx.lineWidth=1/pixel; ctx.strokeStyle="#9ebbb6";
     ctx.strokeRect(0,0,grid.width,grid.height);
+    ctx.restore();
+  }
+
+  function drawAppearance() {
+    if (!texture) return;
+    const [xmin,ymin,xmax,ymax]=texture.bounds;
+    const [u,v]=screen([xmin,ymax]);
+    ctx.save(); ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(texture.image,u,v,(xmax-xmin)*camera.scale,(ymax-ymin)*camera.scale);
+    ctx.restore();
+  }
+
+  function drawAreaNames() {
+    if (!texture || !options.scene) return;
+    ctx.save(); ctx.font="600 13px system-ui"; ctx.textAlign="center";
+    const placed=[];
+    for (const area of texture.areas || []) {
+      const [a,b,c,d]=area.bounds;
+      const [x,y]=screen([(a+c)/2,(b+d)/2]);
+      const size=ctx.measureText(area.label).width;
+      if (x-size/2<4 || x+size/2>width-4 || y<26 || y>height-18) continue;
+      if (placed.some(p=>Math.abs(p.x-x)<(p.size+size)/2+6 && Math.abs(p.y-y)<17)) continue;
+      ctx.lineWidth=4; ctx.strokeStyle="#192d28e6"; ctx.fillStyle="#fffbe9";
+      ctx.strokeText(area.label,x,y); ctx.fillText(area.label,x,y); placed.push({x,y,size});
+    }
     ctx.restore();
   }
 
@@ -142,6 +182,11 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     if (!selection) return "";
     const [x,y]=selection;
     const parts=[`X ${fmt(x)} m · Y ${fmt(y)} m`];
+    if (texture && x>=texture.bounds[0] && y>=texture.bounds[1] && x<=texture.bounds[2] && y<=texture.bounds[3]) {
+      const area=(texture.areas || []).filter(({bounds:[a,b,c,d]})=>x>=a && x<=c && y>=b && y<=d)
+        .sort((p,q)=>{const size=({bounds:[a,b,c,d]})=>(c-a)*(d-b);return size(p)-size(q);})[0];
+      parts.push("仿真外观"+(area ? " · "+area.label : "")+" · "+texture.source);
+    }
     const cell=grid && gridMath.cellAt(grid,x,y);
     if (cell) parts.push(`栅格 (${cell.col}, ${cell.row}) · ${gridMath.describe(cell.value)} · 值 ${cell.value}`
       +(recent(grid)?"":" · 上次观测"));
@@ -192,15 +237,16 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     layers(data,opt);
     const key=JSON.stringify([data?.frame,data?.generation]);
     if (frameKey!==key) { frameKey=key; interacted=false; selection=null; camera=null; }
-    const source=grid?"grid":zones.length || features.length?"scene":clouds.length?"cloud":robot?"pose":"none";
-    if (!camera || (!interacted && (fitSource!==source || resized))) fit();
+    const source=texture || (grid?"grid":zones.length || features.length?"scene":clouds.length?"cloud":robot?"pose":"none");
+    if (requestedBounds) {frameBounds(requestedBounds); requestedBounds=null; interacted=true;}
+    else if (!camera || (!interacted && (fitSource!==source || resized))) fit();
     fitSource=source;
-    drawRaster(); drawSemantic(); drawCloudAndPose(); drawScale(); markSelection(); publishPick();
+    drawAppearance(); drawRaster(); drawSemantic(); drawAreaNames(); drawCloudAndPose(); drawScale(); markSelection(); publishPick();
     return {empty:source==="none"};
   }
 
   function reset() {
-    camera=null; interacted=false; selection=null; pointers.clear(); publishPick(); invalidate();
+    camera=null; requestedBounds=null; interacted=false; selection=null; pointers.clear(); publishPick(); invalidate();
   }
   function zoomAt(factor, anchor) {
     if (!camera) return;
@@ -281,5 +327,5 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     }
     event.preventDefault();
   });
-  return {render,reset,zoomBy,clearPick() { selection=null; publishPick(); invalidate(); }};
+  return {render,reset,zoomBy,focusBounds,clearPick() { selection=null; publishPick(); invalidate(); }};
 };

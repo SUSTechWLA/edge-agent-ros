@@ -141,7 +141,8 @@ def run(args, selected, reasons):
                 report["docker"]=output(["docker","version","--format","{{.Server.Version}}"],env)
                 report["compose"]=output(["docker","compose","version","--short"],env)
                 checks={
-                    "plugin-isolation":[["node","--test",str(ROOT/"tests/map_planar.test.mjs"),str(ROOT/"tests/map_spatial.test.mjs")],
+                    "plugin-isolation":[test("test_map_texture_pack.py","-v"),
+                                        ["node","--test",str(ROOT/"tests/map_planar.test.mjs"),str(ROOT/"tests/map_spatial.test.mjs")],
                                         test("system/map_model_isolation.py","--image",image,
                                              "--out",directory/"map-model-isolation.json"),
                                         test("system/camera_acceptance.py","--image",image,"--out",directory/"camera.json"),
@@ -198,12 +199,13 @@ def run(args, selected, reasons):
                         "--out",directory/"software-author-auto-model.json"))
                 if "campus-world" in selected:
                     assets = args.campus_assets
-                    checks["campus-world"] = [test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
+                    checks["campus-world"] = [in_image("python3","-B","/opt/edge/tests/test_campus_texture.py","-v"),
+                                              test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
                                               test("test_campus_capture.py","-v")]
                     if assets or (ROOT / "artifacts/sim-assets/models/Campus/model.sdf").is_file():
                         checks["campus-world"].append(test("system/campus_acceptance.py","--image",image,"--assets",
                                                        str((assets or ROOT/"artifacts/sim-assets").resolve()),
-                                                       "--verify-reload","--out",directory/"campus-world.json"))
+                                                       "--verify-reload","--verify-texture","--out",directory/"campus-world.json"))
                     else:
                         skip("campus-world-assets","optional campus assets not installed; use scene/campus_large/fetch_assets.py")
                 for name, commands in checks.items():

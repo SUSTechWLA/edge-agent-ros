@@ -15,6 +15,12 @@
 .grid-key .occupied,.key.grid {background:rgb(234,180,126)}
 .grid-key .unknown {background:rgb(34,48,56)}
 .key.scene {background:#84ac88}
+.key.texture {background:linear-gradient(135deg,#95a874 48%,#cfb185 50%)}
+.map-places {display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#183239;padding:8px 14px;font-size:12px;border-bottom:1px solid #345057}
+.map-places select {max-width:12em;background:#25454a;border:1px solid #587174;border-radius:6px;color:#e5f0e9;padding:5px;font:inherit}
+.map-places label {margin-left:auto;color:#bad0cb}
+.map-places button:disabled,.map-places select:disabled {opacity:.55;cursor:default}
+#texture-info {margin:5px 0 2px 26px;line-height:1.5}
 #inspect-source-row {display:grid; grid-template-columns:auto minmax(0,1fr)}
 #inspect-source {min-width:0; width:100%; max-width:100%; font:inherit}
 .plot .grid-key {bottom:auto; top:10px}

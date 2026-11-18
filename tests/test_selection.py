@@ -15,6 +15,7 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("tests/test_map_texture_pack.py","tests/system/campus_texture_browser.mjs"),("plugin-isolation","campus-world")),
     (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_acceptance.py","tests/test_campus_*.py"),
      ("campus-world",)),
     (("perception/map3d/*", "perception/sim_station.py", "map-inputs/*", "tests/test_map3d_ros.py", "tests/test_map3d.py", "tests/test_lidar_inputs_ros.py",
@@ -147,6 +148,7 @@ class TestSelection(unittest.TestCase):
             self.assertIn(stage,chosen)
 
     def test_examples(self):
+        self.assertEqual(selection(["tests/system/campus_texture_browser.mjs"])[0],[R,"plugin-isolation","campus-world"])
         self.assertEqual(selection(["scene/campus_large/build.py","compose.campus.yaml"])[0],[R,"campus-world"])
         self.assertEqual(selection(["docs/specs/example.md"])[0], [R])
         self.assertEqual(selection(["agent/contracts.json"])[0], [R,"planner","agent-contracts","agent-faults","model"])

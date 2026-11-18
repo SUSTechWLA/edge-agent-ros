@@ -9,10 +9,12 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { checkReview } from './review_browser.mjs';
 import { checkSessions } from './session_browser.mjs';
 import { checkMap3D } from './map3d_browser.mjs';
+import { checkCampusTexture } from './campus_texture_browser.mjs';
 import { checkRgbd } from './rgbd_browser.mjs';
 
 const [url, output, screenshotOption] = process.argv.slice(2);
-if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+if (screenshotOption && !['--screenshots','--map3d','--rgbd','--sensor-views','--campus','--campus-texture'].includes(screenshotOption)) throw new Error('Unknown browser test option');
+const campusTexture = screenshotOption === '--campus-texture';
 const campusOnly = screenshotOption === '--campus';
 const mapOnly = screenshotOption === '--map3d';
 const rgbdOnly = screenshotOption === '--rgbd';
@@ -23,7 +25,7 @@ const binary = [process.env.CHROME_PATH, '/usr/bin/google-chrome', '/usr/bin/chr
   join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe')]
   .find(file => file && existsSync(file));
 if (!binary) throw new Error('Set CHROME_PATH to an installed Chrome or Edge browser.');
-if (!mapOnly && !rgbdOnly && !campusOnly) {
+if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture) {
   const state = await (await fetch(new URL('/api/state', url))).json();
   if (state.environment !== 'simulation') throw new Error('A simulation endpoint is required.');
 }
@@ -93,12 +95,16 @@ try {
   await send('Runtime.enable');
   await send('Network.enable');
   await send('Page.navigate',{url});
-  if (!mapOnly && !rgbdOnly && !campusOnly) {
+  if (!mapOnly && !rgbdOnly && !campusOnly && !campusTexture) {
     await waitFor("document.querySelector('#sessions') && !document.querySelector('#sessions').hidden",
                   'Readable sessions are the default landing page');
   }
   for (const width of [1440,390]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:860,deviceScaleFactor:1,mobile:false});
+    if (campusTexture) {
+      viewports.push(await checkCampusTexture({url,width,output,evaluate,waitFor,send}));
+      continue;
+    }
     if (campusOnly) {
       await waitFor("document.querySelectorAll('.choices button').length === 7","seven campus views");
       const imageWidths = {};

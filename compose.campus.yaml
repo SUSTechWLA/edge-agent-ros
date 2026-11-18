@@ -115,6 +115,33 @@ services:
     volumes: [campus-world:/campus:ro]
     command: ["python3","-B","-m","http.server","8080","--bind","0.0.0.0","--directory","/campus/overview"]
 
+  campus-texture:
+    <<: *campus-tool
+    profiles: [map3d]
+    network_mode: none
+    mem_limit: 1g
+    environment:
+      EDGE_CAMPUS_MAP_PORT: ${EDGE_CAMPUS_MAP_PORT:-8773}
+    volumes:
+      - ./scene/campus_large:/opt/edge/scene/campus_large:ro
+      - *campus-assets
+      - campus-world:/campus
+      - campus-runtime:/run/campus:ro
+      - campus-views:/views
+    command: ["python3","-B","/opt/edge/scene/campus_large/install_map.py"]
+
+  map3d:
+    depends_on:
+      campus-texture:
+        condition: service_completed_successfully
+    environment:
+      EDGE_MAP_TEXTURE_DIR: /campus/texture
+    volumes:
+      - campus-world:/campus:ro
+      - campus-map-inputs:/etc/edge/map3d-inputs:ro
+    ports: !override
+      - "127.0.0.1:${EDGE_CAMPUS_MAP_PORT:-8773}:8770"
+
 volumes:
   campus-world:
   campus-runtime:
@@ -122,3 +149,4 @@ volumes:
   campus-contracts:
   campus-observations:
   campus-views:
+  campus-map-inputs:

@@ -21,12 +21,13 @@ from tf2_ros import Buffer, TransformException, TransformListener
 
 from geometry import decode, IDENTITY, rotation, Surface, VOXEL_M
 from inputs import discover, EXTRA_VOXELS
+from texture import TexturePack
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "agent"))
 from module_journal import ModuleJournal
 
 STATIC = Path(__file__).parent / "web"
 TTL = 3.0
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 MAX_GRID_CELLS = 512 * 512
 GRID_TTL = 5.0
 CLOUD_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
@@ -302,7 +303,7 @@ class MapNode(Node):
                 if len(bounds)!=4 or not all(math.isfinite(v) and abs(v)<=1e6 for v in bounds):
                     raise ValueError()
                 zones.append({**{k:str(zone.get(k,""))[:96] for k in ("id","kind","label")}, "bounds":bounds})
-            layer = {"received":time.monotonic(), "features":features, "zones":zones,
+            layer = {"received":time.monotonic(), "features":features, "zones":zones, "id":str(data.get("id",""))[:96],
                      "source":str(data.get("source",""))[:128], "revision":str(data.get("revision",""))[:96]}
         except (AttributeError, ValueError, TypeError, KeyError, OverflowError, RecursionError):
             self.error("scene","scene_invalid")
@@ -369,10 +370,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlsplit(self.path).path
         static = {"/": ("index.html","text/html; charset=utf-8"), "/map.css": ("map.css","text/css")}
-        static.update({"/" + file: (file,"text/javascript") for file in ("map.js","grid.js","planar.js","spatial.js")})
+        static.update({"/" + file: (file,"text/javascript") for file in ("map.js","grid.js","planar.js","spatial.js","texture.js")})
         if path in ("/health", "/api/map"):
             obj = self.server.node.snapshot() if path=="/api/map" else self.server.node.identity
+            if path == "/api/map" and self.server.texture.info:
+                obj["texture"] = self.server.texture.for_map(obj)
             raw, mime = json.dumps(obj, ensure_ascii=False, allow_nan=False, separators=(",",":")).encode(), "application/json"
+        elif path in self.server.texture.files:
+            raw, mime = self.server.texture.files[path], "image/png"
         elif path in static:
             file, mime = static[path]
             raw = (STATIC/file).read_bytes()
@@ -381,7 +386,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.send_response(200)
         self.send_header("Content-Type",mime)
-        self.send_header("Cache-Control","no-store")
+        self.send_header("Cache-Control","public, max-age=31536000, immutable" if mime=="image/png" else "no-store")
         self.send_header("X-Content-Type-Options","nosniff")
         if path == "/health":
             self.send_header("Access-Control-Allow-Origin","*")
@@ -399,6 +404,10 @@ def main():
     node.identity = {"id":"map3d", "version":VERSION, "started_event":node.last_event["plugin"]}
     server = ViewerServer((os.getenv("EDGE_MAP3D_BIND","0.0.0.0"),int(os.getenv("EDGE_MAP3D_PORT","8770"))),Handler)
     server.node = node
+    server.texture = TexturePack(os.getenv("EDGE_MAP_TEXTURE_DIR"))
+    if server.texture.info:
+        info = server.texture.info
+        node.fact("texture", info["status"], reason=info.get("error"), revision=info.get("revision"))
     thread = threading.Thread(target=server.serve_forever,daemon=True)
     thread.start()
     try:

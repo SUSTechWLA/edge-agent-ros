@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import socket
 import subprocess
 import sys
 import tempfile
@@ -294,6 +295,10 @@ def run(args):
              "EDGE_OLLAMA_URL":"","EDGE_PLANNER_URL":"","EDGE_CONTRACTS_DIR":str(tmp/"contracts"),
              "EDGE_PLUGINS_DIR":str(tmp/"plugins"),"EDGE_OBSERVATIONS_DIR":str(tmp/"observations"),
              "EDGE_CAMPUS_ASSETS_DIR":str(args.assets.resolve())}
+        if args.verify_texture:
+            with socket.socket() as probe:
+                probe.bind(("127.0.0.1",0))
+                env["EDGE_CAMPUS_MAP_PORT"]=str(probe.getsockname()[1])
         overrides={svc:{"environment":{"GZ_PARTITION":partition,"ROS_DOMAIN_ID":domain}} for svc in (*SERVICES,"campus-capture")}
         overrides["campus-audit-witness"]={"image":args.image,"pull_policy":"never","init":True,
             "environment":{"GZ_PARTITION":partition,"ROS_DOMAIN_ID":domain,"RMW_IMPLEMENTATION":"rmw_cyclonedds_cpp"},
@@ -454,6 +459,18 @@ def run(args):
                 report["guarded_reload"]={"previous_session":old_session,"new_session":new_session,"old_task_id":key,
                     "old_evidence_preserved":True,"task_id":second,"state":result["state"],
                     "verified_count":proof["verified_count"],"truth":after_reload["truth"][-1],"odom":after_reload["odom"][-1]}
+            if args.verify_texture:
+                dc("up","-d","--no-build","map3d",timeout=180)
+                map_url="http://"+dc("port","map3d","8770")
+                def mapped():
+                    with http.open(map_url+"/api/map",timeout=3) as response:
+                        data=json.load(response)
+                    return data.get("texture",{}).get("status")=="ready" and data["pose"]["status"]=="online"
+                await_fact(mapped,"registered campus appearance and current robot pose",45)
+                args.out.parent.mkdir(parents=True,exist_ok=True)
+                browser_out=args.out.with_name(args.out.stem+"-texture-browser.json")
+                cmd(["node",str(ROOT/"tests/system/console_browser.mjs"),map_url+"/?view=2d",str(browser_out),"--campus-texture"],timeout=120)
+                report["texture_browser"]=json.loads(browser_out.read_bytes())
             dc("down","--volumes","--remove-orphans","--timeout","5")
             current=identities(project+"-small" if small_owned else args.baseline)
             require(all(current.get(svc)==cid for svc,cid in small.items()),"campus lifecycle replaced baseline services")
@@ -492,6 +509,7 @@ if __name__=="__main__":
         parser.add_argument("--image",required=True)
         parser.add_argument("--baseline",default="edge-agent-ros")
         parser.add_argument("--verify-reload",action="store_true",help="cross the door again after guarded campus reload")
+        parser.add_argument("--verify-texture",action="store_true",help="verify both map views on this isolated campus")
         parser.add_argument("--assets",type=Path,default=ROOT/"artifacts/sim-assets")
         parser.add_argument("--out",type=Path,required=True)
         run(parser.parse_args())
