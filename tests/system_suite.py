@@ -203,6 +203,7 @@ def run(args, selected, reasons):
                                               in_image("python3","-B","/opt/edge/tests/test_campus_mesh.py","-v"),
                                               test("test_campus_facilities.py","-v"),
                                               test("test_campus_real_site.py","-v"),
+                                              test("test_campus_robot_assets.py","-v"),
                                               test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
                                               test("test_campus_capture.py","-v")]
                     if assets or (ROOT / "artifacts/sim-assets/models/Pine Tree/model.sdf").is_file():

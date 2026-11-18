@@ -137,7 +137,23 @@ def compile_mesh(tmp):
     return mesh
 
 
-def bake(assets, world_dir, output, width=2048):
+def texture_width(bounds, width=None):
+    span_x, span_y = bounds[2]-bounds[0], bounds[3]-bounds[1]
+    if min(span_x, span_y) <= 0:
+        raise ValueError("Invalid campus bounds")
+    if width is None:
+        # Keep a constant spatial sampling step in both axes. Portrait survey
+        # tiles need fewer columns than rows without dropping their north end.
+        width = round(2048 * span_x / max(span_x, span_y))
+    height = round(width * span_y / span_x)
+    if not 64<=width<=4096 or not 1<=height<=4096:
+        raise ValueError("Invalid texture size")
+    if width * height > 6_000_000:
+        raise ValueError("Texture exceeds pixel budget")
+    return width
+
+
+def bake(assets, world_dir, output, width=None):
     world_path = world_dir / "world.sdf"
     world = ET.parse(world_path).getroot().find("world")
     overview = json.loads((world_dir / "overview/manifest.json").read_text())
@@ -145,10 +161,7 @@ def bake(assets, world_dir, output, width=2048):
     bounds = overview["bounds"]
     if layout["id"] != "campus_large" or overview["frame"] != layout["frame"]:
         raise ValueError("Expected registered campus world and layout")
-    if not 64<=width<=4096 or not 1<=round(width*(bounds[3]-bounds[1])/(bounds[2]-bounds[0]))<=4096:
-        raise ValueError("Invalid texture size")
-    if width * round(width*(bounds[3]-bounds[1])/(bounds[2]-bounds[0])) > 6_000_000:
-        raise ValueError("Texture exceeds pixel budget")
+    width = texture_width(bounds, width)
     output.mkdir(parents=True,exist_ok=True)
     with (output/".bake.lock").open("a") as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)
@@ -239,7 +252,7 @@ if __name__=="__main__":
     p=argparse.ArgumentParser(description=__doc__)
     for name in ("assets","world","output"):
         p.add_argument("--"+name,required=True,type=Path)
-    p.add_argument("--width",type=int,default=2048)
+    p.add_argument("--width",type=int,help="explicit texture width; default fits the longest side to 2048 pixels")
     args=p.parse_args()
     result=bake(args.assets,args.world,args.output,args.width)
     print(f"Campus texture {result['revision']} {result['width']} x {result['height']} px; max Z {result['height_max_m']:.2f} m")

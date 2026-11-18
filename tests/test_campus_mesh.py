@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 import shutil
 import struct
+import sys
 import tempfile
 import unittest
 import zlib
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 NATIVE = (shutil.which("g++") and Path("/usr/include/assimp/scene.h").is_file()
           and importlib.util.find_spec("numpy"))

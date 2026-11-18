@@ -57,3 +57,7 @@ class CampusRobotAssets(unittest.TestCase):
         self.assertEqual(craft.findtext("plugin[@name='gz::sim::systems::VelocityControl']/topic"),
                          "/model/crazyflie/cmd_vel")
         self.assertEqual(craft.findtext("plugin[@name='gz::sim::systems::OdometryPublisher']/dimensions"),"3")
+
+
+if __name__ == "__main__":
+    unittest.main()

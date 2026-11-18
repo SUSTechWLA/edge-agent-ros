@@ -33,6 +33,15 @@ def samples(path):
 
 @unittest.skipUnless(texture, "run in the Linux Gazebo image with its numerical dependencies")
 class TestOrthoAtlas(unittest.TestCase):
+    def test_portrait_campus_retains_both_ends_inside_the_pixel_budget(self):
+        bounds = [-410, -161, 135, 1009]
+        width = texture.texture_width(bounds)
+        self.assertEqual(width, 954)
+        self.assertEqual(round(width * 1170 / 545), 2048)
+        self.assertEqual(texture.texture_width([0, 0, 1170, 545]), 2048)
+        with self.assertRaises(ValueError):
+            texture.texture_width(bounds, 2048)
+
     def test_mesh_uv_and_shape_occlusion_in_world_coordinates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
