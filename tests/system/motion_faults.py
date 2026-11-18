@@ -38,6 +38,7 @@ class MotionProbe:
         self.last_velocity = None
         self.truth = []
         self.braking_events = {}
+        self.result_events = {}
         self.client = ActionClient(self.node, NavigateTo, "/edge/navigate_to")
         self.heartbeat = self.node.create_publisher(String, "/edge/active_operation", 1)
         self.scan = self.node.create_publisher(LaserScan, "/motion_test/scan", qos_profile_sensor_data)
@@ -57,6 +58,8 @@ class MotionProbe:
         event = json.loads(msg.data)
         if event["kind"] == "action.braking":
             self.braking_events[event["operation_id"]] = event
+        if event["kind"] == "action.result":
+            self.result_events[event["operation_id"]] = event
 
     def world_pose(self, msg):
         self.truth.append((time.monotonic(), msg.pose.pose.position.x, msg.pose.pose.position.y))
@@ -172,7 +175,14 @@ class MotionProbe:
                 record["passed"] &= data.get("scan_geometry_valid") is False
             if fault == "clock_ahead":
                 record["passed"] &= abs(data.get("scan_stamp_ns", 0) - data.get("odom_stamp_ns", 0)) > 1e9
+        self.wait(lambda: self.operation in self.result_events,2,"missing terminal gateway evidence")
+        window=self.result_events[self.operation]["data"]["stop_evidence"]
+        record["stop_evidence"]=window
+        if fault!="rewind":
+            record["passed"] &= window["accepted_samples"]>=window["quiet_samples"]>=3 and min(
+                window["quiet_acquisition_ms"],window["quiet_arrival_ms"])>=300
         if fault == "rewind":
+            record["passed"] &= window["quiet_samples"]==0 and window["last_odom_age_ms"]>=900
             self.fault = "healthy"
             self.spin(.4)
             record["new_action_refused"] = not self.send("post-reset").accepted

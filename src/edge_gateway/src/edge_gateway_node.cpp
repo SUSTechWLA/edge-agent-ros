@@ -9,6 +9,7 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <json-c/json.h>
 
 #include "edge_interfaces/action/navigate_to.hpp"
@@ -101,6 +102,23 @@ private:
         json_object_object_add(data,"forward_gap_rad",json_object_new_double(forward_gap_));
     }
     if (pose_) json_object_object_add(data,"odom_stamp_ns",json_object_new_int64(pose_->stamp));
+    if (stop_outcome_ && std::string_view(kind)=="action.result") {
+      auto *stop=json_object_new_object();
+      auto number=[stop](const char *name,std::int64_t v){json_object_object_add(stop,name,json_object_new_int64(v));};
+      number("accepted_samples",stop_samples_);
+      number("quiet_samples",still_samples_);
+      number("sample_gaps",stop_gaps_);
+      number("wall_elapsed_ms",std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-stop_started_).count());
+      number("quiet_acquisition_ms",still_samples_ ? (pose_->stamp-still_stamp_)/1000000 : 0);
+      number("quiet_arrival_ms",still_samples_ ?
+             std::chrono::duration_cast<std::chrono::milliseconds>(pose_->arrived-still_since_).count() : 0);
+      if (pose_) {
+        number("last_odom_age_ms",std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-pose_->arrived).count());
+        json_object_object_add(stop,"last_linear_mps",json_object_new_double(pose_->linear_speed));
+        json_object_object_add(stop,"last_angular_rad_s",json_object_new_double(pose_->angular_speed));
+      }
+      json_object_object_add(data,"stop_evidence",stop);
+    }
     json_object_object_add(body,"data",data);
     std_msgs::msg::String msg;msg.data=json_object_to_json_string_ext(body,JSON_C_TO_STRING_PLAIN);
     json_object_put(body);
@@ -169,10 +187,13 @@ private:
     const double yaw = std::atan2(2.0 * (q.w*q.z + q.x*q.y), 1.0 - 2.0 * (q.y*q.y + q.z*q.z));
     const auto now = Clock::now();
     if (stop_outcome_) {
+      ++stop_samples_;
       // A few quiet wheel samples can occur while the body is still settling.
       // Count a continuous interval in both acquisition time and arrival time.
-      if (!pose_ || now - pose_->arrived > 200ms || stamp - pose_->stamp > 200'000'000)
+      if (!pose_ || now - pose_->arrived > 200ms || stamp - pose_->stamp > 200'000'000) {
+        ++stop_gaps_;
         still_samples_ = 0;
+      }
       if (speed < 0.025 && yaw_rate < 0.05) {
         if (still_samples_ == 0) {
           still_since_ = now;
@@ -195,6 +216,7 @@ private:
     if (!stop_outcome_) {
       stop_started_ = Clock::now();
       still_samples_ = 0;
+      stop_samples_ = stop_gaps_ = 0;
     }
     stop_outcome_ = outcome;
     stop_reason_ = reason;
@@ -306,6 +328,7 @@ private:
   bool inhibited_ = false;
   bool moving_authorized_ = false;
   unsigned still_samples_ = 0;
+  unsigned stop_samples_ = 0, stop_gaps_ = 0;
   Clock::time_point still_since_;
   std::int64_t still_stamp_ = 0;
   std::set<std::string> seen_;
