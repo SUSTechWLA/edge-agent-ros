@@ -1,11 +1,12 @@
 {
-  "title": "陌生校园 · 无人车从空地图到自主返航",
-  "description": "左侧是校园教学楼内的 Gazebo 观察相机，右侧是车端实时建立的占据图。绿色标记来自融合位姿，黄色是本次计算的移动目标。完整录像使用一个仿真时钟。",
+  "title": "陌生校园 · 无人车自主探索、停车复查与返航",
+  "description": "从零地图进入校园教学楼门厅，车辆边行驶边建图。感知中断后先停车，等实验端恢复数据，再从探过的安全位置中选一点，停稳复查周围一米的地图，最后返回起点。左侧是 Gazebo 的现场观察相机，右侧是车端占据图。绿色是融合车位，黄色是本段目标。全程按仿真时钟原速播放。",
   "camera_title": "教学楼门厅 · Gazebo 观察相机",
   "map_width_m": 6,
   "frontier_table": true,
-  "progress": [["scan_ready","首次定位"],["observation_lost","观测失效"],["stopped","停车确认"],["observations_restored","恢复观测"],["home","返航到点"]],
-  "chapters": ["submitted","scan_ready","goal","fault_injected","observation_lost","stopped","observations_restored","mapped","home","finished"],
+  "highlights": ["waiting_for_observations","scan_ready","fault_injected","observation_lost","stopped","fault_released","observations_restored","inspection_selected","inspected","home","finished"],
+  "progress": [["scan_ready","首次定位"],["stopped","故障停车"],["observations_restored","恢复观测"],["inspected","停车复查"],["home","返航到点"]],
+  "chapters": ["cold_start","submitted","scan_ready","goal","fault_injected","observation_lost","stopped","fault_released","observations_restored","mapped","inspection_selected","inspected","home","finished"],
   "phases": {
     "submitted": ["收到自然语言任务","请求中没有指定坐标。"],
     "started": ["任务已开始","探索提供者开始在当前仿真时间内建立第一份观测。"],
@@ -22,6 +23,8 @@
     "receipt_before_cancel": ["原目标先返回了真实到点回执","根据原操作结果进行对账。"],
     "observations_restored": ["感知恢复，重算下一步","确认三份时间递增的观测后，使用新地图和当前位姿重新选目标。"],
     "mapped": ["局部初图已保存","本轮探索区域的实际新观测满足任务条件，保存地图与来源。"],
+    "inspection_selected": ["根据初图选择复查点","从有到点回执的位置中，选出地图上可达、与障碍物留有停车余量的一处。"],
+    "inspected": ["车辆停稳，复查周围一米","读取停稳后的新地图，统计一米半径内的空闲、占据和未知格。"],
     "home": ["回到首次记录的位置","用当前融合位姿与出发点核对返航误差。"],
     "finished": ["任务结束","查看终态、初图和独立实测，判断此次任务是否完成。"]
   }

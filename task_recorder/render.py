@@ -20,6 +20,7 @@ WHITE="#F4F5E9"
 GRAY="#A8BECA"
 GREEN="#79DED0"
 AMBER="#FFC16C"
+MODES={"survey":"探索","inspect":"复查","return":"返航"}
 
 
 def read(path):
@@ -128,11 +129,15 @@ def caption(row, guide):
     title=row.get("title") or (section[0] if section else kind)
     detail=row.get("text") or (section[1] if len(section)>1 else row.get("detail") or row.get("reason") or "")
     if guide.get("frontier_table") and kind in ("goal","accepted","waypoint"):
-        if row.get("mode")=="return": title="返航 · "+title
+        if row.get("mode") in MODES: title=MODES[row["mode"]]+" · "+title
         if xy(row.get("goal")): detail+=f'　目标 ({row["goal"][0]:+.2f}, {row["goal"][1]:+.2f}) m。'
         if xy(row.get("frontier")): detail+=f'　前沿 ({row["frontier"][0]:+.2f}, {row["frontier"][1]:+.2f}) m。'
         if type(row.get("potential_unknown_cells")) is int: detail+=f'　邻近未知格 {row["potential_unknown_cells"]}。'
     if guide.get("frontier_table") and kind=="mapped" and type(row.get("gain")) is int: detail+=f'　作业范围新增 {row["gain"]} 个已知格。'
+    if guide.get("frontier_table") and kind=="inspection_selected" and xy(row.get("target")):
+        detail+=f'　复用第 {row.get("source_step","—")} 段实测位置 ({row["target"][0]:+.2f}, {row["target"][1]:+.2f}) m。'
+    if guide.get("frontier_table") and kind=="inspected" and isinstance(row.get("counts"),dict):
+        detail+=f'　复查范围内 {row["counts"].get("free","—")} 个空闲格；实测车速 {row.get("speed_mps","—")} m/s。'
     if guide.get("frontier_table") and kind=="home" and isinstance(row.get("home_error_m"),(int,float)): detail+=f'　位姿距起点 {row["home_error_m"]:.2f} m。'
     if row.get("state"): title+=" · "+str(row["state"])
     return str(title),str(detail)
@@ -199,7 +204,8 @@ def picture(record,stamp,opt,guide):
         label(1221,339,f'{age:.1f} s',28,AMBER if age>1.5 else WHITE,177)
         if goals:
             active=goals[-1]
-            label(1221,400,"最近目标 (m)",16,GRAY,178)
+            mode=MODES.get(active.get("mode"),"最近")
+            label(1221,400,mode+"目标 (m)",16,GRAY,178)
             label(1221,431,f'{active["goal"][0]:+.2f}, {active["goal"][1]:+.2f}',20,AMBER,177)
             if xy(active.get("frontier")):
                 label(1221,480,"前沿 (m)",16,GRAY,176)
@@ -215,6 +221,12 @@ def picture(record,stamp,opt,guide):
         for i,k in enumerate(kinds[:9]):
             label(820,194+i*42,k,20,GRAY,390)
             label(1245,194+i*42,str(bisect_right(record.times.get(k,[]),stamp)),21,GREEN,135)
+    highlight_phases=guide.get("highlights",[])
+    highlight=next((row for row in reversed(rows) if row.get("phase") in highlight_phases),None)
+    if highlight:
+        h_title,h_detail=caption(highlight,guide)
+        when=(highlight["_at"]-record.first)/1e9
+        label(48,615,f"最近里程碑  +{when:.1f} s　{h_title}　{h_detail}",15,GREEN,1350)
     d.rectangle((34,637,40,738),fill=GREEN)
     label(59,637,title,30,WHITE,1320)
     label(59,686,detail,22,GRAY,1319,2)
@@ -263,12 +275,14 @@ def render(opt):
     selected=guide.get("chapters",[])
     shortlist=[r for r in markers if not selected or r["phase"] in selected]
     buttons=[]
+    chapters=[]
     seen=set()
     for row in shortlist:
         if row["phase"] in seen: continue
         seen.add(row["phase"])
         s=row["sec"]
-        buttons.append(f'<button data-t="{s:.3f}"><time>{int(s)//60:02}:{int(s)%60:02}</time> {html.escape(row["title"])}</button>')
+        chapters.append(row)
+        buttons.append(f'<button data-t="{s:.3f}" data-note="{html.escape(row["detail"],quote=True)}"><time>{int(s)//60:02}:{s%60:04.1f}</time> {html.escape(row["title"])}</button>')
     title=html.escape(guide.get("title",summary["task_id"]))
     desc=html.escape(guide.get("description","点击播放查看同一录制会话中的任务、来源时间和事件。"))
     table=[]
@@ -276,11 +290,12 @@ def render(opt):
         return f'({v[0]:+.2f}, {v[1]:+.2f})' if xy(v) else "—"
     for row in record.marks:
         if row.get("phase")=="goal" and xy(row.get("goal")):
-            table.append(f'<tr><td>{len(table)+1}</td><td>{pair(row.get("xy"))}</td><td>{pair(row.get("frontier"))}</td>'
+            mode=html.escape(MODES.get(row.get("mode"),"移动"))
+            table.append(f'<tr><td>{len(table)+1}</td><td>{mode}</td><td>{pair(row.get("xy"))}</td><td>{pair(row.get("frontier"))}</td>'
                          f'<td>{pair(row["goal"])}</td><td>{int(row.get("map_stamp_ns",0))/1e9:.2f} s</td></tr>')
     coordinates=('<details><summary>查看每段移动坐标的来源</summary><p>坐标单位为米。在已知自由区与未知区的交界选择前沿，根据车体余量选出一段可执行的短目标。'
-                 '返航段沿已观测自由空间向首次有效位姿靠近。地图时间为提供者计算时实际读取的源时间。</p><div class="scroll"><table><thead>'
-                 '<tr><th>段</th><th>计算时车位</th><th>候选前沿</th><th>提交目标</th><th>地图时钟</th></tr></thead>'
+                 '复查段从已到过的位置选择与当前位置、起点均分离的可达停车点，以车体余量筛选。停车后统计一米内的栅格。返航段回到首次有效位姿。地图时间为选点时实际读取的源时间。</p><div class="scroll"><table><thead>'
+                 '<tr><th>段</th><th>目的</th><th>计算时车位</th><th>候选前沿</th><th>提交目标</th><th>地图时钟</th></tr></thead>'
                  '<tbody>'+"".join(table)+'</tbody></table></div></details>') if table and guide.get("frontier_table") else ""
     (opt.out/"index.html").write_text(f'''<!doctype html><html lang="zh-CN"><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><style>
@@ -291,10 +306,19 @@ video{{width:100%;border-radius:10px;background:#101e29}}aside{{padding:14px;bac
 h2{{font-size:19px;margin:0 0 8px}}button{{width:100%;border:0;border-top:1px solid #d2ded9;background:white;padding:8px;color:inherit;font:inherit;text-align:left;cursor:pointer}}button:hover,button:focus-visible{{background:#ddede5}}time{{color:#136758}}
 a{{color:#105b45}}footer{{margin-top:12px;overflow-wrap:anywhere}}details{{margin-top:20px;background:white;padding:14px;border-radius:10px}}summary{{cursor:pointer;font-weight:600}}.scroll{{overflow:auto}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;border-bottom:1px solid #d2ddd7;text-align:left;white-space:nowrap}}
 @media(max-width:780px){{section{{grid-template-columns:1fr}}}}</style>
-<main><h1>{title}</h1><p>{desc}</p><section><video controls playsinline preload="metadata" src="task.mp4" poster="cover.png"></video>
+<main><h1>{title}</h1><p>{desc}</p><section><div><video controls playsinline preload="metadata" src="task.mp4" poster="cover.png"></video><p id="note" aria-live="polite"></p></div>
 <aside><h2>跳到现场</h2>{"".join(buttons)}</aside></section>{coordinates}<footer>任务 <code>{html.escape(summary["task_id"])}</code>　·　
 <a href="task.mp4">播放 MP4</a>　<a href="video.json">查看时间索引与证据哈希</a></footer></main>
-<script>const v=document.querySelector("video");for(const b of document.querySelectorAll("button"))b.onclick=()=>{{v.currentTime=+b.dataset.t;v.play().catch(()=>{{}});}};</script></html>''',"utf8")
+<script>const v=document.querySelector("video");for(const b of document.querySelectorAll("button"))b.onclick=()=>{{document.querySelector("#note").textContent=b.textContent+"　"+b.dataset.note;v.currentTime=+b.dataset.t;v.play().catch(()=>{{}});}};</script></html>''',"utf8")
+    notes=["# "+guide.get("title",summary["task_id"]),"","[打开分章回放](index.html) · [播放完整 MP4](task.mp4)","",
+           guide.get("description","本回放按时间列出录制会话中的任务和事件。"),"",
+           f'任务 `{summary["task_id"]}`。全长 {summary["duration_s"]:.1f} 秒，{W} × {H}，{FPS} 帧/秒。'
+           +"速率为所选时间轴的 1.0×，相邻观测之间保留最近一次实际收到的样本。","",
+           "| 片中时间 | 任务阶段 |","| --- | --- |"]
+    for row in chapters:
+        notes.append(f'| {row["sec"]:.2f} 秒 | {row["title"].replace("|","/")} |')
+    notes+=["","来源计数与 SHA-256 指纹见[时间索引](video.json)。"]
+    (opt.out/"README.md").write_text("\n".join(notes)+"\n","utf8")
     return summary
 
 
