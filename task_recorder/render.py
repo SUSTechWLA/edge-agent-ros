@@ -12,6 +12,7 @@ import shutil
 import subprocess
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+from . import trace_view
 
 W,H,FPS=1440,810,10
 BG="#101E29"
@@ -66,6 +67,7 @@ class Recording:
             self.marks=list(self.by["bus"])
         self.marks.sort(key=lambda r:(r["_at"],r["seq"]))
         self.by["_activity"]=self.marks
+        self.by["_tools"]=trace_view.tool_history(self.marks)
         self.times={}
         for k,values in self.by.items():
             values.sort(key=lambda r:(r["_at"],r["seq"]))
@@ -124,6 +126,8 @@ def paragraph(draw,pos,text,size,width,style,color=WHITE,max_lines=2):
 def caption(row, guide):
     if not row:
         return "开始采集","等待本任务的第一条阶段记录。"
+    if row["kind"] in {"agent_trace","agent_request","agent_state"}:
+        return trace_view.title(row)
     kind=row.get("phase") or row["kind"]
     section=guide.get("phases",{}).get(kind,[])
     title=row.get("title") or (section[0] if section else kind)
@@ -154,7 +158,7 @@ def picture(record,stamp,opt,guide):
     d.rounded_rectangle((28,119,775,608),12,fill=PANEL)
     d.rounded_rectangle((790,119,1412,608),12,fill=PANEL)
     rows=record.seen("_activity",stamp)
-    request=next((e.get("text") for e in rows if e.get("phase")=="submitted" and e.get("text")),None)
+    request=next((e.get("text") for e in rows if (e.get("phase")=="submitted" or e["kind"]=="agent_request") and e.get("text")),None)
     if request:
         label(36,97,"用户任务　"+str(request),16,GRAY,1320)
     title,detail=caption(rows[-1] if rows else None,guide)
@@ -171,7 +175,8 @@ def picture(record,stamp,opt,guide):
             name,_=caption(row,guide)
             label(52,194+43*i,f'+{(row["_at"]-record.first)/1e9:05.1f} s   {name}',21,WHITE,696)
     grid=record.last("map",stamp)
-    label(813,135,"车端占据地图" if record.by["map"] else "采集来源",22)
+    has_tools=bool(record.by.get("agent_trace"))
+    label(813,135,"车端占据地图" if record.by["map"] else ("工具执行记录" if has_tools else "采集来源"),22)
     if grid and grid.get("_path"):
         g,pixels=map_pixels(grid["_path"])
         n=min(g["width"],g["height"],max(15,round(guide.get("map_width_m",8)/g["resolution"])))
@@ -216,6 +221,14 @@ def picture(record,stamp,opt,guide):
         label(815,579,"浅色 空闲　橙色 占据　深色 未知　紫点 前沿　黄点 目标　绿点 车",15,GRAY,580)
     elif record.by["map"]:
         label(920,354,"等待第一张地图",24,GRAY)
+    elif has_tools:
+        end=bisect_right(record.times["_tools"],stamp)
+        recent=record.by["_tools"][max(0,end-6):end]
+        if not recent:
+            label(820,200,"等待实际工具调用",20,GRAY,550)
+        for i,event in enumerate(recent):
+            label(818,186+i*64,trace_view.title(event)[0],19,GREEN,576)
+            label(818,213+i*64,f'日志 #{event["source_seq"]}　{event.get("source_utc","")}',15,GRAY,576)
     else:
         kinds=[k for k in record.by if not k.startswith("_") and record.by[k]]
         for i,k in enumerate(kinds[:9]):
@@ -267,19 +280,24 @@ def render(opt):
     pending.replace(target)
     markers=[{"sec":(e["_at"]-record.first)/1e9,"phase":e.get("phase",e["kind"]),"title":caption(e,guide)[0],
               "detail":caption(e,guide)[1],"event_id":e["event_id"]} for e in record.marks]
+    for row,evidence in zip(markers,record.marks):
+        if evidence["kind"]=="agent_trace":
+            row.update({key:evidence[key] for key in ("source_seq","source_utc","source_event_id","operation_id","call_id","tool",
+                       "module","layer","code","error_type","outcome","duration_ms") if key in evidence})
     summary=dict(task_id=record.header["task_id"],recording_id=record.header["recording_id"],status=record.header["status"],
                  task_status=record.header.get("task_status"),missing_sources=record.header["missing_sources"],
                  axis=opt.axis,first_ns=record.first,last_ns=record.end,fps=FPS,frames=frames,duration_s=float(probe["format"]["duration"]),
                  video_sha256=sha(target),timeline_sha256=record.timeline_digest,counts=record.header["counts"],markers=markers)
     (opt.out/"video.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2)+"\n","utf8")
     selected=guide.get("chapters",[])
-    shortlist=[r for r in markers if not selected or r["phase"] in selected]
+    shortlist=[(m,e) for m,e in zip(markers,record.marks) if not selected or m["phase"] in selected]
     buttons=[]
     chapters=[]
     seen=set()
-    for row in shortlist:
-        if row["phase"] in seen: continue
-        seen.add(row["phase"])
+    for row,evidence in shortlist:
+        key=trace_view.milestone_key(evidence)
+        if key is None or key in seen: continue
+        seen.add(key)
         s=row["sec"]
         chapters.append(row)
         buttons.append(f'<button data-t="{s:.3f}" data-note="{html.escape(row["detail"],quote=True)}"><time>{int(s)//60:02}:{s%60:04.1f}</time> {html.escape(row["title"])}</button>')
@@ -297,6 +315,19 @@ def render(opt):
                  '复查段从已到过的位置选择与当前位置、起点均分离的可达停车点，以车体余量筛选。停车后统计一米内的栅格。返航段回到首次有效位姿。地图时间为选点时实际读取的源时间。</p><div class="scroll"><table><thead>'
                  '<tr><th>段</th><th>目的</th><th>计算时车位</th><th>候选前沿</th><th>提交目标</th><th>地图时钟</th></tr></thead>'
                  '<tbody>'+"".join(table)+'</tbody></table></div></details>') if table and guide.get("frontier_table") else ""
+    history=record.by["_tools"]
+    tool_table=""
+    if history:
+        names={e["operation_id"]:e.get("tool") or e.get("module") for e in history if e["phase"]=="tool.request"}
+        tool_rows=[]
+        for e in history:
+            fields=[e["operation_id"],e.get("tool") or names.get(e["operation_id"],"—"),caption(e,guide)[0],
+                    str(e.get("source_seq","—")),e.get("source_utc","—"),e.get("error_type") or e.get("code","—")]
+            tool_rows.append("<tr>"+"".join("<td>"+html.escape(str(v))+"</td>" for v in fields)+"</tr>")
+        tool_table=('<details open><summary>工具执行记录</summary><p>每行对应 Agent 持久日志中的一条证据。操作 ID 串起意图、调用、回执与验证。'
+                    '表中保留各阶段的首次证据，重复轮询可按序号在原时间线核对。UTC 是 Agent 写入日志的时间。</p>'
+                    '<div class="scroll"><table><thead><tr><th>操作 ID</th><th>工具</th><th>阶段 / 结果</th><th>日志序号</th><th>源 UTC</th><th>类型 / 代码</th>'
+                    '</tr></thead><tbody>'+"".join(tool_rows)+'</tbody></table></div></details>')
     (opt.out/"index.html").write_text(f'''<!doctype html><html lang="zh-CN"><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><style>
 *{{box-sizing:border-box}}body{{margin:0;background:#f0f4f1;color:#19332f;font:16px/1.6 "Microsoft YaHei",sans-serif}}
@@ -307,7 +338,7 @@ h2{{font-size:19px;margin:0 0 8px}}button{{width:100%;border:0;border-top:1px so
 a{{color:#105b45}}footer{{margin-top:12px;overflow-wrap:anywhere}}details{{margin-top:20px;background:white;padding:14px;border-radius:10px}}summary{{cursor:pointer;font-weight:600}}.scroll{{overflow:auto}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;border-bottom:1px solid #d2ddd7;text-align:left;white-space:nowrap}}
 @media(max-width:780px){{section{{grid-template-columns:1fr}}}}</style>
 <main><h1>{title}</h1><p>{desc}</p><section><div><video controls playsinline preload="metadata" src="task.mp4" poster="cover.png"></video><p id="note" aria-live="polite"></p></div>
-<aside><h2>跳到现场</h2>{"".join(buttons)}</aside></section>{coordinates}<footer>任务 <code>{html.escape(summary["task_id"])}</code>　·　
+<aside><h2>跳到现场</h2>{"".join(buttons)}</aside></section>{tool_table}{coordinates}<footer>任务 <code>{html.escape(summary["task_id"])}</code>　·　
 <a href="task.mp4">播放 MP4</a>　<a href="video.json">查看时间索引与证据哈希</a></footer></main>
 <script>const v=document.querySelector("video");for(const b of document.querySelectorAll("button"))b.onclick=()=>{{document.querySelector("#note").textContent=b.textContent+"　"+b.dataset.note;v.currentTime=+b.dataset.t;v.play().catch(()=>{{}});}};</script></html>''',"utf8")
     notes=["# "+guide.get("title",summary["task_id"]),"","[打开分章回放](index.html) · [播放完整 MP4](task.mp4)","",

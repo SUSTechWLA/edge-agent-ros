@@ -10,6 +10,7 @@ from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import Request, urlopen
 import uuid
 
+from . import agent_trace
 
 TERMINAL = {"SUCCEEDED", "FAILED", "CANCELED", "BLOCKED", "RECOVERY_REQUIRED"}
 TASK_STATES = TERMINAL | {"PLANNING", "PLANNED", "WAITING", "RUNNING", "PENDING", "QUEUED"}
@@ -61,6 +62,23 @@ def finish_recording(recorder, path, task_id, status, reason):
         return current
 
 
+def append_observation(recorder, path, event, deadline, interval):
+    """Preserve the same receipt identity after an ambiguous HTTP write."""
+    while time.monotonic() < deadline:
+        try:
+            endpoint(recorder,path+"/events",event)
+            return None
+        except EndpointError as exc:
+            if exc.status==409:
+                current=endpoint(recorder,path)
+                if current["status"]!="ACTIVE":
+                    return current
+            if exc.status and exc.status not in TRANSIENT_HTTP:
+                raise
+            time.sleep(min(interval,.5))
+    raise TimeoutError("recording append timed out")
+
+
 def watch(recorder, rid, agent, *, wait_for_task, finish, interval, timeout):
     path="/recordings/"+quote(rid,safe="")
     session=endpoint(recorder,path)
@@ -74,12 +92,20 @@ def watch(recorder, rid, agent, *, wait_for_task, finish, interval, timeout):
     previous=None
     watch_id=uuid.uuid4().hex
     serial=0
+    after=0
+    trace_enabled="agent_trace" in session["sources"]
+    text_pending="agent_request" in session["sources"]
     while time.monotonic()<deadline:
         current=endpoint(recorder,path)
         if current["status"]!="ACTIVE":
             return current
+        events=[]
+        more=False
         try:
-            task=endpoint(agent,"/agent/tasks?"+urlencode({"id":task_id,"limit":1}))
+            query={"id":task_id,"limit":1}
+            if trace_enabled:
+                query.update(after=after,limit=agent_trace.PAGE_SIZE)
+            task=endpoint(agent,"/agent/tasks?"+urlencode(query))
             if task.get("id")!=task_id:
                 raise ValueError("agent returned a different task identity")
             state=task["state"]
@@ -93,6 +119,13 @@ def watch(recorder, rid, agent, *, wait_for_task, finish, interval, timeout):
             if not isinstance(steps,list) or type(cursor) is not int or not 0<=cursor<=len(steps):
                 raise ValueError("invalid task progress")
             summary={"phase":"task_state","state":state,"step_count":len(steps),"cursor":cursor}
+            if text_pending:
+                request=agent_trace.request_text(task)
+                if request:
+                    events.append(request)
+            if trace_enabled:
+                trace_rows,more=agent_trace.page(task,after)
+                events.extend(trace_rows)
         except EndpointError as exc:
             if exc.status==404 and (wait_for_task or seen):
                 summary={"phase":"task_temporarily_missing" if seen else "waiting_for_submission"}
@@ -100,24 +133,25 @@ def watch(recorder, rid, agent, *, wait_for_task, finish, interval, timeout):
                 summary={"phase":"agent_unavailable"}
             else:
                 raise
+        for event in events:
+            closed=append_observation(recorder,path,event,deadline,interval)
+            if closed:
+                return closed
+            if event["kind"]=="agent_request":
+                text_pending=False
+            else:
+                after=event["source_seq"]
         if summary!=previous:
             serial+=1
             event={"kind":"agent_state","task_id":task_id,"event_id":f"watch-{watch_id}-{serial}",
                    "stamp_ns":time.time_ns(),"clock_domain":"observer_unix_ns",**summary}
-            # Reuse the event id and timestamp if an append succeeded but its receipt was lost.
-            while True:
-                try:
-                    endpoint(recorder,path+"/events",event)
-                    break
-                except EndpointError as exc:
-                    if exc.status==409:
-                        current=endpoint(recorder,path)
-                        if current["status"]!="ACTIVE":
-                            return current
-                    if (exc.status and exc.status not in TRANSIENT_HTTP) or time.monotonic()>=deadline: raise
-                    time.sleep(min(interval,.5))
+            closed=append_observation(recorder,path,event,deadline,interval)
+            if closed:
+                return closed
             previous=summary
             print(json.dumps({"recording_id":rid,**summary},ensure_ascii=False),flush=True)
+        if more:
+            continue
         if summary.get("state") in TERMINAL:
             if finish:
                 return finish_recording(recorder,path,task_id,summary["state"],"Agent terminal state observed")
