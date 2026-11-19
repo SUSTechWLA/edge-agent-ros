@@ -21,6 +21,9 @@ FILES.update({"compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","
               "profiles/bench.json","profiles/bench-camera.json","profiles/observe.json"})
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
+BOARD_SCAFFOLD = {".gitattributes", ".gitignore", "map-inputs/.gitkeep", "observations/.gitkeep",
+                  "plugins/derived/.gitkeep"}
+FORMAT_TRAILER = "Robot-Format: runtime-only-v2"
 
 
 def git(*args, data=None, env=None):
@@ -38,16 +41,23 @@ def entries(rev):
     return result
 
 
-def projection(source):
+def projection(source, *, legacy=False):
     selected = {}
     for name, entry in entries(source).items():
         path = PurePosixPath(name)
         if name.startswith("deploy/robot/"):
             name = name.removeprefix("deploy/robot/")
+            if any(p.startswith(".env") for p in path.parts):
+                raise ValueError("unexpected runtime entry: " + name)
+            if not legacy and name not in BOARD_SCAFFOLD:
+                continue
         elif name not in FILES:
             if not name.startswith(DIRS) or path.suffix in {".md", ".pyc"} or path.name.startswith("test_"):
                 continue
             if "tests" in path.parts or name == "exploration/ros_sim.py":
+                continue
+            if not legacy and (any(p.lower() in {"docs", "doc", "manuals"} for p in path.parts)
+                               or path.stem.lower() == "readme"):
                 continue
             if any(p.startswith(".env") for p in path.parts):
                 raise ValueError("unexpected runtime entry: " + name)
@@ -57,10 +67,23 @@ def projection(source):
                 any(p.startswith(".env") for p in path.parts)):
             raise ValueError("unexpected runtime entry: " + name)
         selected[name] = entry
-    required = {"README.md","scripts/robot.sh","compose.hardware.yaml","calibration/factory.py","exploration/frontier.py"}
+    required = {"scripts/robot.sh","compose.hardware.yaml","calibration/factory.py","exploration/frontier.py"}
+    if legacy:
+        required.add("README.md")
     if required - selected.keys():
         raise ValueError("incomplete source: " + str(sorted(required - selected.keys())))
     return selected
+
+
+def legacy_format(deployment, source):
+    tree = git("rev-parse", deployment+"^{tree}").decode().strip()
+    message = git("show", "-s", "--format=%B", deployment).decode().strip()
+    original = f"build(robot): deploy runtime from {source}\n\nRobot-Tree: {tree}"
+    if message == original:
+        return True
+    if message == original + "\n" + FORMAT_TRAILER:
+        return False
+    raise ValueError("deployment branch contains independent edits; reconcile in the source branch")
 
 
 def publish(revision):
@@ -76,11 +99,8 @@ def publish(revision):
         if not pointer:
             raise ValueError("existing deployment ref has no recorded source")
         prior = git("cat-file","blob",pointer[1]).decode().strip()
-        prior_tree = git("rev-parse", old+"^{tree}").decode().strip()
-        prior_message = git("show","-s","--format=%B",old).decode().strip()
-        if prior_message != f"build(robot): deploy runtime from {prior}\n\nRobot-Tree: {prior_tree}":
-            raise ValueError("deployment branch contains independent edits; reconcile in the source branch")
-        if selected == previous:
+        legacy = legacy_format(old, prior)
+        if not legacy and source == prior and selected == previous:
             return old
         if subprocess.run(["git","merge-base","--is-ancestor",prior,source],cwd=ROOT).returncode:
             raise ValueError("release source diverged from the previous release")
@@ -95,7 +115,7 @@ def publish(revision):
         tree = git("write-tree",env=env).decode().strip()
     args = ["-p",old] if old else []
     commit = git("commit-tree",tree,*args,"-m","build(robot): deploy runtime from "+source,
-                 "-m","Robot-Tree: "+tree).decode().strip()
+                 "-m","Robot-Tree: "+tree+"\n"+FORMAT_TRAILER).decode().strip()
     git("update-ref",REF,commit,old or "0"*len(source))
     return commit
 

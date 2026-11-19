@@ -55,7 +55,7 @@ RULES = [
     (("tests/system/commission_recording.py", "tests/system/long_mission_world.py",
       "tests/system/record_long_mission.py", "tests/system/render_rover_video.py", "tests/system/mission_watch_page.py"),
      (R,)),
-    (("scripts/release_robot.py", "tests/test_robot_release.py"), (R,)),
+    (("scripts/release_robot.py", "tests/test_robot_release.py"), (R,"board")),
     (("scripts/robot.sh", "calibration/ros_capture.py", "calibration/targets.py", "calibration/station/*",
       "tests/test_factory_targets.py", "tests/system/factory_ros_capture.py"), ("board",)),
     (("calibration/*", "tests/test_factory_calibration.py"), ("board","rover-commissioning")),
@@ -248,8 +248,9 @@ class TestSelection(unittest.TestCase):
                          [R,"board","campus-world","rover-commissioning"])
 
     def test_rover_commissioning_consumers(self):
-        for name in ("scripts/release_robot.py", "tests/test_robot_release.py", "deploy/robot/README.md"):
-            self.assertEqual(selection([name])[0], [R], name)
+        self.assertEqual(selection(["deploy/robot/README.md"])[0], [R])
+        for name in ("scripts/release_robot.py", "tests/test_robot_release.py"):
+            self.assertEqual(selection([name])[0], [R,"board"], name)
         for name in ("scripts/robot.sh", "calibration/targets.py", "calibration/ros_capture.py",
                      "calibration/station/bindings.example.json", "tests/test_factory_targets.py",
                      "tests/system/factory_ros_capture.py"):

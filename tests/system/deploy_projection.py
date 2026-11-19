@@ -12,7 +12,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"scripts"))
-from release_robot import entries, projection
+from release_robot import entries, legacy_format, projection
 
 
 def git(*args):
@@ -26,10 +26,16 @@ def verify(ref, directory, platform, ros_base):
     source = git("show",revision+":ROBOT_SOURCE")
     actual = entries(revision)
     actual.pop("ROBOT_SOURCE")
-    if actual != projection(source):
+    legacy = legacy_format(revision, source)
+    if actual != projection(source, legacy=legacy):
         raise ValueError("deployment differs from the original source projection")
-    required = {"scripts/robot.sh","scripts/check_board_plugins.py","compose.physical-camera.yaml",
-                "profiles/bench-camera.json","capabilities/camera/pack.json"}
+    required = {"scripts/robot.sh", "compose.hardware.yaml", "compose.hardware-observe.yaml"}
+    if not legacy:
+        required.update({"scripts/check_board_plugins.py", "compose.physical-camera.yaml",
+                         "profiles/bench-camera.json", "capabilities/camera/pack.json"})
+        if any(Path(p).suffix.lower() in {".md", ".mdx", ".markdown", ".rst", ".adoc", ".pdf", ".docx"}
+               for p in actual):
+            raise ValueError("documentation found in runtime-only deployment")
     if required-actual.keys() or any(p.startswith(("tests/","docs/","sim/","artifacts/")) for p in actual):
         raise ValueError("incomplete board distribution or development fixtures included")
     image = "edge-agent-ros/hardware:projection-"+source[:12]+("-"+platform.split("/")[-1] if platform else "")

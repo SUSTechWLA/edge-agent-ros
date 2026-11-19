@@ -19,6 +19,13 @@ def run(args, cwd=ROOT, env=None):
     return subprocess.check_output(args, cwd=cwd, env=env, stderr=subprocess.STDOUT)
 
 
+def field_guide(tree, source):
+    archived = tree / "README.md"
+    if archived.is_file():
+        return archived.read_bytes()
+    return run(["git", "cat-file", "blob", source + ":deploy/robot/README.md"], cwd=ROOT)
+
+
 def recording_smoke(tree, image, arch, env):
     # Exercise the same read-only recorder bind mount as the deployed Compose
     # profile. Loopback isolates the fixture from any live robot's ROS domain.
@@ -95,7 +102,7 @@ def package(ref, output):
             if proc.wait():
                 raise RuntimeError("docker image save failed")
         run(["docker","load","-i",str(image)])
-        (stage/"START-HERE.md").write_bytes((tree/"README.md").read_bytes())
+        (stage/"START-HERE.md").write_bytes(field_guide(tree, source))
         (stage/"release.json").write_text(json.dumps(dict(source=source,deployment=deploy,image=arm,
                bundle_complete=True,platform="linux/arm64",hardware_test="emulation on build host"),indent=2)+"\n","utf8")
         hashes=[]

@@ -126,7 +126,7 @@ physical 仅在部署期安装与升级。按原 op 取得设备租约与单调�
 
 合并单位为每阶段一条可独立回滚的 PR，正文带 `Spec: SDD-045`。升级验收通过后再推送研发引用和由 `scripts/release_robot.py` 生成的部署分支；核对远端 SHA、`ROBOT_SOURCE` 及镜像 digest。保留失败样本与旧任务原件。升级录像安排在验收之后。
 
-发布责任人在隔离的干净检出中固定通过全套与工位门槛的研发 SHA，使用 `python scripts/release_robot.py <已验研发提交>` 生成部署树，复核 `git show refs/heads/deploy/robot:ROBOT_SOURCE` 与实际构建镜像的来源。纯文档版本允许生成器复用前次相同运行树。推送前核对两个远端旧引用和快进关系，对明确命名的研发分支与 `refs/heads/deploy/robot` 先执行 `git push --atomic --dry-run`，再执行相同 refspec 的正式推送并用 `git ls-remote --heads origin` 回读。分支保护、历史分叉或审批不满足时保留现场与本地证据，按 PR 流程解决；发布脚本不得强推。P0 等候设计确认，远端发布门槛仍未到达。
+发布责任人在隔离的干净检出中固定通过全套与工位门槛的研发 SHA，使用 `python scripts/release_robot.py <已验研发提交>` 生成部署树，复核 `git show refs/heads/deploy/robot:ROBOT_SOURCE` 与实际构建镜像的来源。部署格式与现场包指南的处理遵循 SDD-041，同一研发提交可重复生成。推送前核对两个远端旧引用和快进关系，对明确命名的研发分支与 `refs/heads/deploy/robot` 先执行 `git push --atomic --dry-run`，再执行相同 refspec 的正式推送并用 `git ls-remote --heads origin` 回读。分支保护、历史分叉或审批不满足时保留现场与本地证据，按 PR 流程解决；发布脚本不得强推。P0 等候设计确认，远端发布门槛仍未到达。
 
 ## 变更记录
 
