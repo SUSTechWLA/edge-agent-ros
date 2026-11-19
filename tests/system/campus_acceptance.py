@@ -205,9 +205,16 @@ def direct_render():
                                  "width":msg.width,"height":msg.height,"stamp_ns":msg.header.stamp.sec*10**9+msg.header.stamp.nsec}
         return accept
     views=("campus","campus_street","teaching","track","woods","robots")
-    for name in views:
-        require(gz.subscribe(Image,"/campus/view/"+name+"/image",collect(name)),"Gazebo camera subscription failed")
-    await_fact(lambda:len(samples)==len(views),"independent live rendered RGB",70)
+    active = []
+    try:
+        for name in views:
+            topic = "/campus/view/"+name+"/image"
+            require(gz.subscribe(Image, topic, collect(name)), "Gazebo camera subscription failed")
+            active.append(topic)
+        await_fact(lambda:len(samples)==len(views),"independent live rendered RGB",70)
+    finally:
+        for topic in reversed(active):
+            gz.unsubscribe(topic)
     print(json.dumps(samples))
 
 

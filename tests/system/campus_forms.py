@@ -1,7 +1,6 @@
 """SDD-030. Submit tasks to the normal API and independently read the simulated robot sensors."""
 import json
 import math
-import os
 import sys
 import time
 from urllib.parse import urlencode
@@ -32,13 +31,20 @@ def witness(robot):
         p=next((p for p in msg.pose if p.name==robot),None)
         if p is not None:
             arrived("measurement",msg.header.stamp,{"altitude":p.position.z})
-    node.subscribe(IMU,"/model/"+robot+"/imu",imu)
-    if robot=="crazyflie":
-        node.subscribe(Pose_V,"/world/edge_lab/dynamic_pose/info",poses)
-    else:
-        node.subscribe(Model,"/model/"+robot+"/joint_state",joints)
-    if not done.wait(18):
-        raise TimeoutError(f"{robot} independent Gazebo witness missed data: {list(topics)}")
+    sensor = (Pose_V,"/world/edge_lab/dynamic_pose/info",poses) if robot=="crazyflie" else (
+        Model,"/model/"+robot+"/joint_state",joints)
+    active = []
+    try:
+        for message_type, topic, handler in ((IMU,"/model/"+robot+"/imu",imu), sensor):
+            if not node.subscribe(message_type, topic, handler):
+                raise RuntimeError(f"unable to observe {topic}")
+            active.append(topic)
+        if not done.wait(18):
+            raise TimeoutError(f"{robot} independent Gazebo witness missed data: {list(topics)}")
+    finally:
+        # End both native callback registrations while their Python owners are alive.
+        for topic in reversed(active):
+            node.unsubscribe(topic)
     print(json.dumps(topics,allow_nan=False))
 
 
