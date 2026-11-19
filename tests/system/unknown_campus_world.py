@@ -236,9 +236,19 @@ def audit(out,recording_id):
         dispatched=[r["mission_id"] for r in raw_events if r["phase"]=="goal" and lo<r["stamp_ns"]<hi]
         max_cmd=max([abs(q[k]) for q in cmd for k in ("linear","angular")],default=0)
         drift=max((math.dist(r["xy"],poses[0]["xy"]) for r in poses),default=None)
+        accepted=next((e for e in raw_events if e["phase"]=="accepted" and e["mission_id"]==stopped["mission_id"]),None)
+        motion=None
+        if accepted:
+            pre=[p for p in truth if accepted["stamp_ns"]<=p["stamp_ns"]<=lo]
+            pre_cmd=[c for c in twists if accepted["stamp_ns"]<=c["stamp_ns"]<=lo]
+            if pre and pre_cmd:
+                motion=dict(samples=len(pre),translation_m=max(math.dist(p["xy"],pre[0]["xy"]) for p in pre),
+                            yaw_change_rad=sum(math.remainder(b["yaw"]-a["yaw"],2*math.pi) for a,b in zip(pre,pre[1:])),
+                            peak_linear_command_mps=max(abs(c["linear"]) for c in pre_cmd),
+                            peak_angular_command_rad_s=max(abs(c["angular"]) for c in pre_cmd))
         holds.append(dict(mission_id=stopped["mission_id"],samples=len(poses),drift_m=drift,twist_samples=len(cmd),
                           max_observed_command=max_cmd,goals_while_stopped=dispatched,
-                          interval_sim_s=(hi-lo)/1e9))
+                          interval_sim_s=(hi-lo)/1e9,motion_before_stop=motion))
         demand(len(poses)>=4 and drift is not None and drift<=.025 and cmd and max_cmd<.02 and not dispatched,
                "no confirmed stationary hold")
     demand(bool(holds),"active-motion interruption not observed")
