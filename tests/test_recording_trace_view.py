@@ -86,6 +86,15 @@ class ShowcaseTest(unittest.TestCase):
         self.assertIsNone(chapter["related"])
         self.assertEqual(chapter["identity"]["operation_id"],"T/step/1")
 
+    def test_empty_laser_returns_have_a_stamp_and_differ_from_missing_or_malformed(self):
+        m=dict(beam_count=360,no_return_count=360,return_count=0,invalid_count=0)
+        row=dict(valid=False,reason="no_valid_ranges",metrics=m,clock_domain="sim")
+        rows=[("laser_scan",1,row),("laser_scan",2,dict(row,metrics=dict(m,invalid_count=1,no_return_count=359)))]
+        view=Showcase(self.record(rows,["laser_scan"]),{},"stamp_ns")
+        one,_=view.samples(1_000_000_000,view.signals[0])
+        self.assertEqual((one["status"],one["value"],one["evidence"]["seq"]),("no_return",None,1))
+        self.assertEqual(view.samples(2_000_000_000,view.signals[0])[0]["status"],"invalid")
+
     def test_clocks_source_rewind_fallback_and_active_rejected(self):
         cases=[[("mission",1,{}),("agent_trace",2,dict(clock_domain="agent_utc"))],
                [("clock",3,dict(clock_domain="sim")),("clock",1,dict(clock_domain="sim"))],[("custom",1,{})],

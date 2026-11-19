@@ -13,7 +13,7 @@ DEFAULTS = (
     ("map", "known", "地图已知格", "格", 1.5),
 )
 KEY = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,63}")
-STATUS = {"unselected":"未选录","waiting":"等首样","invalid":"无有效值","stale":"已超时","sample":"已采样"}
+STATUS = {"unselected":"未选录","waiting":"等首样","invalid":"无有效值","no_return":"量程内无回波","stale":"已超时","sample":"已采样"}
 
 
 def finite(value):
@@ -150,9 +150,14 @@ class Showcase:
         age=(stamp-row["_at"])/1e9
         value=sample_value(row,signal["field"])
         status="invalid" if value is None else "stale" if age>signal["max_age_s"] else "sample"
+        m=row.get("metrics",{})
+        if (source=="laser_scan" and value is None and isinstance(m,dict) and row.get("reason")=="no_valid_ranges"
+                and type(m.get("beam_count")) is int and m["beam_count"]>0 and m.get("no_return_count")==m["beam_count"]
+                and m.get("invalid_count")==0):
+            status="no_return"
         first=bisect_left(times,stamp-4_000_000_000,0,end)
         points=[(r["_at"],sample_value(r,signal["field"])) for r in rows[first:end]]
-        return dict(status=status,value=value,age_s=age,evidence=ref(row)),points
+        return dict(status=status,value=value,age_s=age,stale=age>signal["max_age_s"],evidence=ref(row)),points
 
     def chapter(self, row):
         return dict(event=ref(row),identity=identity(row),related=self.related(row,row["_at"]),
