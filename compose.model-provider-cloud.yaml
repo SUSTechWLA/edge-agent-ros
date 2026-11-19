@@ -1,0 +1,8 @@
+services:
+  model-provider:
+    secrets:
+      - source: deepseek-model-key
+        target: deepseek-api-key
+secrets:
+  deepseek-model-key:
+    file: ${EDGE_DEEPSEEK_KEY_FILE:?Set EDGE_DEEPSEEK_KEY_FILE to the private key file outside the repository}

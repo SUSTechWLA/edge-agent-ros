@@ -1,0 +1,11 @@
+{
+  "id": "read_session",
+  "version": "1",
+  "effect": "read",
+  "accepts_trace": true,
+  "description": "复盘指定 task_id 的任务会话，先读取用户目标、计划、结果和问题线索的简短 Markdown。内容含证据引用和覆盖范围。需要精确调用或测量值时再用 evidence_schema 和 query_evidence。",
+  "parameters": {"task_id": "string"},
+  "outcomes": {"session": "markdown"},
+  "utterances": ["复盘任务 {task_id}", "查看任务会话 {task_id}"],
+  "endpoint": "http://evidence:8125/invoke?tool=read_session"
+}

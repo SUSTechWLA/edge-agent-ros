@@ -1,0 +1,10 @@
+{
+  "id": "result-verifier",
+  "version": "1",
+  "reference": "examples/result-verifiers/README.md",
+  "owner": "The verification Service owns its independent measurement. The Agent owns the task result.",
+  "inputs": "Pinned service binding, operation identity, original arguments, candidate evidence, and independently accessible artifact or observation.",
+  "outputs": "Verification verdict, observed evidence or stable failure code returned to the Agent.",
+  "acceptance": "Submit a genuine artifact, a missing artifact, a mismatched operation and a duplicate. Lost contact during verification must not replay the original device action.",
+  "rollback": "Drain new bindings, reconcile outstanding verification by operation ID and restore the previous service binding."
+}

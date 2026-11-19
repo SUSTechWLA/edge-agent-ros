@@ -1,0 +1,7 @@
+{
+  "id": "realsense-points",
+  "name": "RealSense D4xx · optical depth cloud",
+  "type": "sensor_msgs/msg/PointCloud2",
+  "topic": "/camera/camera/depth/color/points",
+  "ttl_s": 3
+}

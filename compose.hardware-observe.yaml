@@ -1,0 +1,5 @@
+# Applied by hardware observe to this workbench only.
+services:
+  console:
+    environment:
+      EDGE_CONSOLE_OBSERVE_ONLY: "1"

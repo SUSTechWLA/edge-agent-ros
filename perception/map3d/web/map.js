@@ -1,0 +1,307 @@
+/* The shell owns the snapshot and layer switches. Each viewer owns its camera and input. */
+(() => {
+  "use strict";
+  const el = id => document.getElementById(id);
+  const workbench=el("workbench");
+  if(workbench.dataset.port){
+    const url=new URL("/",location.href);
+    url.port=workbench.dataset.port;
+    for(const link of workbench.querySelectorAll("a")){
+      url.hash=link.dataset.view;
+      link.href=url.href;
+    }
+    workbench.hidden=false;
+  }
+  const statuses = {waiting:"等待", stale:"已过期", online:"新鲜", error:"输入异常"};
+  const modes = {
+    spatial: {canvas:el("viewport"), factory:window.createSpatialRenderer, name:"三维透视",
+      hint:"拖动环绕 · Shift 或右键拖动平移 · 滚轮或双指缩放",
+      prompt:"点击可见的点、物体或地面，读取空间坐标。"},
+    planar: {canvas:el("planar-viewport"), factory:window.createPlanarRenderer, name:"二维平面 · XY",
+      hint:"拖动平移 · 滚轮或双指缩放 · 点击查询地面",
+      prompt:"点击地图，读取 XY 坐标、栅格和语义信息。"}
+  };
+  const mutedSources = new Set();
+  let placesKey = null;
+  const query = new URLSearchParams(location.search);
+  let initialPlace = query.get("place") || (query.get("view")!=="2d"?"campus":null);
+  const texture = window.createMapTexture(() => {updateTextureControls(); draw();});
+  const layers = Object.fromEntries(["cloud","scene","roof","pose","grid","route"].map(key => [key, el("layer-"+key)]));
+  let active = query.get("view")==="2d" ? "planar" : "spatial";
+  let data=null, connected=false, scheduled=false, sourceSignature=null;
+  let activeRobot=null,pendingRobot=query.get("robot"),robotSignature=null;
+
+  function draw() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      const options = {connected, mutedSources};
+      for (const [key, input] of Object.entries(layers)) options[key] = input.checked;
+      options.texture = el("layer-texture").checked ? texture.current : null;
+      options.appearancePack=texture.current;
+      options.route = options.route ? currentRoute() : null;
+      const view = modes[active].renderer.render(data, options);
+      if(options.texture && active==="spatial"){
+        const message={ready:"已显示 · 三维网格",loading:"正在加载三维网格，暂显正射高度图",
+          unavailable:"WebGL 2 不可用 · 已显示正射高度图",failed:"三维网格读取失败 · 已显示正射高度图",
+          absent:"已显示 · 正射高度图"};
+        el("texture-info").textContent=(message[view.modelState]||"已显示 · 正射高度图")+
+          (view.triangles?" · "+view.triangles.toLocaleString()+" 个三角面":"");
+        if(view.modelState==="ready")el("gestures").textContent="拖动环绕 · 右键平移 · 滚轮缩放 · W/A/S/D 漫游 · Q/E 升降";
+      }
+      el("empty").hidden = !view.empty;
+      el("empty").textContent = data ? "当前可见图层没有可显示的数据" : "等待地图数据";
+      const hasHeight = active==="spatial" && options.cloud && Number.isFinite(view.zMin) && Number.isFinite(view.zMax);
+      el("height-key").hidden = !hasHeight;
+      if (hasHeight) {
+        el("z-min").textContent = view.zMin.toFixed(2);
+        el("z-max").textContent = view.zMax.toFixed(2);
+      }
+      el("grid-key").hidden = !options.grid || !EdgeGrid.usable(data?.grid,data?.frame);
+    });
+  }
+  function showPick() {
+    const mode = modes[active];
+    el("pick-result").textContent = mode.pick || mode.prompt;
+    el("pick-result").classList.toggle("selected", !!mode.pick);
+  }
+  function clearPicks() {
+    for (const mode of Object.values(modes)) {
+      mode.renderer.clearPick?.();
+      mode.pick = "";
+    }
+    showPick();
+  }
+  for (const [id, mode] of Object.entries(modes)) {
+    mode.pick = "";
+    mode.renderer = mode.factory(mode.canvas, {invalidate:draw, onPick(text) {
+      mode.pick = text;
+      if (active === id) showPick();
+    }});
+    el("mode-"+id).onclick = () => select(id);
+    new ResizeObserver(draw).observe(mode.canvas);
+  }
+  function select(id) {
+    active = id;
+    const planar = id==="planar", mode = modes[id];
+    for (const [key, entry] of Object.entries(modes)) {
+      entry.canvas.hidden = key!==id;
+      el("mode-"+key).setAttribute("aria-pressed", String(key===id));
+    }
+    el("view-name").textContent = mode.name;
+    el("gestures").textContent = mode.hint;
+    el("view-top").hidden = el("roof-row").hidden = planar;
+    el("cloud-label").textContent = planar ? "点云 XY 投影" : "实测点云";
+    showPick();
+    if (data) updateTextureControls();
+    draw();
+  }
+  el("view-top").onclick = () => modes.spatial.renderer.top();
+  el("orbit-reset").onclick = () => modes[active].renderer.reset();
+  el("zoom-in").onclick = () => modes[active].renderer.zoomBy(1.25);
+  el("zoom-out").onclick = () => modes[active].renderer.zoomBy(1/1.25);
+  for (const input of Object.values(layers)) input.onchange = () => {clearPicks(); draw();};
+
+  function currentRoute() {
+    const route=data?.texture?.route;
+    return data?.texture?.status==="ready" && route?.frame===data.frame &&
+      route?.scene_revision && route.scene_revision===data.scene?.revision ? route : null;
+  }
+  el("route-fit").onclick=()=>{
+    const route=currentRoute();
+    if(!route)return;
+    const xs=route.points.map(p=>p[0]),ys=route.points.map(p=>p[1]);
+    const bounds=[Math.min(...xs)-7,Math.min(...ys)-7,Math.max(...xs)+7,Math.max(...ys)+7];
+    layers.route.checked=true;activeRobot=null;updateRobots();
+    const cx=(bounds[0]+bounds[2])/2,cy=(bounds[1]+bounds[3])/2;
+    const span=Math.max(bounds[2]-bounds[0],bounds[3]-bounds[1]);
+    modes[active].renderer.focusBounds(bounds,{eye:[cx,cy-span*.52,span*.72],
+      target:[cx,cy,0],referenceAspect:1000/650,frameGround:true});
+    draw();
+  };
+
+  function focusPlace(place) {
+    activeRobot=null;updateRobots();
+    const view=place.id==="track" && place.camera?{...place.camera,frameGround:true}:
+      ["campus","robots"].includes(place.id) && place.camera?{...place.camera,referenceAspect:1000/650}:place.camera;
+    modes[active].renderer.focusBounds(place.bounds,view);
+  }
+
+  function updateTextureControls() {
+    const meta = data?.texture, ready = texture.current, state = texture.state;
+    const available = !!ready && el("layer-texture").checked;
+    const route=currentRoute();
+    el("route-row").hidden=el("route-fit").hidden=!route;
+    if(route)el("route-label").textContent="已核查测试步道 · "+Math.round(route.length_m)+" m";
+    el("texture-row").hidden=el("texture-info").hidden=!meta;
+    el("map-places").hidden=!ready;
+    el("map-title").textContent = ready ? ready.name+"环境地图" : "环境地图";
+    el("layer-texture").disabled=!ready;
+    el("robot-fit").disabled = !data?.pose?.xyz || data.pose.status!=="online";
+    el("place-fit").disabled=!available;
+    el("campus-fit").disabled=!available;
+    if(!available || active==="planar" || !el("texture-info").textContent)
+      el("texture-info").textContent = ready ?
+      (available ? "已显示" : "已隐藏")+" · 仿真正射图" :
+      ({loading:"正在加载校园纹理…",texture_waiting_for_scene:"等待校园场景身份",texture_frame_mismatch:"纹理坐标系不匹配",
+        texture_scene_mismatch:"纹理与当前场景不匹配",download_error:"纹理解码或下载失败，正在重试"}[state] || "纹理不可用 · "+state);
+    el("map-attribution").hidden=!available || !ready?.attribution?.length;
+    for(const button of el("landmarks").children)button.disabled=!available;
+    if (placesKey !== (ready?.key || null)) {
+      placesKey=ready?.key || null;
+      el("place-fit").replaceChildren(new Option("选择地点",""));
+      el("landmarks").replaceChildren();
+      el("map-attribution").replaceChildren();
+      for(const {label,url} of ready?.attribution||[]){
+        const anchor=document.createElement("a");
+        anchor.textContent=label;anchor.href=url;anchor.target="_blank";anchor.rel="noopener noreferrer";
+        el("map-attribution").append(anchor);
+      }
+      for (const a of ready?.areas || []) el("place-fit").add(new Option(a.label,a.id));
+      for(const [id,label] of [["campus","校园总览"],["teaching","教学楼口"],["track","运动场"],["campus_street","实景街道"]]){
+        const place=ready?.areas.find(a=>a.id===id);
+        if(!place?.camera)continue;
+        const button=document.createElement("button");button.type="button";button.textContent=label;
+        button.onclick=()=>focusPlace(place);
+        el("landmarks").append(button);
+      }
+      if (ready && initialPlace) {
+        const place = ready.areas.find(a => a.id === initialPlace);
+        initialPlace = null;
+        // Allow both the backing canvas and the new texture to acquire their dimensions.
+        if (place && !pendingRobot && !activeRobot) { draw(); requestAnimationFrame(() => {if(!activeRobot)focusPlace(place);}); }
+      }
+    }
+  }
+  el("layer-texture").onchange = () => {clearPicks();updateTextureControls();draw();};
+  el("campus-fit").onclick = () => {activeRobot=null;updateRobots();modes[active].renderer.reset();};
+  el("robot-fit").onclick = () => {
+    const p = data?.pose;
+    if (p?.status==="online" && p.xyz) {
+      const [x,y]=p.xyz;
+      modes[active].renderer.focusBounds([x-7,y-7,x+7,y+7]);
+    }
+  };
+  el("place-fit").onchange = () => {
+    const place = texture.current?.areas.find(a => a.id===el("place-fit").value);
+    if (place) focusPlace(place);
+    el("place-fit").value="";
+  };
+
+  function chooseRobot(robot){
+    select("spatial");
+    layers.pose.checked=true;activeRobot=robot.id;pendingRobot=null;
+    modes.spatial.renderer.focusRobot(robot.id);updateRobots();draw();
+  }
+  function updateRobots(){
+    const robots=Array.isArray(data?.robots)?data.robots:[];
+    el("robot-panel").hidden=!robots.length;
+    if(!robots.length){activeRobot=null;robotSignature=null;return;}
+    const live=robots.filter(r=>connected && r.status==="online");
+    el("robot-online").textContent=live.length+" / "+robots.length+" 在线";
+    const signature=JSON.stringify(robots.map(r=>[r.id,r.label]));
+    if(signature!==robotSignature){
+      robotSignature=signature;el("robot-choices").replaceChildren();
+      for(const robot of robots){
+        const button=document.createElement("button");
+        button.type="button";button.textContent=robot.label||robot.id;button.dataset.robot=robot.id;
+        button.onclick=()=>{const current=data.robots.find(r=>r.id===robot.id);if(current)chooseRobot(current);};
+        el("robot-choices").append(button);
+      }
+    }
+    for(const button of el("robot-choices").children){
+      const robot=robots.find(r=>r.id===button.dataset.robot);
+      button.disabled=!(robot?.xyz && ["online","stale"].includes(robot.status) && robot.frame===data.frame);
+      button.setAttribute("aria-pressed",String(activeRobot===robot?.id));
+    }
+    const chosen=robots.find(r=>r.id===activeRobot);
+    const detail=el("robot-detail"),camera=el("robot-camera");
+    camera.hidden=true;
+    if(chosen){
+      const coordinates=chosen.xyz?.map(v=>Number(v).toFixed(2)).join(", ") || "等待测量";
+      const status=connected?(statuses[chosen.status]||chosen.status):"断线快照";
+      const joints=Object.keys(chosen.joints||{}).length;
+      const capabilities=(chosen.capabilities||[]).join("、")||"等待能力清单";
+      detail.textContent=(chosen.label||chosen.id)+" · "+status+"。位置 ["+coordinates+"] m · "+chosen.frame+
+        "。能力："+capabilities+"。"+(joints?joints+" 个关节有测量，其余按模型参考姿态展示。":"关节按模型参考姿态展示。")+
+        (Number.isFinite(chosen.stamp_s)?"位姿采样 "+chosen.stamp_s.toFixed(2)+" s。":"")+
+        (Number.isFinite(chosen.imu_stamp_s)?"IMU 采样 "+chosen.imu_stamp_s.toFixed(2)+" s。":"");
+      if(chosen.camera_url){
+        const url=new URL(chosen.camera_url,location.href);
+        if(["http:","https:"].includes(url.protocol)){camera.href=url.href;camera.hidden=false;}
+      }
+    }else detail.textContent="选择机体，查看实时位置和可用能力。";
+    if(pendingRobot){
+      const first=robots.find(r=>r.id===pendingRobot && r.status==="online" && r.xyz);
+      if(first && texture.current)chooseRobot(first);
+    }
+  }
+
+  function updateSources(extras) {
+    const picker = el("inspect-source");
+    const signature = JSON.stringify(extras.map(([id,v]) => [id,v.name,v.status,v.error]));
+    if (sourceSignature === signature) return;
+    sourceSignature = signature;
+    for (const id of mutedSources) if (!Object.hasOwn(data.cloud_sources || {}, id)) mutedSources.delete(id);
+    const selected = picker.value, list = el("lidar-sources");
+    picker.replaceChildren(new Option("主点云",""));
+    list.replaceChildren();
+    for (const [id,v] of extras) {
+      picker.add(new Option(v.name,id));
+      const label=document.createElement("label"), input=document.createElement("input");
+      input.type="checkbox"; input.checked=!mutedSources.has(id); label.className="sub";
+      input.onchange=() => {
+        if (input.checked) mutedSources.delete(id); else mutedSources.add(id);
+        clearPicks();draw();
+      };
+      label.append(input,document.createTextNode(v.name+" · "+(statuses[v.status] || v.status)));
+      list.append(label);
+    }
+    el("inspect-source-row").hidden=!extras.length;
+    picker.value = selected && data.cloud_sources?.[selected] ? selected :
+      (!data.cloud.points.length && extras.length ? extras[0][0] : "");
+  }
+  function update() {
+    texture.update(data.texture);
+    updateTextureControls();
+    updateSources(Object.entries(data.cloud_sources || {}));
+    updateRobots();
+    const c = data.cloud_sources?.[el("inspect-source").value] || data.cloud;
+    const g = data.grid, s = data.scene, p = data.pose;
+    el("env").textContent = data.environment==="simulation" ? "GAZEBO  /  ROS 2" : "ROS 2  /  机器人";
+    el("frame").textContent = data.frame+" · m";
+    el("grid-info").textContent = EdgeGrid.usable(g,data.frame) ?
+      "占据栅格 · "+g.width+" × "+g.height+" · "+Number((g.resolution*100).toFixed(2))+" cm/格 · "+(connected?statuses[g.status]:"断线快照") :
+      "占据栅格"+(g?.error?"异常 · "+g.error:"等待数据")+"。语义和点云可独立显示。";
+    el("point-count").textContent = c.points.length.toLocaleString();
+    el("cloud-status").dataset.ok = String(connected && c.status==="online");
+    el("cloud-status").textContent = connected ? (c.error==="no_valid_returns" && c.status==="error"?"本帧无有效回波":statuses[c.status] || c.status) : "快照";
+    el("sensor").textContent = data.environment==="simulation" && c.source_frame==="map3d_survey"?"固定仿真台站 · map3d_survey":c.source_frame || "等待点云";
+    el("topic").textContent = c.topic || "—";
+    el("sample").textContent = c.stamp_s?.toFixed(3) ?? "—";
+    el("resolution").textContent = (c.voxel_m*100).toFixed(0)+" cm";
+    el("sources").textContent = "语义 "+(statuses[s.status] || "—")+(s.source?" · "+s.source:"")+"。融合位姿 "+(statuses[p.status] || "—")+"。"+(c.error?"点云诊断 "+c.error+"。":"")+(data.input_catalog_error?"清单目录 "+data.input_catalog_error:"");
+    draw();
+  }
+  el("inspect-source").onchange=() => {if (data) update();};
+  async function poll() {
+    try {
+      const response=await fetch("/api/map",{cache:"no-store",signal:AbortSignal.timeout(4500)});
+      if (!response.ok) throw Error();
+      const next = await response.json();
+      if (data && (data.frame!==next.frame || data.generation!==next.generation)) {
+        clearPicks();
+        for (const mode of Object.values(modes)) mode.renderer.reset();
+      }
+      data = next;
+      connected = true;
+    } catch { connected = false; }
+    el("connection").dataset.ok=String(connected);
+    el("connection").textContent=connected?"已连接":"连接中断";
+    if (data) update(); else draw();
+    setTimeout(poll,1000);
+  }
+  select(active);
+  poll();
+})();

@@ -1,0 +1,12 @@
+.env
+.env.*
+__pycache__/
+*.sqlite*
+*.db*
+artifacts/
+plugins/derived/*
+!plugins/derived/.gitkeep
+plugins/runtime/
+plugins/*.json
+observations/*.json
+map-inputs/*.json

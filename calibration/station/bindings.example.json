@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "robot_id": null,
+  "stationary_reference": null,
+  "clock_domain": null,
+  "sensors": {
+    "lidar": {
+      "serial": null,
+      "topic": "/livox/lidar"
+    },
+    "rgbd": {
+      "serial": null,
+      "topic": "/camera/camera/aligned_depth_to_color/image_raw",
+      "color_topic": "/camera/camera/color/image_raw",
+      "info_topic": "/camera/camera/color/camera_info"
+    },
+    "imu": {
+      "serial": null,
+      "topic": "/imu/data"
+    }
+  }
+}

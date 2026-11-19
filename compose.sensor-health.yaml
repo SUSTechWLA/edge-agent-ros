@@ -1,0 +1,57 @@
+# Shared optional ROS observer for the simulation and hardware Compose projects.
+services:
+  sensor-health-init:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: [sensor-health]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    entrypoint: [/bin/mkdir, -p, /sources/sensor.health]
+    volumes: [module-sources:/sources]
+  sensor-health:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: [sensor-health]
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    mem_limit: 384m
+    pids_limit: 80
+    depends_on:
+      sensor-health-init: {condition: service_completed_successfully}
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+      RMW_IMPLEMENTATION: ${EDGE_RMW:-rmw_cyclonedds_cpp}
+      ROS_LOG_DIR: /tmp/ros-logs
+      EDGE_HEALTH_BIND: 0.0.0.0
+      EDGE_HEALTH_PORT: 8136
+      EDGE_HEALTH_ROBOT_ID: ${EDGE_HEALTH_ROBOT_ID-}
+      EDGE_HEALTH_RGB_TOPIC: ${EDGE_HEALTH_RGB_TOPIC-}
+      EDGE_HEALTH_DEPTH_TOPIC: ${EDGE_HEALTH_DEPTH_TOPIC-}
+      EDGE_HEALTH_POINTS_TOPIC: ${EDGE_HEALTH_POINTS_TOPIC-}
+      EDGE_HEALTH_SCAN_TOPIC: ${EDGE_HEALTH_SCAN_TOPIC-/scan}
+      EDGE_HEALTH_IMU_TOPIC: ${EDGE_HEALTH_IMU_TOPIC-/imu}
+      EDGE_HEALTH_MATCH_TOPIC: ${EDGE_HEALTH_MATCH_TOPIC-}
+      EDGE_HEALTH_LIDAR_MATCH_TOPIC: ${EDGE_HEALTH_LIDAR_MATCH_TOPIC-}
+      EDGE_HEALTH_RGB_FRAME: ${EDGE_HEALTH_RGB_FRAME-}
+      EDGE_HEALTH_DEPTH_FRAME: ${EDGE_HEALTH_DEPTH_FRAME-}
+      EDGE_HEALTH_SCAN_FRAME: ${EDGE_HEALTH_SCAN_FRAME-}
+      EDGE_HEALTH_POINTS_FRAME: ${EDGE_HEALTH_POINTS_FRAME-}
+      EDGE_HEALTH_IMU_FRAME: ${EDGE_HEALTH_IMU_FRAME-}
+      EDGE_HEALTH_MATCH_FRAME: ${EDGE_HEALTH_MATCH_FRAME-}
+      EDGE_HEALTH_LIDAR_MATCH_FRAME: ${EDGE_HEALTH_LIDAR_MATCH_FRAME-}
+      EDGE_HEALTH_TIMEOUT_S: ${EDGE_HEALTH_TIMEOUT_S:-3}
+      EDGE_HEALTH_MAX_AGE_S: ${EDGE_HEALTH_MAX_AGE_S:-1.5}
+      EDGE_HEALTH_RECHECK_S: ${EDGE_HEALTH_RECHECK_S:-6}
+    ports: ["127.0.0.1:${EDGE_HEALTH_PORT:-8136}:8136"]
+    volumes:
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: sensor.health}
+    command: [python3,-B,/opt/edge/perception/sensor_health/provider.py,--ros-args,-p,use_sim_time:=true]

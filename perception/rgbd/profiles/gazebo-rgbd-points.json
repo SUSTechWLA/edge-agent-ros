@@ -1,0 +1,8 @@
+{
+  "id": "gazebo-rgbd-points",
+  "name": "Gazebo · fixed RGB-D survey camera",
+  "type": "sensor_msgs/msg/PointCloud2",
+  "topic": "/edge/rgbd/points",
+  "expected_frame": "edge_rgbd_link",
+  "ttl_s": 3
+}

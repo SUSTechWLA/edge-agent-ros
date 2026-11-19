@@ -1,0 +1,12 @@
+services:
+  rgbd-init:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+  rgbd:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    network_mode: host
+    ports: !reset []
+    environment:
+      EDGE_RGBD_CONFIG: /config/${EDGE_RGBD_PROFILE:-realsense}.json
+      EDGE_RGBD_BIND: 127.0.0.1
+      EDGE_RGBD_PORT: ${EDGE_RGBD_PORT:-8772}
+    command: ["python3", "-B", "/opt/edge/perception/rgbd/service.py", "--ros-args", "-p", "use_sim_time:=false"]

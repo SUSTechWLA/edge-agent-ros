@@ -1,0 +1,8 @@
+{
+  "id": "livox-mid360",
+  "name": "Livox MID-360",
+  "type": "sensor_msgs/msg/PointCloud2",
+  "topic": "/livox/lidar",
+  "expected_frame": "livox_frame",
+  "ttl_s": 3
+}

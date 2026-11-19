@@ -1,0 +1,10 @@
+{
+  "id": "ros-observation",
+  "version": "1",
+  "reference": "observations/README.md",
+  "owner": "The driver owns the sensor. The observation plugin owns subscription health. Registering a subscription does not grant motion control.",
+  "inputs": "Installed ROS message type and topic, sensor id, TTL, sample timestamps and frame when available.",
+  "outputs": "waiting, online, stale, error or removed state, bounded message preview, source topic and timing.",
+  "acceptance": "Inject timestamped samples, stop the source, resume it, unload the definition. Verify transition evidence and unrelated sensor continuity.",
+  "rollback": "Remove the observation definition to unsubscribe. Restore its previous version to observe it again."
+}

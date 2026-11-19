@@ -1,0 +1,7 @@
+{
+  "id": "realsense-d4xx",
+  "alignment": "driver_aligned_to_color",
+  "color_topic": "/camera/camera/color/image_raw",
+  "aligned_depth_topic": "/camera/camera/aligned_depth_to_color/image_raw",
+  "info_topic": "/camera/camera/color/camera_info"
+}

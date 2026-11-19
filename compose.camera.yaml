@@ -1,0 +1,53 @@
+services:
+  camera-init:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["/bin/mkdir","-p","/sources/camera"]
+    volumes: [module-sources:/sources]
+  camera:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    init: true
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    pids_limit: 128
+    depends_on:
+      camera-init:
+        condition: service_completed_successfully
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      ROS_LOG_DIR: /tmp/ros
+    command: ["python3","-B","/opt/edge/perception/camera/provider.py","--ros-args","-p","use_sim_time:=true"]
+    ports:
+      - "127.0.0.1:${EDGE_CAMERA_PORT:-8771}:8771"
+    volumes:
+      - ./perception/camera:/opt/edge/perception/camera:ro
+      - ${EDGE_CAMERA_CONFIG_DIR:-./perception/camera/config}:/config:ro
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: camera}
+  camera-sensor:
+    image: ${EDGE_IMAGE:-edge-agent-ros:v0.1}
+    pull_policy: never
+    profiles: ["camera-sensor"]
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 12s
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      GZ_PARTITION: edge_v1
+    command: ["python3","-B","/opt/edge/perception/camera/simulator.py"]
+    volumes:
+      - ./perception/camera:/opt/edge/perception/camera:ro
+      - ./perception/sim_station.py:/opt/edge/perception/sim_station.py:ro

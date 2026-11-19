@@ -1,0 +1,10 @@
+{
+  "id": "text-transform",
+  "version": "1",
+  "reference": "examples/software-provider/README.md",
+  "owner": "The software provider owns read-only text computation. The Agent owns the user task. The deployment owner separately verifies samples and approves publication.",
+  "inputs": "One literal text string, operation ID and pinned version. Supported calculations chain casefold, lower, upper, strip, whitespace split and literal count. Use this interface when these operations express the goal, including counting a complete whitespace-separated word. No files, ROS topics or devices.",
+  "outputs": "An integer or string value bound to the original UTF-8 text digest and the current definition version.",
+  "acceptance": "Use independent results for mixed case, empty input, word boundaries and literal Unicode. Compare the original input digest and version as well as the result.",
+  "rollback": "Withdraw the approved tool manifest, keep the archived task result and restore the prior verified provider if needed."
+}
