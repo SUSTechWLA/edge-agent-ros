@@ -17,6 +17,18 @@ from xml.etree import ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def read_snapshot(path):
+    # Docker Desktop can briefly deny a Windows reader while the witness replaces this file.
+    deadline = time.monotonic() + 1
+    while True:
+        try:
+            return json.loads(path.read_bytes())
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(.025)
+
+
 def witness(path, record=False):
     import rclpy
     from nav_msgs.msg import Odometry
@@ -155,7 +167,7 @@ print(json.dumps({str(p):hashlib.sha256(p.read_bytes()).hexdigest()
                 and 1.0<=x0+(i%width+.5)*spacing<=1.7 and 1.0<=y0+(i//width+.5)*spacing<=1.7)
             assert occupied_pillar>=2,"test pillar missing from the laser-integrated occupancy grid"
             proof["observed_pillar_cells"]=occupied_pillar
-            truth=json.loads((out/"truth.json").read_bytes())
+            truth=read_snapshot(out/"truth.json")
             proof["truth"]=truth
             assert truth["samples"]>=10 and truth["max_displacement_m"]>.2 and truth["max_linear_command_mps"]>.05,truth
             assert truth["closest_pillar_clearance_m"]>.30,truth
@@ -177,7 +189,7 @@ print(json.dumps({str(p):hashlib.sha256(p.read_bytes()).hexdigest()
             command("restart","sim","bridge","gateway","perception","witness","trial")
             deadline=time.monotonic()+20
             while time.monotonic()<deadline:
-                current=json.loads((out/"truth.json").read_bytes())
+                current=read_snapshot(out/"truth.json")
                 if current["witness_instance"]!=truth["witness_instance"] and current["samples"]>0:
                     break
                 time.sleep(.15)
@@ -192,8 +204,8 @@ print(json.dumps({str(p):hashlib.sha256(p.read_bytes()).hexdigest()
                 deadline=time.monotonic()+35
                 while time.monotonic()<deadline and active.poll() is None:
                     if cancel_file.exists():
-                        progress=json.loads(cancel_file.read_bytes())
-                        witness_data=json.loads((out/"truth.json").read_bytes())
+                        progress=read_snapshot(cancel_file)
+                        witness_data=read_snapshot(out/"truth.json")
                         if (progress["steps"] and progress["steps"][-1].get("accepted")
                                 and witness_data["moving_commands"]>before_cancel
                                 and witness_data["max_displacement_m"]>.08):
@@ -216,15 +228,15 @@ else:
 """
                 command("exec","-T","trial","python3","-c",signal_cli,canceled)
                 assert active.wait(timeout=25)==2
-                stopped=json.loads(cancel_file.read_bytes())
+                stopped=read_snapshot(cancel_file)
                 assert stopped["state"]=="CANCELED" and stopped["reason"]=="operator_cancel",stopped
                 assert len(stopped["steps"])==1 and stopped["cancel"]["mission_id"]==stopped["steps"][0]["mission_id"]
                 assert stopped["cancel"]["state"]=="CANCELED" and stopped["map"]["metadata"]["state"]=="CANCELED"
                 time.sleep(.8)
-                truth_after=json.loads((out/"truth.json").read_bytes())
+                truth_after=read_snapshot(out/"truth.json")
                 assert max(abs(v) for v in truth_after["latest_twist"])<.01
                 time.sleep(.8)
-                stationary=json.loads((out/"truth.json").read_bytes())
+                stationary=read_snapshot(out/"truth.json")
                 stop_drift=math.dist(truth_after["last"],stationary["last"])
                 assert stationary["samples"]>truth_after["samples"] and stop_drift<.015
                 proof["inflight_cancel"]=dict(receipt=stopped["cancel"],state=stopped["state"],reason=stopped["reason"],

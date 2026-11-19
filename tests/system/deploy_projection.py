@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 import zipfile
 
@@ -41,9 +42,9 @@ def verify(ref, directory, platform, ros_base):
         env["EDGE_ROS_BASE"] = ros_base
     result = {"passed":False,"source":source,"deployment":revision,"tree":git("rev-parse",revision+"^{tree}"),
               "runtime_files":len(actual),"image":image,"scope":"isolated Linux containers, synthetic ROS input, no hardware"}
-    def run(name,args,cwd):
+    def run(name,args,cwd,*,check=True):
         with (directory/(name+".log")).open("wb") as log:
-            subprocess.run(args,cwd=cwd,env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1200)
+            subprocess.run(args,cwd=cwd,env=env,stdout=log,stderr=subprocess.STDOUT,check=check,timeout=1200)
         return (directory/(name+".log")).read_text(encoding="utf-8",errors="replace").strip()
     try:
         with tempfile.TemporaryDirectory(prefix="edge-release-build-") as temp:
@@ -66,13 +67,25 @@ def verify(ref, directory, platform, ros_base):
                 "environment":{"ROS_LOCALHOST_ONLY":"1"}} for name in ("console","perception")}}),encoding="utf-8")
             observe = [*compose,"-f","compose.hardware-observe.yaml","-f",str(isolated)]
             run("compose",[*observe,"config","--quiet"],folder)
+            started=time.monotonic()
             try:
                 run("observe-start",[*observe,"up","-d","--no-deps","--no-build","perception","console"],folder)
                 running = sorted(run("observe-services",[*observe,"ps","--status","running","--services"],folder).splitlines())
                 if running != ["console","perception"]:
                     raise ValueError(f"unexpected services in observe: {running}")
+                server_arch=run("daemon-arch",["docker","info","--format","{{.Architecture}}"],folder).lower()
+                if server_arch in ("x86_64","amd64") and info["Architecture"]=="arm64":
+                    # On the x86 test host QEMU imports ARM ROS before the console opens its socket.
+                    ready=run("emulated-listener",[*observe,"exec","-T","console","python3","-u","-c",LISTENER],folder)
+                    result["emulated_listener"]=json.loads(ready)
                 response = json.loads(run("observe-api",[*observe,"exec","-T","console","python3","-c",PROBE],folder))
-                result["observe"] = {**response,"running":running}
+                result["observe"] = {**response,"running":running,"elapsed_s":round(time.monotonic()-started,3)}
+            except Exception:
+                result["observe_failure_elapsed_s"]=round(time.monotonic()-started,3)
+                run("observe-failure-services",[*observe,"ps","--all","--format","json"],folder,check=False)
+                run("observe-failure-logs",[*observe,"logs","--no-color","--timestamps","--tail","120",
+                                            "console","perception"],folder,check=False)
+                raise
             finally:
                 run("observe-stop",[*observe,"down","-v","--remove-orphans","--timeout","3"],folder)
             run("board-smoke",[sys.executable,"-B",str(ROOT/"tests/system/board_smoke.py"),"--image",image,
@@ -84,6 +97,26 @@ def verify(ref, directory, platform, ros_base):
     finally:
         (directory/"summary.json").write_text(json.dumps(result,indent=2)+"\n",encoding="utf-8")
 
+
+LISTENER = """import json,socket,time
+start=time.monotonic()
+end=start+60
+attempts=0
+last_error=None
+while (remaining:=end-time.monotonic())>0:
+    attempts+=1
+    try:
+        with socket.create_connection(('127.0.0.1',8765),timeout=min(1,remaining)):
+            pass
+    except (ConnectionRefusedError,TimeoutError) as error:
+        last_error=repr(error)
+        time.sleep(min(.25,max(0,end-time.monotonic())))
+    else:
+        print(json.dumps({'elapsed_s':round(time.monotonic()-start,3),'attempts':attempts,'last_error':last_error}))
+        break
+else:
+    raise TimeoutError(f'ARM-emulated console failed to open port in 60s: attempts={attempts}, last={last_error}')
+"""
 
 PROBE = """import json,time,urllib.request,urllib.error
 for _ in range(60):

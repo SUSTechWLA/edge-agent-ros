@@ -53,9 +53,18 @@ def build_streams(node, profile):
 def run_capture(node, streams, profile, run, phase):
     command = [sys.executable, "-m", "calibration.ros_capture", "--profile", str(run/"profile.json"),
                "--identity", str(run/"identity.json"), "--robot-id", profile["robot_id"],
-               "--state", str(run), "--seconds", "4"]
+               "--state", str(run)]
+    short_lidar = phase == "lidar_short_window"
+    burst_started = None
+    if short_lidar:
+        # The next match must belong to this capture, not the previous CLI.
+        deadline = time.monotonic() + 8
+        while streams["lidar"][0].get_subscription_count():
+            if time.monotonic() >= deadline:
+                raise TimeoutError("previous LiDAR reader still present")
+            time.sleep(.05)
     with subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as child:
-        end = time.monotonic()+22
+        end = time.monotonic()+30
         try:
             while child.poll() is None:
                 if time.monotonic() > end:
@@ -64,12 +73,19 @@ def run_capture(node, streams, profile, run, phase):
                 for key, (publisher, msg) in streams.items():
                     if phase == "lidar_unplugged" and key == "lidar":
                         continue
+                    if short_lidar and key == "lidar":
+                        if burst_started is None:
+                            if not publisher.get_subscription_count():
+                                continue
+                            burst_started = time.monotonic()
+                        if time.monotonic() - burst_started >= .75:
+                            continue
                     if phase == "camera_info_absent" and key == "info":
                         continue
                     msg.header.stamp = ((now+Duration(seconds=20)).to_msg() if phase == "camera_info_wrong_clock"
                                         and key == "info" else now.to_msg())
                     publisher.publish(msg)
-                time.sleep(.10)
+                time.sleep(.05 if short_lidar else .10)
         finally:
             if child.poll() is None:
                 child.kill()
@@ -89,13 +105,18 @@ def run_capture(node, streams, profile, run, phase):
     if expected_code == 0:
         assert report["status"] == "VERIFIED"
         assert all(report["statistics"][key]["samples"] >= 5 for key in ("lidar","imu","rgbd"))
+        assert all(report["statistics"][key]["last_ns"] - report["statistics"][key]["first_ns"] >= 1_000_000_000
+                   for key in ("lidar","imu","rgbd"))
         assert report["calibration"]["gyro_bias_rad_s"] == [.002,-.001,0]
     else:
         assert report["status"] == "NEEDS_CALIBRATION" and report["revision"] is None
         expected_fault = {"lidar_unplugged":("lidar","capture.missing_stream"),
+                          "lidar_short_window":("lidar","capture.duration"),
                           "camera_info_absent":("rgbd","capture.acquisition"),
                           "camera_info_wrong_clock":("rgbd","camera.sync")}[phase]
         assert expected_fault in {(i["source"],i["code"]) for i in report["issues"]}, report
+        if short_lidar:
+            assert [(i["source"], i["code"]) for i in report["issues"]] == [expected_fault], report
     return {"phase":phase, "cli_exit":child.returncode, "status_exit":status.returncode,
             **{k:report[k] for k in ("status", "event_id", "operation_id", "revision", "last_verified_revision",
                                      "capture_sha256", "profile_sha256", "motion_authorized", "issues","statistics")}}
@@ -119,7 +140,7 @@ def main():
         try:
             streams = build_streams(node, profile)
             results = [run_capture(node, streams, profile, run, phase)
-                       for phase in ("healthy","lidar_unplugged","camera_info_absent",
+                       for phase in ("healthy","lidar_unplugged","lidar_short_window","camera_info_absent",
                                      "camera_info_wrong_clock","sensors_restored")]
         finally:
             node.destroy_node()
@@ -134,6 +155,16 @@ def main():
             for r in results:
                 body = db.execute("SELECT body FROM factory_input WHERE hash=?", (r["capture_sha256"],)).fetchone()[0]
                 assert hashlib.sha256(body.encode()).hexdigest() == r["capture_sha256"]
+                if r["phase"] == "lidar_short_window":
+                    sensors = json.loads(body)["sensors"]
+                    windows = {}
+                    for name in ("lidar","imu","rgbd"):
+                        samples = sensors[name]["samples"]
+                        assert len(samples) >= 5, (name, len(samples))
+                        span = samples[-1]["stamp_ns"] - samples[0]["stamp_ns"]
+                        assert (0 < span < 1_000_000_000 if name == "lidar" else span >= 1_000_000_000), (name, span)
+                        windows[name] = {"samples":len(samples), "span_ns":span}
+                    r["received_windows"] = windows
     evidence = {"spec":"SDD-038", "pass":True, "measured_at":datetime.now(timezone.utc).isoformat(),
                 "ros_distro":os.environ.get("ROS_DISTRO"), "domain":os.environ.get("ROS_DOMAIN_ID"),
                 "runtime_image":os.environ.get("FACTORY_TEST_IMAGE", ""),

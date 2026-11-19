@@ -5,14 +5,30 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests/system"))
+from commission_exploration import read_snapshot
 from long_mission_world import finalize, make_world, recording_services, rows_at
 
 
 class Recording(unittest.TestCase):
+    def test_reopen_live_witness_without_substituting_or_repairing_evidence(self):
+        path = Mock(spec=Path)
+        path.read_bytes.side_effect = [PermissionError("being replaced"), b'{"samples":7}']
+        self.assertEqual(read_snapshot(path), {"samples":7})
+        self.assertEqual(path.read_bytes.call_count, 2)
+        path.read_bytes.side_effect = PermissionError("access denied")
+        with patch("commission_exploration.time.monotonic", side_effect=[10, 12]):
+            with self.assertRaisesRegex(PermissionError, "access denied"):
+                read_snapshot(path)
+        path.read_bytes.side_effect = None
+        path.read_bytes.return_value = b'{"samples":'
+        with self.assertRaises(json.JSONDecodeError):
+            read_snapshot(path)
+
     def test_camera_and_private_compose_inputs(self):
         with tempfile.TemporaryDirectory() as temp:
             out = Path(temp)
