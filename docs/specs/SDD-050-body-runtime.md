@@ -24,6 +24,14 @@ Core 持有原任务与恢复账本，Gateway 为获准导航的每个目标生�
 - AC-2 延迟旧命令、重复命令、错代和跨重启命令不能恢复旧输出。
 - AC-3 失联在本地终止授权。停止见证缺失、陈旧或中断期间封锁下一代写权限。
 
+固定提交 `b55da86` 的 Linux/amd64 镜像通过两个 CTest（`body_authority_contract`、`body_runtime_endpoint`）和完整的单底盘交接实验。观测值来自同一次隔离运行。[原始 Gazebo 报告](../../artifacts/verification/body-runtime/gazebo.json)
+
+| 验收点 | 观测结果 |
+|---|---|
+| AC-1 导航与交接 | 首个任务完成，世界位姿记录位移 0.539 m，随后同一执行端进入下一代可领取状态。 |
+| AC-2 旧包和重启 | 原代的开通与速度包重投期间，40 帧世界位姿的最大位置漂移为 0 m。重启执行端后用旧 boot 重投，41 帧位置漂移仍为 0 m。恢复 Core 后，再提交原任务返回 `RECOVERY_REQUIRED`，已验证路点数为 0。 |
+| AC-3 撤权与静止 | 第二个任务运动中发出 SIGKILL 请求。探针在 0.574 s 后收到 `quiet`，该时刻后的第一个世界样本仍有 0.317 m/s；在 0.921 s 后收到 `ready`。两值均从探针发起杀进程请求计时。独立端点测试还验证见证掉线后收回可领取授权、跨空窗不累计静止时间。 |
+
 ## 迁移与回退
 
 Windows 开发机可在仓根按下列步骤复测。验收脚本使用随机项目名、临时卷和独立的世界位姿观察器。每次选择一个新报告路径。
@@ -38,4 +46,6 @@ $env:EDGE_IMAGE = 'edge-agent-ros:body-runtime-050'
 
 ## 变更记录
 
-2026-11-19，从 `refactor/kernel-boundaries` 的 `3e42ee6` 开始实现和复测。
+2026-11-19，从 `refactor/kernel-boundaries` 的 `3e42ee6` 实现仿真端授权、Gateway 消费者、部署配置和故障验收。系统套件的 `motion-world` 阶段复用同一组测试。上述记录覆盖隔离仿真，实体台架的制动时间、实机驱动独占与现场联锁仍待测量。
+
+同一实现镜像另通过默认配置的 `./scripts/verify.ps1 -SkipBuild` 和 `tests/system/motion_faults.py`。前者覆盖既有任务、取消、Core 重启及速度桥中断，后者覆盖感知故障。此处记录本次实际运行的定向回归。

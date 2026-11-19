@@ -1,0 +1,245 @@
+{
+  "passed": true,
+  "project": "edge-test-body-9cf848b806f0",
+  "image": "edge-agent-ros:body-runtime-b55da86",
+  "scope": "isolated Gazebo simulation",
+  "image_id": "sha256:688cd13d95a2eed5c50aa6e05f70fe4e3bd2e6e398e8b2f91d24d1e0e752b391",
+  "image_revision": "b55da86c479911a825288716e31e2300f1f42f06",
+  "probe_log": " Container edge-test-body-9cf848b806f0-probe-run-affd85983da8 Creating \n Container edge-test-body-9cf848b806f0-probe-run-affd85983da8 Created \n",
+  "measurements": {
+    "handoff": {
+      "old": [
+        "91a5cac211016a41395eda7bd29a7e74",
+        1,
+        "held",
+        "gw-7f5b6fa0-70acfe77-10e7f016-d37967af-1"
+      ],
+      "next": [
+        "91a5cac211016a41395eda7bd29a7e74",
+        2,
+        "ready",
+        "-"
+      ],
+      "distance_m": 0.538557,
+      "state": "SUCCEEDED",
+      "stationary": {
+        "duration_s": 0.8,
+        "samples": 23,
+        "drift_m": 1.0000000000287557e-06,
+        "max_speed_mps": 1e-05,
+        "max_abs_yaw_rate_radps": 0.0
+      }
+    },
+    "command_loss": {
+      "held": [
+        "91a5cac211016a41395eda7bd29a7e74",
+        2,
+        "gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2"
+      ],
+      "next": [
+        "91a5cac211016a41395eda7bd29a7e74",
+        3,
+        "ready",
+        "-"
+      ],
+      "moving_mps": 0.306381,
+      "stopped": {
+        "duration_s": 0.8,
+        "samples": 23,
+        "drift_m": 9.99999999995449e-06,
+        "max_speed_mps": 5.7e-05,
+        "max_abs_yaw_rate_radps": 0.0
+      },
+      "timing": {
+        "clock": "seconds since probe start on its monotonic clock; world.t uses this same origin",
+        "semantics": "The host issues SIGKILL and checks container exit between kill_requested and gateway_exit_confirmed. State times mark receipt at the probe. Actual process death and endpoint revocation times are not directly measured. world.sim_s is simulation time.",
+        "events": {
+          "kill_requested": {
+            "probe_s": 5.402896,
+            "world_before": {
+              "t": 5.4028,
+              "sim_s": 4.216,
+              "x": 0.548967,
+              "y": -0.0,
+              "speed": 0.306381,
+              "yaw_rate": 0.0
+            },
+            "world_after": {
+              "t": 5.437,
+              "sim_s": 4.25,
+              "x": 0.559847,
+              "y": -0.0,
+              "speed": 0.32,
+              "yaw_rate": 0.0
+            }
+          },
+          "gateway_exit_confirmed": {
+            "probe_s": 6.323184,
+            "world_before": {
+              "t": 6.322,
+              "sim_s": 5.134,
+              "x": 0.735525,
+              "y": 0.0,
+              "speed": 6.8e-05,
+              "yaw_rate": 0.0
+            },
+            "world_after": {
+              "t": 6.3553,
+              "sim_s": 5.168,
+              "x": 0.735527,
+              "y": 0.0,
+              "speed": 5.7e-05,
+              "yaw_rate": -0.0
+            }
+          },
+          "quiet_observed": {
+            "probe_s": 5.976723,
+            "world_before": {
+              "t": 5.948,
+              "sim_s": 4.76,
+              "x": 0.723047,
+              "y": 0.0,
+              "speed": 0.32,
+              "yaw_rate": 0.0
+            },
+            "world_after": {
+              "t": 5.9808,
+              "sim_s": 4.794,
+              "x": 0.733873,
+              "y": 0.0,
+              "speed": 0.31731,
+              "yaw_rate": -0.0
+            }
+          },
+          "ready_observed": {
+            "probe_s": 6.323563,
+            "world_before": {
+              "t": 6.322,
+              "sim_s": 5.134,
+              "x": 0.735525,
+              "y": 0.0,
+              "speed": 6.8e-05,
+              "yaw_rate": 0.0
+            },
+            "world_after": {
+              "t": 6.3553,
+              "sim_s": 5.168,
+              "x": 0.735527,
+              "y": 0.0,
+              "speed": 5.7e-05,
+              "yaw_rate": -0.0
+            }
+          }
+        },
+        "request_to_quiet_s": 0.573826,
+        "request_to_ready_s": 0.920667
+      }
+    },
+    "delayed_commands": {
+      "packets": [
+        "v1 91a5cac211016a41395eda7bd29a7e74 2 gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2 open",
+        "v1 91a5cac211016a41395eda7bd29a7e74 2 gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2 drive 2 0.32000000000000001 -9.1541599586980103e-13"
+      ],
+      "world": {
+        "samples": 40,
+        "drift_m": 0.0,
+        "max_speed_mps": 1e-05,
+        "max_yaw_rps": 0.0
+      }
+    },
+    "restart": {
+      "new": [
+        "7e41d69ba8d80870334aea81051a9b87",
+        1,
+        "ready",
+        "-"
+      ],
+      "packets": [
+        "v1 91a5cac211016a41395eda7bd29a7e74 2 gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2 open",
+        "v1 91a5cac211016a41395eda7bd29a7e74 2 gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2 drive 2 0.32000000000000001 -9.1541599586980103e-13",
+        "v1 91a5cac211016a41395eda7bd29a7e74 1 gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2 open",
+        "v1 91a5cac211016a41395eda7bd29a7e74 1 gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2 drive 2 0.32000000000000001 -9.1541599586980103e-13"
+      ],
+      "world": {
+        "samples": 41,
+        "drift_m": 0.0,
+        "max_speed_mps": 0.0,
+        "max_yaw_rps": 0.0
+      }
+    },
+    "recovery": {
+      "mission": "body-lost-gateway",
+      "state": "RECOVERY_REQUIRED",
+      "verified_count": 0,
+      "world": {
+        "duration_s": 0.8,
+        "samples": 24,
+        "drift_m": 0.0,
+        "max_speed_mps": 0.0,
+        "max_abs_yaw_rate_radps": 0.0
+      }
+    },
+    "states": [
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        1,
+        "quiet",
+        "-"
+      ],
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        1,
+        "ready",
+        "-"
+      ],
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        1,
+        "held",
+        "gw-7f5b6fa0-70acfe77-10e7f016-d37967af-1"
+      ],
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        2,
+        "quiet",
+        "-"
+      ],
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        2,
+        "ready",
+        "-"
+      ],
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        2,
+        "held",
+        "gw-7f5b6fa0-70acfe77-10e7f016-d37967af-2"
+      ],
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        3,
+        "quiet",
+        "-"
+      ],
+      [
+        "91a5cac211016a41395eda7bd29a7e74",
+        3,
+        "ready",
+        "-"
+      ],
+      [
+        "7e41d69ba8d80870334aea81051a9b87",
+        1,
+        "quiet",
+        "-"
+      ],
+      [
+        "7e41d69ba8d80870334aea81051a9b87",
+        1,
+        "ready",
+        "-"
+      ]
+    ]
+  }
+}

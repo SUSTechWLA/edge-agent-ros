@@ -3,6 +3,7 @@
 !*/
 !/.gitignore
 !/README.md
+!/body-runtime/gazebo.json
 !/recorder-ops/run03/results.json
 !/recorder-ops/run04/results.json
 !/20261117-031103-3a9cc1/cancel.json
