@@ -133,3 +133,5 @@ physical 仅在部署期安装与升级。按原 op 取得设备租约与单调�
 P0 文档门槛实测：SDD 校验通过；仓库契约 5 项、文档契约 3 项通过；六个变更文件均为 Markdown，README 与 SDD 的双轨表逐字一致，AC-1 至 AC-8 都有证据位置。基线差异选测只命中 `repository`。Windows 首轮运行 `20261119T032415Z-ceccb5e0` 在既有 `test_recording_trace_view.py` 因 `task_recorder` 导入失败；在同一工作树显式设置 PowerShell `$env:PYTHONPATH=(Get-Location).Path` 后，全套所选阶段于 `20261119T032557Z-e7440b6d` 通过。两次原始 summary 和日志位于本地 `.ci-results/sdd-045/p0/suite/<运行号>/`。这两次均未启动机器人任务。全量模型、Gazebo、真机台架和部署验证属于后续门槛。
 
 2026-11-19，P0。基于 `8520e43` 核对现有入口，确定以普通 HTTP 取证、Session 服务与数列派生工具验证 soft，以场景导航验证 physical。P0 审核涉及文档，不产生跨模块运行依赖；各实现 PR 必须同步更新 `tests/test_selection.py` 的规则和断言。本阶段结束后等待维护者确认。
+
+P1 已获准从 f0f7dbf 实施。以独立 soft 宿主运行受信 apply(ctx)，用既有 Task Journal 关联冻结计划，以隔离进程的运行测量验收。旧代码按现存 CLI、部署入口、旧计划和恢复调用逐条核实后清理。可复测条件见 [P1 实施与验证](../testing/soft-runtime.md)。

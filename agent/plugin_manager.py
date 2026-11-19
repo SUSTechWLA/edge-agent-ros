@@ -66,6 +66,9 @@ TYPES = {"derived":release.DerivedRelease, "runtime":RuntimeRelease}
 
 
 def change(args):
+    if args.kind == "v2":
+        from v2_registry import command
+        return command(args)
     policy = TYPES[args.kind]
     directory = Path(args.root) / args.kind
     request = argparse.Namespace(**{**vars(args), "registry":directory})
@@ -87,17 +90,20 @@ def change(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     actions = parser.add_subparsers(dest="action", required=True)
-    for action in ("check", "publish", "remove"):
+    for action in ("validate","check","publish","drain","remove"):
         cmd = actions.add_parser(action)
-        cmd.add_argument("--kind", choices=sorted(TYPES), required=True)
-        cmd.add_argument("--root", type=Path, required=True, help="parent directory of derived/ and runtime/")
-        cmd.add_argument("--expect", required=action!="check", help="installed canonical SHA-256 or absent")
-        if action == "remove":
+        new_only = action in ("validate","drain")
+        read_only = action in ("validate","check")
+        cmd.add_argument("--kind", choices=["v2"] if new_only else sorted([*TYPES,"v2"]), required=True)
+        cmd.add_argument("--root", type=Path, required=action!="validate", help="parent of the managed registries")
+        cmd.add_argument("--trust-root", type=Path, help="site-owned v2 catalog for this local admin process")
+        cmd.add_argument("--expect", required=not read_only, help="installed CAS revision or absent")
+        if action in ("drain","remove"):
             cmd.add_argument("id")
         else:
             cmd.add_argument("definition", type=Path)
             cmd.add_argument("--cases", type=Path, help="independent samples for derived tools")
-        if action != "check":
+        if not read_only:
             cmd.add_argument("--trace-id")
             cmd.add_argument("--parent-event-id")
             cmd.add_argument("--request-id", help="replay the receipt of the same logical change")
@@ -105,7 +111,10 @@ def main():
     try:
         sys.stdout.buffer.write(release.json_bytes(change(args)))
     except (ValueError,OSError,sqlite3.Error,KeyError,TypeError,OverflowError) as exc:
-        parser.exit(1, f"{exc}\n")
+        message = str(exc)
+        if args.kind == "v2" and hasattr(exc,"code") and not message.startswith(exc.code):
+            message = f"{exc.code}: {message}"
+        parser.exit(1, f"{message}\n")
 
 
 if __name__ == "__main__":

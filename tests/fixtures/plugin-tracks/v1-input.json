@@ -1,0 +1,11 @@
+{
+  "services": [
+    {"version":"1","schema_version":1,"id":"session.default","requires":[],"provides":["session.read"],"endpoint":"http://session:8126/session"},
+    {"id":"archive","provides":["archive.read"],"schema_version":1,"version":"1","requires":["session.read"],"endpoint":"http://fixture/archive"},
+    {"provides":["report.read"],"requires":["session.read","archive.read"],"id":"report","endpoint":"http://fixture/report","schema_version":1,"version":"1"}
+  ],
+  "tool": {"id":"verbatim","version":"1","description":"Return text","effect":"read","endpoint":"http://fixture/text","parameters":{"value":"string"},"utterances":["text {value} end"],"verbatim_argument":true},
+  "series": {"schema_version":2,"id":"derived.sample_gap","description":"Sample gap","transforms":["diff"],"reduce":"max"},
+  "odometry": {"schema_version":1,"id":"derived.speed","description":"Measured speed","field":"speed","unit":"m/s"},
+  "arguments": {"series":"[4,1,6,2]"}
+}
