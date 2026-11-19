@@ -11,6 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 from derived_tools import load_directory
+from plugin_descriptor import binding
 import runtime_plugins
 import soft_client
 import plugin_tracks
@@ -192,19 +193,6 @@ def catalog(caps):
                                 if k in ("field","unit","comparison","transforms","reduce")}
         entries.append(entry)
     return entries
-
-
-def binding(cap):
-    if "_physical" in cap:
-        return cap["_physical"]["binding"]
-    if "_soft" in cap:
-        return cap["_soft"]["binding"]
-    fields = {key:cap.get(key) for key in ("id","version","parameters","effect","endpoint")}
-    if cap.get("outcomes"):
-        fields["outcomes"] = cap["outcomes"]
-    if cap.get("verbatim_argument"):
-        fields.update(verbatim_argument=True, utterances=cap["utterances"])
-    return hashlib.sha256(json.dumps(fields,sort_keys=True).encode()).hexdigest()
 
 
 def response_schema(caps, points, step_limit):

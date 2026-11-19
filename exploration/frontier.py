@@ -2,59 +2,7 @@
 from collections import deque
 import math
 
-
-def finite(value):
-    return type(value) in (int, float) and math.isfinite(value)
-
-
-class Grid:
-    """The same ROS row-major layout and origin convention as the map viewer."""
-
-    def __init__(self, grid):
-        self.width, self.height = grid["width"], grid["height"]
-        self.resolution, self.cells = grid["resolution"], grid["cells"]
-        self.frame = grid["frame"]
-        if (type(self.width) is not int or type(self.height) is not int
-                or not 1 <= self.width <= 4096 or not 1 <= self.height <= 4096
-                or self.width*self.height > 262144 or not finite(self.resolution)
-                or not 0.001 <= self.resolution <= 1000 or not isinstance(self.frame, str)
-                or not self.frame.strip() or len(self.frame) > 200):
-            raise ValueError("invalid_grid_geometry")
-        self.ox, self.oy, self.yaw = grid["origin"]
-        if not all(finite(v) for v in (self.ox, self.oy, self.yaw)):
-            raise ValueError("invalid_grid_origin")
-        height_offset = grid.get("origin_z", 0)
-        if not finite(height_offset) or abs(height_offset) > 1e-6:
-            raise ValueError("nonplanar_grid_origin")
-        self.c, self.s = math.cos(self.yaw), math.sin(self.yaw)
-        if (len(self.cells) != self.width*self.height
-                or any(type(v) is not int or not -1 <= v <= 100 for v in self.cells)):
-            raise ValueError("invalid_grid_values")
-
-    def local(self, point):
-        dx, dy = point[0]-self.ox, point[1]-self.oy
-        return ((self.c*dx+self.s*dy)/self.resolution, (-self.s*dx+self.c*dy)/self.resolution)
-
-    def index(self, point):
-        u, v = self.local(point)
-        x, y = math.floor(u), math.floor(v)
-        return y*self.width+x if 0 <= x < self.width and 0 <= y < self.height else -1
-
-    def center(self, index):
-        x = (index % self.width+.5)*self.resolution
-        y = (index // self.width+.5)*self.resolution
-        return [self.ox+self.c*x-self.s*y, self.oy+self.s*x+self.c*y]
-
-    def neighbors(self, i):
-        x = i % self.width
-        if x+1 < self.width:
-            yield i+1
-        if i+self.width < len(self.cells):
-            yield i+self.width
-        if x:
-            yield i-1
-        if i >= self.width:
-            yield i-self.width
+from edge_contracts.occupancy import Grid, finite
 
 
 def _masks(grid, bounds, radius):

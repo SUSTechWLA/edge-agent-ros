@@ -16,9 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/"agent"))
 from module_journal import ModuleJournal
-from module_events import identifier
+from edge_contracts.events import identifier
 from tracing import sanitized
-from evidence.public_source import EvidenceError, PublicSource, remaining
+from edge_contracts.evidence_client import EvidenceError, PublicSource, remaining
 from evidence.query import COLUMNS, dump, run_sql, schema
 
 

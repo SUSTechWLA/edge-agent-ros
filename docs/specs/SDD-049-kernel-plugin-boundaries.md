@@ -64,3 +64,7 @@ ROS 复测使用本地镜像与只读工作树，在 PowerShell 的仓库根目�
 ```powershell
 docker run --pull=never --rm --network none --mount "type=bind,source=$PWD,target=/checkout,readonly" -w /checkout edge-agent-ros/hardware:robot-89a9622b134a-amd64 python3 -B tests/agent_trace_contract.py -v
 ```
+
+### WP1 共享契约与反向依赖
+
+2026-11-19，AC-1、AC-7。描述符与绑定摘要、模块事件、Evidence HTTP 读取，以及 Console 使用的 v1 服务发现、软宿主通信和公开 trace 脱敏逻辑移入 `edge_contracts/`。原脚本入口沿用已有函数和错误类型。板端投影、Docker 构建上下文和两种镜像同步携带契约包，测试选择器将契约变更送入全量消费方回归。此项为实现迁移，无行为开关。
