@@ -5,6 +5,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent/"system"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from campus_revisit import select_inspection_site
 
 

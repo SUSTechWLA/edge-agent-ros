@@ -1,0 +1,126 @@
+{
+  "passed": true,
+  "task_id": "campus-e7962f38e9",
+  "recording_id": "campus-e7962f38e9",
+  "image": "edge-agent-ros:commission-0977a54",
+  "project": "unknown-e7962f38e9",
+  "text": "探索附近的陌生校园，建立初始地图，选一个已探明的安全位置停车复查，再回到出发点",
+  "image_id": "sha256:f064f5ad57f40a0ad456542a6bb31dce7ef5879b7bc4ec5e61aa1306d343bf5e",
+  "calibration_revision": "a75eb8556bcc063e4ebf312c71a7e800551d7c89e14811759d1769edd2b3ecb9",
+  "factory": "synthetic stationary fixture",
+  "submissions": 1,
+  "terminal": "SUCCEEDED",
+  "operation": "campus-e7962f38e9/step/1",
+  "recording": {
+    "bytes": 17320997,
+    "counts": {
+      "bus": 15,
+      "clock": 73,
+      "fused_pose": 211,
+      "map": 37,
+      "mission": 32,
+      "rgb": 217,
+      "twist": 180,
+      "world_pose": 265
+    },
+    "ended_ns": 1795056456510030496,
+    "latest": {
+      "bus": 33540000000,
+      "clock": 36008000000,
+      "fused_pose": 35938000000,
+      "map": 35376000000,
+      "mission": 34206000000,
+      "rgb": 35856000000,
+      "twist": 35810000000,
+      "world_pose": 35938000000
+    },
+    "missing_sources": [],
+    "reason": "Agent terminal receipt",
+    "recording_id": "campus-e7962f38e9",
+    "source_last_receive_ns": {
+      "bus": 1795056453572671237,
+      "clock": 1795056456497690421,
+      "fused_pose": 1795056456441026413,
+      "map": 1795056455936100858,
+      "mission": 1795056454374206390,
+      "rgb": 1795056456362562193,
+      "twist": 1795056456297652672,
+      "world_pose": 1795056456420988143
+    },
+    "sources": [
+      "bus",
+      "clock",
+      "fused_pose",
+      "map",
+      "mission",
+      "rgb",
+      "twist",
+      "world_pose"
+    ],
+    "started_ns": 1795056393166870556,
+    "status": "FINISHED",
+    "stream_timing": {
+      "bus": {
+        "first_source_ns": 7412000000,
+        "last_source_ns": 33540000000,
+        "max_receive_gap_ns": 8905910378,
+        "max_source_gap_ns": 4806000000,
+        "source_rewinds": 0
+      },
+      "clock": {
+        "first_source_ns": 4000000,
+        "last_source_ns": 36008000000,
+        "max_receive_gap_ns": 6458690734,
+        "max_source_gap_ns": 504000000,
+        "source_rewinds": 0
+      },
+      "fused_pose": {
+        "first_source_ns": 4760000000,
+        "last_source_ns": 35938000000,
+        "max_receive_gap_ns": 3889967746,
+        "max_source_gap_ns": 1564000000,
+        "source_rewinds": 0
+      },
+      "map": {
+        "first_source_ns": 5500000000,
+        "last_source_ns": 35376000000,
+        "max_receive_gap_ns": 4251508766,
+        "max_source_gap_ns": 2054000000,
+        "source_rewinds": 0
+      },
+      "mission": {
+        "first_source_ns": 494000000,
+        "last_source_ns": 34206000000,
+        "max_receive_gap_ns": 9915619061,
+        "max_source_gap_ns": 5298000000,
+        "source_rewinds": 0
+      },
+      "rgb": {
+        "first_source_ns": 4000000,
+        "last_source_ns": 35856000000,
+        "max_receive_gap_ns": 981716459,
+        "max_source_gap_ns": 166000000,
+        "source_rewinds": 0
+      },
+      "twist": {
+        "first_source_ns": 4000000,
+        "last_source_ns": 35810000000,
+        "max_receive_gap_ns": 5951809615,
+        "max_source_gap_ns": 228000000,
+        "source_rewinds": 0
+      },
+      "world_pose": {
+        "first_source_ns": 34000000,
+        "last_source_ns": 35938000000,
+        "max_receive_gap_ns": 940677348,
+        "max_source_gap_ns": 136000000,
+        "source_rewinds": 0
+      }
+    },
+    "task_id": "campus-e7962f38e9",
+    "task_status": "SUCCEEDED"
+  },
+  "known_gain": 484,
+  "home_error_m": 0.050812273330410294,
+  "actual_steps": 5
+}

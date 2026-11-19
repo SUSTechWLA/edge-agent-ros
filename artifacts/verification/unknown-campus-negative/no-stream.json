@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "environment": "isolated ROS 2 DDS, Docker network none, no publishers",
+  "case": "persistent missing perception",
+  "worker_exit": 2,
+  "events": [
+    {
+      "phase": "started",
+      "module": "exploration.frontier",
+      "event_id": "missing-publishers/event/1",
+      "parent_event_id": null,
+      "operation_id": "missing-publishers",
+      "trace_id": "missing-publishers",
+      "stamp_ns": 0,
+      "wall_ns": 1795055898193455647
+    },
+    {
+      "phase": "waiting_for_observations",
+      "module": "exploration.frontier",
+      "event_id": "missing-publishers/event/2",
+      "parent_event_id": "missing-publishers/event/1",
+      "operation_id": "missing-publishers",
+      "trace_id": "missing-publishers",
+      "stamp_ns": 0,
+      "wall_ns": 1795055898197459803,
+      "reason": "no_motion_before_fresh_pose_and_map"
+    },
+    {
+      "phase": "finished",
+      "module": "exploration.frontier",
+      "event_id": "missing-publishers/event/3",
+      "parent_event_id": "missing-publishers/event/2",
+      "operation_id": "missing-publishers",
+      "trace_id": "missing-publishers",
+      "stamp_ns": 0,
+      "wall_ns": 1795055900216229088,
+      "state": "BLOCKED",
+      "reason": "fresh_coherent_observations_unavailable: check map/pose publishers and clock"
+    }
+  ],
+  "report": {
+    "operation_id": "missing-publishers",
+    "trace_id": "missing-publishers",
+    "robot_id": "test-rover",
+    "state": "BLOCKED",
+    "reason": "fresh_coherent_observations_unavailable: check map/pose publishers and clock",
+    "steps": [],
+    "survey_arrivals": 0,
+    "home_arrivals": 0,
+    "recovered_interruptions": 0,
+    "gain_required": 100,
+    "required_survey_arrivals": 2,
+    "calibration_revision": "90168b73b6c78ae11e5956488f11cce974d3786cf1717543ab7f607dd9d76014"
+  }
+}

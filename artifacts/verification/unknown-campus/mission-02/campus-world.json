@@ -1,0 +1,29 @@
+{
+  "source": "edge-agent-campus_campus-world",
+  "source_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+  "world_sha256": "e1fab835d220e7766c295b6f98f67c8b6dad2af2de8134282cfc5b219765f58b",
+  "original_models": [
+    "floor",
+    "edge_rover",
+    "delft_surveyed_site",
+    "teaching",
+    "track",
+    "road",
+    "lawn",
+    "woods",
+    "crazyflie",
+    "go1",
+    "g1",
+    "campus_viewpoints"
+  ],
+  "collision_elements": 566,
+  "teaching_collisions": 324,
+  "pine_includes": 36,
+  "original_scan_range_m": 8.0,
+  "test_scan_range_m": 2.1,
+  "masked_for_observer": 304,
+  "observation_topic": "/commission/overview",
+  "map_source": "/edge/perception/map",
+  "pose_source": "/edge/perception/pose",
+  "scope": "full campus physical world, operation confined to teaching entrance local odometry"
+}

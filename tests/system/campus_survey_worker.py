@@ -15,6 +15,7 @@ import time
 from calibration.factory import status as calibration_status
 from exploration.frontier import Grid, _masks, plan_frontier
 from exploration.map_artifact import save_map
+from campus_revisit import select_inspection_site
 
 RADIUS = .30
 MAX_STEP = .65
@@ -276,11 +277,41 @@ def run(args):
                                   operation_id=args.operation,stamp_ns=ts,state="MAPPED",reason="survey_criteria_met"))
                 report.update(map_file="map/map.yaml",saved_known_gain=known-initial,map_sha256=manifest["sha256"])
                 emit("mapped",known=known,gain=known-initial,file=report["map_file"])
-            mode="return" if "map_file" in report else "survey"
-            if mode=="return":
-                goal=home_leg(raw,xy,home,bounds)
+                saved=json.loads((folder/"map"/"occupancy.json").read_bytes())
+                site=select_inspection_site(saved,xy,home,report["steps"],bounds)
+                if site is None:
+                    raise ValueError("no_verified_inspection_site_in_initial_map")
+                report["inspection_site"]=site
+                emit("inspection_selected",**site,initial_map_stamp_ns=ts)
+            mode="survey"
+            if "map_file" in report:
+                mode="return" if "inspection_file" in report else "inspect"
+            if mode in ("inspect","return"):
+                destination=home if mode=="return" else report["inspection_site"]["target"]
+                goal=home_leg(raw,xy,destination,bounds)
                 if goal is None:
-                    report.update(state="SUCCEEDED",reason="map_saved_and_home_verified",final_xy=xy,
+                    if mode=="inspect":
+                        # Take a distinct observation after both the arrival receipt and settling.
+                        (xy,raw,ts),_=acquire(after=ts,minimum=2,monitor_gap=True)
+                        twist=inputs.samples["pose"][2].twist.twist
+                        speed=math.hypot(twist.linear.x,twist.linear.y)
+                        if (math.dist(xy,destination)>HOME_TOLERANCE or not math.isfinite(speed)
+                                or speed>.03 or not math.isfinite(twist.angular.z) or abs(twist.angular.z)>.1):
+                            raise ValueError("inspection_stop_unconfirmed")
+                        grid=Grid(raw)
+                        counts=dict(free=0,occupied=0,unknown=0,uncertain=0)
+                        for i,value in enumerate(grid.cells):
+                            if math.dist(grid.center(i),xy)<=1.0:
+                                key="unknown" if value<0 else "free" if value==0 else "occupied" if value>=65 else "uncertain"
+                                counts[key]+=1
+                        observation=dict(xy=xy,**report["inspection_site"],map_stamp_ns=ts,radius_m=1.0,
+                                         counts=counts,speed_mps=speed,yaw_rate_rad_s=twist.angular.z,
+                                         initial_grid_sha256=report["map_sha256"]["occupancy.json"])
+                        save_report(folder/"inspection.json",observation)
+                        report.update(inspection_xy=xy,inspection_stamp_ns=ts,inspection_file="inspection.json")
+                        emit("inspected",**observation)
+                        continue
+                    report.update(state="SUCCEEDED",reason="map_saved_inspection_complete_and_home_verified",final_xy=xy,
                                   home_error_m=math.dist(xy,home))
                     emit("home",xy=xy,goal=home,home_error_m=report["home_error_m"])
                     break
@@ -307,7 +338,7 @@ def run(args):
                 if mode=="survey":
                     history.append(goal)
                     report["survey_arrivals"]+=1
-                else:
+                elif mode=="return":
                     report["home_arrivals"]+=1
                 emit("waypoint",index=idx,mode=mode,xy=measured_xy,goal=goal,mission_id=step["mission_id"])
             if lost:

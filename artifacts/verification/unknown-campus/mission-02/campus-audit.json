@@ -1,0 +1,168 @@
+{
+  "passed": true,
+  "issues": [],
+  "recording_id": "campus-e7962f38e9",
+  "operation_id": "campus-e7962f38e9",
+  "world_truth_frame": "world",
+  "pose_samples": 265,
+  "world_start_xy": [
+    1.0236151275522173e-09,
+    1.8800487088592376e-20
+  ],
+  "world_end_xy": [
+    -0.04416517036123009,
+    -0.0068412817372752194
+  ],
+  "world_path_m": 1.9810167443345335,
+  "world_home_error_m": 0.04469189523013682,
+  "stopped_final_drift_m": 0.0,
+  "stopped_final_samples": 5,
+  "spatial_checks": [
+    {
+      "checked_cells": 84,
+      "nonfree_cells": 0,
+      "length_m": 0.5522679618415245,
+      "index": 1,
+      "mode": "survey",
+      "goal": [
+        -0.0499999113380909,
+        -0.5499999187886715
+      ],
+      "map_stamp_ns": 7126000000,
+      "known": 1419,
+      "subscriber_map_matches": true,
+      "core_state": "CANCELED"
+    },
+    {
+      "checked_cells": 84,
+      "nonfree_cells": 0,
+      "length_m": 0.5522679607106434,
+      "index": 2,
+      "mode": "survey",
+      "goal": [
+        -0.5499999187886715,
+        -0.0499999113380909
+      ],
+      "map_stamp_ns": 12126000000,
+      "known": 1424,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.4900290776166877,
+        -0.057056668526508036
+      ],
+      "goal_error_m": 0.06038459748057932,
+      "arrival_pair_delta_ms": 44.0
+    },
+    {
+      "checked_cells": 91,
+      "nonfree_cells": 0,
+      "length_m": 0.6009857104096349,
+      "index": 3,
+      "mode": "survey",
+      "goal": [
+        -0.4499999172985554,
+        -0.6499999202787876
+      ],
+      "map_stamp_ns": 17126000000,
+      "known": 1713,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.4535890911775309,
+        -0.5967697682156032
+      ],
+      "goal_error_m": 0.05335101927614178,
+      "arrival_pair_delta_ms": 66.0
+    },
+    {
+      "checked_cells": 84,
+      "nonfree_cells": 0,
+      "length_m": 0.5450673059285792,
+      "index": 4,
+      "mode": "inspect",
+      "goal": [
+        -0.4964361136551931,
+        -0.05339693104338651
+      ],
+      "map_stamp_ns": 22126000000,
+      "known": 1903,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.4739981574868209,
+        -0.10711747636521543
+      ],
+      "goal_error_m": 0.05821820047621248,
+      "arrival_pair_delta_ms": 52.0
+    },
+    {
+      "checked_cells": 84,
+      "nonfree_cells": 0,
+      "length_m": 0.4964048610277227,
+      "index": 5,
+      "mode": "return",
+      "goal": [
+        -1.2477089679339322e-09,
+        -5.94378087697578e-30
+      ],
+      "map_stamp_ns": 29626000000,
+      "known": 1910,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.04416618218201468,
+        -0.00684133180301267
+      ],
+      "goal_error_m": 0.04469290054539694,
+      "arrival_pair_delta_ms": 64.0
+    }
+  ],
+  "holds": [
+    {
+      "mission_id": "campus-e7962f38e9/leg/1",
+      "samples": 24,
+      "drift_m": 0.0,
+      "twist_samples": 17,
+      "max_observed_command": 0.0,
+      "goals_while_stopped": [],
+      "interval_sim_s": 3.286
+    }
+  ],
+  "saved_known_gain": 484,
+  "map_sha256": {
+    "occupancy.json": "51027645665ec18b91c1ea83816cfca9948c5cb041e82044068c304e943a90dd",
+    "map.pgm": "5db73e4eb8647e553d8e70d98b12038927f408637ec1331dcff0f974b30cc86f",
+    "map.yaml": "40ea4c382ed05792e50f47b087582440eef7bf4cd1a28c985e08a92c186cbef8"
+  },
+  "inspection": {
+    "source_step": 2,
+    "target_xy": [
+      -0.4964361136551931,
+      -0.05339693104338651
+    ],
+    "measured_source_xy": [
+      -0.4964361136551931,
+      -0.05339693104338651
+    ],
+    "arrival_world_xy": [
+      -0.47399907399586544,
+      -0.10711301987724944
+    ],
+    "arrival_pair_delta_ms": 2.0,
+    "station_error_m": 0.058213735048368916,
+    "parking_cell_check": {
+      "checked_cells": 49,
+      "nonfree_cells": 0,
+      "length_m": 0.0
+    },
+    "window_pose_samples": 2,
+    "drift_m": 0.0,
+    "independent_observation_counts": {
+      "free": 315,
+      "occupied": 0,
+      "uncertain": 0,
+      "unknown": 0
+    }
+  }
+}

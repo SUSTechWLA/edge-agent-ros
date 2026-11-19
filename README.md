@@ -10,6 +10,8 @@
 
 ## 现在可以做什么
 
+想直观看懂机器人怎样把任务变成坐标，可以看这次校园冷启动实验。从等待第一幅地图、感知中断停车，到存图、选位置复查和返航，整段录像可按决策跳看。录制是默认关闭的独立插件，也能录纯软件任务。[播放校园任务](artifacts/verification/unknown-campus/mission-02/video/index.html) · [坐标来源与实测](docs/testing/unknown-campus.md) · [录自己的任务](task_recorder/README.md)
+
 无人车上板使用单独生成的 `deploy/robot` 分支。板端从 `sh scripts/robot.sh observe` 启动，研发侧维护完整代码、Gazebo、SDD 与测试。机号、安装外参、工厂证据与地图的交接方式见[无人车出厂、首次进场与板端交付](docs/rover-commissioning.md)。
 
 大型校园实验采用代尔夫特理工大学的测绘建筑和正射影像。教学训练楼、机器人广场、八道运动场、草地和林带通过一条约 777 米的步道接入真实校园街网。在[校园全景](http://127.0.0.1:8780/)打开路线叠加，在[三维地图](http://127.0.0.1:8773/?view=3d&place=campus)切换到具体机器人，可近看机体、传感器和动作。轮式车、无人机、四足和双足的仿真动力学与已验收能力各不相同。[校园安装与运行](scene/campus_large/README.md) · [四种机体的查看与复测](docs/testing/campus-robot-view.md) · [长程试验场规格](docs/specs/SDD-029-unified-campus.md)

@@ -15,6 +15,11 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("task_recorder/*","compose.task-recorder.yaml","scripts/record-task.*","tests/test_recorder*.py",
+      "tests/test_task_record*.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
+    (("tests/system/record_unknown_campus.py","tests/system/unknown_campus*",
+      "tests/system/campus_survey*","tests/system/campus_revisit.py",
+      "tests/test_campus_survey_worker.py","tests/test_campus_revisit.py"),(R,"campus-world")),
     (("tests/test_mission_recording.py", "tests/system/commission_recording.py", "tests/system/long_mission_world.py",
       "tests/system/record_long_mission.py", "tests/system/render_rover_video.py", "tests/system/mission_watch_page.py"),
      (R,)),
@@ -144,6 +149,10 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_optional_recorder_and_campus_consumers(self):
+        self.assertEqual(selection(["task_recorder/service.py","compose.task-recorder.yaml"])[0],[R])
+        self.assertEqual(selection(["tests/system/record_unknown_campus.py"])[0],[R,"campus-world"])
+
     def test_recording_fixtures_stay_off_board(self):
         for name in ("commission_recording", "long_mission_world", "record_long_mission", "render_rover_video", "mission_watch_page"):
             self.assertEqual(selection([f"tests/system/{name}.py"])[0], [R], name)

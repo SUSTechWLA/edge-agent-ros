@@ -99,6 +99,11 @@ def run(args, selected, reasons):
                                 test("document_contract.py","-v"),
                                 test("test_selection.py","-v"),test("test_robot_release.py","-v"),
                                 test("test_mission_recording.py","-v"),
+                                test("test_task_recorder.py","-v"),test("test_recorder_cli.py","-v"),
+                                test("test_task_recording_source.py","-v"),test("test_campus_revisit.py","-v"),
+                                test("test_campus_survey_worker.py","-v"),
+                                ["docker","compose","-f","compose.yaml","-f","compose.task-recorder.yaml","config","--quiet"],
+                                ["docker","compose","-f","compose.hardware.yaml","-f","compose.task-recorder.yaml","config","--quiet"],
                                 ["docker","compose","config","--quiet"],
                                 ["docker","compose","-f","compose.hardware.yaml","config","--quiet"],
                                 ["docker","compose","-f","compose.yaml","-f","compose.camera.yaml","-f","compose.rgbd.yaml",
@@ -243,6 +248,9 @@ def run(args, selected, reasons):
                         checks["campus-world"].append(test("system/campus_acceptance.py","--image",image,"--assets",
                                                        str((assets or ROOT/"artifacts/sim-assets").resolve()),
                                                        "--verify-reload","--verify-texture","--verify-onboard","--out",directory/"campus-world.json"))
+                        checks["campus-world"].append(test("system/record_unknown_campus.py","--image",image,"--assets",
+                                                       str((assets or ROOT/"artifacts/sim-assets").resolve()),
+                                                       "--out",directory/"unknown-campus"))
                     else:
                         skip("campus-world-assets","optional campus assets not installed; use scene/campus_large/fetch_assets.py")
                 for name, commands in checks.items():
