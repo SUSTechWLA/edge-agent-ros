@@ -100,3 +100,24 @@ docker run --pull=never --rm --network none --mount "type=bind,source=$PWD,targe
 在 Linux/amd64 的隔离 ROS 域，以合成里程计、真实 HTTP 和 SQLite 验证 status 的旧句式、证据字节、缺样、过期数据和无 binding 任务恢复。只读工具 track_distance 使用 v1 清单、独立提供者和 8 组输入验证，沿用原注册与调用接口。
 
 AC-3 验收使用 `python3 tests/test_capability_catalog.py --http -v`（真实 HTTP、两个 Unix socket 与 4 项投影测试）、`python3 tests/test_status_plugin.py -v`（4 项）、`python3 tests/agent_trace_contract.py -v`（12 项）和 `python3 tests/agent_verification_contract.py -v`（11 项）。Windows 快速门逐条结果见 `.ci-results/k2/wp3/gate.json`，样例工具的 8 个用例及重复投递回执见 `.ci-results/sdd-049/wp3/track-1795082409853305700.json`。旧清单没有声明的契约字段取 null，未探测的健康状态取 unknown。
+
+### WP4 Console 通过 Agent 查询事实
+
+任务与相关步骤由 Agent 在同一只读 SQLite 快照中查询。Console 使用 `EDGE_AGENT_URL` 访问以下 GET。既有任务详情、复盘和 Session 客户端继续使用原有 URL。
+
+| Agent 路径 | 读者与续读方式 |
+|---|---|
+| `/agent/task-context` | 按 task_id 或 trace_id 取得任务、旧步骤、关联任务及覆盖窗口。 |
+| `/agent/task-index` | 复盘和 Session 列表共用分类计数，before 绑定原账本、状态筛选和行号。 |
+| `/agent/task-events` | Observer 以持久化的源身份和原始 seq 续读。源更换后按新身份在 Console 归档中查找对应检查点。 |
+| `/agent/registry-events` | 读取 runtime.registry 原有事件及心跳，保留生产者身份、序号和原始字节。 |
+
+Console 拥有自己的 `history.db`，先收录 Agent 派发事件，再关联同批 core 事件。部署通过 `EDGE_JOURNAL_SOURCES` 指定可公开的模块日志，聚合卷按模块目录发现来源。`console/server/legacy_ledger.py` 中的 `LegacyLedgerReader` 是 core 的过渡性只读适配器，待 core 提供事实接口后迁移。
+
+AC-4 在线实测使用 `python3 -B tests/test_console_facts.py -v`，3 项均通过。旧任务的游标 7 可接续获得序号 13 与 21，查询前后任务、触发与事件表相同。使用 `python3 -m unittest discover -v -s /opt/edge/console/server` 通过 44 项，同一离线 ROS 镜像中的 Evidence 15 项和 Session 9 项通过。Windows 快速门及 Compose 配置见 `.ci-results/k2/wp4/gate.json`。在独立双容器中，Console 无任务卷，Edge 浏览器实际打开会话、复盘和旧任务详情，并收到 SUCCEEDED 和原 status 步骤，证据见 `.ci-results/k2/wp4/811128efb5/acceptance.json`。
+
+板端离线兼容性单独验收。在隔离容器内设置 `EDGE_CONSOLE_OBSERVE_ONLY=1`、`EDGE_AGENT_URL=http://127.0.0.1:1`，用 `.ci-results/k2/wp4/offline_observe_probe.py` 查询同一份旧任务。旧版复盘索引返回 HTTP 200，候选返回 503；任务上下文的 task_available 从 true 变为 false。两个版本的事件归档查询均为 HTTP 200。逐项回执在 `.ci-results/k2/wp4/observe-legacy.json` 与 `.ci-results/k2/wp4/observe-candidate.json`。板端 observe 启动脚本明确禁止随之启动控制 Agent，仅启动 perception 与 console。
+
+为保留上述旧任务，板端观察模式增加独立 `task-facts` 进程。服务复用 Agent 的只读投影，读取原任务卷；Console 通过 `EDGE_FACTS_URL` 访问。常规任务模式沿用 Agent 的 HTTP 入口。已存在的 `EDGE_CONSOLE_OBSERVE_ONLY` 默认为 0，观察配置将它设为 1；任务提交与重试仍受原代理约束。台架切换任务模式前，在事实服务处检查原账本中的未结束任务。
+
+修复后，原 `sh scripts/deploy.sh hardware observe` 在隔离网络启动上述三个容器，旧任务列表和详情恢复为 HTTP 200。见 `.ci-results/k2/wp4/edge-wp4-observe-98fde60b9d/summary.json`。在正常关闭和最新事务仍在 WAL 的两种库上，Edge 均实际打开离线会话、步骤证据与先前归档。WAL 中的第 34 条事件可读，库、WAL、SHM 的文件集合、大小、哈希和修改时间逐项一致。Console 的任务提交返回 403，事实服务相应写请求返回 405。两次完整报告在 `.ci-results/k2/wp4/observe-e4cda4b9/{clean,wal}/acceptance.json`。最终 Console 套件 45 项、`tests/test_console_facts.py` 5 项、Agent trace 12 项、verification 11 项通过；范围均为 Linux/amd64 软件夹具。

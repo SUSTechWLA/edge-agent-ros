@@ -34,6 +34,8 @@ mkdir -p artifacts/verification/field
 sh scripts/deploy.sh hardware preflight > "artifacts/verification/field/$(date -u +%Y%m%dT%H%M%SZ)-inputs.json"
 ```
 
+观察模式启动感知、Console 和 `task-facts`。控制 Agent 停机时，仍可从工作台的任务列表和运行复盘读取这台机器已保存的任务与步骤。只有事实服务以只读方式挂载任务卷。它在板端回环地址监听，默认端口 8091，可通过 `EDGE_FACTS_PORT` 调整。
+
 退出码 0 表示选定话题、坐标系和连续采样达到现场预检条件。只接里程计时可以先运行 `sh scripts/deploy.sh hardware preflight odom`。查看故障与时钟偏差的解释，请从解压后的源码打开 `docs/deployment.md`。
 
 如果 `observe` 最后显示 `Connection refused`，记下当时的端口、机体 ID 和版本，保留容器与数据卷。在同一目录、同一组环境变量下运行以下指令，区分容器退出、工作台仍在启动、端口未监听和传感器缺失。

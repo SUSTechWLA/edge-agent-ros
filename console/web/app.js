@@ -13,7 +13,7 @@ async function api(path,opts={}){
   let data;try{data=await res.json();}catch{throw new Error('服务响应格式异常（HTTP '+res.status+'）');}
   if(!res.ok){
     const error=new Error(typeof data.error==='string'?data.error:data.detail||'服务返回 HTTP '+res.status);
-    error.status=res.status;error.code=data.code;throw error;
+    error.status=res.status;error.code=data.code;error.observeOnly=data.observe_only===true;throw error;
   }
   return data;
 }
@@ -29,6 +29,17 @@ const section=()=>{
   return name==='review'||name==='events'?name:'monitor';
 };
 const displayed=()=>replay||live;
+const taskWritesEnabled=()=>!!live && live.task_proxy_mode!=='observe' && !replay;
+async function readTask(id,limit){
+  if(!live)await initialStateRead;
+  const query=new URLSearchParams({id});
+  if(limit!=null)query.set('limit',limit);
+  if(live && live.task_proxy_mode!=='observe'){
+    try{return await api('/agent/tasks?'+query);}
+    catch(error){if(error.status!==403 || error.code!=='console.observe_only')throw error;}
+  }
+  return api('/api/task-detail?'+query);
+}
 function health(out,source){
   if(!replay && live && !liveOk){out.className='badge warn';out.textContent='连接中断';return;}
   if(source?.status==='error'){out.className='badge warn';out.textContent='来源异常';return;}
@@ -106,7 +117,10 @@ function render(){
   el('metric-yaw').textContent=pose?fmt(pose.yaw*180/Math.PI,1):'—';
   el('metric-speed').textContent=odom?fmt(odom.v,3):'—';
   el('metric-action').textContent=s?(s.active_operation||'无活动动作'):'—';
-  el('history-bar').hidden=!replay;el('open-task').disabled=!!replay;
+  el('history-bar').hidden=!replay;el('open-task').disabled=!taskWritesEnabled();
+  el('open-task').hidden=live?.task_proxy_mode==='observe';
+  const retry=el('task-status').querySelector('button');
+  if(retry)retry.hidden=!taskWritesEnabled();
   if(replay){
     const telemetry=replay.telemetry_at===null?' · 此事件没有同期遥测':Number.isFinite(replay.telemetry_at)?' · 遥测 '+clock(replay.telemetry_at):'';
     el('history-msg').textContent='历史回放　#'+replayRecord.seq+'　'+clock(replayRecord.utc)+'　'+replayRecord.kind+telemetry;
@@ -278,10 +292,11 @@ function renderTask(task){
     list.append(row);
   }
   el('task-status').replaceChildren(title,node('p','',task.text||''),content,list);
-  if(task.can_retry){
+  if(task.can_retry && live?.task_proxy_mode!=='observe'){
     const retry=node('button','','故障已处理，续办原步骤');
+    retry.hidden=!taskWritesEnabled();
     retry.onclick=async()=>{
-      if(replay || taskRecord?.id!==task.id)return;
+      if(!taskWritesEnabled() || taskRecord?.id!==task.id)return;
       retry.disabled=true;
       try{
         renderTask(await api('/agent/retry',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -296,11 +311,11 @@ async function capabilities(){
     el('cap-list').textContent='可用能力　'+(r.capabilities||[]).map(x=>x.id).join(' · ');
   }catch(e){el('cap-list').textContent='能力目录暂不可用 · '+e.message;}
 }
-el('open-task').onclick=()=>{if(replay)return;el('task-modal').showModal();el('task-text').focus();capabilities();};
+el('open-task').onclick=()=>{if(!taskWritesEnabled())return;el('task-modal').showModal();el('task-text').focus();capabilities();};
 el('close-task').onclick=()=>el('task-modal').close();
 el('task-example').onclick=()=>{el('task-text').value='依次巡检 (0.8,0) 和 (0.8,0.7)，然后报告状态';el('task-text').focus();};
 el('task-form').onsubmit=async e=>{
-  e.preventDefault();if(submitBusy||replay)return;const text=el('task-text').value.trim();if(!text)return;
+  e.preventDefault();if(submitBusy||!taskWritesEnabled())return;const text=el('task-text').value.trim();if(!text)return;
   if(!taskDraft||taskDraft.text!==text)taskDraft={text,id:taskId()};
   submitBusy=true;el('task-submit').disabled=true;el('task-feedback').textContent='正在提交…';
   try{
@@ -314,11 +329,12 @@ el('task-form').onsubmit=async e=>{
 let refreshingTask=false;
 async function refreshTask(id,silent=false){
   if(!id||refreshingTask)return;refreshingTask=true;
-  try{const r=await api('/agent/tasks?id='+encodeURIComponent(id));renderTask(r);}
+  try{const r=await readTask(id);renderTask(r);}
   catch(e){if(!silent)setNotice('无法查询任务 · '+e.message);}finally{refreshingTask=false;}
 }
 el('refresh-task').onclick=()=>refreshTask(taskRecord?.id);
 el('trace-task').onclick=()=>{if(!taskRecord)return;clearFilterInputs();el('task-filter').value=taskRecord.id;pageBefore=null;applyFilter();location.hash='events';};
-route();poll();refreshTask(localStorage.getItem('edge-last-task'),true);
+const initialStateRead=poll();
+route();refreshTask(localStorage.getItem('edge-last-task'),true);
 setInterval(()=>{if(!document.hidden)poll();},1000);
 setInterval(()=>{if(!document.hidden && !replay && taskRecord && !['SUCCEEDED','CANCELED','FAILED','REJECTED','BLOCKED','RECOVERY_REQUIRED'].includes(taskRecord.state))refreshTask(taskRecord.id,true);},1800);

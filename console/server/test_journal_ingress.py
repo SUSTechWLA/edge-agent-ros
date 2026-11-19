@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 from history import History
 from journal_ingress import JournalIngress
+from task_data import AgentFacts
+from test_facts_fixture import agent_facts_server
 
 
 class JournalIngressTest(unittest.TestCase):
@@ -52,6 +54,36 @@ class JournalIngressTest(unittest.TestCase):
 
     def rows(self, **filters):
         return self.history.page(0,None,200,filters)["events"]
+
+    def test_registry_http_resumes_old_archive_and_tracks_replaced_source(self):
+        module = "runtime.registry"
+        db = self.source(module)
+        self.publish(db, module, "before-migration")
+        self.poll()
+        with db:
+            db.execute("INSERT INTO module_bus_heartbeat VALUES(1,'pulse-original',4)")
+            db.execute("INSERT INTO module_bus_events(event) VALUES(?)", (b"\xff",))
+        self.publish(db, module, "after-migration")
+        mounts = self.root / "empty-console-sources"
+        mounts.mkdir()
+        journal = self.extra / module / "module-events.sqlite"
+        with agent_facts_server(self.root / "unused-task-db", journal) as url:
+            self.reader = JournalIngress({}, mounts, clock=lambda:self.t, agent=AgentFacts(url))
+            self.poll()
+            self.assertEqual(self.history.source_cursor("journal:runtime.registry:first"), 3)
+            self.assertEqual(len(self.rows(kind="module.event_invalid")), 1)
+            self.assertEqual(self.reader.leases[module].pulse, "pulse-original")
+            self.t += 5
+            self.poll()
+            self.assertEqual(len(self.rows(kind="module.heartbeat_overdue")), 1)
+            with db:
+                db.execute("UPDATE module_bus_meta SET value='second' WHERE key='source_id'")
+                db.execute("DELETE FROM module_bus_events")
+            self.publish(db, module, "replacement")
+            self.poll()
+            self.assertEqual(self.history.source_cursor("journal:runtime.registry:second"), 1)
+            self.assertEqual([row["event_id"] for row in self.rows(source="journal:runtime.registry")],
+                             ["before-migration", "after-migration", "replacement"])
 
     def test_poison_does_not_stall_other_rows_or_other_sources(self):
         a, b = self.source("camera"), self.source("power")

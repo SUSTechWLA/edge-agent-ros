@@ -221,7 +221,7 @@ const RunReview = (() => {
   async function loadOwner() {
     const ticket=++ownerRequest;
     try {
-      const t=await api('/agent/tasks?'+new URLSearchParams({id:taskId,limit:1}));
+      const t=await readTask(taskId,1);
       if(ticket!==ownerRequest)return;
       task=t;showTask(t);
     } catch(e) {

@@ -10,6 +10,7 @@ from unittest.mock import patch
 import rclpy
 
 from observer import Observer
+from test_facts_fixture import agent_facts_server
 
 
 class ReplayTest(unittest.TestCase):
@@ -30,14 +31,15 @@ class ReplayTest(unittest.TestCase):
                     '{"trace":{"event_id":"old-block","parent_event_id":"old-reply","trace_id":"old-trace"}}');
             """)
             db.close()
-            env = {"EDGE_CONSOLE_DIR": str(path / "console"), "EDGE_TASK_DB": str(source),
+            env = {"EDGE_CONSOLE_DIR": str(path / "console"),
                    "EDGE_LEDGER_PATH": str(path / "absent.db"), "EDGE_ENVIRONMENT": "hardware"}
             rclpy.init()
             try:
-                with patch.dict(os.environ, env):
+                with agent_facts_server(source) as url, patch.dict(os.environ, {**env, "EDGE_AGENT_URL":url}):
                     for _ in range(2):
                         obs = Observer()
                         try:
+                            obs.poll_facts()
                             obs.tick()
                             events = [json.loads(line) for line in obs.history.export({"trace_id":"old-trace"},True)]
                             self.assertEqual([e["event_id"] for e in events], ["old-reply","old-block"])
@@ -86,13 +88,14 @@ class ReplayTest(unittest.TestCase):
             """)
             ledger.close()
             env={"EDGE_CONSOLE_DIR":str(root/"console"),"EDGE_LEDGER_PATH":str(root/"core.db"),
-                 "EDGE_TASK_DB":str(root/"tasks.db"),"EDGE_ENVIRONMENT":"hardware"}
+                 "EDGE_ENVIRONMENT":"hardware"}
             rclpy.init()
             try:
-                with patch.dict(os.environ,env):
+                with agent_facts_server(root/"tasks.db") as url, patch.dict(os.environ,{**env,"EDGE_AGENT_URL":url}):
                     for _ in range(2):
                         observer=Observer()
                         try:
+                            observer.poll_facts()
                             observer.tick()
                             rows=[json.loads(line) for line in observer.history.export({"task_id":"inspect"},True)]
                             self.assertEqual(len(rows),6)

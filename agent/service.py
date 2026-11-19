@@ -21,7 +21,7 @@ import soft_client
 from planning import (OutcomeUnknown, Refused, Unavailable, binding, is_series,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
-from kernel import host, verification
+from kernel import host, task_facts, verification
 from kernel.catalog import capability_view, plugin_view
 from kernel.ledger import Journal, project_step, trigger_input, utc
 from kernel.verification import finish_step
@@ -164,6 +164,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path=urlsplit(self.path)
+        if path.path in task_facts.ROUTES:
+            return self.send(*task_facts.read_request(path.path, path.query, self.server.task_db, self.server.registry_db))
         if path.path=="/agent/capabilities":
             try:
                 capabilities = capability_view(runtime_plugins.snapshot)
@@ -246,8 +248,10 @@ if __name__=="__main__":
         threading.Thread(target=worker,args=(journal,robot,planning),daemon=True).start()
     threading.Thread(target=worker,args=(journal,robot,False,True),daemon=True).start()
     server=ThreadingHTTPServer((os.getenv("EDGE_AGENT_BIND","0.0.0.0"),8090),Handler)
+    server.task_db = task_dir / "tasks.db"
+    server.registry_db = task_dir / "module-events.sqlite"
     server.journal=journal
-    server.registry_observer=runtime_plugins.RegistryObserver(task_dir/"module-events.sqlite")
+    server.registry_observer=runtime_plugins.RegistryObserver(server.registry_db)
     stop=threading.Event()
     monitor=threading.Thread(target=server.registry_observer.run,args=(stop,),daemon=True)
     monitor.start()

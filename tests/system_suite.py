@@ -207,6 +207,7 @@ def run(args, selected, reasons):
                                         f"type=bind,source={ROOT/'examples/result-verifiers'},target=/sample,readonly",
                                         "--entrypoint","python3",image,"-B","/sample/test_verifiers.py","-v"]],
                     "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server"),
+                                    in_image("python3","-B","/opt/edge/tests/test_console_facts.py","-v"),
                                     in_image("python3","-B","/opt/edge/tests/test_map3d_ros.py","-v"),
                                     in_image("python3","-B","/opt/edge/tests/test_lidar_inputs_ros.py","-v"),
                                     in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/evidence"),

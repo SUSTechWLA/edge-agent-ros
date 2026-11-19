@@ -91,10 +91,12 @@ def run(image, out):
         publish(inputs / "cases.json", fixtures(DEFAULT["unit"]))
         common = {"image": image, "pull_policy": "never", "cap_drop": ["ALL"],
                   "security_opt": ["no-new-privileges:true"], "environment": {"ROS_DOMAIN_ID": "147"}}
-        console_volumes = [mounted(plugins, REGISTRY), "journal:/var/lib/edge-tasks:ro",
-                           "sources:/var/lib/edge-module-sources:ro"]
+        console_volumes = [mounted(plugins, REGISTRY), "sources:/var/lib/edge-module-sources:ro"]
         def console(volume):
             return {**common, "command": ["python3", "/opt/edge/console/server/main.py"],
+                    "environment": {**common["environment"], "EDGE_JOURNAL_SOURCES": json.dumps({
+                        "plugin.publisher": REGISTRY + "/derived/.history/module-events.sqlite",
+                        "plugin.manager": REGISTRY + "/runtime/.history/module-events.sqlite"})},
                     "volumes": console_volumes + [volume + ":/var/lib/edge-console"],
                     "ports": ["127.0.0.1::8080"]}
 

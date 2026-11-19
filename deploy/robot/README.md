@@ -23,7 +23,7 @@ sh scripts/robot.sh preflight
 
 ## 在台架验证插件组合
 
-默认的 `sh scripts/robot.sh observe` 只启动 Console 和感知。需要验收软件插件时，可在同版硬件镜像上增加下列步骤。`profiles/observe.json` 选择零个插件，`profiles/bench.json` 选择 `capabilities/soft-pilots/pack.json` 中的 Session、证据查询和数列计算。先确定部署分支的提交和 `ROBOT_SOURCE`，再将工位目录指定在代码仓外。以下命令使用已验收的本地镜像、Docker Compose v2 和 Python 3 标准库。
+默认的 `sh scripts/robot.sh observe` 启动 Console、感知和只读任务事实服务。控制 Agent 离线时，可在工作台复盘历史任务。需要验收软件插件时，可在同版硬件镜像上增加下列步骤。`profiles/observe.json` 选择零个插件，`profiles/bench.json` 选择 `capabilities/soft-pilots/pack.json` 中的 Session、证据查询和数列计算。先确定部署分支的提交和 `ROBOT_SOURCE`，再将工位目录指定在代码仓外。以下命令使用已验收的本地镜像、Docker Compose v2 和 Python 3 标准库。
 
 ```sh
 export EDGE_HARDWARE_IMAGE="edge-agent-ros/hardware:robot-$(cut -c1-12 ROBOT_SOURCE)"

@@ -19,7 +19,9 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Imu, LaserScan
 from std_msgs.msg import String
 
-from history import EventConflict, History, ledger_batch, task_batch
+from history import EventConflict, History
+from legacy_ledger import LegacyLedgerReader
+from task_data import AgentFacts, FactsUnavailable
 from journal_ingress import JournalIngress
 from module_events import parse_event
 from observations import Observations
@@ -87,18 +89,9 @@ class Observer(Node):
         self.scan_frame = os.environ.get("EDGE_SCAN_FRAME", "laser_link")
         self.base_frame = os.environ.get("EDGE_BASE_FRAME", "base_link")
         self.history = History(Path(os.environ.get("EDGE_CONSOLE_DIR","/var/lib/edge-console")) / "history.db")
-        self.ledger = Path(os.environ.get("EDGE_LEDGER_PATH","/var/lib/edge-agent/edge.db")).absolute()
-        self.tasks = Path(os.environ.get("EDGE_TASK_DB","/var/lib/edge-tasks/tasks.db")).absolute()
-        journals = {
-            "runtime.registry":self.tasks.parent / "module-events.sqlite",
-            "plugin.author":Path("/var/lib/edge-author-events/module-events.sqlite"),
-            "plugin.publisher":Path("/etc/edge/plugins/derived/.history/module-events.sqlite"),
-            "plugin.manager":Path("/etc/edge/plugins/runtime/.history/module-events.sqlite"),
-            "plugin.supervisor":Path("/var/lib/edge-supervisor/module-events.sqlite"),
-        }
-        if os.getenv("EDGE_PHYSICAL_AUDIT"):
-            journals["physical.controller"] = Path(os.environ["EDGE_PHYSICAL_AUDIT"])
-        self.journals = JournalIngress(journals, "/var/lib/edge-module-sources")
+        self.ledger = LegacyLedgerReader()
+        self.facts = AgentFacts()
+        self.journals = JournalIngress.from_deployment(self.facts)
         self.sources = {}
         self.health = {}
         self.health_event = {}
@@ -110,7 +103,6 @@ class Observer(Node):
         self.task_error = None
         self.task_source_id = None
         self.last_baseline = 0
-        self.last_ledger = 0
         self.moving = None
         self.mode = None
         self.sim_clock = None
@@ -391,8 +383,8 @@ class Observer(Node):
 
     def poll_tasks(self):
         try:
-            source_id,rows=task_batch(self.tasks,self.history)
-        except (OSError,sqlite3.Error) as exc:
+            page = self.facts.event_batch("task-events", self.history)
+        except FactsUnavailable as exc:
             if self.task_error != str(exc):
                 self.task_error=str(exc)
                 self.event("agent.journal_unavailable","mission_agent/tasks",str(exc),"warn")
@@ -400,8 +392,9 @@ class Observer(Node):
         if self.task_error:
             self.task_error=None
             self.event("agent.journal_available","mission_agent/tasks","任务日志已连接")
+        source_id = page["source_id"]
         self.task_source_id=source_id
-        for row in rows:
+        for row in page["events"]:
             kind=row["kind"]
             data={"source_seq":row["seq"],"task_id":row["task_id"],"journal_step":row["step"],
                   "delegated_operation_id":row["operation_id"]}
@@ -430,11 +423,18 @@ class Observer(Node):
             frame["missions"]=prior["missions"] if prior and frame["telemetry_at"] is not None else []
             return frame
 
+    def poll_facts(self):
+        # Import task dispatch first, so core events can link to the original operation.
+        self.poll_tasks()
+        with self.lock:
+            self.poll_ledger()
+
     def watch_journals(self, stop):
         # Source locks, backlog import and snapshot compression must not occupy the ROS executor.
         unavailable = False
         while not stop.is_set():
             try:
+                self.poll_facts()
                 self.journals.poll(self.history, lambda at: self.observed_frame(at) if at else self.snapshot())
                 if unavailable:
                     self.event("module.ingress_restored","edge_console","持久模块事件归档恢复")
@@ -448,7 +448,7 @@ class Observer(Node):
 
     def poll_ledger(self):
         try:
-            identity, missions, events, steps = ledger_batch(self.ledger,self.history)
+            identity, missions, events, steps = self.ledger.batch(self.history)
         except (OSError,sqlite3.Error) as ex:
             if self.ledger_error != str(ex):
                 self.ledger_error=str(ex)
@@ -473,10 +473,6 @@ class Observer(Node):
         with self.lock:
             now = time.monotonic()
             self.extra.tick(now)
-            if now-self.last_ledger >= 0.5:
-                self.poll_tasks()
-                self.poll_ledger()
-                self.last_ledger=now
             frame = self.snapshot()
             self.historical.append(frame)
             for key,s in frame["sources"].items():

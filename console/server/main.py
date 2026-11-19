@@ -2,7 +2,6 @@
 import http.client
 import json
 import os
-import sqlite3
 import threading
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -12,9 +11,9 @@ import rclpy
 
 from history import TRACE_FIELDS, encode
 from observer import Observer
-from task_review import task_page
 from session_service import SessionUnavailable, read_session
-from task_data import task_context
+from task_data import FactsQueryError, FactsUnavailable
+from edge_contracts.trace_content import sanitized
 
 
 def integer(params, key, default=None, ceiling=2**63-1):
@@ -136,20 +135,46 @@ class Handler(SimpleHTTPRequestHandler):
                 snapshot = self.observer.snapshot()
                 snapshot["task_proxy_mode"] = "observe" if os.getenv("EDGE_CONSOLE_OBSERVE_ONLY")=="1" else "agent"
                 self.respond(200,snapshot)
+            elif url.path=="/api/task-detail":
+                if set(params) - {"id","after","limit"} or not params.get("id",[""])[0] or any(
+                        len(values) != 1 for values in params.values()):
+                    raise ValueError("provide one task id and optional event cursor and limit")
+                if os.getenv("EDGE_CONSOLE_OBSERVE_ONLY") != "1":
+                    self.agent("GET",url._replace(path="/agent/tasks"))
+                    return
+                try:
+                    task = self.observer.facts.get("tasks", {key:values[0] for key,values in params.items()})
+                except FactsUnavailable:
+                    self.respond(503,{"code":"facts.unavailable","error":"只读任务服务暂时不可用。"})
+                    return
+                self.respond(200,task)
             elif url.path in ("/api/review/tasks","/api/sessions"):
                 try:
-                    page=task_page(self.observer.tasks,params.get("state",["all"])[0],params.get("before",[None])[0],
-                                   integer(params,"limit",30,100))
-                except (OSError,sqlite3.Error):
-                    self.respond(503,{"error":"任务账本暂时不可读，请检查 Agent 与任务数据卷。"})
+                    query = {"state":params.get("state", ["all"])[0], "limit":integer(params, "limit", 30, 100)}
+                    if "before" in params:
+                        query["before"] = params["before"][0]
+                    page = self.observer.facts.get("task-index", query)
+                except FactsUnavailable:
+                    self.respond(503,{"error":"任务账本暂时不可读，请检查 Agent 连接。"})
                     return
+                if url.path=="/api/sessions" and os.getenv("EDGE_CONSOLE_OBSERVE_ONLY") == "1":
+                    for row in page["tasks"]:
+                        for field in ("text", "detail"):
+                            if isinstance(row.get(field), str):
+                                row[field] = sanitized(row[field])
                 self.respond(200,page)
             elif url.path in ("/api/session","/api/task-context"):
                 if any(len(params[key])!=1 for key in ("task_id","trace_id","format") if key in params):
                     raise ValueError("each task, trace or format parameter must occur once")
                 task_id,trace_id=params.get("task_id",[None])[0],params.get("trace_id",[None])[0]
                 if url.path=="/api/task-context":
-                    self.respond(200,task_context(self.observer.tasks,task_id,trace_id))
+                    paging = {}
+                    for key in ("after", "limit", "source_id"):
+                        if key in params:
+                            if len(params[key]) != 1:
+                                raise ValueError("each pagination parameter must occur once")
+                            paging[key] = params[key][0]
+                    self.respond(200,self.observer.facts.context(task_id,trace_id,**paging))
                     return
                 output=params.get("format",["json"])[0]
                 if output not in ("json","markdown"):
@@ -157,7 +182,10 @@ class Handler(SimpleHTTPRequestHandler):
                 try:
                     document=read_session(task_id,trace_id)
                 except SessionUnavailable as error:
-                    self.respond(error.status,{"error":str(error),"code":error.code,"details":error.details})
+                    result = {"error":str(error),"code":error.code,"details":error.details}
+                    if os.getenv("EDGE_CONSOLE_OBSERVE_ONLY") == "1":
+                        result["observe_only"] = True
+                    self.respond(error.status,result)
                     return
                 if output=="markdown":
                     body=document["markdown"].encode("utf-8")
@@ -187,6 +215,8 @@ class Handler(SimpleHTTPRequestHandler):
                     self.wfile.write(line)
             else:
                 self.respond(404,{"error":"unknown endpoint"})
+        except FactsQueryError as error:
+            self.respond(error.status, {"error":error.details.get("detail", str(error)), **error.details})
         except ValueError as error:
             self.respond(400,{"error":str(error)})
         except (ConnectionResetError,BrokenPipeError):

@@ -203,6 +203,28 @@ const SessionView = (() => {
       get('session-markdown').hidden=true;
       get('session-fallback-review').href='#review?'+new URLSearchParams({task:id});
       get('session-fallback').hidden=false;
+      if(e.observeOnly && !projection){
+        try{
+          const record=await api('/api/task-context?'+new URLSearchParams({task_id:id}));
+          if(ticket!==readerRequest || id!==selectedId)return;
+          const t=record.task;
+          if(!t){
+            get('session-goal').textContent=record.notes?.length?'任务记录暂不可读':'未找到这项任务';
+            notice('session-notice',(record.notes||[]).join(' '));
+            return;
+          }
+          get('session-goal').textContent=t.text||'未记录任务原文';
+          get('session-state').textContent=stateLabel(t.state);
+          get('session-state').className='badge '+tone(t.state);
+          get('session-headline').textContent=t.detail||'';
+          get('session-dates').textContent='创建于 '+date(t.created)+' · 最后更新 '+date(t.updated);
+          notice('session-notice','当前显示只读任务记录。会话摘要暂不可用。');
+        }catch(readError){
+          if(ticket!==readerRequest || id!==selectedId)return;
+          get('session-goal').textContent=readError.status===404?'未找到这项任务':'任务记录暂不可读';
+          notice('session-notice',readError.message);
+        }
+      }
     }finally{
       if(ticket===readerRequest){readerBusy=false;get('session-reader').setAttribute('aria-busy','false');get('session-refresh').disabled=false;}
     }

@@ -15,6 +15,8 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/facts_server.py",), ("observations","board","ui")),
+    (("tests/test_console_facts.py",), ("observations",)),
     (("tests/test_capability_catalog.py", "tests/test_status_plugin.py"), ("agent-contracts",)),
     (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
@@ -182,6 +184,11 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_console_facts_run_observations(self):
+        self.assertEqual(selection(["tests/test_console_facts.py"])[0], [R, "observations"])
+        for stage in ("observations","board","ui"):
+            self.assertIn(stage, selection(["agent/facts_server.py"])[0])
+
     def test_status_and_catalog_use_agent_contracts(self):
         for path in ("tests/test_status_plugin.py", "tests/test_capability_catalog.py"):
             self.assertIn("agent-contracts", selection([path])[0])

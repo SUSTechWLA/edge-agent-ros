@@ -57,7 +57,7 @@ case "$action" in
     fi
     guard
     verify activate --root /registry
-    compose up -d --no-build perception console soft-facts soft-gateway soft-host evidence session
+    compose up -d --no-build perception task-facts console soft-facts soft-gateway soft-host evidence session
     guard --running
     compose ps --services --status running ;;
   camera-check) guard ;;
@@ -76,14 +76,7 @@ if r["phase"]!="ACTIVE" or any(not op["settled"] for op in r["operations"]): sys
     track=soft
     guard --running
     verify activate --root /registry
-    compose exec -T console python3 -c '
-from pathlib import Path
-import sqlite3,sys
-p=Path("/var/lib/edge-tasks/tasks.db")
-if p.exists():
-    db=sqlite3.connect(p.as_uri()+"?mode=ro",uri=True)
-    unfinished=db.execute("SELECT count(*) FROM tasks WHERE state NOT IN (?,?,?)",("BLOCKED","SUCCEEDED","CANCELED")).fetchone()[0]
-    if unfinished: sys.exit("reconcile existing tasks before switching profile")'
+    compose exec -T task-facts python3 -B /opt/edge/agent/facts_server.py --check-handoff
     # Reopen the Console task API on explicit operator request. The control services, drivers
     # and physical provider processes are outside this command's service list.
     compose up -d --no-build --no-deps console agent soft-facts

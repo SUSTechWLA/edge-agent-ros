@@ -1,15 +1,21 @@
-"""Read-only task data for independent consumers; no session narrative policy."""
-from contextlib import closing
+"""Bounded read-only client for task facts owned by the Agent."""
+import http.client
 import json
-from pathlib import Path
-import sqlite3
-import sys
+import os
+import socket
+import threading
+from urllib.parse import urlencode, urlsplit
 
-if not __package__:
-    sys.path.append(str(Path(__file__).resolve().parents[2]))
-from edge_contracts.trace_content import sanitized
 
-MAX_CONTEXT_BYTES = 256 * 1024
+class FactsUnavailable(Exception):
+    """Unable to complete a read; leave the durable archive cursor unchanged."""
+
+
+class FactsQueryError(Exception):
+    def __init__(self, status, details):
+        super().__init__(details.get("code", "facts.invalid_request"))
+        self.status = status
+        self.details = details
 
 
 def identifiers(task_id=None, trace_id=None):
@@ -22,77 +28,87 @@ def identifiers(task_id=None, trace_id=None):
     return {"task_id":task_id} if task_id is not None else {"trace_id":trace_id}
 
 
-def _read(path, task_id, trace_id):
-    # Owner state, steps and related tasks share one SQLite snapshot.
-    with closing(sqlite3.connect(path.absolute().as_uri()+"?mode=ro", uri=True, timeout=0.15)) as db:
-        db.row_factory = sqlite3.Row
-        db.execute("BEGIN")
-        columns = {row[1] for row in db.execute("PRAGMA table_info(tasks)")}
-        if not columns:
-            raise sqlite3.DatabaseError("task table missing")
-        tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-        join, trace = "", "t.id"
-        if "task_triggers" in tables:
-            join = "LEFT JOIN task_triggers tr ON tr.task_id=t.id"
-            trace = "coalesce(tr.trace_id,t.id)"
-        names = ["id","text","state","detail","created","updated","provider","steps"]
-        projection = ",".join("t."+name if name in columns else "NULL AS "+name for name in names)
-        condition = "t.id=?" if task_id is not None else trace+"=?"
-        row = db.execute(f"SELECT {projection}, {trace} AS trace_id FROM tasks t {join} WHERE {condition}"
-                         " ORDER BY t.rowid DESC LIMIT 1", (task_id or trace_id,)).fetchone()
-        if row is None:
-            return None, [], False
-        task = dict(row)
-        related = [dict(item) for item in db.execute(
-            f"SELECT t.id,t.text,t.state FROM tasks t {join} WHERE {trace}=? AND t.id!=?"
-            " ORDER BY t.rowid DESC LIMIT 9", (task["trace_id"],task["id"]))]
-        return task, related[:8], len(related)>8
+class AgentFacts:
+    def __init__(self, url=None):
+        self.url = urlsplit(url or os.getenv("EDGE_FACTS_URL") or os.getenv("EDGE_AGENT_URL", "http://agent:8090"))
+        if (self.url.scheme not in ("http", "https") or not self.url.hostname or self.url.username
+                or self.url.password or self.url.query or self.url.fragment):
+            raise ValueError("the task facts source must be a fixed HTTP(S) service URL")
+        self.sources = {}
 
-
-def task_context(path, task_id=None, trace_id=None):
-    identifiers(task_id, trace_id)
-    notes = []
-    try:
-        task, related, more = _read(path, task_id, trace_id)
-    except (OSError, sqlite3.Error):
-        task, related, more = None, [], False
-        notes.append("任务账本暂不可读，当前终态需要恢复连接后核对。")
-    if task is not None:
+    def get(self, route, params):
+        cls = http.client.HTTPSConnection if self.url.scheme == "https" else http.client.HTTPConnection
+        connection = cls(self.url.hostname, self.url.port, timeout=1.5)
+        limit = 4 * 1024 * 1024
+        transport = None
+        def interrupt_read():
+            sock = transport or connection.sock
+            if sock is not None:
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+        timer = threading.Timer(2.0, interrupt_read)
+        timer.daemon = True
+        timer.start()
         try:
-            steps = json.loads(task["steps"]) if isinstance(task["steps"], str) else task["steps"]
-            if steps is None:
-                steps = []
-            if not isinstance(steps, list):
-                raise ValueError("steps must be a list")
-        except (ValueError, TypeError, RecursionError):
-            steps = []
-            notes.append("任务步骤数据不可解析，未提供步骤内容。")
-        task["steps"] = steps
-    result = {"schema_version":1,
-            "scope":{"task_id":task["id"] if task else task_id,
-                     "trace_id":task["trace_id"] if task else trace_id},
-            "task":task, "related_tasks":related, "related_tasks_has_more":more,
-            "task_available":task is not None, "notes":notes}
-    try:
-        result = sanitized(result)
-        raw = json.dumps(result,ensure_ascii=False,allow_nan=False).encode("utf-8")
-    except (ValueError, RecursionError):
-        if task:
-            task["steps"] = []
-        notes.append("任务步骤结构无法安全公开，未提供步骤内容。")
-        result = sanitized({**result,"task":task,"notes":notes})
-        raw = json.dumps(result,ensure_ascii=False,allow_nan=False).encode("utf-8")
-    if len(raw)>MAX_CONTEXT_BYTES:
-        # The context endpoint exposes data, not a summary. Omitted content is
-        # explicit; callers can continue using the independent event API.
-        if result["task"]:
-            result["task"]["steps"] = []
-            for key in ("text","detail"):
-                value = result["task"].get(key)
-                if isinstance(value,str):
-                    result["task"][key] = value[:8192]
-        for related in result["related_tasks"]:
-            if isinstance(related.get("text"),str):
-                related["text"] = related["text"][:1024]
-        result["notes"].append("任务上下文超过 256 KiB 公开预算，已省略步骤并限制长文本；细节请继续读取公开事件。")
-    return result
+            path = self.url.path.rstrip("/") + "/agent/" + route
+            connection.request("GET", path + "?" + urlencode(params), headers={"Accept":"application/json"})
+            transport = connection.sock
+            reply = connection.getresponse()
+            raw = reply.read(limit + 1)
+            if len(raw) > limit or reply.length not in (None, 0):
+                raise FactsUnavailable("invalid_size")
+            try:
+                value = json.loads(raw)
+                if not isinstance(value, dict):
+                    raise ValueError()
+            except (ValueError, UnicodeError, RecursionError):
+                raise FactsUnavailable("invalid_response") from None
+            if reply.status in (400, 409, 413) or (route == "tasks" and reply.status == 404):
+                raise FactsQueryError(reply.status, value)
+            if reply.status != 200:
+                raise FactsUnavailable("absent" if value.get("reason") == "absent" else "unavailable")
+            return value
+        except (OSError, http.client.HTTPException):
+            raise FactsUnavailable("unreachable") from None
+        finally:
+            timer.cancel()
+            connection.close()
+
+    def context(self, task_id=None, trace_id=None, **paging):
+        params = identifiers(task_id, trace_id)
+        try:
+            return self.get("task-context", {**params, **paging})
+        except FactsUnavailable:
+            return {"schema_version":1, "scope":{"task_id":task_id, "trace_id":trace_id},
+                    "task":None, "related_tasks":[], "related_tasks_has_more":False,
+                    "task_available":False, "event_window":None, "events":[], "events_has_more":False,
+                    "next_after":None, "notes":["任务账本暂不可读，当前终态需要恢复连接后核对。"]}
+
+    def event_batch(self, route, history):
+        # The archive owns one high-water mark per physical source, including across restarts.
+        source = self.sources.get(route)
+        if source is None:
+            source = self.get(route, {"limit":0}).get("source_id")
+        for _ in range(2):
+            if not isinstance(source, str) or not source:
+                raise FactsUnavailable("invalid_source")
+            self.sources[route] = source
+            cursor = history.source_cursor(source)
+            try:
+                page = self.get(route, {"source_id":source, "after":cursor})
+            except FactsQueryError as exc:
+                if exc.status != 409 or exc.details.get("code") != "facts.source_changed":
+                    raise FactsUnavailable(str(exc)) from exc
+                source = exc.details.get("source_id")
+                continue
+            if page.get("source_id") != source or not isinstance(page.get("events"), list):
+                raise FactsUnavailable("invalid_page")
+            previous = cursor
+            for row in page["events"]:
+                if not isinstance(row, dict) or type(row.get("seq")) is not int or row["seq"] <= previous:
+                    raise FactsUnavailable("invalid_sequence")
+                previous = row["seq"]
+            return page
+        raise FactsUnavailable("source_changed")

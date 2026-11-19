@@ -94,7 +94,12 @@ def run(image,base,out):
     with tempfile.TemporaryDirectory(prefix=project+"-") as tmp:
         folder=Path(tmp)
         safe=folder/"isolate.json"
-        confined={k:{"network_mode":"none","environment":{"ROS_LOCALHOST_ONLY":"1"}} for k in ("perception","console")}
+        observe_services=["perception","console"]
+        confined={k:{"network_mode":"none","environment":{"ROS_LOCALHOST_ONLY":"1"}} for k in observe_services}
+        if (base/"agent/facts_server.py").is_file():
+            observe_services.append("task-facts")
+            confined["task-facts"]={"network_mode":"none"}
+            confined["console"]["network_mode"]="service:task-facts"
         confined["agent"]={"network_mode":"service:console","environment":{"ROS_LOCALHOST_ONLY":"1"}}
         safe.write_text(json.dumps({"services":confined}),encoding="utf8")
         def files(track):
@@ -139,7 +144,7 @@ def run(image,base,out):
                                    "-B","/opt/edge/agent/site_pack.py","activate","--root","/registry","--site","/site","--expect-lock",lock))
             assert len(activate["admitted"])==5 and activate["requires_deployment"]==["camera.capture"],activate
             stages["pack_admission"]=activate
-            dc("soft","up","-d","--no-build","perception","console","soft-facts","soft-host","soft-gateway","evidence","session")
+            dc("soft","up","-d","--no-build",*observe_services,"soft-facts","soft-host","soft-gateway","evidence","session")
             stages["runtime"]=guard("soft","--running")
             stages["public_facts"]=json.loads(dc("soft","exec","-T","evidence","python3","-Bc",PROBE))
             started.add("physical")
@@ -157,7 +162,7 @@ def run(image,base,out):
             guard("physical","--running",stack="combined")
             assert original=={name:dc("combined","ps","-q",name) for name in physical_services},original
             running=set(dc("combined","ps","--services","--status","running").splitlines())
-            assert running==set(("console","agent","perception","soft-host","soft-facts","soft-gateway",
+            assert running==set((*observe_services,"agent","soft-host","soft-facts","soft-gateway",
                                  "evidence","session",*physical_services)),running
             config=json.loads((site/"pack.lock.json").read_text(encoding="utf8"))
             stages["board_task"]=json.loads(dc("combined","exec","-T","console","python3","-Bc",TASK_PROBE,

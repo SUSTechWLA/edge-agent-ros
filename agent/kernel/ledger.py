@@ -16,6 +16,7 @@ from edge_contracts.soft_transport import SoftError
 from edge_contracts.trace_content import clean_text, sanitized
 from .authorization import check_id
 from . import host
+from .task_facts import read_task, detail_events
 
 
 def utc():
@@ -131,19 +132,7 @@ class Journal:
 
     def get(self, key):
         with self.lock:
-            row = self.db.execute("""SELECT tasks.*,tr.context,tr.trace_id,
-                       (SELECT kind FROM events WHERE task_id=tasks.id
-                        AND kind NOT IN ('settlement_deferred','settlement_recovered') ORDER BY seq DESC LIMIT 1) AS latest_event
-                       FROM tasks LEFT JOIN task_triggers tr ON tr.task_id=tasks.id WHERE tasks.id=?""",(key,)).fetchone()
-        if not row:
-            return None
-        item = dict(row)
-        item["steps"] = json.loads(item["steps"])
-        context=item.pop("context")
-        item["trigger"]=json.loads(context) if context is not None else None
-        item["trace_id"]=item["trace_id"] or key
-        item["can_retry"] = item.pop("latest_event")=="retry_exhausted" and item["state"] in ("BLOCKED","RECOVERY_REQUIRED")
-        return item
+            return read_task(self.db, key)
 
     def create(self,key,text,trigger=None):
         with self.lock, self.db:
@@ -341,22 +330,9 @@ class Journal:
         while not stop.wait(.3):
             self.settle_soft_batch(stop)
 
-    def event_page(self,key,after=None,limit=128):
-        if not 1<=limit<=500 or (after is not None and after<0):
-            raise ValueError("事件分页参数无效")
-        rows=[]
-        size=0
+    def event_page(self, key, after=None, limit=128):
         with self.lock:
-            reverse=after is None
-            order="DESC" if reverse else "ASC"
-            stream=self.db.execute("SELECT * FROM events WHERE task_id=? AND seq>? ORDER BY seq "+order+" LIMIT ?",
-                                   (key,after or 0,limit+1))
-            for row in stream:
-                size+=len(row["payload"].encode())
-                if len(rows)==limit or (rows and size>350000):
-                    return (rows[::-1] if reverse else rows),True
-                rows.append(dict(row))
-        return (rows[::-1] if reverse else rows),False
+            return detail_events(self.db, key, after, limit)
 
 
 def project_step(step):
