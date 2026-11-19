@@ -49,6 +49,18 @@ def finite_positive(value):
     return n
 
 
+def finish_recording(recorder, path, task_id, status, reason):
+    try:
+        return endpoint(recorder,path+"/finish",{"task_id":task_id,"status":status,"reason":reason})
+    except EndpointError as exc:
+        if exc.status!=409:
+            raise
+        current=endpoint(recorder,path)
+        if current["task_id"]!=task_id or current["status"]=="ACTIVE":
+            raise
+        return current
+
+
 def watch(recorder, rid, agent, *, wait_for_task, finish, interval, timeout):
     path="/recordings/"+quote(rid,safe="")
     session=endpoint(recorder,path)
@@ -108,14 +120,7 @@ def watch(recorder, rid, agent, *, wait_for_task, finish, interval, timeout):
             print(json.dumps({"recording_id":rid,**summary},ensure_ascii=False),flush=True)
         if summary.get("state") in TERMINAL:
             if finish:
-                try:
-                    return endpoint(recorder,path+"/finish",{"task_id":task_id,"status":summary["state"],
-                                                              "reason":"Agent terminal state observed"})
-                except EndpointError as exc:
-                    if exc.status!=409: raise
-                    current=endpoint(recorder,path)
-                    if current["status"]=="ACTIVE": raise
-                    return current
+                return finish_recording(recorder,path,task_id,summary["state"],"Agent terminal state observed")
             return endpoint(recorder,path)
         time.sleep(min(interval,max(0,deadline-time.monotonic())))
     raise TimeoutError("watch timed out; the recording is still owned by the recorder")
@@ -149,8 +154,10 @@ def main(argv=None):
             result=endpoint(args.recorder,path+"/export",{})
         elif args.command=="stop":
             summary=endpoint(args.recorder,path)
-            result=endpoint(args.recorder,path+"/finish",dict(task_id=summary["task_id"],status="STOPPED",
-                            reason="operator ended the recording")) if summary["status"]=="ACTIVE" else endpoint(args.recorder,path+"/export",{})
+            if summary["status"]=="ACTIVE":
+                result=finish_recording(args.recorder,path,summary["task_id"],"STOPPED","operator ended the recording")
+            else:
+                result=endpoint(args.recorder,path+"/export",{})
         else:
             result=watch(args.recorder,args.recording_id,args.agent,wait_for_task=args.wait_for_task,
                          finish=args.finish,interval=args.interval,timeout=args.timeout)

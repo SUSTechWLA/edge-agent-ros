@@ -105,6 +105,20 @@ class CLI(unittest.TestCase):
             self.assertEqual(result.result(timeout=1)["task_status"],"STOPPED")
         self.assertEqual(self.call("status","long")["counts"]["agent_state"],1)
 
+    def test_racing_finishers_keep_the_first_receipt(self):
+        self.call("start","race","--task-id","job")
+        barrier=threading.Barrier(2)
+        def close(status):
+            barrier.wait(timeout=2)
+            return cli.finish_recording(self.rec,"/recordings/race","job",status,status)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            left,right=list(pool.map(close,("STOPPED","SUCCEEDED")))
+        self.assertEqual(left["task_status"],right["task_status"])
+        self.assertIn(left["task_status"],("STOPPED","SUCCEEDED"))
+        self.assertEqual(left["ended_ns"],self.call("status","race")["ended_ns"])
+        with self.assertRaises(cli.EndpointError):
+            cli.finish_recording(self.rec,"/recordings/race","different","STOPPED","wrong task")
+
 
 if __name__=="__main__":
     unittest.main()
