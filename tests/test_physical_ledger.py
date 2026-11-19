@@ -1,4 +1,5 @@
 """SDD-045 P2. Actual deployment preflight + role endpoints and persistent controller transactions."""
+from argparse import Namespace
 import hashlib
 import json
 from pathlib import Path
@@ -13,6 +14,7 @@ from physical_ledger import PhysicalError, PhysicalLedger
 from plugin_descriptor import DescriptorError, compute_content_digest
 from prepare_physical_camera import prepare_site
 from prepare_soft_pilots import sha
+from v2_registry import RegistryError, command as publish_v2
 
 
 class CameraLedgerContract(unittest.TestCase):
@@ -191,6 +193,28 @@ class CameraLedgerContract(unittest.TestCase):
             with self.assertRaises(DescriptorError) as missing:
                 compute_content_digest(item,self.site/"trust")
             self.assertEqual(missing.exception.code,"plugin.physical_contract_missing")
+
+    def test_missing_physical_contract_rejected_at_publish_and_deploy_load(self):
+        path = self.site / "camera.plugin.json"
+        original = json.loads(path.read_bytes())
+        for field in ("device_lease","stop_protocol","operation_ledger","verifier","self_verifier"):
+            with self.subTest(field=field):
+                candidate = dict(original)
+                if field == "self_verifier":
+                    candidate["verifier"] = candidate["id"]
+                    code = "plugin.verifier_invalid"
+                else:
+                    candidate.pop(field)
+                    code = "plugin.physical_contract_missing"
+                path.write_text(json.dumps(candidate),encoding="utf-8")
+                request = Namespace(action="publish",definition=path,root=self.root/"registry",expect="absent",
+                                    trust_root=self.site/"trust",request_id="negative-"+field)
+                with self.assertRaises(RegistryError) as refused:
+                    publish_v2(request)
+                with self.assertRaises(DescriptorError) as unavailable:
+                    load_deployment(self.site,self.image)
+                self.assertEqual((refused.exception.code,unavailable.exception.code),(code,code))
+        self.assertIsNone(self.poll("camera"))
 
     def test_source_scope_is_frozen_and_no_mismatched_endpoint_takes_device_claim(self):
         pin = self.reserve()

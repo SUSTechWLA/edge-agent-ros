@@ -701,7 +701,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path=urlsplit(self.path)
         if path.path=="/agent/capabilities":
-            return self.send(200,{"capabilities":catalog(registry())})
+            try:
+                capabilities = catalog(registry())
+            except Unavailable as exc:
+                return self.send(503, {"code":exc.code,"origin":exc.origin,"detail":str(exc)})
+            return self.send(200,{"capabilities":capabilities})
         if path.path=="/agent/plugins":
             try:
                 directory = self.server.registry_observer.observe()

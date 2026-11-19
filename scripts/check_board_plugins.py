@@ -1,6 +1,7 @@
 """Verify the concrete board image, Compose entrypoints and effective network/volume permissions before bench admission."""
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -93,6 +94,36 @@ def check_compose(config, expected, identity, site):
                     and config["networks"][net].get("internal") is True,"network isolation: "+name)
 
 
+def bind_path(source):
+    # Docker Desktop can report the Linux VM path for a Windows bind source.
+    if os.name=="nt":
+        for prefix in ("/run/desktop/mnt/host/","/host_mnt/"):
+            if source.startswith(prefix):
+                drive,separator,tail=source[len(prefix):].partition("/")
+                if separator and len(drive)==1 and drive.isascii() and drive.isalpha():
+                    source=drive+":/"+tail
+                    break
+    return Path(source).resolve()
+
+
+def inspect_mounts(config,name,actual):
+    expected={m["target"]:m for m in config["services"][name].get("volumes",[])}
+    live={m["Destination"]:m for m in actual["Mounts"] if m["Type"]!="tmpfs"}
+    require(live.keys()==expected.keys(),"live mount targets: "+name)
+    subpaths={m["Target"]:m.get("VolumeOptions",{}).get("Subpath") for m in actual["HostConfig"].get("Mounts") or []}
+    for target,plan in expected.items():
+        mount=live[target]
+        label=name+" "+target
+        require(mount["Type"]==plan["type"] and mount["RW"]== (not plan.get("read_only",False)),
+                "live mount permissions: "+label)
+        if plan["type"]=="bind":
+            require(bind_path(mount["Source"])==bind_path(plan["source"]),"live bind source differs: "+label)
+        else:
+            volume=config["volumes"][plan["source"]]["name"]
+            require(mount["Name"]==volume and subpaths.get(target)==plan.get("volume",{}).get("subpath"),
+                    "live volume or subpath differs: "+label)
+
+
 def inspect_running(config, expected, identity, compose):
     for name,(entry,net) in expected.items():
         cid=docker(*compose,"ps","-q",name)
@@ -118,9 +149,7 @@ def inspect_running(config, expected, identity, compose):
             actual_net=config["networks"][net]["name"]
             require(set(actual["NetworkSettings"]["Networks"])=={actual_net}
                     and json.loads(docker("network","inspect",actual_net))[0]["Internal"],"live network: "+name)
-        approved={v["target"]:(v["type"],not v.get("read_only",False)) for v in config["services"][name].get("volumes",[])}
-        mounts={m["Destination"]:(m["Type"],m["RW"]) for m in actual["Mounts"] if m["Type"]!="tmpfs"}
-        require(mounts==approved,"live mount permissions: "+name)
+        inspect_mounts(config,name,actual)
 
 
 def main():

@@ -63,6 +63,28 @@ class BoardGuard(unittest.TestCase):
                 with self.subTest(service=service,field=field),self.assertRaisesRegex(ValueError,"differs"):
                     checker.camera_scope(altered,approved)
 
+    def test_running_mounts_must_match_site_project_volume_and_subpath(self):
+        config={"services":{"soft-host":{"volumes":[
+            {"target":"/site","source":str(self.site),"type":"bind","read_only":True},
+            {"target":"/journal","source":"module-sources","type":"volume","volume":{"subpath":"soft.runtime"}}]}},
+            "volumes":{"module-sources":{"name":"field-a_module-sources"}}}
+        live={"Mounts":[{"Destination":"/site","Source":str(self.site),"Type":"bind","RW":False},
+                        {"Destination":"/journal","Name":"field-a_module-sources","Type":"volume","RW":True}],
+              "HostConfig":{"Mounts":[{"Target":"/journal","VolumeOptions":{"Subpath":"soft.runtime"}}]}}
+        checker.inspect_mounts(config,"soft-host",live)
+        for variant in ("previous site","other project","other plugin journal","whole volume"):
+            changed=copy.deepcopy(live)
+            if variant=="previous site":
+                changed["Mounts"][0]["Source"]=str(self.site/"previous")
+            elif variant=="other project":
+                changed["Mounts"][1]["Name"]="field-b_module-sources"
+            elif variant=="whole volume":
+                changed["HostConfig"].pop("Mounts")
+            else:
+                changed["HostConfig"]["Mounts"][0]["VolumeOptions"]["Subpath"]="other.plugin"
+            with self.subTest(variant=variant),self.assertRaisesRegex(ValueError,"live (bind source|volume or subpath) differs"):
+                checker.inspect_mounts(config,"soft-host",changed)
+
 
 if __name__=="__main__":
     unittest.main()

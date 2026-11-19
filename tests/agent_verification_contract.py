@@ -106,6 +106,29 @@ class VerificationContracts(unittest.TestCase):
         model.assert_not_called()
         self.robot.run.assert_not_called()
 
+    def test_offline_controller_returns_a_structured_http_result_without_fallback(self):
+        from http.server import ThreadingHTTPServer
+        from urllib.error import HTTPError
+        from urllib.request import ProxyHandler, build_opener
+        from service import Handler
+
+        with patch.dict(os.environ, {"EDGE_PHYSICAL_SOCKET":"/nonexistent/device.sock","EDGE_SOFT_SOCKET":""}), \
+                ThreadingHTTPServer(("127.0.0.1",0),Handler) as server:
+            thread = threading.Thread(target=server.handle_request)
+            thread.start()
+            url = "http://127.0.0.1:" + str(server.server_port) + "/agent/capabilities"
+            try:
+                with self.assertRaises(HTTPError) as caught:
+                    build_opener(ProxyHandler({})).open(url,timeout=3)
+                with caught.exception as response:
+                    self.assertEqual(response.code,503)
+                    result = json.load(response)
+                self.assertEqual((result["origin"],result["code"]),("physical.controller","plugin.transport"))
+                self.assertNotIn("capabilities",result)
+            finally:
+                thread.join(4)
+            self.assertFalse(thread.is_alive())
+
     def test_soft_host_outage_preserves_kernel_status(self):
         self.j.create("kernel","status")
         with patch.dict(os.environ,{"EDGE_SOFT_SOCKET":"/nonexistent/edge-soft.sock"}):
