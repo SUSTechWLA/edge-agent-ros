@@ -124,10 +124,83 @@ def finalize(out,timeout=10):
     return summary
 
 
+def write_waypoint_audit(out):
+    """Independently join each Core odometry receipt to measured world pose on simulation time."""
+    out=Path(out)
+    proof=json.loads((out/"acceptance.json").read_text(encoding="utf-8"))
+    if not proof["passed"]:
+        raise ValueError("only audit a completed, accepted task")
+    rows=rows_at(out)
+    truth=[r for r in rows if r["kind"]=="world_pose"]
+    if any(a["stamp_ns"]>=b["stamp_ns"] for a,b in zip(truth,truth[1:])):
+        raise ValueError("world-pose stream is not a single advancing simulation epoch")
+    markers=[r for r in rows if r["kind"]=="mission" and r["task_id"]==proof["task_id"]]
+    receipts=[r for r in markers if r["phase"]=="waypoint"]
+    goals=proof["goals"]
+    assert [r["index"] for r in receipts]==list(range(1,len(goals)+1))
+    matches=[]
+    for goal,receipt in zip(goals,receipts):
+        stamp=receipt["odom_stamp_ns"]
+        observed=min(truth,key=lambda r:abs(r["stamp_ns"]-stamp))
+        skew=abs(observed["stamp_ns"]-stamp)/1e6
+        error=math.dist(goal,observed["xy"])
+        matches.append(dict(index=receipt["index"],operation_id=receipt["operation_id"],goal_xy=goal,
+            odom_stamp_ns=stamp,world_stamp_ns=observed["stamp_ns"],stamp_delta_ms=skew,world_xy=observed["xy"],
+            odom_xy=receipt["xy"],world_goal_error_m=error,odom_world_distance_m=math.dist(receipt["xy"],observed["xy"])))
+
+    # The actual test world contains the two jambs. Derive the opening (x, y-limits)
+    # from their poses and collision dimensions, independently of commanded waypoints.
+    world=ET.parse(out/"world.sdf").getroot().find("world")
+    edges={}
+    for name,sign in (("door_wall_south",1),("door_wall_north",-1)):
+        wall=world.find(f"./model[@name='{name}']")
+        x,y,*_=map(float,wall.findtext("pose").split())
+        size=list(map(float,wall.findtext("link/collision/geometry/box/size").split()))
+        edges[name]=y+sign*size[1]/2
+    low,high=edges["door_wall_south"],edges["door_wall_north"]
+    crossings=[]
+    for a,b in zip(truth,truth[1:]):
+        ax,ay=a["xy"]
+        bx,by=b["xy"]
+        if (ax<x<=bx) or (bx<x<=ax):
+            t=(x-ax)/(bx-ax)
+            cy=ay+t*(by-ay)
+            crossings.append(dict(direction="outbound" if bx>ax else "return",x=x,y=cy,
+                stamp_ns=round(a["stamp_ns"]+t*(b["stamp_ns"]-a["stamp_ns"])),clearance_to_jamb_m=min(cy-low,high-cy)))
+    end=truth[-1]
+    rest=[r for r in truth if r["stamp_ns"]>=end["stamp_ns"]-800000000]
+    drift=max(math.dist(r["xy"],end["xy"]) for r in rest)
+    trailing=[r for r in rows if r["kind"]=="twist"]
+    home_error=math.dist(goals[-1],end["xy"])
+    good=(len(rest)>=10 and drift<.02 and home_error<.15 and len(crossings)==2
+          and [c["direction"] for c in crossings]==["outbound","return"]
+          and all(c["clearance_to_jamb_m"]>=.30 for c in crossings)
+          and all(m["stamp_delta_ms"]<=100 and m["world_goal_error_m"]<.15 for m in matches)
+          and max(abs(trailing[-1][k]) for k in ("linear","angular"))<.01)
+    audit=dict(passed=good,task_id=proof["task_id"],trace_id=proof["trace_id"],image_id=proof["image_id"],
+        source="Gazebo independent /ground_truth joined to Core odometry header stamps; odom/world aligned at spawn",
+        timeline_sha256=hashlib.sha256((out/"media/mission/timeline.jsonl").read_bytes()).hexdigest(),
+        max_pair_skew_allowed_ms=100,max_world_goal_error_allowed_m=.15,goals=matches,
+        doorway=dict(x=x,y_min=low,y_max=high,required_center_clearance_m=.30,crossings=crossings),
+        stop=dict(start_xy=truth[0]["xy"],end_xy=end["xy"],goal_error_m=home_error,
+                  stationary_window_s=(end["stamp_ns"]-rest[0]["stamp_ns"])/1e9,
+                  samples=len(rest),drift_m=drift,max_allowed_drift_m=.02,
+                  final_command={k:trailing[-1][k] for k in ("linear","angular")}))
+    (out/"waypoint-audit.json").write_text(json.dumps(audit,indent=2)+"\n",encoding="utf-8")
+    if not good:
+        raise ValueError("independent waypoint audit failed; see waypoint-audit.json")
+    return audit
+
+
 if __name__=="__main__":
     cli=argparse.ArgumentParser(description=__doc__)
-    cli.add_argument("--capture",type=Path,required=True)
+    operation=cli.add_mutually_exclusive_group(required=True)
+    operation.add_argument("--capture",type=Path)
+    operation.add_argument("--audit",type=Path)
     args=cli.parse_args()
+    if args.audit:
+        write_waypoint_audit(args.audit)
+        sys.exit(0)
     sys.path.insert(0,"/opt/edge")
     import rclpy
     rclpy.init()
