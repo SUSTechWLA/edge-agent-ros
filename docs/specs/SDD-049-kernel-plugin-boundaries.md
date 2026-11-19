@@ -78,3 +78,17 @@ docker run --pull=never --rm --network none --mount "type=bind,source=$PWD,targe
 - 校园首次因探针拟读取已有仿真时钟被拦截；在独立小型仿真上按相同断言验证时钟、校园重载、贴图与机载观测，全部 16/16 命令通过，见 `.ci-results/kernel-runner/wp1-campus-r1/stage-results.json`。
 
 共享帧编码、栅格导出和预览 HTTP 接口供原插件独立使用；保留原导出名字。上述迁移与真实仿真验收均未改变 operation_id、绑定、终态、SQLite 事务或授权。
+
+### WP2 任务内核
+
+2026-11-19，AC-2。Agent 入口组装 ROS、HTTP 和 worker。任务库、迁移与一次提交内的写入移入 ledger，保留 POSIX 独占锁，Windows 独立账本用非阻塞文件锁。worker 通过注入的规划函数处理队列，verification 持久化候选及独立验收决定，authorization 统一执行原效果检查与预算。catalog 复用 v1/v2 快照；host 访问现有软宿主和物理控制器。公开请求与回执沿用原摘要和错误规范。部署侧批准与 CAS、core 的运动准入和停稳协议继续使用原所有者。
+
+**AC-2 独立证据。** `python tests/test_kernel.py -v` 在 Windows 和 Linux 各通过 3 项。用旧表结构打开真实 SQLite，第二个进程争用账本写锁时被拒绝。用 SQLite 触发器拒绝写入后，接受事件与新任务同时回滚，候选与 tool.response 也同时回滚。独立 Python 进程可在未加载 rclpy、规划器、Console 和感知插件时导入六个 kernel 模块。ROS 镜像中的 `python3 -B tests/agent_trace_contract.py -v` 与 `python3 -B tests/agent_verification_contract.py -v` 分别通过 12、11 项。真实 ROS 节点收到 /odom (1.25, 2.5)，恢复的旧 status 和新 HTTP status 各派发一次，均 SUCCEEDED。SIGKILL 后重启，两个操作号、事件与 GET 字段逐项一致。原镜像及当前入口收到 SIGTERM 后均观测过 8 秒内 HTTP 仍能响应；本次验证的重启使用进程崩溃路径。
+
+基线表中的命令在 WP2 重跑通过，选择器为 12 项。另运行 `python tests/test_author_tool.py -v`（10 项）、`python tests/test_package_boundaries.py -v`（2 项）和 `python tests/test_robot_release.py -v`（3 项）。在候选树上调用 `scripts.release_robot.projection`，208 个板端文件包含全部 19 个 kernel 与 contracts 源文件。两个 Compose config 校验通过。
+
+`python tests/system_suite.py --changed-since 89a9622 --plan` 选中全部 21 个阶段。离线验收实际入口为 `python .ci-results/kernel-runner/board-verify/board.py src-19387672 --full`，使用相同硬件 SDK、源码标签、预装模型和独立校园仿真。干净测试快照 `19387672f9dd887e248862e8cb6ec39834bf87d4` 的实现与提交候选逐文件核对。首次报告 `.ci-results/kernel-runner/wp2/20261119T074007Z-06d5068b/summary.json` 中 33 条阶段记录通过，Session 的两个后续检查因 registry 位于该快照的 .ci-results 之外被夹具拒绝。改用快照内的输出目录，session-evidence 通过，session-plugin 在 Windows 263 字符的原子替换路径触发 WinError 3。保留了两次结果。
+
+在较短的同 SHA worktree `D:/project/kb2t` 内重跑 repository、console-missions、places、UI（含两个 Session 子阶段）与本地模型。实际报告 `.ci-results/kernel-runner/wp2-session-repeat/20261119T082651Z-9ccd42fb/summary.json` 有 14 条通过、零失败或跳过。两次同版本实测合起来覆盖全部 21 个选中阶段。Session 恢复了原 binding，12 条既有机器人任务的状态一致。验收使用 Linux/amd64 容器、真实本地模型和合成 ROS/Gazebo 输入，未运行 ARM64 或实机试验。
+
+**本轮交付边界。** 按任务约定收在全绿的 WP2。WP3 的统一能力字段及 status 提供者尚未实现，旧 status 和 inspect 仍走现有入口。WP4 的 Observer/History 仍读取任务及插件账本，analysis 离线 CLI 和 recorder 的独立契约验收待实现。WP5 的 `edge_contracts.conformance` CLI 和最终覆盖选择器待完成；板端投影已覆盖目前交付的包。WP0–WP2 没有需要切换的运行时行为开关，按工作包逆序 revert 或部署基线镜像即可回退。
