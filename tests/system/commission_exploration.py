@@ -17,18 +17,25 @@ from xml.etree import ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def witness(path):
+def witness(path, record=False):
     import rclpy
     from nav_msgs.msg import Odometry
     from geometry_msgs.msg import Twist
     from rclpy.qos import qos_profile_sensor_data
     rclpy.init()
     node=rclpy.create_node("independent_exploration_witness")
+    if record:
+        from commission_recording import Recorder
+        sys.path.insert(0,str(ROOT))
+        recorder=Recorder(node,path.parent)
     data={"first":None,"last":None,"max_displacement_m":0.,"max_linear_command_mps":0.,"samples":0,
-          "moving_commands":0,"witness_instance":uuid.uuid4().hex}
+          "moving_commands":0,"witness_instance":uuid.uuid4().hex,"closest_pillar_clearance_m":10.0}
     def observed(msg):
         p=msg.pose.pose.position
         xy=[p.x,p.y]
+        # Independent geometry oracle for the axis-aligned fixture pillar below.
+        clearance=math.hypot(max(0.,abs(p.x-1.35)-.25), max(0.,abs(p.y-1.35)-.25))
+        data["closest_pillar_clearance_m"]=min(data["closest_pillar_clearance_m"],clearance)
         data["first"]=data["first"] or xy
         data.update(last=xy,samples=data["samples"]+1,
                     max_displacement_m=max(data["max_displacement_m"],math.dist(xy,data["first"])))
@@ -70,8 +77,19 @@ def trial(args):
         sdf=ET.parse(ROOT/"sim/world.sdf")
         # Finite field of view in range makes new observations possible in a small ROI.
         sdf.find(".//sensor[@name='horizontal_lidar']/lidar/range/max").text="2.1"
+        # Both laser rendering and collisions see this pillar. Its position is never sent to planning.
+        sdf.getroot().find("world").append(ET.fromstring('''<model name="commission_pillar">
+          <static>true</static><pose>1.35 1.35 0.5 0 0 0</pose><link name="body">
+          <visual name="visible"><geometry><box><size>0.5 0.5 1</size></box></geometry></visual>
+          <collision name="solid"><geometry><box><size>0.5 0.5 1</size></box></geometry></collision>
+          </link></model>'''))
+        if args.record:
+            from commission_recording import add_camera
+            add_camera(sdf.getroot().find("world"))
         sdf.write(tmp/"world.sdf",encoding="utf-8",xml_declaration=True)
         proof["sdf_sha256"]=hashlib.sha256((tmp/"world.sdf").read_bytes()).hexdigest()
+        if args.record:
+            (out/"recorded-world.sdf").write_bytes((tmp/"world.sdf").read_bytes())
         domain=20+int(token[:4],16)%40
         env={**os.environ,"EDGE_ROS_DOMAIN_ID":str(domain),"EDGE_IMAGE":args.image}
         services={s:{"environment":{"GZ_PARTITION":partition}} for s in
@@ -85,9 +103,11 @@ def trial(args):
             "environment":{"EDGE_COMMISSION_MODE":"isolated_gazebo","ROS_DOMAIN_ID":str(domain),"EDGE_ROBOT_ID":robot,
                            "GZ_PARTITION":partition,"RMW_IMPLEMENTATION":"rmw_cyclonedds_cpp"},
             "working_dir":"/opt/edge",
-            "command":["python3","-B","/opt/edge/tests/system/commission_exploration.py","--witness","/out/truth.json"],
+            "command":["python3","-B","/opt/edge/tests/system/commission_exploration.py","--witness","/out/truth.json",
+                       *(["--record"] if args.record else [])],
             "volumes":[mount(out,"/out",False),
                        mount(Path(__file__).resolve(),"/opt/edge/tests/system/commission_exploration.py"),
+                       mount(Path(__file__).with_name("commission_recording.py"),"/opt/edge/tests/system/commission_recording.py"),
                        *([] if args.packaged else modules)]}
         override=tmp/"compose.json"
         override.write_text(json.dumps({"services":services}),encoding="utf-8")
@@ -128,9 +148,17 @@ print(json.dumps({str(p):hashlib.sha256(p.read_bytes()).hexdigest()
             proof["linked_module_events"]=len(events)
             for name,digest in report["map"]["sha256"].items():
                 assert hashlib.sha256((out/op/"map"/name).read_bytes()).hexdigest()==digest,name
+            occupancy=json.loads((out/op/"map"/"occupancy.json").read_bytes())
+            x0,y0,_=occupancy["origin"]
+            width,spacing=occupancy["width"],occupancy["resolution"]
+            occupied_pillar=sum(1 for i,v in enumerate(occupancy["cells"]) if v==100
+                and 1.0<=x0+(i%width+.5)*spacing<=1.7 and 1.0<=y0+(i//width+.5)*spacing<=1.7)
+            assert occupied_pillar>=2,"test pillar missing from the laser-integrated occupancy grid"
+            proof["observed_pillar_cells"]=occupied_pillar
             truth=json.loads((out/"truth.json").read_bytes())
             proof["truth"]=truth
             assert truth["samples"]>=10 and truth["max_displacement_m"]>.2 and truth["max_linear_command_mps"]>.05,truth
+            assert truth["closest_pillar_clearance_m"]>.30,truth
             assert max(abs(v) for v in truth["latest_twist"])<.01,truth
             assert math.dist(truth["last"],report["steps"][-1]["measured_xy"][0])<.25,truth
             before=(out/op/"report.json").read_bytes()
@@ -167,7 +195,8 @@ print(json.dumps({str(p):hashlib.sha256(p.read_bytes()).hexdigest()
                         progress=json.loads(cancel_file.read_bytes())
                         witness_data=json.loads((out/"truth.json").read_bytes())
                         if (progress["steps"] and progress["steps"][-1].get("accepted")
-                                and witness_data["moving_commands"]>before_cancel):
+                                and witness_data["moving_commands"]>before_cancel
+                                and witness_data["max_displacement_m"]>.08):
                             break
                     time.sleep(.1)
                 else:
@@ -194,8 +223,13 @@ else:
                 time.sleep(.8)
                 truth_after=json.loads((out/"truth.json").read_bytes())
                 assert max(abs(v) for v in truth_after["latest_twist"])<.01
+                time.sleep(.8)
+                stationary=json.loads((out/"truth.json").read_bytes())
+                stop_drift=math.dist(truth_after["last"],stationary["last"])
+                assert stationary["samples"]>truth_after["samples"] and stop_drift<.015
                 proof["inflight_cancel"]=dict(receipt=stopped["cancel"],state=stopped["state"],reason=stopped["reason"],
-                    goal_count=len(stopped["steps"]),last_twist=truth_after["latest_twist"],partial_map=True)
+                    goal_count=len(stopped["steps"]),last_twist=truth_after["latest_twist"],partial_map=True,
+                    pre_cancel_displacement_m=witness_data["max_displacement_m"],stopped_drift_m=stop_drift)
             finally:
                 if active.poll() is None:
                     active.kill()
@@ -206,6 +240,17 @@ else:
             missing=json.loads((out/blocked/"report.json").read_bytes())
             assert lost.returncode and missing["state"]=="BLOCKED" and not missing["steps"]
             proof["mapping_offline"]={"state":missing["state"],"reason":missing["reason"],"steps":len(missing["steps"])}
+            if args.record:
+                from collections import Counter
+                proof["media"]={}
+                for epoch in ("explore","cancel"):
+                    root=out/"media"/epoch
+                    rows=[json.loads(line) for line in (root/"timeline.jsonl").read_text(encoding="utf-8").splitlines()]
+                    counts=Counter(row["kind"] for row in rows)
+                    assert all(counts.get(kind,0)>=1 for kind in ("world_pose","fused_pose","map","twist","mission")),counts
+                    assert counts["rgb"]>=12 and counts["map"]>=2,counts
+                    assert any(r["kind"]=="mission" and r["phase"]=="finished" for r in rows)
+                    proof["media"][epoch]=dict(counts=dict(counts),rgb_size=[768,512],timeline="media/"+epoch+"/timeline.jsonl")
             proof["passed"]=True
         except Exception as exc:
             proof["error"]=str(exc)
@@ -225,10 +270,11 @@ if __name__=="__main__":
     cli.add_argument("--image",default="edge-agent-ros:field-ready")
     cli.add_argument("--out-dir",type=Path)
     cli.add_argument("--packaged",action="store_true",help="test immutable image instead of mounting plugin sources")
+    cli.add_argument("--record",action="store_true",help="save time-stamped Gazebo RGB, measured maps and motion evidence")
     cli.add_argument("--witness",type=Path,help=argparse.SUPPRESS)
     args=cli.parse_args()
     if args.witness:
-        witness(args.witness)
+        witness(args.witness,args.record)
     elif args.out_dir:
         trial(args)
     else:

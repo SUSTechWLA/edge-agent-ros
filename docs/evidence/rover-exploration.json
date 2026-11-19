@@ -1,0 +1,207 @@
+{
+  "evidence_version": 1,
+  "case": "SDD-038 factory identity and SDD-039 first exploration, Gazebo with physical obstacle",
+  "date": "2026-11-19",
+  "scope": "Four frontier goals in a finite ROI, factory admission uses synthetic fixture, no physical hardware. The cancellation scene is a separate fresh simulation epoch.",
+  "image": "edge-agent-ros:commission-0977a54",
+  "image_id": "sha256:f064f5ad57f40a0ad456542a6bb31dce7ef5879b7bc4ec5e61aa1306d343bf5e",
+  "sdf_sha256": "787cbc618b8789dc06fc41245ad9051aca7f36e1862bf0f8c0f9d98d5cea136c",
+  "test_driver_sha256": "712e06a6429a03c22351daad9c4b4cc834a2638e03d84e730e7cb407a635ae16",
+  "runtime_source_sha256": {
+    "calibration/__init__.py": "a6243fa4347ec11d64675dc165d076264465bb18d2137e499b1535b207646516",
+    "calibration/checks.py": "ecdb2b361bb603fdbb7e2da41ff6703b7c2b0f98d6cbb2d39a450d09471b54df",
+    "calibration/factory.py": "e2aa7bab70ba09a56bbea2a03ca31210c7f05c1f3f19eb34fc675850126e0ccb",
+    "calibration/ros_capture.py": "f4f279b93a0bd3600d1a3972036649dd41f39cdd7969536ec5bb52114625d6cd",
+    "calibration/targets.py": "8d298b15c9aa1848cf2d17cb1d7cdd099a1e6c6935d7668589d70552587db038",
+    "exploration/frontier.py": "6469a3a08cde11922a1d99ba7c26eb305f5607a535ca5918edf11ea10e6ec8fb",
+    "exploration/map_artifact.py": "20ce60d0170ea53008662c82a562184bcf8deef5a8f4ff2e444852b4ae8fe614",
+    "exploration/ros_sim.py": "9f67036de077ea98069e7e6cb329633951494534f7baca7eb5b5410ad0ce0d10"
+  },
+  "raw_directory": "artifacts/verification/commission-exploration/filmed-01",
+  "raw_acceptance_sha256": "10397bdbab6b428d5dfead1c6c256979b15dbbd3d82010a82b887b5ba74dd424",
+  "passed": true,
+  "factory": {
+    "robot_id": "sim-rover-c21dfcd1f5a9",
+    "environment": "simulation",
+    "status": "VERIFIED",
+    "revision": "254981fb47631c45a494c3b7400ed366976ace03e62c21d3da155371fda3fc97",
+    "event_id": "448a8f55be33471fa400bd34fe9f3dd6",
+    "motion_authorized": false
+  },
+  "exploration": {
+    "run_id": "explore-c21dfcd1f5a9",
+    "bounds": [
+      -3.0,
+      -3.0,
+      3.0,
+      3.0
+    ],
+    "state": "PARTIAL",
+    "reason": "goal_budget",
+    "max_goals": 4,
+    "initial_known_cells": 1415,
+    "final_known_cells": 1959,
+    "total_cells": 3600,
+    "start_event_id": "f812d3825baf42278aa293a5dada5df5",
+    "end_event_id": "eb437adb3ce949dfa70f71446a1b5442"
+  },
+  "steps": [
+    {
+      "mission_id": "explore-c21dfcd1f5a9/step/1",
+      "goal": [
+        -0.0499999113380909,
+        -0.5499999187886715
+      ],
+      "measured_xy": [
+        [
+          -0.037598246266278584,
+          -0.49825490414848567
+        ]
+      ],
+      "known_cells": 1415,
+      "map_stamp_ns": 2876000000,
+      "core_state": "SUCCEEDED",
+      "verified_count": 1
+    },
+    {
+      "mission_id": "explore-c21dfcd1f5a9/step/2",
+      "goal": [
+        -0.6499999202787876,
+        -0.4499999172985554
+      ],
+      "measured_xy": [
+        [
+          -0.5995799435473229,
+          -0.4607852563991784
+        ]
+      ],
+      "known_cells": 1696,
+      "map_stamp_ns": 7750000000,
+      "core_state": "SUCCEEDED",
+      "verified_count": 1
+    },
+    {
+      "mission_id": "explore-c21dfcd1f5a9/step/3",
+      "goal": [
+        -0.6499999202787876,
+        -0.24999991431832314
+      ],
+      "measured_xy": [
+        [
+          -0.6492826450305514,
+          -0.30172143362946696
+        ]
+      ],
+      "known_cells": 1909,
+      "map_stamp_ns": 12750000000,
+      "core_state": "SUCCEEDED",
+      "verified_count": 1
+    },
+    {
+      "mission_id": "explore-c21dfcd1f5a9/step/4",
+      "goal": [
+        -0.6499999202787876,
+        -0.14999991282820702
+      ],
+      "measured_xy": [
+        [
+          -0.6520071968235698,
+          -0.19937571496240356
+        ]
+      ],
+      "known_cells": 1940,
+      "map_stamp_ns": 16250000000,
+      "core_state": "SUCCEEDED",
+      "verified_count": 1
+    }
+  ],
+  "map_files": {
+    "occupancy.json": "44982ee0bbff087452df646f1b03668b30a78c28dd3ee6af47606c2a7e05511c",
+    "map.pgm": "8782fb2fed6de48ed9f4d1205d14137c6d297e068385901f23ec81c5e0552512",
+    "map.yaml": "40ea4c382ed05792e50f47b087582440eef7bf4cd1a28c985e08a92c186cbef8"
+  },
+  "linked_module_events": 10,
+  "observed_pillar_cells": 11,
+  "world_witness": {
+    "first": [
+      1.0236151275522173e-09,
+      1.8800487088592376e-20
+    ],
+    "last": [
+      -0.6476737614452148,
+      -0.20877782065696793
+    ],
+    "max_displacement_m": 0.7501192363682864,
+    "max_linear_command_mps": 0.32,
+    "samples": 546,
+    "moving_commands": 209,
+    "witness_instance": "a641edd689cd4d469d7a9c3cf19835e1",
+    "closest_pillar_clearance_m": 1.5556349094776765,
+    "latest_twist": [
+      0.0,
+      0.0
+    ]
+  },
+  "inflight_cancel": {
+    "receipt": {
+      "mission_id": "cancel-c21dfcd1f5a9/step/1",
+      "state": "CANCELED",
+      "detail": "cancel-c21dfcd1f5a9/step/1/waypoint/1 stop confirmed: cancel requested; stationary odometry confirmed [code:navigation.cancel_requested]"
+    },
+    "state": "CANCELED",
+    "reason": "operator_cancel",
+    "goal_count": 1,
+    "last_twist": [
+      0.0,
+      0.0
+    ],
+    "partial_map": true,
+    "pre_cancel_displacement_m": 0.10559071949853996,
+    "stopped_drift_m": 2.403372401204594e-07
+  },
+  "missing_mapper": {
+    "state": "BLOCKED",
+    "reason": "map_or_pose_unavailable",
+    "steps": 0
+  },
+  "other_robot_refused": true,
+  "repeat_refused": true,
+  "recording": {
+    "explore": {
+      "counts": {
+        "twist": 447,
+        "rgb": 163,
+        "world_pose": 597,
+        "fused_pose": 597,
+        "clock": 81,
+        "map": 21,
+        "mission": 13,
+        "bus": 12
+      },
+      "rgb_size": [
+        768,
+        512
+      ],
+      "timeline": "media/explore/timeline.jsonl",
+      "timeline_sha256": "b66682cc10b9526dfdb8abd2a132ea64aa85bf481cd8e2b03e950d501b6124fd"
+    },
+    "cancel": {
+      "counts": {
+        "twist": 596,
+        "rgb": 213,
+        "fused_pose": 783,
+        "world_pose": 783,
+        "clock": 106,
+        "map": 29,
+        "mission": 3,
+        "bus": 3
+      },
+      "rgb_size": [
+        768,
+        512
+      ],
+      "timeline": "media/cancel/timeline.jsonl",
+      "timeline_sha256": "a408299ab399d9edbac323bf641c58a720793a7285057016969ff69b19e1e8a6"
+    }
+  }
+}

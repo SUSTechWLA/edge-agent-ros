@@ -34,3 +34,18 @@ python tests/system/commission_exploration.py --image edge-agent-ros:commission-
 - `BLOCKED / map_or_pose_unavailable` 表示收不到对时且同坐标系的地图和位姿，任务没有启动。运动中观测丢失会尝试按原 ID 取消，恢复策略可从 `reason` 和 `cancel` 分辨原因与停车结果。结果不明时状态为 `RECOVERY_REQUIRED`。
 - `report.json.final_known_cells / total_cells` 是给定探索区域的覆盖比例。`map/manifest.json` 中相同名称的字段统计整张局部地图。试验区域为 3,600 格，完整局部栅格为 14,400 格。
 - 仿真场地以轮速和 IMU 估计的 `odom` 为参考系，使用二维激光建图。无回环优化。将来接入激光惯导 SLAM、视觉 SLAM 或 Nav2，需要分别验证姿态质量、坐标变换、制动距离与急停，不应将此局部探索试验作为真机移动授权。
+
+## 记录同一次真实仿真的画面和事件
+
+为上述命令增加 `--record`，使用另一个空目录。程序在试验世界设置固定斜俯视相机，发布每秒 8 帧、768 × 512 的 Gazebo RGB 图像。场地刻度间距 1 米，橙色方柱同时参与渲染和物理碰撞。独立订阅者核对激光栅格实际观察到方柱，以及实车模型相对于方柱的最近距离。相机和独立判据不参与选点。
+
+| 目录或记录 | 用途 |
+|---|---|
+| `recorded-world.sdf` | 连同场地、几何、材质和相机参数一并保留，可按验收报告中的 SHA-256 校验 |
+| `media/explore` 和 `media/cancel` | 前者记录四步预算的探索，后者记录重置仿真后、车已经产生平移时请求取消。两轮仿真各自从零计时 |
+| `rgb/*.png`、`grid/*.json` | 原始 Gazebo RGB 像素经无损 PNG 编码；ROS 占据栅格保留坐标和全部原格值。文件名是该轮仿真时间，单位纳秒 |
+| `timeline.jsonl` | `rgb/map/world_pose/fused_pose` 保留消息头时间戳。`mission/twist/bus` 使用订阅者首次看到变化时最近的 `/clock`。每条记录另存主机单调时间和 UTC Unix 纳秒，可区分处理延迟与观测时间 |
+
+复盘时从 `mission.phase=requested` 读出目标，看同一时基的 `world_pose` 是否发生位移，再用 `receipt` 的实际位置和下一次 `map` 验证执行及覆盖。取消实验还记录停车后的两个独立位姿样本间位移。完整运行的测试产物位于 `artifacts/verification/commission-exploration/`，可在下次更新驱动或控制器时用相同方式重做。
+
+2026-11-19 在研发提交 `0977a54` 的镜像上，四个自动选择的目标都收到了到点回执，探索区域的已知栅格从 1,415 增至 1,959／3,600，独立世界位姿从起点最远移动 0.750 米。地图实际观察到立柱的 11 个占据格。独立的取消实验中，车已平移 0.106 米才注入终止信号。任务按原 ID 取消，停车后两个独立世界位姿样本相隔约 0.8 秒，位置变化小于 0.001 米。另验证重复运行和错误机体拒绝，地图提供者离线时零步受阻。[实测数据、时间线摘要与哈希](../evidence/rover-exploration.json)
