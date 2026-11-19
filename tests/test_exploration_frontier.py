@@ -93,6 +93,26 @@ class FrontierTests(unittest.TestCase):
             # Minimum distance from the unsnapped continuous path to the newly occupied square.
             self.assertGreaterEqual(math.hypot(max(gx-x,0,x-gx-1),max(gy-y,0,y-gy-1)),.32)
 
+    def test_sub_tolerance_first_turn_uses_other_frontier(self):
+        rows = (["############"]*2 + ["###..??#####","###..#####??","###.#####.??","###..####???",
+                "####.???????","####.???????","####.???????"] + ["############"]*3)
+        grid = square(12,[{"#":100,".":0,"?":-1}[c] for row in rows for c in row]) | {"resolution":.1}
+        pose = [.3977,.5505]
+        options = dict(bounds=[0,0,1.2,1.2],footprint_radius=0,max_step=.65)
+        ideal = plan_frontier(grid,pose,**options)
+        # The highest-gain route first turns after 5.23 cm; the rover's
+        # controller accepts goals within 5.5 cm without moving.
+        self.assertLess(math.dist(pose,ideal["goal"]),.055)
+        actual = plan_frontier(grid,pose,min_step=.12,**options)
+        self.assertEqual(actual["state"],"WAYPOINT")
+        self.assertGreaterEqual(math.dist(pose,actual["goal"]),.12)
+        self.assertLess(actual["potential_unknown_cells"],ideal["potential_unknown_cells"])
+        grid["cells"][4*12+3] = 100  # close the alternative corridor
+        blocked = plan_frontier(grid,pose,min_step=.12,**options)
+        self.assertEqual((blocked["reason"],blocked["goal"]),("no_leg_above_controller_tolerance",None))
+        for limit in (-1,.7,math.nan):
+            self.assertEqual(plan_frontier(grid,pose,min_step=limit,**options)["state"],"BLOCKED")
+
     def test_rotated_grid_and_malformed_map(self):
         g=square(10,[0 if x<7 else -1 for _ in range(10) for x in range(10)])
         p=plan_frontier(g,[2.5,5.5],bounds=[0,0,10,10],max_step=2)

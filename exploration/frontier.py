@@ -87,21 +87,22 @@ def _masks(grid, bounds, radius):
     return inside, unknown, safe, pad
 
 
-def plan_frontier(grid, pose_xy, *, bounds, footprint_radius=0.28, max_step=0.65, visited=()):
+def plan_frontier(grid, pose_xy, *, bounds, footprint_radius=0.28, min_step=0, max_step=0.65, visited=()):
     """Return WAYPOINT, COMPLETE, PARTIAL or BLOCKED. Only zero-valued cells can be traversed.
 
     bounds is [xmin,ymin,xmax,ymax] in the grid frame. visited is a sequence of
     already reached waypoint coordinates for this attempt. The next leg is one
-    straight subset of a reachable path. Re-observe after executing that leg.
+    straight subset of a reachable path. Set min_step above the controller's
+    arrival tolerance. Re-observe after executing that leg.
     """
     result = {"state": "BLOCKED", "goal": None, "path": [], "known_cells": 0, "total_cells": 0}
     try:
         g = Grid(grid)
         x0, y0, x1, y1 = bounds
         px, py = pose_xy
-        if not all(finite(v) for v in (*bounds,px,py,footprint_radius,max_step)):
+        if not all(finite(v) for v in (*bounds,px,py,footprint_radius,min_step,max_step)):
             raise ValueError("invalid_limits_or_pose")
-        if x0 >= x1 or y0 >= y1 or footprint_radius < 0 or max_step <= 0:
+        if x0 >= x1 or y0 >= y1 or footprint_radius < 0 or max_step <= 0 or not 0 <= min_step <= max_step:
             raise ValueError("invalid_limits_or_pose")
         if footprint_radius > min(x1-x0,y1-y0,g.width*g.resolution,g.height*g.resolution)/2:
             raise ValueError("pose_without_clearance")
@@ -173,39 +174,49 @@ def plan_frontier(grid, pose_xy, *, bounds, footprint_radius=0.28, max_step=0.65
         top, bottom = max(0,y-look)*stride, min(g.height,y+look+1)*stride
         left, right = max(0,x-look), min(g.width,x+look+1)
         return summed[bottom+right]-summed[top+right]-summed[bottom+left]+summed[top+left]
-    parents = {start: None}
-    queue = deque([(start,0)])
+    # Seed the BFS with straight rays. A ray becomes a normal search path once
+    # its first leg is long enough to move the controller. Short ray prefixes
+    # do not mark a cell visited: another admissible path may reach that cell.
+    reached = {start}
+    queue = deque([(start,0,0,start,False)])
+    short_leg = clipped_leg = False
     target = None
+    goal = direction = None
     best = None
     while queue:
-        i, distance = queue.popleft()
-        if i != start and i in candidates and not already_seen(i):
+        i, distance, heading, first_end, admitted = queue.popleft()
+        if admitted and i in candidates and not already_seen(i):
             new_area = gain(i)
             rank = (new_area/(distance+look),new_area,-distance,-i)
             if best is None or rank > best:
-                target, best = i, rank
+                target, goal, direction, best = i, first_end, heading, rank
         for j in g.neighbors(i):
-            if safe[j] and j not in parents:
-                parents[j] = i
-                queue.append((j,distance+1))
+            if not safe[j] or j == start:
+                continue
+            step = j-i
+            straight = heading == 0 or (i == first_end and heading == step)
+            if not admitted and not straight:
+                continue
+            end = first_end
+            if straight:
+                advance = math.dist(g.center(j),pose_xy)
+                if advance <= max_step+1e-9:
+                    end = j
+                    if not admitted and advance < min_step:
+                        short_leg = True
+                        queue.append((j,distance+1,heading or step,end,False))
+                        continue
+                elif not admitted:
+                    clipped_leg = True
+                    continue
+            if j not in reached:
+                reached.add(j)
+                queue.append((j,distance+1,heading or step,end,True))
     if target is None:
+        if len(reached) == 1 and (short_leg or clipped_leg):
+            reason = "no_leg_above_controller_tolerance" if short_leg else "step_below_grid_spacing"
+            return {**result, "reason":reason}
         return {**result, "state":"PARTIAL", "reason":"no_new_reachable_frontier"}
-    trail = []
-    i = target
-    while i != start:
-        trail.append(i)
-        i = parents[i]
-    trail.reverse()
-    first_direction = trail[0]-start
-    previous = start
-    leg = []
-    for i in trail:
-        p = g.center(i)
-        if i-previous != first_direction or math.dist(p,pose_xy) > max_step+1e-9:
-            break
-        leg.append(p)
-        previous = i
-    if not leg:
-        return {**result, "reason":"step_below_grid_spacing"}
+    leg = [g.center(i) for i in range(start+direction,goal+direction,direction)]
     return {**result, "state":"WAYPOINT", "reason":"reachable_frontier", "goal":leg[-1],
             "path":[list(pose_xy), *leg], "frontier":g.center(target),"potential_unknown_cells":best[1]}
