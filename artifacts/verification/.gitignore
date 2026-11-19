@@ -43,3 +43,7 @@
 !/task-recorder/fast-tool-01/video/cover.png
 !/task-recorder/fast-tool-01/video/viewer-qa.json
 !/task-recorder/fast-tool-01/video/README.md
+!/plugin-tracks/deployment-amd64.json
+!/plugin-tracks/deployment-arm64.json
+!/plugin-tracks/frozen-missions.json
+!/plugin-tracks/historical-frozen.json

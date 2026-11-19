@@ -1,0 +1,1167 @@
+{
+  "spec": "SDD-045",
+  "accepted_for": "isolated software, Gazebo and synthetic ROS bench validation",
+  "hardware_qualification": "pending real hardware, independently installed source witness and operator stop/handoff acceptance",
+  "full_suite": {
+    "revision": "2afb070b54357849347193f8d0455600bcdb2500",
+    "dirty": false,
+    "status": "passed",
+    "started_at": "2026-11-19T05:39:37.558481+00:00",
+    "run_id": "20261119T053937Z-71e980d0",
+    "platform": "Docker Linux containers",
+    "image_revision": "2afb070b54357849347193f8d0455600bcdb2500",
+    "selected": [
+      "repository",
+      "planner",
+      "agent-contracts",
+      "observations",
+      "scene-contracts",
+      "core",
+      "motion-sensors",
+      "motion-world",
+      "agent-faults",
+      "resilience",
+      "console-missions",
+      "places",
+      "scene-binding",
+      "scene-outage",
+      "clock-reset",
+      "ui",
+      "model",
+      "board",
+      "plugin-isolation",
+      "campus-world",
+      "rover-commissioning"
+    ],
+    "selection": {
+      "*": "full"
+    },
+    "stages": [
+      {
+        "name": "repository",
+        "status": "passed",
+        "duration_s": 19.84
+      },
+      {
+        "name": "planner",
+        "status": "passed",
+        "duration_s": 40.78
+      },
+      {
+        "name": "board-build",
+        "status": "passed",
+        "duration_s": 2.58
+      },
+      {
+        "name": "board",
+        "status": "passed",
+        "duration_s": 128.25
+      },
+      {
+        "name": "build",
+        "status": "passed",
+        "duration_s": 5.34
+      },
+      {
+        "name": "rover-commissioning",
+        "status": "passed",
+        "duration_s": 80.91
+      },
+      {
+        "name": "plugin-isolation",
+        "status": "passed",
+        "duration_s": 359.64
+      },
+      {
+        "name": "agent-contracts",
+        "status": "passed",
+        "duration_s": 9.31
+      },
+      {
+        "name": "observations",
+        "status": "passed",
+        "duration_s": 282.39
+      },
+      {
+        "name": "scene-contracts",
+        "status": "passed",
+        "duration_s": 2.39
+      },
+      {
+        "name": "core",
+        "status": "passed",
+        "duration_s": 95.58
+      },
+      {
+        "name": "motion-sensors",
+        "status": "passed",
+        "duration_s": 18.86
+      },
+      {
+        "name": "agent-faults",
+        "status": "passed",
+        "duration_s": 583.12
+      },
+      {
+        "name": "resilience",
+        "status": "passed",
+        "duration_s": 45.12
+      },
+      {
+        "name": "campus-world",
+        "status": "passed",
+        "duration_s": 386.8
+      },
+      {
+        "name": "motion-world",
+        "status": "passed",
+        "duration_s": 8.14
+      },
+      {
+        "name": "motion-cleanup",
+        "status": "passed",
+        "duration_s": 2.03
+      },
+      {
+        "name": "session-register",
+        "status": "passed",
+        "duration_s": 2.16
+      },
+      {
+        "name": "model-cache",
+        "status": "passed",
+        "duration_s": 2.83
+      },
+      {
+        "name": "simulation-start",
+        "status": "passed",
+        "duration_s": 8.23
+      },
+      {
+        "name": "model-ready",
+        "status": "passed",
+        "duration_s": 0.42
+      },
+      {
+        "name": "console-missions",
+        "status": "passed",
+        "duration_s": 25.09
+      },
+      {
+        "name": "places",
+        "status": "passed",
+        "duration_s": 61.78
+      },
+      {
+        "name": "scene-binding",
+        "status": "passed",
+        "duration_s": 2.78
+      },
+      {
+        "name": "scene-outage",
+        "status": "passed",
+        "duration_s": 15.52
+      },
+      {
+        "name": "clock-reset",
+        "status": "passed",
+        "duration_s": 2.61
+      },
+      {
+        "name": "ui",
+        "status": "passed",
+        "duration_s": 15.02
+      },
+      {
+        "name": "session-evidence",
+        "status": "passed",
+        "duration_s": 2.44
+      },
+      {
+        "name": "session-plugin",
+        "status": "passed",
+        "duration_s": 10.02
+      },
+      {
+        "name": "model",
+        "status": "passed",
+        "duration_s": 10.14
+      },
+      {
+        "name": "plugin-frozen-missions",
+        "status": "passed",
+        "duration_s": 0.11
+      },
+      {
+        "name": "simulation-cleanup",
+        "status": "passed",
+        "duration_s": 4.8
+      },
+      {
+        "name": "image-cleanup",
+        "status": "passed",
+        "duration_s": 0.19
+      },
+      {
+        "name": "board-cleanup",
+        "status": "passed",
+        "duration_s": 0.72
+      }
+    ]
+  },
+  "acceptance": {
+    "AC1": {
+      "result": "passed_in_scope",
+      "measured": "v2 字段和篡改拒绝；冻结的 v1 通信样本字节比对。",
+      "limit": "仅覆盖仓库金样，未知第三方插件未采样。",
+      "records": [
+        "ut-planner"
+      ],
+      "tests": [
+        {
+          "test": "test_pinned_pre_migration_wire_bytes",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_every_top_level_field_required_and_cross_fields_fail_closed",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_hash_authenticates_code_schemas_and_descriptor_independently",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_file_parser_truncated_duplicate_and_bounds",
+          "observed_ok_log": "planner.log"
+        }
+      ],
+      "cases": {
+        "positive": "冻结的 v1 工具/服务样本",
+        "negative": "缺字段、类型不合规",
+        "fault": "改变代码、契约或描述符字节"
+      }
+    },
+    "AC2": {
+      "result": "passed_in_scope",
+      "measured": "软插件安装、热更、排空、卸载和在途绑定。",
+      "limit": "限定在五个试点和本轮并发故障负载。",
+      "records": [
+        "soft-runtime",
+        "p1-committed",
+        "ut-planner"
+      ],
+      "tests": [
+        {
+          "test": "test_duplicate_call_or_lost_client_executes_once_and_holds_inflight",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_frozen_undispatched_plan_drains_before_explicit_dispose_and_apply",
+          "observed_ok_log": "planner.log"
+        }
+      ],
+      "cases": {
+        "positive": "原 Agent 进程完成数列与证据工具调用",
+        "negative": "撤销后新任务无法调用旧工具",
+        "fault": "冻结步骤时排空，恢复后原绑定完成"
+      }
+    },
+    "AC3": {
+      "result": "passed_in_scope",
+      "measured": "缺 lease、stop、独立验收器的 publish/load 拒绝；验收器掉线、恢复、杀进程、换代。",
+      "limit": "物理试点为合成 ROS 相机，独立台架尚待验收。",
+      "records": [
+        "physical-camera",
+        "p2-committed",
+        "ut-planner"
+      ],
+      "tests": [
+        {
+          "test": "test_missing_physical_contract_rejected_at_publish_and_deploy_load",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_no_self_verification_and_no_malformed_or_incomplete_receipt",
+          "observed_ok_log": "planner.log"
+        }
+      ],
+      "cases": {
+        "positive": "合成相机帧由独立见证验收",
+        "negative": "缺租约/停稳协议/独立验收器拒绝发布或载入",
+        "fault": "验收器离线与来源中断"
+      }
+    },
+    "AC4": {
+      "result": "passed_in_scope",
+      "measured": "依赖撤销后保留消费者并拒绝调用；重启后旧任务拒绝替代依赖。",
+      "limit": "用可控的服务依赖故障做验证。",
+      "records": [
+        "ut-planner",
+        "soft-runtime"
+      ],
+      "tests": [
+        {
+          "test": "test_dependency_loss_keeps_consumer_and_fails_closed_transitively",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_restart_with_changed_dependency_cannot_restore_original_reservation",
+          "observed_ok_log": "planner.log"
+        }
+      ],
+      "cases": {
+        "positive": "已就绪的依赖被使用",
+        "negative": "依赖消失时保留消费者并关闭准入",
+        "fault": "重启后更换依赖，拒绝恢复到替代版本"
+      }
+    },
+    "AC5": {
+      "result": "passed_in_scope",
+      "measured": "声明检查、设备挂载检查和进程网络探测。",
+      "limit": "隔离结论限于已检查的容器、Docker 配置与请求。",
+      "records": [
+        "soft-runtime",
+        "board-pack",
+        "ut-planner"
+      ],
+      "tests": [
+        {
+          "test": "test_every_top_level_field_required_and_cross_fields_fail_closed",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_controls_permissions_and_route_violations_fail",
+          "observed_ok_log": "board.log"
+        }
+      ],
+      "cases": {
+        "positive": "受限容器读公开事实",
+        "negative": "拒绝执行器权限与设备挂载",
+        "fault": "从运行容器探测控制网络、网关任务提交"
+      }
+    },
+    "AC6": {
+      "result": "passed_in_scope",
+      "measured": "生命周期账本包含版本/摘要；目录提供健康和类别。",
+      "limit": "逐条校验已采集的生命周期事件；未穷举所有故障时序。",
+      "records": [
+        "soft-runtime",
+        "ut-planner"
+      ],
+      "tests": [
+        {
+          "test": "test_partial_apply_rolls_back_and_preserves_failure_for_reconciliation",
+          "observed_ok_log": "planner.log"
+        },
+        {
+          "test": "test_admin_lifecycle_reservations_survive_restart_without_rebinding",
+          "observed_ok_log": "planner.log"
+        }
+      ],
+      "cases": {
+        "positive": "目录列出 class/health，事件可查版本摘要",
+        "negative": "失败应用不进入可用状态",
+        "fault": "部分注册失败执行回收，注册表重启保留证据"
+      }
+    },
+    "AC7": {
+      "result": "passed_in_scope",
+      "measured": "完整系统套件、冻结任务、物理操作原始身份、仿真位姿和网关启动计数。",
+      "limit": "历史对照只审计已知 operation，当前严格门槛扫描全部 gateway starts；指标仅适用于这些样本。",
+      "records": [
+        "full-suite",
+        "frozen-missions",
+        "historical-frozen",
+        "physical-camera"
+      ],
+      "tests": [
+        {
+          "test": "test_crash_after_dispatch_never_reoffers_and_conflicting_device_lease_waits",
+          "observed_ok_log": "planner.log"
+        }
+      ],
+      "cases": {
+        "positive": "冻结任务+仿真位姿独立核验成功",
+        "negative": "封锁区域、未知位置等核验未成功",
+        "fault": "重启设备网关、替换账本，保留未知操作"
+      }
+    },
+    "AC8": {
+      "result": "passed_in_scope",
+      "measured": "部署投影在两种架构构建、observe、端到端板端软件任务、镜像和站点变更拒绝。",
+      "limit": "ARM64 为构建机仿真；真实 RK3588/Jetson、USB、真实 DDS 拓扑和现场见证尚未验收。",
+      "records": [
+        "deployment-amd64",
+        "deployment-arm64",
+        "board-pack",
+        "combined-field-cli",
+        "soft-field-cli",
+        "pre-fix-stale-site"
+      ],
+      "tests": [
+        {
+          "test": "test_running_mounts_must_match_site_project_volume_and_subpath",
+          "observed_ok_log": "board.log"
+        }
+      ],
+      "cases": {
+        "positive": "从部署投影构建镜像，observe 与板端软件任务",
+        "negative": "observe 拒绝提交，错误站点挂载被拒绝",
+        "fault": "替换站点仍保留旧容器，复现原缺陷并验证修复"
+      }
+    }
+  },
+  "baseline": {
+    "legacy_units": {
+      "commit": "f0f7dbf177f0edde07c07a9d4d17035795537b4d",
+      "total": 102,
+      "ok": true
+    },
+    "historical_frozen": {
+      "passed": true,
+      "expected_cases": 7,
+      "matching_cases": 7,
+      "claimed_success": 4,
+      "false_success": 0,
+      "success_missing_witness": 0,
+      "unexpected_motion": 0,
+      "invalid_world_samples": 0,
+      "comparison_strength": "original_operation_only",
+      "gateway_starts": 1,
+      "motion_operations": 1,
+      "duplicate_motion_starts": 0,
+      "unexpected_operation_ids": [],
+      "gateway_witness_passed": true,
+      "unknown_outcome": "RECOVERY_REQUIRED",
+      "valid_kill_pose": true,
+      "source_reports_passed": true
+    },
+    "golden": {
+      "revision": "2afb070b54357849347193f8d0455600bcdb2500",
+      "path": "tests/fixtures/plugin-tracks/v1-expected.json",
+      "sha256": "d529fab85a6e9eb3ec31717ea4502469d0d35c40c1efea1c0f8be78f982410d2",
+      "wire_byte_samples": 18
+    }
+  },
+  "frozen_missions": {
+    "passed": true,
+    "expected_cases": 7,
+    "matching_cases": 7,
+    "claimed_success": 4,
+    "false_success": 0,
+    "success_missing_witness": 0,
+    "unexpected_motion": 0,
+    "invalid_world_samples": 0,
+    "comparison_strength": "private_stack_lifetime",
+    "gateway_starts": 1,
+    "motion_operations": 2,
+    "duplicate_motion_starts": 0,
+    "unexpected_operation_ids": [],
+    "gateway_witness_passed": true,
+    "unknown_outcome": "RECOVERY_REQUIRED",
+    "valid_kill_pose": true,
+    "source_reports_passed": true
+  },
+  "stage_benchmarks": {
+    "p1": {
+      "passed": true,
+      "source_commit": "0aab629a39cac9aee6597d5d00ea457c54141db5",
+      "platform": "linux/amd64",
+      "platform_digest": "sha256:6143a7d2c4ebec0336ecc3affc236f70090c07c9a2269c04b84c306367ff01f1",
+      "dirty": false,
+      "active": {
+        "derived.series_mean": {
+          "id": "derived.series_mean",
+          "version": "1.0.0",
+          "class": "soft",
+          "lifecycle": "ACTIVE",
+          "health": "ready",
+          "content_digest": "sha256:b0ed98b038f9f51d9a9bed9a39137adda09a39d835d15242fa322d707807917a"
+        },
+        "evidence.evidence_schema": {
+          "id": "evidence.evidence_schema",
+          "version": "1.0.0",
+          "class": "soft",
+          "lifecycle": "ACTIVE",
+          "health": "ready",
+          "content_digest": "sha256:a7668723ccc164d8da76b49cb21c8c295ea8d8e4937ccaab002889ad8595490b"
+        },
+        "evidence.query_evidence": {
+          "id": "evidence.query_evidence",
+          "version": "1.0.0",
+          "class": "soft",
+          "lifecycle": "ACTIVE",
+          "health": "ready",
+          "content_digest": "sha256:0d17e1073523b2105cac92b903b771ecf2139129cb8fe0eedbab9019d2c19260"
+        },
+        "evidence.read_session": {
+          "id": "evidence.read_session",
+          "version": "1.0.0",
+          "class": "soft",
+          "lifecycle": "ACTIVE",
+          "health": "ready",
+          "content_digest": "sha256:2fa71968910aa3e6d4d7bf6f9aaf3a665fff085a24e4980c562aae5ff6b97c4a"
+        },
+        "session.default": {
+          "id": "session.default",
+          "version": "1.0.0",
+          "class": "soft",
+          "lifecycle": "ACTIVE",
+          "health": "ready",
+          "content_digest": "sha256:0ded15701fe1fe354f5f0254dbe7fc237fd6abc9b144f5509b606ea9df9a2e41"
+        }
+      },
+      "upgrade": {
+        "previous_digest": "sha256:b0ed98b038f9f51d9a9bed9a39137adda09a39d835d15242fa322d707807917a",
+        "updated_digest": "sha256:1184d42b9d817778f8bc8c16bda71103130feb820a3a428d4d1dde06fba38870",
+        "agent_pid_and_start_unchanged": true,
+        "saved_step_unchanged": true
+      },
+      "inflight_at_drain": 1,
+      "tasks": [
+        {
+          "state": "SUCCEEDED",
+          "tools": [
+            "derived.series_mean"
+          ]
+        },
+        {
+          "state": "SUCCEEDED",
+          "tools": [
+            "read_session"
+          ]
+        },
+        {
+          "state": "SUCCEEDED",
+          "tools": [
+            "query_evidence"
+          ]
+        },
+        {
+          "state": "SUCCEEDED",
+          "tools": [
+            "evidence_schema"
+          ]
+        },
+        {
+          "state": "SUCCEEDED",
+          "tools": [
+            "derived.series_mean"
+          ]
+        },
+        {
+          "state": "BLOCKED",
+          "tools": []
+        }
+      ],
+      "lifecycle": {
+        "observations": 10,
+        "states": [
+          "ACTIVE",
+          "DISPOSED",
+          "LOADING",
+          "PENDING",
+          "UNLOADING"
+        ],
+        "every_observed_version_and_digest": true
+      },
+      "isolated_roles": {
+        "evidence": {
+          "agent_dns_resolves": false,
+          "control_socket_denied": true,
+          "gateway_submit_response_status": 403,
+          "device_count": 0,
+          "cap_drop": [
+            "ALL"
+          ]
+        },
+        "session": {
+          "agent_dns_resolves": false,
+          "control_socket_denied": true,
+          "gateway_submit_response_status": 403,
+          "device_count": 0,
+          "cap_drop": [
+            "ALL"
+          ]
+        },
+        "soft-host": {
+          "agent_dns_resolves": false,
+          "control_socket_denied": true,
+          "gateway_submit_response_status": 403,
+          "device_count": 0,
+          "cap_drop": [
+            "ALL"
+          ]
+        }
+      }
+    },
+    "p2": {
+      "passed": true,
+      "source_revision": "e728cac319a998eeb4925e03aa6e06aa50e3d268",
+      "platform": "linux/amd64",
+      "platform_digest": "sha256:00e9f666a115fb8c67623a5e47f2b2663912ff8e95dc5d34335f075e34b3352e",
+      "simulated_driver": true,
+      "tasks": {
+        "healthy_task": "SUCCEEDED",
+        "unknown_task": "RECOVERY_REQUIRED",
+        "verified_after_return": "SUCCEEDED",
+        "v2_task": "SUCCEEDED"
+      },
+      "score": {
+        "successful_operations_with_source_truth": 3,
+        "false_success": 0,
+        "unplanned_source_readers": 0,
+        "unresolved_operations": 1
+      },
+      "handoff": [
+        {
+          "event": "installation",
+          "phase": "ACTIVE",
+          "epoch": 1
+        },
+        {
+          "event": "drain",
+          "phase": "DRAINING",
+          "epoch": 1
+        },
+        {
+          "event": "quiet",
+          "phase": "QUIESCENT",
+          "epoch": 1
+        },
+        {
+          "event": "release",
+          "phase": "RELEASED",
+          "epoch": 2
+        },
+        {
+          "event": "exited",
+          "phase": "STOPPED",
+          "epoch": 2
+        },
+        {
+          "event": "installed_v2",
+          "phase": "ACTIVE",
+          "epoch": 3
+        }
+      ],
+      "faults": {
+        "source_witness_matches": true,
+        "blocked_upgrade": "plugin.physical_hot_reload_forbidden",
+        "early_release": "plugin.stop_unconfirmed",
+        "stale_fence": "tool.binding_unavailable"
+      }
+    }
+  },
+  "current_soft": {
+    "passed": true,
+    "source_commit": "2afb070b54357849347193f8d0455600bcdb2500",
+    "platform": "linux/amd64",
+    "platform_digest": "sha256:f0325ea5ab15dab2583842f860e9a9b15865edda13e5e65288a2a245ff56a470",
+    "dirty": false,
+    "active": {
+      "derived.series_mean": {
+        "id": "derived.series_mean",
+        "version": "1.0.0",
+        "class": "soft",
+        "lifecycle": "ACTIVE",
+        "health": "ready",
+        "content_digest": "sha256:7e44ece2d60d64903a0748c93e3bb80c5692e6e9d493a3f764e415d5101223ee"
+      },
+      "evidence.evidence_schema": {
+        "id": "evidence.evidence_schema",
+        "version": "1.0.0",
+        "class": "soft",
+        "lifecycle": "ACTIVE",
+        "health": "ready",
+        "content_digest": "sha256:d745311a811bf932c7d524b75a31603ce7d7f96f6d8398da9a67f5e48948dc7f"
+      },
+      "evidence.query_evidence": {
+        "id": "evidence.query_evidence",
+        "version": "1.0.0",
+        "class": "soft",
+        "lifecycle": "ACTIVE",
+        "health": "ready",
+        "content_digest": "sha256:06846836b2603db9b4810579a16f0a889de316707e1f8a9c9c584e44c8ab24ed"
+      },
+      "evidence.read_session": {
+        "id": "evidence.read_session",
+        "version": "1.0.0",
+        "class": "soft",
+        "lifecycle": "ACTIVE",
+        "health": "ready",
+        "content_digest": "sha256:b04c3622820339c525d4d16458ae83cf0e7af389bc803ee77d03a5dc96489ef1"
+      },
+      "session.default": {
+        "id": "session.default",
+        "version": "1.0.0",
+        "class": "soft",
+        "lifecycle": "ACTIVE",
+        "health": "ready",
+        "content_digest": "sha256:c5a0b8838a4f1e6f9fc6c0f7ba907a40f1bb6edaa9d50b2037a4fe5d4bd650b1"
+      }
+    },
+    "upgrade": {
+      "previous_digest": "sha256:7e44ece2d60d64903a0748c93e3bb80c5692e6e9d493a3f764e415d5101223ee",
+      "updated_digest": "sha256:517cce40c8035604b8d278d470038461054143bd20975243cbebf0abead40926",
+      "agent_pid_and_start_unchanged": true,
+      "saved_step_unchanged": true
+    },
+    "inflight_at_drain": 1,
+    "tasks": [
+      {
+        "state": "SUCCEEDED",
+        "tools": [
+          "derived.series_mean"
+        ]
+      },
+      {
+        "state": "SUCCEEDED",
+        "tools": [
+          "read_session"
+        ]
+      },
+      {
+        "state": "SUCCEEDED",
+        "tools": [
+          "query_evidence"
+        ]
+      },
+      {
+        "state": "SUCCEEDED",
+        "tools": [
+          "evidence_schema"
+        ]
+      },
+      {
+        "state": "SUCCEEDED",
+        "tools": [
+          "derived.series_mean"
+        ]
+      },
+      {
+        "state": "BLOCKED",
+        "tools": []
+      }
+    ],
+    "lifecycle": {
+      "observations": 10,
+      "states": [
+        "ACTIVE",
+        "DISPOSED",
+        "LOADING",
+        "PENDING",
+        "UNLOADING"
+      ],
+      "every_observed_version_and_digest": true
+    },
+    "isolated_roles": {
+      "evidence": {
+        "agent_dns_resolves": false,
+        "control_socket_denied": true,
+        "gateway_submit_response_status": 403,
+        "device_count": 0,
+        "cap_drop": [
+          "ALL"
+        ]
+      },
+      "session": {
+        "agent_dns_resolves": false,
+        "control_socket_denied": true,
+        "gateway_submit_response_status": 403,
+        "device_count": 0,
+        "cap_drop": [
+          "ALL"
+        ]
+      },
+      "soft-host": {
+        "agent_dns_resolves": false,
+        "control_socket_denied": true,
+        "gateway_submit_response_status": 403,
+        "device_count": 0,
+        "cap_drop": [
+          "ALL"
+        ]
+      }
+    }
+  },
+  "current_physical": {
+    "passed": true,
+    "source_revision": "2afb070b54357849347193f8d0455600bcdb2500",
+    "platform": "linux/amd64",
+    "platform_digest": "sha256:f0325ea5ab15dab2583842f860e9a9b15865edda13e5e65288a2a245ff56a470",
+    "simulated_driver": true,
+    "tasks": {
+      "healthy_task": "SUCCEEDED",
+      "unknown_task": "RECOVERY_REQUIRED",
+      "verified_after_return": "SUCCEEDED",
+      "v2_task": "SUCCEEDED"
+    },
+    "score": {
+      "successful_operations_with_source_truth": 3,
+      "false_success": 0,
+      "unplanned_source_readers": 0,
+      "unresolved_operations": 1
+    },
+    "handoff": [
+      {
+        "event": "installation",
+        "phase": "ACTIVE",
+        "epoch": 1
+      },
+      {
+        "event": "drain",
+        "phase": "DRAINING",
+        "epoch": 1
+      },
+      {
+        "event": "quiet",
+        "phase": "QUIESCENT",
+        "epoch": 1
+      },
+      {
+        "event": "release",
+        "phase": "RELEASED",
+        "epoch": 2
+      },
+      {
+        "event": "exited",
+        "phase": "STOPPED",
+        "epoch": 2
+      },
+      {
+        "event": "installed_v2",
+        "phase": "ACTIVE",
+        "epoch": 3
+      }
+    ],
+    "faults": {
+      "source_witness_matches": true,
+      "blocked_upgrade": "plugin.physical_hot_reload_forbidden",
+      "early_release": "plugin.stop_unconfirmed",
+      "stale_fence": "tool.binding_unavailable"
+    }
+  },
+  "board_pack": {
+    "board_image_test": {
+      "passed": true,
+      "source_commit": "2afb070b54357849347193f8d0455600bcdb2500",
+      "platform_digest": "sha256:284ea6f920895fcdd6533fd04c3cada4ba159354ad44014c7557d81ce32fb836",
+      "projection": false
+    },
+    "runtime_submission": {
+      "state": "SUCCEEDED",
+      "tool": "derived.series_mean",
+      "value": 4.0,
+      "operation_id": "board-mean-539763ffe58e/step/1",
+      "soft_digest": "sha256:10c118253d41672dd419ff1fef2eedfe83262e63bb42827146f82f6f972ca503"
+    },
+    "public_facts": {
+      "public_events_http": 200,
+      "task_submit_http": 403,
+      "direct_console_dns": false
+    },
+    "synthetic_driver_absent": true,
+    "release_without_witness": "plugin.stop_unconfirmed"
+  },
+  "field_cli": {
+    "pre-fix-stale-site": {
+      "passed": false,
+      "source": "1cac02886f561026888957ccfe5e906aa1be5eca",
+      "wrong_site_accepted": true,
+      "task": {},
+      "retained_roles": []
+    },
+    "combined-field-cli": {
+      "passed": true,
+      "source": "faa8e5acd8dbef397553a7ae0c692ced735e196d",
+      "wrong_site_accepted": false,
+      "phase": "ACTIVE",
+      "physical_operations": 0,
+      "running": [
+        "agent",
+        "console",
+        "evidence",
+        "perception",
+        "physical-camera",
+        "physical-controller",
+        "physical-verifier",
+        "session",
+        "soft-facts",
+        "soft-gateway",
+        "soft-host"
+      ],
+      "task": {
+        "state": "SUCCEEDED",
+        "tool": "derived.series_mean",
+        "value": 4.0,
+        "operation_id": "field-mean-77732c56/step/1",
+        "soft_digest": "sha256:26bcac8416b7310aee6ed16b260b7791900130dadd1ead6cb01ad2a29c649332"
+      },
+      "retained_roles": [
+        "physical-camera",
+        "physical-controller",
+        "physical-verifier"
+      ]
+    },
+    "soft-field-cli": {
+      "passed": true,
+      "source": "faa8e5acd8dbef397553a7ae0c692ced735e196d",
+      "phase": "software-only",
+      "physical_operations": 0,
+      "running": [
+        "agent",
+        "console",
+        "evidence",
+        "perception",
+        "session",
+        "soft-facts",
+        "soft-gateway",
+        "soft-host"
+      ],
+      "task": {
+        "state": "SUCCEEDED",
+        "tool": "derived.series_mean",
+        "value": 4.0,
+        "operation_id": "field-mean-cb52368b/step/1",
+        "soft_digest": "sha256:26bcac8416b7310aee6ed16b260b7791900130dadd1ead6cb01ad2a29c649332"
+      },
+      "retained_roles": [
+        "evidence",
+        "session",
+        "soft-host"
+      ]
+    }
+  },
+  "deploy": {
+    "amd64": {
+      "passed": true,
+      "source": "b5316aa6e37eb4454dd15ec70b1201ad83a91cbb",
+      "deployment": "17d1050c07ff781c478aa885c0e941735f5c4100",
+      "tree": "a7e577d4c194dea45a5ede47ab8c1b203cce86a0",
+      "runtime_files": 183,
+      "platform": "linux/amd64",
+      "image_id": "sha256:e9cc74fe151b3de062c5c6893c54a99ec38ed44c9c466aa90c87d40035f74a86",
+      "scope": "isolated Linux containers, synthetic ROS input, no hardware",
+      "observe": {
+        "mode": "observe",
+        "environment": "hardware",
+        "denied": "console.observe_only",
+        "running": [
+          "console",
+          "perception"
+        ]
+      }
+    },
+    "arm64": {
+      "passed": true,
+      "source": "b5316aa6e37eb4454dd15ec70b1201ad83a91cbb",
+      "deployment": "17d1050c07ff781c478aa885c0e941735f5c4100",
+      "tree": "a7e577d4c194dea45a5ede47ab8c1b203cce86a0",
+      "runtime_files": 183,
+      "platform": "linux/arm64",
+      "image_id": "sha256:06689cffd3418e55098ee5de784bf37838b39f56835f2b53a962287f00e32cc3",
+      "scope": "isolated Linux containers, synthetic ROS input, no hardware",
+      "observe": {
+        "mode": "observe",
+        "environment": "hardware",
+        "denied": "console.observe_only",
+        "running": [
+          "console",
+          "perception"
+        ]
+      }
+    }
+  },
+  "full_suite_and_deploy_same_runtime_tree": true,
+  "full_suite_image_sources_match": true,
+  "retained_earlier_failures": [
+    {
+      "record": "p1-first-candidate",
+      "diagnosis": "task_timeout",
+      "passed": false,
+      "last_completed_stage": "active"
+    },
+    {
+      "record": "p1-second-candidate",
+      "diagnosis": "task_timeout",
+      "passed": false,
+      "last_completed_stage": "isolation_soft-host"
+    },
+    {
+      "record": "p2-first-candidate",
+      "diagnosis": "native_export_timeout",
+      "passed": false,
+      "last_completed_stage": "installation"
+    },
+    {
+      "record": "p2-second-candidate",
+      "diagnosis": "lease_expired",
+      "passed": false,
+      "last_completed_stage": "installation"
+    },
+    {
+      "record": "p2-fourth-candidate",
+      "diagnosis": "process_exit_proof_rejected",
+      "passed": false,
+      "last_completed_stage": "release"
+    }
+  ],
+  "offline_kit": {
+    "passed": true,
+    "archive_platform_digest": "sha256:9b94edd3c1c9c458c420c190bb0caa89f536018155d6b1c88de8ad62c2ff5c34",
+    "archive_config": "sha256:6e21396d94887974b0d6ff6a9ce76a26e129051e0f3e27b594ed992af79ebef0",
+    "archive_checked_against_loaded_image": true,
+    "projection_files": 183
+  },
+  "source_records": {
+    "ut-planner": {
+      "filename": "planner.log",
+      "sha256": "3fd9e163fda19b9296ef5ed4b9ae707a16154852f7d47cab61061d09f188ebb9",
+      "bytes": 52827,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/planner.log"
+    },
+    "ut-repository": {
+      "filename": "repository.log",
+      "sha256": "497b113c7b927e1c6cfb1da5f1c5038dfcff1d648edffa7af72dc9b674f6c03d",
+      "bytes": 11064,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/repository.log"
+    },
+    "ut-board": {
+      "filename": "board.log",
+      "sha256": "81088f281c8405f206e8f6ae1b1149cf55b5536b86bfd78b61da2ed58cb799bf",
+      "bytes": 12779,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/board.log"
+    },
+    "ut-plugin-isolation": {
+      "filename": "plugin-isolation.log",
+      "sha256": "e5217ba316001f2378ec8a55b4ba7ab1b7adf706218a24b5e52cb261dedc4b04",
+      "bytes": 43260,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/plugin-isolation.log"
+    },
+    "p0-unit": {
+      "filename": "summary.json",
+      "sha256": "f63dcf1cf3d6f1c4b817a813895463e5a75d807481b0bfff6d088cdfd96107d5",
+      "bytes": 3565,
+      "local_evidence": ".ci-results/sdd-045/p0/cordis-baseline-unit/20261119T033618Z/summary.json"
+    },
+    "historical-frozen": {
+      "filename": "historical-75bd27e.json",
+      "sha256": "d38f20d2812fe8db0d7e57d8f647cc9537bf81468a0f69994754ef5e9141603f",
+      "bytes": 1980,
+      "local_evidence": ".ci-results/sdd-045/p3/ac7-scorer/historical-75bd27e.json",
+      "public_original": "artifacts/verification/plugin-tracks/historical-frozen.json"
+    },
+    "frozen-missions": {
+      "filename": "plugin-frozen-missions.json",
+      "sha256": "c43a68c25732f0f2d4788438696954f80dc3aaf48f77bf07b69dc3a757ffc014",
+      "bytes": 2010,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/plugin-frozen-missions.json",
+      "public_original": "artifacts/verification/plugin-tracks/frozen-missions.json"
+    },
+    "p1-committed": {
+      "filename": "report.json",
+      "sha256": "daeb4e8934ae92eb1bf7a56935bde3aeefc1179cb43f2e195d61122bd7c2756d",
+      "bytes": 28459,
+      "local_evidence": ".ci-results/sdd-045/p1/committed-01/report.json"
+    },
+    "p2-committed": {
+      "filename": "report.json",
+      "sha256": "d5d90a92a1246557edf30e330b720c921a66c275f16527fd775bece00a4df516",
+      "bytes": 28684,
+      "local_evidence": ".ci-results/sdd-045/p2/committed-01/report.json"
+    },
+    "soft-runtime": {
+      "filename": "soft-runtime.json",
+      "sha256": "38f36a4ea7dd7c3331115245f61a2488a04b50a0375d5c276f959f40f3fff60a",
+      "bytes": 29066,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/soft-runtime.json"
+    },
+    "physical-camera": {
+      "filename": "physical-camera.json",
+      "sha256": "cf8bb484118137e8afe8997744bca940783e8dbd85858d004cd0afd20a5d2b98",
+      "bytes": 28696,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/physical-camera.json"
+    },
+    "full-suite": {
+      "filename": "summary.json",
+      "sha256": "5efcd30d3cc23503b74b4012b95febcb66836edd17ce9e4b3e5dfd017e712b0d",
+      "bytes": 7478,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/summary.json"
+    },
+    "deployment-amd64": {
+      "filename": "summary.json",
+      "sha256": "401b2ab24010e2da569e00d0069020ee7352577f31b54e983033131038ff8dde",
+      "bytes": 690,
+      "local_evidence": ".ci-results/sdd-046/deploy-amd64-03/summary.json",
+      "public_original": "artifacts/verification/plugin-tracks/deployment-amd64.json"
+    },
+    "deployment-arm64": {
+      "filename": "summary.json",
+      "sha256": "5c446467f6a18ac26a675eddf65841c95e5f68716de162a20e4aeaf94d23269d",
+      "bytes": 842,
+      "local_evidence": ".ci-results/sdd-046/deploy-arm64-03/summary.json",
+      "public_original": "artifacts/verification/plugin-tracks/deployment-arm64.json"
+    },
+    "board-pack": {
+      "filename": "board-pack.json",
+      "sha256": "850f4846d02d02a1be303747380cf3a667af0fde4c88b331d1bb5105079adb81",
+      "bytes": 4801,
+      "local_evidence": ".ci-results/sdd-046/release/20261119T053937Z-71e980d0/board-pack.json"
+    },
+    "pre-fix-stale-site": {
+      "filename": "report.json",
+      "sha256": "66e476dbe0bc9815b943396cc01b3c3b8ad04165d735834ed15dcb0c56958245",
+      "bytes": 652,
+      "local_evidence": ".ci-results/sdd-045/p3/board-wrong-site-01/report.json"
+    },
+    "combined-field-cli": {
+      "filename": "report.json",
+      "sha256": "adc476e64b32b6b80ec86dd19cde4a9270c13179a7df5062c72ffff7cb22607b",
+      "bytes": 1560,
+      "local_evidence": ".ci-results/sdd-045/p3/board-cli-fixed-01/report.json"
+    },
+    "soft-field-cli": {
+      "filename": "report.json",
+      "sha256": "aba23c621bf7bcdbb5cc0a454248e132ec3c2275759d4becaf694609fbfb9959",
+      "bytes": 1251,
+      "local_evidence": ".ci-results/sdd-045/p3/board-cli-soft-only-01/report.json"
+    },
+    "p1-first-candidate": {
+      "filename": "report.json",
+      "sha256": "b113357effe3186843d1d037858c89950ecb6a77f758ad93755f512676391269",
+      "bytes": 7476,
+      "local_evidence": ".ci-results/sdd-045/p1/container-candidate-01/report.json"
+    },
+    "p1-second-candidate": {
+      "filename": "report.json",
+      "sha256": "23fd84e9b759ac43c41c33c3f5317e7554c041e38b76a98b57c3f4c99dd6f714",
+      "bytes": 21732,
+      "local_evidence": ".ci-results/sdd-045/p1/container-candidate-02/report.json"
+    },
+    "p2-first-candidate": {
+      "filename": "camera-a01.json",
+      "sha256": "46025ff0072274718704f412569ea39aab44b6d191ec0c6ef717c5fc98450b24",
+      "bytes": 2432,
+      "local_evidence": ".ci-results/sdd-045/p2/camera-a01.json"
+    },
+    "p2-second-candidate": {
+      "filename": "camera-a02.json",
+      "sha256": "81b3ebd47fff65f6cf4c7e8f6ed378202211b39cf0a840733104aa1c149c28b4",
+      "bytes": 1831,
+      "local_evidence": ".ci-results/sdd-045/p2/camera-a02.json"
+    },
+    "p2-fourth-candidate": {
+      "filename": "camera-a04.json",
+      "sha256": "b59a6ffbc90dc114c5149006ec98ae4562aa8a383710fda10a6c3f4d6f513cae",
+      "bytes": 28129,
+      "local_evidence": ".ci-results/sdd-045/p2/camera-a04.json"
+    },
+    "verified-offline-kit": {
+      "filename": "kit-b5316aa6e37e.json",
+      "sha256": "8d4d9ec2c7b643e557ed81633d5c55983d45303e13ec78ef72681e973751d91d",
+      "bytes": 2040,
+      "local_evidence": ".ci-results/sdd-045/p3/kit-b5316aa6e37e.json"
+    }
+  }
+}
