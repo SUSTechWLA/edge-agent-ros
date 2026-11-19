@@ -64,3 +64,17 @@ ROS 复测使用本地镜像与只读工作树，在 PowerShell 的仓库根目�
 ```powershell
 docker run --pull=never --rm --network none --mount "type=bind,source=$PWD,target=/checkout,readonly" -w /checkout edge-agent-ros/hardware:robot-89a9622b134a-amd64 python3 -B tests/agent_trace_contract.py -v
 ```
+
+### WP1 共享契约与反向依赖
+
+2026-11-19，AC-1、AC-7。描述符与绑定摘要、模块事件、Evidence HTTP 读取，以及 Console 使用的 v1 服务发现、软宿主通信和公开 trace 脱敏逻辑移入 `edge_contracts/`。原脚本入口沿用已有函数和错误类型。板端投影、Docker 构建上下文和两种镜像同步携带契约包，测试选择器将契约变更送入全量消费方回归。此项为实现迁移，无行为开关。
+
+沿用 WP0 的 BASE 和全部必跑命令。Windows 的文档 3、仓库 5、规划 12、选择器 12、描述符 9、soft runtime 17、runtime plugins 8 项通过；ROS 容器 task trace 12 项通过。两份 Compose config、check_sdd、diff --check 通过。新增 `python tests/test_package_boundaries.py -v` 2 项通过，覆盖生产模块的包导入、平铺入口与路径注入。Console 的 ROS 镜像测试 43 项，Evidence 15 项，Session 9 项通过。板端投影测试 `python tests/test_robot_release.py -v` 3 项通过。
+
+`python tests/system_suite.py --changed-since BASE --plan` 选中 21 个阶段。使用本地 SDK、已安装校园资产及只读模型卷运行同一套件，测试项目的清理保留命名卷。首轮 `.ci-results/kernel-runner/wp1/20261119T065914Z-1352a50b/summary.json` 有 30 条通过、3 条失败、1 条阻塞。事件回补、任务重投/重启、插件换版、物理运动和停车、真实模型、浏览器以及冻结任务指标通过。三项差异分别完整复测：
+
+- 板端离线 apt 冷构建失败（exit 100）。复用基点镜像的精确 SDK 层，对照 9 项包版本，再使用当前 COPY 和 colcon 编译。首次启动检查发现 Compose 重设 PYTHONPATH 覆盖 ROS 路径，移除该覆盖并保留镜像 ENV。原 board 阶段在干净候选 43891930 上运行通过，见 `.ci-results/kernel-runner/board-verify/runs/20261119T071420Z-f2039c24/summary.json` 和 `board-verify/sdk-proof.json`（相对于 kernel-runner）。验证平台 Linux/amd64、合成 ROS 输入。
+- 插件隔离首次被本地测试工具拦下只读 image save，开放其 stdout 导出后 12/12 命令通过，见 `.ci-results/kernel-runner/wp1-plugin-r1/stage-results.json`。
+- 校园首次因探针拟读取已有仿真时钟被拦截；在独立小型仿真上按相同断言验证时钟、校园重载、贴图与机载观测，全部 16/16 命令通过，见 `.ci-results/kernel-runner/wp1-campus-r1/stage-results.json`。
+
+共享帧编码、栅格导出和预览 HTTP 接口供原插件独立使用；保留原导出名字。上述迁移与真实仿真验收均未改变 operation_id、绑定、终态、SQLite 事务或授权。

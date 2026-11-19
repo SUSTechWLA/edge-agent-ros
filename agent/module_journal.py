@@ -2,14 +2,14 @@
 import hashlib
 import json
 import sqlite3
-import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-# The console and producers share the same validation, normalization and redaction.
-sys.path.append(str(Path(__file__).resolve().parents[1] / "console" / "server"))
-from module_events import parse_event
+if not __package__:
+    import _contract_path
+
+from edge_contracts.events import parse_event
 
 
 def canonical(value):

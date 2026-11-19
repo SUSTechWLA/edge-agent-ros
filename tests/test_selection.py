@@ -15,6 +15,8 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("edge_contracts/*",), STAGES),
+    (("tests/test_package_boundaries.py",), (R,)),
     (("agent/site_pack.py","profiles/*.json","capabilities/*/pack.json","scripts/robot-plugins.sh",
       "scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"), ("planner","board","plugin-isolation")),
     (("tests/test_site_pack.py","tests/test_board_plugins.py","tests/system/board_pack_acceptance.py",
@@ -177,6 +179,10 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_contract_package_runs_all_consumers(self):
+        self.assertEqual(selection(["edge_contracts/events.py"])[0], list(STAGES))
+        self.assertEqual(selection(["tests/test_package_boundaries.py"])[0], [R])
+
     def test_packs_run_their_board_consumers(self):
         for path in ("agent/site_pack.py","profiles/bench-camera.json","capabilities/camera/pack.json",
                      "scripts/robot-plugins.sh","scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"):

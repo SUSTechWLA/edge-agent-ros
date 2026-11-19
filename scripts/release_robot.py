@@ -7,7 +7,7 @@ import tempfile
 
 REF = "refs/heads/deploy/robot"
 ROOT = Path(__file__).resolve().parents[1]
-DIRS = ("src/edge_core/", "src/edge_interfaces/", "agent/", "client/", "perception/", "console/",
+DIRS = ("src/edge_core/", "src/edge_interfaces/", "agent/", "edge_contracts/", "client/", "perception/", "console/",
         "sessions_plugin/", "evidence/", "model_provider/", "calibration/", "exploration/",
         "contracts/", "policies/", "task_recorder/")
 FILES = {"compose.hardware.yaml", "compose.hardware-observe.yaml", "compose.sensor-health.yaml",

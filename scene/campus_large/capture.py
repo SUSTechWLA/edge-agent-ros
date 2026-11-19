@@ -6,10 +6,14 @@ import os
 import re
 from pathlib import Path
 from queue import Empty, Full, Queue
-import struct
+import sys
 import tempfile
 import time
-import zlib
+
+if not __package__:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+
+from edge_contracts.image_frames import chunk, encode_gazebo as encode
 
 
 VIEWS = ("overview", "campus", "teaching", "track", "woods", "road", "lawn")
@@ -80,26 +84,6 @@ def prepare(root, current):
     receipt = {"schema_version": 1, "world": current, "views": valid, "complete": len(valid) == len(names)}
     record(manifest, receipt)
     return receipt
-
-
-def chunk(kind, data):
-    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
-
-
-def encode(frame):
-    w, h, pitch = frame.width, frame.height, frame.step
-    pixels = frame.data
-    # gz.msgs.PixelFormatType.RGB_INT8 is the wire enum value 3.
-    if (frame.pixel_format_type != 3 or not 1 <= w <= 4096 or not 1 <= h <= 2160 or
-            pitch < w * 3 or len(pixels) != pitch * h or len(pixels) > 32 * 1024 * 1024):
-        raise ValueError("unsupported Gazebo RGB8 layout")
-    stamp = frame.header.stamp.sec * 1_000_000_000 + frame.header.stamp.nsec
-    if stamp <= 0:
-        raise ValueError("waiting for a stamped frame")
-    rows = [b"\x00" + pixels[y * pitch:y * pitch + w * 3] for y in range(h)]
-    ihdr = struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)
-    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(b"".join(rows), 3)) + chunk(b"IEND", b"")
-    return png, {"width": w, "height": h, "stamp_ns": stamp, "sha256": hashlib.sha256(png).hexdigest()}
 
 
 def capture(node, message_type, topic, deadline):

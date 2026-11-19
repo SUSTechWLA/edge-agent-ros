@@ -219,12 +219,11 @@ class SourceTest(unittest.TestCase):
         s.args=args
         s.last={}
         s.sink=Mock()
-        camera=SimpleNamespace(header=SimpleNamespace(stamp=SimpleNamespace(sec=1,nanosec=2,nsec=2)))
-        with patch("perception.camera.frames.raw_frame",return_value=(b"on",0,0,0,2,1,0)), \
-             patch("scene.campus_large.capture.encode",return_value=(b"off",{"width":2,"height":1})):
-            for _ in range(2):
-                s.rgb(camera)
-                s.gz_rgb(camera,"overview",args.overview)
+        camera=SimpleNamespace(width=2, height=1, step=6, encoding="rgb8", pixel_format_type=3,
+                               data=b"abcdef", header=SimpleNamespace(stamp=SimpleNamespace(sec=1,nanosec=2,nsec=2)))
+        for _ in range(2):
+            s.rgb(camera)
+            s.gz_rgb(camera,"overview",args.overview)
         rows=s.sink.emit.call_args_list
         self.assertEqual([r.args for r in rows],[("rgb",1000000002),("overview",1000000002)])
         self.assertEqual([r.kwargs["image_role"] for r in rows],["onboard","overview"])

@@ -4,7 +4,7 @@ import json
 import math
 import re
 
-from agent.tracing import clean_text
+from edge_contracts.trace_content import clean_text
 
 PAGE_SIZE = 32
 SYMBOL = re.compile(r"[a-zA-Z][a-zA-Z0-9_.-]{0,95}")
