@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "host_source": "Live Edge Agent ROS browser viewport, Microsoft Edge via CDP",
+  "environment": "simulation",
+  "robot_id": "edge-rover",
+  "recorded_at_utc": "2026-11-19T02:09:56Z",
+  "task_id": "96daff5c-db95-48f0-a73e-e046b012439e",
+  "request": "报告当前位置",
+  "state": "SUCCEEDED",
+  "provider": "local",
+  "tool": "status",
+  "tool_status": "SUCCEEDED",
+  "operation_id": "96daff5c-db95-48f0-a73e-e046b012439e/step/1",
+  "evidence": {
+    "source": "/odom",
+    "frame": "odom",
+    "stamp_ns": 61406516000000,
+    "stamp": {
+      "sec": 61406,
+      "nanosec": 516000000
+    },
+    "x": -1.2477123082571964E-09,
+    "y": -6.06008911448001E-29,
+    "yaw": 2.6075837069444466E-14,
+    "speed": -7.00797754712582E-19
+  },
+  "observed_ui_submissions": 1,
+  "http_posts": [
+    "/agent/tasks"
+  ],
+  "captured_browser_frames": 91,
+  "codec": "H.264/AVC",
+  "width": 1440,
+  "height": 900,
+  "fps": 10,
+  "duration_seconds": 15.5,
+  "decoded_frames": 155,
+  "file": "console-position-task.mp4",
+  "bytes": 874097,
+  "sha256": "a5a93d9aa473905ac6654ae4c7579adf5987f0ed34bab3d4652132f5e19dfb19",
+  "chapters": [
+    {
+      "seconds": 1.61,
+      "action": "打开自然语言任务窗口"
+    },
+    {
+      "seconds": 2.35,
+      "action": "输入中文"
+    },
+    {
+      "seconds": 4.6,
+      "action": "点击下发任务"
+    },
+    {
+      "seconds": 5.45,
+      "action": "会话展示终态"
+    },
+    {
+      "seconds": 8.38,
+      "action": "查看工具、坐标系、位置与速度"
+    },
+    {
+      "seconds": 11.59,
+      "action": "展开 status 的原始证据"
+    }
+  ]
+}

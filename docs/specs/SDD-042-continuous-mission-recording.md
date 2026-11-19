@@ -42,3 +42,5 @@ python tests/system/mission_watch_page.py $run
 2026-11-19，为完整长程任务的演示补充连续采集、独立故障注入和证据核对。人体现场、实车制动、长时间耐久性另按现场工况验收。
 
 常规 `repository` 阶段新增录像配置与证据契约两项，主机 Python 通过；消费者选测五组通过。修改录像脚本仅选中该轻量阶段，混合修改仍会叠加实际运行时消费者。对当前开发树逐项核对 145 个板端投影条目，内容和模式均与 `deploy/robot` 相同。录像、测试脚本与开发资料位于研发侧。
+
+完整任务 `patrol-0764413ed7` 通过 AC-1 至 AC-3。初次试录的注入器同时匹配了容器 init 和应用，未能触发目标故障。修正为匹配应用进程后从空环境重录。通过的一轮中，测试脚本解除 Core 的短暂暂停，Agent 按原操作号自动重试；在途 Agent 退出后由 Docker 的现有重启策略接手。七站各启动一次，Gazebo 世界真值测得总行程 8.58 m，回到工位目标的误差为 7.09 cm，末段 24 个位姿样本无平移。影片约 50 秒，从一个仿真时钟连续播放到终态。桌面浏览器已验证本地 MP4 可解码、章节按钮可跳至进程恢复时刻，390 像素宽视口无横向溢出。[连续录像与复盘入口](../../artifacts/verification/rover-long-mission/continuous-02/video/index.html) · [验收记录](../../artifacts/verification/rover-long-mission/continuous-02/acceptance.json)

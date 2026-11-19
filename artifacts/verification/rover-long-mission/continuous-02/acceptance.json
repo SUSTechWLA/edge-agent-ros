@@ -1,0 +1,138 @@
+{
+  "passed": true,
+  "task_id": "patrol-0764413ed7",
+  "operation_id": "patrol-0764413ed7/step/1",
+  "project": "film-route-0764413ed7",
+  "image": "edge-agent-ros:commission-0977a54",
+  "request": "请依次巡检(1.1,0)、(2.4,0)、(3.3,1.35)、(3.65,0.25)、(2.3,0.15)、(1.1,0.1)、(0,0)，然后报告状态",
+  "planner": "local explicit-coordinate grammar",
+  "goals": [
+    [
+      1.1,
+      0
+    ],
+    [
+      2.4,
+      0
+    ],
+    [
+      3.3,
+      1.35
+    ],
+    [
+      3.65,
+      0.25
+    ],
+    [
+      2.3,
+      0.15
+    ],
+    [
+      1.1,
+      0.1
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "submissions": 1,
+  "image_id": "sha256:f064f5ad57f40a0ad456542a6bb31dce7ef5879b7bc4ec5e61aa1306d343bf5e",
+  "trace_id": "patrol-0764413ed7",
+  "provider": "local",
+  "terminal": "SUCCEEDED",
+  "retry": "/edge/get_mission 回执超时",
+  "restore": {
+    "before": {
+      "started": "2026-11-19T02:15:55.417447709Z",
+      "restarts": 0,
+      "state": "running"
+    },
+    "after": {
+      "started": "2026-11-19T02:16:09.933726202Z",
+      "restarts": 1,
+      "state": "running"
+    }
+  },
+  "gateway_starts": {
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1
+  },
+  "media": {
+    "counts": {
+      "rgb": 401,
+      "twist": 1041,
+      "world_pose": 1473,
+      "fused_pose": 1473,
+      "clock": 200,
+      "map": 51,
+      "mission": 24,
+      "bus": 21
+    },
+    "measured_world_path_m": 8.58101696600346,
+    "start_xy": [
+      1.0236151275522173e-09,
+      1.8800487088592376e-20
+    ],
+    "end_xy": [
+      0.06305128640510549,
+      -0.03247353937629624
+    ],
+    "timeline": "media/mission/timeline.jsonl",
+    "presentation": "camera mask cuts away roof and two near-facing walls; lidar visuals and physical collision retained",
+    "clock": "one Gazebo simulation epoch, ROS message or latest received /clock time (ns)"
+  },
+  "final_status": {
+    "source": "/odom",
+    "frame": "odom",
+    "stamp_ns": 47668000000,
+    "stamp": {
+      "sec": 47,
+      "nanosec": 668000000
+    },
+    "x": 0.052537917265501825,
+    "y": 0.00503839520360116,
+    "yaw": -3.0460129922165597,
+    "speed": 0.0
+  },
+  "waypoint_evidence": {
+    "mission_id": "patrol-0764413ed7/step/1",
+    "verified_count": 7,
+    "points": [
+      [
+        1.0502680608198247,
+        3.3309105818282214e-16
+      ],
+      [
+        2.348045444982315,
+        8.393023570447825e-14
+      ],
+      [
+        3.270610247725644,
+        1.3059101282373584
+      ],
+      [
+        3.634687166812324,
+        0.2996220404512784
+      ],
+      [
+        2.351959270723378,
+        0.15407517054708786
+      ],
+      [
+        1.152048786676938,
+        0.10201295121846224
+      ],
+      [
+        0.052537917265501825,
+        0.00503839520360116
+      ]
+    ]
+  },
+  "stop_drift_m": 0.0
+}

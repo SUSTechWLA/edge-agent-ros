@@ -4,6 +4,7 @@
 
 | 我想做什么 | 从这里读 |
 |---|---|
+| 看一条真实仿真任务如何下发、运动、遇错、恢复与停车 | [完整任务录像与可点击章节](../artifacts/verification/rover-long-mission/continuous-02/video/index.html) · [原始观测与复现方法](testing/rover-mission-video.md) |
 | 给一台新车交付精简代码、工厂标定，验证第一次进场建图 | [无人车出厂、首次进场与板端交付](rover-commissioning.md) |
 | 准备真机首测，复盘多机体故障，判断哪些问题能自动恢复 | [现场验收与升级记录](testing/edge-field-readiness.md) · [首次上板](board-first-boot.md) |
 | 启动校园，查看四种机体、具名任务、关节测量和连通步道 | [校园部署](../scene/campus_large/README.md) · [机器人近景与验收](testing/campus-robot-view.md) · [插件边界](testing/campus-plugin.md) |

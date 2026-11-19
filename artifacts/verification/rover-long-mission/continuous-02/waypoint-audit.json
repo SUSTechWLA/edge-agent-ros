@@ -1,0 +1,200 @@
+{
+  "passed": true,
+  "task_id": "patrol-0764413ed7",
+  "trace_id": "patrol-0764413ed7",
+  "image_id": "sha256:f064f5ad57f40a0ad456542a6bb31dce7ef5879b7bc4ec5e61aa1306d343bf5e",
+  "source": "Gazebo independent /ground_truth joined to Core odometry header stamps; odom/world aligned at spawn",
+  "timeline_sha256": "b462229a6d1d85d0d8d58b070bd8dd64ebc3e2b24c30645ccab4bba62e547464",
+  "max_pair_skew_allowed_ms": 100,
+  "max_world_goal_error_allowed_m": 0.15,
+  "goals": [
+    {
+      "index": 1,
+      "operation_id": "patrol-0764413ed7/step/1/waypoint/1",
+      "goal_xy": [
+        1.1,
+        0
+      ],
+      "odom_stamp_ns": 13056000000,
+      "world_stamp_ns": 13056000000,
+      "stamp_delta_ms": 0.0,
+      "world_xy": [
+        1.0434706947950603,
+        -1.2381520433805314e-14
+      ],
+      "odom_xy": [
+        1.0502680608198247,
+        3.3309105818282214e-16
+      ],
+      "world_goal_error_m": 0.05652930520493982,
+      "odom_world_distance_m": 0.00679736602476444
+    },
+    {
+      "index": 2,
+      "operation_id": "patrol-0764413ed7/step/1/waypoint/2",
+      "goal_xy": [
+        2.4,
+        0
+      ],
+      "odom_stamp_ns": 18224000000,
+      "world_stamp_ns": 18224000000,
+      "stamp_delta_ms": 0.0,
+      "world_xy": [
+        2.3344426152128444,
+        1.9813626285895795e-14
+      ],
+      "odom_xy": [
+        2.348045444982315,
+        8.393023570447825e-14
+      ],
+      "world_goal_error_m": 0.06555738478715556,
+      "odom_world_distance_m": 0.013602829769470581
+    },
+    {
+      "index": 3,
+      "operation_id": "patrol-0764413ed7/step/1/waypoint/3",
+      "goal_xy": [
+        3.3,
+        1.35
+      ],
+      "odom_stamp_ns": 25024000000,
+      "world_stamp_ns": 25024000000,
+      "stamp_delta_ms": 0.0,
+      "world_xy": [
+        3.2600872350419836,
+        1.29800239374791
+      ],
+      "odom_xy": [
+        3.270610247725644,
+        1.3059101282373584
+      ],
+      "world_goal_error_m": 0.06554982732655558,
+      "odom_world_distance_m": 0.013163056662344456
+    },
+    {
+      "index": 4,
+      "operation_id": "patrol-0764413ed7/step/1/waypoint/4",
+      "goal_xy": [
+        3.65,
+        0.25
+      ],
+      "odom_stamp_ns": 31246000000,
+      "world_stamp_ns": 31246000000,
+      "stamp_delta_ms": 0.0,
+      "world_xy": [
+        3.6227428549350433,
+        0.2961876417056067
+      ],
+      "odom_xy": [
+        3.634687166812324,
+        0.2996220404512784
+      ],
+      "world_goal_error_m": 0.05363068341367267,
+      "odom_world_distance_m": 0.01242826138146516
+    },
+    {
+      "index": 5,
+      "operation_id": "patrol-0764413ed7/step/1/waypoint/5",
+      "goal_xy": [
+        2.3,
+        0.15
+      ],
+      "odom_stamp_ns": 37842000000,
+      "world_stamp_ns": 37842000000,
+      "stamp_delta_ms": 0.0,
+      "world_xy": [
+        2.346998480721913,
+        0.14006480509803834
+      ],
+      "odom_xy": [
+        2.351959270723378,
+        0.15407517054708786
+      ],
+      "world_goal_error_m": 0.04803712405950233,
+      "odom_world_distance_m": 0.014862697516082107
+    },
+    {
+      "index": 6,
+      "operation_id": "patrol-0764413ed7/step/1/waypoint/6",
+      "goal_xy": [
+        1.1,
+        0.1
+      ],
+      "odom_stamp_ns": 42840000000,
+      "world_stamp_ns": 42840000000,
+      "stamp_delta_ms": 0.0,
+      "world_xy": [
+        1.1546488010783316,
+        0.07479729128689705
+      ],
+      "odom_xy": [
+        1.152048786676938,
+        0.10201295121846224
+      ],
+      "world_goal_error_m": 0.06018029566042825,
+      "odom_world_distance_m": 0.027339572425296943
+    },
+    {
+      "index": 7,
+      "operation_id": "patrol-0764413ed7/step/1/waypoint/7",
+      "goal_xy": [
+        0,
+        0
+      ],
+      "odom_stamp_ns": 47464000000,
+      "world_stamp_ns": 47464000000,
+      "stamp_delta_ms": 0.0,
+      "world_xy": [
+        0.06305351402352236,
+        -0.03247330461959637
+      ],
+      "odom_xy": [
+        0.052537917265501825,
+        0.00503839520360116
+      ],
+      "world_goal_error_m": 0.07092433393153319,
+      "odom_world_distance_m": 0.038957738625374154
+    }
+  ],
+  "doorway": {
+    "x": 1.8,
+    "y_min": -0.8400000000000001,
+    "y_max": 0.8400000000000001,
+    "required_center_clearance_m": 0.3,
+    "crossings": [
+      {
+        "direction": "outbound",
+        "x": 1.8,
+        "y": 8.202005199016002e-13,
+        "stamp_ns": 15467628181,
+        "clearance_to_jamb_m": 0.8399999999991798
+      },
+      {
+        "direction": "return",
+        "x": 1.8,
+        "y": 0.10709671689883944,
+        "stamp_ns": 39676359287,
+        "clearance_to_jamb_m": 0.7329032831011606
+      }
+    ]
+  },
+  "stop": {
+    "start_xy": [
+      1.0236151275522173e-09,
+      1.8800487088592376e-20
+    ],
+    "end_xy": [
+      0.06305128640510549,
+      -0.03247353937629624
+    ],
+    "goal_error_m": 0.07092246101879504,
+    "stationary_window_s": 0.782,
+    "samples": 24,
+    "drift_m": 0.0,
+    "max_allowed_drift_m": 0.02,
+    "final_command": {
+      "linear": 0.0,
+      "angular": 0.0
+    }
+  }
+}

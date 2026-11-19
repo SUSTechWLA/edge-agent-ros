@@ -1,0 +1,1535 @@
+{
+  "id": "patrol-0764413ed7",
+  "text": "请依次巡检(1.1,0)、(2.4,0)、(3.3,1.35)、(3.65,0.25)、(2.3,0.15)、(1.1,0.1)、(0,0)，然后报告状态",
+  "state": "SUCCEEDED",
+  "detail": "已取得步骤证据",
+  "provider": "local",
+  "steps": [
+    {
+      "tool": "inspect",
+      "args": {
+        "points": [
+          [
+            1.1,
+            0.0
+          ],
+          [
+            2.4,
+            0.0
+          ],
+          [
+            3.3,
+            1.35
+          ],
+          [
+            3.65,
+            0.25
+          ],
+          [
+            2.3,
+            0.15
+          ],
+          [
+            1.1,
+            0.1
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      "version": "1",
+      "binding": "ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d",
+      "status": "SUCCEEDED",
+      "verification": {
+        "required": []
+      },
+      "operation_id": "patrol-0764413ed7/step/1",
+      "started_at": 1795054564.107778,
+      "ros_binding": "bound",
+      "evidence": {
+        "mission_id": "patrol-0764413ed7/step/1",
+        "verified_count": 7,
+        "points": [
+          [
+            1.0502680608198247,
+            3.3309105818282214e-16
+          ],
+          [
+            2.348045444982315,
+            8.393023570447825e-14
+          ],
+          [
+            3.270610247725644,
+            1.3059101282373584
+          ],
+          [
+            3.634687166812324,
+            0.2996220404512784
+          ],
+          [
+            2.351959270723378,
+            0.15407517054708786
+          ],
+          [
+            1.152048786676938,
+            0.10201295121846224
+          ],
+          [
+            0.052537917265501825,
+            0.00503839520360116
+          ]
+        ]
+      }
+    },
+    {
+      "tool": "status",
+      "args": {},
+      "version": "1",
+      "binding": "914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a",
+      "status": "SUCCEEDED",
+      "verification": {
+        "required": []
+      },
+      "operation_id": "patrol-0764413ed7/step/2",
+      "started_at": 1795054610.0233061,
+      "evidence": {
+        "source": "/odom",
+        "frame": "odom",
+        "stamp_ns": 47668000000,
+        "stamp": {
+          "sec": 47,
+          "nanosec": 668000000
+        },
+        "x": 0.052537917265501825,
+        "y": 0.00503839520360116,
+        "yaw": -3.0460129922165597,
+        "speed": 0.0
+      }
+    }
+  ],
+  "cursor": 2,
+  "retries": 0,
+  "due": 1795054610.0308807,
+  "created": "2026-11-19T02:16:03.839645+00:00",
+  "updated": "2026-11-19T02:16:50.030795+00:00",
+  "trace_id": "patrol-0764413ed7",
+  "trigger": {
+    "kind": "user",
+    "source": "user",
+    "id": "patrol-0764413ed7"
+  },
+  "can_retry": false,
+  "events": [
+    {
+      "seq": 145,
+      "utc": "2026-11-19T02:16:31.021744+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"c8a2cb63c92d4279bd2da2fce506a852\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"a654e2cb44404ff79abdb1075b7a85e5\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"8055393919e84d079a820fcd7720ad9b\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "a654e2cb44404ff79abdb1075b7a85e5"
+    },
+    {
+      "seq": 146,
+      "utc": "2026-11-19T02:16:31.029653+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"c8a2cb63c92d4279bd2da2fce506a852\", \"artifact\": {\"sha256\": \"eb012bf2e0c6b7dc363587835daa748732e18cac6fa479724437bf8ebb0660f0\", \"bytes\": 244, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 7.95, \"event_id\": \"ade7c6515dc945d699237cbe9f7e4242\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"a654e2cb44404ff79abdb1075b7a85e5\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "ade7c6515dc945d699237cbe9f7e4242"
+    },
+    {
+      "seq": 147,
+      "utc": "2026-11-19T02:16:31.036216+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"ded33cbfbdf648bd8ffdafa4b622ba9d\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 21.84, \"event_id\": \"52e17914e1cd44eb8b3d746267e7db16\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"ade7c6515dc945d699237cbe9f7e4242\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "52e17914e1cd44eb8b3d746267e7db16"
+    },
+    {
+      "seq": 148,
+      "utc": "2026-11-19T02:16:31.653223+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"fe68ebbf4ac54223a44c2ef23dfd7eaf\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"3b469747fbd546438cde6591e48e4e42\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"52e17914e1cd44eb8b3d746267e7db16\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "3b469747fbd546438cde6591e48e4e42"
+    },
+    {
+      "seq": 149,
+      "utc": "2026-11-19T02:16:31.657100+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"225dea67932b4092b0d8c2466d11b852\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"4e78ef8a83314031bf162d7e2b997f54\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"3b469747fbd546438cde6591e48e4e42\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "4e78ef8a83314031bf162d7e2b997f54"
+    },
+    {
+      "seq": 150,
+      "utc": "2026-11-19T02:16:31.680441+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"225dea67932b4092b0d8c2466d11b852\", \"artifact\": {\"sha256\": \"eb012bf2e0c6b7dc363587835daa748732e18cac6fa479724437bf8ebb0660f0\", \"bytes\": 244, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 23.4, \"event_id\": \"f4fc6a477f3941b5833c0d067328ac34\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"4e78ef8a83314031bf162d7e2b997f54\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f4fc6a477f3941b5833c0d067328ac34"
+    },
+    {
+      "seq": 151,
+      "utc": "2026-11-19T02:16:31.685870+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"fe68ebbf4ac54223a44c2ef23dfd7eaf\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 32.69, \"event_id\": \"b8c56c533de2400e99974f819ff67b2b\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f4fc6a477f3941b5833c0d067328ac34\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b8c56c533de2400e99974f819ff67b2b"
+    },
+    {
+      "seq": 152,
+      "utc": "2026-11-19T02:16:32.303747+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"486549df86824837895cb7e3a8e3a282\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"5ceb29681ccf491d80f5ce523789e28d\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b8c56c533de2400e99974f819ff67b2b\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "5ceb29681ccf491d80f5ce523789e28d"
+    },
+    {
+      "seq": 153,
+      "utc": "2026-11-19T02:16:32.312570+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"54b91be34df8487399bf98202593d749\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"23ae0b59a17c40b9a374185bcc90b4e3\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"5ceb29681ccf491d80f5ce523789e28d\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "23ae0b59a17c40b9a374185bcc90b4e3"
+    },
+    {
+      "seq": 154,
+      "utc": "2026-11-19T02:16:32.322491+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"54b91be34df8487399bf98202593d749\", \"artifact\": {\"sha256\": \"eb012bf2e0c6b7dc363587835daa748732e18cac6fa479724437bf8ebb0660f0\", \"bytes\": 244, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 9.88, \"event_id\": \"dc613a9318a7472ebb57ea645c3428b2\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"23ae0b59a17c40b9a374185bcc90b4e3\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "dc613a9318a7472ebb57ea645c3428b2"
+    },
+    {
+      "seq": 155,
+      "utc": "2026-11-19T02:16:32.333545+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"486549df86824837895cb7e3a8e3a282\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 29.93, \"event_id\": \"f894842a54f04864968197ac35c7a3b7\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"dc613a9318a7472ebb57ea645c3428b2\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f894842a54f04864968197ac35c7a3b7"
+    },
+    {
+      "seq": 156,
+      "utc": "2026-11-19T02:16:32.955820+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"fb44f45b6f494e8680d1c3623b836e0f\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"8028dae5f25f4183bcc3d83f074a96b8\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f894842a54f04864968197ac35c7a3b7\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "8028dae5f25f4183bcc3d83f074a96b8"
+    },
+    {
+      "seq": 157,
+      "utc": "2026-11-19T02:16:32.960341+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"a6a3273d45ac482a89e8ced840260f41\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"519f98b298f44b948383fd56ae3e9c48\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"8028dae5f25f4183bcc3d83f074a96b8\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "519f98b298f44b948383fd56ae3e9c48"
+    },
+    {
+      "seq": 158,
+      "utc": "2026-11-19T02:16:32.965940+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"a6a3273d45ac482a89e8ced840260f41\", \"artifact\": {\"sha256\": \"eb012bf2e0c6b7dc363587835daa748732e18cac6fa479724437bf8ebb0660f0\", \"bytes\": 244, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 5.61, \"event_id\": \"87f6664e03184d8c833b652091f4e0ef\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"519f98b298f44b948383fd56ae3e9c48\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "87f6664e03184d8c833b652091f4e0ef"
+    },
+    {
+      "seq": 159,
+      "utc": "2026-11-19T02:16:32.970776+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"fb44f45b6f494e8680d1c3623b836e0f\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 14.99, \"event_id\": \"a56390aaffca4d5bab6a11d8e182a45d\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"87f6664e03184d8c833b652091f4e0ef\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "a56390aaffca4d5bab6a11d8e182a45d"
+    },
+    {
+      "seq": 160,
+      "utc": "2026-11-19T02:16:33.589211+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"5f4ec6fa77414946aed51fba6d45cae7\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"dcd3786c0b3e442a92cf56ec6c926ee2\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"a56390aaffca4d5bab6a11d8e182a45d\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "dcd3786c0b3e442a92cf56ec6c926ee2"
+    },
+    {
+      "seq": 161,
+      "utc": "2026-11-19T02:16:33.598066+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"40860095bef7490c806e6022ec9a588f\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"b4eef5fdf34341c78d3cc769915cbeb8\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"dcd3786c0b3e442a92cf56ec6c926ee2\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b4eef5fdf34341c78d3cc769915cbeb8"
+    },
+    {
+      "seq": 162,
+      "utc": "2026-11-19T02:16:33.603420+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"40860095bef7490c806e6022ec9a588f\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 5.45, \"event_id\": \"f24f32b105da4bdd835be26c6ccca923\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b4eef5fdf34341c78d3cc769915cbeb8\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f24f32b105da4bdd835be26c6ccca923"
+    },
+    {
+      "seq": 163,
+      "utc": "2026-11-19T02:16:33.607896+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"5f4ec6fa77414946aed51fba6d45cae7\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 18.74, \"event_id\": \"31a74981961a4263954b02e78201ee6a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f24f32b105da4bdd835be26c6ccca923\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "31a74981961a4263954b02e78201ee6a"
+    },
+    {
+      "seq": 164,
+      "utc": "2026-11-19T02:16:34.224919+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"9673643dcbff42f3b8b7e0cb2369db7b\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"fec489a1f843495bb36e1daf0e2ffc6c\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"31a74981961a4263954b02e78201ee6a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "fec489a1f843495bb36e1daf0e2ffc6c"
+    },
+    {
+      "seq": 165,
+      "utc": "2026-11-19T02:16:34.230286+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"d9ac236b5cb84a73946f86cd72bedc28\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"a84b066754ff48639c903cf4a73e7188\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"fec489a1f843495bb36e1daf0e2ffc6c\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "a84b066754ff48639c903cf4a73e7188"
+    },
+    {
+      "seq": 166,
+      "utc": "2026-11-19T02:16:34.235975+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"d9ac236b5cb84a73946f86cd72bedc28\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 5.7, \"event_id\": \"71593a58be9f4a479290e2ee537eeedf\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"a84b066754ff48639c903cf4a73e7188\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "71593a58be9f4a479290e2ee537eeedf"
+    },
+    {
+      "seq": 167,
+      "utc": "2026-11-19T02:16:34.240402+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"9673643dcbff42f3b8b7e0cb2369db7b\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 15.82, \"event_id\": \"2886eac5c37846b39eb73b2204449af7\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"71593a58be9f4a479290e2ee537eeedf\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "2886eac5c37846b39eb73b2204449af7"
+    },
+    {
+      "seq": 168,
+      "utc": "2026-11-19T02:16:34.854449+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"a77b98b9f1b34ec8835b7a1d7a81d9d6\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"a4c141617d5847bb89f44c49d28aa4f9\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"2886eac5c37846b39eb73b2204449af7\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "a4c141617d5847bb89f44c49d28aa4f9"
+    },
+    {
+      "seq": 169,
+      "utc": "2026-11-19T02:16:34.863737+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"b541781b3e414490af43001772661ffe\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"003845f79ed84de89426d6a01e88874a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"a4c141617d5847bb89f44c49d28aa4f9\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "003845f79ed84de89426d6a01e88874a"
+    },
+    {
+      "seq": 170,
+      "utc": "2026-11-19T02:16:34.870818+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"b541781b3e414490af43001772661ffe\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 7.12, \"event_id\": \"c9cd3edf06d148b78aa75aac5cc939b8\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"003845f79ed84de89426d6a01e88874a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "c9cd3edf06d148b78aa75aac5cc939b8"
+    },
+    {
+      "seq": 171,
+      "utc": "2026-11-19T02:16:34.876972+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"a77b98b9f1b34ec8835b7a1d7a81d9d6\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 22.57, \"event_id\": \"4c69a159e8054a3e82ddbf9659015fbf\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"c9cd3edf06d148b78aa75aac5cc939b8\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "4c69a159e8054a3e82ddbf9659015fbf"
+    },
+    {
+      "seq": 172,
+      "utc": "2026-11-19T02:16:35.492555+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"ace1acc7e57d4c8994728f9d219646d4\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"5404a606b28d4b1c8078ab05ca44caf8\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"4c69a159e8054a3e82ddbf9659015fbf\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "5404a606b28d4b1c8078ab05ca44caf8"
+    },
+    {
+      "seq": 173,
+      "utc": "2026-11-19T02:16:35.496445+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"b1869a8c7c6c4d19870d70663829d835\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"683ccb1da9b64e39866198d7bee056ba\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"5404a606b28d4b1c8078ab05ca44caf8\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "683ccb1da9b64e39866198d7bee056ba"
+    },
+    {
+      "seq": 174,
+      "utc": "2026-11-19T02:16:35.502811+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"b1869a8c7c6c4d19870d70663829d835\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 6.38, \"event_id\": \"7e8c34eb043e40ceb3bc663f7fb16f02\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"683ccb1da9b64e39866198d7bee056ba\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7e8c34eb043e40ceb3bc663f7fb16f02"
+    },
+    {
+      "seq": 175,
+      "utc": "2026-11-19T02:16:35.506487+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"ace1acc7e57d4c8994728f9d219646d4\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 13.93, \"event_id\": \"e2971438e0e946c89598aa003f0b4dd6\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7e8c34eb043e40ceb3bc663f7fb16f02\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "e2971438e0e946c89598aa003f0b4dd6"
+    },
+    {
+      "seq": 176,
+      "utc": "2026-11-19T02:16:36.116231+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"a573c90f7f834da3afb11502d7db93d4\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"fa24ee0de79f4c7799c698f1d0a4af4e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"e2971438e0e946c89598aa003f0b4dd6\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "fa24ee0de79f4c7799c698f1d0a4af4e"
+    },
+    {
+      "seq": 177,
+      "utc": "2026-11-19T02:16:36.119914+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"45610fae27db459f93aa5990ed30bf7a\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"239f907f53494e528c4cb90b6b106af9\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"fa24ee0de79f4c7799c698f1d0a4af4e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "239f907f53494e528c4cb90b6b106af9"
+    },
+    {
+      "seq": 178,
+      "utc": "2026-11-19T02:16:36.124498+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"45610fae27db459f93aa5990ed30bf7a\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.69, \"event_id\": \"183cd154e28e4bd49fa0cb67de7ffd50\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"239f907f53494e528c4cb90b6b106af9\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "183cd154e28e4bd49fa0cb67de7ffd50"
+    },
+    {
+      "seq": 179,
+      "utc": "2026-11-19T02:16:36.127505+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"a573c90f7f834da3afb11502d7db93d4\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 11.33, \"event_id\": \"8384b3fff5e641958230673b0a4917a7\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"183cd154e28e4bd49fa0cb67de7ffd50\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "8384b3fff5e641958230673b0a4917a7"
+    },
+    {
+      "seq": 180,
+      "utc": "2026-11-19T02:16:36.740451+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"b59419f080454ca6ba3c591de6039e9a\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"5faf2451dce84bca8b3dc0c1ae65774c\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"8384b3fff5e641958230673b0a4917a7\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "5faf2451dce84bca8b3dc0c1ae65774c"
+    },
+    {
+      "seq": 181,
+      "utc": "2026-11-19T02:16:36.748170+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"ce2022f4182b4f658882b8804a25c641\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"00ff1366343740559259abe0cb219e3a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"5faf2451dce84bca8b3dc0c1ae65774c\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "00ff1366343740559259abe0cb219e3a"
+    },
+    {
+      "seq": 182,
+      "utc": "2026-11-19T02:16:36.756142+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"ce2022f4182b4f658882b8804a25c641\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 7.95, \"event_id\": \"9f784212d41642739b0f61eba2603781\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"00ff1366343740559259abe0cb219e3a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9f784212d41642739b0f61eba2603781"
+    },
+    {
+      "seq": 183,
+      "utc": "2026-11-19T02:16:36.763929+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"b59419f080454ca6ba3c591de6039e9a\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 23.51, \"event_id\": \"d3dbe2f5376c4f1281811b32395acc71\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9f784212d41642739b0f61eba2603781\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "d3dbe2f5376c4f1281811b32395acc71"
+    },
+    {
+      "seq": 184,
+      "utc": "2026-11-19T02:16:37.379182+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"fd45028d555848399af8e537822431f4\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"97dbbf4b8ccd475fb25aee44f67c1908\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"d3dbe2f5376c4f1281811b32395acc71\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "97dbbf4b8ccd475fb25aee44f67c1908"
+    },
+    {
+      "seq": 185,
+      "utc": "2026-11-19T02:16:37.383435+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"ccd3cd8d05e249899951f6bf17c408b6\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"9f2767ef7852408286a6b229706ff69e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"97dbbf4b8ccd475fb25aee44f67c1908\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9f2767ef7852408286a6b229706ff69e"
+    },
+    {
+      "seq": 186,
+      "utc": "2026-11-19T02:16:37.388291+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"ccd3cd8d05e249899951f6bf17c408b6\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.85, \"event_id\": \"55d8b0f4b7974dadbceb9804adfe005a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9f2767ef7852408286a6b229706ff69e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "55d8b0f4b7974dadbceb9804adfe005a"
+    },
+    {
+      "seq": 187,
+      "utc": "2026-11-19T02:16:37.392006+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"fd45028d555848399af8e537822431f4\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 12.83, \"event_id\": \"c6b5808ca6b348f490a1344afdd80ff7\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"55d8b0f4b7974dadbceb9804adfe005a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "c6b5808ca6b348f490a1344afdd80ff7"
+    },
+    {
+      "seq": 188,
+      "utc": "2026-11-19T02:16:38.007283+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"eca6193f000d4b75a0d07215197652c9\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"9af09e046b3e47b2ab11d13b5254f2b9\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"c6b5808ca6b348f490a1344afdd80ff7\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9af09e046b3e47b2ab11d13b5254f2b9"
+    },
+    {
+      "seq": 189,
+      "utc": "2026-11-19T02:16:38.011220+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"482b34efcb614bd1be758681ebaabc0c\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"fabeb73306fc41e286fcb748b0eff903\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9af09e046b3e47b2ab11d13b5254f2b9\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "fabeb73306fc41e286fcb748b0eff903"
+    },
+    {
+      "seq": 190,
+      "utc": "2026-11-19T02:16:38.016501+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"482b34efcb614bd1be758681ebaabc0c\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 5.33, \"event_id\": \"95de8513744949e7a4e329c3a54df1d1\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"fabeb73306fc41e286fcb748b0eff903\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "95de8513744949e7a4e329c3a54df1d1"
+    },
+    {
+      "seq": 191,
+      "utc": "2026-11-19T02:16:38.020231+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"eca6193f000d4b75a0d07215197652c9\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 12.81, \"event_id\": \"4be99c60dc4949b38add7a09372e8fdb\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"95de8513744949e7a4e329c3a54df1d1\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "4be99c60dc4949b38add7a09372e8fdb"
+    },
+    {
+      "seq": 192,
+      "utc": "2026-11-19T02:16:38.632876+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"298d0a767e3749a6bac17861f18b9958\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"a4fef0d1212649759e83e4ea2085df13\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"4be99c60dc4949b38add7a09372e8fdb\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "a4fef0d1212649759e83e4ea2085df13"
+    },
+    {
+      "seq": 193,
+      "utc": "2026-11-19T02:16:38.636815+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"409ca505e4fb45d38b1514a088b3614d\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"141456a375d6447187cc2dbfcd23daca\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"a4fef0d1212649759e83e4ea2085df13\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "141456a375d6447187cc2dbfcd23daca"
+    },
+    {
+      "seq": 194,
+      "utc": "2026-11-19T02:16:38.644417+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"409ca505e4fb45d38b1514a088b3614d\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 7.61, \"event_id\": \"9920f8368da343eabe2e8d95f73f9480\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"141456a375d6447187cc2dbfcd23daca\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9920f8368da343eabe2e8d95f73f9480"
+    },
+    {
+      "seq": 195,
+      "utc": "2026-11-19T02:16:38.647910+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"298d0a767e3749a6bac17861f18b9958\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 15.04, \"event_id\": \"9f9b9d506d804ac597f830df7ca797b6\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9920f8368da343eabe2e8d95f73f9480\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9f9b9d506d804ac597f830df7ca797b6"
+    },
+    {
+      "seq": 196,
+      "utc": "2026-11-19T02:16:39.259915+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"ef9e4e4e9e9745b68e0851a0c8a27eec\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"f97ef253c37841689c9a7c1cc5b5ec5a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9f9b9d506d804ac597f830df7ca797b6\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f97ef253c37841689c9a7c1cc5b5ec5a"
+    },
+    {
+      "seq": 197,
+      "utc": "2026-11-19T02:16:39.276588+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"2a0df9367461424394c7517b6bf73470\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"94f57b5960ee4916bb3734d317374239\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f97ef253c37841689c9a7c1cc5b5ec5a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "94f57b5960ee4916bb3734d317374239"
+    },
+    {
+      "seq": 198,
+      "utc": "2026-11-19T02:16:39.286957+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"2a0df9367461424394c7517b6bf73470\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 10.6, \"event_id\": \"696fe13017af443b8a4f60ce12dec926\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"94f57b5960ee4916bb3734d317374239\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "696fe13017af443b8a4f60ce12dec926"
+    },
+    {
+      "seq": 199,
+      "utc": "2026-11-19T02:16:39.293533+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"ef9e4e4e9e9745b68e0851a0c8a27eec\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 33.63, \"event_id\": \"663620ed23bb43b7b82fe42eaf86c85d\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"696fe13017af443b8a4f60ce12dec926\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "663620ed23bb43b7b82fe42eaf86c85d"
+    },
+    {
+      "seq": 200,
+      "utc": "2026-11-19T02:16:39.911237+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"73e834cabb294a8284f5504f206f75fe\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"f0da43d6354a4257b776ee2b5ca35ea3\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"663620ed23bb43b7b82fe42eaf86c85d\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f0da43d6354a4257b776ee2b5ca35ea3"
+    },
+    {
+      "seq": 201,
+      "utc": "2026-11-19T02:16:39.918191+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"6476198df2394edfa2c3a3075a0f1728\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"b619e92b55aa4a41924c345279d2635e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f0da43d6354a4257b776ee2b5ca35ea3\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b619e92b55aa4a41924c345279d2635e"
+    },
+    {
+      "seq": 202,
+      "utc": "2026-11-19T02:16:39.922337+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"6476198df2394edfa2c3a3075a0f1728\", \"artifact\": {\"sha256\": \"5168fe89ef48586aa40296d82a12d3728581e4545e12ca8ecb374ae5107ca0f0\", \"bytes\": 283, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.16, \"event_id\": \"ced84ed9fc854d65a2de93773d33a9e4\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b619e92b55aa4a41924c345279d2635e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "ced84ed9fc854d65a2de93773d33a9e4"
+    },
+    {
+      "seq": 203,
+      "utc": "2026-11-19T02:16:39.925562+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"73e834cabb294a8284f5504f206f75fe\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 14.36, \"event_id\": \"e7c394ae45f5469780d0043828850636\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"ced84ed9fc854d65a2de93773d33a9e4\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "e7c394ae45f5469780d0043828850636"
+    },
+    {
+      "seq": 204,
+      "utc": "2026-11-19T02:16:40.537931+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"726b89562b524e0d9c4d6ff3143acf99\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"f78aef2f165742f7b83547f73c5bd8d8\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"e7c394ae45f5469780d0043828850636\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f78aef2f165742f7b83547f73c5bd8d8"
+    },
+    {
+      "seq": 205,
+      "utc": "2026-11-19T02:16:40.541229+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"504142e0b31d488089fa763a613bcb47\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"822aa4317ee4475fa8e64d7098578a33\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f78aef2f165742f7b83547f73c5bd8d8\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "822aa4317ee4475fa8e64d7098578a33"
+    },
+    {
+      "seq": 206,
+      "utc": "2026-11-19T02:16:40.547036+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"504142e0b31d488089fa763a613bcb47\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 5.81, \"event_id\": \"74eb8b4a536f4704aef42bc5412de379\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"822aa4317ee4475fa8e64d7098578a33\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "74eb8b4a536f4704aef42bc5412de379"
+    },
+    {
+      "seq": 207,
+      "utc": "2026-11-19T02:16:40.551876+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"726b89562b524e0d9c4d6ff3143acf99\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 14.0, \"event_id\": \"8d5a3ad00b0c42d0a1da22920138af2c\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"74eb8b4a536f4704aef42bc5412de379\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "8d5a3ad00b0c42d0a1da22920138af2c"
+    },
+    {
+      "seq": 208,
+      "utc": "2026-11-19T02:16:41.163613+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"53b7332445cc497b961f79d8894f2dee\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"ab8cc9e821a34607989284ab8a07f97c\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"8d5a3ad00b0c42d0a1da22920138af2c\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "ab8cc9e821a34607989284ab8a07f97c"
+    },
+    {
+      "seq": 209,
+      "utc": "2026-11-19T02:16:41.166749+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"3b440f3ea39f4ce9906ddf3570e22c15\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"4a0f72b472884d52ad1636cd0e66a6e0\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"ab8cc9e821a34607989284ab8a07f97c\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "4a0f72b472884d52ad1636cd0e66a6e0"
+    },
+    {
+      "seq": 210,
+      "utc": "2026-11-19T02:16:41.170711+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"3b440f3ea39f4ce9906ddf3570e22c15\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 3.94, \"event_id\": \"9b880bbbdc8d423c94dc2923a81cbb67\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"4a0f72b472884d52ad1636cd0e66a6e0\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9b880bbbdc8d423c94dc2923a81cbb67"
+    },
+    {
+      "seq": 211,
+      "utc": "2026-11-19T02:16:41.174089+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"53b7332445cc497b961f79d8894f2dee\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 10.49, \"event_id\": \"d4555093addd48cdac111135da813bee\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9b880bbbdc8d423c94dc2923a81cbb67\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "d4555093addd48cdac111135da813bee"
+    },
+    {
+      "seq": 212,
+      "utc": "2026-11-19T02:16:41.785677+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"5de9a9f60b8e4cc1beab0b0b299d2085\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"e7997b23b5774bd198aae3df060d473a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"d4555093addd48cdac111135da813bee\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "e7997b23b5774bd198aae3df060d473a"
+    },
+    {
+      "seq": 213,
+      "utc": "2026-11-19T02:16:41.791679+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"26cde5fa28db43eaace34ce1724872fd\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"e9a4573f47074cffb2fae671708919e8\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"e7997b23b5774bd198aae3df060d473a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "e9a4573f47074cffb2fae671708919e8"
+    },
+    {
+      "seq": 214,
+      "utc": "2026-11-19T02:16:41.796302+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"26cde5fa28db43eaace34ce1724872fd\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.64, \"event_id\": \"6e683e20a278490e9f193c025bf7ef3f\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"e9a4573f47074cffb2fae671708919e8\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "6e683e20a278490e9f193c025bf7ef3f"
+    },
+    {
+      "seq": 215,
+      "utc": "2026-11-19T02:16:41.799607+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"5de9a9f60b8e4cc1beab0b0b299d2085\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 13.96, \"event_id\": \"7be87d0d5ba443438a9083b6b7958c91\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"6e683e20a278490e9f193c025bf7ef3f\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7be87d0d5ba443438a9083b6b7958c91"
+    },
+    {
+      "seq": 216,
+      "utc": "2026-11-19T02:16:42.409629+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"ccbd787515af45aebb841539f832a0ae\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"44653bdea6b443b69fdd9bcf54ad4a58\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7be87d0d5ba443438a9083b6b7958c91\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "44653bdea6b443b69fdd9bcf54ad4a58"
+    },
+    {
+      "seq": 217,
+      "utc": "2026-11-19T02:16:42.414034+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"9332ade4c372421fbc278b5da20b740a\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"b9dc9816e34e4bf28260d22f7acf338e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"44653bdea6b443b69fdd9bcf54ad4a58\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b9dc9816e34e4bf28260d22f7acf338e"
+    },
+    {
+      "seq": 218,
+      "utc": "2026-11-19T02:16:42.419349+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"9332ade4c372421fbc278b5da20b740a\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 5.36, \"event_id\": \"aeeec401bb3643949f83ad304402362d\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b9dc9816e34e4bf28260d22f7acf338e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "aeeec401bb3643949f83ad304402362d"
+    },
+    {
+      "seq": 219,
+      "utc": "2026-11-19T02:16:42.422947+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"ccbd787515af45aebb841539f832a0ae\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 13.14, \"event_id\": \"2370696637bd4f7d9b1d7c09dfa70df7\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"aeeec401bb3643949f83ad304402362d\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "2370696637bd4f7d9b1d7c09dfa70df7"
+    },
+    {
+      "seq": 220,
+      "utc": "2026-11-19T02:16:43.034055+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"3d048a018f5a4b84b743b0a4f2eaf1ae\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"0e9522174b924b438ebfc42ca8ea1b4e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"2370696637bd4f7d9b1d7c09dfa70df7\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "0e9522174b924b438ebfc42ca8ea1b4e"
+    },
+    {
+      "seq": 221,
+      "utc": "2026-11-19T02:16:43.038020+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"dd9b3767968541ca86398e3b7b962ea8\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"c557201bc81e4489b15009ff0801c9d6\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"0e9522174b924b438ebfc42ca8ea1b4e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "c557201bc81e4489b15009ff0801c9d6"
+    },
+    {
+      "seq": 222,
+      "utc": "2026-11-19T02:16:43.042771+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"dd9b3767968541ca86398e3b7b962ea8\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.8, \"event_id\": \"4db9d9d5d2af4c77b65ca648c7c73293\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"c557201bc81e4489b15009ff0801c9d6\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "4db9d9d5d2af4c77b65ca648c7c73293"
+    },
+    {
+      "seq": 223,
+      "utc": "2026-11-19T02:16:43.046449+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"3d048a018f5a4b84b743b0a4f2eaf1ae\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 12.44, \"event_id\": \"fcad9f15103947ceba91881e6ec90d2a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"4db9d9d5d2af4c77b65ca648c7c73293\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "fcad9f15103947ceba91881e6ec90d2a"
+    },
+    {
+      "seq": 224,
+      "utc": "2026-11-19T02:16:43.657711+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"f8f1d201006f4fe8bf3c0308adbf1b33\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"599e33f69ded4b20b7b6e11adef1d556\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"fcad9f15103947ceba91881e6ec90d2a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "599e33f69ded4b20b7b6e11adef1d556"
+    },
+    {
+      "seq": 225,
+      "utc": "2026-11-19T02:16:43.662280+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"471e8328e017479a94070ef575977776\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"e04d9630cec440d4b009abfc22aa9f39\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"599e33f69ded4b20b7b6e11adef1d556\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "e04d9630cec440d4b009abfc22aa9f39"
+    },
+    {
+      "seq": 226,
+      "utc": "2026-11-19T02:16:43.666288+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"471e8328e017479a94070ef575977776\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.3, \"event_id\": \"7c7a81b78a7a4fd3802a35d1713496ff\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"e04d9630cec440d4b009abfc22aa9f39\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7c7a81b78a7a4fd3802a35d1713496ff"
+    },
+    {
+      "seq": 227,
+      "utc": "2026-11-19T02:16:43.668889+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"f8f1d201006f4fe8bf3c0308adbf1b33\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 11.17, \"event_id\": \"28983ba22788435e88392c0a0db1b2c3\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7c7a81b78a7a4fd3802a35d1713496ff\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "28983ba22788435e88392c0a0db1b2c3"
+    },
+    {
+      "seq": 228,
+      "utc": "2026-11-19T02:16:44.280443+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"d076b6cecdfb4b7e83525d904ac4f185\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"9d1f78f486b841daa2d52149f99aebd5\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"28983ba22788435e88392c0a0db1b2c3\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9d1f78f486b841daa2d52149f99aebd5"
+    },
+    {
+      "seq": 229,
+      "utc": "2026-11-19T02:16:44.287167+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"6f0fb3df928d4686956152a848c15a8c\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"b6d08c3ebf8d40f7bdce77e719de94e4\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9d1f78f486b841daa2d52149f99aebd5\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b6d08c3ebf8d40f7bdce77e719de94e4"
+    },
+    {
+      "seq": 230,
+      "utc": "2026-11-19T02:16:44.293802+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"6f0fb3df928d4686956152a848c15a8c\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 6.71, \"event_id\": \"432742bcd7b843caaac3a95f91ec52be\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b6d08c3ebf8d40f7bdce77e719de94e4\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "432742bcd7b843caaac3a95f91ec52be"
+    },
+    {
+      "seq": 231,
+      "utc": "2026-11-19T02:16:44.299352+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"d076b6cecdfb4b7e83525d904ac4f185\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 18.89, \"event_id\": \"7c6f28793669491ab3dd7afd9c0975ce\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"432742bcd7b843caaac3a95f91ec52be\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7c6f28793669491ab3dd7afd9c0975ce"
+    },
+    {
+      "seq": 232,
+      "utc": "2026-11-19T02:16:44.922162+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"991a3d2cd6164f7c931d414ff73c397b\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"c480f6405edb42fe9aac083e41f52a7a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7c6f28793669491ab3dd7afd9c0975ce\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "c480f6405edb42fe9aac083e41f52a7a"
+    },
+    {
+      "seq": 233,
+      "utc": "2026-11-19T02:16:44.926788+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"74d279a8680c4414b7fd6dcec44de6b2\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"0866d3a5f771444abbd72adcbbdbc10f\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"c480f6405edb42fe9aac083e41f52a7a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "0866d3a5f771444abbd72adcbbdbc10f"
+    },
+    {
+      "seq": 234,
+      "utc": "2026-11-19T02:16:44.932859+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"74d279a8680c4414b7fd6dcec44de6b2\", \"artifact\": {\"sha256\": \"b5e598799362a2e118efd15f1c84fb570b52bd721be4e8a9be814cd39f9c0461\", \"bytes\": 323, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 6.09, \"event_id\": \"b37914ed48fa428b8375572364dcce3e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"0866d3a5f771444abbd72adcbbdbc10f\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b37914ed48fa428b8375572364dcce3e"
+    },
+    {
+      "seq": 235,
+      "utc": "2026-11-19T02:16:44.935833+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"991a3d2cd6164f7c931d414ff73c397b\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 13.72, \"event_id\": \"06b40f4b1b3c4b749a7a56afd1ab497f\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b37914ed48fa428b8375572364dcce3e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "06b40f4b1b3c4b749a7a56afd1ab497f"
+    },
+    {
+      "seq": 236,
+      "utc": "2026-11-19T02:16:45.548890+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"cd2fbad7af78467d9799a4acfb5c69dd\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"7423f11c3b824f8eba2b67b8bce2efe6\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"06b40f4b1b3c4b749a7a56afd1ab497f\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7423f11c3b824f8eba2b67b8bce2efe6"
+    },
+    {
+      "seq": 237,
+      "utc": "2026-11-19T02:16:45.552949+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"7daa245bf2b6498bbab2210bd092be9c\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"2d9831519db84c9895405b77b1dd1d6d\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7423f11c3b824f8eba2b67b8bce2efe6\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "2d9831519db84c9895405b77b1dd1d6d"
+    },
+    {
+      "seq": 238,
+      "utc": "2026-11-19T02:16:45.559916+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"7daa245bf2b6498bbab2210bd092be9c\", \"artifact\": {\"sha256\": \"2525c132a32533e616b3b3233ab90b2448c42098276ea1ae45aea52373b94088\", \"bytes\": 363, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 6.96, \"event_id\": \"27201d5c88fa400face03ddabf174eb4\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"2d9831519db84c9895405b77b1dd1d6d\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "27201d5c88fa400face03ddabf174eb4"
+    },
+    {
+      "seq": 239,
+      "utc": "2026-11-19T02:16:45.563585+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"cd2fbad7af78467d9799a4acfb5c69dd\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 14.74, \"event_id\": \"2c3aa4d0f38c4bf891d1c48f8ef700e0\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"27201d5c88fa400face03ddabf174eb4\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "2c3aa4d0f38c4bf891d1c48f8ef700e0"
+    },
+    {
+      "seq": 240,
+      "utc": "2026-11-19T02:16:46.172865+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"d6186dd7a11c471a9d54397510f94401\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"1b105f7dda754a4aa2d476cbf866ffd8\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"2c3aa4d0f38c4bf891d1c48f8ef700e0\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "1b105f7dda754a4aa2d476cbf866ffd8"
+    },
+    {
+      "seq": 241,
+      "utc": "2026-11-19T02:16:46.177760+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"0c9397239e014927b164c6cd2f52c6f3\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"c1beb3d7fc9b4bf686859e57598e47ae\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"1b105f7dda754a4aa2d476cbf866ffd8\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "c1beb3d7fc9b4bf686859e57598e47ae"
+    },
+    {
+      "seq": 242,
+      "utc": "2026-11-19T02:16:46.184511+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"0c9397239e014927b164c6cd2f52c6f3\", \"artifact\": {\"sha256\": \"2525c132a32533e616b3b3233ab90b2448c42098276ea1ae45aea52373b94088\", \"bytes\": 363, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 6.6, \"event_id\": \"f7f03ab2e4ef4f62aa2090022268d0a0\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"c1beb3d7fc9b4bf686859e57598e47ae\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f7f03ab2e4ef4f62aa2090022268d0a0"
+    },
+    {
+      "seq": 243,
+      "utc": "2026-11-19T02:16:46.188605+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"d6186dd7a11c471a9d54397510f94401\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 15.77, \"event_id\": \"b1b9bbb4347044019e33f0371b75b827\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f7f03ab2e4ef4f62aa2090022268d0a0\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b1b9bbb4347044019e33f0371b75b827"
+    },
+    {
+      "seq": 244,
+      "utc": "2026-11-19T02:16:46.798782+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"ba714c00533b4ee1924e5ecacd6fd2ae\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"d4589cb9c49e4182b9c7d9742ebe90c2\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b1b9bbb4347044019e33f0371b75b827\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "d4589cb9c49e4182b9c7d9742ebe90c2"
+    },
+    {
+      "seq": 245,
+      "utc": "2026-11-19T02:16:46.814550+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"2abc0510303f452fafc095619f40ded5\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"2999e7f9436e4f33a37aee0fb4a35d6c\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"d4589cb9c49e4182b9c7d9742ebe90c2\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "2999e7f9436e4f33a37aee0fb4a35d6c"
+    },
+    {
+      "seq": 246,
+      "utc": "2026-11-19T02:16:46.827072+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"2abc0510303f452fafc095619f40ded5\", \"artifact\": {\"sha256\": \"2525c132a32533e616b3b3233ab90b2448c42098276ea1ae45aea52373b94088\", \"bytes\": 363, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 12.55, \"event_id\": \"4544afe707f24aec9db95bf391dc3f9f\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"2999e7f9436e4f33a37aee0fb4a35d6c\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "4544afe707f24aec9db95bf391dc3f9f"
+    },
+    {
+      "seq": 247,
+      "utc": "2026-11-19T02:16:46.861868+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"ba714c00533b4ee1924e5ecacd6fd2ae\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 62.83, \"event_id\": \"b47efda16a3b459284737a58bfeb5afc\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"4544afe707f24aec9db95bf391dc3f9f\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "b47efda16a3b459284737a58bfeb5afc"
+    },
+    {
+      "seq": 248,
+      "utc": "2026-11-19T02:16:47.484760+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"664f9f36770b46d88752971a0ce58035\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"e1e120248399460ea80ff347a3f4796d\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"b47efda16a3b459284737a58bfeb5afc\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "e1e120248399460ea80ff347a3f4796d"
+    },
+    {
+      "seq": 249,
+      "utc": "2026-11-19T02:16:47.495148+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"3bf80e36bcc544699b5eba58e51e01b9\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"47e499cadf394a019573ef3681214cb5\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"e1e120248399460ea80ff347a3f4796d\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "47e499cadf394a019573ef3681214cb5"
+    },
+    {
+      "seq": 250,
+      "utc": "2026-11-19T02:16:47.509267+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"3bf80e36bcc544699b5eba58e51e01b9\", \"artifact\": {\"sha256\": \"2525c132a32533e616b3b3233ab90b2448c42098276ea1ae45aea52373b94088\", \"bytes\": 363, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 14.13, \"event_id\": \"7cd3952ca9534199b9c010427122171a\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"47e499cadf394a019573ef3681214cb5\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7cd3952ca9534199b9c010427122171a"
+    },
+    {
+      "seq": 251,
+      "utc": "2026-11-19T02:16:47.517165+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"664f9f36770b46d88752971a0ce58035\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 32.47, \"event_id\": \"6fd19b8bc7d144619013f6c43afac36b\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7cd3952ca9534199b9c010427122171a\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "6fd19b8bc7d144619013f6c43afac36b"
+    },
+    {
+      "seq": 252,
+      "utc": "2026-11-19T02:16:48.138063+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"138e5788a5c8400baecdb5dd6d19af97\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"7533b176f8cc4926822a29d4e27b75bf\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"6fd19b8bc7d144619013f6c43afac36b\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7533b176f8cc4926822a29d4e27b75bf"
+    },
+    {
+      "seq": 253,
+      "utc": "2026-11-19T02:16:48.140591+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"27b9e8df350e4a75a5a351bfdaf88803\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"3176d620993e42d18736aea89da7eaf7\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7533b176f8cc4926822a29d4e27b75bf\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "3176d620993e42d18736aea89da7eaf7"
+    },
+    {
+      "seq": 254,
+      "utc": "2026-11-19T02:16:48.144364+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"27b9e8df350e4a75a5a351bfdaf88803\", \"artifact\": {\"sha256\": \"2525c132a32533e616b3b3233ab90b2448c42098276ea1ae45aea52373b94088\", \"bytes\": 363, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 3.79, \"event_id\": \"79bc465518fd4b6ab3a646e8e1efb062\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"3176d620993e42d18736aea89da7eaf7\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "79bc465518fd4b6ab3a646e8e1efb062"
+    },
+    {
+      "seq": 255,
+      "utc": "2026-11-19T02:16:48.146773+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"138e5788a5c8400baecdb5dd6d19af97\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 8.78, \"event_id\": \"6030dc5ce926427ca2ab06eac2229146\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"79bc465518fd4b6ab3a646e8e1efb062\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "6030dc5ce926427ca2ab06eac2229146"
+    },
+    {
+      "seq": 256,
+      "utc": "2026-11-19T02:16:48.755483+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"33f5f92f82c64c2cb4a294fbf58f98b2\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"7bfeda40f3514e1e826ddf5d4570559d\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"6030dc5ce926427ca2ab06eac2229146\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "7bfeda40f3514e1e826ddf5d4570559d"
+    },
+    {
+      "seq": 257,
+      "utc": "2026-11-19T02:16:48.759970+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"5f62a77eef9a4800a40965e66761997a\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"0078c0fedd9142d0a7cd22f28c5e916f\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"7bfeda40f3514e1e826ddf5d4570559d\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "0078c0fedd9142d0a7cd22f28c5e916f"
+    },
+    {
+      "seq": 258,
+      "utc": "2026-11-19T02:16:48.764445+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"5f62a77eef9a4800a40965e66761997a\", \"artifact\": {\"sha256\": \"2525c132a32533e616b3b3233ab90b2448c42098276ea1ae45aea52373b94088\", \"bytes\": 363, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.46, \"event_id\": \"f208e578b3f6450ba9f22ef7df4d89fc\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"0078c0fedd9142d0a7cd22f28c5e916f\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "f208e578b3f6450ba9f22ef7df4d89fc"
+    },
+    {
+      "seq": 259,
+      "utc": "2026-11-19T02:16:48.767907+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"33f5f92f82c64c2cb4a294fbf58f98b2\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 12.73, \"event_id\": \"9210bee32d894ecabf00fd787260d071\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"f208e578b3f6450ba9f22ef7df4d89fc\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9210bee32d894ecabf00fd787260d071"
+    },
+    {
+      "seq": 260,
+      "utc": "2026-11-19T02:16:49.378857+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"f058fea7f71a428b8d2c47701c700f93\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"a66d5cf9411847a3b5430bfd863439bd\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9210bee32d894ecabf00fd787260d071\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "a66d5cf9411847a3b5430bfd863439bd"
+    },
+    {
+      "seq": 261,
+      "utc": "2026-11-19T02:16:49.382792+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"fecb144bdff049acae3ed5afd6e250a3\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"35d48f0f2be04867b2889921087fce22\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"a66d5cf9411847a3b5430bfd863439bd\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "35d48f0f2be04867b2889921087fce22"
+    },
+    {
+      "seq": 262,
+      "utc": "2026-11-19T02:16:49.388617+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"fecb144bdff049acae3ed5afd6e250a3\", \"artifact\": {\"sha256\": \"2525c132a32533e616b3b3233ab90b2448c42098276ea1ae45aea52373b94088\", \"bytes\": 363, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 5.82, \"event_id\": \"6731b7c90f9145fc8d97cdcd87a3f12f\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"35d48f0f2be04867b2889921087fce22\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "6731b7c90f9145fc8d97cdcd87a3f12f"
+    },
+    {
+      "seq": 263,
+      "utc": "2026-11-19T02:16:49.392691+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"f058fea7f71a428b8d2c47701c700f93\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"RUNNING\", \"artifact\": {\"sha256\": \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\", \"bytes\": 4, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 13.85, \"event_id\": \"9eedd8cc54264a2792cd113ffa2afb3c\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"6731b7c90f9145fc8d97cdcd87a3f12f\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "9eedd8cc54264a2792cd113ffa2afb3c"
+    },
+    {
+      "seq": 264,
+      "utc": "2026-11-19T02:16:50.004220+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"7b7e11ddbe78472695a153561c469d32\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"artifact\": {\"sha256\": \"806ee009f4b77d0b9dcb38ec88009cf68c4e342c4c85a39037e976b63183c6f6\", \"bytes\": 156, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"dadf0c85abb04cc9a45e2ed0800fd62e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"9eedd8cc54264a2792cd113ffa2afb3c\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "dadf0c85abb04cc9a45e2ed0800fd62e"
+    },
+    {
+      "seq": 265,
+      "utc": "2026-11-19T02:16:50.006613+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.request",
+      "detail": "ros.request",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.request\", \"call_id\": \"75b326f3da52466d9edd0d66bd4ef987\", \"artifact\": {\"sha256\": \"6889810ba3c2b6db5a46d53e22d7001bd58751b5832e54f50c6dba7be10ff765\", \"bytes\": 41, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"22c6d705c12a4740a4edd1c2de3badbd\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"dadf0c85abb04cc9a45e2ed0800fd62e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "22c6d705c12a4740a4edd1c2de3badbd"
+    },
+    {
+      "seq": 266,
+      "utc": "2026-11-19T02:16:50.011165+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "ros.response",
+      "detail": "ros.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"edge_core.get_mission\", \"layer\": \"ros\", \"code\": \"agent.ros.response\", \"call_id\": \"75b326f3da52466d9edd0d66bd4ef987\", \"artifact\": {\"sha256\": \"f62a8ec5f24eeaf214ff4c98314f2b25c18a57b0d408366b361b629ac8e8a6fc\", \"bytes\": 382, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 4.06, \"event_id\": \"71745b07cc094ebebd525d7589649dbd\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"22c6d705c12a4740a4edd1c2de3badbd\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "71745b07cc094ebebd525d7589649dbd"
+    },
+    {
+      "seq": 267,
+      "utc": "2026-11-19T02:16:50.014446+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"inspect\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"7b7e11ddbe78472695a153561c469d32\", \"provider\": \"ros\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"outcome\": \"SUCCEEDED\", \"artifact\": {\"sha256\": \"31cddbd6d1da1e37238ba5848726f0e40896e6aa9fbdcd31c1dcd645a8b6ddfc\", \"bytes\": 358, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 10.25, \"event_id\": \"56413a8d0cf74e3c8c9944a98202d96e\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"71745b07cc094ebebd525d7589649dbd\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "56413a8d0cf74e3c8c9944a98202d96e"
+    },
+    {
+      "seq": 268,
+      "utc": "2026-11-19T02:16:50.017045+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 0,
+      "kind": "verified",
+      "detail": "已取得步骤证据",
+      "operation_id": "patrol-0764413ed7/step/1",
+      "payload": "{\"provider\": \"local\", \"prior_state\": \"WAITING\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"inspect\", \"args\": {\"sha256\": \"0f60cce912e9a4d793a14876e41881d812302d22439b65bbfdc4ab247bc91199\", \"bytes\": 86, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"version\": \"1\", \"binding\": \"ad581cfbd45f165a2497111b27270cda31a067843018c416da15824034656a0d\", \"status\": \"SUCCEEDED\", \"verification\": {\"sha256\": \"2c768feeae6656b96979b0305b8e55a6c1b9cb55bd359725c9ef5665244514a0\", \"bytes\": 15, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"operation_id\": \"patrol-0764413ed7/step/1\", \"started_at\": 1795054564.107778, \"ros_binding\": \"bound\", \"evidence\": {\"sha256\": \"31cddbd6d1da1e37238ba5848726f0e40896e6aa9fbdcd31c1dcd645a8b6ddfc\", \"bytes\": 358, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}}, \"trace\": {\"schema_version\": 1, \"module\": \"agent\", \"layer\": \"task\", \"code\": \"agent.verified\", \"event_id\": \"6c607fe79a224360b3fb0eed2a1dc37c\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"56413a8d0cf74e3c8c9944a98202d96e\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "6c607fe79a224360b3fb0eed2a1dc37c"
+    },
+    {
+      "seq": 269,
+      "utc": "2026-11-19T02:16:50.023467+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 1,
+      "kind": "dispatch",
+      "detail": "已持久化步骤意图",
+      "operation_id": "patrol-0764413ed7/step/2",
+      "payload": "{\"provider\": \"local\", \"prior_state\": \"RUNNING\", \"state\": \"RUNNING\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {\"sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"bytes\": 2, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"RUNNING\", \"verification\": {\"sha256\": \"2c768feeae6656b96979b0305b8e55a6c1b9cb55bd359725c9ef5665244514a0\", \"bytes\": 15, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"operation_id\": \"patrol-0764413ed7/step/2\", \"started_at\": 1795054610.0233061}, \"trace\": {\"schema_version\": 1, \"module\": \"agent\", \"layer\": \"task\", \"code\": \"agent.dispatch\", \"event_id\": \"a0db1dd2b0a740ed8b8b39cbec0b1cd5\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"6c607fe79a224360b3fb0eed2a1dc37c\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "a0db1dd2b0a740ed8b8b39cbec0b1cd5"
+    },
+    {
+      "seq": 270,
+      "utc": "2026-11-19T02:16:50.025862+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 1,
+      "kind": "tool.request",
+      "detail": "tool.request",
+      "operation_id": "patrol-0764413ed7/step/2",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"status\", \"layer\": \"tool\", \"code\": \"agent.tool.request\", \"call_id\": \"1029dd3d341a452096ee7226ca860a80\", \"provider\": \"ros\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"artifact\": {\"sha256\": \"0079cf3c493b695f38e5250a110547d0bc72418d2bde7c08e2829b2af22ffe27\", \"bytes\": 72, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"event_id\": \"ef8c3a793f964ddc825b0da8a49d9faa\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"a0db1dd2b0a740ed8b8b39cbec0b1cd5\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "ef8c3a793f964ddc825b0da8a49d9faa"
+    },
+    {
+      "seq": 271,
+      "utc": "2026-11-19T02:16:50.028576+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 1,
+      "kind": "tool.response",
+      "detail": "tool.response",
+      "operation_id": "patrol-0764413ed7/step/2",
+      "payload": "{\"trace\": {\"schema_version\": 1, \"module\": \"status\", \"layer\": \"tool\", \"code\": \"agent.tool.response\", \"call_id\": \"1029dd3d341a452096ee7226ca860a80\", \"provider\": \"ros\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"outcome\": \"SUCCEEDED\", \"artifact\": {\"sha256\": \"71f55d6b3946b37342ece44ffc91a03142155fb1cd5978dbd01725405a896e48\", \"bytes\": 182, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"duration_ms\": 2.7, \"event_id\": \"5b2dc11b2a0a4ce49b416fd35f1acd29\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"ef8c3a793f964ddc825b0da8a49d9faa\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "5b2dc11b2a0a4ce49b416fd35f1acd29"
+    },
+    {
+      "seq": 272,
+      "utc": "2026-11-19T02:16:50.030951+00:00",
+      "task_id": "patrol-0764413ed7",
+      "step": 1,
+      "kind": "verified",
+      "detail": "已取得步骤证据",
+      "operation_id": "patrol-0764413ed7/step/2",
+      "payload": "{\"provider\": \"local\", \"prior_state\": \"RUNNING\", \"state\": \"SUCCEEDED\", \"retries\": 0, \"step\": {\"tool\": \"status\", \"args\": {\"sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\", \"bytes\": 2, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"version\": \"1\", \"binding\": \"914864862e4ef9d84d7d7af7f104936bdc8edff59fc50459c313fa335c0f7b1a\", \"status\": \"SUCCEEDED\", \"verification\": {\"sha256\": \"2c768feeae6656b96979b0305b8e55a6c1b9cb55bd359725c9ef5665244514a0\", \"bytes\": 15, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}, \"operation_id\": \"patrol-0764413ed7/step/2\", \"started_at\": 1795054610.0233061, \"evidence\": {\"sha256\": \"71f55d6b3946b37342ece44ffc91a03142155fb1cd5978dbd01725405a896e48\", \"bytes\": 182, \"encoding\": \"canonical-json-utf8\", \"mode\": \"metadata\"}}, \"trace\": {\"schema_version\": 1, \"module\": \"agent\", \"layer\": \"task\", \"code\": \"agent.verified\", \"event_id\": \"4f5962cf2e5445d8854e1f002bd3d4b3\", \"trace_id\": \"patrol-0764413ed7\", \"parent_event_id\": \"5b2dc11b2a0a4ce49b416fd35f1acd29\", \"trigger\": {\"kind\": \"user\", \"source\": \"user\", \"id\": \"patrol-0764413ed7\"}}}",
+      "event_id": "4f5962cf2e5445d8854e1f002bd3d4b3"
+    }
+  ],
+  "events_has_more": true
+}

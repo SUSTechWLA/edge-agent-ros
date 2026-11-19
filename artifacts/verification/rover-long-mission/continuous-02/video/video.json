@@ -1,0 +1,158 @@
+{
+  "task_id": "patrol-0764413ed7",
+  "fps": 12,
+  "simulation_speed": 1.0,
+  "first_camera_ns": 4000000,
+  "last_display_ns": 49760000000,
+  "frame_count": 599,
+  "sha256": "8f065987c0aea8992d6e16bfc74b1dc3898a5ceea36a5e801a40a379bcff16c9",
+  "timeline_sha256": "b462229a6d1d85d0d8d58b070bd8dd64ebc3e2b24c30645ccab4bba62e547464",
+  "input_events": 24,
+  "input_rgb": 403,
+  "markers": [
+    {
+      "phase": "fault_core",
+      "video_seconds": 3.378,
+      "stamp_ns": 3382000000,
+      "title": "\u6ce8\u5165\u6545\u969c 1 \u00b7 \u6682\u505c Core"
+    },
+    {
+      "phase": "submitted",
+      "video_seconds": 3.378,
+      "stamp_ns": 3382000000,
+      "title": "\u6536\u5230\u4e00\u6761\u81ea\u7136\u8bed\u8a00\u6307\u4ee4"
+    },
+    {
+      "phase": "planned",
+      "video_seconds": 3.574,
+      "stamp_ns": 3578000000,
+      "title": "\u672c\u5730\u89c4\u5212\u5668\u9009\u51fa inspect \u2192 status"
+    },
+    {
+      "phase": "retry",
+      "video_seconds": 7.612,
+      "stamp_ns": 7616000000,
+      "title": "\u6267\u884c\u670d\u52a1\u6682\u65f6\u65e0\u54cd\u5e94 \u00b7 \u5df2\u8bb0\u5f55\u91cd\u8bd5"
+    },
+    {
+      "phase": "core_restored",
+      "video_seconds": 7.91,
+      "stamp_ns": 7914000000,
+      "title": "\u6267\u884c\u670d\u52a1\u6062\u590d \u00b7 \u7ee7\u7eed\u539f\u64cd\u4f5c"
+    },
+    {
+      "phase": "moving",
+      "video_seconds": 8.782,
+      "stamp_ns": 8786000000,
+      "title": "\u673a\u5668\u4eba\u5df2\u9a76\u79bb\u8d77\u70b9"
+    },
+    {
+      "phase": "fault_agent",
+      "video_seconds": 8.782,
+      "stamp_ns": 8786000000,
+      "title": "\u6ce8\u5165\u6545\u969c 2 \u00b7 \u8f66\u5728\u8fd0\u52a8\u65f6\u7ec8\u6b62 Agent \u8fdb\u7a0b"
+    },
+    {
+      "phase": "agent_restored",
+      "video_seconds": 10.222,
+      "stamp_ns": 10226000000,
+      "title": "Agent \u5df2\u91cd\u542f \u00b7 \u4ece\u6301\u4e45\u4efb\u52a1\u8bb0\u5f55\u7eed\u8dd1"
+    },
+    {
+      "phase": "goal",
+      "video_seconds": 10.222,
+      "stamp_ns": 10226000000,
+      "title": "\u6b63\u5728\u6267\u884c\u7b2c 1 \u7ad9 / 7"
+    },
+    {
+      "phase": "waypoint",
+      "video_seconds": 13.484,
+      "stamp_ns": 13488000000,
+      "title": "\u7b2c 1 \u7ad9\u5df2\u5230\u8fbe\uff0c\u91cc\u7a0b\u8ba1\u56de\u6267\u5df2\u5b58\u6863"
+    },
+    {
+      "phase": "goal",
+      "video_seconds": 13.484,
+      "stamp_ns": 13488000000,
+      "title": "\u6b63\u5728\u6267\u884c\u7b2c 2 \u7ad9 / 7"
+    },
+    {
+      "phase": "waypoint",
+      "video_seconds": 18.776,
+      "stamp_ns": 18780000000,
+      "title": "\u7b2c 2 \u7ad9\u5df2\u5230\u8fbe\uff0c\u91cc\u7a0b\u8ba1\u56de\u6267\u5df2\u5b58\u6863"
+    },
+    {
+      "phase": "goal",
+      "video_seconds": 18.776,
+      "stamp_ns": 18780000000,
+      "title": "\u6b63\u5728\u6267\u884c\u7b2c 3 \u7ad9 / 7"
+    },
+    {
+      "phase": "waypoint",
+      "video_seconds": 25.642,
+      "stamp_ns": 25646000000,
+      "title": "\u7b2c 3 \u7ad9\u5df2\u5230\u8fbe\uff0c\u91cc\u7a0b\u8ba1\u56de\u6267\u5df2\u5b58\u6863"
+    },
+    {
+      "phase": "goal",
+      "video_seconds": 25.642,
+      "stamp_ns": 25646000000,
+      "title": "\u6b63\u5728\u6267\u884c\u7b2c 4 \u7ad9 / 7"
+    },
+    {
+      "phase": "waypoint",
+      "video_seconds": 31.766,
+      "stamp_ns": 31770000000,
+      "title": "\u7b2c 4 \u7ad9\u5df2\u5230\u8fbe\uff0c\u91cc\u7a0b\u8ba1\u56de\u6267\u5df2\u5b58\u6863"
+    },
+    {
+      "phase": "goal",
+      "video_seconds": 31.766,
+      "stamp_ns": 31770000000,
+      "title": "\u6b63\u5728\u6267\u884c\u7b2c 5 \u7ad9 / 7"
+    },
+    {
+      "phase": "waypoint",
+      "video_seconds": 38.23,
+      "stamp_ns": 38234000000,
+      "title": "\u7b2c 5 \u7ad9\u5df2\u5230\u8fbe\uff0c\u91cc\u7a0b\u8ba1\u56de\u6267\u5df2\u5b58\u6863"
+    },
+    {
+      "phase": "goal",
+      "video_seconds": 38.23,
+      "stamp_ns": 38234000000,
+      "title": "\u6b63\u5728\u6267\u884c\u7b2c 6 \u7ad9 / 7"
+    },
+    {
+      "phase": "waypoint",
+      "video_seconds": 43.614,
+      "stamp_ns": 43618000000,
+      "title": "\u7b2c 6 \u7ad9\u5df2\u5230\u8fbe\uff0c\u91cc\u7a0b\u8ba1\u56de\u6267\u5df2\u5b58\u6863"
+    },
+    {
+      "phase": "goal",
+      "video_seconds": 43.614,
+      "stamp_ns": 43618000000,
+      "title": "\u6b63\u5728\u6267\u884c\u7b2c 7 \u7ad9 / 7"
+    },
+    {
+      "phase": "waypoint",
+      "video_seconds": 48.258,
+      "stamp_ns": 48262000000,
+      "title": "\u7b2c 7 \u7ad9\u5df2\u5230\u8fbe\uff0c\u91cc\u7a0b\u8ba1\u56de\u6267\u5df2\u5b58\u6863"
+    },
+    {
+      "phase": "verified",
+      "video_seconds": 48.258,
+      "stamp_ns": 48262000000,
+      "title": "\u72b6\u6001\u5de5\u5177\u8bfb\u56de\u505c\u8f66\u7ed3\u679c"
+    },
+    {
+      "phase": "finished",
+      "video_seconds": 48.556,
+      "stamp_ns": 48560000000,
+      "title": "\u540c\u4e00\u4efb\u52a1\u6210\u529f\u5b8c\u6210 \u00b7 SUCCEEDED"
+    }
+  ]
+}
