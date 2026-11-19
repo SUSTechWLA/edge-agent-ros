@@ -6,7 +6,7 @@ import unittest
 STAGES = ("repository", "planner", "agent-contracts", "observations", "scene-contracts",
           "core", "motion-sensors", "motion-world", "agent-faults", "resilience",
           "console-missions", "places", "scene-binding", "scene-outage", "clock-reset", "ui", "model", "board",
-          "plugin-isolation", "campus-world")
+          "plugin-isolation", "campus-world", "rover-commissioning")
 R = "repository"
 AGENT = ("planner", "agent-contracts", "agent-faults", "resilience", "console-missions",
          "places", "scene-binding", "ui", "model")
@@ -15,6 +15,12 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("scripts/release_robot.py", "tests/test_robot_release.py"), (R,)),
+    (("scripts/robot.sh", "calibration/ros_capture.py", "calibration/targets.py", "calibration/station/*",
+      "tests/test_factory_targets.py", "tests/system/factory_ros_capture.py"), ("board",)),
+    (("calibration/*", "tests/test_factory_calibration.py"), ("board","rover-commissioning")),
+    (("exploration/*", "tests/test_exploration_frontier.py", "tests/system/commission_exploration.py"),
+     ("rover-commissioning",)),
     (("perception/sensor_health/*","compose.sensor-health.yaml","tests/system/sensor_health_acceptance.py",
       "tests/system/sensor_health_restart.py","tests/test_sensor_incidents.py"),
      ("plugin-isolation",)),
@@ -55,7 +61,8 @@ RULES = [
      ("planner","observations","agent-faults","board")),
     (("tests/test_plugin_manager.py","tests/test_plugin_manager_watch.py"), ("planner",)),
     (("tests/system/plugin_manager_acceptance.py",), ("agent-faults",)),
-    (("agent/module_journal.py","agent/runtime_plugins.py", "plugins/runtime/*.json", "contracts/verification-policy.json"),
+    (("agent/module_journal.py",), (*AGENT,"observations","board","rover-commissioning")),
+    (("agent/runtime_plugins.py", "plugins/runtime/*.json", "contracts/verification-policy.json"),
      (*AGENT,"observations","board")),
     (("tests/test_module_journal.py","tests/test_author_eventbus.py"), ("planner",)),
     (("tests/system/module_bus_acceptance.py","tests/system/author_bus_acceptance.py"), ("observations",)),
@@ -79,13 +86,15 @@ RULES = [
     (("scene/start_world.py", "scene/campus.json", "scene/layout.py"), (*SCENE,"core","motion-world","ui","clock-reset")),
     (("scene/provider.py",), (*SCENE,"clock-reset")),
     (("scene/*",), SCENE),
+    (("perception/node.py",), (*OBS,"board","rover-commissioning")),
     (("console/server/*", "perception/*", "observations/*.json"), (*OBS,"board")),
     (("console/web/review.*","tests/system/review_browser.mjs"), ("ui","console-missions","places")),
     (("console/web/*", "tests/system/console_browser.mjs"), ("ui","console-missions")),
     (("client/event_sink.py",), ("planner","observations","agent-faults","board")),
-    (("sim/bridge.yaml","sim/witness.yaml","sim/world.sdf"), (*MOTION,*OBS)),
-    (("src/edge_core/*",), (*MOTION,"board")),
-    (("src/edge_gateway/*","sim/*"), MOTION),
+    (("sim/bridge.yaml","sim/witness.yaml","sim/world.sdf"), (*MOTION,*OBS,"rover-commissioning")),
+    (("src/edge_core/*",), (*MOTION,"board","rover-commissioning")),
+    (("src/edge_gateway/*",), (*MOTION,"rover-commissioning")),
+    (("sim/*",), MOTION),
     (("compose.hardware.yaml","compose.hardware-observe.yaml","client/hardware_preflight.py","tests/test_board_preflight.py",
       "tests/system/board_smoke.py","tests/system/realsense_board.py"), ("board",)),
     (("tests/planning_contract.py",), ("planner",)),
@@ -132,6 +141,22 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_rover_commissioning_consumers(self):
+        for name in ("scripts/release_robot.py", "tests/test_robot_release.py", "deploy/robot/README.md"):
+            self.assertEqual(selection([name])[0], [R], name)
+        for name in ("scripts/robot.sh", "calibration/targets.py", "calibration/ros_capture.py",
+                     "calibration/station/bindings.example.json", "tests/test_factory_targets.py",
+                     "tests/system/factory_ros_capture.py"):
+            self.assertEqual(selection([name])[0], [R,"board"], name)
+        for name in ("calibration/checks.py", "calibration/factory.py", "tests/test_factory_calibration.py"):
+            self.assertEqual(selection([name])[0], [R,"board","rover-commissioning"], name)
+        for name in ("exploration/frontier.py", "exploration/map_artifact.py", "exploration/ros_sim.py",
+                     "tests/test_exploration_frontier.py", "tests/system/commission_exploration.py"):
+            self.assertEqual(selection([name])[0], [R,"rover-commissioning"], name)
+        for name in ("perception/node.py", "agent/module_journal.py", "sim/bridge.yaml", "sim/world.sdf",
+                     "src/edge_core/src/node.cpp", "src/edge_gateway/src/node.cpp", "client/mission.py"):
+            self.assertIn("rover-commissioning", selection([name])[0], name)
+
     def test_map_and_model_plugin_consumers(self):
         self.assertEqual(selection(["perception/map3d/provider.py"])[0],
                          [R,"planner","observations","board","plugin-isolation","campus-world"])

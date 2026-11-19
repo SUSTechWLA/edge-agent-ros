@@ -97,7 +97,8 @@ def run(args, selected, reasons):
         if "repository" in selected:
             stage("repository",[[PY,"scripts/check_sdd.py"],test("repository_contract.py","-v"),
                                 test("document_contract.py","-v"),
-                                test("test_selection.py","-v"),["docker","compose","config","--quiet"],
+                                test("test_selection.py","-v"),test("test_robot_release.py","-v"),
+                                ["docker","compose","config","--quiet"],
                                 ["docker","compose","-f","compose.hardware.yaml","config","--quiet"],
                                 ["docker","compose","-f","compose.yaml","-f","compose.camera.yaml","-f","compose.rgbd.yaml",
                                  "-f","compose.rgbd-sensor.yaml","-f","compose.model-provider.yaml","config","--quiet"],
@@ -124,7 +125,18 @@ def run(args, selected, reasons):
             env["EDGE_HARDWARE_IMAGE"]=board_image
             board_built=stage("board-build",[["docker","compose","-f","compose.hardware.yaml","build","core"]])
             if board_built:
+                # The deployable board image ships plugins without development fixtures.
+                # Bind tests only; imports and subprocesses must use the image's runtime.
+                board_test = ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
+                              "-e","PYTHONDONTWRITEBYTECODE=1","-e","ROS_LOG_DIR=/tmp/ros",
+                              "-e","ROS_DOMAIN_ID=184","-e","ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST",
+                              "-e",f"FACTORY_TEST_IMAGE={board_image}",
+                              "--mount",f"type=bind,source={ROOT/'tests'},target=/opt/edge/tests,readonly",
+                              "--mount",f"type=bind,source={directory},target=/evidence",board_image,"python3","-B"]
                 stage("board",[test("test_board_preflight.py","-v"),
+                               [*board_test,"/opt/edge/tests/test_factory_targets.py","-v"],
+                               [*board_test,"/opt/edge/tests/system/factory_ros_capture.py",
+                                "--out","/evidence/factory-ros-capture.json"],
                                test("system/board_smoke.py","--image",board_image,"--out",directory/"board.json"),
                                test("system/realsense_board.py","--image",board_image,"--out",directory/"realsense-board.json")])
             else:
@@ -142,6 +154,10 @@ def run(args, selected, reasons):
                 report["docker"]=output(["docker","version","--format","{{.Server.Version}}"],env)
                 report["compose"]=output(["docker","compose","version","--short"],env)
                 checks={
+                    "rover-commissioning":[in_image("python3","-B","/opt/edge/tests/test_factory_calibration.py","-v"),
+                                           in_image("python3","-B","/opt/edge/tests/test_exploration_frontier.py","-v"),
+                                           test("system/commission_exploration.py","--packaged","--image",image,
+                                                "--out-dir",directory/"rover-commissioning")],
                     "plugin-isolation":[test("test_map_texture_pack.py","-v"),
                                         test("test_sensor_incidents.py","-v"),
                                         ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
