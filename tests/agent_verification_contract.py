@@ -74,6 +74,38 @@ class VerificationContracts(unittest.TestCase):
         self.assertEqual(self.j.get("frozen")["steps"],proposal[1])
         self.assertIsNone(self.j.soft_intent("frozen"))
 
+    def test_partial_mixed_admission_resumes_original_intent_without_dispatch(self):
+        from copy import deepcopy
+        from soft_client import SoftError
+
+        key = "mixed-admission"
+        self.j.create(key, "read and capture")
+        steps = [
+            {"tool":"read","status":"PENDING","soft_pin":{"binding":"a"}},
+            {"tool":"capture","status":"PENDING","physical_pin":{"class":"physical","binding":"b"}},
+        ]
+        self.j.soft_intent(key, ["fixed", steps])
+        accepted = deepcopy(steps)
+        accepted[0]["soft_pin"]["reservation_id"] = key + "/step/1"
+        complete = deepcopy(accepted)
+        complete[1]["physical_pin"]["reservation_id"] = key + "/step/2"
+        with patch.dict(os.environ,{"EDGE_SOFT_SOCKET":"/unused"}), patch("service.plan") as model, \
+                patch("service.soft_client.request",return_value=["fixed",accepted]) as soft, \
+                patch("plugin_tracks.physical_request", side_effect=[
+                    SoftError("plugin.transport","freeze reply lost"), ["fixed",complete]]) as physical:
+            self.tick(planning=True)
+            self.assertEqual(self.j.get(key)["state"],"BLOCKED")
+            self.assertTrue(self.j.get(key)["can_retry"])
+            self.assertEqual(self.j.soft_intent(key), ["fixed",steps])
+            self.assertEqual(self.j.retry(key)["state"],"PLANNING")
+            self.tick(planning=True)
+        self.assertEqual(self.j.get(key)["steps"], complete)
+        self.assertIsNone(self.j.soft_intent(key))
+        self.assertEqual(soft.call_args_list[0],soft.call_args_list[1])
+        self.assertEqual(physical.call_args_list[0],physical.call_args_list[1])
+        model.assert_not_called()
+        self.robot.run.assert_not_called()
+
     def test_soft_host_outage_preserves_kernel_status(self):
         self.j.create("kernel","status")
         with patch.dict(os.environ,{"EDGE_SOFT_SOCKET":"/nonexistent/edge-soft.sock"}):

@@ -23,10 +23,16 @@ def encode(value):
 
 
 def request(action, **fields):
-    path = os.environ["EDGE_SOFT_SOCKET"]
+    path = os.getenv("EDGE_SOFT_SOCKET")
+    if not path:
+        raise SoftError("tool.binding_unavailable","original soft runtime unavailable")
+    return request_at(path, action, **fields)
+
+
+def request_at(path, action, *, timeout=12, **fields):
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as conn:
-            conn.settimeout(12)
+            conn.settimeout(timeout)
             conn.connect(path)
             conn.sendall(encode({"action": action, **fields}))
             with conn.makefile("rb") as stream:
@@ -42,7 +48,7 @@ def request(action, **fields):
             raise SoftError(reply["error"], reply["detail"])
         return reply["value"]
     except (OSError, ValueError, KeyError, TypeError) as error:
-        raise SoftError("plugin.transport", "soft runtime unavailable or invalid reply") from error
+        raise SoftError("plugin.transport", "plugin runtime unavailable or invalid reply") from error
 
 
 def enabled():
@@ -59,8 +65,9 @@ def can_take_over(previous, candidate):
             previous.get("endpoint") == "http://evidence:8125/invoke?tool=" + name)
 
 
-def catalog(legacy):
-    view = request("catalog")
+def catalog(legacy, view=None):
+    if view is None:
+        view = request("catalog")
     # Tombstones continue to own a migrated name after removal. Only explicitly
     # authorized v1 handoffs can shadow an installed legacy tool.
     tools = {name: cap for name, cap in legacy.items() if name not in view["claims"]}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "source": "tests/semantic_acceptance.py",
+  "max_goal_error_m": 0.18,
+  "max_stationary_displacement_m": 0.025,
+  "missions": {
+    "origin": {"text":"报告当前位置","tool":"status","state":"SUCCEEDED"},
+    "garden": {"text":"去庭院巡检","tool":"navigate_place","state":"SUCCEEDED","goal":[3.3,1.35]},
+    "desk": {"text":"回到工位","tool":"navigate_place","state":"SUCCEEDED","goal":[0,0]},
+    "unknown": {"text":"去火星巡检","tool":"navigate_place","state":"BLOCKED","stationary":true},
+    "closed": {"text":"去维修区巡检","tool":"navigate_place","state":"BLOCKED","stationary":true},
+    "wall": {"text":"巡检 (2.2,2.1)","tool":"inspect","state":"BLOCKED"},
+    "recover": {"text":"回到工位","tool":"navigate_place","state":"SUCCEEDED","goal":[0,0]}
+  },
+  "motion_restart": {"source":"tests/console_resilience.py","operation_id":"first/step/1/waypoint/1","allowed_starts":1},
+  "lost_original_ledger": {"source":"tests/system/agent_faults.py","state":"RECOVERY_REQUIRED"}
+}

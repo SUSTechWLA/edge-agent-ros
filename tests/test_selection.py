@@ -15,6 +15,11 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/physical_*.py","agent/plugin_tracks.py","scripts/prepare_physical_camera.py","perception/camera/physical*.py",
+      "compose.physical-camera*.yaml","tests/system/physical_camera*.py"), (*AGENT,"observations","board","plugin-isolation")),
+    (("tests/test_physical_*.py","tests/test_plugin_tracks.py"), ("planner","plugin-isolation")),
+    (("tests/system/plugin_tracks_metrics.py","tests/fixtures/plugin-tracks/frozen-missions.json"),
+     ("places","resilience","agent-faults")),
     (("agent/soft_*.py","agent/v2_registry.py","agent/plugin_descriptor.py","compose.soft-runtime.yaml",
       "scripts/prepare_soft_pilots.py","console/server/session_service.py"), (*AGENT,"observations","board","plugin-isolation")),
     (("tests/test_soft_*.py","tests/test_v2_registry.py","tests/test_plugin_descriptor.py",
@@ -154,6 +159,16 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_frozen_mission_witnesses(self):
+        for name in ("tests/system/plugin_tracks_metrics.py","tests/fixtures/plugin-tracks/frozen-missions.json"):
+            self.assertEqual(set(selection([name])[0]),{R,"places","resilience","agent-faults"})
+
+    def test_physical_capture_consumers(self):
+        for path in ("agent/physical_controller.py","agent/plugin_tracks.py","perception/camera/physical.py",
+                     "compose.physical-camera.yaml","tests/system/physical_camera_acceptance.py"):
+            self.assertIn("board", selection([path])[0])
+            self.assertIn("plugin-isolation", selection([path])[0])
+
     def test_soft_release_consumers(self):
         for path in ("agent/soft_host.py","agent/plugin_descriptor.py","agent/soft_client.py",
                      "agent/v2_registry.py","compose.soft-runtime.yaml","scripts/prepare_soft_pilots.py",

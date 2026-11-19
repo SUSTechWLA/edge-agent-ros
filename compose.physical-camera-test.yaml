@@ -1,0 +1,32 @@
+# Explicit simulation driver for the isolated camera pilot. Excluded from deploy/robot.
+x-fixture-discovery: &fixture-discovery >-
+  <CycloneDDS><Domain><General><Interfaces><NetworkInterface name="eth0"/></Interfaces>
+  <AllowMulticast>false</AllowMulticast></General><Discovery><ParticipantIndex>auto</ParticipantIndex>
+  <Peers><Peer address="physical-camera"/><Peer address="physical-verifier"/>
+  <Peer address="physical-camera-source"/></Peers></Discovery></Domain></CycloneDDS>
+services:
+  physical-camera:
+    environment:
+      CYCLONEDDS_URI: *fixture-discovery
+  physical-verifier:
+    environment:
+      CYCLONEDDS_URI: *fixture-discovery
+  physical-camera-source:
+    image: ${EDGE_PHYSICAL_IMAGE:?supply test image}
+    pull_policy: never
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    networks: [physical-sensors]
+    environment:
+      CYCLONEDDS_URI: *fixture-discovery
+      ROS_DOMAIN_ID: ${EDGE_PHYSICAL_DOMAIN_ID:-161}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      ROS_LOG_DIR: /tmp/ros
+      EDGE_CAMERA_TOPIC: ${EDGE_PHYSICAL_CAMERA_TOPIC:-/physical/camera/image}
+      EDGE_CAMERA_SOURCE: ${EDGE_PHYSICAL_CAMERA_SOURCE:-camera.front}
+    entrypoint: ["/usr/local/bin/edge-entrypoint","python3","-B","/opt/edge/tests/system/physical_camera_source.py"]
+    volumes:
+      - physical-witness:/witness
