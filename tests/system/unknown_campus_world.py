@@ -18,15 +18,15 @@ def write_json(path, value):
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False)+"\n",encoding="utf8")
 
 
-def prepare_world(out, image):
+def prepare_world(out, image, assets=ASSETS):
     """Snapshot generated meshes and world into out/site, then add the independent camera."""
     out=Path(out).resolve()
     site=out/"site"
     site.mkdir(parents=True,exist_ok=False)
-    if not (ASSETS/"models/Pine Tree/model.sdf").is_file():
+    if not (assets/"models/Pine Tree/model.sdf").is_file():
         raise FileNotFoundError("campus assets missing; run scene/campus_large/fetch_assets.py")
     prefix=["docker","run","--rm","--network","none","--mount",f"type=bind,src={site},dst=/site",
-            "--mount",f"type=bind,src={ASSETS},dst=/assets,readonly"]
+            "--mount",f"type=bind,src={assets},dst=/assets,readonly"]
     if subprocess.run(["docker","volume","inspect",SOURCE_VOLUME],capture_output=True).returncode==0:
         subprocess.run(prefix+["--mount",f"type=volume,src={SOURCE_VOLUME},dst=/from,readonly",
                  "--entrypoint","sh",image,"-ec",
@@ -76,7 +76,7 @@ def prepare_world(out, image):
     return output
 
 
-def services(image, domain, partition, out):
+def services(image, domain, partition, out, assets=ASSETS):
     """Compose overrides for the simulation only; all scene mounts stay in sim."""
     site=Path(out).resolve()/"site"
     if not (site/"observed-campus.sdf").is_file():
@@ -85,7 +85,7 @@ def services(image, domain, partition, out):
     common={name:{"environment":dict(env)} for name in ("sim","bridge","witness","perception")}
     common["sim"].update(command=["gz","sim","-s","-r","--headless-rendering","/campus/observed-campus.sdf"],
                          volumes=[{"type":"bind","source":str(src),"target":dst,"read_only":True}
-                                  for src,dst in ((site,"/campus"),(ASSETS,"/assets"))])
+                                  for src,dst in ((site,"/campus"),(assets,"/assets"))])
     common["sim"]["environment"].update(GZ_SIM_RESOURCE_PATH="/assets/models:/assets:/campus",LP_NUM_THREADS="6")
     return common
 
@@ -114,8 +114,6 @@ def audit(out,recording_id):
     events=[json.loads(line) for line in (media/"timeline.jsonl").read_bytes().splitlines() if line.strip()]
     reports=[(p,json.loads(p.read_bytes())) for p in (out/"work").glob("*/report.json")]
     matches=[(p,v) for p,v in reports if recording_id in (v.get("trace_id"),v.get("operation_id"))]
-    if not matches and len(reports)==1:
-        matches=reports
     if len(matches)!=1:
         raise ValueError("no unique recorded worker report for "+recording_id)
     path,report=matches[0]
@@ -156,7 +154,8 @@ def audit(out,recording_id):
                          arrival_pair_delta_ms=abs(event["stamp_ns"]-observed["stamp_ns"])/1e6)
             demand(error<.20 and check["arrival_pair_delta_ms"]<250,"arrival not independently verified")
         steps.append(check)
-    demand(any(s["subscriber_map_matches"] for s in steps),"no independently observed decision grid")
+    demand(bool(steps) and all(s["subscriber_map_matches"] for s in steps),
+           "decision grid missing from the independent map recording")
     demand(report["state"]=="SUCCEEDED" and report["survey_arrivals"]>=2 and report["saved_known_gain"]>=100,
            "survey success and map growth not established")
     for name,digest in report.get("map_sha256",{}).items():
@@ -197,10 +196,33 @@ def audit(out,recording_id):
                    "world witness does not confirm a distinct station stop")
             demand(bool(report.get("inspection_file")) and (path.parent/report["inspection_file"]).is_file(),
                    "missing station inspection artifact")
+            observed_counts=None
+            inspected_map=maps.get(inspected[0]["map_stamp_ns"])
+            demand(inspected_map is not None,"station map missing from the independent recording")
+            if inspected_map:
+                station_map=json.loads((media/inspected_map["file"]).read_bytes())
+                ox,oy,yaw=station_map["origin"]
+                c,s=math.cos(yaw),math.sin(yaw)
+                resolution=station_map["resolution"]
+                observed_counts=dict(free=0,occupied=0,uncertain=0,unknown=0)
+                for idx,value in enumerate(station_map["cells"]):
+                    row,col=divmod(idx,station_map["width"])
+                    gx,gy=(col+.5)*resolution,(row+.5)*resolution
+                    cell=(ox+c*gx-s*gy,oy+s*gx+c*gy)
+                    if math.dist(cell,inspected[0]["xy"])<=inspected[0]["radius_m"]:
+                        label="unknown" if value<0 else "free" if value==0 else "occupied" if value>=65 else "uncertain"
+                        observed_counts[label]+=1
+                demand(observed_counts==inspected[0]["counts"],"independent station observation differs")
+            if report.get("inspection_file") and (path.parent/report["inspection_file"]).is_file():
+                artifact=json.loads((path.parent/report["inspection_file"]).read_bytes())
+                demand(artifact["counts"]==inspected[0]["counts"] and artifact["map_stamp_ns"]==inspected[0]["map_stamp_ns"]
+                       and artifact["initial_grid_sha256"]==report["map_sha256"]["occupancy.json"],
+                       "unmatched station artifact or initial grid")
             inspection=dict(source_step=station["source_step"],target_xy=target,
                             measured_source_xy=source_measured,arrival_world_xy=pose["xy"],
                             arrival_pair_delta_ms=delta,station_error_m=distance_to_station,
-                            parking_cell_check=parking,window_pose_samples=len(near),drift_m=drift_at_site)
+                            parking_cell_check=parking,window_pose_samples=len(near),drift_m=drift_at_site,
+                            independent_observation_counts=observed_counts)
     holds=[]
     for stopped in (e for e in raw_events if e["phase"]=="stopped"):
         restored=next((e for e in raw_events if e["phase"]=="observations_restored" and e["stamp_ns"]>stopped["stamp_ns"]),None)

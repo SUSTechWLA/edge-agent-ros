@@ -10,12 +10,38 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def run(args, cwd=ROOT, env=None):
     return subprocess.check_output(args, cwd=cwd, env=env, stderr=subprocess.STDOUT)
+
+
+def recording_smoke(tree, image, arch, env):
+    # Exercise the same read-only recorder bind mount as the deployed Compose
+    # profile. Loopback isolates the fixture from any live robot's ROS domain.
+    with tempfile.TemporaryDirectory() as folder:
+        override=Path(folder)/"isolated.json"
+        override.write_text(json.dumps({"services":{"recorder-hardware-source":{"network_mode":"none"}}}),"utf8")
+        container="edge-camera-smoke-"+uuid.uuid4().hex[:10]
+        compose=["docker","compose","--project-name",container,
+                 "-f","compose.hardware.yaml","-f","compose.task-recorder.yaml","-f",str(override)]
+        spec=ROOT/"tests/system/recording_board_smoke.py"
+        invocation=compose+["run","--rm","--name",container,"--no-deps","-T","-v",f"{spec}:/opt/edge/recording_board_smoke.py:ro",
+                            "recorder-hardware-source","python3","-B","/opt/edge/recording_board_smoke.py"]
+        fixture_env={**env,"EDGE_RECORDER_IMAGE":image}
+        try:
+            result=subprocess.run(invocation,cwd=tree,env=fixture_env,capture_output=True,text=True,timeout=100)
+        finally:
+            subprocess.run(["docker","rm","-f",container],capture_output=True)
+        if result.returncode:
+            raise RuntimeError("recording profile failed on "+arch+": "+(result.stderr+result.stdout)[-2500:])
+        report=json.loads(result.stdout.splitlines()[-1])
+        if not report["passed"] or report["machine"]!={"arm64":"aarch64","amd64":"x86_64"}[arch]:
+            raise ValueError("invalid recording smoke identity for "+arch)
+        return {**report,"image":image,"plugin_source":"deploy/robot task_recorder read-only Compose mount"}
 
 
 def package(ref, output):
@@ -56,6 +82,8 @@ def package(ref, output):
             report=json.loads(smoke.read_bytes())
             if not report["passed"] or report["revision"]!=source:
                 raise ValueError("board smoke did not verify "+tag)
+            camera=recording_smoke(tree,tag,arch,env)
+            (stage/("recording-"+arch+".json")).write_text(json.dumps(camera,indent=2)+"\n","utf8")
             return tag
         with ThreadPoolExecutor(max_workers=2) as pool:
             _, arm=pool.map(build,("amd64","arm64"))
