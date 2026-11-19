@@ -1,0 +1,273 @@
+{
+  "spec": "SDD-038",
+  "pass": true,
+  "measured_at": "2026-11-19T02:03:13.104241+00:00",
+  "ros_distro": "jazzy",
+  "domain": "184",
+  "runtime_image": "sha256:0a8df92e42055debabb4940a70860e759d9031a52d9a6d8f5f2e06e883f178b2",
+  "base_image_revision": "9f6fbe7",
+  "scope": "Private Docker ROS domain. Real rclpy/DDS/CLI/SQLite, synthetic sensor messages and mounting evidence. No physical unit, driver, or actuator.",
+  "sources_sha256": {
+    "calibration/ros_capture.py": "6160015d9ac5dc7335496237afa19a89cc8a89aa00218df78f9982fd86e52d1c",
+    "calibration/checks.py": "caa82ef8b1de0c468d92cb71c8ed5e45eef80d6729d1cbc243a84fc480271871",
+    "calibration/factory.py": "267bb22c516c54fc273d7959df0a9341b94786867f55f1686b9ad72a1099201e",
+    "tests/system/factory_ros_capture.py": "b79d76b45e4b9626e927f6f713b851acc757292c2665483468062a4fb1db7086"
+  },
+  "event_kinds": [
+    "factory.calibration_published",
+    "factory.calibration_rejected",
+    "factory.calibration_rejected",
+    "factory.calibration_rejected",
+    "factory.calibration_published"
+  ],
+  "phases": [
+    {
+      "phase": "healthy",
+      "cli_exit": 0,
+      "status_exit": 0,
+      "status": "VERIFIED",
+      "event_id": "f34aa88ea56c4e95a5b43d3f7b904082",
+      "operation_id": "factory-726152e4cb10492aa3ecc9b60373fc78",
+      "revision": "bcc8117d96b76ef93e07030d23bd83cfdad306b96537e58b3da494d81ab341bf",
+      "last_verified_revision": "bcc8117d96b76ef93e07030d23bd83cfdad306b96537e58b3da494d81ab341bf",
+      "capture_sha256": "4a7e24d67a01bd8155163fa9c59de29574c5207f1883ab8081c0b8339618f651",
+      "profile_sha256": "8dae3fe441f4887d4c2939d03e4469cdb830848d56ed4c48f56d31d2a4cb0925",
+      "motion_authorized": false,
+      "issues": [],
+      "statistics": {
+        "imu": {
+          "accel_mean_mps2": [
+            0.0,
+            0.0,
+            9.81
+          ],
+          "first_ns": 1795053768850472011,
+          "gyro_bias_rad_s": [
+            0.002,
+            -0.001,
+            0.0
+          ],
+          "last_ns": 1795053772785538524,
+          "max_accel_residual_mps2": 0.0,
+          "max_gyro_residual_rad_s": 0.0,
+          "samples": 40
+        },
+        "lidar": {
+          "first_ns": 1795053768850472011,
+          "last_ns": 1795053772684548883,
+          "min_finite_fraction": 1.0,
+          "samples": 39
+        },
+        "rgbd": {
+          "first_ns": 1795053768850472011,
+          "last_ns": 1795053772684548883,
+          "max_rgbd_skew_ns": 0,
+          "min_depth_fraction": 1.0,
+          "samples": 39
+        },
+        "timing": {
+          "common_end_ns": 1795053772684548883,
+          "common_start_ns": 1795053768850472011,
+          "worst_nearest_skew_ns": 0
+        }
+      }
+    },
+    {
+      "phase": "lidar_unplugged",
+      "cli_exit": 2,
+      "status_exit": 2,
+      "status": "NEEDS_CALIBRATION",
+      "event_id": "aba769eac00d42eb87730c784865c49a",
+      "operation_id": "factory-69c7597ee4bd4bb2930ddc030d159f25",
+      "revision": null,
+      "last_verified_revision": "bcc8117d96b76ef93e07030d23bd83cfdad306b96537e58b3da494d81ab341bf",
+      "capture_sha256": "efc70d0d2b1e30003ac60f8e5f6185a2b193ec21a28e34eda1f942fad7646922",
+      "profile_sha256": "8dae3fe441f4887d4c2939d03e4469cdb830848d56ed4c48f56d31d2a4cb0925",
+      "motion_authorized": false,
+      "issues": [
+        {
+          "code": "capture.missing_stream",
+          "detail": "窗口内未收到该传感器数据，请检查供电、驱动、主题与 QoS。",
+          "source": "lidar"
+        }
+      ],
+      "statistics": {
+        "imu": {
+          "accel_mean_mps2": [
+            0.0,
+            0.0,
+            9.81
+          ],
+          "first_ns": 1795053774899985942,
+          "gyro_bias_rad_s": [
+            0.002,
+            -0.001,
+            0.0
+          ],
+          "last_ns": 1795053777526561430,
+          "max_accel_residual_mps2": 0.0,
+          "max_gyro_residual_rad_s": 0.0,
+          "samples": 27
+        },
+        "rgbd": {
+          "first_ns": 1795053774899985942,
+          "last_ns": 1795053777425841305,
+          "max_rgbd_skew_ns": 0,
+          "min_depth_fraction": 1.0,
+          "samples": 26
+        }
+      }
+    },
+    {
+      "phase": "camera_info_absent",
+      "cli_exit": 2,
+      "status_exit": 2,
+      "status": "NEEDS_CALIBRATION",
+      "event_id": "151aaff3a13e436ca93f1c20796dc6d6",
+      "operation_id": "factory-c240aabe7b12466abc8736dbbc17a3c7",
+      "revision": null,
+      "last_verified_revision": "bcc8117d96b76ef93e07030d23bd83cfdad306b96537e58b3da494d81ab341bf",
+      "capture_sha256": "bbc9c377e3630f9ef9807b14a2f26b7978256be8b9adc29ab12c75cd49d272a8",
+      "profile_sha256": "8dae3fe441f4887d4c2939d03e4469cdb830848d56ed4c48f56d31d2a4cb0925",
+      "motion_authorized": false,
+      "issues": [
+        {
+          "code": "capture.acquisition",
+          "detail": "missing or different optical frame: info",
+          "source": "rgbd"
+        },
+        {
+          "code": "capture.count",
+          "detail": "每路需要 5 至 4096 份连续实测。",
+          "source": "rgbd"
+        }
+      ],
+      "statistics": {
+        "imu": {
+          "accel_mean_mps2": [
+            0.0,
+            0.0,
+            9.81
+          ],
+          "first_ns": 1795053780823876478,
+          "gyro_bias_rad_s": [
+            0.002,
+            -0.001,
+            0.0
+          ],
+          "last_ns": 1795053782351292596,
+          "max_accel_residual_mps2": 0.0,
+          "max_gyro_residual_rad_s": 0.0,
+          "samples": 16
+        },
+        "lidar": {
+          "first_ns": 1795053780823876478,
+          "last_ns": 1795053782453072964,
+          "min_finite_fraction": 1.0,
+          "samples": 17
+        }
+      }
+    },
+    {
+      "phase": "camera_info_wrong_clock",
+      "cli_exit": 2,
+      "status_exit": 2,
+      "status": "NEEDS_CALIBRATION",
+      "event_id": "ecc753afee21499e9cbace1563f2cde2",
+      "operation_id": "factory-7f353e96bca947aabf5bc6d47aef3c75",
+      "revision": null,
+      "last_verified_revision": "bcc8117d96b76ef93e07030d23bd83cfdad306b96537e58b3da494d81ab341bf",
+      "capture_sha256": "d16b2d4d28f01df615b0f33d11bfd73d9ae2cd981559d2ca8055ea32c5b0389a",
+      "profile_sha256": "8dae3fe441f4887d4c2939d03e4469cdb830848d56ed4c48f56d31d2a4cb0925",
+      "motion_authorized": false,
+      "issues": [
+        {
+          "code": "camera.sync",
+          "detail": "彩色、深度及内参时间跨度超过 50 ms。",
+          "source": "rgbd"
+        }
+      ],
+      "statistics": {
+        "imu": {
+          "accel_mean_mps2": [
+            0.0,
+            0.0,
+            9.81
+          ],
+          "first_ns": 1795053786869758665,
+          "gyro_bias_rad_s": [
+            0.002,
+            -0.001,
+            0.0
+          ],
+          "last_ns": 1795053787886197542,
+          "max_accel_residual_mps2": 0.0,
+          "max_gyro_residual_rad_s": 0.0,
+          "samples": 11
+        },
+        "lidar": {
+          "first_ns": 1795053786869758665,
+          "last_ns": 1795053787986917089,
+          "min_finite_fraction": 1.0,
+          "samples": 12
+        },
+        "timing": {
+          "common_end_ns": 1795053787886197542,
+          "common_start_ns": 1795053786869758665,
+          "worst_nearest_skew_ns": 0
+        }
+      }
+    },
+    {
+      "phase": "sensors_restored",
+      "cli_exit": 0,
+      "status_exit": 0,
+      "status": "VERIFIED",
+      "event_id": "64e754a0fabf4ebc8ff059e6c625e373",
+      "operation_id": "factory-0c7ad3fdf5e74c9c8e32ecddcee56cab",
+      "revision": "42c2b87d79d325ab4cc4e492489ad47923e2b84b244a3dac19c0cf89a6d92cfa",
+      "last_verified_revision": "42c2b87d79d325ab4cc4e492489ad47923e2b84b244a3dac19c0cf89a6d92cfa",
+      "capture_sha256": "22bf6c17d55e6a0623736bf2133b21c98780f4e0b93faf0157e551ef77d387e4",
+      "profile_sha256": "8dae3fe441f4887d4c2939d03e4469cdb830848d56ed4c48f56d31d2a4cb0925",
+      "motion_authorized": false,
+      "issues": [],
+      "statistics": {
+        "imu": {
+          "accel_mean_mps2": [
+            0.0,
+            0.0,
+            9.81
+          ],
+          "first_ns": 1795053789828037180,
+          "gyro_bias_rad_s": [
+            0.002,
+            -0.001,
+            0.0
+          ],
+          "last_ns": 1795053792797022863,
+          "max_accel_residual_mps2": 0.0,
+          "max_gyro_residual_rad_s": 0.0,
+          "samples": 30
+        },
+        "lidar": {
+          "first_ns": 1795053789828037180,
+          "last_ns": 1795053792696400203,
+          "min_finite_fraction": 1.0,
+          "samples": 29
+        },
+        "rgbd": {
+          "first_ns": 1795053789828037180,
+          "last_ns": 1795053792696400203,
+          "max_rgbd_skew_ns": 0,
+          "min_depth_fraction": 1.0,
+          "samples": 29
+        },
+        "timing": {
+          "common_end_ns": 1795053792696400203,
+          "common_start_ns": 1795053789828037180,
+          "worst_nearest_skew_ns": 0
+        }
+      }
+    }
+  ]
+}

@@ -32,3 +32,16 @@ python -m calibration.factory status --state factory-state --robot-id rover-01 -
 例如，其他车的雷达安装报告会返回 `extrinsic.identity`，更换相机模式导致内参变化会返回 `camera.intrinsics_mismatch`。带有合法机体/环境的失败复核会保留 `last_verified_revision`，并使该机体当前状态变为 `NEEDS_CALIBRATION`。故障处置后用新现场采样复验。无法辨认机体或存储不可写时，调用者按本次失败阻止启动，并保留 CLI 错误。
 
 `factory-state/module-events.sqlite` 包含源归档、历次版本、工厂回执以及现有 ModuleJournal 格式的事件。按 `operation_id` 读 `factory_attempt` 回执；按其中的 `profile_sha256/capture_sha256` 读 `factory_input` 取回实际验收输入。这些是每帧质量统计和 IMU 测量，图像与点云原包可在工位独立保留。SQLite 在一个事务内提交事件和发布状态。其他插件消费只读回执；写库仅由工厂入口负责。历史记录在工厂状态卷中持续保留，定期备份与介质容量由部署者管理。[规格、验收与回退](../docs/specs/SDD-038-rover-factory-calibration.md)
+
+## 开发者复验
+
+在仓库根目录运行 `python -B tests/test_factory_calibration.py -v` 检查数据契约、失败和事务语义。含当前源码与测试的开发镜像还可运行下面的命令。Docker 隔离网络使 DDS 发现只发生在本次工位内，测试在临时目录建立独立数据库。镜像标签换成自己的开发构建。
+
+```sh
+mkdir -p artifacts/verification/rover-factory
+docker run --rm --network none -e ROS_DOMAIN_ID=184 -e ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST \
+  -v "$PWD/artifacts/verification/rover-factory:/proof" edge-agent-ros:development \
+  python3 -B tests/system/factory_ros_capture.py --out /proof/ros-dds.json
+```
+
+[五阶段 DDS 验证记录](../docs/evidence/rover-factory-calibration.json) 给出采样数、对齐误差、静止统计、版本、事件 ID 和具体错误。工厂门控只确认本次窗口与已登记工位档案相符，后续探索的运动许可由运行现场重新判断。
