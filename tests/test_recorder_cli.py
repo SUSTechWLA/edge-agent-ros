@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlsplit
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from task_recorder import cli
+from task_recorder import agent_trace
 from task_recorder.service import Archive, Handler
 
 
@@ -42,6 +43,15 @@ class Agent(BaseHTTPRequestHandler):
         if isinstance(value,int):
             self.send_error(value)
             return
+        if hasattr(self.server,"ledger"):
+            after=int(q["after"][0])
+            size=int(q["limit"][0])
+            self.server.pages.append(after)
+            if after and hasattr(self.server,"second_page"):
+                self.server.second_page.set()
+                self.server.resume.wait(timeout=2)
+            rows=[row for row in self.server.ledger if row["seq"]>after]
+            value={**value,"events":rows[:size],"events_has_more":len(rows)>size}
         self.send_response(200)
         self.end_headers()
         self.wfile.write(json.dumps(value).encode())
@@ -118,6 +128,99 @@ class CLI(unittest.TestCase):
         self.assertEqual(left["ended_ns"],self.call("status","race")["ended_ns"])
         with self.assertRaises(cli.EndpointError):
             cli.finish_recording(self.rec,"/recordings/race","different","STOPPED","wrong task")
+
+    def test_terminal_task_backfills_history_and_retries_are_idempotent(self):
+        hidden="private-free-form fixture"
+        stamp="2026-11-19T02:10:55.876543+00:00"
+        task=dict(id="job",state="SUCCEEDED",cursor=1,steps=[{"args":hidden}],created=stamp,text=hidden,
+                  trace_id="parent-task")
+        self.agent.states=[task]
+        self.agent.pages=[]
+        self.agent.ledger=[]
+        for n in range(1,39):
+            source_id=f"{n:032x}"
+            payload={"trace":{"event_id":source_id,"trace_id":"parent-task","module":"checksum","layer":"tool",
+                              "outcome":"SUCCEEDED","provider":"api","code":"agent.tool.response",
+                              "artifact":{"content":hidden},"freeform":hidden,"token":hidden},
+                     "arguments":{"key":hidden}}
+            self.agent.ledger.append(dict(seq=n*5,event_id=source_id,utc=stamp,task_id="job",step=0,
+                                         kind="tool.response",operation_id="job/step/1",detail=hidden,
+                                         payload=json.dumps(payload)))
+        self.call("start","history","--task-id","job","--sources","agent_state","agent_trace")
+        self.call("watch","history","--agent",self.url)
+        result=self.call("watch","history","--agent",self.url,"--finish")
+        self.assertEqual(result["counts"]["agent_trace"],38)
+        self.assertEqual(self.agent.pages,[0,160,0,160])
+        archive=(Path(self.tmp.name)/"history/media/mission/timeline.jsonl").read_text("utf8")
+        self.assertNotIn(hidden,archive)
+        traces=[r for r in map(json.loads,archive.splitlines()) if r["kind"]=="agent_trace"]
+        self.assertEqual([r["source_seq"] for r in traces],list(range(5,191,5)))
+        self.assertEqual(traces[0]["source_event_id"],self.agent.ledger[0]["event_id"])
+        self.assertEqual((traces[0]["phase"],traces[0]["tool"],traces[0]["code"]),
+                         ("tool.response","checksum","agent.tool.response"))
+        self.assertEqual(traces[-1]["stamp_ns"],1795054255876543000)
+
+    def test_request_text_requires_source_and_preserves_redaction(self):
+        token="sk-"+"a"*32
+        self.agent.states=[dict(id="job",state="SUCCEEDED",text="please check "+token,created="2026-11-19T02:00:00Z")]
+        self.call("start","consent","--task-id","job","--sources","agent_state","agent_trace","agent_request")
+        self.call("watch","consent","--agent",self.url)
+        result=self.call("watch","consent","--agent",self.url,"--finish")
+        self.assertEqual(result["missing_sources"],["agent_trace"])
+        self.assertEqual(result["counts"]["agent_request"],1)
+        body=(Path(self.tmp.name)/"consent/media/mission/timeline.jsonl").read_text("utf8")
+        self.assertNotIn(token,body)
+        self.assertIn("please check [REDACTED]",body)
+
+    def test_bad_journal_rows_fail_closed_before_append(self):
+        task={"id":"job","trace_id":"parent","state":"SUCCEEDED"}
+        valid=dict(task_id="job",kind="tool.request",seq=11,step=0,operation_id="job/step/1",utc="2026-11-19T02:00:00Z")
+        for change in ({"task_id":"another"},{"operation_id":"another/step/1"},{"operation_id":"job/step/2"},
+                       {"seq":True},{"seq":2**63},{"step":-1},{"utc":"2026-11-19T02:00:00"},
+                       {"kind":"free form"},{"payload":{"trace":{"trace_id":"another"}}},
+                       {"payload":{"trace":{"event_id":"bad"}}}):
+            with self.subTest(change=change),self.assertRaises(ValueError):
+                agent_trace.page({**task,"events":[{**valid,**change}]},0)
+        for rows,more in (([valid,valid],False),([],True),([valid]*33,False),([],1)):
+            with self.assertRaises(ValueError):
+                agent_trace.page({**task,"events":rows,"events_has_more":more},0)
+        self.agent.states=[{**task,"events":[valid,{**valid,"seq":12,"task_id":"another"}]}]
+        self.call("start","mixed","--task-id","job","--sources","agent_state","agent_trace")
+        with self.assertRaisesRegex(SystemExit,"2"):
+            self.call("watch","mixed","--agent",self.url,"--finish")
+        self.assertEqual(self.call("status","mixed")["counts"],{})
+
+    def test_interrupted_backfill_keeps_operator_receipt(self):
+        row=dict(task_id="job",kind="dispatch",step=0,utc="2026-11-19T02:00:00.000000001Z")
+        self.agent.states=[dict(id="job",state="SUCCEEDED",steps=[{}],cursor=1)]
+        self.agent.pages=[]
+        self.agent.ledger=[{**row,"seq":i+1} for i in range(34)]
+        self.agent.second_page=threading.Event()
+        self.agent.resume=threading.Event()
+        self.call("start","early","--task-id","job","--sources","agent_state","agent_trace")
+        with ThreadPoolExecutor(max_workers=1) as pool, redirect_stdout(io.StringIO()):
+            future=pool.submit(cli.watch,self.rec,"early",self.url,wait_for_task=False,finish=True,interval=.01,timeout=5)
+            try:
+                self.assertTrue(self.agent.second_page.wait(2))
+                receipt=self.call("stop","early")
+            finally:
+                self.agent.resume.set()
+            self.assertEqual(future.result(timeout=2)["task_status"],"STOPPED")
+        self.assertEqual(receipt["counts"]["agent_trace"],agent_trace.PAGE_SIZE)
+        self.assertEqual(receipt["latest"]["agent_trace"]%1_000_000_000,1)
+
+    def test_optional_metrics_use_bounded_projected_fields(self):
+        task={"id":"job"}
+        row=dict(task_id="job",seq=1,step=0,kind="tool.error",utc="2026-11-19T02:00:00Z")
+        trace={"duration_ms":12.4,"diagnosis":{"error_type":"ProviderTimeout","message":"private"}}
+        def project(trace):
+            return agent_trace.page({**task,"events":[{**row,"payload":{"trace":trace}}]},0)[0][0]
+        event=project(trace)
+        self.assertEqual((event["duration_ms"],event["error_type"]),(12.4,"ProviderTimeout"))
+        self.assertNotIn("private",json.dumps(event))
+        for duration in (float("nan"),-1,True,2**54):
+            self.assertNotIn("duration_ms",project({"duration_ms":duration}))
+        self.assertNotIn("error_type",project({"diagnosis":{"error_type":"arbitrary free text"}}))
 
 
 if __name__=="__main__":

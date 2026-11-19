@@ -4,6 +4,7 @@
 !/.gitignore
 !/README.md
 !/recorder-ops/run03/results.json
+!/recorder-ops/run04/results.json
 !/20261117-031103-3a9cc1/cancel.json
 !/20261117-031532-ae63c8/cancel.json
 !/20261117-031532-ae63c8/result.json
@@ -34,3 +35,11 @@
 !/unknown-campus/mission-02/video/inspection-frame.png
 !/unknown-campus/mission-02/video/viewer-qa.json
 !/unknown-campus-negative/no-stream.json
+!/recorder-ops/campus-binding/results.json
+!/task-recorder/fast-tool-01/acceptance.json
+!/task-recorder/fast-tool-01/video/index.html
+!/task-recorder/fast-tool-01/video/task.mp4
+!/task-recorder/fast-tool-01/video/video.json
+!/task-recorder/fast-tool-01/video/cover.png
+!/task-recorder/fast-tool-01/video/viewer-qa.json
+!/task-recorder/fast-tool-01/video/README.md

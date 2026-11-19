@@ -5,7 +5,7 @@ set -eu
 case "$(uname -s)" in MINGW*|MSYS*) export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*';; esac
 cd "$(dirname "$0")/.."
 usage() {
-  echo 'Usage: sh scripts/record-task.sh sim|hardware enable|drain|disable|start TASK [RID]|status RID|stop RID|export RID NEW_DIR' >&2
+  echo 'Usage: sh scripts/record-task.sh sim|campus|hardware enable|drain|disable|start TASK [RID]|status RID|stop RID|export RID NEW_DIR' >&2
   exit 2
 }
 [ "$#" -ge 2 ] || usage
@@ -13,11 +13,28 @@ mode=$1
 action=$2
 shift 2
 case "$mode" in
-  sim)
+  sim|campus)
     base=compose.yaml
     src=recorder-source
     url=http://task-recorder:8188
     agent=${EDGE_RECORD_AGENT_URL:-http://agent:8090}
+    if [ "$mode" = campus ]; then
+      export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-edge-agent-campus}
+      export EDGE_RECORDING_PORT=${EDGE_RECORDING_PORT:-8189}
+      hub=$(docker compose -f "$base" ps --status running -q agent)
+      if [ -n "$hub" ]; then
+        registry_volume=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/etc/edge/plugins"}}{{if eq .Type "volume"}}{{.Name}}{{end}}{{end}}{{end}}' "$hub")
+        [ -n "$registry_volume" ] || { echo 'Campus Agent requires its named plugin registry.' >&2; exit 2; }
+        export EDGE_CAMPUS_RECORD_REGISTRY=$registry_volume
+        export EDGE_RECORDER_IMAGE=${EDGE_RECORDER_IMAGE:-$(docker inspect --format '{{.Config.Image}}' "$hub")}
+        domain=$(docker inspect --format '{{range .Config.Env}}{{if eq (index (split . "=") 0) "ROS_DOMAIN_ID"}}{{println .}}{{end}}{{end}}' "$hub")
+        export EDGE_ROS_DOMAIN_ID=${EDGE_ROS_DOMAIN_ID:-${domain#ROS_DOMAIN_ID=}}
+      elif [ "$action" = start ] || [ "$action" = enable ]; then
+        echo 'Start the campus Agent before enabling recording for that project.' >&2; exit 2
+      else
+        export EDGE_CAMPUS_RECORD_REGISTRY=${EDGE_CAMPUS_RECORD_REGISTRY:-${COMPOSE_PROJECT_NAME}_campus-plugins}
+      fi
+    fi
     ;;
   hardware)
     base=compose.hardware.yaml
@@ -33,7 +50,13 @@ case "$mode" in
     ;;
   *) usage ;;
 esac
-dc() { docker compose -f "$base" -f compose.task-recorder.yaml "$@"; }
+dc() {
+  if [ "$mode" = campus ]; then
+    docker compose -f "$base" -f compose.task-recorder.yaml -f compose.task-recorder-campus.yaml "$@"
+  else
+    docker compose -f "$base" -f compose.task-recorder.yaml "$@"
+  fi
+}
 cmd() { dc exec -T task-recorder python3 -B -m task_recorder.cli "$@"; }
 admission() { dc exec -T task-recorder python3 -B -m task_recorder.manage admission "$1"; }
 registry() { dc run --no-deps --rm -T recorder-admin python3 -B -m task_recorder.manage registry "$1" "$url"; }
@@ -63,6 +86,8 @@ case "$action" in
     rid=${2:-$task}
     recid "$rid"
     set -- agent_state
+    case "${EDGE_RECORD_AGENT_TRACE:-1}" in 1) set -- "$@" agent_trace;; 0) ;; *) usage;; esac
+    case "${EDGE_RECORD_REQUEST_TEXT:-0}" in 1) set -- "$@" agent_request;; 0) ;; *) usage;; esac
     case "${EDGE_RECORD_SOFTWARE_ONLY:-0}" in
       1) [ -z "${EDGE_RECORD_CAMERA:-}" ] || usage ;;
       0)
@@ -85,7 +110,7 @@ case "$action" in
     name="edge-rec-$project-$rid"
     set -- python3 -B -m task_recorder.collect "$task" "$rid" --url "$url" --agent "$agent" --timeout "${EDGE_RECORD_WATCH_TIMEOUT:-86400}"
     if [ "${EDGE_RECORD_SOFTWARE_ONLY:-0}" = 1 ]; then set -- "$@" --software; fi
-    if [ "$mode" = sim ]; then set -- "$@" --sim; fi
+    if [ "$mode" != hardware ]; then set -- "$@" --sim; fi
     if [ -n "${EDGE_RECORD_CAMERA:-}" ]; then set -- "$@" --camera "$EDGE_RECORD_CAMERA"; fi
     # An identical ACTIVE recording may already own its collector. Only accept
     # containers from this exact Compose project and the requested service.

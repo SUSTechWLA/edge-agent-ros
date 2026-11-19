@@ -22,7 +22,8 @@ def main():
     a=cli.parse_args()
     path="/recordings/"+quote(a.recording_id,safe="")
     pfx=[sys.executable,"-u","-B","-m"]
-    workers=[]
+    workers={}
+    failure_reason="collector terminated before a terminal receipt"
     def interrupted(*_): raise InterruptedError("collector shutdown")
     signal.signal(signal.SIGTERM,interrupted)
     signal.signal(signal.SIGINT,interrupted)
@@ -31,16 +32,20 @@ def main():
             args=pfx+["task_recorder.ros_source","--url",a.url,"--task-id",a.task_id,"--recording-id",a.recording_id]
             if a.sim: args.append("--sim")
             if a.camera: args.extend(["--camera",a.camera])
-            workers.append(subprocess.Popen(args))
-        workers.append(subprocess.Popen(pfx+["task_recorder.cli","--recorder",a.url,"watch",a.recording_id,
-            "--agent",a.agent,"--wait-for-task","--finish","--timeout",str(a.timeout)]))
+            workers[subprocess.Popen(args)]="ROS observer"
+        # The archive's declared sources select live state, historical events and optional text.
+        observer=subprocess.Popen(pfx+["task_recorder.cli","--recorder",a.url,"watch",a.recording_id,
+            "--agent",a.agent,"--wait-for-task","--finish","--timeout",str(a.timeout)])
+        workers[observer]="Agent observer"
         while all(p.poll() is None for p in workers):
             time.sleep(.2)
         if endpoint(a.url,path)["status"]=="ACTIVE":
-            raise RuntimeError("capture source or watcher exited before the terminal receipt")
+            proc=next(p for p in workers if p.returncode is not None)
+            failure_reason=f"{workers[proc]} exited with code {proc.returncode} before a terminal receipt"
+            raise RuntimeError(failure_reason)
     except BaseException:
         if endpoint(a.url,path)["status"]=="ACTIVE":
-            endpoint(a.url,path+"/finish",{"task_id":a.task_id,"status":"INTERRUPTED","reason":"collector terminated"})
+            endpoint(a.url,path+"/finish",{"task_id":a.task_id,"status":"INTERRUPTED","reason":failure_reason})
         raise
     finally:
         for proc in workers:

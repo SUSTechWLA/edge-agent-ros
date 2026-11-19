@@ -24,9 +24,18 @@ from sensor_msgs.msg import Image
 from rosgraph_msgs.msg import Clock
 class Agent(BaseHTTPRequestHandler):
     def do_GET(self):
-        task=parse_qs(urlsplit(self.path).query)["id"][0]
+        q=parse_qs(urlsplit(self.path).query)
+        task=q["id"][0]
         done=task=="task-b" and os.path.exists("/tmp/finish-b")
-        body=json.dumps(dict(id=task,state="SUCCEEDED" if done else "RUNNING",steps=[],cursor=0)).encode()
+        result=dict(id=task,state="SUCCEEDED" if done else "RUNNING",steps=[],cursor=0)
+        if done:
+            after=int(q.get("after",[0])[0]); limit=int(q["limit"][0])
+            rows=[dict(seq=n,task_id=task,kind="tool.response",step=0,
+                       operation_id=task+"/step/1",utc=f"2026-11-19T00:00:{n:02d}+00:00",
+                       payload={"trace":{"layer":"tool","module":"check.fixture","outcome":"SUCCEEDED"}})
+                  for n in range(1,34) if n>after]
+            result.update(events=rows[:limit],events_has_more=len(rows)>limit)
+        body=json.dumps(result).encode()
         self.send_response(200)
         self.send_header("Content-Length",str(len(body)))
         self.end_headers()
@@ -119,7 +128,8 @@ else:
         shell("start","task-b","rec-b",extra=rgb)
         shell("start","task-c","rec-c")
         poll(lambda: summary("rec-b")["counts"].get("rgb",0)>0 and summary("rec-c")["counts"].get("clock",0)>0)
-        assert summary("rec-a")["sources"]==["agent_state"] and "rgb" not in summary("rec-c")["sources"]
+        assert summary("rec-a")["sources"]==["agent_state","agent_trace"] and "rgb" not in summary("rec-c")["sources"]
+        assert "agent_trace" in summary("rec-a")["missing_sources"]
         mark("software_ros_and_selected_camera_capture")
         if os.name=="nt":
             ps=shutil.which("pwsh.exe") or shutil.which("powershell.exe")
@@ -139,10 +149,15 @@ else:
         mark("per_task_manual_stop")
         run(["docker","exec",fixture,"touch","/tmp/finish-b"])
         poll(lambda: summary("rec-b")["task_status"]=="SUCCEEDED")
+        assert summary("rec-b")["counts"]["agent_trace"]==33
         mark("watcher_observed_terminal",summary("rec-b")["counts"])
         exp=output/"recording-b"
         shell("export","rec-b",exp.as_posix())
         assert (exp/"recording.json").is_file() and any((exp/"media").rglob("*.png"))
+        timeline=exp/"media"/"mission"/"timeline.jsonl"
+        traces=[r for r in map(json.loads,timeline.read_text("utf8").splitlines()) if r["kind"]=="agent_trace"]
+        assert [r["source_seq"] for r in traces]==list(range(1,34)) and all(r["tool"]=="check.fixture" for r in traces)
+        mark("backfilled_two_pages_before_terminal_finish")
         mark("export_includes_manifest_and_real_ros_image")
         shell("disable")
         assert not descriptor.exists() and not run(compose+["ps","-q","task-recorder"])
