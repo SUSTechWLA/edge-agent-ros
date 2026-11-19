@@ -96,7 +96,7 @@ v1 的 `plugins/*.json`、`runtime/*.json`、受管 derived 声明保留自己�
 
 ## 管理面与现场读法
 
-以下是目标命令。旧 `--kind runtime|derived` 仍由既有管理器处理。各子命令通过认证的操作者入口执行；审计事件和 LLM 输出均无发布权限。
+下表是 v2 管理接口契约。soft 的本地 CLI 已实现五个子命令，v1 的 `--kind runtime|derived` 保持原协议。physical 的 `validate` 可验证描述符，soft 管理通道的 `check` 会返回 `plugin.physical_hot_reload_forbidden`；实际安装和交接由部署工位的 `physical-admin install|drain|release|process-stopped` 执行。普通 soft 管理器上的 publish 会拒绝 physical。站点角色由受限目录和容器挂载授予。[板端命令与工位前提](../deploy/robot/README.md)
 
 | 命令 | 读写、前置条件与可观察回执 |
 |---|---|

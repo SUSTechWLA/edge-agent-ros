@@ -15,6 +15,10 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/site_pack.py","profiles/*.json","capabilities/*/pack.json","scripts/robot-plugins.sh",
+      "scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"), ("planner","board","plugin-isolation")),
+    (("tests/test_site_pack.py","tests/test_board_plugins.py","tests/system/board_pack_acceptance.py",
+      "tests/system/deploy_projection.py"), ("board",)),
     (("agent/physical_*.py","agent/plugin_tracks.py","scripts/prepare_physical_camera.py","perception/camera/physical*.py",
       "compose.physical-camera*.yaml","tests/system/physical_camera*.py"), (*AGENT,"observations","board","plugin-isolation")),
     (("tests/test_physical_*.py","tests/test_plugin_tracks.py"), ("planner","plugin-isolation")),
@@ -159,6 +163,13 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_packs_run_their_board_consumers(self):
+        for path in ("agent/site_pack.py","profiles/bench-camera.json","capabilities/camera/pack.json",
+                     "scripts/robot-plugins.sh","scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"):
+            self.assertEqual(selection([path])[0], [R,"planner","board","plugin-isolation"], path)
+        for name in ("tests/system/board_pack_acceptance.py","tests/system/deploy_projection.py"):
+            self.assertEqual(selection([name])[0], [R,"board"], name)
+
     def test_frozen_mission_witnesses(self):
         for name in ("tests/system/plugin_tracks_metrics.py","tests/fixtures/plugin-tracks/frozen-missions.json"):
             self.assertEqual(set(selection([name])[0]),{R,"places","resilience","agent-faults"})

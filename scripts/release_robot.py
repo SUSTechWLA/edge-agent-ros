@@ -15,6 +15,10 @@ FILES = {"compose.hardware.yaml", "compose.hardware-observe.yaml", "compose.sens
          "compose.rgbd-hardware.yaml", "compose.model-provider.yaml", "compose.model-provider-hardware.yaml",
          "compose.model-provider-cloud.yaml", "docker/entrypoint.sh", "scripts/deploy.sh", "scripts/robot.sh",
          "compose.task-recorder.yaml", "scripts/record-task.sh", "scripts/record-task.ps1", ".dockerignore", "LICENSE"}
+FILES.update({"compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","compose.physical-camera.yaml",
+              "scripts/prepare_soft_pilots.py","scripts/prepare_physical_camera.py","scripts/robot-plugins.sh","scripts/check_board_plugins.py",
+              "capabilities/soft-pilots/pack.json","capabilities/camera/pack.json",
+              "profiles/bench.json","profiles/bench-camera.json","profiles/observe.json"})
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
 

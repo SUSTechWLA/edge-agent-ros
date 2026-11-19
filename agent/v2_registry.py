@@ -120,6 +120,7 @@ class V2Registry:
                 plugin_id TEXT NOT NULL, digest TEXT NOT NULL, operation_id TEXT NOT NULL, settled INTEGER NOT NULL,
                 PRIMARY KEY(plugin_id,operation_id));
             CREATE TABLE IF NOT EXISTS v2_plans(task_id TEXT PRIMARY KEY, plan TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS v2_pack_policy(singleton INTEGER PRIMARY KEY, lock_digest TEXT NOT NULL, allowed TEXT NOT NULL);
         """)
 
     def close(self):
@@ -142,6 +143,42 @@ class V2Registry:
 
     def claimed_exports(self):
         return claims(self.db)
+
+    def install_pack(self, items, lock_digest):
+        """Activate a verified site snapshot as a single additive admission; handoffs stay explicit."""
+        from argparse import Namespace
+        desired={item["id"]:item for item in items}
+        trace=uuid.uuid4().hex
+        failure=None
+        accepted=[]
+        with self._write():
+            before=self.entries()
+            cause=self._event("requested","release.pack_requested",trace,None,{"lock":lock_digest})
+            self.db.execute("SAVEPOINT pack")
+            try:
+                for row in before:
+                    old=row["descriptor"]
+                    if old["id"] not in desired or old["content_digest"]!=desired[old["id"]]["content_digest"] or row["draining"]:
+                        raise RegistryError("version_conflict","perform the explicit drain and handoff before changing this pack")
+                allowed={key:item["content_digest"] for key,item in desired.items()}
+                self.db.execute("INSERT OR REPLACE INTO v2_pack_policy VALUES(1,?,?)",(lock_digest,canonical(allowed)))
+                live={row["descriptor"]["id"] for row in before}
+                for key,item in sorted(desired.items()):
+                    if key in live:
+                        continue
+                    pointer=self.db.execute("SELECT revision FROM v2_pointers WHERE id=?",(key,)).fetchone()
+                    self._apply(Namespace(action="publish",expect=pointer[0] if pointer else "absent"),key,item,trace,cause)
+                    accepted.append(key)
+            except RegistryError as exc:
+                self.db.execute("ROLLBACK TO pack")
+                failure=exc
+            self.db.execute("RELEASE pack")
+            status="rejected" if failure else "applied"
+            event=self._event(status,failure.code if failure else "release.pack_applied",trace,cause,
+                              {"lock":lock_digest,"count":0 if failure else len(accepted)})
+        if failure:
+            raise failure
+        return {"admitted":accepted,"event_id":event}
 
     def lookup(self, plugin_id, digest):
         found = self.db.execute("SELECT descriptor FROM v2_releases WHERE id=? AND digest=?", (plugin_id,digest)).fetchone()
@@ -241,6 +278,9 @@ class V2Registry:
         frozen = self._frozen(name)
         missing = []
         if action == "publish":
+            site=self.db.execute("SELECT allowed FROM v2_pack_policy WHERE singleton=1").fetchone()
+            if site and json.loads(site[0]).get(name) != item["content_digest"]:
+                raise RegistryError("plugin.permission_denied","release is outside the installed board profile")
             missing = admissible(item,self.entries(),self.claimed_exports())
             immutable_version(self.db,item)
             if old and (not draining or not disposed or frozen):

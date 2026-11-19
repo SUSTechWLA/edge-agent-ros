@@ -4,6 +4,8 @@
 
 项目沿用 dsh 的 **Plugin、Service Definition、Service Provider、Consumer、Tool、Model Adapter** 和 SuperAgent 的 **Source / Trigger、Router / Worker、Thread / Session、Ticket / Assignment**。完整含义及当前实现差异见[术语对照与扩展矩阵](harness-extensions.md#团队共用的术语)。这里不另造一套框架，也不要求所有模块继承同一个抽象基类：HTTP 协议、ROS 接口、清单与契约测试是跨语言边界。
 
+新增软件插件时先确定实际权限。受信的第一方 Python 实现用 `apply(ctx)` 注册服务或工具，并把资源清理交给 Fiber。外部 HTTP 服务走相同的 v2 描述符和版本绑定。读取相机原始图像、串口或请求运动时走 physical 部署入口；用独立角色提供设备授权和验收。新增现场组合时先定义 pack/profile，再核对板端解析出的版本锁。[Context 与 Fiber 的代码映射](plugin-runtime-mapping.md) · [相机接入](testing/physical-camera.md) · [板端手册](../deploy/robot/README.md)
+
 ## 1. 先决定谁需要这项能力
 
 两个实现可以直接参考。需要从运行中的系统补收失败事实，可新增独立巡检消费者，使用自己的事故、重试预算和持久游标。需要模型处理原文，可基于受限的文本代码候选，使用原文参数契约、独立测试数据、批准及热装流程。[Watchdog 手册](watchdog.md) · [文本插件开发示例](../examples/software-provider/README.md)

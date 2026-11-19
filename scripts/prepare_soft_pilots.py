@@ -187,6 +187,9 @@ def main():
     source.add_argument("--image-manifest", type=Path, help="offline OCI platform manifest bytes")
     parser.add_argument("--image-digest", help="required with --image-manifest")
     parser.add_argument("--derived", type=Path, help="reviewed v2 caller-series definition")
+    parser.add_argument("--profile", type=Path, help="resolve a board profile and write its immutable lock")
+    parser.add_argument("--override", type=Path, help="optional narrowing overlay used with --profile")
+    parser.add_argument("--physical-site",type=Path,help="separate site-approved camera deployment referenced by the profile")
     args = parser.parse_args()
     if bool(args.image_manifest) != bool(args.image_digest):
         parser.error("--image-manifest and --image-digest are used together")
@@ -200,8 +203,19 @@ def main():
             definition = parse_definition(stream.read(8193))
     else:
         definition = DEFAULT_SERIES
-    names = prepare_site(args.site, manifest, args.source_commit, definition)
-    print(json.dumps({"site":str(args.site.resolve()),"image_digest":sha(manifest),"plugins":names}))
+    if (args.override or args.physical_site) and not args.profile:
+        parser.error("--override and --physical-site require --profile")
+    result={"site":str(args.site.resolve()),"image_digest":sha(manifest)}
+    if args.profile:
+        from site_pack import build_lock, verify
+        with tempfile.TemporaryDirectory(prefix="edge-pack-input-") as tmp:
+            base=Path(tmp)/"trusted"
+            prepare_site(base,manifest,args.source_commit,definition)
+            result["lock"]=build_lock(ROOT/"capabilities",args.profile,base,args.override,args.site,args.physical_site)
+        result["plugins"]=list(verify(args.site,result["lock"])[1])
+    else:
+        result["plugins"]=prepare_site(args.site, manifest, args.source_commit, definition)
+    print(json.dumps(result))
 
 
 if __name__ == "__main__":

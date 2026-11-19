@@ -2,6 +2,11 @@
 
 from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import os
+from pathlib import Path
+import socket
+from socketserver import ThreadingMixIn, UnixStreamServer
+import sys
 import threading
 from urllib.parse import parse_qsl, urlsplit
 
@@ -44,7 +49,12 @@ class Handler(BaseHTTPRequestHandler):
             data = self.rfile.read(length) if length else None
             if data is not None and len(data) != length:
                 return self.send_error(400)
-            conn = HTTPConnection(*upstream, timeout=9)
+            if upstream[0]=="console" and getattr(self.server,"board_port",None):
+                conn=HTTPConnection("127.0.0.1",self.server.board_port,timeout=9)
+            elif upstream[0]=="console" and os.environ.get("EDGE_SOFT_FACT_SOCKET"):
+                conn=UnixHTTPConnection(os.environ["EDGE_SOFT_FACT_SOCKET"])
+            else:
+                conn = HTTPConnection(*upstream, timeout=9)
             try:
                 conn.request(self.command, self.path, body=data, headers={"Content-Type": "application/json"})
                 response = conn.getresponse()
@@ -65,7 +75,30 @@ class Handler(BaseHTTPRequestHandler):
     do_POST = forward
 
 
-if __name__ == "__main__":
+class UnixHTTPConnection(HTTPConnection):
+    def __init__(self, path):
+        super().__init__("localhost",timeout=9)
+        self.path=path
+
+    def connect(self):
+        self.sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+        self.sock.settimeout(self.timeout)
+        self.sock.connect(self.path)
+
+
+class FactsSocket(ThreadingMixIn,UnixStreamServer):
+    daemon_threads=True
+    server_port=8129
+
+
+if __name__ == "__main__" and sys.argv[1:]==["--board-facts"]:
+    path=Path("/facts/console.sock")
+    path.unlink(missing_ok=True)
+    with FactsSocket(str(path),Handler) as server:
+        path.chmod(0o660)
+        server.board_port=int(os.environ["EDGE_CONSOLE_PORT"])
+        server.serve_forever()
+elif __name__ == "__main__":
     servers = [ThreadingHTTPServer(("0.0.0.0", port), Handler) for port in (8125, 8126, 8129)]
     for server in servers[:-1]:
         threading.Thread(target=server.serve_forever, daemon=True).start()

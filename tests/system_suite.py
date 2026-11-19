@@ -145,7 +145,10 @@ def run(args, selected, reasons):
                               "-e",f"FACTORY_TEST_IMAGE={board_image}",
                               "--mount",f"type=bind,source={ROOT/'tests'},target=/opt/edge/tests,readonly",
                               "--mount",f"type=bind,source={directory},target=/evidence",board_image,"python3","-B"]
-                stage("board",[test("test_board_preflight.py","-v"),
+                stage("board",[test("test_board_preflight.py","-v"),test("test_site_pack.py","-v"),
+                               test("test_board_plugins.py","-v"),
+                               test("system/board_pack_acceptance.py","--image",board_image,"--root",ROOT,
+                                    "--out",directory/"board-pack.json"),
                                [*board_test,"/opt/edge/tests/test_factory_targets.py","-v"],
                                [*board_test,"/opt/edge/tests/system/factory_ros_capture.py",
                                 "--out","/evidence/factory-ros-capture.json"],

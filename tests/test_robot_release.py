@@ -71,6 +71,20 @@ class Release(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"unexpected runtime"):
             release_robot.projection("HEAD")
 
+    def test_site_profiles_and_physical_bench_are_projected_without_station_fixtures(self):
+        shipped={"compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","compose.physical-camera.yaml",
+                 "scripts/prepare_physical_camera.py","scripts/prepare_soft_pilots.py","scripts/robot-plugins.sh","scripts/check_board_plugins.py",
+                 "capabilities/soft-pilots/pack.json","capabilities/camera/pack.json","profiles/bench.json",
+                 "profiles/bench-camera.json","profiles/observe.json","agent/site_pack.py"}
+        local={"compose.physical-camera-test.yaml","tests/system/physical_camera_source.py","profiles/.env",
+               "profiles/site-local.json","capabilities/soft-pilots/keys.json"}
+        for name in shipped|local:
+            self.write(name,"fixture")
+        self.commit()
+        actual=set(release_robot.projection("HEAD"))
+        self.assertTrue(shipped<=actual)
+        self.assertFalse(local&actual)
+
 
 if __name__=="__main__":
     unittest.main()
