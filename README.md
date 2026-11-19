@@ -13,7 +13,7 @@
 **看一次有人能读懂的运行录像。** 在校园门厅给无人车一句没有坐标的中文任务，点击“内核确认已停车”，同时观察地图帧龄、现场画面、激光回波、IMU 角速度和下发线速度；再看它在哪一刻取得新观测并重新选点。视频由已封存的十路数据离线生成。纯软件任务也能用同一插件。[分章回放](artifacts/verification/recording-showcase/mission-01/index.html) · [独立观测与原始归档](artifacts/verification/recording-showcase/mission-01/README.md) · [录制自己的任务](task_recorder/README.md)
 
 
-无人车上板使用单独生成的 `deploy/robot` 分支。板端从 `sh scripts/robot.sh observe` 启动，研发侧维护完整代码、Gazebo、SDD 与测试。机号、安装外参、工厂证据与地图的交接方式见[无人车出厂、首次进场与板端交付](docs/rover-commissioning.md)。
+在同一个 `edge-agent-ros` 目录开发。`main` 保存完整源码、文档、仿真、测试和验收记录；`deploy/robot` 从指定开发提交生成，仅交付板端运行文件。板端用 `cat ROBOT_SOURCE` 查询对应的开发提交，用 `sh scripts/robot.sh observe` 启动。操作手册保存在开发分支。[板端操作手册](deploy/robot/README.md) · [无人车出厂与首次进场](docs/rover-commissioning.md)
 
 大型校园实验采用代尔夫特理工大学的测绘建筑和正射影像。教学训练楼、机器人广场、八道运动场、草地和林带通过一条约 777 米的步道接入真实校园街网。在[校园全景](http://127.0.0.1:8780/)打开路线叠加，在[三维地图](http://127.0.0.1:8773/?view=3d&place=campus)切换到具体机器人，可近看机体、传感器和动作。轮式车、无人机、四足和双足的仿真动力学与已验收能力各不相同。[校园安装与运行](scene/campus_large/README.md) · [四种机体的查看与复测](docs/testing/campus-robot-view.md) · [长程试验场规格](docs/specs/SDD-029-unified-campus.md)
 

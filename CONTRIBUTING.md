@@ -56,20 +56,20 @@ git diff --check
 
 ## 分支、评审和回移
 
-日常开发在同一个仓库目录运行 `git switch` 切换阶段。每个 SDD 阶段使用独立分支和 PR，收到评审后在对应分支追加提交。部署版本由生成器更新本仓库的 `deploy/robot` 引用，使用 `git show deploy/robot:ROBOT_SOURCE` 查询来源。本地测试的日志进入本仓库的 `.ci-results/`，需要共享的结论和复测入口留在 `docs/testing/`。
+日常使用同一个 `edge-agent-ros` 目录。长期保留以下两条分支。需要独立评审时，在该目录用 `git switch -c` 创建临时分支，合入开发线后删除。部署生成器直接更新 Git 引用。查看板端版本及手册来源可运行 `git show deploy/robot:ROBOT_SOURCE`。本地运行日志进入 `.ci-results/`，可共享的证据和复测入口留在开发分支。
 
 | 引用 | 职责 | 合入方式 |
 |---|---|---|
-| `main` | 持续集成、下一版本的来源 | 功能分支开 PR；两个必需检查通过、讨论已处理后合入 |
-| `release/<主>.<次>` | 某一版本线的维护，如 `release/0.1` | 从已验收的提交切出；从维护线新建修复分支，使用 `git cherry-pick -x <已合入修复>` 留存来源，再向维护线开 PR |
-| `feat/*`、`fix/*`、`docs/*` | 一组可独立审查的改动 | 合入后可删除短期分支，提交或 squash 消息保留规格 ID 和 PR 编号 |
-| `vX.Y.Z` | 发布时点 | 维护线的已验收提交创建附注标签，标签固定到该提交 |
+| `main` | 源码、研发文档、仿真、测试、验收记录和板端手册 | 在此集成，自已验收的开发提交生成部署版本和发行标签 |
+| `deploy/robot` | 板端运行文件和 `ROBOT_SOURCE` 来源指针 | 在开发分支运行 `python scripts/release_robot.py HEAD`，保留上一版部署提交作为父提交 |
+
+2026-11-19 整理前的分支头与独立验收快照保存在 `archive/2026-11-19/` 标签下。使用 `git tag -l 'archive/2026-11-19/*'` 查找，用 `git show <标签>:<路径>` 读取当时的文件。
 
 单维护者模式的默认规则要求 PR、CI 和讨论解决，独立批准数为 0。团队有第二位维护者时，可把规则中的 `required_approving_review_count` 提高为 1。合并后从 issue/PR → SDD → 容器证据可查测试，从 `git log --follow -- docs/specs/SDD-001-runtime-trace.md` 或 `git log --all --grep=SDD-001` 可查契约演变。
 
 ## 连接 GitHub 与启用保护
 
-将项目推至组织或个人指定的仓库后，设置默认分支为 `main`，推送需要维护的 `release/*`，并在仓库中启用 Actions。先让两个检查在正常 PR 或手工运行中出现，再启用保护。[GitHub rulesets API](https://docs.github.com/en/rest/repos/rules)
+将项目推至组织或个人指定的仓库后，设置默认分支为 `main`，推送生成的 `deploy/robot`，并在仓库中启用 Actions。先让两个检查在正常 PR 或手工运行中出现，再启用保护。[GitHub rulesets API](https://docs.github.com/en/rest/repos/rules)
 
 具有仓库管理权限的维护者可以在 **Settings → Rules → Rulesets** 导入下列两份 JSON，也可用已认证的 GitHub CLI 调用 API。先用 `gh repo view --json nameWithOwner` 核对目标仓库。以下命令在项目根目录执行一次。后续更新相应规则时对其现有 ID 用 `PUT` 以避免重复创建。
 
@@ -86,14 +86,14 @@ gh api 'repos/{owner}/{repo}/rules/branches/main'
 
 ## 发布一个版本
 
-在维护线的 PR 内对齐 `src/**/package.xml` 里的版本、发行说明和兼容性。切换到目标提交，确认其属于已推送的相应维护线，创建附注标签。例如版本 0.1.1：
+在开发分支对齐 `src/**/package.xml` 里的版本、发行说明和兼容性。切换到已推送并验收的开发提交，创建附注标签。以下命令以版本 0.1.1 为例。
 
 ```sh
 git fetch origin --tags
-git switch --detach origin/release/0.1
+git switch --detach origin/main
 git tag -a v0.1.1 -m "Edge Agent ROS 0.1.1"
 python3 scripts/check_release.py v0.1.1
 git push origin refs/tags/v0.1.1
 ```
 
-该标签触发同一套 CI。两个检查通过后，发布任务再次验证标签、包版本、维护线归属，创建 **Draft Release** 并关联 Git SHA 和本次 CI run。维护者核对变更清单、验收和发布范围后在 GitHub 发布草稿。回退部署时选择之前验证过的标签和相应数据备份，修复按新的补丁版本发布。[GitHub CLI 发布行为](https://cli.github.com/manual/gh_release_create)
+该标签触发同一套 CI。两个检查通过后，发布任务再次验证标签、包版本和开发线归属，创建 **Draft Release** 并关联 Git SHA 和本次 CI run。维护者核对变更清单、验收和发布范围后在 GitHub 发布草稿。回退部署时选择之前验证过的部署提交及相应数据备份，修复按新的补丁版本发布。[GitHub CLI 发布行为](https://cli.github.com/manual/gh_release_create)
