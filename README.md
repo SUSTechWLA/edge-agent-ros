@@ -36,6 +36,22 @@ sh scripts/robot.sh calibration-status
 
 现场验收通过后，`sh scripts/robot.sh start` 启动 Core、Agent、工作台、Session 与取证等服务。可用 `sh scripts/robot.sh status` 和 `sh scripts/robot.sh logs` 查看所选部署。停稳并完成任务交接后，可执行 `sh scripts/robot.sh stop` 停止服务，数据卷保留。切换回只读观测时重新执行 `observe`。工厂标定结果需要由具体的探索适配器检查，完整 Agent 的通用任务入口没有全局标定联锁。
 
+## 在板端录制一个任务
+
+先按现场配置启动 Agent，取一个你准备提交或已经提交的任务 ID。例如，以下命令为 `visit-lobby` 创建独立录制 `lobby-01`。录制器从第一个命令开始观察。提交任务仍使用现有工作台或 Agent 接口。
+
+```sh
+EDGE_RECORD_CAMERA=/camera/color/image_raw sh scripts/record-task.sh hardware start visit-lobby lobby-01
+sh scripts/record-task.sh hardware status lobby-01
+sh scripts/record-task.sh hardware export lobby-01 /data/exports/lobby-01
+```
+
+相机为可选的 `sensor_msgs/Image` 话题。去掉第一个命令的环境变量，仍会采集时钟、融合地图、位姿、速度命令、该任务的总线事件和 Agent 状态。纯软件任务用 `EDGE_RECORD_SOFTWARE_ONLY=1` 开录。传入与板端部署相同的 `EDGE_ROS_DOMAIN_ID`，容器会将其设置为 `ROS_DOMAIN_ID`。同时录制时，位姿、地图、相机等是同一物理平台的观察，任务状态和带任务标识的事件才可归因到指定任务。
+
+默认部署关闭录制。第一次 `start` 会发布 `task.record` 服务并为指定 ID 开启一个采集器。返回的 `sources` 是申请的来源；`counts` 和 `missing_sources` 说明哪些实际有数据。观察到任务终态后录制自动完成。也可 `sh scripts/record-task.sh hardware stop lobby-01` 提前停录；同车其他录制继续工作。对已关闭的录制使用 `export` 导出到新目录，查看 `recording.json`、`media/mission/timeline.jsonl` 与实际采集的图像。
+
+下线时 `sh scripts/record-task.sh hardware drain` 会拒绝新录制。所有录制收尾后执行 `sh scripts/record-task.sh hardware disable` 撤销服务并停止归档进程，证据卷保留。在途任务会使 `disable` 返回代码 2，可等待自动收尾或按 ID 手工停录后重试。重新开放准入使用 `sh scripts/record-task.sh hardware enable`。复盘时分别查看 `status`（如 `FINISHED`）与 `task_status`（如 `SUCCEEDED` 或人工停录时的 `STOPPED`）。
+
 ## 目录和更新
 
 | 路径 | 现场用途 |
@@ -44,6 +60,7 @@ sh scripts/robot.sh calibration-status
 | `src/`、`agent/`、`client/` | ROS 接口、任务与执行记录、插件管理 |
 | `calibration/`、`exploration/`、`perception/` | 标定、通用探索算法与传感器处理 |
 | `console/`、`sessions_plugin/`、`evidence/` | 本机工作台、会话与取证 |
+| `task_recorder/`、`scripts/record-task.sh`、`compose.task-recorder.yaml` | 可选的按任务录制、独立采集与归档 |
 | `contracts/`、`policies/`、`model_provider/` | 运行契约、恢复策略和模型适配 |
 
 每次上板固定部署提交和镜像标签；SDK、研发资料与仿真验收留在研发分支。待设备停稳并完成在途操作交接后切换版本。回退选用先前的部署提交及配套镜像。现场配置在板外保存备份，保留设备数据卷。

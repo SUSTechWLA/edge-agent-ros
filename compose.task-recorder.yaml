@@ -1,0 +1,48 @@
+# Optional evidence service; storage survives removing the service/profile.
+services:
+  recorder-source: &recorder-source
+    profiles: ["recording-tools"]
+    image: ${EDGE_RECORDER_IMAGE:-${EDGE_IMAGE:-edge-agent-ros:v0.1}}
+    pull_policy: never
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    working_dir: /opt/edge
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+      RMW_IMPLEMENTATION: ${EDGE_RMW:-rmw_cyclonedds_cpp}
+      ROS_LOG_DIR: /tmp/ros-logs
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./task_recorder:/opt/edge/task_recorder:ro
+  recorder-hardware-source:
+    <<: *recorder-source
+    network_mode: host
+  recorder-admin:
+    <<: *recorder-source
+    network_mode: none
+    volumes:
+      - ./task_recorder:/opt/edge/task_recorder:ro
+      - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins
+  task-recorder:
+    profiles: ["recording"]
+    image: ${EDGE_RECORDER_IMAGE:-${EDGE_IMAGE:-edge-agent-ros:v0.1}}
+    pull_policy: never
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    working_dir: /opt/edge
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: [python3, -B, -m, task_recorder.service, --bind, 0.0.0.0, --state, /recordings, --max-mib, "${EDGE_RECORDING_MAX_MIB:-256}"]
+    ports: ["127.0.0.1:${EDGE_RECORDING_PORT:-8188}:8188"]
+    volumes:
+      - ./task_recorder:/opt/edge/task_recorder:ro
+      - ${EDGE_RECORDING_STORAGE:-recording-data}:/recordings
+volumes:
+  recording-data:
