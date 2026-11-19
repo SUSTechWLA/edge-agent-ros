@@ -1,0 +1,9 @@
+# The campus hub reads its plugin registry from a Docker volume.
+services:
+  recorder-admin:
+    volumes:
+      - campus-recording-registry:/plugins
+volumes:
+  campus-recording-registry:
+    external: true
+    name: ${EDGE_CAMPUS_RECORD_REGISTRY:-edge-agent-campus_campus-plugins}

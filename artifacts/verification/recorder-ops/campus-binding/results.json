@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "registered": {
+    "service": "task.record",
+    "plugin_id": "recorder.default",
+    "plugin_version": "1",
+    "endpoint": "http://task-recorder:8188",
+    "binding": "d1bea1e5cc14203a75414c552d755f05e088a7317a6623b8614d807833fe2fe7",
+    "dependencies": {}
+  },
+  "domain": 162,
+  "agent_container_preserved": true,
+  "registry": "existing custom-named volume",
+  "image": "edge-agent-ros:commission-0977a54"
+}

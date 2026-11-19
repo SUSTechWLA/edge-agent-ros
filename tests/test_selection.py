@@ -15,8 +15,8 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
-    (("task_recorder/*","compose.task-recorder.yaml","scripts/record-task.*","tests/test_recorder*.py",
-      "tests/test_task_record*.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
+    (("task_recorder/*","compose.task-recorder*.yaml","scripts/record-task.*","tests/test_recorder*.py",
+      "tests/test_task_record*.py","tests/test_recording_trace_view.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
     (("tests/system/record_unknown_campus.py","tests/system/unknown_campus*",
       "tests/system/campus_survey*","tests/system/campus_revisit.py",
       "tests/test_campus_survey_worker.py","tests/test_campus_revisit.py"),(R,"campus-world")),

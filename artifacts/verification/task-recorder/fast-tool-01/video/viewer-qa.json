@@ -1,0 +1,18 @@
+{
+  "duration": 1.5,
+  "chapters": 7,
+  "goals": 4,
+  "wanted": 0.37,
+  "time": 0.37,
+  "mobile": {
+    "w": 390,
+    "scroll": 390
+  },
+  "cells": [
+    "timestamp-eb9ec51b100d/step/1\ttimestamp_audit\t记录工具执行意图 · timestamp_audit\t7\t2026-11-19T03:00:28.485528+00:00\tagent.dispatch",
+    "timestamp-eb9ec51b100d/step/1\ttimestamp_audit\t发起工具调用 · timestamp_audit\t8\t2026-11-19T03:00:28.490417+00:00\tagent.tool.request",
+    "timestamp-eb9ec51b100d/step/1\ttimestamp_audit\t收到工具回执 · timestamp_audit · SUCCEEDED\t11\t2026-11-19T03:00:28.520490+00:00\tagent.tool.response",
+    "timestamp-eb9ec51b100d/step/1\ttimestamp_audit\t步骤已验证 · timestamp_audit\t12\t2026-11-19T03:00:28.524061+00:00\tagent.verified"
+  ],
+  "details": "00:00.4 收到工具回执 · timestamp_audit · SUCCEEDED　操作 timestamp-eb9ec51b100d/step/1　代码 agent.tool.response　日志序号 11　源时间 2026-11-19T03:00:28.520490+00:00"
+}

@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "started_at": "2026-11-19T03:00:19.069561+00:00",
+  "image": "edge-agent-ros:commission-0977a54",
+  "image_id": "sha256:f064f5ad57f40a0ad456542a6bb31dce7ef5879b7bc4ec5e61aa1306d343bf5e",
+  "revision": "0977a543d2e494d1401530f51a9758add29eb9a2",
+  "project": "edge-sample-eb9ec51b100d",
+  "model": "local",
+  "scope": "internal Docker network, Agent and read-only HTTP provider",
+  "recording": {
+    "id": "timestamp-eb9ec51b100d",
+    "state_polls": [
+      "SUCCEEDED"
+    ],
+    "trace_rows": 9,
+    "source_seq": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "tool_phases": [
+      "dispatch",
+      "tool.request",
+      "tool.response",
+      "verified"
+    ]
+  },
+  "text": "检查这组采样时间戳的重复与回拨：[100,110,110,95,110,140]",
+  "before": "BLOCKED",
+  "after": "BLOCKED",
+  "task_id": "timestamp-eb9ec51b100d",
+  "operation_id": "timestamp-eb9ec51b100d/step/1",
+  "evidence": {
+    "sample_count": 6,
+    "duplicate_count": 2,
+    "backward_count": 1,
+    "max_forward_gap_ms": 30
+  },
+  "version": "1",
+  "trace_id": "timestamp-eb9ec51b100d",
+  "event_kinds": [
+    "accepted",
+    "planner.context",
+    "planned",
+    "dispatch",
+    "tool.request",
+    "adapter.request",
+    "adapter.response",
+    "tool.response",
+    "verified"
+  ],
+  "replay_same_task": true,
+  "original_query_after_remove": "SUCCEEDED",
+  "agent_started_at": "2026-11-19T03:00:20.750352354Z",
+  "agent_restarted": false
+}
