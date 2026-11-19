@@ -2,6 +2,7 @@
 # action server can run on the board itself or in compatible host-net containers.
 name: edge-agent-hardware
 x-env: &environment
+  PYTHONPATH: /opt/edge
   ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
   RMW_IMPLEMENTATION: ${EDGE_RMW:-rmw_cyclonedds_cpp}
 x-runtime: &runtime
@@ -98,6 +99,8 @@ services:
         COPY perception perception
         COPY calibration calibration
         COPY exploration exploration
+        ENV PYTHONPATH=/opt/edge
+        COPY edge_contracts edge_contracts
         COPY agent agent
         COPY evidence evidence
         COPY sessions_plugin sessions_plugin

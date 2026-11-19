@@ -1,6 +1,5 @@
 """Read-only ROS 2 camera source plugin. Owns subscriptions and latest-frame previews."""
-from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
-import json
+from http.server import BaseHTTPRequestHandler
 import os
 from pathlib import Path
 import sys
@@ -15,6 +14,7 @@ from rclpy.qos import QoSProfile,ReliabilityPolicy
 from sensor_msgs.msg import Image,CompressedImage,CameraInfo
 
 from frames import Source, config, NAME
+from edge_contracts.preview_http import PreviewHTTP, json_reply
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"agent"))
 from module_journal import ModuleJournal
 
@@ -158,10 +158,6 @@ class CameraNode(Node):
         return json_reply(404,{"error":"camera.not_found"})
 
 
-def json_reply(status,obj):
-    return status,"application/json",json.dumps(obj,allow_nan=False).encode(),{}
-
-
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args):
         pass
@@ -182,40 +178,9 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-class CameraHTTP(ThreadingHTTPServer):
-    def __init__(self,address,node):
-        self.node=node
-        self.slots=threading.BoundedSemaphore(8)
-        super().__init__(address,Handler)
-
-    def process_request(self,request,address):
-        if not self.slots.acquire(blocking=False):
-            self.shutdown_request(request)
-            return
-        request.settimeout(3)
-        try:
-            super().process_request(request,address)
-        except BaseException:
-            self.slots.release()
-            raise
-
-    def process_request_thread(self,request,address):
-        def expire():
-            try:
-                request.shutdown(2)
-            except OSError:
-                pass
-        limit=threading.Timer(5,expire)
-        try:
-            limit.start()
-            super().process_request_thread(request,address)
-        finally:
-            limit.cancel()
-            self.slots.release()
-
-    def handle_error(self,request,address):
-        if not isinstance(sys.exc_info()[1],OSError):
-            super().handle_error(request,address)
+class CameraHTTP(PreviewHTTP):
+    def __init__(self, address, node):
+        super().__init__(address, node, Handler)
 
 
 def main():

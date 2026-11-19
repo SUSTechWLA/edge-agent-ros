@@ -5,8 +5,9 @@ from pathlib import Path
 import sqlite3
 import sys
 
-sys.path.append(str(Path(__file__).resolve().parents[2] / "agent"))
-from tracing import sanitized
+if not __package__:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+from edge_contracts.trace_content import sanitized
 
 MAX_CONTEXT_BYTES = 256 * 1024
 

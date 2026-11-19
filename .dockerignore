@@ -17,6 +17,8 @@
 !console/**
 !agent
 !agent/**
+!edge_contracts
+!edge_contracts/**
 !scene
 !scene/**
 !evidence

@@ -7,8 +7,7 @@ from pathlib import Path
 import re
 from copy import deepcopy
 
-from exploration.frontier import Grid
-from exploration.map_artifact import save_map
+from edge_contracts.occupancy import Grid, save_map
 
 
 MAX_CELLS = 262144

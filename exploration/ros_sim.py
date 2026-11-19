@@ -11,7 +11,6 @@ import sys
 import time
 
 from agent.module_journal import ModuleJournal
-from calibration.factory import status as calibration_status
 from exploration.frontier import plan_frontier
 from exploration.map_artifact import save_map
 
@@ -26,7 +25,14 @@ def checkpoint(path, value):
 
 
 def factory_state(args):
-    state = calibration_status(args.calibration, args.robot_id, "simulation")
+    # The factory status CLI owns the ledger format and emits a scoped JSON receipt.
+    response = subprocess.run(
+        [sys.executable, "-m", "calibration.factory", "status", "--state", str(Path(args.calibration).resolve()),
+         "--robot-id", args.robot_id, "--environment", "simulation"],
+        cwd=Path(__file__).resolve().parents[1], stdout=subprocess.PIPE, timeout=8, check=False)
+    if response.returncode not in (0, 2):
+        raise ValueError("simulation calibration identity or revision unavailable")
+    state = json.loads(response.stdout)
     if (state.get("status") != "VERIFIED" or not state.get("revision") or state.get("robot_id") != args.robot_id
             or state.get("environment") != "simulation"):
         raise ValueError("simulation calibration identity or revision unavailable")

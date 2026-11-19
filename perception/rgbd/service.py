@@ -19,7 +19,7 @@ from pairs import configuration, Synchronizer
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "agent"))
-from perception.camera.provider import CameraHTTP, json_reply
+from edge_contracts.preview_http import PreviewHTTP, json_reply
 from module_journal import ModuleJournal
 
 WEB = Path(__file__).with_name("web.html")
@@ -145,8 +145,7 @@ def main():
     rclpy.init()
     node = RGBD()
     node.render = threading.Lock()
-    http = CameraHTTP((os.getenv("EDGE_RGBD_BIND", "0.0.0.0"), int(os.getenv("EDGE_RGBD_PORT", "8772"))), node)
-    http.RequestHandlerClass = Handler
+    http = PreviewHTTP((os.getenv("EDGE_RGBD_BIND", "0.0.0.0"), int(os.getenv("EDGE_RGBD_PORT", "8772"))), node, Handler)
     thread = threading.Thread(target=http.serve_forever, daemon=True)
     thread.start()
     try:

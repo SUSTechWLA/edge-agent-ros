@@ -96,7 +96,7 @@ def run(args, selected, reasons):
     try:
         if "repository" in selected:
             stage("repository",[[PY,"scripts/check_sdd.py"],test("repository_contract.py","-v"),
-                                test("document_contract.py","-v"),
+                                test("document_contract.py","-v"),test("test_package_boundaries.py","-v"),
                                 test("test_selection.py","-v"),test("test_robot_release.py","-v"),
                                 test("test_mission_recording.py","-v"),
                                 test("test_task_recorder.py","-v"),test("test_recorder_cli.py","-v"),

@@ -17,6 +17,8 @@ COPY perception perception
 COPY calibration calibration
 COPY exploration exploration
 COPY console console
+ENV PYTHONPATH=/opt/edge
+COPY edge_contracts edge_contracts
 COPY agent agent
 COPY scene scene
 COPY evidence evidence

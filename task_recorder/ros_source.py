@@ -377,19 +377,19 @@ class Sources:
                        sha256=hashlib.sha256(data).hexdigest(),media=attachment(f"{kind}/{ns:018d}.png",data))
 
     def rgb(self,msg):
-        from perception.camera.frames import raw_frame
+        from edge_contracts.image_frames import raw_frame
         ns=self.stamp(msg)
         if self.due("rgb",ns,110_000_000):
             png,_,_,_,width,height,_=raw_frame(msg)
             self.png("rgb",ns,png,width,height,self.args.camera,"sensor_msgs/msg/Image","onboard")
 
     def gz_rgb(self,msg,kind,topic):
-        from scene.campus_large.capture import encode
+        from edge_contracts.image_frames import encode_gazebo
         stamp=msg.header.stamp
         ns=stamp.sec*10**9+stamp.nsec
         if self.due(kind,ns,110_000_000):
             try:
-                png,meta=encode(msg)
+                png,meta=encode_gazebo(msg)
                 self.png(kind,ns,png,meta["width"],meta["height"],topic,"gz.msgs.Image","overview")
             except ValueError as error:
                 self.sink.problem=str(error)

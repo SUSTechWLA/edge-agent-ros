@@ -7,6 +7,7 @@ x-runtime: &runtime
     driver: local
     options: {max-size: "10m", max-file: "4"}
   environment: &environment
+    PYTHONPATH: /opt/edge
     ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
     RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     GZ_PARTITION: edge_v1

@@ -12,11 +12,12 @@ import threading
 from urllib.parse import urlsplit
 import uuid
 
-sys.path.append(str(Path(__file__).resolve().parents[2] / "agent"))
-from runtime_plugins import PluginUnavailable, ServiceSnapshot
-import soft_client
+if not __package__:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+from edge_contracts.service_directory import PluginUnavailable, ServiceSnapshot
+from edge_contracts import soft_transport as soft_client
 from task_data import identifiers
-from tracing import clean_text
+from edge_contracts.trace_content import clean_text
 
 
 TIMEOUT = 8

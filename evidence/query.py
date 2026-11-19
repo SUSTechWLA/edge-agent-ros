@@ -5,7 +5,7 @@ import sqlite3
 import time
 from contextlib import closing
 
-from .public_source import EvidenceError, remaining
+from edge_contracts.evidence_client import EvidenceError, remaining
 
 
 COLUMNS = ("seq","utc","kind","level","source","session_id","mission_id","operation_id",
