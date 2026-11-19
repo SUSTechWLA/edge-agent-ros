@@ -128,6 +128,12 @@ class CameraLedgerContract(unittest.TestCase):
         inspection = {"Id":"a"*64,"Image":self.deploy["image_config_digest"],"Config":{"Hostname":self.camera,
             "Entrypoint":["/usr/local/bin/edge-entrypoint",*self.deploy["camera_argv"]]},"State":{"Running":False,"Status":"exited"}}
         self.reject("plugin.handoff_unconfirmed",self.ledger.process_stopped,self.resource,dict(inspection,Image="wrong"))
+        platform = {"digest":self.deploy["pin"]["image_digest"],"mediaType":"application/vnd.oci.image.manifest.v1+json"}
+        for altered in (dict(platform,digest=sha(b"wrong image")),dict(platform,mediaType="application/vnd.oci.image.index.v1+json")):
+            self.reject("plugin.handoff_unconfirmed",self.ledger.process_stopped,self.resource,
+                        dict(inspection,ImageManifestDescriptor=altered))
+        self.ledger.process_stopped(self.resource,dict(inspection,Image=sha(b"index"),ImageManifestDescriptor=platform))
+        # Classic engines identify the exact pinned image config in .Image.
         self.ledger.process_stopped(self.resource,inspection)
         switched = self.ledger.install(newer)
         self.assertGreater(switched["epoch"],lease["epoch"])

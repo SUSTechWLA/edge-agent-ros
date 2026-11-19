@@ -368,9 +368,19 @@ class PhysicalLedger:
             argv = (config.get("Entrypoint") or []) + (config.get("Cmd") or [])
             if argv[:1]==["/usr/local/bin/edge-entrypoint"]:
                 argv = argv[1:]
+            # containerd's .Image may identify the multi-architecture index. The
+            # engine supplies the actual platform manifest separately. If present
+            # it must match; an index, tag or label cannot override a mismatch.
+            manifest = inspect.get("ImageManifestDescriptor")
+            if manifest is None:
+                image_matches = inspect.get("Image") == device["deployment"]["image_config_digest"]
+            else:
+                image_matches = isinstance(manifest,dict) and manifest.get("digest")==device["deployment"]["pin"]["image_digest"] and (
+                    manifest.get("mediaType") in ("application/vnd.oci.image.manifest.v1+json",
+                                                  "application/vnd.docker.distribution.manifest.v2+json"))
             require(device["phase"] in ("RELEASED","STOPPED") and owner and
                     re.fullmatch("[a-f0-9]{12,64}",owner) and re.fullmatch("[a-f0-9]{64}",inspect.get("Id",""))
-                    and config.get("Hostname")==owner and inspect.get("Image")==device["deployment"]["image_config_digest"]
+                    and config.get("Hostname")==owner and image_matches
                     and argv==device["deployment"]["camera_argv"]
                     and inspect["Id"].startswith(owner) and inspect.get("State",{}).get("Running") is False
                     and inspect["State"].get("Status") in ("exited","dead"),
