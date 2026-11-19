@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "bench",
+  "packs": [
+    "soft-pilots"
+  ],
+  "settings": {},
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}

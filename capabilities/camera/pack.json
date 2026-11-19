@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "camera",
+  "policy": {
+    "classes": [
+      "physical"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": true
+  },
+  "plugins": [
+    {
+      "id": "camera.capture",
+      "version": "1.0.0",
+      "class": "physical",
+      "config": {}
+    }
+  ]
+}

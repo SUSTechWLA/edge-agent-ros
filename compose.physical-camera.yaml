@@ -1,0 +1,81 @@
+# Apply explicitly over simulation or hardware Compose. Site driver and verifier
+# witness are separate from the task owner. This overlay never launches a driver.
+x-fixed: &fixed
+  image: ${EDGE_PHYSICAL_IMAGE:?supply the immutable physical image ID}
+  pull_policy: never
+  init: true
+  restart: "no"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 96
+  mem_limit: 256m
+  tmpfs: [/tmp]
+x-device-env: &device-env
+  ROS_DOMAIN_ID: ${EDGE_PHYSICAL_DOMAIN_ID:-161}
+  RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+  ROS_LOG_DIR: /tmp/ros
+  EDGE_CAMERA_TOPIC: ${EDGE_PHYSICAL_CAMERA_TOPIC:-/physical/camera/image}
+  EDGE_CAMERA_SOURCE: ${EDGE_PHYSICAL_CAMERA_SOURCE:-camera.front}
+  EDGE_PHYSICAL_PLATFORM_DIGEST: ${EDGE_PHYSICAL_PLATFORM_DIGEST:?supply the platform manifest digest}
+services:
+  agent:
+    environment:
+      EDGE_PHYSICAL_SOCKET: /physical/physical.sock
+    volumes:
+      - physical-agent-socket:/physical:ro
+  console:
+    environment:
+      EDGE_PHYSICAL_AUDIT: /physical-journal/physical.sqlite
+    volumes:
+      - physical-ledger:/physical-journal:ro
+  physical-controller:
+    <<: *fixed
+    network_mode: none
+    environment:
+      EDGE_PHYSICAL_PLATFORM_DIGEST: ${EDGE_PHYSICAL_PLATFORM_DIGEST}
+    entrypoint: ["python3","-B","/opt/edge/agent/physical_controller.py"]
+    command: ["serve"]
+    volumes:
+      - ${EDGE_PHYSICAL_SITE:?supply the audited physical site directory}:/site:ro
+      - physical-ledger:/ledger
+      - physical-agent-socket:/sockets/agent
+      - physical-camera-socket:/sockets/camera
+      - physical-verifier-socket:/sockets/verifier
+  physical-admin:
+    <<: *fixed
+    profiles: [physical-admin]
+    network_mode: none
+    environment:
+      EDGE_PHYSICAL_PLATFORM_DIGEST: ${EDGE_PHYSICAL_PLATFORM_DIGEST}
+    entrypoint: ["python3","-B","/opt/edge/agent/physical_controller.py"]
+    command: ["status"]
+    volumes:
+      - ${EDGE_PHYSICAL_SITE}:/site:ro
+      - physical-ledger:/ledger
+  physical-camera:
+    <<: *fixed
+    networks: [physical-sensors]
+    environment: *device-env
+    entrypoint: ["/usr/local/bin/edge-entrypoint","python3","-B","/opt/edge/perception/camera/physical.py"]
+    volumes:
+      - physical-camera-socket:/sockets/camera:ro
+      - physical-captures:/captures
+  physical-verifier:
+    <<: *fixed
+    networks: [physical-sensors]
+    environment: *device-env
+    entrypoint: ["/usr/local/bin/edge-entrypoint","python3","-B","/opt/edge/perception/camera/physical_verifier.py"]
+    volumes:
+      - physical-verifier-socket:/sockets/verifier:ro
+      - physical-captures:/captures:ro
+      - physical-witness:/witness:ro
+networks:
+  physical-sensors: {internal: true}
+volumes:
+  physical-ledger:
+  physical-agent-socket:
+  physical-camera-socket:
+  physical-verifier-socket:
+  physical-captures:
+  physical-witness:

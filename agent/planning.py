@@ -12,6 +12,8 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 from derived_tools import load_directory
 import runtime_plugins
+import soft_client
+import plugin_tracks
 import series_tools
 from tracing import CODE, artifact, contract, exchange
 
@@ -123,7 +125,7 @@ def http_json(url, data, timeout=6):
         raise failure(Refused,"invalid adapter JSON","transport.invalid_json","provider") from exc
 
 
-def registry():
+def registry(*, legacy_only=False):
     caps = dict(BASE)
     loaded = set()
     dirs=[Path(os.getenv("EDGE_PLUGIN_DIR", "/etc/edge/plugins"))]
@@ -173,6 +175,11 @@ def registry():
     # have their own directory and cannot shadow an existing provider.
     for key, cap in load_directory(dirs[0] / "derived").items():
         caps.setdefault(key, cap)
+    if not legacy_only and (soft_client.enabled() or plugin_tracks.physical_enabled()):
+        try:
+            return plugin_tracks.catalog(caps)
+        except soft_client.SoftError as error:
+            raise failure(Unavailable, str(error), error.code, error.origin) from error
     return caps
 
 
@@ -188,6 +195,10 @@ def catalog(caps):
 
 
 def binding(cap):
+    if "_physical" in cap:
+        return cap["_physical"]["binding"]
+    if "_soft" in cap:
+        return cap["_soft"]["binding"]
     fields = {key:cap.get(key) for key in ("id","version","parameters","effect","endpoint")}
     if cap.get("outcomes"):
         fields["outcomes"] = cap["outcomes"]

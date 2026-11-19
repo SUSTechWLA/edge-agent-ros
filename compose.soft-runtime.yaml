@@ -1,0 +1,100 @@
+# Explicit P1 overlay. Only the read gateway spans the two networks.
+x-software: &software
+  image: ${EDGE_SOFT_IMAGE:?set the pinned soft deployment image ID}
+  pull_policy: never
+  init: true
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 48
+  mem_limit: 192m
+  tmpfs: [/tmp]
+services:
+  agent:
+    environment:
+      EDGE_SOFT_SOCKET: /soft/agent.sock
+    volumes:
+      - soft-agent-socket:/soft:ro
+  console:
+    environment:
+      EDGE_SOFT_SOCKET: /soft/session.sock
+    volumes:
+      - soft-session-socket:/soft:ro
+  soft-init:
+    <<: *software
+    network_mode: none
+    restart: "no"
+    entrypoint: ["mkdir","-p","/sources/soft.runtime","/sources/session.default","/sources/evidence.query"]
+    volumes:
+      - module-sources:/sources
+  soft-host:
+    <<: *software
+    depends_on:
+      soft-init: {condition: service_completed_successfully}
+    networks: [soft-data]
+    environment:
+      EDGE_SOFT_PLATFORM_DIGEST: ${EDGE_SOFT_PLATFORM_DIGEST:?set pinned platform manifest digest}
+    entrypoint: ["python3","-B","/opt/edge/agent/soft_host.py"]
+    volumes:
+      - ${EDGE_SOFT_SITE:?set prepared site directory}:/site:ro
+      - soft-registry:/registry
+      - soft-agent-socket:/sockets/agent
+      - soft-session-socket:/sockets/session
+      - type: volume
+        source: module-sources
+        target: /journal
+        volume: {subpath: soft.runtime}
+  soft-admin:
+    <<: *software
+    profiles: [soft-admin]
+    network_mode: none
+    restart: "no"
+    entrypoint: ["python3","-B","/opt/edge/agent/plugin_manager.py"]
+    environment:
+      EDGE_PLUGIN_TRUST_ROOT: /site/trust
+    volumes:
+      - ${EDGE_SOFT_SITE}:/site:ro
+      - soft-registry:/registry
+  soft-gateway:
+    <<: *software
+    networks:
+      default:
+        aliases: [evidence, session]
+      soft-data: {}
+    entrypoint: ["python3","-B","/opt/edge/agent/soft_gateway.py"]
+  evidence:
+    image: ${EDGE_SOFT_IMAGE}
+    networks:
+      soft-data:
+        aliases: [soft-evidence]
+    depends_on:
+      soft-init: {condition: service_completed_successfully}
+    volumes: !override
+      - type: volume
+        source: module-sources
+        target: /var/lib/edge-evidence/evidence.query
+        volume: {subpath: evidence.query}
+    environment:
+      EDGE_EVIDENCE_SOURCE: http://soft-gateway:8129
+  session:
+    image: ${EDGE_SOFT_IMAGE}
+    networks:
+      soft-data:
+        aliases: [soft-session]
+    depends_on:
+      soft-init: {condition: service_completed_successfully}
+    volumes: !override
+      - type: volume
+        source: module-sources
+        target: /var/lib/edge-session/session.default
+        volume: {subpath: session.default}
+    environment:
+      EDGE_SESSION_SOURCE: http://soft-gateway:8129
+networks:
+  soft-data:
+    internal: true
+volumes:
+  soft-registry:
+  soft-agent-socket:
+  soft-session-socket:

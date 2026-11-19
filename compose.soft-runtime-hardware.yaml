@@ -1,0 +1,36 @@
+# Third file after compose.hardware.yaml and compose.soft-runtime.yaml.
+# Hardware Console listens on board loopback. A fixed GET-only gateway serves its public facts over a Unix socket.
+services:
+  soft-facts:
+    image: ${EDGE_SOFT_IMAGE:?set the pinned software image}
+    pull_policy: never
+    network_mode: service:console
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 32
+    mem_limit: 96m
+    environment:
+      EDGE_CONSOLE_PORT: ${EDGE_CONSOLE_PORT:-8765}
+    entrypoint: ["python3","-B","/opt/edge/agent/soft_gateway.py","--board-facts"]
+    volumes:
+      - soft-facts:/facts
+  soft-gateway:
+    networks: !override [soft-data]
+    environment:
+      EDGE_SOFT_FACT_SOCKET: /facts/console.sock
+    volumes:
+      - soft-facts:/facts:ro
+  session:
+    network_mode: !reset null
+    environment:
+      EDGE_SESSION_BIND: 0.0.0.0
+      EDGE_SESSION_PORT: "8126"
+  evidence:
+    network_mode: !reset null
+    environment:
+      EDGE_EVIDENCE_BIND: 0.0.0.0
+      EDGE_EVIDENCE_PORT: "8125"
+volumes:
+  soft-facts:

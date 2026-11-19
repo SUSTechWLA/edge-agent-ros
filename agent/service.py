@@ -22,6 +22,8 @@ from geometry_msgs.msg import Point
 from edge_interfaces.srv import GetMission, SubmitMission
 from derived_tools import check_id, evaluate
 import runtime_plugins
+import soft_client
+import plugin_tracks
 from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog, is_series,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
@@ -71,6 +73,8 @@ class Journal:
                 step INTEGER, kind TEXT, detail TEXT, operation_id TEXT, payload TEXT NOT NULL DEFAULT '{}');
             CREATE INDEX IF NOT EXISTS events_by_task ON events(task_id,seq);
             CREATE INDEX IF NOT EXISTS tasks_ready ON tasks(state,due,created);
+            CREATE TABLE IF NOT EXISTS soft_settlements(operation TEXT PRIMARY KEY, pin TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS soft_plan_intents(task TEXT PRIMARY KEY, plan TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS task_triggers(
               task_id TEXT PRIMARY KEY REFERENCES tasks(id), kind TEXT NOT NULL, source TEXT NOT NULL,
               source_key TEXT NOT NULL, context TEXT NOT NULL, trace_id TEXT NOT NULL,
@@ -82,6 +86,12 @@ class Journal:
         if "event_id" not in {r[1] for r in self.db.execute("PRAGMA table_info(events)")}:
             self.db.execute("ALTER TABLE events ADD COLUMN event_id TEXT")
         self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS events_by_id ON events(event_id) WHERE event_id IS NOT NULL")
+        settlement_fields = {r[1] for r in self.db.execute("PRAGMA table_info(soft_settlements)")}
+        for name, declaration in (("next_attempt","REAL NOT NULL DEFAULT 0"),
+                                  ("attempts","INTEGER NOT NULL DEFAULT 0"), ("last_code","TEXT")):
+            if name not in settlement_fields:
+                self.db.execute(f"ALTER TABLE soft_settlements ADD COLUMN {name} {declaration}")
+        self.db.execute("CREATE INDEX IF NOT EXISTS soft_settlements_due ON soft_settlements(next_attempt)")
         self.db.commit()
         if self.db.execute("PRAGMA user_version").fetchone()[0] < 1:
             self.repair_nonfinite_steps()
@@ -121,7 +131,8 @@ class Journal:
     def get(self, key):
         with self.lock:
             row = self.db.execute("""SELECT tasks.*,tr.context,tr.trace_id,
-                       (SELECT kind FROM events WHERE task_id=tasks.id ORDER BY seq DESC LIMIT 1) AS latest_event
+                       (SELECT kind FROM events WHERE task_id=tasks.id
+                        AND kind NOT IN ('settlement_deferred','settlement_recovered') ORDER BY seq DESC LIMIT 1) AS latest_event
                        FROM tasks LEFT JOIN task_triggers tr ON tr.task_id=tasks.id WHERE tasks.id=?""",(key,)).fetchone()
         if not row:
             return None
@@ -249,6 +260,18 @@ class Journal:
                 kind="transition"
             self.db.execute("""UPDATE tasks SET state=?,detail=?,provider=?,steps=?,cursor=?,retries=?,due=?,updated=? WHERE id=?""",
                 (state,clean_text(detail)[:1200],t["provider"],json.dumps(t["steps"]),t["cursor"],t["retries"],time.time()+delay,now,t["id"]))
+            if kind == "planned":
+                self.db.execute("DELETE FROM soft_plan_intents WHERE task=?", (t["id"],))
+            if kind in ("verified","blocked","canceled"):
+                # The journal owner releases a proven terminal step, and any
+                # never-dispatched steps abandoned behind it. Unknowns keep their pin.
+                closed = (t["steps"][t["cursor"]-1:t["cursor"]] if kind == "verified"
+                          else t["steps"][t["cursor"]:])
+                for step in closed:
+                    pin = step.get("soft_pin") or step.get("physical_pin")
+                    if pin:
+                        self.db.execute("INSERT OR IGNORE INTO soft_settlements(operation,pin,next_attempt) VALUES(?,?,?)",
+                                        (pin["reservation_id"],json.dumps(pin),time.time()))
             if kind:
                 index = t["cursor"]-1 if kind=="verified" else t["cursor"]
                 payload = {"provider":t["provider"],"prior_state":prior,"state":state,"retries":t["retries"]}
@@ -271,6 +294,51 @@ class Journal:
                     trace={"layer":layer,"code":diagnostic["code"],
                            "diagnosis":payload["diagnostic"]}
                 self.append(t,kind,detail,payload,step=index,op=op,trace=trace)
+
+    def soft_intent(self, task, candidate=None):
+        with self.lock,self.db:
+            if candidate is not None:
+                self.db.execute("INSERT OR IGNORE INTO soft_plan_intents VALUES(?,?)",
+                                (task,json.dumps(candidate,allow_nan=False)))
+            row = self.db.execute("SELECT plan FROM soft_plan_intents WHERE task=?",(task,)).fetchone()
+            return json.loads(row[0]) if row else None
+
+    def settle_soft_batch(self, stop):
+        with self.lock:
+            rows = self.db.execute("""SELECT operation,pin,attempts,last_code FROM soft_settlements
+                WHERE next_attempt <= ? ORDER BY next_attempt,rowid LIMIT 64""",(time.time(),)).fetchall()
+        for op, raw, attempts, previous_code in rows:
+            if stop.is_set():
+                break
+            code = None
+            try:
+                pin = json.loads(raw)
+                if not isinstance(pin,dict) or pin.get("reservation_id") != op:
+                    raise ValueError("stored settlement pin mismatch")
+                if plugin_tracks.call_for(pin,"settle") is not True:
+                    code = "plugin.settlement_unconfirmed"
+            except soft_client.SoftError as exc:
+                code = exc.code if isinstance(exc.code,str) and re.fullmatch(r"[a-z][a-z0-9_.-]{0,95}",exc.code) else "plugin.transport"
+            except (TypeError, ValueError, RecursionError):
+                code = "plugin.settlement_pin_invalid"
+            with self.lock,self.db:
+                if code:
+                    due = time.time() + min(60, 2 ** min(attempts,6))
+                    self.db.execute("""UPDATE soft_settlements SET next_attempt=?,attempts=attempts+1,
+                        last_code=? WHERE operation=?""",(due,code,op))
+                else:
+                    self.db.execute("DELETE FROM soft_settlements WHERE operation=?",(op,))
+                if code != previous_code:
+                    task_id, _, number = op.rpartition("/step/")
+                    task = self.get(task_id) or {"id":task_id or "soft.settlements","trace_id":task_id or op,"trigger":None}
+                    kind = "settlement_deferred" if code else "settlement_recovered"
+                    self.append(task,kind,"插件结算待重试" if code else "原操作已确认结算",
+                                {"attempt":attempts+1,"code":code or "plugin.settlement_recovered","previous_code":previous_code},
+                                step=int(number)-1 if number.isdecimal() and len(number)<10 else None,op=op)
+
+    def settle_soft(self, stop):
+        while not stop.wait(.3):
+            self.settle_soft_batch(stop)
 
     def event_page(self,key,after=None,limit=128):
         if not 1<=limit<=500 or (after is not None and after<0):
@@ -347,7 +415,7 @@ class Robot(Node):
     def run(self,step,op,cap,trace=None,context=None):
         if step["tool"] == "status" and not cap.get("endpoint"):
             return self.odometry()
-        if "derived" in cap and not cap.get("endpoint"):
+        if "derived" in cap and not cap.get("endpoint") and "soft_pin" not in step:
             if is_series(cap):
                 try:
                     evidence = evaluate(cap["derived"], step["args"])
@@ -406,7 +474,12 @@ class Robot(Node):
             body={"operation_id":op,"arguments":step["args"],"version":step["version"]}
             if context is not None:
                 body["trace"]=context
-            result=exchange(trace,"adapter",step["tool"],body,lambda:http_json(cap["endpoint"],body))
+            def invoke():
+                pin = step.get("physical_pin") or step.get("soft_pin")
+                if pin:
+                    return plugin_tracks.call_for(pin,"call",wire=body)
+                return http_json(cap["endpoint"],body)
+            result=exchange(trace,"adapter",step["tool"],body,invoke)
         except Refused as exc:
             if cap["effect"]!="read":
                 raise failure(OutcomeUnknown,str(exc),getattr(exc,"code","tool.receipt_invalid"),
@@ -482,6 +555,41 @@ def finish_step(journal, task, step, op, result):
     journal.save(task, "SUCCEEDED" if last else "RUNNING", "已取得步骤证据", kind="verified", op=op)
 
 
+def task_plan(journal, task, trace):
+    # Persist the exact proposal before crossing the socket. A lost reply can
+    # then replay this request without a second LLM call or an alternate route.
+    candidate = journal.soft_intent(task["id"])
+    if candidate is None:
+        try:
+            caps = registry()
+        except Unavailable:
+            # Reserved local status remains usable during a soft-host outage.
+            # Restrict this fallback to a direct, read-only kernel request.
+            if task["text"].strip().lower() != "status" or (task.get("trigger") or {}).get("read_only_tool"):
+                raise
+            legacy = registry(legacy_only=True)
+            if legacy["status"].get("endpoint"):
+                raise
+            caps = {"status":legacy["status"]}
+        pin = (task.get("trigger") or {}).get("read_only_tool")
+        if pin:
+            provider, steps = plan_read_only(task["text"],caps,pin)
+        else:
+            provider, steps = plan(task["text"],caps,trace)
+        managed = False
+        for step in steps:
+            cap = caps[step["tool"]]
+            for track in ("physical","soft"):
+                if "_" + track in cap:
+                    step[track + "_pin"] = cap["_" + track]
+                    step[track + "_cap"] = {k:v for k,v in cap.items() if k not in ("_"+track,"_legacy_contract")}
+                    managed = True
+        if not managed:
+            return provider, steps
+        candidate = journal.soft_intent(task["id"], [provider, steps])
+    return plugin_tracks.freeze(task["id"],candidate)
+
+
 def worker(journal,robot,planning,verifying=False):
     while rclpy.ok():
         t=journal.due(planning, verifying)
@@ -493,11 +601,7 @@ def worker(journal,robot,planning,verifying=False):
             journal.exchange_event(t,kind,fields,None if planning else op)
         try:
             if planning:
-                pin = (t.get("trigger") or {}).get("read_only_tool")
-                if pin:
-                    t["provider"],t["steps"]=plan_read_only(t["text"],registry(),pin)
-                else:
-                    t["provider"],t["steps"]=plan(t["text"],registry(),trace)
+                t["provider"],t["steps"] = task_plan(journal,t,trace)
                 t["retries"]=0
                 journal.save(t,"RUNNING","已验证计划",kind="planned")
                 continue
@@ -506,7 +610,12 @@ def worker(journal,robot,planning,verifying=False):
                 result = verify_candidate(journal, t, step, op, trace)
                 finish_step(journal, t, step, op, result)
                 continue
-            cap=registry().get(step["tool"])
+            if "physical_pin" in step:
+                cap = {**step["physical_cap"], "_physical":step["physical_pin"]}
+            elif "soft_pin" in step:
+                cap = {**step["soft_cap"], "_soft":step["soft_pin"]}
+            else:
+                cap=registry(legacy_only=True).get(step["tool"])
             if "binding" not in step and step["tool"] not in ("inspect","status"):
                 raise failure(OutcomeUnknown,"旧步骤未保存提供者绑定，请按原操作 ID 核对旧提供者的记录",
                               "tool.binding_unverified","registry")
@@ -527,7 +636,8 @@ def worker(journal,robot,planning,verifying=False):
                 t["retries"] = 0
                 journal.save(t, "RUNNING", "已保存工具候选结果，等待独立验收", kind="verification_pending",
                              op=op, tool_response=receipt)
-            provider = "http-adapter" if cap.get("endpoint") else "software" if is_series(cap) else "ros"
+            provider = ("physical-controller" if "physical_pin" in step else "soft-runtime" if "soft_pin" in step
+                        else "http-adapter" if cap.get("endpoint") else "software" if is_series(cap) else "ros")
             result=exchange(trace,"tool",step["tool"],{"operation_id":op,"arguments":step["args"],"version":step["version"]},
                             lambda:robot.run(step,op,cap,trace,context),
                             meta={"provider":provider,"binding":binding(cap)},
@@ -541,8 +651,12 @@ def worker(journal,robot,planning,verifying=False):
             if step["status"] == "VERIFYING":
                 continue
             finish_step(journal, t, step, op, result)
-        except (Unavailable, runtime_plugins.PluginUnavailable, runtime_plugins.PolicyError) as exc:
+        except (Unavailable, runtime_plugins.PluginUnavailable, runtime_plugins.PolicyError, soft_client.SoftError) as exc:
             diagnostic=event_diagnosis(exc,planning,"tool.transport_unavailable")
+            if isinstance(exc,soft_client.SoftError) and not planning and exc.code in (
+                    "tool.outcome_unknown","tool.receipt_invalid","plugin.config_invalid"):
+                journal.save(t,"RECOVERY_REQUIRED",str(exc),kind="error",op=op,diagnostic=diagnostic)
+                continue
             if planning and diagnostic.get("provider"):
                 t["provider"]=diagnostic["provider"]
             t["retries"]+=1
@@ -593,6 +707,18 @@ class Handler(BaseHTTPRequestHandler):
                 directory = self.server.registry_observer.observe()
             except runtime_plugins.PluginUnavailable as exc:
                 return self.send(503, {"code":exc.code,"detail":str(exc)})
+            if parse_qs(path.query).get("schema") == ["2"]:
+                from plugin_descriptor import normalize_legacy_service, normalize_legacy_tool
+                try:
+                    soft, physical = plugin_tracks.views()
+                    view = {"claims":{**soft["claims"],**physical["claims"]}, "plugins":soft["plugins"] + physical["plugins"]}
+                except soft_client.SoftError as exc:
+                    return self.send(503, {"code":exc.code, "detail":str(exc)})
+                old = [normalize_legacy_service(r) for r in directory["plugins"]
+                       if r["id"] not in view["claims"].values()]
+                old += [normalize_legacy_tool(c) for c in registry(legacy_only=True).values()
+                        if c["id"] not in view["claims"] and c["id"] not in ("inspect","status")]
+                return self.send(200,{"schema_version":2,"plugins":old + view["plugins"]})
             return self.send(200,directory)
         if path.path=="/agent/services":
             query = parse_qs(path.query, keep_blank_values=True)
@@ -664,6 +790,8 @@ if __name__=="__main__":
     stop=threading.Event()
     monitor=threading.Thread(target=server.registry_observer.run,args=(stop,),daemon=True)
     monitor.start()
+    if soft_client.enabled() or plugin_tracks.physical_enabled():
+        threading.Thread(target=journal.settle_soft,args=(stop,),daemon=True).start()
     try:
         server.serve_forever()
     finally:

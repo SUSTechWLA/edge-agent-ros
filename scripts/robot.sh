@@ -20,6 +20,7 @@ check_image() {
   fi
 }
 case "$action" in
+  plugins) check_image; exec sh scripts/robot-plugins.sh "$@" ;;
   build) exec sh scripts/deploy.sh hardware build ;;
   observe)
     if ! docker image inspect "$EDGE_HARDWARE_IMAGE" >/dev/null 2>&1; then
@@ -54,5 +55,5 @@ case "$action" in
       -e ROS_LOG_DIR=/tmp/ros-logs -e PYTHONDONTWRITEBYTECODE=1 \
       --mount "type=bind,src=$station,dst=/station,readonly" --mount "type=volume,src=edge-factory-$EDGE_ROBOT_ID,dst=/factory" \
       "$image" "$@" ;;
-  *) echo 'Usage: sh scripts/robot.sh [build|observe|preflight|status|logs|fit-targets|factory|calibration-status|start|stop]' >&2; exit 2 ;;
+  *) echo 'Usage: sh scripts/robot.sh [build|observe|preflight|plugins|status|logs|fit-targets|factory|calibration-status|start|stop]' >&2; exit 2 ;;
 esac
