@@ -61,6 +61,42 @@ class VerificationContracts(unittest.TestCase):
                 self.assertEqual(json.loads(last["payload"])["diagnostic"]["code"],"verification.legacy_unbound")
         self.assertEqual(self.robot.run.call_count,1)
 
+    def test_lost_freeze_reply_reuses_the_original_plan(self):
+        task = self.j.create("frozen","compute")
+        proposal = ["pinned", [{"tool":"old","soft_pin":{"binding":"original"}}]]
+        self.j.soft_intent(task["id"], proposal)
+        with patch.dict(os.environ,{"EDGE_SOFT_SOCKET":"/unused"}), patch("service.plan") as model, \
+                patch("service.soft_client.request",return_value=proposal) as freeze:
+            self.tick(planning=True)
+        model.assert_not_called()
+        freeze.assert_called_once_with("freeze_plan",task="frozen",provider="pinned",steps=proposal[1])
+        self.assertEqual(self.j.get("frozen")["steps"],proposal[1])
+        self.assertIsNone(self.j.soft_intent("frozen"))
+
+    def test_soft_host_outage_preserves_kernel_status(self):
+        self.j.create("kernel","status")
+        with patch.dict(os.environ,{"EDGE_SOFT_SOCKET":"/nonexistent/edge-soft.sock"}):
+            self.tick(planning=True)
+        row = self.j.get("kernel")
+        self.assertEqual((row["state"],row["steps"][0]["tool"]),("RUNNING","status"))
+        self.assertNotIn("soft_pin",row["steps"][0])
+
+    def test_soft_settlement_follows_terminal_evidence(self):
+        task = self.j.create("soft", "query soft facts")
+        pins = [{"reservation_id":f"soft/step/{i}"} for i in (1,2)]
+        task["steps"] = [{"soft_pin":pin, "status":"PENDING"} for pin in pins]
+        def queued():
+            return [r[0] for r in self.j.db.execute("SELECT operation FROM soft_settlements ORDER BY operation")]
+        self.j.save(task,"RUNNING","frozen",kind="planned")
+        self.j.save(task,"RECOVERY_REQUIRED","lost receipt",kind="error")
+        self.assertEqual(queued(),[])
+        task["steps"][0]["status"] = "SUCCEEDED"
+        task["cursor"] = 1
+        self.j.save(task,"RUNNING","independently verified",kind="verified")
+        self.assertEqual(queued(),["soft/step/1"])
+        self.j.save(task,"BLOCKED","rejected before dispatch",kind="blocked")
+        self.assertEqual(queued(),["soft/step/1","soft/step/2"])
+
     def test_atomic_candidate_and_independent_queues(self):
         self.j.create("capture","collect photo")
         self.tick(planning=True)

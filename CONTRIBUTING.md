@@ -56,6 +56,8 @@ git diff --check
 
 ## 分支、评审和回移
 
+日常开发在同一个仓库目录运行 `git switch` 切换阶段。每个 SDD 阶段使用独立分支和 PR，收到评审后在对应分支追加提交。部署版本由生成器更新本仓库的 `deploy/robot` 引用，使用 `git show deploy/robot:ROBOT_SOURCE` 查询来源。本地测试的日志进入本仓库的 `.ci-results/`，需要共享的结论和复测入口留在 `docs/testing/`。
+
 | 引用 | 职责 | 合入方式 |
 |---|---|---|
 | `main` | 持续集成、下一版本的来源 | 功能分支开 PR；两个必需检查通过、讨论已处理后合入 |

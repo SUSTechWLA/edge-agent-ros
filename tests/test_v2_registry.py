@@ -47,6 +47,14 @@ class RegistryContract(unittest.TestCase):
     def install(self):
         return change(self.request("publish", self.descriptor(self.item), "absent"))
 
+    def authorize_exports(self, item, names):
+        # Emulate the site administrator, separately from the candidate author.
+        path = self.trust / "catalog.json"
+        catalog = json.loads(path.read_text(encoding="utf8"))
+        records = catalog["implementations"][item["provenance"]["code_digest"]]
+        next(record for record in records if record["id"] == item["id"])["exports"] = names
+        path.write_text(json.dumps(catalog),encoding="utf8")
+
     def test_admin_lifecycle_reservations_survive_restart_without_rebinding(self):
         receipt = self.install()
         old = self.item["content_digest"]
@@ -172,9 +180,33 @@ class RegistryContract(unittest.TestCase):
         change(self.request("remove",self.name,drained["revision"],"r"))
         impostor = descriptor_fixture(self.trust,plugin_id="other")
         impostor["provides"] = [wire]
+        self.authorize_exports(impostor,[wire["name"]])
         impostor["content_digest"] = compute_content_digest(impostor,self.trust)
         with self.assertRaisesRegex(RegistryError,"service_conflict"):
             change(self.request("publish",self.descriptor(impostor),"absent","other"))
+
+    def test_kernel_exports_are_reserved_even_with_site_approval(self):
+        for name in ("inspect","status"):
+            with self.subTest(name=name):
+                candidate = {**self.item,"provides":[{**self.item["provides"][0],"name":name}]}
+                self.authorize_exports(candidate,[name])
+                candidate["content_digest"] = compute_content_digest(candidate,self.trust)
+                with self.assertRaisesRegex(RegistryError,"execution kernel owns"):
+                    change(self.request("publish",self.descriptor(candidate),"absent",name))
+
+    def test_settlement_releases_dependency_closure_atomically_and_replays(self):
+        self.install()
+        sub = descriptor_fixture(self.trust,plugin_id="sub")
+        change(self.request("publish",self.descriptor(sub),"absent","sub"))
+        expected = {row["id"]:row["content_digest"] for row in (self.item,sub)}
+        with V2Registry(self.root) as registry:
+            registry.freeze_plan("task","test",[],[(k,v,"op") for k,v in expected.items()])
+            with self.assertRaisesRegex(RegistryError,"complete reservation"):
+                registry.settle_operation("op",{self.name:expected[self.name]})
+            self.assertEqual(registry.reservations_for("op"),expected)
+            registry.settle_operation("op",expected)
+            self.assertEqual(registry.reservations_for("op"),{})
+            registry.settle_operation("op",expected)
 
     def test_input_mutation_and_semver_reuse_are_rejected_with_audit(self):
         a = self.install()
@@ -183,6 +215,8 @@ class RegistryContract(unittest.TestCase):
             change(self.request("publish",self.descriptor(tampered),a["revision"],"tamper"))
         mutated = {**self.item,"parameters":{"type":"boolean"}}
         mutated["content_digest"] = compute_content_digest(mutated,self.trust)
+        with self.assertRaisesRegex(RegistryError,"digest_mismatch"):
+            change(self.request("check",self.descriptor(mutated),a["revision"]))
         with self.assertRaisesRegex(RegistryError,"digest_mismatch"):
             change(self.request("publish",self.descriptor(mutated),a["revision"],"immutable"))
         with V2Registry(self.root) as registry:

@@ -9,6 +9,7 @@ import uuid
 
 from author_tool import public_reference
 from module_journal import ModuleJournal, canonical
+from planning import BASE
 from plugin_descriptor import NAME, load_descriptor
 
 
@@ -43,6 +44,12 @@ def claims(db):
     return owners
 
 
+def immutable_version(db, item):
+    seen = db.execute("SELECT digest FROM v2_releases WHERE id=? AND version=?", (item["id"],item["version"])).fetchone()
+    if seen and seen[0] != item["content_digest"]:
+        raise RegistryError("plugin.digest_mismatch","existing semantic version has different contents")
+
+
 def admissible(item, entries, owners):
     if item["class"] != "soft":
         raise RegistryError("plugin.physical_hot_reload_forbidden", "physical releases require the deployment channel")
@@ -50,6 +57,8 @@ def admissible(item, entries, owners):
     if "release-admin" not in policy["install"] or "site-operator" not in policy["enable"] or policy["site_approval"]:
         raise RegistryError("plugin.permission_denied", "the soft release channel cannot satisfy this site's approval requirements")
     for spec in item["provides"]:
+        if spec["name"] in BASE:
+            raise RegistryError("plugin.permission_denied", "the execution kernel owns " + spec["name"])
         if owners.get(spec["name"],item["id"]) != item["id"]:
             raise RegistryError("plugin.service_conflict", "export has a different historical owner: " + spec["name"])
     # A missing service leaves its consumer pending. An ambiguous service or a known
@@ -169,6 +178,19 @@ class V2Registry:
         return self.db.execute("""SELECT plugin_id,digest,operation_id FROM v2_reservations
             WHERE settled=0 ORDER BY plugin_id,operation_id""").fetchall()
 
+    def settle_operation(self, operation_id, expected):
+        """Release the complete frozen dependency set after terminal evidence, including idempotent retries."""
+        with self._write():
+            stored = dict(self.db.execute("SELECT plugin_id,digest FROM v2_reservations WHERE operation_id=?",
+                                          (operation_id,)))
+            if not stored or stored != expected:
+                raise RegistryError("tool.binding_unavailable", "settlement does not match the complete reservation")
+            self.db.execute("UPDATE v2_reservations SET settled=1 WHERE operation_id=?", (operation_id,))
+
+    def reservations_for(self, operation_id):
+        return dict(self.db.execute("SELECT plugin_id,digest FROM v2_reservations WHERE operation_id=? AND settled=0",
+                                    (operation_id,)))
+
     def saved_plan(self, task_id):
         row = self.db.execute("SELECT plan FROM v2_plans WHERE task_id=?", (task_id,)).fetchone()
         return json.loads(row[0]) if row else None
@@ -220,9 +242,7 @@ class V2Registry:
         missing = []
         if action == "publish":
             missing = admissible(item,self.entries(),self.claimed_exports())
-            seen = self.db.execute("SELECT digest FROM v2_releases WHERE id=? AND version=?", (name,item["version"])).fetchone()
-            if seen and seen[0] != item["content_digest"]:
-                raise RegistryError("plugin.digest_mismatch","existing semantic version has different contents")
+            immutable_version(self.db,item)
             if old and (not draining or not disposed or frozen):
                 raise RegistryError("plugin.cleanup_incomplete","drain and dispose the old release before updating")
             if old and not old["hot_reload"]:
@@ -294,7 +314,13 @@ class V2Registry:
                 if "error" in result:
                     raise RegistryError(result["error"],result["detail"])
                 return result
-            cause = self._event("requested","release.requested",trace,parent,data)
+            audit = dict(data)
+            if args.action in ("drain","remove") and name is not None and not invalid:
+                old = self.db.execute("SELECT version,digest FROM v2_pointers JOIN v2_releases USING(id,digest) WHERE id=?",
+                                      (name,)).fetchone()
+                if old:
+                    audit.update(version=old[0],content_digest=old[1])
+            cause = self._event("requested","release.requested",trace,parent,audit)
             if not expect_valid:
                 invalid = RegistryError("version_conflict","expect must be an installed CAS revision or absent")
             if prior:
@@ -308,7 +334,7 @@ class V2Registry:
                 self.db.execute("ROLLBACK TO publication")
                 failure = exc
                 result = {"error":exc.code,"detail":str(exc).removeprefix(exc.code+": ")}
-                self._event("rejected",exc.code,trace,cause,data)
+                self._event("rejected",exc.code,trace,cause,audit)
             self.db.execute("RELEASE publication")
             if not prior:
                 self.db.execute("INSERT INTO v2_receipts VALUES(?,?,?)", (key,intent,canonical(result)))
@@ -318,6 +344,8 @@ class V2Registry:
 
 
 def command(args):
+    if getattr(args,"cases",None) is not None:
+        raise RegistryError("plugin.manifest_invalid","--cases applies to the derived definition registry")
     configured = os.environ.get("EDGE_PLUGIN_TRUST_ROOT")
     supplied = getattr(args,"trust_root",None)
     if configured and supplied and Path(configured).resolve() != Path(supplied).resolve():
@@ -333,10 +361,12 @@ def command(args):
             current,entries,owners = "absent",[],{}
             if path.exists():
                 with closing(sqlite3.connect(path.resolve().as_uri()+"?mode=ro",uri=True)) as db:
+                    db.execute("BEGIN")
                     entries = catalog(db)
                     owners = claims(db)
                     row = db.execute("SELECT revision FROM v2_pointers WHERE id=?", (item["id"],)).fetchone()
                     current = row[0] if row else "absent"
+                    immutable_version(db,item)
             if args.expect is not None and args.expect != current:
                 raise RegistryError("version_conflict","registry changed; current revision is " + current)
             result.update(revision=current,missing_services=admissible(item,entries,owners))

@@ -1,5 +1,9 @@
 """Readable tool milestones are a projection. A running poll can never act as terminal evidence."""
+from pathlib import Path
+import sys
 import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from task_recorder.trace_view import milestone_key, title, tool_history
 
@@ -26,3 +30,7 @@ class TraceViewTest(unittest.TestCase):
         self.assertIn("camera",heading)
         for evidence in ("camera.raw_encoding","a/step/1","73",row["source_utc"]):
             self.assertIn(evidence,description)
+
+
+if __name__ == "__main__":
+    unittest.main()

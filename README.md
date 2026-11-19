@@ -77,9 +77,9 @@ docker compose start
 
 ## 架构与插件边界
 
-### 插件升级的两条轨道（P0 待评审）
+### 插件升级的两条轨道
 
-同一次发布要回答两个问题：旧任务还能找到原来那份实现吗？如果涉及设备，谁能证明旧进程已经交出控制权？下面是 SDD-045 的目标契约。当前 v1 能力、实施阶段和独立证据门槛在规格中逐项列明。
+旧任务怎样继续找到原实现？驱动退出时，谁来证明设备已经停稳？下面是 SDD-045 的双轨契约。P1 提供可选的纯软件宿主，physical 部署交接与设备台架验收属于 P2，板端 pack 交付属于 P3。
 
 | 维度 | soft（纯软件） | physical（设备与物理作用） |
 |---|---|---|
@@ -94,7 +94,9 @@ docker compose start
 | 回退 | 排空后卸载或恢复原版 | 交接后重新部署原版本与已验镜像 |
 | 权限 | 无设备与执行器网络，只开放批准的事实与软件服务 | 最小设备挂载、网络白名单和可信准入 |
 
-例如，按任务 ID 查询已存证据可选 soft；原始雷达订阅与会下发底盘动作的导航提供者应选 physical。设计提出先用 Session、Evidence 和纯数列计算验证 soft，再以导航验证物理交接。[P0 总规格与评审入口](docs/specs/SDD-045-plugin-tracks.md) · [Cordis 概念对应](docs/plugin-runtime-mapping.md) · [验收计划](docs/testing/plugin-tracks.md)
+P1 的三个试点可用一个实验理解。给 Agent 下发“求输入数列的平均值 [2,4,6]”，它冻结派生工具的版本和操作号，隔离的 soft-host 返回数值 4。通过 `session.read` 追查这次任务，再用 Evidence 的三项工具按需查询公开事实。一项已经冻结的操作会占住旧版本的引用，管理器等它排空后才能发布新代码。原始雷达订阅和底盘导航属于 physical。目标设计、实际 Python 接口和分阶段验收分别见[总规格](docs/specs/SDD-045-plugin-tracks.md)、[Cordis 运行时](docs/plugin-runtime-mapping.md)及[验收计划](docs/testing/plugin-tracks.md)。
+
+在仓库根目录执行 `python tests/test_plugin_descriptor.py -v` 和 `python tests/test_soft_runtime.py -v` 可以先观察清单准入、换版与依赖失联。已有带完整源码提交标签的本地 P1 镜像时，执行 `python tests/system/soft_runtime_acceptance.py --image <本地镜像> --out artifacts/verification/plugin-tracks/<新运行号>/soft.json`。脚本建立独立 Compose 项目，注册真实提供者并保存验收记录。[现场安装命令与目录](docs/plugin-descriptor-v2.md#p1-现场安装) · [测试范围与记录](docs/testing/soft-runtime.md)
 
 从一个实际案例开始，追查模型如何提出新工具、一次错误表达式如何进入下一次推理，以及哪个进程有权批准安装。[单机验收与故障对照](docs/testing/event-driven-evolution.md)
 

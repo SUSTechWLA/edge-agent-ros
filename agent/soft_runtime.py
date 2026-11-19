@@ -148,9 +148,12 @@ class Context:
 class SoftRuntime:
     """Use on one event loop. Management transactions serialize across await points."""
 
-    def __init__(self, on_event, resolve_schema=lambda schema: schema):
+    def __init__(self, on_event, resolve_schema=lambda schema: schema, *, load_timeout=10.0):
         self._sink = on_event
         self._resolve_schema = resolve_schema
+        if not 0 < load_timeout < float("inf"):
+            raise ValueError("load_timeout must be positive and finite")
+        self._load_timeout = load_timeout
         self._fibers = {}
         self._versions = {}
         self._reservations = {}
@@ -245,7 +248,7 @@ class SoftRuntime:
     def catalog(self):
         return [self._row(self._fibers[key]) for key in sorted(self._fibers)]
 
-    def _candidate(self, descriptor, apply, config):
+    def _candidate(self, descriptor, apply, config, healthy):
         self._audited()
         if descriptor["class"] != "soft" or descriptor["effects"] not in ("read", "idempotent"):
             raise SoftRuntimeError("plugin.class_violation", "only admitted software may run in this host")
@@ -253,7 +256,9 @@ class SoftRuntime:
             raise SoftRuntimeError("plugin.permission_denied", "a host-approved adapter is required")
         if any(ref["type"] not in ("service", "event") for ref in descriptor["requires"]):
             raise SoftRuntimeError("plugin.manifest_invalid", "unsupported dependency type in soft host")
-        fiber = Fiber(deepcopy(descriptor), apply, deepcopy({} if config is None else config))
+        if type(healthy) is not bool:
+            raise ValueError("health must be boolean")
+        fiber = Fiber(deepcopy(descriptor), apply, deepcopy({} if config is None else config), healthy=healthy)
         self._validate(descriptor["config_schema"], fiber.settings)
         key = (fiber.id, descriptor["version"])
         if self._versions.get(key, descriptor["content_digest"]) != descriptor["content_digest"]:
@@ -307,7 +312,18 @@ class SoftRuntime:
                     continue
                 self._transition(fiber, "LOADING")
                 try:
-                    disposer = await _invoke(fiber.apply, Context(self, fiber))
+                    loading = asyncio.create_task(_invoke(fiber.apply, Context(self, fiber)))
+                    loading.add_done_callback(lambda task: None if task.cancelled() else task.exception())
+                    try:
+                        done, _ = await asyncio.wait([loading], timeout=self._load_timeout)
+                    finally:
+                        if not loading.done():
+                            loading.cancel()
+                            # Until the owner is reconciled a late apply might still hold a resource.
+                            fiber.cleanup_failed.append("apply")
+                    if not done:
+                        raise SoftRuntimeError("plugin.cleanup_incomplete", "apply deadline reached")
+                    disposer = loading.result()
                     if disposer is not None:
                         Context(self, fiber).effect(disposer)
                     expected = fiber.declared("provides", "tool") | fiber.declared("provides", "service")
@@ -315,8 +331,13 @@ class SoftRuntime:
                         raise SoftRuntimeError("plugin.manifest_invalid", "apply did not register declared exports")
                 except (Exception, asyncio.CancelledError) as exc:
                     fiber.error = getattr(exc, "code", "plugin.apply_failed")
-                    self._transition(fiber, "FAILED", code=fiber.error)
-                    await self._cleanup(fiber)
+                    self._transition(fiber, "FAILED", code=fiber.error, unreleased=list(fiber.cleanup_failed))
+                    if not fiber.cleanup_failed:
+                        try:
+                            await self._cleanup(fiber)
+                        except SoftRuntimeError as cleanup_error:
+                            if cleanup_error.code != "plugin.cleanup_incomplete":
+                                raise
                     if isinstance(exc, asyncio.CancelledError):
                         raise
                 else:
@@ -335,9 +356,9 @@ class SoftRuntime:
             raise SoftRuntimeError(fiber.error, "plugin activation failed", plugin_id=fiber.id)
         return self._row(fiber)
 
-    async def install(self, descriptor, apply, config=None):
+    async def install(self, descriptor, apply, config=None, *, healthy=True):
         async with self._manage:
-            fiber = self._candidate(descriptor, apply, config)
+            fiber = self._candidate(descriptor, apply, config, healthy)
             old = self._fibers.get(fiber.id)
             if old and old.state != "DISPOSED":
                 raise SoftRuntimeError("version_conflict", "ID already installed", plugin_id=fiber.id)
@@ -374,9 +395,9 @@ class SoftRuntime:
         async with self._manage:
             return await self._remove(self._find(plugin_id))
 
-    async def update(self, descriptor, apply, config=None):
+    async def update(self, descriptor, apply, config=None, *, healthy=True):
         async with self._manage:
-            fiber = self._candidate(descriptor, apply, config)
+            fiber = self._candidate(descriptor, apply, config, healthy)
             old = self._find(fiber.id)
             if not old.descriptor["hot_reload"]:
                 raise SoftRuntimeError("plugin.permission_denied", "code reload disabled")
@@ -417,7 +438,7 @@ class SoftRuntime:
                         for key, owner in closure.items()}
         pin = {"plugin_id": plugin_id, "name": name,
                "version": fiber.descriptor["version"], "content_digest": fiber.descriptor["content_digest"],
-               "binding": _digest([plugin_id, name, dependencies])}
+               "binding": _digest([plugin_id, name, dependencies]), "dependencies": dependencies}
         return Reservation(pin, closure, settings)
 
     def preview(self, plugin_id, name):
@@ -466,19 +487,33 @@ class SoftRuntime:
         if reservation is None or reservation.pin != pin:
             raise SoftRuntimeError("tool.binding_unavailable", "no matching reservation")
         arg_digest = _digest(arguments)
-        if reservation.task is None:
-            fiber = self._find(pin["plugin_id"])
+        if reservation.argument_digest is not None and reservation.argument_digest != arg_digest:
+            raise SoftRuntimeError("version_conflict", "operation arguments changed on replay")
+        fiber = self._find(pin["plugin_id"])
+        task = reservation.task
+        operation = arguments.get("operation_id") if isinstance(arguments, dict) else None
+        if task and task.done() and not task.cancelled():
+            if task.exception() is not None:
+                # Retrying a read or an operation-keyed idempotent provider is safe.
+                # The provider owns the durable operation ledger across host restarts.
+                if fiber.descriptor["effects"] == "read" or (isinstance(operation, str) and operation):
+                    task = None
+            else:
+                reply = task.result()
+                if (isinstance(operation, str) and operation and isinstance(reply, dict)
+                        and reply.get("operation_id") == operation and reply.get("state") == "RUNNING"):
+                    # An acknowledged running operation is polled again with its original identity.
+                    task = None
+        if task is None:
             closure = self._closure(fiber, allow_draining=True)
             if closure != reservation.closure:
                 raise SoftRuntimeError("tool.binding_unavailable", "original implementation unavailable")
             reservation.argument_digest = arg_digest
-            reservation.task = asyncio.create_task(self._execute(
+            reservation.task = task = asyncio.create_task(self._execute(
                 reservation, fiber.exports[pin["name"]], deepcopy(arguments)))
             # Disconnecting an HTTP client cannot cancel, duplicate or orphan the operation.
             reservation.task.add_done_callback(lambda task: None if task.cancelled() else task.exception())
-        elif reservation.argument_digest != arg_digest:
-            raise SoftRuntimeError("version_conflict", "operation arguments changed on replay")
-        return deepcopy(await asyncio.shield(reservation.task))
+        return deepcopy(await asyncio.shield(task))
 
     async def release(self, reservation_id):
         reservation = self._reservations.get(reservation_id)
@@ -495,7 +530,16 @@ class SoftRuntime:
         # Snapshot the subscribers. Re-check admission immediately before each delivery.
         deliveries = [(fiber, handler) for fiber in self._fibers.values()
                       if fiber.state == "ACTIVE" for event, handler in fiber.listeners if event == name]
+        first_error = None
         for fiber, handler in deliveries:
-            closure = self._closure(fiber, allow_draining=False)
-            settings = {key: deepcopy(owner.settings) for key, owner in closure.items()}
-            await self._execute(Reservation({}, closure, settings), handler, deepcopy(payload))
+            try:
+                closure = self._closure(fiber, allow_draining=False)
+                settings = {key: deepcopy(owner.settings) for key, owner in closure.items()}
+                await self._execute(Reservation({}, closure, settings), handler, deepcopy(payload))
+            except Exception as exc:
+                code = getattr(exc, "code", "plugin.handler_failed")
+                self._emit(fiber, "plugin.delivery_failed", event=name, code=code)
+                if first_error is None:
+                    first_error = SoftRuntimeError(code, "event delivery failed", plugin_id=fiber.id)
+        if first_error:
+            raise first_error

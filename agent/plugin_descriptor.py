@@ -157,6 +157,10 @@ def _validate_schema(schema, field="schema"):
 def validate_instance(schema, value):
     """Check the supported schema vocabulary strictly, including nested values and boolean types."""
     _validate_schema(schema)
+    try:
+        canonical(value)
+    except (ValueError, UnicodeError, RecursionError, TypeError, AttributeError) as error:
+        raise DescriptorError("plugin.config_invalid", "value must be interoperable JSON") from error
 
     def visit(rule, actual, where):
         def require(ok):
@@ -306,6 +310,9 @@ def _record(item, catalog):
     matches = [r for r in records if isinstance(r, dict) and r.get("id") == item["id"]]
     _check(len(matches) == 1, "site identity", "plugin.permission_denied")
     record = matches[0]
+    exports = record.get("exports")
+    _strings(exports, "site exports")
+    _check(all(row["name"] in exports for row in item["provides"]), "site exports", "plugin.permission_denied")
     expected = {"source_commit": p["source_commit"], "image_digest": p["image_digest"],
                 "entrypoint": item["entrypoint"], "class": item["class"],
                 "kind": "code" if item["runtime"] == "inproc" else "image"}
@@ -365,7 +372,8 @@ def trusted_code(item, trust_root):
 def _legacy(row, kind, binding, software=False):
     return {"id":row["id"], "version":row.get("version"), "kind":kind, "class":"soft" if software else "physical",
             "content_digest":None, "binding":binding, "legacy":True, "health":"unknown",
-            "availability":row.get("status", "unknown"), "lifecycle":"legacy"}
+            "availability":row.get("status", "unknown"), "lifecycle":"legacy",
+            "class_basis":"caller-supplied series" if software else "conservative; implementation unattested"}
 
 
 def normalize_legacy_tool(cap):

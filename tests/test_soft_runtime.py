@@ -96,6 +96,8 @@ class SoftRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await self.runtime.install(source, lambda ctx: ctx.provide("numbers", lambda args: 5))
         gen = self.row()["generation"]
         pin = await self.runtime.freeze("math", "calculate", "task/0")
+        self.assertEqual(set(pin["dependencies"]), {"math", "adapter", "sensor.facts"})
+        self.assertEqual(pin["dependencies"]["sensor.facts"][:2], [source["version"], source["content_digest"]])
         self.assertEqual(self.row("sensor.facts")["reservations"], 1)
         await self.runtime.set_health("sensor.facts", False)
         self.assertEqual(self.row()["lifecycle"], "ACTIVE")
@@ -149,6 +151,27 @@ class SoftRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await self.reject("version_conflict", restarted.freeze("math", "other", "persisted"))
         await self.reject("tool.binding_unavailable", restarted.call(dict(pin, binding="forged"), {}))
 
+    async def test_restart_with_changed_dependency_cannot_restore_original_reservation(self):
+        root = descriptor(requires=[ref("reading")])
+        dependency = descriptor("facts", provides=[ref("reading")])
+
+        def source(ctx):
+            ctx.provide("reading", lambda _: ctx.config()["revision"])
+
+        def consumer(ctx):
+            ctx.tools.register("calculate", ctx.require("reading"))
+
+        await self.runtime.install(dependency, source, {"revision": 1})
+        await self.runtime.install(root, consumer)
+        pin = await self.runtime.freeze("math", "calculate", "p")
+        other = SoftRuntime(self.events.append)
+        await other.install(dependency, source, {"revision": 2})
+        await other.install(root, consumer)
+        await self.reject("tool.binding_unavailable", other.freeze("math", "calculate", "p", expected_pin=pin,
+                                                                   restore=True))
+        # Merely browsing a directory has not reserved either provider.
+        self.assertTrue(all(row["reservations"] == 0 for row in other.catalog()))
+
     async def test_duplicate_call_or_lost_client_executes_once_and_holds_inflight(self):
         start, finish = asyncio.Event(), asyncio.Event()
         calls = []
@@ -190,6 +213,60 @@ class SoftRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await self.reject("plugin.dependency_unavailable", self.runtime.freeze("math", "calculate", "op"))
         await self.runtime.remove("math")
         self.assertEqual(calls, ["released"])
+
+    async def test_running_receipt_is_polled_by_original_operation_then_terminal_is_cached(self):
+        lifecycle = iter(["RUNNING", "SUCCEEDED"])
+        calls = []
+
+        def provider(envelope):
+            calls.append(envelope)
+            return {"operation_id": envelope["operation_id"], "state": next(lifecycle)}
+
+        await self.runtime.install(dict(self.old, effects="idempotent"),
+                                   lambda ctx: ctx.tools.register("calculate", provider))
+        pin = await self.runtime.freeze("math", "calculate", "step/0")
+        envelope = {"operation_id": "op", "arguments": {"number": 2}, "version": "1", "trace": {"task_id": "T"}}
+        self.assertEqual((await self.runtime.call(pin, envelope))["state"], "RUNNING")
+        await self.reject("version_conflict", self.runtime.call(pin, dict(envelope, operation_id="other")))
+        await self.reject("version_conflict", self.runtime.call(pin, dict(envelope, trace={"task_id": "U"})))
+        await self.runtime.drain("math")
+        self.assertEqual((await self.runtime.call(pin, envelope))["state"], "SUCCEEDED")
+        self.assertEqual((await self.runtime.call(pin, envelope))["state"], "SUCCEEDED")
+        self.assertEqual(calls, [envelope, envelope])
+
+    async def test_initial_health_and_transport_recovery_preserve_single_fiber(self):
+        calls = []
+
+        def flaky(envelope):
+            calls.append(envelope)
+            if len(calls) == 1:
+                raise ConnectionError
+            return "five"
+
+        initial = await self.runtime.install(self.old, lambda ctx: ctx.tools.register("calculate", flaky),
+                                             healthy=False)
+        self.assertEqual(initial["lifecycle"], "PENDING")
+        await self.reject("plugin.dependency_unavailable", self.runtime.freeze("math", "calculate", "p"))
+        await self.runtime.set_health("math", True)
+        self.assertEqual(self.row()["generation"], initial["generation"])
+        pin = await self.runtime.freeze("math", "calculate", "p")
+        with self.assertRaises(ConnectionError):
+            await self.runtime.call(pin, {"operation_id": "original"})
+        self.assertEqual(await self.runtime.call(pin, {"operation_id": "original"}), "five")
+        self.assertEqual(calls, [{"operation_id": "original"}] * 2)
+
+    async def test_hung_apply_timeout_quarantines_and_unblocks_unrelated_installs(self):
+        host = SoftRuntime(self.events.append, load_timeout=.03)
+
+        async def incomplete(ctx):
+            await asyncio.Event().wait()
+
+        await self.reject("plugin.cleanup_incomplete", asyncio.wait_for(host.install(self.old, incomplete), 1))
+        self.assertEqual(host.catalog()[0]["cleanup_failed"], ["apply"])
+        await self.reject("plugin.cleanup_incomplete", host.remove("math"))
+        unrelated = descriptor("text", provides=[ref("echo", "tool")])
+        row = await host.install(unrelated, lambda ctx: ctx.tools.register("echo", str))
+        self.assertEqual(row["lifecycle"], "ACTIVE")
 
     async def test_concurrent_dispose_serializes_reverse_async_cleanup(self):
         order = []
@@ -270,6 +347,21 @@ class SoftRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await self.runtime.remove("listener")
         await self.runtime.emit("task.seen", 3)
         self.assertEqual(called, [1])
+
+    async def test_one_failed_listener_does_not_starve_healthy_subscribers(self):
+        called = []
+
+        def broken(_):
+            raise RuntimeError("observer refused")
+
+        listeners = [("broken", broken), ("healthy", called.append)]
+        for name, handler in listeners:
+            desc = descriptor(name, provides=[], requires=[ref("task.event", "event")])
+            await self.runtime.install(desc, lambda ctx: ctx.on("task.event", handler))
+        await self.reject("plugin.handler_failed", self.runtime.emit("task.event", 123))
+        self.assertEqual(called, [123])
+        failure, = [event for event in self.events if event["type"] == "plugin.delivery_failed"]
+        self.assertEqual(failure["plugin_id"], "broken")
 
     async def test_permission_conflict_and_corrupt_candidate_preserve_live_version(self):
         await self.runtime.install(self.old, calculate)

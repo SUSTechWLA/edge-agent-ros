@@ -15,6 +15,11 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("agent/soft_*.py","agent/v2_registry.py","agent/plugin_descriptor.py","compose.soft-runtime.yaml",
+      "scripts/prepare_soft_pilots.py","console/server/session_service.py"), (*AGENT,"observations","board","plugin-isolation")),
+    (("tests/test_soft_*.py","tests/test_v2_registry.py","tests/test_plugin_descriptor.py",
+      "tests/fixtures/plugin-tracks/*"), ("planner",)),
+    (("tests/system/soft_runtime_acceptance.py",), ("plugin-isolation",)),
     (("task_recorder/*","compose.task-recorder*.yaml","scripts/record-task.*","tests/test_recorder*.py",
       "tests/test_task_record*.py","tests/test_recording_trace_view.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
     (("tests/system/record_unknown_campus.py","tests/system/unknown_campus*",
@@ -149,6 +154,15 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_soft_release_consumers(self):
+        for path in ("agent/soft_host.py","agent/plugin_descriptor.py","agent/soft_client.py",
+                     "agent/v2_registry.py","compose.soft-runtime.yaml","scripts/prepare_soft_pilots.py",
+                     "console/server/session_service.py"):
+            for consumer in ("planner","observations","agent-contracts","agent-faults","ui","board","plugin-isolation"):
+                self.assertIn(consumer,selection([path])[0],path)
+        self.assertEqual(selection(["tests/fixtures/plugin-tracks/v1-expected.json"])[0],[R,"planner"])
+        self.assertEqual(selection(["tests/system/soft_runtime_acceptance.py"])[0],[R,"plugin-isolation"])
+
     def test_optional_recorder_and_campus_consumers(self):
         self.assertEqual(selection(["task_recorder/service.py","compose.task-recorder.yaml"])[0],[R])
         self.assertEqual(selection(["tests/system/record_unknown_campus.py"])[0],[R,"campus-world"])

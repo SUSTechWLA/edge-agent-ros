@@ -49,6 +49,16 @@ def enabled():
     return bool(os.getenv("EDGE_SOFT_SOCKET"))
 
 
+def can_take_over(previous, candidate):
+    if previous != candidate.get("_legacy_contract") or previous.get("effect") != "read":
+        return False
+    if previous.get("derived", {}).get("schema_version") == 2 and not previous.get("endpoint"):
+        return True
+    name = previous["id"]
+    return (name in ("read_session","evidence_schema","query_evidence") and
+            previous.get("endpoint") == "http://evidence:8125/invoke?tool=" + name)
+
+
 def catalog(legacy):
     view = request("catalog")
     # Tombstones continue to own a migrated name after removal. Only explicitly
@@ -56,6 +66,6 @@ def catalog(legacy):
     tools = {name: cap for name, cap in legacy.items() if name not in view["claims"]}
     for cap in view["tools"]:
         previous = legacy.get(cap["id"])
-        if previous is None or previous == cap.get("_legacy_contract"):
+        if previous is None or can_take_over(previous, cap):
             tools[cap["id"]] = cap
     return tools

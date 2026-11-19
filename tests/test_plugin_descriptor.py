@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "agent"))
+sys.path[:0] = [str(ROOT / "agent"), str(ROOT)]
 import plugin_descriptor as desc
 
 
@@ -56,7 +56,7 @@ def descriptor_fixture(trust_root, *, plugin_id="series.test", version="1.0.0", 
     catalog["schemas"][schema_name] = "input.json"
     records = catalog["implementations"].setdefault(impl, [])
     records[:] = [r for r in records if r["id"] != plugin_id]
-    records.append({"id":plugin_id, "class":track, "artifact":artifact_name, "entrypoint":entry,
+    records.append({"id":plugin_id, "class":track, "artifact":artifact_name, "entrypoint":entry, "exports":[plugin_id],
                     "kind":"code" if runtime == "inproc" else "image", "image_digest":image,
                     "source_commit":provenance["source_commit"]})
     catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
@@ -171,3 +171,151 @@ class LegacyCompatibility(unittest.TestCase):
         self.assertEqual(desc.normalize_legacy_tool(fake)["class"], "physical")
         service = {**inputs["services"][0], "binding":"legacy", "status":"ready"}
         self.assertEqual(desc.normalize_legacy_service(service)["binding"], "legacy")
+
+
+class DescriptorContract(unittest.TestCase):
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        self.root = Path(folder.name)
+        self.item = descriptor_fixture(self.root)
+
+    def rejects(self, item, code="plugin.manifest_invalid"):
+        with self.assertRaises(desc.DescriptorError) as raised:
+            desc.validate_descriptor(item, self.root)
+        self.assertEqual(raised.exception.code, code)
+
+    def test_fixed_canonical_vector_and_json_domains(self):
+        # RFC 8785 examples: binary64 rounding, fixed/scientific thresholds and UTF-16 sort.
+        numbers = [333333333.33333329, 1e30, 4.50, 2e-3, 1e-27, -0.0, 1e-6, 1e-7, 1e20, 1e21]
+        self.assertEqual(desc.canonical(numbers),
+                         b"[333333333.3333333,1e+30,4.5,0.002,1e-27,0,0.000001,1e-7,100000000000000000000,1e+21]")
+        self.assertEqual(desc.canonical({"\ue000":0,"\U00010000":1}), '{"\U00010000":1,"\ue000":0}'.encode())
+        for invalid in (float("inf"), float("nan"), 1 << 54, "\ud800"):
+            with self.subTest(value=repr(invalid)), self.assertRaises(ValueError):
+                desc.canonical(invalid)
+
+    def test_every_top_level_field_required_and_cross_fields_fail_closed(self):
+        for field in desc.FIELDS:
+            with self.subTest(missing=field):
+                self.rejects({k:v for k,v in self.item.items() if k != field})
+        mutations = [
+            ({"unknown":True},"plugin.manifest_invalid"), ({"schema_version":True},"plugin.manifest_invalid"),
+            ({"id":"../tool"},"plugin.manifest_invalid"), ({"version":"1.0.0-01"},"plugin.manifest_invalid"),
+            ({"kind":[]}, "plugin.manifest_invalid"), ({"runtime":"fork"}, "plugin.manifest_invalid"),
+            ({"effects":"actuation"},"plugin.class_violation"), ({"drain_required":False},"plugin.manifest_invalid"),
+            ({"device_lease":"camera"},"plugin.class_violation"), ({"verifier":self.item["id"]},"plugin.verifier_invalid"),
+            ({"resources":{"cpu":True}}, "plugin.manifest_invalid"), ({"policy":{}}, "plugin.manifest_invalid"),
+            ({"entrypoint":"../unsafe.py"}, "plugin.manifest_invalid"), ({"health":{}}, "plugin.manifest_invalid"),
+            ({"provides":["service.name"]},"plugin.manifest_invalid"),
+            ({"provides":[{**self.item["provides"][0],"name":"status"}]},"plugin.permission_denied"),
+            ({"requires":self.item["provides"]},"plugin.dependency_cycle"),
+            ({"parameters":{"type":"object","$ref":"http://example.test"}},"plugin.manifest_invalid"),
+            ({"outcomes":{"schema_ref":"missing@1"}},"plugin.manifest_invalid"),
+            ({"mounts":[{"source":"/dev/tty","target":"/data","read_only":True}]},"plugin.class_violation"),
+            ({"network":{"egress":["chassis"],"ingress":[]}},"plugin.permission_denied"),
+        ]
+        for change, code in mutations:
+            with self.subTest(change=change):
+                self.rejects({**self.item, **change}, code)
+        good = {**self.item, "version":"0.0.1-alpha.1+linux.01"}
+        good["content_digest"] = desc.compute_content_digest(good, self.root)
+        self.assertEqual(desc.validate_descriptor(good, self.root), good)
+
+    def test_hash_authenticates_code_schemas_and_descriptor_independently(self):
+        valid = desc.validate_descriptor(self.item, self.root)
+        self.assertTrue(desc.trusted_code(valid,self.root).startswith(b"# Reviewed fixture code"))
+        self.rejects({**valid, "version":"2.0.0"}, "plugin.digest_mismatch")
+        self.rejects({**valid, "entrypoint":"different:apply"}, "plugin.permission_denied")
+        catalog_path = self.root / "catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        record = next(iter(catalog["implementations"].values()))[0]
+        schema = self.root / "input.json"
+        prior = schema.read_bytes()
+        schema.write_bytes(b'{"type":"string"}')
+        self.rejects(valid, "plugin.digest_mismatch")
+        schema.write_bytes(prior)
+        artifact = self.root / record["artifact"]
+        artifact.write_bytes(b"changed after validation")
+        with self.assertRaisesRegex(ValueError,"plugin.digest_mismatch"):
+            desc.trusted_code(valid,self.root)
+        record["artifact"] = "../outside"
+        catalog_path.write_text(json.dumps(catalog),encoding="utf-8")
+        self.rejects(valid)
+
+    def test_pinned_physical_contract_and_process_soft(self):
+        process = descriptor_fixture(self.root, plugin_id="camera.probe", runtime="process", track="physical")
+        desc.validate_descriptor(process, self.root)
+        for key in desc.PHYSICAL:
+            with self.subTest(missing=key):
+                self.rejects({k:v for k,v in process.items() if k!=key}, "plugin.physical_contract_missing")
+        self.rejects({**process, "hot_reload":True}, "plugin.physical_hot_reload_forbidden")
+        self.rejects({**process, "verifier":"camera.probe"}, "plugin.verifier_invalid")
+        self.rejects({**process, "runtime":"inproc"}, "plugin.class_violation")
+        process_soft = descriptor_fixture(self.root, plugin_id="read.log", runtime="process")
+        self.assertEqual(desc.validate_descriptor(process_soft,self.root),process_soft)
+        with self.assertRaisesRegex(ValueError,"plugin.class_violation"):
+            desc.trusted_code(process_soft,self.root)
+
+    def test_file_parser_truncated_duplicate_and_bounds(self):
+        path = self.root / "test.plugin.json"
+        for raw in (b'{"id":"a","id":"b"}', b"{}" + b" " * desc.MAX_JSON, b'{"a":1', b'{"a":NaN}'):
+            path.write_bytes(raw)
+            with self.subTest(prefix=raw[:20]), self.assertRaises(desc.DescriptorError):
+                desc.load_descriptor(path,self.root)
+        path.write_bytes(json.dumps(dict(reversed(list(self.item.items())))).encode())
+        self.assertEqual(desc.load_descriptor(path,self.root), self.item)
+
+    def test_config_nested_types_bounds_enums_and_closed_objects(self):
+        schema = {"type":"object", "required":["items"],"additionalProperties":False, "properties":{
+            "items":{"type":"array","maxItems":1,"minItems":1,"items":{"type":"integer","minimum":1,"maximum":5}},
+            "mode":{"type":"string","enum":["read","scan"], "maxLength":4}}}
+        self.assertIsNone(desc.validate_instance(schema, {"items":[1],"mode":"scan"}))
+        for bad in ({}, {"items":[]}, {"items":[8]}, {"items":[True]}, {"items":[1,2]},
+                    {"items":[2],"extra":1}, {"items":[1],"mode":"move"}):
+            with self.subTest(value=bad), self.assertRaisesRegex(ValueError,"plugin.config_invalid"):
+                desc.validate_instance(schema,bad)
+        with self.assertRaisesRegex(ValueError,"plugin.config_invalid"):
+            desc.validate_instance({"type":"boolean","enum":[0]}, False)
+
+
+class PilotContracts(unittest.TestCase):
+    def test_offline_site_and_real_callers_evidence_schema(self):
+        from types import SimpleNamespace
+        from evidence.query import schema
+        from scripts.prepare_soft_pilots import DEFAULT_SERIES, prepare_site
+        from soft_series_plugin import apply
+
+        manifest = json.dumps({"schemaVersion":2, "config":{"digest":"sha256:" + "a"*64},"layers":[]}).encode()
+        with tempfile.TemporaryDirectory() as tmp:
+            site = Path(tmp) / "site"
+            names = prepare_site(site,manifest,"b"*40,DEFAULT_SERIES)
+            self.assertEqual(sorted(names), ["derived.series_mean", "evidence.evidence_schema", "evidence.query_evidence",
+                                            "evidence.read_session", "session.default"])
+            with self.assertRaisesRegex(ValueError,"existing trust root"):
+                prepare_site(site,manifest,"b"*40,DEFAULT_SERIES)
+            trust = site / "trust"
+
+            def pilot(name):
+                return desc.load_descriptor(site / "releases" / (name + ".plugin.json"),trust)
+
+            tool = pilot(DEFAULT_SERIES["id"])
+            profile = tool["config_schema"]["properties"]["profile"]["const"]
+            handlers = {}
+            ctx = SimpleNamespace(config=lambda:{"profile":profile,"settings":{}},
+                                  tools=SimpleNamespace(register=lambda name,handler: handlers.update({name:handler})))
+            apply(ctx)
+            payload = {"operation_id":"fixed","version":profile["legacy"]["version"],"arguments":{"series":"[2,4,6]"}}
+            reply = handlers[tool["id"]](payload)
+            self.assertEqual(reply["operation_id"], "fixed")
+            self.assertEqual(reply["evidence"]["value"], 4)
+            desc.validate_instance(tool["outcomes"], reply["evidence"])
+            self.assertEqual(desc.trusted_code(tool,trust), (ROOT/"agent"/"soft_series_plugin.py").read_bytes())
+            evidence = pilot("evidence.evidence_schema")
+            expected = evidence["config_schema"]["properties"]["profile"]["const"]["health_expected"]
+            self.assertEqual({k:schema()[k] for k in expected},expected)
+            desc.validate_instance(evidence["outcomes"], {**schema(),"query_id":"fixed"})
+
+
+if __name__ == "__main__":
+    unittest.main()

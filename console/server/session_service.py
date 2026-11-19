@@ -14,6 +14,7 @@ import uuid
 
 sys.path.append(str(Path(__file__).resolve().parents[2] / "agent"))
 from runtime_plugins import PluginUnavailable, ServiceSnapshot
+import soft_client
 from task_data import identifiers
 from tracing import clean_text
 
@@ -32,7 +33,25 @@ class SessionUnavailable(Exception):
 
 def _pin():
     try:
-        return ServiceSnapshot(Path(os.getenv("EDGE_PLUGIN_DIR", "/etc/edge/plugins"))/"runtime").pin("session.read")
+        directory = ServiceSnapshot(Path(os.getenv("EDGE_PLUGIN_DIR", "/etc/edge/plugins"))/"runtime")
+        if soft_client.enabled():
+            view = soft_client.request("session_pin")
+            if view["claimed"]:
+                item = view["service"]
+                if item is None:
+                    raise SessionUnavailable("session.draining","会话提供者当前不可用。")
+                legacy, pin = item["legacy"], item["pin"]
+                if directory.owners.get("session.read"):
+                    old = directory.pin("session.read")
+                    if not legacy or any(old[k] != legacy[v] for k,v in (
+                            ("plugin_id","id"),("plugin_version","version"),("endpoint","endpoint"))):
+                        raise SessionUnavailable("session.service_conflict","旧服务与当前许可不一致。")
+                return {"service":"session.read","plugin_id":pin["plugin_id"],
+                        "plugin_version":legacy["version"] if legacy else pin["version"],
+                        "binding":pin["binding"].removeprefix("sha256:"),"soft_pin":pin}
+        return directory.pin("session.read")
+    except soft_client.SoftError as error:
+        raise SessionUnavailable("session.transport",str(error)) from error
     except PluginUnavailable as error:
         code = "session." + error.code.removeprefix("plugin.")
         messages = {"session.service_missing":"会话插件未安装；仍可查看任务目录和原始事件。",
@@ -166,7 +185,14 @@ def _refs(refs):
 
 
 def _read(binding, metadata, scope):
-    status, reply = _post(binding["endpoint"], {**metadata,**scope})
+    wire = {**metadata,**scope}
+    if "soft_pin" in binding:
+        try:
+            status, reply = soft_client.request("session",pin=binding["soft_pin"],wire=wire)
+        except soft_client.SoftError as error:
+            raise SessionUnavailable("session.transport",str(error)) from error
+    else:
+        status, reply = _post(binding["endpoint"], wire)
     try:
         current = _pin()
     except SessionUnavailable as error:

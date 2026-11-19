@@ -1,12 +1,12 @@
 # 从 Cordis 到 Edge Agent ROS 的插件运行时
 
-**P0 设计草案 · 供 P1 实现与验收使用。** 阅读源码的基线为 `8520e434b66102b593eb8714f02b425f47187a79`。本文中的 Python Context、Fiber 以及换版流程都是拟议契约。现存入口和初次迁移范围见下表。
+**P1 实现**将 Python Context 和 Fiber 放在独立的 soft-host 中。Agent 持有原任务，soft-admin 管理发布和持久预约，soft-host 执行受信软件。未启用 overlay 的部署继续使用 v1。下表用 `8520e434b66102b593eb8714f02b425f47187a79` 对照迁移前的入口；physical 交接及板端 pack 属于后续阶段。[Context 与 Fiber](../agent/soft_runtime.py) · [宿主与调用边界](../agent/soft_host.py) · [SQLite 发布目录](../agent/v2_registry.py) · [隔离部署](../compose.soft-runtime.yaml)
 
 假设两项任务同时查询本机的数据，任务 A 采用工具 v1 的输入单位，任务 B 在升级后才制定计划。系统应当能说明 A 到底按哪个单位计算，B 从什么时候开始看到 v2，失败的回执该去哪个版本对账。即使两个版本都只有十行纯 Python，直接覆盖同名函数也回答不了这些问题。运行时负责登记和撤销每一份能力，并让一次已绑定的调用始终找到自己的来源。
 
 ## 1　当前有哪些入口
 
-| 对象 | 基线中的所有者和真实行为 | P1 建议 |
+| 对象 | 基线中的所有者和真实行为 | P1 的接入边界 |
 | --- | --- | --- |
 | 服务目录与观察器 | `agent/runtime_plugins.py` 的 `ServiceSnapshot.pin` 校验唯一提供者、依赖链、摘要和 draining。`RegistryObserver` 将采样到的目录变化、观察失败与恢复写入模块账本。`agent/service.py` 启动这一观察线程。目录只证明声明可解析，观察器还可能错过两次采样之间的变化。 | 保留为对外服务解析与证据来源。只有宿主控制的显式激活／撤销事务可以确认 Fiber 的实际生命周期。 |
 | Session | `client/register_session.py` 经管理器安装 `session.default`，提供 `session.read`。`sessions_plugin/provider.py` 提供 HTTP 服务。Console 的 `session_service.py` 在响应前后核对绑定及请求范围，读途中换版会返回 `session.binding_changed`。 | soft 试点注册这一公开服务的受信适配器。保留 HTTP 消费方、前后绑定检查和回执格式。Session 继续从来源读取事实。 |
@@ -37,12 +37,68 @@ Cordis 的 Context 给已装载实例提供服务、监听和 effect。Fiber 是
 | --- | --- | --- |
 | `ctx.effect(disposer)` | 接受无参同步或异步清理函数，登记成功表示本实例承担清理责任。例如，取得 HTTP 客户端后登记关闭函数。 | 获取资源后立即登记。重复 dispose 共享同一次清理结果。失败记录对应登记项、原因和未释放资源。卸载开始后禁止再登记。 |
 | `ctx.on(event, handler)` | 接受已声明事件及处理函数。注册成功后按现有事件契约接收授权范围内的事实。 | 监听器属于本实例。卸载关闭新投递，已启动回调计入在途引用。需要重放的消费者仍按持久源身份与游标续读。 |
-| `ctx.provide(service)` | 提供含公开名称、版本和调用契约的 Service。宿主准备该实例的登记，激活后供消费者发现。 | 同一名称冲突须显式拒绝。卸载或失败只撤销本实例持有的登记，迟到的清理不得删除其它版本。 |
-| `ctx.require(name)` | 根据已声明依赖取得与该调用绑定的服务引用，调用时核对可用性与期限。 | 激活前依赖缺失保持等待。运行中依赖失去时报告 `plugin.dependency_unavailable`，含所缺服务、原绑定和源事件。在途请求按原身份对账。 |
-| `ctx.tools.register(tool)` | 登记已有 ID、版本、输入 schema、效果类别、执行器与证据约定。激活提交后才进入**新计划**看到的工具目录。 | 摘要覆盖行为契约。冻结的旧计划保留原 schema 与绑定。对冲突、参数错误、迟到回执分别留证，按宿主登记撤销。 |
-| `ctx.config(schema)` | 用声明的 schema 校验部署配置，取得本次装载的只读配置快照，留存可公开的版本或摘要。 | 配置不合法时本次装载失败，部分登记回滚。仅配置更新时，宿主先按 schema 校验并原子发布新的配置修订；同一 Fiber 可继续工作，已冻结调用读取原快照。失败保留上一修订。代码或契约变化才走显式 dispose/apply。密钥以受控引用解析，诊断与快照不保存密钥明文。 |
+| `ctx.provide(name, handler)` | 将一个函数挂到描述符预先声明的 service 名称。handler 接受一个参数对象，可同步或异步返回。 | 只能在 LOADING 阶段登记，激活后供消费者发现。卸载或失败只撤销本实例的登记。 |
+| `ctx.require(name)` | 读取 requires 中明确声明的服务，返回异步函数。在已冻结的调用内执行 `await service(arguments)`。 | 首次激活前缺服务时等待。运行中失去依赖时拒绝调用并保留消费者，原任务继续按冻结身份对账。 |
+| `ctx.tools.register(name, handler)` | 在 LOADING 阶段登记已声明的 tool 名。调用方传入含 operation_id、arguments、version 等字段的 wire 对象，handler 返回带原操作号的回执。 | 新模型目录在激活后更新。输入及成功回执的 evidence 分别接受 parameters 和 outcomes 校验；旧计划持有原 schema 和 binding。 |
+| `ctx.config(schema=None)` | 可选 schema 用于额外校验，返回配置的深复制。在调用内取得这次预约冻结的快照；在 apply 内读取当前配置。 | 宿主先验证新配置，成功后为新计划提供新修订；旧调用的快照保持原值。热配置应在 handler 中读取，需要配置变化才生效的资源应由插件明确管理。 |
 
 监听注册、服务发布、工具登记都是自动纳入 Fiber 的 effect。插件作者只为宿主看不见的资源手工登记 disposer。局部事件回调只在当前进程有效。需要重启后仍可解释的发布、失败和退订结果，写入现有 ModuleJournal ／ EventBus。事件发布不授予执行权。
+
+### 新工具怎样获得第一份调用
+
+全新工具 `text.length` 无需 v1 的 `profile.legacy`。宿主从 `provides`、版本、效果和 `parameters` 生成模型看到的条目。把可读的工具说明放入输入 schema 的 `description`；当前 Agent 规划器可以向新工具传递 string、number、boolean 参数。一次成功回执中的 `evidence` 必须符合 `outcomes`。以下程序可在仓库根目录保存为临时 Python 脚本并运行。它用单元测试的虚拟站点准备一次性授权，复用与实际 soft-host 相同的适配器，然后提交一项调用并排空。正式发布仍由站点维护者使用独立的只读信任目录。[站点安装与发布步骤](plugin-descriptor-v2.md#p1-现场安装)
+
+```python
+import asyncio, hashlib, json, sys, tempfile
+from pathlib import Path
+
+sys.path[:0] = [str(Path.cwd() / "agent"), str(Path.cwd() / "tests")]
+from test_plugin_descriptor import descriptor_fixture
+from plugin_descriptor import compute_content_digest, validate_descriptor
+from soft_host import adapter
+from soft_runtime import SoftRuntime
+
+source = b'''def apply(ctx):
+    def length(wire):
+        return {"operation_id": wire["operation_id"], "state": "SUCCEEDED",
+                "evidence": {"count": len(wire["arguments"]["text"])}}
+    ctx.tools.register("text.length", length)
+'''
+
+async def demo(site):
+    trust = site / "trust"
+    item = descriptor_fixture(trust, plugin_id="text.length")
+    item["parameters"] = {"type":"object", "description":"Count characters in text",
+                          "properties":{"text":{"type":"string"}}, "required":["text"], "additionalProperties":False}
+    item["outcomes"] = {"type":"object", "properties":{"count":{"type":"integer","minimum":0}}, "required":["count"]}
+    catalog_file = trust / "catalog.json"
+    catalog = json.loads(catalog_file.read_bytes())
+    record = catalog["implementations"].pop(item["provenance"]["code_digest"])[0]
+    record["artifact"] = "text_length.py"
+    record["entrypoint"] = item["entrypoint"] = "text_length:apply"
+    (trust / record["artifact"]).write_bytes(source)
+    (trust / "input.json").write_text(json.dumps(item["parameters"]), encoding="utf-8")
+    digest = "sha256:" + hashlib.sha256(source).hexdigest()
+    item["provenance"]["code_digest"] = digest
+    catalog["implementations"][digest] = [record]
+    catalog_file.write_text(json.dumps(catalog), encoding="utf-8")
+    item["content_digest"] = compute_content_digest(item, trust)
+    validate_descriptor(item, trust)
+    events = []
+    rt = SoftRuntime(events.append)
+    await rt.install(item, adapter(item, site, {}))
+    pin = await rt.freeze("text.length", "text.length", "demo-1")
+    wire = {"operation_id":"demo-1", "version":item["version"], "arguments":{"text":"robot"}}
+    receipt = await rt.call(pin, wire)
+    assert receipt["evidence"] == {"count":5}
+    await rt.release("demo-1")
+    await rt.drain("text.length")
+    await rt.remove("text.length")
+    print(receipt, [event["type"] for event in events])
+
+with tempfile.TemporaryDirectory() as directory:
+    asyncio.run(demo(Path(directory)))
+```
 
 ## 4　实例存活与依赖可用性
 

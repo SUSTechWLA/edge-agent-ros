@@ -1,5 +1,5 @@
 """Fixed GET-only public facts and legacy read-provider routes for the isolated soft network."""
-from functools import partial
+
 from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
@@ -20,7 +20,7 @@ def route(port, method, target):
     if port == 8126 and ((method, target) in {("GET", "/health"), ("POST", "/session")}):
         return "soft-session", 8126
     if port == 8125:
-        if (method, target) == ("GET", "/health"):
+        if method == "GET" and target in ("/health", "/schema"):
             return "soft-evidence", 8125
         query = parse_qsl(url.query)
         if method == "POST" and url.path == "/invoke" and len(query) == 1 and query[0][0] == "tool" and query[0][1] in EVIDENCE:

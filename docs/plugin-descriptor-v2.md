@@ -1,6 +1,41 @@
 # 插件描述符 v2 与发布协议
 
-本页是 SDD-045 的接口提案。举例时用 `session.default` 表示提供会话查询的实现，用 `session.read` 表示它提供的服务。一次发布可以有多项能力，只有作为 Tool 导出的操作才进入模型目录。以下命令和字段属于 P1–P3 的开发目标。
+本页对应 SDD-045。`session.default` 是提供会话查询的插件，`session.read` 是它导出的服务。一次发布可以有多项能力，模型目录展示作为 Tool 导出的操作。下节说明 P1 当前可执行的接口；后文的 physical 交接和 capability pack 分别是 P2、P3 的开发目标。
+
+## P1 现场安装
+
+从源码和镜像能够对应的发布构建开始。以下命令适用于仓库根目录的 POSIX shell，`IMAGE` 填写含本版宿主的本地研发镜像，镜像的 `org.opencontainers.image.revision` 标签须为完整 Git SHA。为每次验收选用未使用过的站点目录和 Compose 项目名。执行 `prepare_soft_pilots.py` 的身份负责复核源码、镜像和允许导出的能力。它读取本地 Docker 镜像生成工件与信任目录；运行中的发布者只有读取权限。
+
+```sh
+IMAGE=edge-agent-ros:soft-p1
+export EDGE_SOFT_SITE="$PWD/.ci-results/plugin-site-p1"
+SOURCE=$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$IMAGE")
+PLATFORM=$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "$IMAGE")
+export EDGE_SOFT_IMAGE=$(docker image inspect --format '{{.Id}}' "$IMAGE")
+export EDGE_SOFT_PLATFORM_DIGEST=$(docker image inspect --platform "$PLATFORM" --format '{{.Descriptor.digest}}' "$IMAGE")
+export EDGE_IMAGE="$IMAGE"
+python scripts/prepare_soft_pilots.py --site "$EDGE_SOFT_SITE" --image "$IMAGE" --source-commit "$SOURCE"
+dc() { docker compose -p edge-soft-p1 -f compose.yaml -f compose.soft-runtime.yaml "$@"; }
+dc up -d --no-build agent console soft-host soft-gateway evidence session
+admin() { dc run --rm -T --no-deps soft-admin "$@"; }
+file=/site/releases/derived.series_mean.plugin.json
+admin validate "$file" --kind v2
+admin check "$file" --kind v2 --root /registry --expect absent
+admin publish "$file" --kind v2 --root /registry --expect absent --request-id install-series-1
+```
+
+再依次发布 `session.default`、`evidence.read_session`、`evidence.evidence_schema`、`evidence.query_evidence` 的同名 `.plugin.json` 文件，为每次发布使用独立的 `--request-id`。查看 `GET /agent/plugins?schema=2` 中当前实例的健康、可用性和排空状态。退役时对同一 ID 使用 `admin drain ID --kind v2 --root /registry --expect <发布回执中的revision> --request-id drain-1`；旧引用归零且宿主确认 dispose 后，用 drain 回执的 revision 执行 `admin remove` 或 `admin publish 新文件`。回执重试复用原 request_id。进程启动正常但提供者尚未健康时，目录仍显示不可用。
+
+| 位置 | 谁写入，保存什么 |
+|---|---|
+| `SITE/releases/<id>.plugin.json` | 现场准备脚本输出的原生 v2 发布输入。可选 `--derived FILE` 仅接受从调用参数取数的 v2 derived 声明。离线镜像使用 `--image-manifest FILE --image-digest sha256:…`，传入平台 manifest 原始字节。 |
+| `SITE/trust/catalog.json` 与 `assets/` | 站点列出经批准的实现摘要、ID、入口、镜像、源码提交、导出名、网络及 schema 路径。相同镜像可对应多个独立插件。宿主重算实际工件和 schema 摘要，inproc 执行已复核的源码字节。 |
+| `SITE/config/<id>.json` | 可选的现场 JSON 配置。三个试点的 `profile` 固定在描述符中，现场文件只提供 `settings`。新增原生插件亦可直接声明配置 schema 而不使用迁移 profile。对站点挂载内单个配置文件原子替换。 |
+| `/registry/v2/.history/module-events.sqlite` | soft-admin 经 CAS 修改活动指针。发布历史、各代描述符、持久预约与审计保存在受管 SQLite 中。把 JSON 复制入输入目录不会激活它。 |
+
+128 KiB 为 JSON 文件上限，inproc 源文件最多 1 MiB。P1 的 schema 支持单个基础 `type`、`properties`、`required`、布尔 `additionalProperties`、`items`、`enum`、`const`、长度及数值上下限。引用使用 `schema_ref` 对应站点目录中的版本键，遇到未知关键字即拒绝。P1 原生 soft 描述符的 `mounts` 必须为空，平台按 Compose 管理只读站点、审计卷与 Unix socket。HTTP 探针按站点配置的路由与响应字段核对服务契约，平台镜像身份另行固定。部署级资源上限以实际 Compose 配置为准。
+
+普通 v1 查询及模型目录沿原协议读取。请求 v2 视图时，缺乏实现证明的旧 HTTP 插件按 physical 保守分类，`class_basis` 给出原因，`content_digest` 为 null。P1 可离线检查 physical 清单的结构、租约、停止契约和验收器标识；运行时的 `check`、`publish` 与 soft-host 装载只接受 soft。P2 承担设备租约执行、独立验收、停稳交接和台架证明。
 
 ## 清单格式
 
