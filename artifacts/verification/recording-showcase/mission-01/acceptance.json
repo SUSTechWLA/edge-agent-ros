@@ -1,0 +1,180 @@
+{
+  "passed": true,
+  "task_id": "campus-d5620187b9",
+  "recording_id": "campus-d5620187b9",
+  "image": "edge-agent-ros:verified-showcase-2afb070",
+  "project": "unknown-d5620187b9",
+  "text": "探索附近的陌生校园，建立初始地图，选一个已探明的安全位置停车复查，再回到出发点",
+  "image_id": "sha256:6cfbecf2506212a43e374351fa1ad4fabbe4a7591110fa83105f4bd4ddf241db",
+  "calibration_revision": "3ad004384f70c2302b79bd38de3d093c62e43f93f4fb82e22f33f0003f55b120",
+  "factory": "synthetic stationary fixture",
+  "submissions": 1,
+  "terminal": "SUCCEEDED",
+  "operation": "campus-d5620187b9/step/1",
+  "recording": {
+    "bytes": 15980563,
+    "counts": {
+      "bus": 15,
+      "clock": 62,
+      "fused_pose": 187,
+      "imu": 229,
+      "laser_scan": 169,
+      "map": 52,
+      "mission": 32,
+      "rgb": 187,
+      "twist": 157,
+      "world_pose": 228
+    },
+    "ended_ns": 1795069105487085670,
+    "latest": {
+      "bus": 29352000000,
+      "clock": 30542000000,
+      "fused_pose": 30872000000,
+      "imu": 30880000000,
+      "laser_scan": 30750000000,
+      "map": 30626000000,
+      "mission": 30160000000,
+      "rgb": 30876000000,
+      "twist": 30798000000,
+      "world_pose": 30906000000
+    },
+    "missing_sources": [],
+    "reason": "Agent terminal receipt",
+    "recording_id": "campus-d5620187b9",
+    "source_last_receive_ns": {
+      "bus": 1795069101457710750,
+      "clock": 1795069104014049941,
+      "fused_pose": 1795069104732304331,
+      "imu": 1795069104753106751,
+      "laser_scan": 1795069104657507562,
+      "map": 1795069104556787879,
+      "mission": 1795069103117616785,
+      "rgb": 1795069104812732699,
+      "twist": 1795069104705676368,
+      "world_pose": 1795069104787008651
+    },
+    "sources": [
+      "bus",
+      "clock",
+      "fused_pose",
+      "imu",
+      "laser_scan",
+      "map",
+      "mission",
+      "rgb",
+      "twist",
+      "world_pose"
+    ],
+    "started_ns": 1795069027340468918,
+    "status": "FINISHED",
+    "stream_timing": {
+      "bus": {
+        "first_source_ns": 4964000000,
+        "last_source_ns": 29352000000,
+        "max_receive_gap_ns": 11978893670,
+        "max_source_gap_ns": 4772000000,
+        "source_rewinds": 0
+      },
+      "clock": {
+        "first_source_ns": 4000000,
+        "last_source_ns": 30542000000,
+        "max_receive_gap_ns": 7100610323,
+        "max_source_gap_ns": 538000000,
+        "source_rewinds": 0
+      },
+      "fused_pose": {
+        "first_source_ns": 3944000000,
+        "last_source_ns": 30872000000,
+        "max_receive_gap_ns": 4073607739,
+        "max_source_gap_ns": 646000000,
+        "source_rewinds": 0
+      },
+      "imu": {
+        "first_source_ns": 2000000,
+        "last_source_ns": 30880000000,
+        "max_receive_gap_ns": 6272739041,
+        "max_source_gap_ns": 320000000,
+        "source_rewinds": 0
+      },
+      "laser_scan": {
+        "first_source_ns": 4000000,
+        "last_source_ns": 30750000000,
+        "max_receive_gap_ns": 1402207620,
+        "max_source_gap_ns": 376000000,
+        "source_rewinds": 0
+      },
+      "map": {
+        "first_source_ns": 4126000000,
+        "last_source_ns": 30626000000,
+        "max_receive_gap_ns": 4768754101,
+        "max_source_gap_ns": 2038000000,
+        "source_rewinds": 0
+      },
+      "mission": {
+        "first_source_ns": 500000000,
+        "last_source_ns": 30160000000,
+        "max_receive_gap_ns": 13655300496,
+        "max_source_gap_ns": 5174000000,
+        "source_rewinds": 0
+      },
+      "rgb": {
+        "first_source_ns": 4000000,
+        "last_source_ns": 30876000000,
+        "max_receive_gap_ns": 1313176975,
+        "max_source_gap_ns": 166000000,
+        "source_rewinds": 0
+      },
+      "twist": {
+        "first_source_ns": 4000000,
+        "last_source_ns": 30798000000,
+        "max_receive_gap_ns": 6448560339,
+        "max_source_gap_ns": 274000000,
+        "source_rewinds": 0
+      },
+      "world_pose": {
+        "first_source_ns": 34000000,
+        "last_source_ns": 30906000000,
+        "max_receive_gap_ns": 1403879543,
+        "max_source_gap_ns": 136000000,
+        "source_rewinds": 0
+      }
+    },
+    "task_id": "campus-d5620187b9",
+    "task_status": "SUCCEEDED"
+  },
+  "known_gain": 496,
+  "home_error_m": 0.05300564882762011,
+  "actual_steps": 5,
+  "measured_sources": {
+    "laser_scan": {
+      "topic": "/scan",
+      "source": "sensor_msgs/msg/LaserScan",
+      "frames": [
+        "laser_link"
+      ],
+      "valid": 126,
+      "invalid": 43,
+      "metric": "nearest_m",
+      "minimum": 1.7100783586502075,
+      "maximum": 2.0997109413146973
+    },
+    "imu": {
+      "topic": "/imu",
+      "source": "sensor_msgs/msg/Imu",
+      "frames": [
+        "imu_link"
+      ],
+      "valid": 229,
+      "invalid": 0,
+      "metric": "angular_z_rad_s",
+      "minimum": -1.0999993311376828,
+      "maximum": 1.0999993311527034
+    },
+    "overview": {
+      "topic": "/commission/overview",
+      "source": "gz.msgs.Image",
+      "frames": 187,
+      "distinct_images": 121
+    }
+  }
+}

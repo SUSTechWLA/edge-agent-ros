@@ -47,3 +47,16 @@
 !/plugin-tracks/deployment-arm64.json
 !/plugin-tracks/frozen-missions.json
 !/plugin-tracks/historical-frozen.json
+!/recording-showcase/mission-01/README.md
+!/recording-showcase/mission-01/acceptance.json
+!/recording-showcase/mission-01/campus-audit.json
+!/recording-showcase/mission-01/cover.png
+!/recording-showcase/mission-01/index.html
+!/recording-showcase/mission-01/opening.png
+!/recording-showcase/mission-01/provider-claim.json
+!/recording-showcase/mission-01/recording-export.zip
+!/recording-showcase/mission-01/task.json
+!/recording-showcase/mission-01/task.mp4
+!/recording-showcase/mission-01/video.json
+!/recording-showcase/mission-01/viewer-qa.json
+!/recording-showcase/mission-01/worker-report.json

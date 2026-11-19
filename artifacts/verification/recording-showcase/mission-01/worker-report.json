@@ -1,0 +1,193 @@
+{
+  "operation_id": "campus-d5620187b9",
+  "trace_id": "campus-d5620187b9",
+  "robot_id": "rover-d5620187b9",
+  "state": "SUCCEEDED",
+  "reason": "map_saved_inspection_complete_and_home_verified",
+  "steps": [
+    {
+      "index": 1,
+      "mode": "survey",
+      "mission_id": "campus-d5620187b9/leg/1",
+      "goal": [
+        -0.0499999113380909,
+        -0.5499999187886715
+      ],
+      "xy": [
+        -1.2477089688309109e-09,
+        -5.9437809696514795e-30
+      ],
+      "map_stamp_ns": 4750000000,
+      "pose_stamp_ns": 4862000000,
+      "known": 1419,
+      "grid_file": "grid-01.json.gz",
+      "grid_sha256": "4070bba92ff9d97c5ed33ddaee0cc4c082f98e7f245c5b2bcfc90f5e5143b109",
+      "frontier": [
+        -0.0499999113380909,
+        -1.749999936670065
+      ],
+      "potential_unknown_cells": 122,
+      "accepted": true,
+      "core_state": "CANCELED",
+      "detail": "campus-d5620187b9/leg/1/waypoint/1 stop confirmed: cancel requested; stationary odometry confirmed [code:navigation.cancel_requested]"
+    },
+    {
+      "index": 2,
+      "mode": "survey",
+      "mission_id": "campus-d5620187b9/leg/2",
+      "goal": [
+        -0.5499999187886715,
+        -0.0499999113380909
+      ],
+      "xy": [
+        -1.2485977595722297e-09,
+        3.182748801045006e-13
+      ],
+      "map_stamp_ns": 8376000000,
+      "pose_stamp_ns": 8500000000,
+      "known": 1434,
+      "grid_file": "grid-02.json.gz",
+      "grid_sha256": "7d88af145f40bea8a3510be8c2cb03ada6f6470c42c722f2bf6f2f9707190c26",
+      "frontier": [
+        -1.749999936670065,
+        -0.0499999113380909
+      ],
+      "potential_unknown_cells": 129,
+      "accepted": true,
+      "core_state": "SUCCEEDED",
+      "detail": "verified waypoint 1",
+      "measured_xy": [
+        -0.49882784481820636,
+        -0.052445710984904845
+      ]
+    },
+    {
+      "index": 3,
+      "mode": "survey",
+      "mission_id": "campus-d5620187b9/leg/3",
+      "goal": [
+        -0.4499999172985554,
+        -0.6499999202787876
+      ],
+      "xy": [
+        -0.4991418337751958,
+        -0.04942758821894863
+      ],
+      "map_stamp_ns": 13500000000,
+      "pose_stamp_ns": 13634000000,
+      "known": 1725,
+      "grid_file": "grid-03.json.gz",
+      "grid_sha256": "1cf437eb1aca98dd6182bd40f9a48a3144f616009ec97b8dd8658a652b55f123",
+      "frontier": [
+        -0.4499999172985554,
+        -1.849999938160181
+      ],
+      "potential_unknown_cells": 118,
+      "accepted": true,
+      "core_state": "SUCCEEDED",
+      "detail": "verified waypoint 1",
+      "measured_xy": [
+        -0.46131626114382907,
+        -0.5984963197762144
+      ]
+    },
+    {
+      "index": 4,
+      "mode": "inspect",
+      "mission_id": "campus-d5620187b9/leg/4",
+      "goal": [
+        -0.49882784481820636,
+        -0.052445710984904845
+      ],
+      "xy": [
+        -0.45926381954295975,
+        -0.5952631613613774
+      ],
+      "map_stamp_ns": 18250000000,
+      "pose_stamp_ns": 18258000000,
+      "known": 1915,
+      "grid_file": "grid-04.json.gz",
+      "grid_sha256": "97a5b13c37e143879d027b8f78bace791438086bfa48c6c7a9d2d346bb7848c1",
+      "accepted": true,
+      "core_state": "SUCCEEDED",
+      "detail": "verified waypoint 1",
+      "measured_xy": [
+        -0.487205862659274,
+        -0.10178788406911293
+      ]
+    },
+    {
+      "index": 5,
+      "mode": "return",
+      "mission_id": "campus-d5620187b9/leg/5",
+      "goal": [
+        -1.2477089688309109e-09,
+        -5.9437809696514795e-30
+      ],
+      "xy": [
+        -0.48847911040284026,
+        -0.09873732980542728
+      ],
+      "map_stamp_ns": 25376000000,
+      "pose_stamp_ns": 25500000000,
+      "known": 1920,
+      "grid_file": "grid-05.json.gz",
+      "grid_sha256": "fd841bd9366c70ca7123ac850ef326dcd28a5076093cef265d52476221e4635f",
+      "accepted": true,
+      "core_state": "SUCCEEDED",
+      "detail": "verified waypoint 1",
+      "measured_xy": [
+        -0.05204169717692744,
+        -0.0015101608549107268
+      ]
+    }
+  ],
+  "survey_arrivals": 2,
+  "home_arrivals": 1,
+  "recovered_interruptions": 1,
+  "gain_required": 100,
+  "required_survey_arrivals": 2,
+  "calibration_revision": "3ad004384f70c2302b79bd38de3d093c62e43f93f4fb82e22f33f0003f55b120",
+  "home_xy": [
+    -1.2477089688309109e-09,
+    -5.9437809696514795e-30
+  ],
+  "bounds": [
+    -3.000000001247709,
+    -3.0,
+    2.999999998752291,
+    3.0
+  ],
+  "initial_known_cells": 1419,
+  "final_known_cells": 1927,
+  "known_gain": 508,
+  "total_cells": 3600,
+  "map_file": "map/map.yaml",
+  "saved_known_gain": 496,
+  "map_sha256": {
+    "occupancy.json": "1b2e46d4d68bd364e282027bcb515e1e5e200aa1dcae22db9385b9d15af2bd9c",
+    "map.pgm": "688291b6da2e32689fb488cea5fe2d7cf6db2c34e1acd0e3342ba6e1e624c469",
+    "map.yaml": "40ea4c382ed05792e50f47b087582440eef7bf4cd1a28c985e08a92c186cbef8"
+  },
+  "inspection_site": {
+    "target": [
+      -0.49882784481820636,
+      -0.052445710984904845
+    ],
+    "source_step": 2,
+    "clearance_m": 2.138677572299637,
+    "distance_from_home_m": 0.5015772823024431,
+    "path_m": 0.5000000074505806
+  },
+  "inspection_xy": [
+    -0.48847911040284026,
+    -0.09873732980542728
+  ],
+  "inspection_stamp_ns": 25376000000,
+  "inspection_file": "inspection.json",
+  "final_xy": [
+    -0.05300551939654132,
+    -0.00011770051312009148
+  ],
+  "home_error_m": 0.05300564882762011
+}

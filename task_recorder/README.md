@@ -103,3 +103,5 @@ print(folder)
 未选择相机时仍有状态和地图证据；选择相机却一直收不到帧，会在 `missing_sources` 中看到 `rgb`。已收到过的来源可按时间线和 `stream_timing` 查中途断流。记录既保留各来源的采集时间，也保留服务接收时间。软件观察器与 ROS 仿真时钟混用时默认按接收时间渲染；所有来源都使用同一时钟才选择 `--axis stamp_ns`。
 
 服务每次录制默认限额 256 MiB，可用 `EDGE_RECORDING_MAX_MIB` 配置。达到限额标记 `LIMIT_REACHED`，进程重启后把此前仍活动的录制标记为 `INTERRUPTED`。两种情况都能导出已提交的数据。导出和视频另占空间，部署者需根据相机码率、任务时长与保留周期准备磁盘。本版长时间任务需提前规划容量，尚无分段滚动归档。精确回放全部原始激光、IMU 包或零丢帧录像，需要专门的数据源和相应的存储预算。[HTTP 和纯软件观察器用法](CLI.md) · [设计和验收契约](../docs/specs/SDD-044-task-recorder.md)
+
+完整的教学楼门厅演示按任务展示激光、IMU、控制指令、规划与故障恢复。下载原始归档可重新选择布局，按时间线序号核对具体一帧。[播放器](../artifacts/verification/recording-showcase/mission-01/index.html) · [原始归档与复现命令](../artifacts/verification/recording-showcase/mission-01/README.md)

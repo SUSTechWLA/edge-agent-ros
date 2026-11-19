@@ -1,0 +1,119 @@
+{
+  "suite_run_id": "20261119T053937Z-71e980d0",
+  "revision": "2afb070b54357849347193f8d0455600bcdb2500",
+  "image_id": "sha256:6cfbecf2506212a43e374351fa1ad4fabbe4a7591110fa83105f4bd4ddf241db",
+  "suite_status_at_render": "passed",
+  "task_id": "campus-d5620187b9",
+  "agent_step_operation_id": "campus-d5620187b9/step/1",
+  "worker_operation_id": "campus-d5620187b9",
+  "worker_trace_id": "campus-d5620187b9",
+  "tool_request_event_seq": 254,
+  "tool_verified_event_seq": 378,
+  "provider_claim_sha256": "fc830066103f7a86e4d3e06b0dd078a7537f7695a83fa85879a819e9a7b9a253",
+  "worker_report_sha256": "162de03f61f8fefa8a1a12c4582d6fdf4e8883259b6c67c48dd40efa7d69e60d",
+  "sources": {
+    "imu": 229,
+    "clock": 62,
+    "twist": 157,
+    "rgb": 187,
+    "laser_scan": 169,
+    "world_pose": 228,
+    "mission": 32,
+    "fused_pose": 187,
+    "map": 52,
+    "bus": 15
+  },
+  "frames": 311,
+  "duration_s": 31.1,
+  "timeline_sha256": "cfe9b3475af2de06b358daa55cad58150653385a1d4ee3c8c3577b08154f28de",
+  "video_sha256": "1deaf23b618f8733b782dbf7b67a0fc82e1ee918f256195d340032832e23e0b5",
+  "audit_sha256": "f69b76426279c2f3fcb10659fd071d64f0dd010daa5ca7331385c928fe628ad8",
+  "sealed_session_manifest_sha256": "fd9b66a3fc60e1d35282970ae2d6a326327569ae9cc68451375832bf02777808",
+  "guide_sha256": "61ed303192a6a15fc7ce55baf0ec5f4a28e07f3cbf8371d8e4aa73525ba12e67",
+  "codec": "h264",
+  "full_decode": true,
+  "axis": "stamp_ns",
+  "phases_s": {
+    "submitted": 0.498,
+    "scan_ready": 4.87,
+    "fault_injected": 5.25,
+    "observation_lost": 5.556,
+    "stopped": 5.968,
+    "fault_released": 7.6,
+    "observations_restored": 8.5,
+    "mapped": 18.286,
+    "inspected": 25.53,
+    "home": 29.886,
+    "finished": 30.158
+  },
+  "recorded_holds": [
+    {
+      "mission_id": "campus-d5620187b9/leg/1",
+      "samples": 19,
+      "drift_m": 0.0,
+      "twist_samples": 13,
+      "max_observed_command": 0.0,
+      "goals_while_stopped": [],
+      "interval_sim_s": 2.532,
+      "motion_before_stop": {
+        "samples": 7,
+        "translation_m": 0.0004341745950932211,
+        "yaw_change_rad": -0.5969398820362071,
+        "peak_linear_command_mps": 0.0,
+        "peak_angular_command_rad_s": 1.1
+      }
+    }
+  ],
+  "returned_world_error_m": 0.04659958958164446,
+  "path_length_m": 1.9834726284725532,
+  "added_known_cells": 496,
+  "viewer": {
+    "chapters": 14,
+    "duration_s": 31.1,
+    "requested_sec": 5.968,
+    "observed_sec": 5.9805,
+    "viewport_width": 390,
+    "document_width": 390,
+    "decoded": true
+  },
+  "raw_signal_metrics": {
+    "laser_scan": {
+      "field": "nearest_m",
+      "valid_samples": 126,
+      "minimum": 1.7100783586502075,
+      "maximum": 2.0997109413146973
+    },
+    "imu": {
+      "field": "angular_z_rad_s",
+      "valid_samples": 229,
+      "minimum": -1.0999993311376828,
+      "maximum": 1.0999993311527034
+    }
+  },
+  "environment": {
+    "world_sha256": "e1fab835d220e7766c295b6f98f67c8b6dad2af2de8134282cfc5b219765f58b",
+    "observation_topic": "/commission/overview",
+    "map_source": "/edge/perception/map",
+    "scope": "full campus physical world, operation confined to teaching entrance local odometry"
+  },
+  "capture_image": {
+    "alias": "edge-agent-ros:verified-showcase-2afb070",
+    "local_image_id": "sha256:6cfbecf2506212a43e374351fa1ad4fabbe4a7591110fa83105f4bd4ddf241db",
+    "source_revision": "2afb070b54357849347193f8d0455600bcdb2500",
+    "platform_manifest": {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:f0325ea5ab15dab2583842f860e9a9b15865edda13e5e65288a2a245ff56a470",
+      "size": 6197,
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    }
+  },
+  "raw_archive": {
+    "path": "recording-export.zip",
+    "sha256": "01c9bcd862b7b0f6937eae72b7ccf5505e9e9507e564e9fab4cab3dadbe2503f",
+    "bytes": 13362447,
+    "members": 241
+  }
+}

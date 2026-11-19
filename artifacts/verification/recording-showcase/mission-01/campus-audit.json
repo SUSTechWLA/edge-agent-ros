@@ -1,0 +1,175 @@
+{
+  "passed": true,
+  "issues": [],
+  "recording_id": "campus-d5620187b9",
+  "operation_id": "campus-d5620187b9",
+  "world_truth_frame": "world",
+  "pose_samples": 228,
+  "world_start_xy": [
+    1.0236151275522173e-09,
+    1.8800487088592376e-20
+  ],
+  "world_end_xy": [
+    -0.04609494928533804,
+    -0.006839393627569973
+  ],
+  "world_path_m": 1.9834726284725532,
+  "world_home_error_m": 0.04659958958164446,
+  "stopped_final_drift_m": 0.0,
+  "stopped_final_samples": 5,
+  "spatial_checks": [
+    {
+      "checked_cells": 84,
+      "nonfree_cells": 0,
+      "length_m": 0.5522679618415245,
+      "index": 1,
+      "mode": "survey",
+      "goal": [
+        -0.0499999113380909,
+        -0.5499999187886715
+      ],
+      "map_stamp_ns": 4750000000,
+      "known": 1419,
+      "subscriber_map_matches": true,
+      "core_state": "CANCELED"
+    },
+    {
+      "checked_cells": 84,
+      "nonfree_cells": 0,
+      "length_m": 0.5522679607110453,
+      "index": 2,
+      "mode": "survey",
+      "goal": [
+        -0.5499999187886715,
+        -0.0499999113380909
+      ],
+      "map_stamp_ns": 8376000000,
+      "known": 1434,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.49227242450076214,
+        -0.05639497511975015
+      ],
+      "goal_error_m": 0.058080637371951224,
+      "arrival_pair_delta_ms": 42.0
+    },
+    {
+      "checked_cells": 91,
+      "nonfree_cells": 0,
+      "length_m": 0.6025795001415087,
+      "index": 3,
+      "mode": "survey",
+      "goal": [
+        -0.4499999172985554,
+        -0.6499999202787876
+      ],
+      "map_stamp_ns": 13500000000,
+      "known": 1725,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.4550141273247657,
+        -0.5957542241690389
+      ],
+      "goal_error_m": 0.05447694786437797,
+      "arrival_pair_delta_ms": 20.0
+    },
+    {
+      "checked_cells": 84,
+      "nonfree_cells": 0,
+      "length_m": 0.5442573807760392,
+      "index": 4,
+      "mode": "inspect",
+      "goal": [
+        -0.49882784481820636,
+        -0.052445710984904845
+      ],
+      "map_stamp_ns": 18250000000,
+      "known": 1915,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.47624626894934113,
+        -0.1053402481015524
+      ],
+      "goal_error_m": 0.05751312568019341,
+      "arrival_pair_delta_ms": 54.0
+    },
+    {
+      "checked_cells": 77,
+      "nonfree_cells": 0,
+      "length_m": 0.49835820488690297,
+      "index": 5,
+      "mode": "return",
+      "goal": [
+        -1.2477089688309109e-09,
+        -5.9437809696514795e-30
+      ],
+      "map_stamp_ns": 25376000000,
+      "known": 1920,
+      "subscriber_map_matches": true,
+      "core_state": "SUCCEEDED",
+      "receipt_world_xy": [
+        -0.04609636441100836,
+        -0.006839455169768116
+      ],
+      "goal_error_m": 0.04660099616855902,
+      "arrival_pair_delta_ms": 36.0
+    }
+  ],
+  "holds": [
+    {
+      "mission_id": "campus-d5620187b9/leg/1",
+      "samples": 19,
+      "drift_m": 0.0,
+      "twist_samples": 13,
+      "max_observed_command": 0.0,
+      "goals_while_stopped": [],
+      "interval_sim_s": 2.532,
+      "motion_before_stop": {
+        "samples": 7,
+        "translation_m": 0.0004341745950932211,
+        "yaw_change_rad": -0.5969398820362071,
+        "peak_linear_command_mps": 0.0,
+        "peak_angular_command_rad_s": 1.1
+      }
+    }
+  ],
+  "saved_known_gain": 496,
+  "map_sha256": {
+    "occupancy.json": "1b2e46d4d68bd364e282027bcb515e1e5e200aa1dcae22db9385b9d15af2bd9c",
+    "map.pgm": "688291b6da2e32689fb488cea5fe2d7cf6db2c34e1acd0e3342ba6e1e624c469",
+    "map.yaml": "40ea4c382ed05792e50f47b087582440eef7bf4cd1a28c985e08a92c186cbef8"
+  },
+  "inspection": {
+    "source_step": 2,
+    "target_xy": [
+      -0.49882784481820636,
+      -0.052445710984904845
+    ],
+    "measured_source_xy": [
+      -0.49882784481820636,
+      -0.052445710984904845
+    ],
+    "arrival_world_xy": [
+      -0.47624818441933753,
+      -0.10533126189645657
+    ],
+    "arrival_pair_delta_ms": 66.0,
+    "station_error_m": 0.05750410906141034,
+    "parking_cell_check": {
+      "checked_cells": 49,
+      "nonfree_cells": 0,
+      "length_m": 0.0
+    },
+    "window_pose_samples": 3,
+    "drift_m": 0.0,
+    "independent_observation_counts": {
+      "free": 313,
+      "occupied": 0,
+      "uncertain": 0,
+      "unknown": 0
+    }
+  }
+}

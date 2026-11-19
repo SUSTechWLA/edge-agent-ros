@@ -10,7 +10,8 @@
 
 ## 现在可以做什么
 
-想直观看懂机器人怎样把任务变成坐标，可以看这次校园冷启动实验。从等待第一幅地图、感知中断停车，到存图、选位置复查和返航，整段录像可按决策跳看。录制是默认关闭的独立插件，也能录纯软件任务。[播放校园任务](artifacts/verification/unknown-campus/mission-02/video/index.html) · [坐标来源与实测](docs/testing/unknown-campus.md) · [录自己的任务](task_recorder/README.md)
+**看一次有人能读懂的运行录像。** 在校园门厅给无人车一句没有坐标的中文任务，点击“内核确认已停车”，同时观察地图帧龄、现场画面、激光回波、IMU 角速度和下发线速度；再看它在哪一刻取得新观测并重新选点。视频由已封存的十路数据离线生成。纯软件任务也能用同一插件。[分章回放](artifacts/verification/recording-showcase/mission-01/index.html) · [独立观测与原始归档](artifacts/verification/recording-showcase/mission-01/README.md) · [录制自己的任务](task_recorder/README.md)
+
 
 无人车上板使用单独生成的 `deploy/robot` 分支。板端从 `sh scripts/robot.sh observe` 启动，研发侧维护完整代码、Gazebo、SDD 与测试。机号、安装外参、工厂证据与地图的交接方式见[无人车出厂、首次进场与板端交付](docs/rover-commissioning.md)。
 
