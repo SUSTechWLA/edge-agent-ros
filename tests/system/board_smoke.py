@@ -204,8 +204,8 @@ def exercise():
             log.close()
 
 
-def launch(image):
-    root = Path(__file__).resolve().parents[2]
+def launch(image, config_root=None):
+    root = config_root or Path(__file__).resolve().parents[2]
     host = {k:v for k,v in os.environ.items() if not k.startswith(("EDGE_", "COMPOSE_"))}
     host.update(EDGE_ODOM_TOPIC="/fixture/odom", EDGE_IMU_TOPIC="/fixture/imu", EDGE_SCAN_TOPIC="/fixture/scan",
                 EDGE_BASE_FRAME="fixture_base", EDGE_ODOM_FRAME="fixture_odom", EDGE_IMU_FRAME="fixture_imu",
@@ -237,9 +237,10 @@ if __name__ == "__main__":
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image",default="edge-agent-ros/hardware:v0.1")
     parser.add_argument("--out",type=Path)
+    parser.add_argument("--config-root",type=Path,help="use the hardware Compose config from this deployment clone")
     parser.add_argument("--inside",action="store_true",help=argparse.SUPPRESS)
     args=parser.parse_args()
-    raw=json.dumps(exercise() if args.inside else launch(args.image))
+    raw=json.dumps(exercise() if args.inside else launch(args.image,args.config_root))
     if args.out:
         args.out.parent.mkdir(exist_ok=True,parents=True)
         args.out.write_text(raw+"\n",encoding="utf-8")

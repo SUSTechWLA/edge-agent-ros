@@ -78,7 +78,8 @@ def package(ref, output):
             run(["docker","run","--rm","--network","none","--platform","linux/"+arch,tag,"python3","-B","-c",
                  "from calibration import ros_capture, targets, factory; from exploration import frontier, map_artifact"])
             smoke=stage/("smoke-"+arch+".json")
-            run([sys.executable,str(ROOT/"tests/system/board_smoke.py"),"--image",tag,"--out",str(smoke)])
+            run([sys.executable,str(ROOT/"tests/system/board_smoke.py"),"--image",tag,
+                 "--config-root",str(tree),"--out",str(smoke)])
             report=json.loads(smoke.read_bytes())
             if not report["passed"] or report["revision"]!=source:
                 raise ValueError("board smoke did not verify "+tag)
