@@ -1,0 +1,6 @@
+{
+  "health": {"path": "/schema", "expected": {"schema_version": 1, "table": "events"}},
+  "cases": [
+    {"arguments": {}, "expected": {"schema_version": 1, "table": "events"}}
+  ]
+}

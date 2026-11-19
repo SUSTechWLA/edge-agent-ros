@@ -1,0 +1,8 @@
+{
+  "health": {"path": "/agent/tasks?id=wp5-status", "expected": {"id": "wp5-status", "state": "SUCCEEDED"}},
+  "version_check": {"path": "/agent/tasks?id=wp5-status", "field": ["steps", 0, "version"]},
+  "cases": [
+    {"path": "/agent/tasks?id=wp5-status", "expected": {"id": "wp5-status", "state": "SUCCEEDED", "cursor": 1}},
+    {"path": "/agent/tasks?id=wp5-status&limit=0", "http_status": 400, "expected": {"detail": "事件分页参数无效"}}
+  ]
+}

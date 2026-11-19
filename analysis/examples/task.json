@@ -1,0 +1,53 @@
+{
+  "id": "wp4-legacy-survey",
+  "text": "Review the recorded position",
+  "state": "SUCCEEDED",
+  "detail": "Position recorded",
+  "provider": "local",
+  "steps": [
+    {
+      "tool": "status",
+      "version": "1",
+      "status": "SUCCEEDED",
+      "args": {},
+      "operation_id": "wp4-legacy-survey/step/1",
+      "evidence": {
+        "x": 2,
+        "y": 3
+      }
+    }
+  ],
+  "cursor": 1,
+  "retries": 0,
+  "due": 0.0,
+  "created": "2026-11-19T12:29:10.569928+00:00",
+  "updated": "2026-11-19T12:29:10.569928+00:00",
+  "trace_id": "wp4-legacy-survey",
+  "trigger": null,
+  "can_retry": false,
+  "events": [
+    {
+      "seq": 13,
+      "utc": "2026-11-19T12:29:10.569928+00:00",
+      "task_id": "wp4-legacy-survey",
+      "step": 0,
+      "kind": "dispatch",
+      "detail": "Status read",
+      "operation_id": "wp4-legacy-survey/step/1",
+      "payload": "{}",
+      "event_id": null
+    },
+    {
+      "seq": 21,
+      "utc": "2026-11-19T12:29:10.569928+00:00",
+      "task_id": "wp4-legacy-survey",
+      "step": 0,
+      "kind": "completed",
+      "detail": "Position recorded",
+      "operation_id": "wp4-legacy-survey/step/1",
+      "payload": "{}",
+      "event_id": null
+    }
+  ],
+  "events_has_more": true
+}

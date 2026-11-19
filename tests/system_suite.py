@@ -97,7 +97,8 @@ def run(args, selected, reasons):
         if "repository" in selected:
             stage("repository",[[PY,"scripts/check_sdd.py"],test("repository_contract.py","-v"),
                                 test("document_contract.py","-v"),test("test_package_boundaries.py","-v"),
-                                test("test_kernel.py","-v"),
+                                test("test_kernel.py","-v"),test("test_offline_analysis.py","-v"),
+                                test("test_conformance.py","-v"),
                                 test("test_selection.py","-v"),test("test_robot_release.py","-v"),
                                 test("test_mission_recording.py","-v"),
                                 test("test_task_recorder.py","-v"),test("test_recorder_cli.py","-v"),
@@ -143,14 +144,18 @@ def run(args, selected, reasons):
             if board_built:
                 # The deployable board image ships plugins without development fixtures.
                 # Bind tests only; imports and subprocesses must use the image's runtime.
-                board_test = ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
+                board_container = ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
                               "-e","PYTHONDONTWRITEBYTECODE=1","-e","ROS_LOG_DIR=/tmp/ros",
                               "-e","ROS_DOMAIN_ID=184","-e","ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST",
                               "-e",f"FACTORY_TEST_IMAGE={board_image}",
                               "--mount",f"type=bind,source={ROOT/'tests'},target=/opt/edge/tests,readonly",
-                              "--mount",f"type=bind,source={directory},target=/evidence",board_image,"python3","-B"]
+                              "--mount",f"type=bind,source={directory},target=/evidence"]
+                board_python = [board_image,"python3","-B"]
+                board_test = [*board_container,*board_python]
                 stage("board",[test("test_board_preflight.py","-v"),test("test_site_pack.py","-v"),
                                test("test_board_plugins.py","-v"),
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'task_recorder'},target=/opt/edge/task_recorder,readonly",
+                                *board_python,"/opt/edge/tests/test_plugin_conformance.py","--out","/evidence/plugin-conformance.json"],
                                test("system/board_pack_acceptance.py","--image",board_image,"--root",ROOT,
                                     "--out",directory/"board-pack.json"),
                                [*board_test,"/opt/edge/tests/test_factory_targets.py","-v"],

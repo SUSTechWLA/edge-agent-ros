@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_ROOTS = {"calibration", "evidence", "exploration", "model_provider",
                 "scene", "sessions_plugin", "task_recorder"}
 GROUPS = {"examples", "perception", "plugins"}
-LAYERS = {"agent", "console", "edge_contracts"}
+LAYERS = {"agent", "console", "edge_contracts", "analysis"}
 
 
 def owner(parts):
@@ -29,7 +29,7 @@ def owner(parts):
 def forbidden(source, target):
     if not target or source == target:
         return False
-    if source == "edge_contracts":
+    if source in {"edge_contracts", "analysis"}:
         return True
     if source in {"agent", "console"}:
         return target != "edge_contracts"
@@ -140,6 +140,8 @@ class PackageBoundaries(unittest.TestCase):
 
     def test_legacy_and_package_import_spellings(self):
         for directory, source in [
+            ("analysis", "from agent.kernel import ledger"),
+            ("analysis", "from console.server import history"),
             ("agent", "import console.server.observer as observer"),
             ("console/server", "from agent import planning as planner"),
             ("sessions_plugin", "from evidence import public_source"),

@@ -1,0 +1,45 @@
+{
+  "operation_id": "offline-example/query-1",
+  "state": "SUCCEEDED",
+  "evidence": {
+    "scope": {
+      "task_id": "wp4-legacy-survey"
+    },
+    "columns": [
+      "seq",
+      "kind"
+    ],
+    "rows": [
+      [
+        2,
+        "camera.unavailable"
+      ]
+    ],
+    "refs": [
+      {
+        "seq": 2,
+        "event_id": "offline-example-2",
+        "kind": "camera.unavailable",
+        "code": "camera.unavailable"
+      }
+    ],
+    "coverage": {
+      "archive_id": "2870ae6e868eb790b64837ecbcff1af3",
+      "task_id": "wp4-legacy-survey",
+      "after_seq": 0,
+      "through_seq": 2,
+      "loaded_events": 2,
+      "has_more": false,
+      "next_after": null,
+      "pruned_through_seq": 0,
+      "retention_gap_possible": false,
+      "notes": [
+        "SQL 只作用于本次加载窗口；聚合数量不能代替整个任务总量。",
+        "范围由 Console task_id 查询及其已记录的委托关联确定；缺失事件不会被补造。"
+      ]
+    },
+    "truncated": false,
+    "markdown": "本次载入任务 `wp4-legacy-survey` 的 2 条公开事件，查询返回 1 行。\n\n结果只描述本次加载范围；`rows` 为查询值，`refs` 为可回查的归档编号。",
+    "query_id": "132fc55a74424d7685ecbf524d340cca"
+  }
+}

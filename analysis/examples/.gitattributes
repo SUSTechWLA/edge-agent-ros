@@ -1,0 +1,3 @@
+# Sample output records digests of the original UTF-8 export bytes.
+*.json text eol=lf
+*.ndjson text eol=lf

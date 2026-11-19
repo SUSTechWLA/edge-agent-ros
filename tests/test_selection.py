@@ -15,6 +15,8 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("analysis/*","tests/test_offline_analysis.py","tests/test_conformance.py"), (R,)),
+    (("tests/test_plugin_conformance.py","tests/fixtures/plugin-conformance/*"), ("board",)),
     (("agent/facts_server.py",), ("observations","board","ui")),
     (("tests/test_console_facts.py",), ("observations",)),
     (("tests/test_capability_catalog.py", "tests/test_status_plugin.py"), ("agent-contracts",)),
@@ -49,7 +51,8 @@ RULES = [
       "scripts/record-task.*","tests/test_task_recording_source.py","tests/test_recorder_cli.py"), ("board","campus-world")),
     (("task_recorder/render.py","task_recorder/showcase.py",
       "compose.task-recorder-campus.yaml","tests/test_recording_trace_view.py"), ("campus-world",)),
-    (("task_recorder/*","compose.task-recorder*.yaml","tests/test_recorder*.py",
+    (("task_recorder/*",), ("board",)),
+    (("compose.task-recorder*.yaml","tests/test_recorder*.py",
       "tests/test_task_record*.py","tests/test_recording_trace_view.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
     (("tests/system/record_unknown_campus.py","tests/system/unknown_campus*",
       "tests/system/campus_survey*","tests/system/campus_revisit.py",
@@ -203,6 +206,15 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["tests/test_kernel.py"])[0], [R])
         self.assertEqual(set(selection(["agent/kernel/ledger.py"])[0]),
                          {R, *AGENT, "observations", "board", "plugin-isolation"})
+
+    def test_offline_analysis_and_provider_conformance(self):
+        self.assertEqual(selection(["edge_contracts/conformance.py"])[0], list(STAGES))
+        for path in ("analysis/__main__.py", "analysis/examples/expected.json",
+                     "tests/test_offline_analysis.py", "tests/test_conformance.py"):
+            self.assertEqual(selection([path])[0], [R], path)
+        for path in ("task_recorder/manage.py", "tests/test_plugin_conformance.py",
+                     "tests/fixtures/plugin-conformance/status.cases.json"):
+            self.assertEqual(selection([path])[0], [R,"board"], path)
 
     def test_packs_run_their_board_consumers(self):
         for path in ("agent/site_pack.py","profiles/bench-camera.json","capabilities/camera/pack.json",

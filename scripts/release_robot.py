@@ -7,6 +7,8 @@ import tempfile
 
 REF = "refs/heads/deploy/robot"
 ROOT = Path(__file__).resolve().parents[1]
+# agent/ includes the kernel and its independent reader. Providers also need
+# edge_contracts/ on the board. analysis/ runs on exported copies at the workstation.
 DIRS = ("src/edge_core/", "src/edge_interfaces/", "agent/", "edge_contracts/", "client/", "perception/", "console/",
         "sessions_plugin/", "evidence/", "model_provider/", "calibration/", "exploration/",
         "contracts/", "policies/", "task_recorder/")

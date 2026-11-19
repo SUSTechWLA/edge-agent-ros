@@ -121,3 +121,13 @@ AC-4 在线实测使用 `python3 -B tests/test_console_facts.py -v`，3 项均�
 为保留上述旧任务，板端观察模式增加独立 `task-facts` 进程。服务复用 Agent 的只读投影，读取原任务卷；Console 通过 `EDGE_FACTS_URL` 访问。常规任务模式沿用 Agent 的 HTTP 入口。已存在的 `EDGE_CONSOLE_OBSERVE_ONLY` 默认为 0，观察配置将它设为 1；任务提交与重试仍受原代理约束。台架切换任务模式前，在事实服务处检查原账本中的未结束任务。
 
 修复后，原 `sh scripts/deploy.sh hardware observe` 在隔离网络启动上述三个容器，旧任务列表和详情恢复为 HTTP 200。见 `.ci-results/k2/wp4/edge-wp4-observe-98fde60b9d/summary.json`。在正常关闭和最新事务仍在 WAL 的两种库上，Edge 均实际打开离线会话、步骤证据与先前归档。WAL 中的第 34 条事件可读，库、WAL、SHM 的文件集合、大小、哈希和修改时间逐项一致。Console 的任务提交返回 403，事实服务相应写请求返回 405。两次完整报告在 `.ci-results/k2/wp4/observe-e4cda4b9/{clean,wal}/acceptance.json`。最终 Console 套件 45 项、`tests/test_console_facts.py` 5 项、Agent trace 12 项、verification 11 项通过；范围均为 Linux/amd64 软件夹具。
+
+### WP5 独立契约验收与离线分析
+
+只读 Tool 的探针使用清单、公开 HTTP 和独立期望值核对回执。显式托管的测试进程可执行崩溃和重启验证。对原生 status 和 recorder，还需按实际公开读接口验证其事实；录制的启停与导出属于 recorder 自己的生命周期。默认部署与录制 profile 应对相同输入产生相同的任务终态、操作号及派发次数。
+
+工作站上的 `analysis/` 读取导出的副本。板端发布包含 `agent/kernel/`、`agent/facts_server.py` 和 `edge_contracts/`；离线分析及其样例只在开发分支分发。选择器将公共契约改动送入全量阶段，分析改动运行仓库级离线测试，板端回归在实际镜像中检查三类提供者。
+
+AC-5/6 在 Linux/amd64 隔离 ROS 域用 `python3 -B tests/test_plugin_conformance.py --out /evidence/plugin-conformance.json` 实测。录制器启用和停机时，输入均为一个缺里程计任务和两个收到合成里程计的任务。两组均得到一个 `RECOVERY_REQUIRED`、两个 `SUCCEEDED`，每个原操作的 SQLite 派发数均为 1。夹具在每组开始发送数据前先验缺样，提交两个正例前从本轮 Agent 确认已收到各自的时间戳。独立录制得到一个状态样本、七个 trace 样本；Evidence 重投和提供者重启后原操作只有一份持久化终态回执。
+
+三个提供者的健康、坏版本、坏参数、超时恢复和托管进程崩溃/重启共 15 项通过。`status`、`task.record` 的读契约验证公开的任务和录制资源，Evidence 使用部署清单中的 `evidence_schema` v1 Tool。逐次 HTTP 回应、固定操作号、SQLite 计数和两组任务终态见 `.ci-results/k2/wp5/plugin-conformance.json`。`python -B tests/test_conformance.py -v` 的 6 项与 `python -B tests/test_offline_analysis.py -v` 的 5 项通过，后者另在仅挂分析包与样例的 Linux 环境复现。原 `tests/system/verify_sample_provider.py` 的 8 个用例各验证两份回执，轨迹样例的托管进程验收见 `.ci-results/k2/wp5/track-managed.json`。选择器 16 项、部署投影 4 项及其余快速门见 `.ci-results/k2/wp5/gate.json`。

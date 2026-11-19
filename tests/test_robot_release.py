@@ -109,10 +109,12 @@ class Release(unittest.TestCase):
                  "capabilities/soft-pilots/pack.json","capabilities/camera/pack.json","profiles/bench.json",
                  "profiles/bench-camera.json","profiles/observe.json","agent/site_pack.py"}
         shipped.update({"deploy/robot/map-inputs/.gitkeep","src/edge_core/CMakeLists.txt","console/web/index.html"})
+        shipped.update({"agent/kernel/task_facts.py","agent/facts_server.py","edge_contracts/conformance.py"})
         local={"compose.physical-camera-test.yaml","tests/system/physical_camera_source.py","profiles/.env",
                "deploy/robot/manual.pdf","deploy/robot/docs/start.html","deploy/robot/TIPS.txt",
                "agent/docs/guide.html","console/readme.html",
                "profiles/site-local.json","capabilities/soft-pilots/keys.json"}
+        local.update({"analysis/__main__.py","analysis/examples/expected.json","analysis/README.md"})
         for name in shipped|local:
             self.write(name,"fixture")
         self.commit()
