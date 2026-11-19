@@ -9,12 +9,12 @@ REF = "refs/heads/deploy/robot"
 ROOT = Path(__file__).resolve().parents[1]
 DIRS = ("src/edge_core/", "src/edge_interfaces/", "agent/", "client/", "perception/", "console/",
         "sessions_plugin/", "evidence/", "model_provider/", "calibration/", "exploration/",
-        "contracts/", "policies/")
+        "contracts/", "policies/", "task_recorder/")
 FILES = {"compose.hardware.yaml", "compose.hardware-observe.yaml", "compose.sensor-health.yaml",
          "compose.camera.yaml", "compose.camera-hardware.yaml", "compose.rgbd.yaml",
          "compose.rgbd-hardware.yaml", "compose.model-provider.yaml", "compose.model-provider-hardware.yaml",
          "compose.model-provider-cloud.yaml", "docker/entrypoint.sh", "scripts/deploy.sh", "scripts/robot.sh",
-         ".dockerignore", "LICENSE"}
+         "compose.task-recorder.yaml", "scripts/record-task.sh", "scripts/record-task.ps1", ".dockerignore", "LICENSE"}
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
 

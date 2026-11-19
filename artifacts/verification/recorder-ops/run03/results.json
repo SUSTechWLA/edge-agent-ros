@@ -1,0 +1,20 @@
+{
+  "image": "edge-agent-ros:commission-0977a54",
+  "fixture": "test Agent and ROS RGB/clock",
+  "cases": {
+    "default_disabled": true,
+    "managed_service_published": true,
+    "peer_cannot_change_admission": true,
+    "software_ros_and_selected_camera_capture": true,
+    "windows_powershell_entry_verified": true,
+    "drain_rejects_new_preserves_inflight_and_idempotent_start": true,
+    "per_task_manual_stop": true,
+    "watcher_observed_terminal": {
+      "agent_state": 2,
+      "clock": 56,
+      "rgb": 112
+    },
+    "export_includes_manifest_and_real_ros_image": true,
+    "drain_persists_restart_explicit_enable_readmits": true
+  }
+}
