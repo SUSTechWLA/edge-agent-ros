@@ -23,7 +23,7 @@ def check(condition, reason):
         raise AssertionError(reason)
 
 
-def verify_agent(image, out):
+def verify_agent(image, out, recording_root=None):
     run_id = uuid.uuid4().hex[:12]
     env = {k: v for k, v in os.environ.items() if not k.startswith(("COMPOSE_", "EDGE_"))}
     env["COMPOSE_DISABLE_ENV_FILE"] = "1"
@@ -48,6 +48,15 @@ def verify_agent(image, out):
                                 "entrypoint": ["python3", "-B", "/candidate/provider.py"],
                                 "volumes": [{"type": "bind", "source": str(SAMPLE), "target": "/candidate", "read_only": True}]}},
             "networks": {"default": {"internal": True}}}
+        recording_id = "timestamp-"+run_id
+        if recording_root:
+            recording_root = recording_root.resolve()
+            recording_root.mkdir(parents=True,exist_ok=False)
+            config["services"]["recorder"] = {
+                "image":image, "pull_policy":"never", "working_dir":"/opt/edge",
+                "command":["python3","-B","-m","task_recorder.service","--state","/archive","--bind","0.0.0.0"],
+                "volumes":[{"type":"bind","source":str(ROOT/"task_recorder"),"target":"/opt/edge/task_recorder","read_only":True},
+                           {"type":"bind","source":str(recording_root),"target":"/archive"}]}
         compose_file = temp / "compose.json"
         compose_file.write_text(json.dumps(config), encoding="utf-8")
 
@@ -78,7 +87,14 @@ def verify_agent(image, out):
 
         text = "检查这组采样时间戳的重复与回拨：[100,110,110,95,110,140]"
         def submit(trigger):
-            return api("/agent/tasks", {"text": text, "trigger": {"kind": "user", "source": "audit-probe", "id": trigger}})["id"]
+            body={"text":text,"trigger":{"kind":"user","source":"audit-probe","id":trigger}}
+            if recording_root and trigger=="active":
+                body["id"]=recording_id
+            return api("/agent/tasks",body)["id"]
+
+        def recorder(*args):
+            output=compose("exec","-T","recorder","python3","-B","-m","task_recorder.cli",*args)
+            return json.loads(output.splitlines()[-1])
 
         try:
             compose("up", "-d", "--no-build")
@@ -103,8 +119,23 @@ def verify_agent(image, out):
             shutil.copyfile(SAMPLE / "tool.json", staging)
             staging.replace(live)
             check("timestamp_audit" in catalog(), "tool missing after atomic publication")
+            if recording_root:
+                recorder("start",recording_id,"--task-id",recording_id,"--sources","agent_state","agent_trace")
             key = submit("active")
             task = done(key)
+            if recording_root:
+                # First observer poll takes place after terminal completion. Only the actual Agent journal can recover the call.
+                session=recorder("watch",recording_id,"--agent","http://agent:8090","--finish","--timeout","25")
+                check(session["task_status"]=="SUCCEEDED","late watcher missed terminal task")
+                timeline=recording_root/recording_id/"media/mission/timeline.jsonl"
+                recorded=[json.loads(line) for line in timeline.read_text(encoding="utf8").splitlines()]
+                check([e["state"] for e in recorded if e["kind"]=="agent_state"]==["SUCCEEDED"],"watcher unexpectedly saw an intermediate state")
+                traces=[e for e in recorded if e["kind"]=="agent_trace"]
+                phases={e["phase"] for e in traces if e.get("tool")=="timestamp_audit"}
+                check({"tool.request","tool.response","verified"}<=phases,"missing real tool invocation, receipt or verification")
+                check(not any(e["kind"]=="agent_request" for e in recorded),"opt-out text leak")
+                report["recording"]={"id":recording_id,"state_polls":["SUCCEEDED"],"trace_rows":len(traces),
+                                     "source_seq":[e["source_seq"] for e in traces],"tool_phases":sorted(phases)}
             expected = {"sample_count": 6, "duplicate_count": 2, "backward_count": 1, "max_forward_gap_ms": 30}
             check(task["state"] == "SUCCEEDED" and len(task["steps"]) == 1, "timestamp task failed")
             step = task["steps"][0]
@@ -144,9 +175,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out",type=Path,required=True)
     parser.add_argument("--image", help="exercise the public Agent API in two private Docker services")
+    parser.add_argument("--recording",type=Path,help="new archive directory to test late-watcher journal recovery for the software task")
     args = parser.parse_args()
     if args.image:
-        verify_agent(args.image, args.out)
+        verify_agent(args.image, args.out,args.recording)
         sys.exit(0)
     # This path imports the fixed repository example. Docker mode keeps its code inside the provider container.
     sys.path.insert(0, str(SAMPLE))
