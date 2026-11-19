@@ -96,6 +96,8 @@ services:
         COPY client client
         COPY console console
         COPY perception perception
+        COPY calibration calibration
+        COPY exploration exploration
         COPY agent agent
         COPY evidence evidence
         COPY sessions_plugin sessions_plugin

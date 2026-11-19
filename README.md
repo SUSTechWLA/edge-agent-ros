@@ -10,6 +10,8 @@
 
 ## 现在可以做什么
 
+无人车上板使用单独生成的 `deploy/robot` 分支。板端从 `sh scripts/robot.sh observe` 启动，研发侧维护完整代码、Gazebo、SDD 与测试。机号、安装外参、工厂证据与地图的交接方式见[无人车出厂、首次进场与板端交付](docs/rover-commissioning.md)。
+
 大型校园实验采用代尔夫特理工大学的测绘建筑和正射影像。教学训练楼、机器人广场、八道运动场、草地和林带通过一条约 777 米的步道接入真实校园街网。在[校园全景](http://127.0.0.1:8780/)打开路线叠加，在[三维地图](http://127.0.0.1:8773/?view=3d&place=campus)切换到具体机器人，可近看机体、传感器和动作。轮式车、无人机、四足和双足的仿真动力学与已验收能力各不相同。[校园安装与运行](scene/campus_large/README.md) · [四种机体的查看与复测](docs/testing/campus-robot-view.md) · [长程试验场规格](docs/specs/SDD-029-unified-campus.md)
 
 可选的三维点云地图、多相机预览、RGB-D 像素测距和模型适配器可以按需安装。同一规划入口已经分别通过本地 Qwen 和真实 DeepSeek 调用 ROS 状态工具。用工作台观察各插件的状态、输入和装卸边界，可以从[感知与模型插件快速上手](docs/perception-model-quickstart.md)开始。

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "robot_id": null,
+  "environment": "hardware",
+  "base_frame": "base_link",
+  "sensors": {
+    "lidar": {
+      "serial": null,
+      "topic": "/livox/lidar",
+      "frame": "livox_frame"
+    },
+    "rgbd": {
+      "serial": null,
+      "topic": "/camera/camera/aligned_depth_to_color/image_raw",
+      "frame": "camera_color_optical_frame"
+    },
+    "imu": {
+      "serial": null,
+      "topic": "/imu/data",
+      "frame": "imu_link"
+    }
+  },
+  "extrinsics": {
+    "lidar": {
+      "method": "surveyed_mount",
+      "reference": null,
+      "robot_id": null,
+      "serial": null,
+      "parent_frame": "base_link",
+      "child_frame": "livox_frame",
+      "translation_m": null,
+      "rotation_xyzw": null
+    },
+    "rgbd": {
+      "method": "surveyed_mount",
+      "reference": null,
+      "robot_id": null,
+      "serial": null,
+      "parent_frame": "base_link",
+      "child_frame": "camera_color_optical_frame",
+      "translation_m": null,
+      "rotation_xyzw": null
+    },
+    "imu": {
+      "method": "surveyed_mount",
+      "reference": null,
+      "robot_id": null,
+      "serial": null,
+      "parent_frame": "base_link",
+      "child_frame": "imu_link",
+      "translation_m": null,
+      "rotation_xyzw": null
+    }
+  },
+  "camera_intrinsics": {
+    "serial": null,
+    "frame": "camera_color_optical_frame",
+    "reference": null,
+    "width": null,
+    "height": null,
+    "k": null
+  }
+}

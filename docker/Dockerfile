@@ -14,6 +14,8 @@ RUN source /opt/ros/jazzy/setup.bash && cmake -S sim -B /tmp/edge-sim-build -DCM
 COPY tests tests
 COPY client client
 COPY perception perception
+COPY calibration calibration
+COPY exploration exploration
 COPY console console
 COPY agent agent
 COPY scene scene
