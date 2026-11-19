@@ -10,11 +10,11 @@ from pathlib import Path
 
 if not __package__:
     import _contract_path  # Support direct script entry points.
+from edge_contracts.errors import CODE
 from edge_contracts.trace_content import SECRET, clean_text, encoded, sanitized
 
 
 BUILTINS = Path(__file__).with_name("contracts.json")
-CODE = re.compile(r"[a-zA-Z][a-zA-Z0-9_.-]{0,95}")
 MAX_CONTENT = 16384
 
 

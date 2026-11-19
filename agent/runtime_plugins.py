@@ -15,8 +15,12 @@ if not __package__:
     import _contract_path  # Support direct script entry points.
 from edge_contracts.service_directory import (MAX_CONFIG_BYTES, NAME, VERSION, PluginUnavailable,
     ServiceSnapshot, _decode, _descriptor, _names, _read, _schema)
-from module_journal import ModuleJournal, canonical
-from tracing import encoded, exchange, sanitized
+if __package__:
+    from .module_journal import ModuleJournal, canonical
+    from .tracing import encoded, exchange, sanitized
+else:
+    from module_journal import ModuleJournal, canonical
+    from tracing import encoded, exchange, sanitized
 
 
 MAX_REPLY_BYTES = 65536

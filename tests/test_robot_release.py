@@ -72,7 +72,7 @@ class Release(unittest.TestCase):
             release_robot.projection("HEAD")
 
     def test_site_profiles_and_physical_bench_are_projected_without_station_fixtures(self):
-        shipped={"edge_contracts/__init__.py","edge_contracts/descriptor.py","compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","compose.physical-camera.yaml",
+        shipped={"agent/kernel/ledger.py","edge_contracts/__init__.py","edge_contracts/descriptor.py","compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","compose.physical-camera.yaml",
                  "scripts/prepare_physical_camera.py","scripts/prepare_soft_pilots.py","scripts/robot-plugins.sh","scripts/check_board_plugins.py",
                  "capabilities/soft-pilots/pack.json","capabilities/camera/pack.json","profiles/bench.json",
                  "profiles/bench-camera.json","profiles/observe.json","agent/site_pack.py"}

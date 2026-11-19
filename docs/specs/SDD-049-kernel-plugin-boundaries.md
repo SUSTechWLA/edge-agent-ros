@@ -78,3 +78,7 @@ docker run --pull=never --rm --network none --mount "type=bind,source=$PWD,targe
 - 校园首次因探针拟读取已有仿真时钟被拦截；在独立小型仿真上按相同断言验证时钟、校园重载、贴图与机载观测，全部 16/16 命令通过，见 `.ci-results/kernel-runner/wp1-campus-r1/stage-results.json`。
 
 共享帧编码、栅格导出和预览 HTTP 接口供原插件独立使用；保留原导出名字。上述迁移与真实仿真验收均未改变 operation_id、绑定、终态、SQLite 事务或授权。
+
+### WP2 任务内核
+
+2026-11-19，AC-2。Agent 入口组装 ROS、HTTP 和 worker。任务库、迁移与一次提交内的写入移入 ledger，保留 POSIX 独占锁，Windows 独立账本用非阻塞文件锁。worker 通过注入的规划函数处理队列，verification 持久化候选及独立验收决定，authorization 统一执行原效果检查与预算。catalog 复用 v1/v2 快照；host 访问现有软宿主和物理控制器。公开请求与回执沿用原摘要和错误规范。部署侧批准与 CAS、core 的运动准入和停稳协议继续使用原所有者。
