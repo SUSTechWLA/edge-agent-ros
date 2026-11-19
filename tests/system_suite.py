@@ -98,6 +98,7 @@ def run(args, selected, reasons):
             stage("repository",[[PY,"scripts/check_sdd.py"],test("repository_contract.py","-v"),
                                 test("document_contract.py","-v"),
                                 test("test_selection.py","-v"),test("test_robot_release.py","-v"),
+                                test("test_mission_recording.py","-v"),
                                 ["docker","compose","config","--quiet"],
                                 ["docker","compose","-f","compose.hardware.yaml","config","--quiet"],
                                 ["docker","compose","-f","compose.yaml","-f","compose.camera.yaml","-f","compose.rgbd.yaml",

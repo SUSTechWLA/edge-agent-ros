@@ -15,6 +15,9 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("tests/test_mission_recording.py", "tests/system/commission_recording.py", "tests/system/long_mission_world.py",
+      "tests/system/record_long_mission.py", "tests/system/render_rover_video.py", "tests/system/mission_watch_page.py"),
+     (R,)),
     (("scripts/release_robot.py", "tests/test_robot_release.py"), (R,)),
     (("scripts/robot.sh", "calibration/ros_capture.py", "calibration/targets.py", "calibration/station/*",
       "tests/test_factory_targets.py", "tests/system/factory_ros_capture.py"), ("board",)),
@@ -141,6 +144,13 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_recording_fixtures_stay_off_board(self):
+        for name in ("commission_recording", "long_mission_world", "record_long_mission", "render_rover_video", "mission_watch_page"):
+            self.assertEqual(selection([f"tests/system/{name}.py"])[0], [R], name)
+        self.assertEqual(selection(["tests/test_mission_recording.py"])[0], [R])
+        self.assertEqual(selection(["tests/system/record_long_mission.py","exploration/frontier.py"])[0],
+                         [R,"rover-commissioning"])
+
     def test_rover_commissioning_consumers(self):
         for name in ("scripts/release_robot.py", "tests/test_robot_release.py", "deploy/robot/README.md"):
             self.assertEqual(selection([name])[0], [R], name)
