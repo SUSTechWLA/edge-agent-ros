@@ -165,7 +165,7 @@ def showcase_band(img, stamp, current, view, guide, opt):
         if i: d.line((x-10,665,x-10,777),fill="#394D58")
         reading,points=view.samples(stamp,signal)
         state=reading["status"]
-        color=GREEN if state=="sample" else (AMBER if state in {"stale","invalid"} else GRAY)
+        color=GREEN if state=="sample" else (AMBER if state in {"stale","invalid","no_return"} else GRAY)
         label(x,664,signal["label"],18,WHITE,224)
         value=reading["value"]
         text="—" if value is None else f'{showcase.formatted(value)} {signal["unit"]}'
@@ -186,7 +186,9 @@ def showcase_band(img, stamp, current, view, guide, opt):
                     d.ellipse((px-1,py-1,px+1,py+1),fill="#78C8BB")
                 prev=(when,px,py)
         age=f' · {reading["age_s"]:.1f} s' if "age_s" in reading else ""
-        label(x,760,showcase.STATUS[state]+age,16,color,218)
+        state_label=showcase.STATUS[state]
+        if reading.get("stale") and state!="stale": state_label+=" · 超时"
+        label(x,760,state_label+age,16,color,218)
     label(810,632,"任务事件",18,GREEN,270)
     title,detail=caption(current,guide)
     if current and current["kind"]=="bus":
