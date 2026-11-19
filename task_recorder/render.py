@@ -1,0 +1,314 @@
+"""Offline MP4 and chapter viewer for one exported task-recorder session. Requires Pillow and FFmpeg."""
+import argparse
+from bisect import bisect_right
+from collections import defaultdict
+from functools import lru_cache
+import hashlib
+import html
+import json
+import math
+from pathlib import Path
+import shutil
+import subprocess
+
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+W,H,FPS=1440,810,10
+BG="#101E29"
+PANEL="#192C39"
+WHITE="#F4F5E9"
+GRAY="#A8BECA"
+GREEN="#79DED0"
+AMBER="#FFC16C"
+
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+
+def sha(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream,"sha256").hexdigest()
+
+
+def xy(value):
+    return (isinstance(value,(list,tuple)) and len(value)==2 and
+            all(type(n) in (int,float) and math.isfinite(n) for n in value))
+
+
+class Recording:
+    def __init__(self, root, axis):
+        self.header=read(root/"recording.json")
+        self.media=root/"media/mission"
+        timeline=self.media/"timeline.jsonl"
+        self.timeline_digest=sha(timeline)
+        self.by=defaultdict(list)
+        self.marks=[]
+        self.all=[]
+        for line in timeline.read_text(encoding="utf8").splitlines():
+            r=json.loads(line)
+            if r["task_id"]!=self.header["task_id"]:
+                raise ValueError("unexpected task in recording")
+            r["_at"]=r[axis]
+            if "file" in r:
+                path=(self.media/r["file"]).resolve()
+                if not path.is_relative_to(self.media.resolve()) or sha(path)!=r["sha256"]:
+                    raise ValueError("invalid media evidence")
+                r["_path"]=path
+            self.all.append(r)
+            self.by[r["kind"]].append(r)
+            if r.get("phase") or r["kind"] not in ("rgb","map","twist","fused_pose","world_pose","clock","bus"):
+                self.marks.append(r)
+        if not self.all:
+            raise ValueError("no recorded events to render")
+        if not self.marks:
+            self.marks=list(self.by["bus"])
+        self.marks.sort(key=lambda r:(r["_at"],r["seq"]))
+        self.by["_activity"]=self.marks
+        self.times={}
+        for k,values in self.by.items():
+            values.sort(key=lambda r:(r["_at"],r["seq"]))
+            self.times[k]=[v["_at"] for v in values]
+        self.first=min(r["_at"] for r in self.all)
+        self.end=max(r["_at"] for r in self.all)
+
+    def seen(self,k,t):
+        return self.by[k][:bisect_right(self.times.get(k,[]),t)]
+
+    def last(self,k,t):
+        end=bisect_right(self.times.get(k,[]),t)
+        return self.by[k][end-1] if end else {}
+
+
+@lru_cache(maxsize=6)
+def camera(path):
+    with Image.open(path) as image:
+        return ImageOps.contain(image.convert("RGB"),(706,438),Image.Resampling.LANCZOS)
+
+
+@lru_cache(maxsize=8)
+def map_pixels(path):
+    g=read(path)
+    width,height=g["width"],g["height"]
+    if not (0<width*height<=2_000_000 and width*height==len(g["cells"]) and g["resolution"]>0):
+        raise ValueError("invalid occupancy grid")
+    im=Image.frombytes("P",(width,height),bytes(0 if v<0 else 1 if v==0 else 2 if v>=50 else 3 for v in g["cells"]))
+    im.putpalette([51,73,89,201,216,218,237,145,111,143,164,174]+[0]*756)
+    return g,im.convert("RGB").transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+
+
+@lru_cache(maxsize=16)
+def font(path,size):
+    return ImageFont.truetype(path,size)
+
+
+def paragraph(draw,pos,text,size,width,style,color=WHITE,max_lines=2):
+    face=font(style,size)
+    x,y=pos
+    line=""
+    count=1
+    for char in str(text):
+        if char=="\n" or face.getlength(line+char)>width:
+            if count==max_lines:
+                draw.text((x,y),line[:-1]+"…",font=face,fill=color,anchor="lt")
+                return
+            draw.text((x,y),line,font=face,fill=color,anchor="lt")
+            y+=size+9
+            line=""
+            count+=1
+        if char!="\n": line+=char
+    draw.text((x,y),line,font=face,fill=color,anchor="lt")
+
+
+def caption(row, guide):
+    if not row:
+        return "开始采集","等待本任务的第一条阶段记录。"
+    kind=row.get("phase") or row["kind"]
+    section=guide.get("phases",{}).get(kind,[])
+    title=row.get("title") or (section[0] if section else kind)
+    detail=row.get("text") or (section[1] if len(section)>1 else row.get("detail") or row.get("reason") or "")
+    if guide.get("frontier_table") and kind in ("goal","accepted","waypoint"):
+        if row.get("mode")=="return": title="返航 · "+title
+        if xy(row.get("goal")): detail+=f'　目标 ({row["goal"][0]:+.2f}, {row["goal"][1]:+.2f}) m。'
+        if xy(row.get("frontier")): detail+=f'　前沿 ({row["frontier"][0]:+.2f}, {row["frontier"][1]:+.2f}) m。'
+        if type(row.get("potential_unknown_cells")) is int: detail+=f'　邻近未知格 {row["potential_unknown_cells"]}。'
+    if guide.get("frontier_table") and kind=="mapped" and type(row.get("gain")) is int: detail+=f'　作业范围新增 {row["gain"]} 个已知格。'
+    if guide.get("frontier_table") and kind=="home" and isinstance(row.get("home_error_m"),(int,float)): detail+=f'　位姿距起点 {row["home_error_m"]:.2f} m。'
+    if row.get("state"): title+=" · "+str(row["state"])
+    return str(title),str(detail)
+
+
+def picture(record,stamp,opt,guide):
+    img=Image.new("RGB",(W,H),BG)
+    d=ImageDraw.Draw(img)
+    def label(x,y,value,size,color=WHITE,width=1300,lines=1):
+        paragraph(d,(x,y),value,size,width,opt.font,color,lines)
+    label(34,18,"EDGE AGENT ROS    /    任务运行录像",19,GREEN)
+    label(34,52,guide.get("title") or record.header["task_id"],37,WHITE,1110)
+    label(1158,52,f"+ {(stamp-record.first)/1e9:6.1f} 秒",28,AMBER,255)
+    d.rounded_rectangle((28,119,775,608),12,fill=PANEL)
+    d.rounded_rectangle((790,119,1412,608),12,fill=PANEL)
+    rows=record.seen("_activity",stamp)
+    request=next((e.get("text") for e in rows if e.get("phase")=="submitted" and e.get("text")),None)
+    if request:
+        label(36,97,"用户任务　"+str(request),16,GRAY,1320)
+    title,detail=caption(rows[-1] if rows else None,guide)
+    rgb=record.last("rgb",stamp)
+    label(49,135,guide.get("camera_title","相机观测") if record.by["rgb"] else "任务事件",22)
+    if rgb and rgb.get("_path"):
+        frame=camera(rgb["_path"])
+        img.paste(frame,(int(403-frame.width/2),int(384-frame.height/2)))
+        label(473,138,f'{rgb.get("width",frame.width)} × {rgb.get("height",frame.height)}  ·  帧龄 {(stamp-rgb["_at"])/1e9:.1f} s',16,GRAY,290)
+    elif record.by["rgb"]:
+        label(233,354,"等待第一帧相机观测",25,GRAY)
+    else:
+        for i,row in enumerate(rows[-9:]):
+            name,_=caption(row,guide)
+            label(52,194+43*i,f'+{(row["_at"]-record.first)/1e9:05.1f} s   {name}',21,WHITE,696)
+    grid=record.last("map",stamp)
+    label(813,135,"车端占据地图" if record.by["map"] else "采集来源",22)
+    if grid and grid.get("_path"):
+        g,pixels=map_pixels(grid["_path"])
+        n=min(g["width"],g["height"],max(15,round(guide.get("map_width_m",8)/g["resolution"])))
+        ox,oy,a=g["origin"]
+        def transform(pt):
+            dx,dy=pt[0]-ox,pt[1]-oy
+            return ((dx*math.cos(a)+dy*math.sin(a))/g["resolution"],g["height"]-(-dx*math.sin(a)+dy*math.cos(a))/g["resolution"])
+        poses=[v for v in record.seen("fused_pose",stamp) if v.get("frame")==g["frame"] and xy(v.get("xy"))]
+        center=transform(poses[-1]["xy"] if poses else (0,0))
+        left=max(0,min(g["width"]-n,round(center[0]-n/2)))
+        top=max(0,min(g["height"]-n,round(center[1]-n/2)))
+        side=390
+        img.paste(pixels.crop((left,top,left+n,top+n)).resize((side,side),Image.Resampling.NEAREST),(814,182))
+        def dot(pt,r,color):
+            x,y=transform(pt)
+            x,y=814+(x-left)*side/n,182+(y-top)*side/n
+            if 814+r<=x<=1204-r and 182+r<=y<=572-r:
+                d.ellipse((x-r,y-r,x+r,y+r),fill=color,outline=BG if r>3 else None,width=2)
+        for p in poses: dot(p["xy"],2,"#278075")
+        goals=[r for r in rows if r.get("phase")=="goal" and xy(r.get("goal"))]
+        if goals:
+            if xy(goals[-1].get("frontier")):
+                dot(goals[-1]["frontier"],8,"#BEA9F7")
+            dot(goals[-1]["goal"],8,AMBER)
+        if poses: dot(poses[-1]["xy"],6,GREEN)
+        label(1221,192,"整图已知格",18,GRAY,176)
+        label(1221,230,str(grid.get("known","—")),31,GREEN,177)
+        label(1221,302,"地图帧龄",18,GRAY,176)
+        age=(stamp-grid["_at"])/1e9
+        label(1221,339,f'{age:.1f} s',28,AMBER if age>1.5 else WHITE,177)
+        if goals:
+            active=goals[-1]
+            label(1221,400,"最近目标 (m)",16,GRAY,178)
+            label(1221,431,f'{active["goal"][0]:+.2f}, {active["goal"][1]:+.2f}',20,AMBER,177)
+            if xy(active.get("frontier")):
+                label(1221,480,"前沿 (m)",16,GRAY,176)
+                label(1221,512,f'{active["frontier"][0]:+.2f}, {active["frontier"][1]:+.2f}',20,"#CEB9FF",178)
+        else:
+            label(1221,411,"分辨率",18,GRAY,176)
+            label(1221,448,f'{g["resolution"]:.2f} m',24,WHITE,177)
+        label(815,579,"浅色 空闲　橙色 占据　深色 未知　紫点 前沿　黄点 目标　绿点 车",15,GRAY,580)
+    elif record.by["map"]:
+        label(920,354,"等待第一张地图",24,GRAY)
+    else:
+        kinds=[k for k in record.by if not k.startswith("_") and record.by[k]]
+        for i,k in enumerate(kinds[:9]):
+            label(820,194+i*42,k,20,GRAY,390)
+            label(1245,194+i*42,str(bisect_right(record.times.get(k,[]),stamp)),21,GREEN,135)
+    d.rectangle((34,637,40,738),fill=GREEN)
+    label(59,637,title,30,WHITE,1320)
+    label(59,686,detail,22,GRAY,1319,2)
+    d.line((34,751,1408,751),fill="#3B5361")
+    label(36,768,"任务  "+record.header["task_id"],17,GRAY,450)
+    occurred={phase.get("phase") for phase in rows}
+    for index,pair in enumerate(guide.get("progress",[])[:5]):
+        phase,name=pair
+        label(504+index*109,770,name,16,GREEN if phase in occurred else "#8A9BA5",105)
+    label(1110,768,"原速 1.0×  ·  "+("来源时钟" if opt.axis=="stamp_ns" else "接收时钟"),17,GREEN,298)
+    return img
+
+
+def render(opt):
+    record=Recording(opt.recording.resolve(),opt.axis)
+    guide=read(opt.guide) if opt.guide else {}
+    opt.out.mkdir(parents=True,exist_ok=True)
+    frames=max(FPS,math.ceil((record.end-record.first)/1e9*FPS)+1)
+    if frames>opt.max_seconds*FPS: raise ValueError("time span exceeds --max-seconds; verify input clock domains")
+    target=opt.out/"task.mp4"
+    pending=target.with_suffix(".partial.mp4")
+    with subprocess.Popen([opt.ffmpeg,"-hide_banner","-loglevel","error","-y","-f","rawvideo","-pix_fmt","rgb24",
+        "-s",f"{W}x{H}","-r",str(FPS),"-i","-","-an","-c:v","libx264","-preset","veryfast","-pix_fmt","yuv420p",
+        "-crf","19","-movflags","+faststart",str(pending)],stdin=subprocess.PIPE) as ff:
+        try:
+            for i in range(frames):
+                t=min(record.end,record.first+i*(10**9//FPS))
+                frame=picture(record,t,opt,guide)
+                if i==frames//2: frame.save(opt.out/"cover.png")
+                ff.stdin.write(frame.tobytes())
+        finally:
+            ff.stdin.close()
+        if ff.wait(): raise RuntimeError("FFmpeg failed")
+    probe=json.loads(subprocess.check_output([opt.ffprobe,"-v","error","-show_format","-show_streams","-of","json",str(pending)]))
+    stream=next(e for e in probe["streams"] if e["codec_type"]=="video")
+    if (stream["codec_name"],stream["width"],stream["height"],int(stream["nb_frames"]))!=("h264",W,H,frames):
+        raise ValueError("encoded stream does not match requested timeline")
+    pending.replace(target)
+    markers=[{"sec":(e["_at"]-record.first)/1e9,"phase":e.get("phase",e["kind"]),"title":caption(e,guide)[0],
+              "detail":caption(e,guide)[1],"event_id":e["event_id"]} for e in record.marks]
+    summary=dict(task_id=record.header["task_id"],recording_id=record.header["recording_id"],status=record.header["status"],
+                 task_status=record.header.get("task_status"),missing_sources=record.header["missing_sources"],
+                 axis=opt.axis,first_ns=record.first,last_ns=record.end,fps=FPS,frames=frames,duration_s=float(probe["format"]["duration"]),
+                 video_sha256=sha(target),timeline_sha256=record.timeline_digest,counts=record.header["counts"],markers=markers)
+    (opt.out/"video.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2)+"\n","utf8")
+    selected=guide.get("chapters",[])
+    shortlist=[r for r in markers if not selected or r["phase"] in selected]
+    buttons=[]
+    seen=set()
+    for row in shortlist:
+        if row["phase"] in seen: continue
+        seen.add(row["phase"])
+        s=row["sec"]
+        buttons.append(f'<button data-t="{s:.3f}"><time>{int(s)//60:02}:{int(s)%60:02}</time> {html.escape(row["title"])}</button>')
+    title=html.escape(guide.get("title",summary["task_id"]))
+    desc=html.escape(guide.get("description","点击播放查看同一录制会话中的任务、来源时间和事件。"))
+    table=[]
+    def pair(v):
+        return f'({v[0]:+.2f}, {v[1]:+.2f})' if xy(v) else "—"
+    for row in record.marks:
+        if row.get("phase")=="goal" and xy(row.get("goal")):
+            table.append(f'<tr><td>{len(table)+1}</td><td>{pair(row.get("xy"))}</td><td>{pair(row.get("frontier"))}</td>'
+                         f'<td>{pair(row["goal"])}</td><td>{int(row.get("map_stamp_ns",0))/1e9:.2f} s</td></tr>')
+    coordinates=('<details><summary>查看每段移动坐标的来源</summary><p>坐标单位为米。在已知自由区与未知区的交界选择前沿，根据车体余量选出一段可执行的短目标。'
+                 '返航段沿已观测自由空间向首次有效位姿靠近。地图时间为提供者计算时实际读取的源时间。</p><div class="scroll"><table><thead>'
+                 '<tr><th>段</th><th>计算时车位</th><th>候选前沿</th><th>提交目标</th><th>地图时钟</th></tr></thead>'
+                 '<tbody>'+"".join(table)+'</tbody></table></div></details>') if table and guide.get("frontier_table") else ""
+    (opt.out/"index.html").write_text(f'''<!doctype html><html lang="zh-CN"><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><style>
+*{{box-sizing:border-box}}body{{margin:0;background:#f0f4f1;color:#19332f;font:16px/1.6 "Microsoft YaHei",sans-serif}}
+main{{max-width:1440px;margin:auto;padding:25px clamp(14px,4vw,46px)}}h1{{font-size:clamp(25px,4vw,45px);margin:9px 0}}
+section{{display:grid;grid-template-columns:minmax(0,2.65fr) minmax(215px,1fr);gap:18px;align-items:start}}
+video{{width:100%;border-radius:10px;background:#101e29}}aside{{padding:14px;background:white;border-radius:10px}}
+h2{{font-size:19px;margin:0 0 8px}}button{{width:100%;border:0;border-top:1px solid #d2ded9;background:white;padding:8px;color:inherit;font:inherit;text-align:left;cursor:pointer}}button:hover,button:focus-visible{{background:#ddede5}}time{{color:#136758}}
+a{{color:#105b45}}footer{{margin-top:12px;overflow-wrap:anywhere}}details{{margin-top:20px;background:white;padding:14px;border-radius:10px}}summary{{cursor:pointer;font-weight:600}}.scroll{{overflow:auto}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;border-bottom:1px solid #d2ddd7;text-align:left;white-space:nowrap}}
+@media(max-width:780px){{section{{grid-template-columns:1fr}}}}</style>
+<main><h1>{title}</h1><p>{desc}</p><section><video controls playsinline preload="metadata" src="task.mp4" poster="cover.png"></video>
+<aside><h2>跳到现场</h2>{"".join(buttons)}</aside></section>{coordinates}<footer>任务 <code>{html.escape(summary["task_id"])}</code>　·　
+<a href="task.mp4">播放 MP4</a>　<a href="video.json">查看时间索引与证据哈希</a></footer></main>
+<script>const v=document.querySelector("video");for(const b of document.querySelectorAll("button"))b.onclick=()=>{{v.currentTime=+b.dataset.t;v.play().catch(()=>{{}});}};</script></html>''',"utf8")
+    return summary
+
+
+if __name__=="__main__":
+    cli=argparse.ArgumentParser(description=__doc__)
+    cli.add_argument("--recording",required=True,type=Path)
+    cli.add_argument("--out",required=True,type=Path)
+    cli.add_argument("--guide",type=Path,help="optional presentation labels and selectable chapter phases")
+    cli.add_argument("--axis",choices=("stamp_ns","received_ns"),default="received_ns")
+    cli.add_argument("--font",required=True,help="path to a CJK font")
+    cli.add_argument("--max-seconds",type=int,default=3600)
+    cli.add_argument("--ffmpeg",default=shutil.which("ffmpeg"))
+    cli.add_argument("--ffprobe",default=shutil.which("ffprobe"))
+    opts=cli.parse_args()
+    if not (opts.ffmpeg and opts.ffprobe): cli.error("FFmpeg and FFprobe are required")
+    result=render(opts)
+    print(json.dumps({k:result[k] for k in ("task_id","frames","duration_s","video_sha256")}))
