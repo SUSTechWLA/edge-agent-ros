@@ -235,8 +235,9 @@ def main():
     worker=threading.Thread(target=httpd.serve_forever,daemon=True)
     worker.start()
     stop = threading.Event()
-    journals = threading.Thread(target=node.watch_journals, args=(stop,), name="module-journals")
-    journals.start()
+    journals = node.journal_workers(stop)
+    for journal in journals:
+        journal.start()
     print(f"Edge console listening on {address[0]}:{address[1]}",flush=True)
     try:
         rclpy.spin(node)
@@ -244,7 +245,8 @@ def main():
         pass
     finally:
         stop.set()
-        journals.join()
+        for journal in journals:
+            journal.join()
         httpd.shutdown()
         httpd.server_close()
         worker.join()

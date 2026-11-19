@@ -59,6 +59,9 @@ class History:
               singleton INTEGER PRIMARY KEY CHECK(singleton=1), id TEXT NOT NULL, pruned_through INTEGER NOT NULL
             );
             INSERT OR IGNORE INTO archive_identity VALUES(1,lower(hex(randomblob(16))),0);
+            CREATE TABLE IF NOT EXISTS observer_fact_sources (
+              singleton INTEGER PRIMARY KEY CHECK(singleton=1), task_source TEXT NOT NULL, core_source TEXT
+            );
             CREATE TABLE IF NOT EXISTS events (
               seq INTEGER PRIMARY KEY AUTOINCREMENT, utc TEXT NOT NULL, observed_at REAL NOT NULL,
               kind TEXT NOT NULL, level TEXT NOT NULL, source TEXT NOT NULL, session_id TEXT NOT NULL,
@@ -75,12 +78,14 @@ class History:
         # unavailable provenance NULL instead of backfilling a guessed trigger.
         with self.db:
             existing = {r[1] for r in self.db.execute("PRAGMA table_info(events)")}
-            for name in (*TRACE_FIELDS,"ingress_hash"):
+            for name in (*TRACE_FIELDS,"ingress_hash","peer_source"):
                 if name not in existing:
                     self.db.execute(f"ALTER TABLE events ADD COLUMN {name} TEXT")
             for name in ("event_id","trace_id","parent_event_id","task_id","module","code","trigger_kind","trigger_id","call_id","operation_id"):
                 self.db.execute(f"CREATE INDEX IF NOT EXISTS trace_{name} ON events({name},seq) WHERE {name} IS NOT NULL")
             self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS wire_event_id ON events(event_id) WHERE ingress_hash IS NOT NULL")
+            self.db.execute("""CREATE INDEX IF NOT EXISTS core_mission_scope ON events(source_id,mission_id,seq)
+                WHERE source='edge_core/ledger' AND peer_source IS NOT NULL""")
         self.db.execute(f"CREATE INDEX IF NOT EXISTS ordinary_by_seq ON events(seq) WHERE {ORDINARY_SAMPLE}")
         self.db.execute(f"CREATE INDEX IF NOT EXISTS ordinary_by_age ON events(observed_at) WHERE {ORDINARY_SAMPLE}")
         self.archive_id,self.pruned_through=self.db.execute("SELECT id,pruned_through FROM archive_identity").fetchone()
@@ -126,6 +131,19 @@ class History:
             return self.db.execute("SELECT coalesce(max(source_seq),0) FROM events WHERE source_id=?",
                                    (source_id,)).fetchone()[0]
 
+    def fact_sources(self):
+        with self.lock:
+            row = self.db.execute("SELECT task_source,core_source FROM observer_fact_sources WHERE singleton=1").fetchone()
+            if row:
+                return tuple(row)
+            old = self.db.execute("""SELECT source_id FROM events WHERE source='mission_agent/tasks'
+                AND source_id IS NOT NULL ORDER BY seq DESC LIMIT 1""").fetchone()
+            return (old[0] if old else None), None
+
+    def remember_sources(self, task_source, core_source):
+        with self.lock, self.db:
+            self.db.execute("INSERT OR REPLACE INTO observer_fact_sources VALUES(1,?,?)", (task_source, core_source))
+
     def journal_health(self):
         """Restore observer-owned transitions once when opening an archive."""
         with self.lock:
@@ -144,8 +162,15 @@ class History:
 
     def record(self, snapshot, *, kind, source, detail, level="info", mission_id=None,
                operation_id=None, data=None, event_utc=None, source_id=None,
-               source_seq=None, source_cause=None, cause=None, trace=None, ingress_hash=None):
+               source_seq=None, source_cause=None, cause=None, trace=None, ingress_hash=None, peer_source=None):
         with self.lock, self.db:
+            if source == "edge_core/ledger" and peer_source is not None:
+                # A replacement Agent cannot take over a mission already witnessed by this core.
+                first = self.db.execute("""SELECT peer_source FROM events WHERE source='edge_core/ledger'
+                    AND source_id=? AND mission_id=? AND peer_source IS NOT NULL ORDER BY seq LIMIT 1""",
+                    (source_id, mission_id)).fetchone()
+                if first:
+                    peer_source = first[0]
             trace = dict(trace or {})
             event_id = trace.get("event_id") or uuid.uuid4().hex
             if ingress_hash:
@@ -182,12 +207,16 @@ class History:
             at = time.time()
             insert = self.db.execute("""
                 INSERT INTO events(utc,observed_at,kind,level,source,session_id,mission_id,operation_id,
-                  detail,data,cause_seq,source_id,source_seq,snapshot,ingress_hash,
+                  detail,data,cause_seq,source_id,source_seq,snapshot,ingress_hash,peer_source,
                   event_id,trace_id,parent_event_id,task_id,module,layer,code,call_id,trigger_kind,trigger_id,trigger_source)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (event_utc or utc(at), at, kind, level, source, snapshot["session_id"], mission_id,
-                  operation_id, detail, encode(data or {}), cause, source_id, source_seq, pack(snapshot),ingress_hash,*metadata))
+                  operation_id, detail, encode(data or {}), cause, source_id, source_seq, pack(snapshot),ingress_hash,peer_source,*metadata))
             self.cursor = insert.lastrowid
+            if peer_source and source == "mission_agent/tasks" and kind == "agent.dispatch" and operation_id:
+                self._link_dispatch(source_id, peer_source, operation_id)
+            elif peer_source and source == "edge_core/ledger":
+                self._link_dispatch(peer_source, source_id, mission_id, core_seq=self.cursor)
             self.db.execute("UPDATE events SET cause_seq=? WHERE parent_event_id=? AND cause_seq IS NULL AND seq!=?",
                             (self.cursor,event_id,self.cursor))
             if kind == "telemetry.sample":
@@ -236,17 +265,20 @@ class History:
             if key in filters:
                 where.append(key+"=?")
                 values.append(filters[key])
+        # Earlier archives and ROS observations support a query-time operation lookup.
+        # Newly ingested core rows have an explicit peer scope, including "" for unknown.
+        operation_lookup = "(source!='edge_core/ledger' OR peer_source IS NULL)"
         if "task_id" in filters:
-            where.append("""(task_id=? OR mission_id=? OR mission_id IN
+            where.append(f"""(task_id=? OR mission_id=? OR ({operation_lookup} AND mission_id IN
               (SELECT operation_id FROM events WHERE source='mission_agent/tasks' AND mission_id=?
-               AND operation_id IS NOT NULL))""")
+               AND operation_id IS NOT NULL)))""")
             values.extend([filters["task_id"]]*3)
         if "trace_id" in filters:
             # A ROS action server may only know the delegated mission ID. Join
             # it to the agent's original dispatch without rewriting that event.
-            where.append("""(trace_id=? OR mission_id IN
+            where.append(f"""(trace_id=? OR ({operation_lookup} AND mission_id IN
                  (SELECT operation_id FROM events WHERE trace_id=? AND source='mission_agent/tasks'
-                  AND kind='agent.dispatch' AND operation_id IS NOT NULL))""")
+                  AND kind='agent.dispatch' AND operation_id IS NOT NULL)))""")
             values.extend([filters["trace_id"]]*2)
         for cond, val in (("seq>?", after), ("seq<?", before), ("seq<=?",maximum)):
             if val is not None:
@@ -302,9 +334,39 @@ class History:
                                   (source_id,task_id)).fetchone()
             return row[0]
 
-    def dispatch_origin(self, source_id, delegated_id):
-        with self.lock:
-            row=self.db.execute("""SELECT seq,mission_id,trace_id,trigger_kind,trigger_id,trigger_source FROM events
-                WHERE source_id=? AND operation_id=? AND kind='agent.dispatch'
-                ORDER BY source_seq LIMIT 1""", (source_id,delegated_id)).fetchone()
-            return dict(row) if row else None
+    def _link_dispatch(self, agent_source, core_source, mission, core_seq=None):
+        """Join exact producer evidence atomically, whichever side was observed first."""
+        candidates = self.db.execute("""SELECT seq,event_id,mission_id,trace_id,trigger_kind,trigger_id,trigger_source,
+                peer_source FROM events WHERE source='mission_agent/tasks' AND kind='agent.dispatch'
+                AND source_id=? AND operation_id=? AND (peer_source=? OR peer_source IS NULL)
+                ORDER BY source_seq""", (agent_source, mission, core_source))
+        for dispatch in candidates:
+            if dispatch["peer_source"] is None:
+                # Pre-migration dispatches can prove the core identity via their stored snapshot
+                # or an existing creation which explicitly named this dispatch.
+                snapshot = self.db.execute("SELECT snapshot FROM events WHERE seq=?", (dispatch["seq"],)).fetchone()[0]
+                if json.loads(zlib.decompress(snapshot)).get("ledger_id") != core_source:
+                    witness = self.db.execute("""SELECT 1 FROM events WHERE source='edge_core/ledger'
+                        AND source_id=? AND mission_id=? AND kind='mission.created' AND task_id=?
+                        AND json_extract(data,'$.agent_dispatch_seq')=? LIMIT 1""",
+                        (core_source, mission, dispatch["mission_id"], dispatch["seq"])).fetchone()
+                    if not witness:
+                        continue
+            break
+        else:
+            return
+        scope = """source='edge_core/ledger' AND source_id=? AND mission_id=? AND peer_source=? AND task_id IS NULL"""
+        binding = (core_source, mission, agent_source)
+        if core_seq is not None:
+            scope += " AND seq=?"
+            binding += (core_seq,)
+        # Keep a producer's own cause even when its referenced event has not arrived.
+        root = """cause_seq IS NULL AND parent_event_id IS NULL AND json_extract(data,'$.source_cause_seq') IS NULL"""
+        self.db.execute(f"""UPDATE events SET data=json_set(data,'$.parent_task_id',?,'$.agent_dispatch_seq',?),
+            cause_seq=CASE WHEN {root} THEN ? ELSE cause_seq END,
+            parent_event_id=CASE WHEN {root} THEN ? ELSE parent_event_id END
+            WHERE {scope} AND kind='mission.created'""", (dispatch["mission_id"], dispatch["seq"],
+            dispatch["seq"], dispatch["event_id"], *binding))
+        self.db.execute(f"""UPDATE events SET task_id=?, trace_id=?, trigger_kind=?, trigger_id=?, trigger_source=?
+            WHERE {scope}""", (dispatch["mission_id"], dispatch["trace_id"], dispatch["trigger_kind"],
+            dispatch["trigger_id"], dispatch["trigger_source"], *binding))

@@ -119,7 +119,18 @@ services:
     volumes: [campus-world:/campus:ro, campus-fleet-state:/state]
     command: ["python3","-B","/opt/edge/scene/campus_large/robot_agent/provider.py"]
 
+  # The guarded reload closes task admission before its second check of the same owner ledger.
+  campus-task-facts:
+    <<: *campus-tool
+    restart: unless-stopped
+    entrypoint: ["python3","-B","/opt/edge/agent/facts_server.py"]
+    environment: {EDGE_FACTS_BIND: 0.0.0.0}
+    volumes: [task-state:/var/lib/edge-tasks:ro]
+
   console:
+    depends_on: [campus-task-facts]
+    environment:
+      EDGE_FACTS_URL: http://campus-task-facts:8091
     ports: !override
       - "127.0.0.1:${EDGE_CAMPUS_CONSOLE_PORT:-8766}:8080"
     volumes:

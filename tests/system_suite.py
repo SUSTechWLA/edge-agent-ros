@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -24,9 +25,19 @@ def output(cmd, env):
     return subprocess.check_output(cmd, cwd=ROOT, env=env, encoding="utf-8", errors="replace").strip()
 
 
+def parse_run_id(value):
+    if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}", value):
+        raise argparse.ArgumentTypeError("expected YYYYMMDDTHHMMSSZ-xxxxxxxx (lowercase hex)")
+    try:
+        datetime.strptime(value[:16], "%Y%m%dT%H%M%SZ")
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("invalid UTC timestamp in run ID") from exc
+    return value
+
+
 def run(args, selected, reasons):
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
-    directory = (args.out_root / run_id).resolve()
+    run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
+    directory = args.out_root.resolve() / run_id
     directory.mkdir(parents=True)
     report_file = directory / "summary.json"
     env = dict(os.environ)
@@ -398,6 +409,7 @@ if __name__=="__main__":
     parser.add_argument("--changed-since",help="compare with the merge base including uncommitted files; default runs full suite")
     parser.add_argument("--plan",action="store_true",help="print selected stages and reasons without running")
     parser.add_argument("--out-root",type=Path,default=ROOT/".ci-results/system/runs")
+    parser.add_argument("--run-id",type=parse_run_id,help="use this UTC run ID for a new report directory")
     parser.add_argument("--base-image",help="preinstalled ROS/Gazebo SDK image")
     parser.add_argument("--campus-assets",type=Path,help="installed Gazebo Fuel campus cache for the offline world test")
     parser.add_argument("--ollama-cache-volume",help="existing Ollama home volume; mounts the model cache read-only in the isolated project")

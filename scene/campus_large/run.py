@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PROJECT = "edge-agent-campus"
 SERVICES = ("sim", "bridge", "witness", "gateway", "core", "perception", "scene", "agent", "console",
             "campus-capture", "campus-overview","campus-robot-bridge","campus-fleet",
-            "crazyflie-agent","go1-agent","g1-agent","session")
+            "crazyflie-agent","go1-agent","g1-agent","session","campus-task-facts")
 CHILDREN = ("crazyflie", "go1", "g1")
 
 

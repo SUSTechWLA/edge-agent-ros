@@ -43,9 +43,10 @@ class Lease:
 
 
 class JournalIngress:
-    def __init__(self, builtin, extensions, clock=time.monotonic, *, agent=None):
+    def __init__(self, builtin, extensions, clock=time.monotonic, *, agent=None, reserved=()):
         self.builtin = builtin
-        self.extensions = Path(extensions)
+        self.extensions = Path(extensions) if extensions is not None else None
+        self.reserved = frozenset(reserved)
         self.agent = agent
         self.health = {}
         self.archive_id = None
@@ -53,7 +54,7 @@ class JournalIngress:
         self.leases = {}
 
     @classmethod
-    def from_deployment(cls, agent):
+    def from_deployment(cls):
         mapping = json.loads(os.getenv("EDGE_JOURNAL_SOURCES", "{}"))
         if not isinstance(mapping, dict) or any(
                 not MODULE.fullmatch(name) or name == "runtime.registry" or
@@ -62,7 +63,8 @@ class JournalIngress:
         paths = {name:Path(path) for name, path in mapping.items()}
         if os.getenv("EDGE_PHYSICAL_AUDIT"):
             paths["physical.controller"] = Path(os.environ["EDGE_PHYSICAL_AUDIT"])
-        return cls(paths, os.getenv("EDGE_MODULE_SOURCES", "/var/lib/edge-module-sources"), agent=agent)
+        return cls(paths, os.getenv("EDGE_MODULE_SOURCES", "/var/lib/edge-module-sources"),
+                   reserved={"runtime.registry"})
 
     def poll(self, history, frame):
         if self.archive_id != history.archive_id:
@@ -72,21 +74,8 @@ class JournalIngress:
         sources = dict(self.builtin)
         if self.agent is not None:
             sources["runtime.registry"] = None
-        listing_complete = True
-        try:
-            for path in self.extensions.iterdir():
-                if MODULE.fullmatch(path.name) and path.name not in sources and path.is_dir() and not path.is_symlink():
-                    sources[path.name] = path / "module-events.sqlite"
-        except FileNotFoundError:
-            self.status(history, frame, "@sources", "absent")
-        except OSError:
-            listing_complete = False
-            self.status(history, frame, "@sources", "unreadable")
-        else:
-            self.status(history, frame, "@sources", "available")
-        if listing_complete:
-            for module in self.health.keys() - sources.keys() - {"@sources"}:
-                self.status(history, frame, module, "absent")
+        if self.extensions is not None:
+            self.discover(history, frame, sources)
         for module, path in sources.items():
             try:
                 if path is None:
@@ -97,6 +86,24 @@ class JournalIngress:
                 self.status(history, frame, module, str(error))
             else:
                 self.status(history, frame, module, "available")
+
+    def discover(self, history, frame, sources):
+        listing_complete = True
+        try:
+            for path in self.extensions.iterdir():
+                if (MODULE.fullmatch(path.name) and path.name not in sources and path.name not in self.reserved
+                        and path.is_dir() and not path.is_symlink()):
+                    sources[path.name] = path / "module-events.sqlite"
+        except FileNotFoundError:
+            self.status(history, frame, "@sources", "absent")
+        except OSError:
+            listing_complete = False
+            self.status(history, frame, "@sources", "unreadable")
+        else:
+            self.status(history, frame, "@sources", "available")
+        if listing_complete:
+            for module in self.health.keys() - sources.keys() - self.reserved - {"@sources"}:
+                self.status(history, frame, module, "absent")
 
     def status(self, history, frame, module, state):
         previous, parent = self.health.get(module, (None, None))

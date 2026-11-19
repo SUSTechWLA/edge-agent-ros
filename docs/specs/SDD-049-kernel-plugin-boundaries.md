@@ -131,3 +131,19 @@ AC-4 在线实测使用 `python3 -B tests/test_console_facts.py -v`，3 项均�
 AC-5/6 在 Linux/amd64 隔离 ROS 域用 `python3 -B tests/test_plugin_conformance.py --out /evidence/plugin-conformance.json` 实测。录制器启用和停机时，输入均为一个缺里程计任务和两个收到合成里程计的任务。两组均得到一个 `RECOVERY_REQUIRED`、两个 `SUCCEEDED`，每个原操作的 SQLite 派发数均为 1。夹具在每组开始发送数据前先验缺样，提交两个正例前从本轮 Agent 确认已收到各自的时间戳。独立录制得到一个状态样本、七个 trace 样本；Evidence 重投和提供者重启后原操作只有一份持久化终态回执。
 
 三个提供者的健康、坏版本、坏参数、超时恢复和托管进程崩溃/重启共 15 项通过。`status`、`task.record` 的读契约验证公开的任务和录制资源，Evidence 使用部署清单中的 `evidence_schema` v1 Tool。逐次 HTTP 回应、固定操作号、SQLite 计数和两组任务终态见 `.ci-results/k2/wp5/plugin-conformance.json`。`python -B tests/test_conformance.py -v` 的 6 项与 `python -B tests/test_offline_analysis.py -v` 的 5 项通过，后者另在仅挂分析包与样例的 Linux 环境复现。原 `tests/system/verify_sample_provider.py` 的 8 个用例各验证两份回执，轨迹样例的托管进程验收见 `.ci-results/k2/wp5/track-managed.json`。选择器 16 项、部署投影 4 项及其余快速门见 `.ci-results/k2/wp5/gate.json`。
+
+### WP6 全量运行和离线恢复
+
+早先的全量 `20261119T062918Z-af92005f` 在 core 阶段只留下运行中状态。任务回执已写出，core 容器以 SIGTERM（143）退出，同项目容器随后停止。现存记录不足以识别发起停止的一方。本轮在干净提交 `23eeb5d6cdc897599d6f3d01e9aeeada47abe661` 使用本地 ROS/Gazebo 镜像、校园资产和只读的 Qwen 1.5B 缓存，执行完整套件的 21 个阶段组。第一次完整报告为 `.ci-results/r/20261119T124415Z-c76c811b/summary.json`，镜像 `sha256:06a5eed7faa66c4f05a740c4ed16d4e5121cf01f5da62475386cb477db307e30`。36 个阶段行中 34 通过、2 失败、0 跳过。core 的受理、取消、重启、独立停稳观测及持久化对账通过。失败项如下。
+
+| 场景 | 现场证据和修复 |
+|---|---|
+| `observations` 的本地模块积压 | 生产者写入 1,088 条。Agent 不可达时两个 HTTP 请求串行阻塞了本地归档，每 32 条的间隔中位数为 8.234 秒；210 秒时 Console 只有 864 条。现在独立线程分别采集本地日志和 Agent 提供的事实。原探针以 20.234 秒公开所有条目，两个消费者各自重放 34 页，导出摘要与生产者一致。回执在 `.ci-results/k2/wp6/backlog/complete.json`。 |
+| `campus-world` 的暂停受理后复核 | 校园热重载主动停止 Agent，第二次查询活动任务时返回 503。校园 Compose 复用独立事实进程，只读挂载与校园 Agent 同一任务卷，并在重载检查期间保持它在线。工作台继续向原 Agent 提交任务，复核继续检查活动任务、core 账本、里程计及子机账本。定向实测中停 Agent 后旧任务仍可读，活动任务、事实服务中断或账本损坏都会阻止重载。见 `.ci-results/k2/wp6/campus/focused.json`。 |
+| 迟到的 Agent 派发 | 真实 SQLite/HTTP 的新旧 Console 对照显示，当 core 记录先于派发归档时，原任务的追踪、触发和父事件信息在重启后仍丢失。修复在归档事务中按两个账本身份和完整操作号关联。原归档序号、采集快照和 core 自有因果链保留；缺少来源证据的旧档沿用原筛选可见性。账本更换或首次离线、无法确认关联时保留当时的观测。实测见 `.ci-results/k2/wp6/causality/fixed-comparison.json` 和 `.ci-results/k2/wp6/causality/migration-comparison.json`。 |
+
+校园重载恢复后，站点探针在打印三个站点及位置恢复的完整数据后偶发 SIGABRT（134）。隔离分区中，原实现在 40 次运行里复现三次。Gazebo 的接收线程在 `unsubscribe` 返回后仍持有 Python 回调；夹具现在等到回调实际释放再退出。60 次定向试验分别覆盖正常退出、原采样断言失败、第二个订阅创建失败各 20 次，错误退出码和断言内容均保留。另有 64 次高频和请求超时组合正常退出。见 `.ci-results/k2/wp6/gz-teardown/summary.json`。修复只涉及仿真测试进程的生命周期。完整校园验收 `.ci-results/k2/wp6/campus/corrected.json` 使用 `--verify-reload --verify-texture --verify-onboard` 返回 0。新任务核验三个位置，旧证据保留；16 路合成 onboard 来源、3 个站点的 9 帧雷达及独立小世界时钟均通过。Console 回归 50 项、独立事实服务回归 5 项通过，结果在 `.ci-results/k2/wp6/console-final.log` 和 `.ci-results/k2/wp6/task-facts-final.log`。
+
+最终提交的全量运行号为 `20261119T132402Z-b663475d`，原始回执路径为 `.ci-results/r/20261119T132402Z-b663475d/summary.json`。测试读取当前 Git SHA、检查工作树并记录镜像 ID 及其 revision 标签。核对时以此回执的 `revision`、`dirty`、`image_id`、`image_revision`、`status` 以及 `stages[].status` 计数为准。每次运行使用新目录，已存在的运行号会被拒绝。
+
+在本机，`pwsh -NoProfile -File .ci-results/k2/runner/run.ps1 -RunId <新运行号>` 以上述离线资源执行 `tests/system_suite.py --out-root .ci-results/r --campus-assets artifacts/sim-assets --ollama-cache-volume edge-agent-ros_models`，全量包含模型和校园场景。运行器在 Docker 命令执行前保留临时项目的命名卷，仿真和板端镜像各在无网络的构建阶段使用已核实的本地 SDK。快速门逐条命令、返回码及日志保存在 `.ci-results/k2/wp6/gate.json`。上述回执均为 Linux/amd64 容器及软件夹具的结果。
