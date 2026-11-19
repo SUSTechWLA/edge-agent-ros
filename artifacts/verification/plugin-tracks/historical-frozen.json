@@ -1,0 +1,72 @@
+{
+  "expected_cases": 7,
+  "matching_cases": 7,
+  "claimed_success": 4,
+  "false_success": 0,
+  "success_missing_witness": 0,
+  "unexpected_motion": 0,
+  "invalid_world_samples": 0,
+  "samples": {
+    "origin": {
+      "task": "campus-32776f9d35-origin",
+      "state": "SUCCEEDED",
+      "world_samples": 4,
+      "invalid_world_samples": 0,
+      "goal_error_m": 0.016755619284881233
+    },
+    "garden": {
+      "task": "campus-32776f9d35-garden",
+      "state": "SUCCEEDED",
+      "world_samples": 129,
+      "invalid_world_samples": 0,
+      "goal_error_m": 0.13760579993654862
+    },
+    "desk": {
+      "task": "campus-32776f9d35-desk",
+      "state": "SUCCEEDED",
+      "world_samples": 148,
+      "invalid_world_samples": 0,
+      "goal_error_m": 0.041070743706874295
+    },
+    "unknown": {
+      "task": "campus-32776f9d35-unknown",
+      "state": "BLOCKED",
+      "world_samples": 9,
+      "invalid_world_samples": 0,
+      "max_displacement_m": 6.045051122439865e-07
+    },
+    "closed": {
+      "task": "campus-32776f9d35-closed",
+      "state": "BLOCKED",
+      "world_samples": 11,
+      "invalid_world_samples": 0,
+      "max_displacement_m": 0.0
+    },
+    "wall": {
+      "task": "campus-32776f9d35-wall",
+      "state": "BLOCKED",
+      "world_samples": 67,
+      "invalid_world_samples": 0
+    },
+    "recover": {
+      "task": "campus-32776f9d35-recover",
+      "state": "SUCCEEDED",
+      "world_samples": 70,
+      "invalid_world_samples": 0,
+      "goal_error_m": 0.05893410532598696
+    }
+  },
+  "comparison_strength": "original_operation_only",
+  "all_gateway_operation_ids": [
+    "first/step/1/waypoint/1"
+  ],
+  "gateway_starts": 1,
+  "motion_operations": 1,
+  "duplicate_motion_starts": 0,
+  "unexpected_operation_ids": [],
+  "gateway_witness_passed": true,
+  "unknown_outcome": "RECOVERY_REQUIRED",
+  "valid_kill_pose": true,
+  "source_reports_passed": true,
+  "passed": true
+}

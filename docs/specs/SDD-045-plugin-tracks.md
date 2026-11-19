@@ -147,3 +147,17 @@ P3 真入口故障注入时，已运行容器绑定旧站点与新配置有相�
 全套试验还发现本地模型容器创建完成后，Ollama 启动监听会稍晚。软件提供者故障试验原先遇到第一次连接拒绝即中止。测试探针现使用有限截止时间等待指定的缓存模型，明确配置错误和超时仍使原验收失败。
 
 校园验收的原生 Gazebo 图像和关节见证曾在有效输出后因仍存活的回调退出 134。见证在结束或部分订阅失败时逐一释放订阅，再退出 Python。验收继续要求传感数据完整且进程正常结束。
+
+## 发布核查结果
+
+**P0–P3 已实现。AC-1 至 AC-8 在下列软件、仿真与合成 ROS 工位范围通过。** 集成测试提交为 `2afb070b54357849347193f8d0455600bcdb2500`，运行号 `20261119T053937Z-71e980d0`，使用本地模型缓存。21 个测试组共执行 34 个阶段，全部通过。板端部署提交为 `17d1050c07ff781c478aa885c0e941735f5c4100`，其 183 个运行文件与已测源码投影一致。完整检查清单、正反例、保留的失败和证据摘要可从同一索引查询。[机器可读验收记录](../evidence/plugin-tracks.json)
+
+| 验收 | 怎样复核 | 已观察到的事实 |
+|---|---|---|
+| AC-1 与 AC-2 | `tests/test_plugin_descriptor.py`、`tests/test_soft_runtime.py` 和 `tests/system/soft_runtime_acceptance.py` | 对照 18 组旧版契约字节。热更期间旧操作持有原 pin，Agent 进程身份连续，排空并卸载后新的请求看到新版本。 |
+| AC-3 与 AC-4 | `tests/test_physical_ledger.py`、`tests/test_plugin_tracks.py` 和 `tests/system/physical_camera_acceptance.py` | 缺租约、停采协议或独立验收时拒绝。断开依赖后保留现有消费者；采集进程领取操作后失联时保留原操作与待核查状态。 |
+| AC-5 与 AC-6 | `tests/test_soft_host.py`、`tests/test_v2_registry.py` 和上述容器试验 | 对实际软件容器核查设备与执行器网络隔离，对照源账本中的生命周期、版本、摘要与目录健康。 |
+| AC-7 | `tests/system/plugin_tracks_metrics.py` | 冻结集 7/7 条与预期一致。在 4 条宣告成功且有独立真值的任务中，误报成功 0。另对私有仿真运行中 2 个物理操作逐一数 Gateway 起动，重复 0 次。原账本丢失后的状态为 `RECOVERY_REQUIRED`。[冻结集原件](../../artifacts/verification/plugin-tracks/frozen-missions.json) |
+| AC-8 | `scripts/release_robot.py`、`tests/system/deploy_projection.py` 和板端操作脚本 | amd64、ARM64 均可按生成树构建。从 observe 读取状态返回 200，提交任务返回 403。另从包启动软件数列任务，得到 4，未触发物理采集。详见两份平台报告。[amd64](../../artifacts/verification/plugin-tracks/deployment-amd64.json) · [ARM64](../../artifacts/verification/plugin-tracks/deployment-arm64.json) |
+
+直接读相机的 `camera.capture` 是本轮设备试点，底盘仍由 Core 与 Gateway 管理。两种架构的 Docker 测试均使用合成传感输入，ARM64 在 x86 构建机上仿真。真实 RealSense 还需提供独立源端见证，验证时钟、物理独占及停采交接；本轮成绩不能替代这些测量。现场回退保留原账本，按上文交接后恢复上一批准的锁和镜像。[上板步骤](../../deploy/robot/README.md) · [相机见证契约](../testing/physical-camera.md)

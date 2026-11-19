@@ -8,7 +8,7 @@
 
 研发基线为 `8520e434b661`。现有 v1 注册器验证字段、解析依赖并持久绑定服务。受管发布可以检测旧版本冲突和中断。已有模拟运动测试能独立观察制动。本文所列源码、旧文档和测试路径均相对本地研发基线仓根。本轮新增的两类插件、物理租约、双入口权限门禁及部署隔离均须单独验收。`agent/runtime_plugins.py` · `agent/plugin_manager.py` · `docs/specs/SDD-006-runtime-plugins.md`
 
-**计划的原始证据**统一写入 `artifacts/verification/plugin-tracks/<run-id>/`。同一次运行含 `manifest.json` 和 `ac-01/` 至 `ac-08/`。清单固定基线/候选提交、镜像 ID、配置摘要、环境、时钟、输入种子、预期结果和可复跑命令。每个用例写入 case ID、注入时刻、目标请求或操作、独立观察、系统报告、通过/失败/证据不足及原件摘要。失败、被阻断及采集缺失均保留。公开脱敏索引计划写入 `docs/evidence/plugin-tracks.json`；原视频、原始消息和密钥不进入索引。引用上述路径不表示已产生验收结果。
+**实际归档位置**以[验收清单](../evidence/plugin-tracks.json)为入口。每个 AC 列出测试名、正例、拒绝与故障、实际结果及适用范围。完整原始运行存本机 `.ci-results/sdd-045/` 和 `.ci-results/sdd-046/`，受控发布的 4 份原件位于 `artifacts/verification/plugin-tracks/`。下表的 `ac-01/` 至 `ac-08/` 是设计时的证据分类；实际文件与 SHA-256 由清单的 `source_records` 给出。同一份原件仅保留一处。
 
 ## 2　八项验收
 

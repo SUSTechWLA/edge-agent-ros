@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "source": "b5316aa6e37eb4454dd15ec70b1201ad83a91cbb",
+  "deployment": "17d1050c07ff781c478aa885c0e941735f5c4100",
+  "tree": "a7e577d4c194dea45a5ede47ab8c1b203cce86a0",
+  "runtime_files": 183,
+  "image": "edge-agent-ros/hardware:projection-b5316aa6e37e-amd64",
+  "scope": "isolated Linux containers, synthetic ROS input, no hardware",
+  "image_id": "sha256:e9cc74fe151b3de062c5c6893c54a99ec38ed44c9c466aa90c87d40035f74a86",
+  "platform": "linux/amd64",
+  "observe": {
+    "mode": "observe",
+    "environment": "hardware",
+    "denied": "console.observe_only",
+    "running": [
+      "console",
+      "perception"
+    ],
+    "elapsed_s": 3.75
+  }
+}
