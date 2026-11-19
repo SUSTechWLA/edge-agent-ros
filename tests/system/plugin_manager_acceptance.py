@@ -14,6 +14,7 @@ from urllib.parse import urlencode
 from author_bus_acceptance import CLIENT, author_model, ros
 from derived_tool_acceptance import DEFAULT, PUBLISHER, fixtures, write_json
 from lifecycle_acceptance import check, wait_for
+from model_readiness import wait_for_cached_model
 from runtime_plugin_acceptance import SAMPLE, mounted
 
 
@@ -125,7 +126,7 @@ def run(image, out, cache=None):
             compose("up","-d","--no-build",*services)
             wait_for(lambda: api("/agent/capabilities")["capabilities"], "agent startup", 60)
             if cache:
-                check("qwen2.5:1.5b" in compose("exec","-T","model","ollama","list"), "seed lacks qwen2.5:1.5b")
+                wait_for_cached_model(stack, project, env, "qwen2.5:1.5b")
 
             trigger = {"kind":"user","source":"operator-console","id":"user-request-171"}
             original = api("/agent/tasks",{"id":"speed-request","text":ALLOWED,"trigger":trigger})

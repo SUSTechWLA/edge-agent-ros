@@ -16,6 +16,7 @@ import uuid
 
 from plugin_design_acceptance import DeclineOdometry, MODEL_IMAGE, ROOT, Watch
 from lifecycle_acceptance import check,wait_for
+from model_readiness import wait_for_cached_model
 from runtime_plugin_acceptance import mounted
 from plugin_design import ModuleJournal,run as design
 from software_provider import digest,program,Invalid
@@ -164,7 +165,7 @@ def run(args):
                 compose("run","--rm","--no-deps","-T","--entrypoint","/bin/sh","model","-ec",
                         "test -d /cache/models/blobs && mkdir -p /root/.ollama/models && cp -a /cache/models/. /root/.ollama/models/")
                 compose("up","-d","model")
-                wait_for(lambda:args.model in compose("exec","-T","model","ollama","list"),"Ollama startup")
+                wait_for_cached_model(stack, project, env, args.model)
             if args.automatic:
                 compose("up","--no-build","-d","fixture","legacy","design","coder")
             http("/agent/tasks",{"id":"word-gap","text":goal})
