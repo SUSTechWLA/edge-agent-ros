@@ -1,6 +1,8 @@
 """Read-only ROS 2 source for an explicitly started task recording."""
 import argparse
+from array import array
 import base64
+from dataclasses import dataclass
 import hashlib
 import json
 import math
@@ -90,6 +92,10 @@ def check_signal_scope(args):
     deployment = os.getenv("EDGE_RECORDING_DEPLOYMENT")
     if args.sim and deployment == "hardware":
         raise ValueError("hardware recorder rejects the simulation switch")
+    if (getattr(args,"gz_camera",None) or getattr(args,"overview",None)) and (not args.sim or deployment != "gazebo"):
+        raise ValueError("Gazebo camera inputs require the configured simulation recorder")
+    if (getattr(args,"gz_camera",None) and args.gz_camera == getattr(args,"overview",None)):
+        raise ValueError("one Gazebo topic cannot serve both the legacy RGB and overview recording roles")
     if (args.laser_scan or args.imu) and (not args.sim or deployment != "gazebo"):
         raise ValueError("direct raw sensor summaries require the isolated Gazebo collector deployment")
 
@@ -132,6 +138,16 @@ def task_event(event, task):
                for v in (event.get(k) for k in ("task_id","trace_id","mission_id","operation_id")))
 
 
+@dataclass
+class MapSample:
+    stamp: int
+    geometry: dict
+    metadata: dict
+    cells: bytes
+    known: int
+    emitted: bool = False
+
+
 class Sources:
     def __init__(self, node, args, sink, kinds):
         check_signal_scope(args)
@@ -148,6 +164,7 @@ class Sources:
         self.signal_next = {}
         self.mark_offset = 0
         self.gz = None
+        self.gz_topics = []
 
         def sub(kind, msg, topic, callback, qos=qos_profile_sensor_data):
             if kind in kinds and topic:
@@ -158,7 +175,8 @@ class Sources:
         self.send_clock = "clock" in kinds
         if not args.sim and self.send_clock:
             node.create_timer(.5,lambda:sink.emit("clock",self.now()))
-        sub("map",OccupancyGrid,args.map,self.grid,QoSProfile(depth=16 if args.all_map_revisions else 1,
+        # Jazzy chooses the two-argument callback only when the second argument is required.
+        sub("map",OccupancyGrid,args.map,lambda msg,info:self.grid(msg,info),QoSProfile(depth=16 if args.all_map_revisions else 1,
                                                                durability=DurabilityPolicy.TRANSIENT_LOCAL))
         sub("fused_pose",Odometry,args.pose,lambda m:self.pose("fused_pose",m))
         sub("world_pose",Odometry,args.world_pose,lambda m:self.pose("world_pose",m))
@@ -171,17 +189,32 @@ class Sources:
         if args.imu and "imu" in kinds:
             from sensor_msgs.msg import Imu
             sub("imu",Imu,args.imu,lambda m:self.sensor("imu",m,args.imu,imu_metrics))
-        if "rgb" in kinds and args.gz_camera:
+        streams = [(kind,topic) for kind,topic in (("rgb",args.gz_camera),("overview",args.overview))
+                   if topic and kind in kinds]
+        if streams:
             from gz.transport13 import Node
             from gz.msgs10.image_pb2 import Image as GzImage
             self.gz=Node()
-            if not self.gz.subscribe(GzImage,args.gz_camera,self.gz_rgb):
-                raise RuntimeError("Gazebo RGB subscription failed")
+            try:
+                for kind,topic in streams:
+                    def received(msg, source_kind=kind, source_topic=topic):
+                        self.gz_rgb(msg,source_kind,source_topic)
+                    if not self.gz.subscribe(GzImage,topic,received):
+                        raise RuntimeError(f"Gazebo camera subscription failed: {topic}")
+                    self.gz_topics.append(topic)
+            except BaseException:
+                self.close()
+                raise
         if "mission" in kinds and args.markers:
             node.create_timer(.12,self.markers)
 
     def now(self):
         return self.clock if self.args.sim else self.node.get_clock().now().nanoseconds
+
+    def close(self):
+        for topic in reversed(self.gz_topics):
+            self.gz.unsubscribe(topic)
+        self.gz_topics.clear()
 
     @staticmethod
     def stamp(message):
@@ -210,7 +243,9 @@ class Sources:
             p,q=msg.pose.pose.position,msg.pose.pose.orientation
             yaw=math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))
             if all(map(math.isfinite,[p.x,p.y,yaw])):
-                self.sink.emit(kind,ns,xy=[p.x,p.y],yaw=yaw,frame=msg.header.frame_id)
+                topic=self.args.pose if kind=="fused_pose" else self.args.world_pose
+                self.sink.emit(kind,ns,xy=[p.x,p.y],yaw=yaw,frame=msg.header.frame_id,topic=topic,
+                               source="nav_msgs/msg/Odometry",stamp_origin="header")
 
     def twist(self,msg):
         ns=self.now()
@@ -249,38 +284,82 @@ class Sources:
         except ValueError:
             pass
 
-    def grid(self,msg):
+    def grid(self,msg,info=None):
         ns=self.stamp(msg)
-        if (not self.due("map",ns,1 if self.args.all_map_revisions else 400_000_000) or not 0<len(msg.data)<=2000000
-                or msg.info.width*msg.info.height!=len(msg.data)):
-            return
-        cells=list(msg.data)
         o=msg.info.origin
-        record=dict(frame=msg.header.frame_id,width=msg.info.width,height=msg.info.height,resolution=msg.info.resolution,
-                    origin=[o.position.x,o.position.y,2*math.atan2(o.orientation.z,o.orientation.w)],cells=cells)
-        data=json.dumps(record,allow_nan=False,separators=(",",":")).encode()
-        self.sink.emit("map",ns,frame=msg.header.frame_id,known=sum(c>=0 for c in cells),
-                       media=attachment(f"grid/{ns:018d}.json",data))
+        p,q=o.position,o.orientation
+        if (not msg.header.frame_id or not 0<len(msg.data)<=2000000 or msg.info.width*msg.info.height!=len(msg.data)
+                or not all(map(math.isfinite,(p.x,p.y,p.z,q.x,q.y,q.z,q.w,msg.info.resolution)))
+                or msg.info.resolution<=0 or abs(p.z)>1e-6 or math.hypot(q.x,q.y)>1e-6
+                or abs(math.hypot(q.x,q.y,q.z,q.w)-1)>1e-5):
+            raise ValueError("invalid or non-planar ROS OccupancyGrid geometry")
+        if ns<=0:
+            return
+        if min(msg.data)<-1 or max(msg.data)>100:
+            raise ValueError("invalid ROS OccupancyGrid cell value")
+        geometry=dict(frame=msg.header.frame_id,width=msg.info.width,height=msg.info.height,resolution=msg.info.resolution,
+                      origin=[o.position.x,o.position.y,2*math.atan2(o.orientation.z,o.orientation.w)])
+        metadata=dict(topic=self.args.map,source="nav_msgs/msg/OccupancyGrid",stamp_origin="header")
+        load_time=getattr(msg.info,"map_load_time",None)
+        if load_time is not None:
+            if load_time.sec<0 or not 0<=load_time.nanosec<10**9:
+                raise ValueError("invalid ROS map_load_time")
+            metadata["map_load_time_ns"]=load_time.sec*10**9+load_time.nanosec
+        gid=info.get("publisher_gid") if isinstance(info,dict) else getattr(info,"publisher_gid",None)
+        if gid is not None:
+            raw=bytes(gid)
+            if 0<len(raw)<=64 and any(raw):
+                metadata["publisher_id"]=raw.hex()
+        # Hold at most one bounded raw window, even when the ordinary recorder samples at 2.5 Hz.
+        cells=msg.data.tobytes() if isinstance(msg.data,array) and msg.data.typecode=="b" else array("b",msg.data).tobytes()
+        sample=MapSample(ns,geometry,metadata,cells,len(cells)-cells.count(255))
+        previous=getattr(self,"last_map_sample",None)
+        boundary=False
+        if previous:
+            if ns==previous.stamp:
+                if geometry==previous.geometry and metadata==previous.metadata and cells==previous.cells:
+                    return
+                # Preserve both sides of conflicting same-stamp data, including a sampled-out first side.
+                if not previous.emitted:
+                    self.emit_map(previous)
+            boundary=(ns<=previous.stamp or metadata!=previous.metadata
+                      or geometry["frame"]!=previous.geometry["frame"]
+                      or geometry["resolution"]!=previous.geometry["resolution"]
+                      or geometry["origin"][2]!=previous.geometry["origin"][2]
+                      or previous.known>0 and not sample.known)
+        self.last_map_sample=sample
+        if boundary or self.args.all_map_revisions or ns-self.last.get("map",-400_000_000)>=400_000_000:
+            self.emit_map(sample)
 
-    def png(self,ns,data,width,height,topic,source):
-        self.sink.emit("rgb",ns,topic=topic,source=source,width=width,height=height,sha256=hashlib.sha256(data).hexdigest(),
-                       media=attachment(f"rgb/{ns:018d}.png",data))
+    def emit_map(self,sample):
+        record={**sample.geometry,"cells":memoryview(sample.cells).cast("b").tolist()}
+        data=json.dumps(record,allow_nan=False,separators=(",",":")).encode()
+        # Distinct writes can have the same source stamp on a reset or publisher change.
+        name=f"grid/{sample.stamp:018d}-{uuid.uuid4().hex}.json"
+        self.sink.emit("map",sample.stamp,frame=record["frame"],known=sample.known,
+                       media=attachment(name,data),**sample.metadata)
+        sample.emitted=True
+        self.last["map"]=sample.stamp
+
+    def png(self,kind,ns,data,width,height,topic,source,image_role):
+        self.sink.emit(kind,ns,topic=topic,source=source,image_role=image_role,stamp_origin="header",width=width,height=height,
+                       sha256=hashlib.sha256(data).hexdigest(),media=attachment(f"{kind}/{ns:018d}.png",data))
 
     def rgb(self,msg):
         from perception.camera.frames import raw_frame
         ns=self.stamp(msg)
         if self.due("rgb",ns,110_000_000):
             png,_,_,_,width,height,_=raw_frame(msg)
-            self.png(ns,png,width,height,self.args.camera,"sensor_msgs/msg/Image")
+            self.png("rgb",ns,png,width,height,self.args.camera,"sensor_msgs/msg/Image","onboard")
 
-    def gz_rgb(self,msg):
+    def gz_rgb(self,msg,kind,topic):
         from scene.campus_large.capture import encode
         stamp=msg.header.stamp
         ns=stamp.sec*10**9+stamp.nsec
-        if self.due("rgb",ns,110_000_000):
+        if self.due(kind,ns,110_000_000):
             try:
                 png,meta=encode(msg)
-                self.png(ns,png,meta["width"],meta["height"],self.args.gz_camera,"gz.msgs.Image")
+                self.png(kind,ns,png,meta["width"],meta["height"],topic,"gz.msgs.Image","overview")
             except ValueError as error:
                 self.sink.problem=str(error)
                 self.sink.end.set()
@@ -317,6 +396,7 @@ def main():
     cameras=ap.add_mutually_exclusive_group()
     cameras.add_argument("--camera",help="ROS sensor_msgs/Image topic")
     cameras.add_argument("--gz-camera",help="Gazebo native RGB8 topic in a simulation image")
+    ap.add_argument("--overview", help="separate external Gazebo camera topic, independent of onboard RGB")
     ap.add_argument("--laser-scan", help="opt in to summaries of a ROS sensor_msgs/LaserScan topic")
     ap.add_argument("--imu", help="opt in to measured gyro from a ROS sensor_msgs/Imu topic")
     ap.add_argument("--sensor-hz", type=sensor_rate, default=4, help="maximum samples per second per raw sensor")
@@ -365,7 +445,7 @@ def main():
         if sink.problem: raise RuntimeError(sink.problem)
     finally:
         sink.end.set()
-        if source and source.gz: source.gz.unsubscribe(args.gz_camera)
+        if source: source.close()
         sink.worker.join(timeout=4)
         node.destroy_node()
         rclpy.try_shutdown()

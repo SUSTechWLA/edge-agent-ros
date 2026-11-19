@@ -19,6 +19,8 @@ def main():
     cli.add_argument("--software",action="store_true")
     cli.add_argument("--sim",action="store_true")
     cli.add_argument("--camera")
+    cli.add_argument("--overview")
+    cli.add_argument("--clock-domain")
     cli.add_argument("--laser-scan")
     cli.add_argument("--imu")
     cli.add_argument("--sensor-hz", type=sensor_rate, default=4)
@@ -28,7 +30,7 @@ def main():
         check_signal_scope(a)
     except ValueError as error:
         cli.error(str(error))
-    if a.software and (a.camera or a.laser_scan or a.imu):
+    if a.software and (a.camera or a.overview or a.laser_scan or a.imu):
         cli.error("device inputs require the ROS recording source")
     path="/recordings/"+quote(a.recording_id,safe="")
     pfx=[sys.executable,"-u","-B","-m"]
@@ -42,6 +44,8 @@ def main():
             args=pfx+["task_recorder.ros_source","--url",a.url,"--task-id",a.task_id,"--recording-id",a.recording_id]
             if a.sim: args.append("--sim")
             if a.camera: args.extend(["--camera",a.camera])
+            if a.overview: args.extend(["--overview",a.overview])
+            if a.clock_domain: args.extend(["--clock-domain",a.clock_domain])
             if a.laser_scan: args.extend(["--laser-scan",a.laser_scan])
             if a.imu: args.extend(["--imu",a.imu])
             if a.laser_scan or a.imu: args.extend(["--sensor-hz",str(a.sensor_hz)])

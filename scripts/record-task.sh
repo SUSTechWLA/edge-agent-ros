@@ -5,7 +5,7 @@ set -eu
 case "$(uname -s)" in MINGW*|MSYS*) export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*';; esac
 cd "$(dirname "$0")/.."
 usage() {
-  echo 'Usage: sh scripts/record-task.sh sim|campus|hardware enable|drain|disable|start TASK [RID] [--laser-scan TOPIC] [--imu TOPIC] [--sensor-hz HZ] [--external-sensor imu|laser_scan]|status RID|stop RID|export RID NEW_DIR' >&2
+  echo 'Usage: sh scripts/record-task.sh sim|campus|hardware enable|drain|disable|start TASK [RID] [--camera ROS_TOPIC] [--overview GAZEBO_TOPIC|--external-overview] [--clock-domain DOMAIN] [--laser-scan TOPIC] [--imu TOPIC] [--sensor-hz HZ] [--external-sensor imu|laser_scan]|status RID|stop RID|export RID NEW_DIR' >&2
   exit 2
 }
 [ "$#" -ge 2 ] || usage
@@ -74,6 +74,11 @@ recid() {
   case "$1" in ''|[!a-zA-Z0-9]*|*[!a-zA-Z0-9_.-]*) usage;; esac
   [ "${#1}" -le 96 ] || usage
 }
+map_view() {
+  address="127.0.0.1:${EDGE_RECORDING_PORT:-8188}"
+  if [ "${EDGE_RECORDING_PORT:-8188}" = 0 ]; then address=$(dc port task-recorder 8188); fi
+  printf 'Map view: http://%s/recordings/%s/map-view\n' "$address" "$1" >&2
+}
 case "$action" in
   enable)
     [ "$#" = 0 ] || usage
@@ -87,20 +92,47 @@ case "$action" in
     rid=$task
     case "${1:-}" in ''|--*) ;; *) rid=$1; shift ;; esac
     recid "$rid"
+    camera=${EDGE_RECORD_CAMERA:-}
+    overview=${EDGE_RECORD_OVERVIEW:-}
+    external_overview=
+    clock_domain=${EDGE_RECORD_CLOCK_DOMAIN:-}
     scan=${EDGE_RECORD_LASER_SCAN:-}
     imu=${EDGE_RECORD_IMU:-}
     sensor_hz=${EDGE_RECORD_SENSOR_HZ:-4}
     external_scan=
     external_imu=
     while [ "$#" -gt 0 ]; do
+      if [ "$1" = --external-overview ]; then external_overview=1; shift; continue; fi
       [ "$#" -ge 2 ] && [ -n "$2" ] || usage
       case "$1" in
+        --camera) camera=$2;; --overview) overview=$2;; --clock-domain) clock_domain=$2;;
         --laser-scan) scan=$2;; --imu) imu=$2;; --sensor-hz) sensor_hz=$2;;
         --external-sensor) case "$2" in laser_scan) external_scan=1;; imu) external_imu=1;; *) usage;; esac ;;
         *) usage;;
       esac
       shift 2
     done
+    case "$clock_domain" in *[!A-Za-z0-9_.:-]*) usage;; esac
+    [ "${#clock_domain}" -le 96 ] || usage
+    gz_source=
+    if [ -n "$external_overview" ]; then
+      [ -z "$overview" ] || usage
+      gz_source=external
+    fi
+    if [ -n "$overview" ]; then
+      [ "$mode" != hardware ] || { echo 'External overview is available only in Gazebo.' >&2; exit 2; }
+      [ "${EDGE_RECORD_SOFTWARE_ONLY:-0}" = 0 ] || usage
+      printf '%s\n' "$overview" | grep -Eq '^(/[A-Za-z0-9_.-]+)+$' || usage
+      sim_id=$(dc ps --status running -q sim)
+      [ -n "$sim_id" ] && [ "$(printf '%s\n' "$sim_id" | wc -l)" -eq 1 ] || {
+        echo 'Select a running Compose project with a single simulator for the overview.' >&2; exit 2;
+      }
+      gz_env=$(docker inspect --format '{{range .Config.Env}}{{if eq (index (split . "=") 0) "GZ_PARTITION"}}{{println .}}{{end}}{{end}}' "$sim_id")
+      gz_partition=${gz_env#GZ_PARTITION=}
+      [ -n "$gz_partition" ] || { echo 'The running simulator must declare a Gazebo partition.' >&2; exit 2; }
+      gz_image=$(docker inspect --format '{{.Image}}' "$sim_id")
+      gz_source="$overview|$gz_partition|$gz_image"
+    fi
     signals=
     if [ -n "$scan$imu" ]; then
       [ "$mode" != hardware ] || { echo 'Use --external-sensor for summaries from the deployed physical collector.' >&2; exit 2; }
@@ -115,15 +147,17 @@ case "$action" in
       signals="$scan|$imu|$sensor_hz"
     fi
     set -- agent_state
+    if [ -n "$external_overview" ]; then set -- "$@" overview; fi
     if [ -n "$external_scan" ]; then set -- "$@" laser_scan; fi
     if [ -n "$external_imu" ]; then set -- "$@" imu; fi
     case "${EDGE_RECORD_AGENT_TRACE:-1}" in 1) set -- "$@" agent_trace;; 0) ;; *) usage;; esac
     case "${EDGE_RECORD_REQUEST_TEXT:-0}" in 1) set -- "$@" agent_request;; 0) ;; *) usage;; esac
     case "${EDGE_RECORD_SOFTWARE_ONLY:-0}" in
-      1) [ -z "${EDGE_RECORD_CAMERA:-}$signals" ] || usage ;;
+      1) [ -z "$camera$overview$signals" ] || usage ;;
       0)
         set -- "$@" clock map fused_pose twist bus
-        if [ -n "${EDGE_RECORD_CAMERA:-}" ]; then set -- "$@" rgb; fi
+        if [ -n "$camera" ]; then set -- "$@" rgb; fi
+        if [ -n "$overview" ]; then set -- "$@" overview; fi
         if [ -n "$scan" ]; then set -- "$@" laser_scan; fi
         if [ -n "$imu" ]; then set -- "$@" imu; fi ;;
       *) usage ;;
@@ -134,9 +168,10 @@ case "$action" in
     fi
     ready
     gate=$(admission state)
-    case "$gate" in *'"draining": false'*) registry ensure;; esac
+    case "$gate" in *'"draining": false'*) registry ensure >&2;; esac
     status=$(cmd start "$rid" --task-id "$task" --sources "$@")
     printf '%s\n' "$status"
+    map_view "$rid"
     case "$status" in *'"status": "ACTIVE"'*) ;; *) exit 0;; esac
     cid=$(dc ps -q task-recorder)
     project=$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$cid")
@@ -144,17 +179,24 @@ case "$action" in
     set -- python3 -B -m task_recorder.collect "$task" "$rid" --url "$url" --agent "$agent" --timeout "${EDGE_RECORD_WATCH_TIMEOUT:-86400}"
     if [ "${EDGE_RECORD_SOFTWARE_ONLY:-0}" = 1 ]; then set -- "$@" --software; fi
     if [ "$mode" != hardware ]; then set -- "$@" --sim; fi
-    if [ -n "${EDGE_RECORD_CAMERA:-}" ]; then set -- "$@" --camera "$EDGE_RECORD_CAMERA"; fi
+    if [ -n "$camera" ]; then set -- "$@" --camera "$camera"; fi
+    if [ -n "$overview" ]; then set -- "$@" --overview "$overview"; fi
+    if [ -n "$clock_domain" ]; then set -- "$@" --clock-domain "$clock_domain"; fi
     if [ -n "$scan" ]; then set -- "$@" --laser-scan "$scan"; fi
     if [ -n "$imu" ]; then set -- "$@" --imu "$imu"; fi
     if [ -n "$signals" ]; then set -- "$@" --sensor-hz "$sensor_hz"; fi
     # An identical ACTIVE recording may already own its collector. Only accept
     # containers from this exact Compose project and the requested service.
     owns() {
-      [ "$(docker inspect --format '{{.State.Running}} {{index .Config.Labels "com.docker.compose.project"}} {{index .Config.Labels "com.docker.compose.service"}} {{index .Config.Labels "edge.recorder.camera"}}|{{index .Config.Labels "edge.recorder.signals"}}' "$name" 2>/dev/null || true)" = "true $project $src ${EDGE_RECORD_CAMERA:-}|$signals" ]
+      [ "$(docker inspect --format '{{.State.Running}} {{index .Config.Labels "com.docker.compose.project"}} {{index .Config.Labels "com.docker.compose.service"}} {{index .Config.Labels "edge.recorder.camera"}}|{{index .Config.Labels "edge.recorder.signals"}}|{{index .Config.Labels "edge.recorder.overview"}}|{{index .Config.Labels "edge.recorder.clock"}}' "$name" 2>/dev/null || true)" = "true $project $src $camera|$signals|$gz_source|$clock_domain" ]
     }
     if ! owns; then
-      dc run -d --rm --no-deps --label "edge.recorder.camera=${EDGE_RECORD_CAMERA:-}" --label "edge.recorder.signals=$signals" --name "$name" "$src" "$@" || owns || {
+      set -- "$src" "$@"
+      if [ -n "$overview" ]; then
+        export EDGE_RECORDER_IMAGE="$gz_image"
+        set -- -e "GZ_PARTITION=$gz_partition" "$@"
+      fi
+      dc run -d --rm --no-deps --label "edge.recorder.camera=$camera" --label "edge.recorder.signals=$signals" --label "edge.recorder.overview=$gz_source" --label "edge.recorder.clock=$clock_domain" --name "$name" "$@" >&2 || owns || {
         echo "Collector launch failed. Inspect recording $rid and retry start or explicitly stop it." >&2
         exit 1
       }
@@ -162,7 +204,8 @@ case "$action" in
   status|stop)
     [ "$#" = 1 ] || usage
     recid "$1"
-    cmd "$action" "$1" ;;
+    cmd "$action" "$1"
+    if [ "$action" = status ]; then map_view "$1"; fi ;;
   export)
     [ "$#" = 2 ] || usage
     recid "$1"
