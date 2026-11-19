@@ -1,0 +1,49 @@
+{
+  "passed": true,
+  "source": "0977a543d2e494d1401530f51a9758add29eb9a2",
+  "deployment": "a8f610c9993999afbac5360659591c7868f76508",
+  "tracked_files": 146,
+  "history_commits": 1,
+  "running": [
+    "console",
+    "perception"
+  ],
+  "observe_mode": "observe",
+  "robot_id": "release-audit-rover",
+  "ros_domain_id": 153,
+  "preflight_issues": [
+    "odom.missing",
+    "imu.missing",
+    "scan.missing"
+  ],
+  "expected_preflight_exit": 1,
+  "smokes": {
+    "amd64": {
+      "passed": true,
+      "architecture": "x86_64",
+      "image": "edge-agent-ros/hardware:robot-0977a543d2e4-amd64",
+      "image_id": "sha256:9d01fd437d44ef3754c8b3c5acd60d5710a06c59741df0768c345c923d5f0f6c",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator",
+      "network": "none"
+    },
+    "arm64": {
+      "passed": true,
+      "architecture": "aarch64",
+      "image": "edge-agent-ros/hardware:robot-0977a543d2e4",
+      "image_id": "sha256:f0b66f7c81805b22be4b97990cec10d00799bcf5e85121a6da3cfe4c015db5b3",
+      "fixture": "synthetic ROS 2 wheel odometry, imu and planar laser; no actuator",
+      "network": "none"
+    }
+  },
+  "kit": "artifacts/deployment/rover-0977a543d2e4",
+  "kit_sha256": {
+    "build-amd64.log": "d236c3fc9265e27d6c410e00883cdac371d9364f92d89e6eb3a09c75764c1009",
+    "build-arm64.log": "0617df00d1d907f7639c06067bcff711aef6da3e40ed8217acee003c7b2adddb",
+    "edge-agent-ros-robot.bundle": "3b1beb73ef3cbb0ba3b41c2a048fc03d0a25e8c7758478d59e93e1caad4841ab",
+    "hardware-linux-arm64.tar.gz": "ebb93a041659a138436e846601fdbf5c40eb2bbc2300f2b08673037362c27740",
+    "release.json": "45c798e882d2df9f7a5c08bf91fce5031dce48ab8aa751e087947b1eefd7d947",
+    "smoke-amd64.json": "770dc183587fcf5132cac48391befdc4bde366c4f689888539cfefc4a31180fe",
+    "smoke-arm64.json": "f13ad7f5613b1ca0d50c53645d84bc8e26aa9118c12be9329647687aeba35585",
+    "START-HERE.md": "a17aa2a597a395c75777833542139775a14cb7ea1a7ab1168fec962a7eea6505"
+  }
+}
