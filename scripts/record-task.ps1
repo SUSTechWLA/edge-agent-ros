@@ -1,4 +1,6 @@
 # PowerShell entry point for the same Docker operator commands used on Linux.
+# Gazebo: .\scripts\record-task.ps1 sim start inspect-01 --laser-scan /scan --imu /imu --sensor-hz 4
+# Deployed sensor summaries: .\scripts\record-task.ps1 hardware start inspect-01 --external-sensor imu
 $ErrorActionPreference = 'Stop'
 $gitExe = (Get-Command git.exe -CommandType Application | Select-Object -First 1).Source
 $gitRoot = Split-Path (Split-Path $gitExe -Parent) -Parent

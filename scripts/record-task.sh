@@ -5,7 +5,7 @@ set -eu
 case "$(uname -s)" in MINGW*|MSYS*) export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*';; esac
 cd "$(dirname "$0")/.."
 usage() {
-  echo 'Usage: sh scripts/record-task.sh sim|campus|hardware enable|drain|disable|start TASK [RID]|status RID|stop RID|export RID NEW_DIR' >&2
+  echo 'Usage: sh scripts/record-task.sh sim|campus|hardware enable|drain|disable|start TASK [RID] [--laser-scan TOPIC] [--imu TOPIC] [--sensor-hz HZ] [--external-sensor imu|laser_scan]|status RID|stop RID|export RID NEW_DIR' >&2
   exit 2
 }
 [ "$#" -ge 2 ] || usage
@@ -81,18 +81,51 @@ case "$action" in
     registry enable
     admission enable ;;
   start)
-    [ "$#" -ge 1 ] && [ "$#" -le 2 ] || usage
+    [ "$#" -ge 1 ] || usage
     task=$1
-    rid=${2:-$task}
+    shift
+    rid=$task
+    case "${1:-}" in ''|--*) ;; *) rid=$1; shift ;; esac
     recid "$rid"
+    scan=${EDGE_RECORD_LASER_SCAN:-}
+    imu=${EDGE_RECORD_IMU:-}
+    sensor_hz=${EDGE_RECORD_SENSOR_HZ:-4}
+    external_scan=
+    external_imu=
+    while [ "$#" -gt 0 ]; do
+      [ "$#" -ge 2 ] && [ -n "$2" ] || usage
+      case "$1" in
+        --laser-scan) scan=$2;; --imu) imu=$2;; --sensor-hz) sensor_hz=$2;;
+        --external-sensor) case "$2" in laser_scan) external_scan=1;; imu) external_imu=1;; *) usage;; esac ;;
+        *) usage;;
+      esac
+      shift 2
+    done
+    signals=
+    if [ -n "$scan$imu" ]; then
+      [ "$mode" != hardware ] || { echo 'Use --external-sensor for summaries from the deployed physical collector.' >&2; exit 2; }
+      [ -z "$scan" ] || [ -z "$external_scan" ] || usage
+      [ -z "$imu" ] || [ -z "$external_imu" ] || usage
+      for topic in "$scan" "$imu"; do
+        case "$topic" in *[!A-Za-z0-9_/]*) usage;; esac
+        [ -z "$topic" ] || printf '%s\n' "$topic" | grep -Eq '^(/[A-Za-z_][A-Za-z0-9_]*)+$' || usage
+      done
+      case "$sensor_hz" in ''|*[!0-9.]*) usage;; esac
+      awk -v hz="$sensor_hz" 'BEGIN { exit !(hz ~ /^[0-9]+([.][0-9]+)?$/ && hz >= 0.1 && hz <= 10) }' || usage
+      signals="$scan|$imu|$sensor_hz"
+    fi
     set -- agent_state
+    if [ -n "$external_scan" ]; then set -- "$@" laser_scan; fi
+    if [ -n "$external_imu" ]; then set -- "$@" imu; fi
     case "${EDGE_RECORD_AGENT_TRACE:-1}" in 1) set -- "$@" agent_trace;; 0) ;; *) usage;; esac
     case "${EDGE_RECORD_REQUEST_TEXT:-0}" in 1) set -- "$@" agent_request;; 0) ;; *) usage;; esac
     case "${EDGE_RECORD_SOFTWARE_ONLY:-0}" in
-      1) [ -z "${EDGE_RECORD_CAMERA:-}" ] || usage ;;
+      1) [ -z "${EDGE_RECORD_CAMERA:-}$signals" ] || usage ;;
       0)
         set -- "$@" clock map fused_pose twist bus
-        if [ -n "${EDGE_RECORD_CAMERA:-}" ]; then set -- "$@" rgb; fi ;;
+        if [ -n "${EDGE_RECORD_CAMERA:-}" ]; then set -- "$@" rgb; fi
+        if [ -n "$scan" ]; then set -- "$@" laser_scan; fi
+        if [ -n "$imu" ]; then set -- "$@" imu; fi ;;
       *) usage ;;
     esac
     if [ -n "$(dc ps --all --status exited -q task-recorder)" ]; then
@@ -112,13 +145,16 @@ case "$action" in
     if [ "${EDGE_RECORD_SOFTWARE_ONLY:-0}" = 1 ]; then set -- "$@" --software; fi
     if [ "$mode" != hardware ]; then set -- "$@" --sim; fi
     if [ -n "${EDGE_RECORD_CAMERA:-}" ]; then set -- "$@" --camera "$EDGE_RECORD_CAMERA"; fi
+    if [ -n "$scan" ]; then set -- "$@" --laser-scan "$scan"; fi
+    if [ -n "$imu" ]; then set -- "$@" --imu "$imu"; fi
+    if [ -n "$signals" ]; then set -- "$@" --sensor-hz "$sensor_hz"; fi
     # An identical ACTIVE recording may already own its collector. Only accept
     # containers from this exact Compose project and the requested service.
     owns() {
-      [ "$(docker inspect --format '{{.State.Running}} {{index .Config.Labels "com.docker.compose.project"}} {{index .Config.Labels "com.docker.compose.service"}} {{index .Config.Labels "edge.recorder.camera"}}' "$name" 2>/dev/null || true)" = "true $project $src ${EDGE_RECORD_CAMERA:-}" ]
+      [ "$(docker inspect --format '{{.State.Running}} {{index .Config.Labels "com.docker.compose.project"}} {{index .Config.Labels "com.docker.compose.service"}} {{index .Config.Labels "edge.recorder.camera"}}|{{index .Config.Labels "edge.recorder.signals"}}' "$name" 2>/dev/null || true)" = "true $project $src ${EDGE_RECORD_CAMERA:-}|$signals" ]
     }
     if ! owns; then
-      dc run -d --rm --no-deps --label "edge.recorder.camera=${EDGE_RECORD_CAMERA:-}" --name "$name" "$src" "$@" || owns || {
+      dc run -d --rm --no-deps --label "edge.recorder.camera=${EDGE_RECORD_CAMERA:-}" --label "edge.recorder.signals=$signals" --name "$name" "$src" "$@" || owns || {
         echo "Collector launch failed. Inspect recording $rid and retry start or explicitly stop it." >&2
         exit 1
       }

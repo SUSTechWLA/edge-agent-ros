@@ -4,6 +4,7 @@ import base64
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 from queue import Empty, Full, Queue
 import threading
@@ -23,9 +24,10 @@ def post_json(http, endpoint, body=None):
 
 class Sink:
     """Bound network backpressure and retry the same event ID after a lost response."""
-    def __init__(self, endpoint, task):
+    def __init__(self, endpoint, task, clock_domain=None):
         self.endpoint = endpoint
         self.task = task
+        self.clock_domain = clock_domain
         self.queue = Queue(maxsize=96)
         self.end = threading.Event()
         self.problem = None
@@ -35,6 +37,8 @@ class Sink:
     def emit(self, kind, stamp, **values):
         if stamp <= 0 or self.end.is_set():
             return
+        if self.clock_domain:
+            values.setdefault("clock_domain",self.clock_domain)
         row = dict(values, kind=kind, stamp_ns=stamp, task_id=self.task, event_id=uuid.uuid4().hex)
         try:
             self.queue.put_nowait(row)
@@ -75,6 +79,51 @@ def attachment(name, data):
     return {"name": name, "base64": base64.b64encode(data).decode("ascii")}
 
 
+def sensor_rate(value):
+    hz = float(value)
+    if not 0.1 <= hz <= 10:
+        raise argparse.ArgumentTypeError("sensor rate must be 0.1 through 10 Hz")
+    return hz
+
+
+def check_signal_scope(args):
+    deployment = os.getenv("EDGE_RECORDING_DEPLOYMENT")
+    if args.sim and deployment == "hardware":
+        raise ValueError("hardware recorder rejects the simulation switch")
+    if (args.laser_scan or args.imu) and (not args.sim or deployment != "gazebo"):
+        raise ValueError("direct raw sensor summaries require the isolated Gazebo collector deployment")
+
+
+def scan_metrics(scan):
+    counts = {"beam_count":len(scan.ranges), "return_count":0, "no_return_count":0, "invalid_count":0}
+    if len(scan.ranges) > 65536:
+        return counts, "scan_exceeds_beam_limit"
+    if not all(map(math.isfinite, (scan.range_min, scan.range_max))) or not 0 <= scan.range_min < scan.range_max:
+        return counts, "invalid_range_limits"
+    nearest = math.inf
+    for ray in scan.ranges:
+        if ray == math.inf:
+            counts["no_return_count"] += 1
+        elif not math.isfinite(ray) or not scan.range_min <= ray <= scan.range_max:
+            counts["invalid_count"] += 1
+        else:
+            counts["return_count"] += 1
+            nearest = min(nearest, ray)
+    if counts["return_count"]:
+        counts["nearest_m"] = nearest
+        return counts, ""
+    return counts, "no_valid_ranges"
+
+
+def imu_metrics(imu):
+    if imu.angular_velocity_covariance[0] == -1:
+        return {}, "gyro_unavailable"
+    gyro = imu.angular_velocity
+    if not all(map(math.isfinite, (gyro.x, gyro.y, gyro.z))):
+        return {}, "nonfinite_gyro"
+    return {"angular_x_rad_s":gyro.x, "angular_y_rad_s":gyro.y, "angular_z_rad_s":gyro.z}, ""
+
+
 def task_event(event, task):
     if not isinstance(event, dict):
         return False
@@ -85,6 +134,7 @@ def task_event(event, task):
 
 class Sources:
     def __init__(self, node, args, sink, kinds):
+        check_signal_scope(args)
         from geometry_msgs.msg import Twist
         from nav_msgs.msg import OccupancyGrid, Odometry
         from rclpy.qos import DurabilityPolicy, QoSProfile, qos_profile_sensor_data
@@ -95,6 +145,7 @@ class Sources:
         self.node, self.args, self.sink = node, args, sink
         self.clock = 0
         self.last = {}
+        self.signal_next = {}
         self.mark_offset = 0
         self.gz = None
 
@@ -107,12 +158,19 @@ class Sources:
         self.send_clock = "clock" in kinds
         if not args.sim and self.send_clock:
             node.create_timer(.5,lambda:sink.emit("clock",self.now()))
-        sub("map",OccupancyGrid,args.map,self.grid,QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        sub("map",OccupancyGrid,args.map,self.grid,QoSProfile(depth=16 if args.all_map_revisions else 1,
+                                                               durability=DurabilityPolicy.TRANSIENT_LOCAL))
         sub("fused_pose",Odometry,args.pose,lambda m:self.pose("fused_pose",m))
         sub("world_pose",Odometry,args.world_pose,lambda m:self.pose("world_pose",m))
         sub("twist",Twist,args.twist,self.twist)
         sub("bus",String,args.bus,self.bus)
         sub("rgb",Image,args.camera,self.rgb)
+        if args.laser_scan and "laser_scan" in kinds:
+            from sensor_msgs.msg import LaserScan
+            sub("laser_scan",LaserScan,args.laser_scan,lambda m:self.sensor("laser_scan",m,args.laser_scan,scan_metrics))
+        if args.imu and "imu" in kinds:
+            from sensor_msgs.msg import Imu
+            sub("imu",Imu,args.imu,lambda m:self.sensor("imu",m,args.imu,imu_metrics))
         if "rgb" in kinds and args.gz_camera:
             from gz.transport13 import Node
             from gz.msgs10.image_pb2 import Image as GzImage
@@ -159,6 +217,30 @@ class Sources:
         if self.due("twist",ns,180_000_000) and all(map(math.isfinite,[msg.linear.x,msg.angular.z])):
             self.sink.emit("twist",ns,linear=msg.linear.x,angular=msg.angular.z)
 
+    def sensor(self, kind, msg, topic, summarize):
+        # Rate-limit by local elapsed time even when a device clock stalls or jumps.
+        now = time.monotonic()
+        if now < self.signal_next.get(kind, 0):
+            return
+        self.signal_next[kind] = now + 1/self.args.sensor_hz
+        stamp = self.stamp(msg)
+        frame = msg.header.frame_id
+        valid_stamp = 0 < stamp < 2**63 and 0 <= msg.header.stamp.nanosec < 10**9
+        if not valid_stamp:
+            metrics, reason = {}, "invalid_header_stamp"
+        elif not frame or len(frame) > 256:
+            metrics, reason = {}, "invalid_frame_id"
+        else:
+            metrics, reason = summarize(msg)
+        values = dict(topic=topic, frame_id=frame[:256], source="sensor_msgs/msg/"+type(msg).__name__,
+                      header_stamp_ns=stamp, stamp_origin="header" if valid_stamp else "receipt",
+                      valid=not reason, metrics=metrics)
+        if reason:
+            values["reason"] = reason
+        if not valid_stamp:
+            values["clock_domain"] = "observer_unix_ns"
+        self.sink.emit(kind, stamp if valid_stamp else time.time_ns(), **values)
+
     def bus(self,msg):
         try:
             event=json.loads(msg.data)
@@ -169,7 +251,7 @@ class Sources:
 
     def grid(self,msg):
         ns=self.stamp(msg)
-        if (not self.due("map",ns,400_000_000) or not 0<len(msg.data)<=2000000
+        if (not self.due("map",ns,1 if self.args.all_map_revisions else 400_000_000) or not 0<len(msg.data)<=2000000
                 or msg.info.width*msg.info.height!=len(msg.data)):
             return
         cells=list(msg.data)
@@ -180,8 +262,8 @@ class Sources:
         self.sink.emit("map",ns,frame=msg.header.frame_id,known=sum(c>=0 for c in cells),
                        media=attachment(f"grid/{ns:018d}.json",data))
 
-    def png(self,ns,data,width,height):
-        self.sink.emit("rgb",ns,width=width,height=height,sha256=hashlib.sha256(data).hexdigest(),
+    def png(self,ns,data,width,height,topic,source):
+        self.sink.emit("rgb",ns,topic=topic,source=source,width=width,height=height,sha256=hashlib.sha256(data).hexdigest(),
                        media=attachment(f"rgb/{ns:018d}.png",data))
 
     def rgb(self,msg):
@@ -189,7 +271,7 @@ class Sources:
         ns=self.stamp(msg)
         if self.due("rgb",ns,110_000_000):
             png,_,_,_,width,height,_=raw_frame(msg)
-            self.png(ns,png,width,height)
+            self.png(ns,png,width,height,self.args.camera,"sensor_msgs/msg/Image")
 
     def gz_rgb(self,msg):
         from scene.campus_large.capture import encode
@@ -198,7 +280,7 @@ class Sources:
         if self.due("rgb",ns,110_000_000):
             try:
                 png,meta=encode(msg)
-                self.png(ns,png,meta["width"],meta["height"])
+                self.png(ns,png,meta["width"],meta["height"],self.args.gz_camera,"gz.msgs.Image")
             except ValueError as error:
                 self.sink.problem=str(error)
                 self.sink.end.set()
@@ -227,7 +309,6 @@ class Sources:
 
 
 def main():
-    import rclpy
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--url",required=True)
     ap.add_argument("--recording-id",required=True)
@@ -236,6 +317,11 @@ def main():
     cameras=ap.add_mutually_exclusive_group()
     cameras.add_argument("--camera",help="ROS sensor_msgs/Image topic")
     cameras.add_argument("--gz-camera",help="Gazebo native RGB8 topic in a simulation image")
+    ap.add_argument("--laser-scan", help="opt in to summaries of a ROS sensor_msgs/LaserScan topic")
+    ap.add_argument("--imu", help="opt in to measured gyro from a ROS sensor_msgs/Imu topic")
+    ap.add_argument("--sensor-hz", type=sensor_rate, default=4, help="maximum samples per second per raw sensor")
+    ap.add_argument("--all-map-revisions", action="store_true", help="preserve each stamped map revision for decision audits")
+    ap.add_argument("--clock-domain", help="explicit shared time basis guaranteed by this recording deployment")
     ap.add_argument("--map",default="/edge/perception/map")
     ap.add_argument("--pose",default="/edge/perception/pose")
     ap.add_argument("--twist",default="/cmd_vel")
@@ -243,6 +329,11 @@ def main():
     ap.add_argument("--world-pose",help="optional independent simulator witness topic")
     ap.add_argument("--markers",type=Path,help="optional append-only task marker JSONL")
     args=ap.parse_args()
+    try:
+        check_signal_scope(args)
+    except ValueError as error:
+        ap.error(str(error))
+    import rclpy
     endpoint=args.url.rstrip("/")+"/recordings/"+quote(args.recording_id,safe="")
     http=build_opener(ProxyHandler({}))
     delay_until=time.monotonic()+120
@@ -261,7 +352,7 @@ def main():
         raise ValueError("recording must be active and belong to the requested task")
     rclpy.init(args=[])
     node=rclpy.create_node("edge_recording_source_"+uuid.uuid4().hex[:8])
-    sink=Sink(endpoint,args.task_id)
+    sink=Sink(endpoint,args.task_id,args.clock_domain)
     source=None
     try:
         source=Sources(node,args,sink,set(header["sources"]))
