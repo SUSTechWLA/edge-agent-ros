@@ -148,6 +148,12 @@ class MapSample:
     emitted: bool = False
 
 
+class MapInputError(ValueError):
+    def __init__(self,code,detail):
+        super().__init__(detail)
+        self.code=code
+
+
 class Sources:
     def __init__(self, node, args, sink, kinds):
         check_signal_scope(args)
@@ -161,6 +167,8 @@ class Sources:
         self.node, self.args, self.sink = node, args, sink
         self.clock = 0
         self.last = {}
+        self.map_fault_next = {}
+        self.map_fault_skipped = {}
         self.signal_next = {}
         self.mark_offset = 0
         self.gz = None
@@ -176,7 +184,7 @@ class Sources:
         if not args.sim and self.send_clock:
             node.create_timer(.5,lambda:sink.emit("clock",self.now()))
         # Jazzy chooses the two-argument callback only when the second argument is required.
-        sub("map",OccupancyGrid,args.map,lambda msg,info:self.grid(msg,info),QoSProfile(depth=16 if args.all_map_revisions else 1,
+        sub("map",OccupancyGrid,args.map,self.on_grid,QoSProfile(depth=16 if args.all_map_revisions else 1,
                                                                durability=DurabilityPolicy.TRANSIENT_LOCAL))
         sub("fused_pose",Odometry,args.pose,lambda m:self.pose("fused_pose",m))
         sub("world_pose",Odometry,args.world_pose,lambda m:self.pose("world_pose",m))
@@ -284,31 +292,51 @@ class Sources:
         except ValueError:
             pass
 
+    def on_grid(self,msg,info):
+        try:
+            self.grid(msg,info)
+        except MapInputError as error:
+            # Only malformed observations are recovered here. Transport or programming errors still propagate.
+            now=time.monotonic()
+            if now<self.map_fault_next.get(error.code,0):
+                self.map_fault_skipped[error.code]=self.map_fault_skipped.get(error.code,0)+1
+                return
+            self.map_fault_next[error.code]=now+.4
+            stamp=self.stamp(msg)
+            metadata=dict(topic=self.args.map,source="nav_msgs/msg/OccupancyGrid",frame=msg.header.frame_id[:256],
+                          valid=False,error=error.code,detail=str(error),header_stamp_ns=stamp,
+                          suppressed=self.map_fault_skipped.pop(error.code,0),stamp_origin="header")
+            if error.code=="map.invalid_stamp":
+                metadata.update(stamp_origin="receipt",clock_domain="observer_unix_ns")
+                stamp=time.time_ns()
+            self.sink.emit("map",stamp,**metadata)
+
     def grid(self,msg,info=None):
         ns=self.stamp(msg)
+        if not 0<ns<2**63 or not 0<=msg.header.stamp.nanosec<10**9:
+            raise MapInputError("map.invalid_stamp","invalid ROS OccupancyGrid header stamp")
         o=msg.info.origin
         p,q=o.position,o.orientation
         if (not msg.header.frame_id or not 0<len(msg.data)<=2000000 or msg.info.width*msg.info.height!=len(msg.data)
                 or not all(map(math.isfinite,(p.x,p.y,p.z,q.x,q.y,q.z,q.w,msg.info.resolution)))
                 or msg.info.resolution<=0 or abs(p.z)>1e-6 or math.hypot(q.x,q.y)>1e-6
                 or abs(math.hypot(q.x,q.y,q.z,q.w)-1)>1e-5):
-            raise ValueError("invalid or non-planar ROS OccupancyGrid geometry")
-        if ns<=0:
-            return
+            raise MapInputError("map.invalid_geometry","invalid or non-planar ROS OccupancyGrid geometry")
         if min(msg.data)<-1 or max(msg.data)>100:
-            raise ValueError("invalid ROS OccupancyGrid cell value")
+            raise MapInputError("map.invalid_cells","invalid ROS OccupancyGrid cell value")
         geometry=dict(frame=msg.header.frame_id,width=msg.info.width,height=msg.info.height,resolution=msg.info.resolution,
                       origin=[o.position.x,o.position.y,2*math.atan2(o.orientation.z,o.orientation.w)])
         metadata=dict(topic=self.args.map,source="nav_msgs/msg/OccupancyGrid",stamp_origin="header")
         load_time=getattr(msg.info,"map_load_time",None)
         if load_time is not None:
             if load_time.sec<0 or not 0<=load_time.nanosec<10**9:
-                raise ValueError("invalid ROS map_load_time")
+                raise MapInputError("map.invalid_load_time","invalid ROS map_load_time")
             metadata["map_load_time_ns"]=load_time.sec*10**9+load_time.nanosec
         gid=info.get("publisher_gid") if isinstance(info,dict) else getattr(info,"publisher_gid",None)
-        if gid is not None:
-            raw=bytes(gid)
-            if 0<len(raw)<=64 and any(raw):
+        if isinstance(gid,(bytes,bytearray,memoryview,list,tuple,array)) and 0<len(gid)<=64:
+            try: raw=bytes(gid)
+            except (ValueError,TypeError,OverflowError): raw=b""
+            if any(raw):
                 metadata["publisher_id"]=raw.hex()
         # Hold at most one bounded raw window, even when the ordinary recorder samples at 2.5 Hz.
         cells=msg.data.tobytes() if isinstance(msg.data,array) and msg.data.typecode=="b" else array("b",msg.data).tobytes()
@@ -336,8 +364,11 @@ class Sources:
         data=json.dumps(record,allow_nan=False,separators=(",",":")).encode()
         # Distinct writes can have the same source stamp on a reset or publisher change.
         name=f"grid/{sample.stamp:018d}-{uuid.uuid4().hex}.json"
+        skipped=getattr(self,"map_fault_skipped",{})
+        diagnostics={"suppressed_map_faults":dict(skipped)} if skipped else {}
         self.sink.emit("map",sample.stamp,frame=record["frame"],known=sample.known,
-                       media=attachment(name,data),**sample.metadata)
+                       media=attachment(name,data),**sample.metadata,**diagnostics)
+        skipped.clear()
         sample.emitted=True
         self.last["map"]=sample.stamp
 

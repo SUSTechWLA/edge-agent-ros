@@ -89,11 +89,26 @@ class MapPlayback:
         revisions=[]
         self.model=dict(task_id=record.header["task_id"],title=guide.get("title") or record.header["task_id"],
                         description="按观测时间展开累计地图。拖动平移，滚轮缩放。",duration=math.ceil((record.end-record.first)/1e6),
-                        saved=False,revisions=revisions,poses=[],events=[],signals=[],cameras={})
+                        saved=False,revisions=revisions,poses=[],events=[],diagnostics=[],signals=[],cameras={})
         if base_info: revisions.append(saved_revision(base_info))
         for row in record.all:
             if row["kind"]!="map": continue
-            d=self.history.advance(row,json.loads(row["_path"].read_bytes()))
+            blob=row["_path"].read_bytes() if row.get("_path") else None
+            try:
+                grid=global_map.decode_observation(row,blob)
+                d=self.history.advance(row,grid)
+            except ValueError as exc:
+                cause=str(exc)[:250]
+                if (cause=="map.attachment_digest" and blob is not None and hashlib.sha256(blob).hexdigest()!=row.get("sha256")
+                        or cause=="map.base_scope_mismatch" and row.get("valid") is not False):
+                    raise
+                detail=row.get("detail") if row.get("valid") is False else None
+                fault=dict(t=ms(row),seq=row["seq"],event_id=row["event_id"],stamp_ns=str(row["stamp_ns"]),
+                           code=cause.split(":",1)[0],title=f'地图观测 #{row["seq"]} 未采用',
+                           detail=cause+(" · "+detail[:200] if isinstance(detail,str) and detail else ""))
+                if row.get("sha256"): fault["sha256"]=row["sha256"]
+                self.model["diagnostics"].append(fault)
+                continue
             if not d["changes"] and revisions and d["segment"]==revisions[-1]["segment"] and d["revision"]==revisions[-1]["revision"]:
                 continue
             revisions.append(dict(d,t=ms(row),stamp_ns=str(d["stamp_ns"]),added=d["new_cells"],
@@ -113,6 +128,9 @@ class MapPlayback:
             if row["kind"] in ("rgb","overview","map","fused_pose","world_pose","laser_scan","imu"): continue
             name,detail=captioner(row,guide)
             self.model["events"].append(dict(t=ms(row),title=name,detail=detail,seq=row["seq"],event_id=row["event_id"]))
+        self.model["diagnostics"].sort(key=lambda e:(e["t"],e["seq"]))
+        self.model["events"].extend(self.model["diagnostics"])
+        self.model["events"].sort(key=lambda e:(e["t"],e["seq"]))
         for signal in view.signals:
             samples=[]
             for row in record.by.get(signal["source"],[]):
@@ -193,7 +211,7 @@ class MapPlayback:
                 else: self._seed.discard((x,y))
         self._cursor=n
         if n<0:
-            txt(265,378,"等待第一幅地图观测",29,GRAY)
+            txt(265,378,"等待第一幅可用地图观测",29,GRAY)
         else:
             r=self.model["revisions"][n]
             b=r["fit"];sc=min(830/max(8,b[2]-b[0]),505/max(8,b[3]-b[1]))
@@ -238,6 +256,11 @@ class MapPlayback:
             txt(1000,151,f'{r["known_cells"]:,} 格',38,GREEN,382)
             txt(1000,218,f'本次新增 {r["added"]}  ·  更新 {r["updated"]}',20,AMBER,380)
             txt(1000,254,f'距上次地图观测 {(t-r["t"])/1000:.1f} s',17,GRAY,375)
+        faults=self.model["diagnostics"]
+        fi=bisect_right(faults,t,key=lambda e:e["t"])-1
+        if fi>=0 and (n<0 or faults[fi]["seq"]>self.model["revisions"][n].get("seq",0)):
+            fault=faults[fi]
+            txt(275,115,"观测 #"+str(fault["seq"])+" 未采用 · "+fault["code"],16,AMBER,655)
         at=self.record.first+int(t*1e6)
         events=self.model["events"]
         active=bisect_right(events,t,key=lambda e:e["t"])-1

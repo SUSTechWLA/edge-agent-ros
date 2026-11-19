@@ -26,6 +26,7 @@ aside{padding:16px}.group+.group{border-top:1px solid var(--line);margin-top:17p
 <canvas id="map" tabindex="0" aria-label="可缩放和拖动的已观测地图"></canvas><div class="mapfoot"><div class="legend"><span style="--c:#bed8cb">自由</span><span style="--c:#db8e5d">占据</span><span style="--c:#314551">未知</span><span style="--c:#7eeac7">新增</span><span style="--c:#ffc67c">更新</span><span id="oldKey" style="--c:#8d84b6" hidden>底图</span></div><span id="geometry"></span></div></section>
 <aside><div class="group"><h2 id="rev">等待观测</h2><div class="metric" id="known">0</div><p class="muted">累计已知格</p><p><span id="delta" class="change"></span></p><small id="when"></small></div>
 <div class="group" id="event"><h2>任务事件</h2><p id="eventName"></p><p class="muted" id="why"></p></div>
+<div class="group" id="mapFaults" hidden><p class="change" id="mapFault"></p><details><summary>查看异常观测</summary><div id="faultLinks"></div></details></div>
 <div class="group" id="signalBox"><h2>观测与指令</h2><div id="signals"></div></div>
 <div class="group" id="camera" hidden><label>图像 <select id="role"></select></label><div id="photo" hidden><img id="image" alt="当前时刻最近收到的图像"><small id="imageTime"></small></div></div>
 <details id="meta"><summary>坐标与来源</summary><small id="source"></small></details><details id="saves" hidden><summary>查看各分段已保存的整图</summary><div id="savedLinks"></div></details></aside></div><section id="software" class="nos" hidden><h2>任务事件</h2><p class="muted">该录制没有地图观测。</p><ol id="events"></ol></section></main>
@@ -40,13 +41,13 @@ function reset(){cells.clear();seed.clear();hot.clear();segment=-1;cache=-1}
 function install(r){if(r.segment!==segment){cells.clear();seed.clear();segment=r.segment;zoom=1;dx=dy=0}hot=new Map();for(const [x,y,v] of r.changes){const k=x+","+y;if(!D.saved)hot.set(k,cells.has(k)?"changed":"new");cells.set(k,[x,y,v]);if(r.base&&!D.saved)seed.add(k);else seed.delete(k)}}
 function fit(){zoom=1;dx=dy=0;draw()}
 function draw(){
- if(!D.revisions.length)return;
  const cv=el("map"),rect=cv.getBoundingClientRect(),w=rect.width,h=rect.height,ratio=window.devicePixelRatio||1;
+ if(!w||!h)return;
  if(cv.width!==Math.round(w*ratio)||cv.height!==Math.round(h*ratio)){cv.width=Math.round(w*ratio);cv.height=Math.round(h*ratio)}
  ctx.setTransform(ratio,0,0,ratio,0,0);ctx.fillStyle="#14242d";ctx.fillRect(0,0,w,h);
  const n=ix(D.revisions,t);if(n<cache)reset();
  for(let j=cache+1;j<=n;j++)install(D.revisions[j]);cache=n;
- if(n<0){ctx.fillStyle="#afc8c6";ctx.font="18px sans-serif";ctx.fillText("等待第一幅地图观测",30,h/2);return}
+ if(n<0){ctx.fillStyle="#afc8c6";ctx.font="18px sans-serif";ctx.fillText("等待第一幅可用地图观测",30,h/2);return}
  const r=D.revisions[n];let b=r.fit||r.bounds;let cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;
  const sc=Math.min(w*.84/Math.max(8,b[2]-b[0]),h*.82/Math.max(8,b[3]-b[1]))*zoom;
  const X=x=>w/2+(x-cx)*sc+dx,Y=y=>h/2-(y-cy)*sc+dy;
@@ -73,6 +74,8 @@ function setTime(ms){t=Math.max(0,Math.min(D.duration,ms));el("time").value=t;el
  el("source").textContent=r?"源时间 "+r.stamp_ns+" ns · 坐标原点 "+r.origin.map(v=>v.toFixed(2)).join(", ")+(r.reason?" · "+r.reason:"")+" · SHA-256 "+r.sha256:"";
  el("oldKey").hidden=D.saved||!r||!D.revisions.some(v=>v.segment===r.segment&&v.base&&v.t<=t);
  el("eventName").textContent=ev?ev.title:"等候首条事件";el("why").textContent=ev?ev.detail:"";
+ const faults=D.diagnostics||[],fi=ix(faults,t),f=faults[fi];
+ el("mapFaults").hidden=!faults.length;el("mapFault").textContent=f&&(!r||f.seq>(r.seq||0))?f.title+" · "+f.code:(fi+1)+" 条历史异常";
  el("signals").replaceChildren();for(const k of D.signals){const row=k.samples[ix(k.samples,t)],line=document.createElement("div"),val=document.createElement("b");line.className="signal";line.append(k.label);val.textContent=!row?"待采样":(row.value===null?row.status:row.text+" "+k.unit)+" · "+((t-row.t)/1000).toFixed(1)+" s"+((t-row.t)>k.max_age_s*1000?" 超时":"");line.append(val);el("signals").append(line)}
  const group=D.cameras[el("role").value];const shot=group&&group[ix(group,t)];el("photo").hidden=!group;
  if(shot){el("image").hidden=false;if(el("image").dataset.hash!==shot.hash){el("image").src=shot.src;el("image").dataset.hash=shot.hash}el("imageTime").textContent="录制样本预览 · "+((t-shot.t)/1000).toFixed(1)+" s 前"}else{el("image").hidden=true;el("imageTime").textContent="等待首帧"}
@@ -94,6 +97,7 @@ for(const [id,label] of [["","隐藏图像"],["onboard","车载相机"],["overvi
  if(id&&!D.cameras[id])continue;const o=document.createElement("option");o.value=id;o.textContent=label;el("role").append(o)}
 el("role").onchange=()=>setTime(t);
 for(const m of D.saved_maps||[]){el("saves").hidden=false;const p=document.createElement("p"),a=document.createElement("a");a.href=m.folder+"/index.html";a.textContent="分段 "+m.segment+" · 终态整图";p.append(a);el("savedLinks").append(p)}
-if(!D.revisions.length){el("grid").hidden=true;el("transport").hidden=true;el("software").hidden=false;for(const e of D.events){const li=document.createElement("li");li.textContent=(e.t/1000).toFixed(1)+" s · "+e.title;el("events").append(li)}}
+for(const f of D.diagnostics||[]){const p=document.createElement("p"),b=document.createElement("button");b.textContent="定位 #"+f.seq+" · "+f.code;b.onclick=()=>{stop();setTime(f.t)};p.append(b,document.createTextNode(" "+f.detail));el("faultLinks").append(p)}
+if(!D.revisions.length&&!D.diagnostics?.length){el("grid").hidden=true;el("transport").hidden=true;el("software").hidden=false;for(const e of D.events){const li=document.createElement("li");li.textContent=(e.t/1000).toFixed(1)+" s · "+e.title;el("events").append(li)}}
 if(D.saved){el("transport").hidden=true;el("highlight").hidden=true}window.addEventListener("resize",draw);setTime(0);
 </script></html>
