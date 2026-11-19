@@ -428,12 +428,21 @@ class SoftRuntime:
             await self._activate_pending()
             return self._row(fiber)
 
-    def _snapshot(self, plugin_id, name, allow_draining):
+    def _snapshot(self, plugin_id, name, allow_draining, restored_settings=None):
         fiber = self._find(plugin_id)
         closure = self._closure(fiber, allow_draining=allow_draining)
         if name not in fiber.exports:
             raise SoftRuntimeError("tool.binding_unavailable", "requested export missing", name=name)
         settings = {key: deepcopy(owner.settings) for key, owner in closure.items()}
+        if restored_settings is not None:
+            if set(restored_settings) != set(closure):
+                raise SoftRuntimeError("tool.binding_unavailable", "stored configuration closure differs")
+            for key, owner in closure.items():
+                config = restored_settings[key]
+                self._validate(owner.descriptor["config_schema"], config)
+                for schema in owner.config_checks:
+                    self._validate(schema, config)
+            settings = deepcopy(restored_settings)
         dependencies = {key: [owner.descriptor["version"], owner.descriptor["content_digest"], _digest(settings[key])]
                         for key, owner in closure.items()}
         pin = {"plugin_id": plugin_id, "name": name,
@@ -445,7 +454,11 @@ class SoftRuntime:
         self._audited()
         return self._snapshot(plugin_id, name, False).pin
 
-    async def freeze(self, plugin_id, name, reservation_id, *, expected_pin=None, restore=False):
+    def frozen_settings(self, reservation_id):
+        """Private handoff to the durable plan owner. No settings enter public pin JSON."""
+        return deepcopy(self._reservations[reservation_id].settings)
+
+    async def freeze(self, plugin_id, name, reservation_id, *, expected_pin=None, restore=False, restored_settings=None):
         self._audited()
         if not isinstance(reservation_id, str) or not reservation_id:
             raise SoftRuntimeError("tool.binding_unavailable", "reservation identity required")
@@ -458,7 +471,9 @@ class SoftRuntime:
             return deepcopy(pin)
         if restore and not expected_pin:
             raise SoftRuntimeError("tool.binding_unavailable", "restoring requires the original durable pin")
-        reservation = self._snapshot(plugin_id, name, allow_draining=restore)
+        if restored_settings is not None and not restore:
+            raise SoftRuntimeError("tool.binding_unavailable", "historical settings require a durable pin")
+        reservation = self._snapshot(plugin_id, name, allow_draining=restore, restored_settings=restored_settings)
         pin = reservation.pin
         pin["reservation_id"] = reservation_id
         if expected_pin is not None and pin != expected_pin:

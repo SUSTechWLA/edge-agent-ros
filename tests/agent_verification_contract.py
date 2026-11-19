@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import Mock, patch
 
@@ -96,6 +97,52 @@ class VerificationContracts(unittest.TestCase):
         self.assertEqual(queued(),["soft/step/1"])
         self.j.save(task,"BLOCKED","rejected before dispatch",kind="blocked")
         self.assertEqual(queued(),["soft/step/1","soft/step/2"])
+
+    def test_settlement_outbox_migrates_and_one_poison_batch_cannot_starve_other_tasks(self):
+        from soft_client import SoftError
+
+        task = self.j.create("retry-owner","trace the original read task")
+        self.j.save(task,"RECOVERY_REQUIRED","operator may retry",kind="retry_exhausted")
+        operations = [f"retry-owner/step/{i}" for i in range(1,67)]
+        with self.j.db:
+            self.j.db.execute("DROP TABLE soft_settlements")
+            self.j.db.execute("CREATE TABLE soft_settlements(operation TEXT PRIMARY KEY,pin TEXT NOT NULL)")
+            self.j.db.executemany("INSERT INTO soft_settlements VALUES(?,?)",
+                                  [(op,json.dumps({"reservation_id":op})) for op in operations])
+        self.j.db.close()
+        self.j.owner.close()
+        self.j = Journal(self.root/"data")
+        self.addCleanup(self.j.db.close)
+        self.addCleanup(self.j.owner.close)
+        unavailable = set(operations[:65])
+
+        def settle(action, *, pin):
+            self.assertEqual(action,"settle")
+            if pin["reservation_id"] in unavailable:
+                raise SoftError("plugin.draining","injected persistent failure")
+            return True
+
+        stop = threading.Event()
+        with patch("service.soft_client.request",side_effect=settle) as rpc, patch("service.time.time",return_value=1000):
+            self.j.settle_soft_batch(stop)
+            self.assertEqual(rpc.call_count,64)
+            self.j.settle_soft_batch(stop)
+            self.assertEqual(rpc.call_count,66)
+            self.j.settle_soft_batch(stop)
+            self.assertEqual(rpc.call_count,66)
+        queued = self.j.db.execute("SELECT operation,attempts FROM soft_settlements").fetchall()
+        self.assertEqual(dict(queued),{op:1 for op in unavailable})
+        with patch("service.soft_client.request",side_effect=settle), patch("service.time.time",return_value=1001):
+            self.j.settle_soft_batch(stop)
+            self.j.settle_soft_batch(stop)
+        unavailable.clear()
+        with patch("service.soft_client.request",side_effect=settle), patch("service.time.time",return_value=1003):
+            self.j.settle_soft_batch(stop)
+            self.j.settle_soft_batch(stop)
+        self.assertEqual(self.j.db.execute("SELECT COUNT(*) FROM soft_settlements").fetchone()[0],0)
+        counts = dict(self.j.db.execute("SELECT kind,count(*) FROM events WHERE kind LIKE 'settlement_%' GROUP BY kind"))
+        self.assertEqual(counts,{"settlement_deferred":65,"settlement_recovered":65})
+        self.assertTrue(self.j.get("retry-owner")["can_retry"])
 
     def test_atomic_candidate_and_independent_queues(self):
         self.j.create("capture","collect photo")

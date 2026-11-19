@@ -7,6 +7,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 import sqlite3
 import struct
 from urllib.parse import urlsplit
@@ -16,11 +17,33 @@ from module_journal import ModuleJournal, canonical
 from plugin_descriptor import resolve_schema, trusted_code, validate_descriptor, validate_instance
 from soft_client import LIMIT, encode
 from soft_runtime import SoftRuntime, SoftRuntimeError
+from tracing import clean_text
 from v2_registry import V2Registry
 
 
 def problem(code, detail):
     return SoftRuntimeError(code, detail)
+
+
+def check_site_settings(values):
+    """Site settings are non-secret JSON. Credentials travel by reference only."""
+    if isinstance(values, dict):
+        if set(values) == {"secret_ref"}:
+            reference = values["secret_ref"]
+            if not isinstance(reference,str) or not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_./-]{0,127}", reference):
+                raise problem("plugin.config_invalid", "expected an opaque site credential reference")
+            return
+        for key, value in values.items():
+            sensitive = re.search(r"(password|passwd|secret|token|api.?key|authorization|credential|cookie|private.?key)$",
+                                  key, re.I)
+            if sensitive and not (isinstance(value, dict) and set(value) == {"secret_ref"}):
+                raise problem("plugin.config_invalid", "site credentials require a reference")
+            check_site_settings(value)
+    elif isinstance(values, list):
+        for element in values:
+            check_site_settings(element)
+    elif isinstance(values, str) and (clean_text(values) != values or "PRIVATE KEY-----" in values):
+        raise problem("plugin.config_invalid", "raw credentials are forbidden in site settings")
 
 
 def settings_for(item, site):
@@ -39,6 +62,7 @@ def settings_for(item, site):
         config = {}
     except (OSError, ValueError) as error:
         raise problem("plugin.config_invalid", "invalid site configuration") from error
+    check_site_settings(config)
     result = {"profile": profile, "settings": config} if profile is not None else config
     validate_instance(schema, result)
     return profile or {}, result
@@ -111,6 +135,11 @@ class Host:
             operation TEXT PRIMARY KEY, digest TEXT NOT NULL, input_hash TEXT NOT NULL, receipt TEXT)""")
         self.journal.db.execute("""CREATE TABLE IF NOT EXISTS soft_instances(
             plugin_id TEXT PRIMARY KEY, digest TEXT NOT NULL, publication INTEGER NOT NULL, lifecycle TEXT NOT NULL)""")
+        # Immutable snapshots are keyed by the durable pin. Never put these values
+        # into the public journal events, registration catalog or task's wire pin.
+        self.journal.db.execute("""CREATE TABLE IF NOT EXISTS soft_config_snapshots(
+            plugin_id TEXT NOT NULL, digest TEXT NOT NULL, config_digest TEXT NOT NULL, settings TEXT NOT NULL,
+            PRIMARY KEY(plugin_id,digest,config_digest))""")
 
     def record(self, event):
         with self.journal.db:
@@ -290,6 +319,7 @@ class Host:
                 exact = dict(pin, reservation_id=op)
                 got = await self.rt.freeze(pin["plugin_id"], pin["name"], op, expected_pin=exact)
                 registered.append(op)
+                self.save_settings(got)
                 step["soft_pin"] = got
                 bindings.extend((key, version[1], op) for key,version in got["dependencies"].items())
             return self.registry.freeze_plan(task, data["provider"], data["steps"], bindings)
@@ -297,6 +327,45 @@ class Host:
             for op in registered:
                 await self.rt.release(op)
             raise
+
+    def save_settings(self, pin):
+        # Commit immutable data first. A crash before plan admission can leave an
+        # unreferenced snapshot but can never expose a plan missing its configuration.
+        frozen = self.rt.frozen_settings(pin["reservation_id"])
+        with self.journal.db:
+            for key, (version, digest, config_digest) in pin["dependencies"].items():
+                config = frozen[key]
+                schema = self.schemas[key]["config_schema"]
+                profile = schema.get("properties", {}).get("profile", {}).get("const")
+                settings = config["settings"] if profile is not None else config
+                check_site_settings(settings)
+                self.journal.db.execute("INSERT OR IGNORE INTO soft_config_snapshots VALUES(?,?,?,?)",
+                                        (key, digest, config_digest, canonical(settings)))
+
+    def restored_settings(self, pin):
+        values = {}
+        for key, (version, digest, config_digest) in pin["dependencies"].items():
+            item, profile, current = self.items[key]
+            if item["version"] != version or item["content_digest"] != digest:
+                raise problem("tool.binding_unavailable", "configuration owner differs from the durable pin")
+            row = self.journal.db.execute("""SELECT settings FROM soft_config_snapshots
+                WHERE plugin_id=? AND digest=? AND config_digest=?""", (key,digest,config_digest)).fetchone()
+            if row is None:
+                # Earlier P1 journals can still restore if the complete current
+                # configuration has the exact hash in the saved plan.
+                values[key] = current
+                continue
+            try:
+                config = json.loads(row[0])
+            except ValueError as error:
+                raise problem("tool.binding_unavailable", "stored configuration is unreadable") from error
+            check_site_settings(config)
+            schema = self.schemas[key]["config_schema"]
+            has_profile = schema.get("properties", {}).get("profile", {}).get("const") is not None
+            values[key] = {"profile":profile, "settings":config} if has_profile else config
+        # SoftRuntime recomputes and checks every transitive digest and validates
+        # schema before binding the historical values to just this reservation.
+        return values
 
     def pinned_step(self, pin):
         op = pin.get("reservation_id")
@@ -340,7 +409,8 @@ class Host:
                            for x in (trace.get("trace_id"),trace.get("parent_event_id")))))):
             raise problem("tool.binding_unavailable", "operation, arguments or scope differ from the frozen plan")
         self.check_dependencies(pin)
-        await self.rt.freeze(pin["plugin_id"], pin["name"], op, expected_pin=pin, restore=True)
+        await self.rt.freeze(pin["plugin_id"], pin["name"], op, expected_pin=pin, restore=True,
+                             restored_settings=self.restored_settings(pin))
         item = self.items[pin["plugin_id"]][0]
         self.validate_payload(pin["plugin_id"], "parameters", wire["arguments"])
         # The persisted intent prevents retrying an unknown software write after a lost response.

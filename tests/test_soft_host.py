@@ -139,6 +139,70 @@ class HostContracts(unittest.IsolatedAsyncioTestCase):
         self.assertNotEqual(second["binding"], pin["binding"])
         self.assertEqual((await self.host.invoke(pin,wire))["state"], "SUCCEEDED")
 
+    async def test_frozen_a_then_b_after_restart_first_dispatch_observes_each_original_value(self):
+        # An observable config-dependent adapter exercises the real host, persistence,
+        # descriptor validation and output contract. Unit inputs never leave this process.
+        def configurable_adapter(item, site, profile):
+            def apply(ctx):
+                def invoke(wire):
+                    return {"operation_id":wire["operation_id"],"state":"SUCCEEDED","evidence":{
+                        "source":"unit","input_sha256":"a"*64,"input_count":1,"output_count":1,
+                        "value":ctx.config()["settings"]["scale"],"definition_version":"unit"}}
+                ctx.tools.register(self.series, invoke)
+            return apply
+
+        self.admin("publish", self.series)
+        directory = self.site / "config"
+        directory.mkdir()
+        path = directory / (self.series + ".json")
+        with patch("soft_host.adapter", configurable_adapter):
+            path.write_text('{"scale":2}', encoding="utf-8")
+            await self.host.reconcile()
+            a, wa = await self.freeze("old")
+            path.write_text('{"scale":7}', encoding="utf-8")
+            await self.host.reconcile()
+            b, wb = await self.freeze("new")
+            self.host = self.restart()
+            await self.host.reconcile()
+            self.assertEqual((await self.host.invoke(a,wa))["evidence"]["value"], 2)
+            self.assertEqual((await self.host.invoke(b,wb))["evidence"]["value"], 7)
+            fresh, wc = await self.freeze("current")
+            self.assertEqual((await self.host.invoke(fresh,wc))["evidence"]["value"], 7)
+            self.assertEqual(fresh["binding"], b["binding"])
+            self.assertNotEqual(a["binding"], b["binding"])
+        snapshot_rows = self.journal.db.execute("SELECT settings FROM soft_config_snapshots").fetchall()
+        self.assertEqual(sorted(snapshot_rows), [('{"scale":2}',), ('{"scale":7}',)])
+
+    async def test_restore_rejects_modified_snapshot_or_provenance_before_dispatch(self):
+        self.admin("publish", self.series)
+        await self.host.reconcile()
+        pin, wire = await self.freeze()
+        with self.journal.db:
+            self.journal.db.execute("UPDATE soft_config_snapshots SET settings=?", ('{"corrupted":true}',))
+        self.host = self.restart()
+        await self.host.reconcile()
+        await self.reject("tool.binding_unavailable", self.host.invoke(pin,wire))
+        self.assertFalse(self.journal.db.execute("SELECT 1 FROM soft_operations").fetchone())
+        self.host = Host(self.registry,self.site,self.journal,"sha256:" + "0"*64)
+        await self.host.reconcile()
+        await self.reject("plugin.dependency_unavailable", self.host.invoke(pin,wire))
+        self.assertTrue(self.registry.reservations_for(pin["reservation_id"]))
+
+    async def test_plaintext_credential_is_rejected_while_references_remain_usable(self):
+        self.admin("publish", self.series)
+        directory = self.site / "config"
+        directory.mkdir()
+        path = directory / (self.series + ".json")
+        path.write_text('{"password":"unit-plain"}', encoding="utf-8")
+        await self.host.reconcile()
+        self.assertEqual(self.host.catalog()["plugins"][0]["last_error"],"plugin.config_invalid")
+        self.assertFalse(self.journal.db.execute("SELECT 1 FROM soft_config_snapshots").fetchone())
+        path.write_text('{"password":{"secret_ref":"site/model-reader"}}', encoding="utf-8")
+        await self.host.reconcile()
+        await self.freeze("refs")
+        rows = self.journal.db.execute("SELECT settings FROM soft_config_snapshots").fetchall()
+        self.assertEqual(rows, [('{"password":{"secret_ref":"site/model-reader"}}',)])
+
     async def test_initial_probe_requires_contract_then_session_preserves_old_hex_wire(self):
         name = "session.default"
         self.admin("publish", name)

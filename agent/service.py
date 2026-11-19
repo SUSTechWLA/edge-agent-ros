@@ -85,6 +85,12 @@ class Journal:
         if "event_id" not in {r[1] for r in self.db.execute("PRAGMA table_info(events)")}:
             self.db.execute("ALTER TABLE events ADD COLUMN event_id TEXT")
         self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS events_by_id ON events(event_id) WHERE event_id IS NOT NULL")
+        settlement_fields = {r[1] for r in self.db.execute("PRAGMA table_info(soft_settlements)")}
+        for name, declaration in (("next_attempt","REAL NOT NULL DEFAULT 0"),
+                                  ("attempts","INTEGER NOT NULL DEFAULT 0"), ("last_code","TEXT")):
+            if name not in settlement_fields:
+                self.db.execute(f"ALTER TABLE soft_settlements ADD COLUMN {name} {declaration}")
+        self.db.execute("CREATE INDEX IF NOT EXISTS soft_settlements_due ON soft_settlements(next_attempt)")
         self.db.commit()
         if self.db.execute("PRAGMA user_version").fetchone()[0] < 1:
             self.repair_nonfinite_steps()
@@ -124,7 +130,8 @@ class Journal:
     def get(self, key):
         with self.lock:
             row = self.db.execute("""SELECT tasks.*,tr.context,tr.trace_id,
-                       (SELECT kind FROM events WHERE task_id=tasks.id ORDER BY seq DESC LIMIT 1) AS latest_event
+                       (SELECT kind FROM events WHERE task_id=tasks.id
+                        AND kind NOT IN ('settlement_deferred','settlement_recovered') ORDER BY seq DESC LIMIT 1) AS latest_event
                        FROM tasks LEFT JOIN task_triggers tr ON tr.task_id=tasks.id WHERE tasks.id=?""",(key,)).fetchone()
         if not row:
             return None
@@ -262,8 +269,8 @@ class Journal:
                 for step in closed:
                     pin = step.get("soft_pin")
                     if pin:
-                        self.db.execute("INSERT OR IGNORE INTO soft_settlements VALUES(?,?)",
-                                        (pin["reservation_id"],json.dumps(pin)))
+                        self.db.execute("INSERT OR IGNORE INTO soft_settlements(operation,pin,next_attempt) VALUES(?,?,?)",
+                                        (pin["reservation_id"],json.dumps(pin),time.time()))
             if kind:
                 index = t["cursor"]-1 if kind=="verified" else t["cursor"]
                 payload = {"provider":t["provider"],"prior_state":prior,"state":state,"retries":t["retries"]}
@@ -295,17 +302,42 @@ class Journal:
             row = self.db.execute("SELECT plan FROM soft_plan_intents WHERE task=?",(task,)).fetchone()
             return json.loads(row[0]) if row else None
 
+    def settle_soft_batch(self, stop):
+        with self.lock:
+            rows = self.db.execute("""SELECT operation,pin,attempts,last_code FROM soft_settlements
+                WHERE next_attempt <= ? ORDER BY next_attempt,rowid LIMIT 64""",(time.time(),)).fetchall()
+        for op, raw, attempts, previous_code in rows:
+            if stop.is_set():
+                break
+            code = None
+            try:
+                pin = json.loads(raw)
+                if not isinstance(pin,dict) or pin.get("reservation_id") != op:
+                    raise ValueError("stored settlement pin mismatch")
+                if soft_client.request("settle",pin=pin) is not True:
+                    code = "plugin.settlement_unconfirmed"
+            except soft_client.SoftError as exc:
+                code = exc.code if isinstance(exc.code,str) and re.fullmatch(r"[a-z][a-z0-9_.-]{0,95}",exc.code) else "plugin.transport"
+            except (TypeError, ValueError, RecursionError):
+                code = "plugin.settlement_pin_invalid"
+            with self.lock,self.db:
+                if code:
+                    due = time.time() + min(60, 2 ** min(attempts,6))
+                    self.db.execute("""UPDATE soft_settlements SET next_attempt=?,attempts=attempts+1,
+                        last_code=? WHERE operation=?""",(due,code,op))
+                else:
+                    self.db.execute("DELETE FROM soft_settlements WHERE operation=?",(op,))
+                if code != previous_code:
+                    task_id, _, number = op.rpartition("/step/")
+                    task = self.get(task_id) or {"id":task_id or "soft.settlements","trace_id":task_id or op,"trigger":None}
+                    kind = "settlement_deferred" if code else "settlement_recovered"
+                    self.append(task,kind,"软件插件结算待重试" if code else "原操作已确认结算",
+                                {"attempt":attempts+1,"code":code or "plugin.settlement_recovered","previous_code":previous_code},
+                                step=int(number)-1 if number.isdecimal() and len(number)<10 else None,op=op)
+
     def settle_soft(self, stop):
         while not stop.wait(.3):
-            with self.lock:
-                rows = self.db.execute("SELECT operation,pin FROM soft_settlements LIMIT 64").fetchall()
-            for op, raw in rows:
-                try:
-                    soft_client.request("settle", pin=json.loads(raw))
-                except soft_client.SoftError:
-                    continue
-                with self.lock, self.db:
-                    self.db.execute("DELETE FROM soft_settlements WHERE operation=?", (op,))
+            self.settle_soft_batch(stop)
 
     def event_page(self,key,after=None,limit=128):
         if not 1<=limit<=500 or (after is not None and after<0):
