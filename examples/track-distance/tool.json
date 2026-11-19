@@ -1,0 +1,11 @@
+{
+  "id": "track_distance",
+  "version": "1",
+  "effect": "read",
+  "description": "计算给定平面采样轨迹的折线长度和首末直线距离，单位为米。points_m 是按采样顺序排列的 [x,y] 米坐标数组的 JSON 文本，最多 256 个点。",
+  "parameters": {"points_m": "string"},
+  "outcomes": {"track_distance": "path_length_m"},
+  "outcome_terms": {"track_distance": ["轨迹长度"]},
+  "utterances": ["计算这组采样点的轨迹长度：{points_m}"],
+  "endpoint": "http://track-distance:8125/invoke"
+}

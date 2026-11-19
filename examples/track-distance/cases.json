@@ -1,0 +1,19 @@
+[
+  {
+    "arguments": {"points_m": "[[0,0],[3,4],[3,0]]"},
+    "expected": {"sample_count": 3, "path_length_m": 9.0, "displacement_m": 3.0}
+  },
+  {
+    "arguments": {"points_m": "[[-1.5,2],[-1.5,2],[1.5,2],[-1.5,2]]"},
+    "expected": {"sample_count": 4, "path_length_m": 6.0, "displacement_m": 0.0}
+  },
+  {
+    "arguments": {"points_m": "[[3,4]]"},
+    "expected": {"sample_count": 1, "path_length_m": 0.0, "displacement_m": 0.0}
+  },
+  {"arguments": {"points_m": "[]"}, "error": "track.invalid_points"},
+  {"arguments": {"points_m": "[[0,0],[true,1]]"}, "error": "track.invalid_points"},
+  {"arguments": {"points_m": "[[1,2,3]]"}, "error": "track.invalid_points"},
+  {"arguments": {"points_m": "[[0,0],[1e999,0]]"}, "error": "track.invalid_points"},
+  {"arguments": {"points_m": "[[0,0],"}, "error": "track.invalid_points"}
+]

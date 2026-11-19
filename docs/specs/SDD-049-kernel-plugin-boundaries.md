@@ -91,4 +91,12 @@ docker run --pull=never --rm --network none --mount "type=bind,source=$PWD,targe
 
 在较短的同 SHA worktree `D:/project/kb2t` 内重跑 repository、console-missions、places、UI（含两个 Session 子阶段）与本地模型。实际报告 `.ci-results/kernel-runner/wp2-session-repeat/20261119T082651Z-9ccd42fb/summary.json` 有 14 条通过、零失败或跳过。两次同版本实测合起来覆盖全部 21 个选中阶段。Session 恢复了原 binding，12 条既有机器人任务的状态一致。验收使用 Linux/amd64 容器、真实本地模型和合成 ROS/Gazebo 输入，未运行 ARM64 或实机试验。
 
-**本轮交付边界。** 按任务约定收在全绿的 WP2。WP3 的统一能力字段及 status 提供者尚未实现，旧 status 和 inspect 仍走现有入口。WP4 的 Observer/History 仍读取任务及插件账本，analysis 离线 CLI 和 recorder 的独立契约验收待实现。WP5 的 `edge_contracts.conformance` CLI 和最终覆盖选择器待完成；板端投影已覆盖目前交付的包。WP0–WP2 没有需要切换的运行时行为开关，按工作包逆序 revert 或部署基线镜像即可回退。
+**首轮交付边界（WP0–WP2）。** 按任务约定收在全绿的 WP2。WP3 的统一能力字段及 status 提供者尚未实现，旧 status 和 inspect 仍走现有入口。WP4 的 Observer/History 仍读取任务及插件账本，analysis 离线 CLI 和 recorder 的独立契约验收待实现。WP5 的 `edge_contracts.conformance` CLI 和最终覆盖选择器待完成；板端投影已覆盖目前交付的包。WP0–WP2 没有需要切换的运行时行为开关，按工作包逆序 revert 或部署基线镜像即可回退。
+
+### WP3 统一目录与状态查询
+
+在同一目录快照中为公开能力投影增加 records 与冲突诊断。原 capabilities 字段继续供旧客户端读取。status 沿用内置实现，Agent 持有唯一的里程计订阅，独立 soft host 的 ctx.require 只能读取该宿主中已冻结的依赖。跨进程迁移需先建立只读事实接口，并约定软宿主离线时如何处理旧任务。inspect 委托 Core 执行运动，继续保留原授权与对账入口。
+
+在 Linux/amd64 的隔离 ROS 域，以合成里程计、真实 HTTP 和 SQLite 验证 status 的旧句式、证据字节、缺样、过期数据和无 binding 任务恢复。只读工具 track_distance 使用 v1 清单、独立提供者和 8 组输入验证，沿用原注册与调用接口。
+
+AC-3 验收使用 `python3 tests/test_capability_catalog.py --http -v`（真实 HTTP、两个 Unix socket 与 4 项投影测试）、`python3 tests/test_status_plugin.py -v`（4 项）、`python3 tests/agent_trace_contract.py -v`（12 项）和 `python3 tests/agent_verification_contract.py -v`（11 项）。Windows 快速门逐条结果见 `.ci-results/k2/wp3/gate.json`，样例工具的 8 个用例及重复投递回执见 `.ci-results/sdd-049/wp3/track-1795082409853305700.json`。旧清单没有声明的契约字段取 null，未探测的健康状态取 unknown。

@@ -33,8 +33,8 @@ def views():
     return soft, physical
 
 
-def catalog(legacy):
-    soft, physical = views()
+def catalog(legacy, track_views=None):
+    soft, physical = views() if track_views is None else track_views
     tools = soft_client.catalog(legacy, soft)
     # Both owners must agree on admission. A duplicate name is withheld even
     # when one track is draining and no longer advertises a callable tool.

@@ -18,11 +18,11 @@ from edge_interfaces.srv import GetMission, SubmitMission
 from derived_tools import check_id, evaluate
 import runtime_plugins
 import soft_client
-from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog, is_series,
+from planning import (OutcomeUnknown, Refused, Unavailable, binding, is_series,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
 from kernel import host, verification
-from kernel.catalog import plugin_view
+from kernel.catalog import capability_view, plugin_view
 from kernel.ledger import Journal, project_step, trigger_input, utc
 from kernel.verification import finish_step
 from kernel.worker import event_diagnosis, task_plan as run_task_plan, worker as run_worker
@@ -166,10 +166,10 @@ class Handler(BaseHTTPRequestHandler):
         path=urlsplit(self.path)
         if path.path=="/agent/capabilities":
             try:
-                capabilities = catalog(registry())
+                capabilities = capability_view(runtime_plugins.snapshot)
             except Unavailable as exc:
                 return self.send(503, {"code":exc.code,"origin":exc.origin,"detail":str(exc)})
-            return self.send(200,{"capabilities":capabilities})
+            return self.send(200,capabilities)
         if path.path=="/agent/plugins":
             try:
                 directory = self.server.registry_observer.observe()
