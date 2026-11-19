@@ -1,6 +1,9 @@
 """Route an already admitted task to its track. Only the deployment controller accepts device work."""
 import os
-import soft_client
+if __package__:
+    from . import soft_client
+else:
+    import soft_client
 
 
 def physical_enabled():

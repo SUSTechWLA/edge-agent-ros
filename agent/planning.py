@@ -10,20 +10,23 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
-from derived_tools import load_directory
-import runtime_plugins
-import soft_client
-import plugin_tracks
-import series_tools
-from tracing import CODE, artifact, contract, exchange
+if __package__:
+    from . import runtime_plugins, series_tools
+    from .kernel import authorization, verification
+    from .kernel.catalog import BASE, binding, catalog, is_series, registry, valid_utterance, valid_verbatim_manifest
+    from .tracing import CODE, artifact, contract, exchange
+else:
+    import _contract_path
+    import runtime_plugins
+    import series_tools
+    from kernel import authorization, verification
+    from kernel.catalog import BASE, binding, catalog, is_series, registry, valid_utterance, valid_verbatim_manifest
+    from tracing import CODE, artifact, contract, exchange
+
+from edge_contracts.errors import OutcomeUnknown, Refused, Unavailable, failure, remote_failure
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
 PAIR = re.compile(rf"\(\s*({NUMBER})\s*,\s*({NUMBER})\s*\)")
-BASE = {
-    "inspect": {"id":"inspect", "description":"依次到明确给出的平面坐标停稳并记录位置", "version":"1", "parameters":{"points":"xy_list"}, "effect":"idempotent"},
-    "status": {"id":"status", "description":"读取本机当前里程计位置、朝向和速度", "version":"1", "parameters":{}, "effect":"read"},
-}
-
 # Outcome terms describe requested products, independently of which tools happen
 # to be installed. A successful read of odometry cannot produce a photograph.
 OUTCOME_TERMS = {
@@ -51,36 +54,6 @@ def requested_outcomes(text, caps):
                 if not re.search(r"(?:不需要|无需|不用|不必|不要|禁止|别|no|without|do not|don't)\s*(?:用相机)?\s*$",prefix,re.I):
                     required.add(key)
     return required
-
-
-class Unavailable(Exception):
-    """Transport or provider is temporarily unavailable."""
-
-
-class Refused(Exception):
-    """Unfulfillable task or terminal adapter failure."""
-
-
-class OutcomeUnknown(Exception):
-    """A dispatched operation lacks a trustworthy terminal receipt."""
-
-
-def failure(cls, message, code, origin, details=None):
-    exc=cls(str(message))
-    marker=re.search(r"\[code:([a-zA-Z][\w.-]{0,95})\]\s*$",str(message))
-    exc.code=marker.group(1) if marker else code
-    exc.origin=origin
-    exc.details=details
-    return exc
-
-
-def remote_failure(cls, reply, fallback):
-    error=reply.get("error",{})
-    if not isinstance(error,dict):
-        error={}
-    code=error.get("code")
-    code=code if isinstance(code,str) and CODE.fullmatch(code) else fallback
-    return failure(cls,error.get("message") or reply.get("detail") or fallback,code,"provider",error.get("details"))
 
 
 def finite_number(token):
@@ -125,88 +98,6 @@ def http_json(url, data, timeout=6):
         raise failure(Refused,"invalid adapter JSON","transport.invalid_json","provider") from exc
 
 
-def registry(*, legacy_only=False):
-    caps = dict(BASE)
-    loaded = set()
-    dirs=[Path(os.getenv("EDGE_PLUGIN_DIR", "/etc/edge/plugins"))]
-    extra=os.getenv("EDGE_EXTRA_PLUGIN_DIR")
-    if extra:
-        dirs.append(Path(extra))
-    for path in (p for directory in dirs for p in sorted(directory.glob("*.json"))):
-        try:
-            if not path.is_file():
-                continue
-            with path.open("rb") as stream:
-                raw = stream.read(131073)
-            if len(raw) > 131072:
-                raise ValueError("manifest exceeds 128 KiB")
-            item = json.loads(raw.decode("utf-8-sig"))
-            key = item["id"]
-            parameters = item["parameters"]
-            outcomes = item.get("outcomes",{})
-            terms = item.get("outcome_terms",{})
-            utterances=item.get("utterances",[])
-            if not isinstance(item.get("endpoint"), str):
-                print(f"Invalid capability manifest {path.name}: endpoint must be a string", flush=True)
-                continue
-            url = urlsplit(item["endpoint"])
-            compatible = (key not in BASE or
-                          (parameters == BASE[key]["parameters"] and item["effect"] == BASE[key]["effect"]))
-            valid = (re.fullmatch(r"[a-z][a-z0-9_.-]{0,63}", key) and key not in loaded and compatible
-                     and isinstance(item["version"],str) and item["version"] and isinstance(item["description"],str)
-                     and url.scheme in ("http","https") and url.hostname and not url.username and not url.password
-                     and item["effect"] in ("read","idempotent")
-                     and isinstance(parameters,dict)
-                     and isinstance(utterances,list) and all(valid_utterance(p,parameters) for p in utterances)
-                     and valid_verbatim_manifest(item)
-                     and isinstance(outcomes,dict) and all(isinstance(k,str) and isinstance(v,str) and v
-                                                         for k,v in outcomes.items())
-                     and isinstance(terms,dict) and all(k in outcomes and isinstance(words,list)
-                          and all(isinstance(w,str) and w for w in words) for k,words in terms.items())
-                     and (key == "inspect" or all(v in ("string","number","boolean") for v in parameters.values())))
-            if valid:
-                loaded.add(key)
-                caps[key] = item
-            else:
-                print(f"Invalid capability manifest {path.name}", flush=True)
-        except (ValueError, TypeError, KeyError, OSError, RecursionError) as exc:
-            print(f"Invalid capability manifest {path.name}: {type(exc).__name__}", flush=True)
-    # Preserve the existing precedence of deployed HTTP tools. Derived definitions
-    # have their own directory and cannot shadow an existing provider.
-    for key, cap in load_directory(dirs[0] / "derived").items():
-        caps.setdefault(key, cap)
-    if not legacy_only and (soft_client.enabled() or plugin_tracks.physical_enabled()):
-        try:
-            return plugin_tracks.catalog(caps)
-        except soft_client.SoftError as error:
-            raise failure(Unavailable, str(error), error.code, error.origin) from error
-    return caps
-
-
-def catalog(caps):
-    entries = []
-    for item in caps.values():
-        entry = {k:v for k,v in item.items() if k in ("id","version","description","parameters","effect","outcomes")}
-        if "derived" in item and not item.get("endpoint"):
-            entry["derived"] = {k:v for k,v in item["derived"].items()
-                                if k in ("field","unit","comparison","transforms","reduce")}
-        entries.append(entry)
-    return entries
-
-
-def binding(cap):
-    if "_physical" in cap:
-        return cap["_physical"]["binding"]
-    if "_soft" in cap:
-        return cap["_soft"]["binding"]
-    fields = {key:cap.get(key) for key in ("id","version","parameters","effect","endpoint")}
-    if cap.get("outcomes"):
-        fields["outcomes"] = cap["outcomes"]
-    if cap.get("verbatim_argument"):
-        fields.update(verbatim_argument=True, utterances=cap["utterances"])
-    return hashlib.sha256(json.dumps(fields,sort_keys=True).encode()).hexdigest()
-
-
 def response_schema(caps, points, step_limit):
     variants = []
     for cap in caps.values():
@@ -230,28 +121,6 @@ def normalized(text):
 
 def points_in(text):
     return [[float(x),float(y)] for x,y in PAIR.findall(normalized(text))]
-
-
-def valid_utterance(pattern, parameters):
-    if len(parameters)!=1 or next(iter(parameters.values()))!="string" or not isinstance(pattern,str):
-        return False
-    marker="{"+next(iter(parameters))+"}"
-    return (pattern.count(marker)==1 and pattern.count("{")==pattern.count("}")==1
-            and len(marker)<len(pattern)<=256)
-
-
-def valid_verbatim_manifest(cap):
-    flag = cap.get("verbatim_argument", False)
-    if flag is False:
-        return True
-    patterns = cap.get("utterances")
-    parameters = cap.get("parameters")
-    if (flag is not True or cap.get("effect") != "read" or cap.get("id") in BASE
-            or not isinstance(patterns, list) or not patterns or not isinstance(parameters, dict)
-            or not all(valid_utterance(pattern, parameters) for pattern in patterns)):
-        return False
-    marker = "{" + next(iter(parameters)) + "}"
-    return all(all(pattern.split(marker)) for pattern in patterns)
 
 
 def verbatim_step(text, caps):
@@ -324,11 +193,12 @@ def local_plan(text, caps):
     return match_utterances(request,caps, text)
 
 
-def plan(text, caps, trace=None):
+def plan(text, caps, trace=None, *, model_profile=None, model_request=None):
     diagnostic = {"stage":"capability_check"}
     try:
         policy = runtime_plugins.load_policy()
-        provider, steps = build_plan(text,caps,diagnostic,trace)
+        provider, steps = build_plan(text, caps, diagnostic, trace,
+                                     model_profile=model_profile, model_request=model_request)
         for step in steps:
             step["verification"] = verification_plan(caps[step["tool"]], policy)
         return provider, steps
@@ -341,13 +211,7 @@ def plan(text, caps, trace=None):
 
 def plan_read_only(text, caps, pin):
     """A restricted follow-up may execute only the approved local declaration."""
-    cap = caps.get(pin["id"])
-    if cap is None:
-        raise failure(Unavailable, "已授权的只读声明尚未挂载，等待恢复原绑定",
-                      "planner.approved_binding_unavailable", "registry")
-    if cap["version"] != pin["version"] or cap.get("effect") != "read" or "derived" not in cap or cap.get("endpoint"):
-        raise failure(Refused, "已授权的本地只读声明或版本未挂载，需复核发布记录",
-                      "planner.approved_binding_unavailable", "registry")
+    cap = authorization.approved_read_tool(caps, pin)
     description, args = text, {}
     if is_series(cap):
         request = series_tools.split_request(text)
@@ -363,10 +227,6 @@ def plan_read_only(text, caps, pin):
             "binding":binding(cap), "status":"PENDING", "verification":verification_plan(cap,policy)}]
 
 
-def is_series(cap):
-    return not cap.get("endpoint") and cap.get("derived", {}).get("schema_version") == 2
-
-
 def validate_series_input(text, args, cap):
     request = series_tools.split_request(text)
     try:
@@ -379,11 +239,7 @@ def validate_series_input(text, args, cap):
 
 
 def verification_plan(cap, policy):
-    required = runtime_plugins.requirements(cap, policy)
-    result = {"required":required}
-    if required:
-        result.update(outcomes=dict(cap.get("outcomes", {})), pins=[], decisions=[])
-    return result
+    return verification.verification_plan(cap, policy, runtime_plugins.requirements)
 
 
 def planner_profile():
@@ -427,7 +283,7 @@ def planner_profile():
                       "planner.profile_invalid","registry") from exc
 
 
-def build_plan(text, caps, diagnostic, trace=None):
+def build_plan(text, caps, diagnostic, trace=None, *, model_profile=None, model_request=None):
     if trace:
         trace("planner.context",{"layer":"planner","module":"registry",
               "artifact":artifact([dict(item,binding=binding(caps[item["id"]])) for item in catalog(caps)])})
@@ -444,7 +300,8 @@ def build_plan(text, caps, diagnostic, trace=None):
     steps = local_plan(text,caps)
     provider = "local"
     if steps is None:
-        profile=planner_profile()
+        profile = planner_profile() if model_profile is None else model_profile
+        request = http_json if model_request is None else model_request
         url=profile["url"]
         plugin=profile["protocol"]=="http-planner"
         revision={"version":profile["version"],"sha256":hashlib.sha256(
@@ -472,14 +329,14 @@ def build_plan(text, caps, diagnostic, trace=None):
             if plugin:
                 provider = "http-planner"
                 body={"schema_version":1,**context,"output_schema":schema}
-                answer=exchange(trace,"model","planner",body,lambda:http_json(url,body,90),
+                answer=exchange(trace,"model","planner",body,lambda:request(url,body,90),
                                 meta={"provider":provider,"protocol":"planner.http.v1","profile":revision})
             else:
                 prompt=contract("prompts","planner.system")
                 body={"model":model,"stream":False,"format":schema,"options":profile["options"],
                       "messages":[{"role":"system","content":prompt["text"]},
                                   {"role":"user","content":json.dumps(context,ensure_ascii=False)}]}
-                reply=exchange(trace,"model","planner",body,lambda:http_json(url.rstrip("/")+"/api/chat",body,90),
+                reply=exchange(trace,"model","planner",body,lambda:request(url.rstrip("/")+"/api/chat",body,90),
                                meta={"provider":provider,"protocol":"ollama.chat","profile":revision,
                                      "prompt":{k:prompt[k] for k in ("id","version","sha256")}})
                 answer=json.loads(reply["message"]["content"], parse_constant=finite_number, parse_float=finite_number)
@@ -517,8 +374,7 @@ def build_plan(text, caps, diagnostic, trace=None):
             elif not ((kind=="number" and type(value) in (int,float) and math.isfinite(value)) or
                       (kind=="string" and isinstance(value,str)) or (kind=="boolean" and type(value) is bool)):
                 raise Refused(f"{name} 类型错误")
-        if cap["effect"]!="read" and re.search(r"不要|禁止|别去|别动|不能|不得|不许|\b(?:not|never|unless|if)\b|如果|除非",text,re.I):
-            raise Refused("含否定或条件的执行请求需要明确后再派发")
+        authorization.require_effect_allowed(cap, text)
         if is_series(cap):
             validate_series_input(text, args, cap)
         if cap["id"]=="inspect" and not MOVE_TERMS.search(text):

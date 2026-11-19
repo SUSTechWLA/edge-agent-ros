@@ -9,8 +9,10 @@ import struct
 import sys
 import zlib
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "camera"))
-from frames import NAME, TOPIC, chunk, dimensions, raw_frame, unique
+if not __package__:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+
+from edge_contracts.image_frames import NAME, TOPIC, chunk, dimensions, raw_frame, unique
 
 KINDS = ("color", "depth", "info")
 MAX_PIXELS = 1920 * 1080

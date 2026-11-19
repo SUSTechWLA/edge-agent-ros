@@ -5,9 +5,15 @@ import logging
 import math
 import operator
 from pathlib import Path
-import re
 import unicodedata
-import series_tools
+
+if __package__:
+    from . import series_tools
+    from .kernel.authorization import check_id
+else:
+    import _contract_path
+    import series_tools
+    from kernel.authorization import check_id
 
 
 _FIELDS = {
@@ -21,7 +27,6 @@ _COMPARISONS = {"lt": operator.lt, "le": operator.le, "gt": operator.gt, "ge": o
 UNITS_BY_FIELD = {field: tuple(units) for field, (_, units) in _FIELDS.items()}
 COMPARISON_OPS = tuple(_COMPARISONS)
 _REQUIRED = {"schema_version", "id", "description", "field", "unit"}
-_ID = re.compile(r"derived\.[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
 MAX_BYTES = 8192
 
 
@@ -35,12 +40,6 @@ def _number(value, name):
     if not math.isfinite(numeric):
         raise ValueError(f"{name} must be finite")
     return numeric
-
-
-def check_id(key):
-    if not isinstance(key, str) or len(key) > 64 or not _ID.fullmatch(key):
-        raise ValueError("id must be derived.<snake_name>, up to 64 characters")
-    return key
 
 
 def validate(definition):

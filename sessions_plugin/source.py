@@ -1,5 +1,5 @@
 """Bounded public HTTP facts for a replaceable Session reading provider."""
-from evidence.public_source import EvidenceError, PublicSource
+from edge_contracts.evidence_client import EvidenceError, PublicSource
 from .projection import FINAL_KINDS, select_events
 
 
