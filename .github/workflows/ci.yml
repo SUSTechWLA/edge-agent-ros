@@ -2,10 +2,10 @@ name: Edge CI
 
 on:
   pull_request:
-    branches: [main, 'release/**']
+    branches: [main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
-    branches: [main, 'release/**']
+    branches: [main]
     tags: ['v*.*.*']
   workflow_dispatch:
 
@@ -49,7 +49,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Run affected single-robot suites on PRs, full simulation on main and release
+      - name: Run affected suites on PRs and the full simulation on main, tags and manual runs
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
@@ -80,7 +80,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Verify tag, maintenance line and package version
+      - name: Verify tag, main provenance and package version
         run: python3 scripts/check_release.py "$GITHUB_REF_NAME"
       - name: Create a draft for the reviewed commit
         env:

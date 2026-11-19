@@ -1,4 +1,4 @@
-"""Verify a proposed release tag against the fetched maintenance line and ROS packages."""
+"""Verify a proposed release tag against the fetched source main and ROS packages."""
 from pathlib import Path
 import re
 import subprocess
@@ -7,8 +7,7 @@ import xml.etree.ElementTree as ET
 
 
 def verify(tag, remote="origin"):
-    match = re.fullmatch(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", tag)
-    if not match:
+    if not re.fullmatch(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", tag):
         raise ValueError("expected vMAJOR.MINOR.PATCH")
     ref = f"refs/tags/{tag}"
     def git(*args):
@@ -18,7 +17,7 @@ def verify(tag, remote="origin"):
         raise ValueError("the release tag must be annotated")
     if git("rev-parse", f"{ref}^{{commit}}") != git("rev-parse", "HEAD"):
         raise ValueError("check out the exact tagged commit")
-    branch = f"refs/remotes/{remote}/release/{match[1]}.{match[2]}"
+    branch = f"refs/remotes/{remote}/main"
     if subprocess.run(["git", "merge-base", "--is-ancestor", ref, branch]).returncode:
         raise ValueError(f"tagged commit is not on fetched {branch}")
     packages = sorted(Path("src").rglob("package.xml"))

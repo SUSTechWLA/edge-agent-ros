@@ -57,11 +57,14 @@ class SpecCheck(unittest.TestCase):
         self.spec.write_text("# SDD-007 Example\n## 背景与价值\n<!-- fill me -->", encoding="utf-8")
         self.assertTrue(check("HEAD"))
 
-    def test_release_requires_matching_package_tag_and_line(self):
+    def test_release_requires_matching_package_tag_and_source_main(self):
         Path("src/package.xml").write_text("<package><version>0.1.1</version></package>")
         self.commit("prepare version")
         git("tag", "-a", "v0.1.1", "-m", "patch")
-        git("update-ref", "refs/remotes/origin/release/0.1", "HEAD")
+        Path("README.md").write_text("newer source main commit\n")
+        self.commit("continue development")
+        git("update-ref", "refs/remotes/origin/main", "HEAD")
+        git("checkout", "-q", "--detach", "v0.1.1")
         verify("v0.1.1")
         git("tag", "v0.1.2")
         with self.assertRaisesRegex(ValueError, "annotated"):
@@ -69,8 +72,9 @@ class SpecCheck(unittest.TestCase):
         git("tag", "-a", "v0.1.3", "-m", "mismatched")
         with self.assertRaisesRegex(ValueError, "package version"):
             verify("v0.1.3")
-        git("update-ref", "refs/remotes/origin/release/0.1", "HEAD^")
-        with self.assertRaisesRegex(ValueError, "maintenance|fetched"):
+        git("update-ref", "refs/remotes/origin/main", "HEAD^")
+        git("update-ref", "refs/remotes/origin/release/0.1", "HEAD")
+        with self.assertRaisesRegex(ValueError, "fetched refs/remotes/origin/main"):
             verify("v0.1.1")
 
 
