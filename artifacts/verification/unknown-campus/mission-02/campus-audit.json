@@ -126,7 +126,14 @@
       "twist_samples": 17,
       "max_observed_command": 0.0,
       "goals_while_stopped": [],
-      "interval_sim_s": 3.286
+      "interval_sim_s": 3.286,
+      "motion_before_stop": {
+        "samples": 12,
+        "translation_m": 0.00035325319427071273,
+        "yaw_change_rad": -1.1852730345613944,
+        "peak_linear_command_mps": 0.0,
+        "peak_angular_command_rad_s": 1.1
+      }
     }
   ],
   "saved_known_gain": 484,
