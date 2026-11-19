@@ -6,3 +6,5 @@ Dockerfile* text eol=lf
 # Preserve the published SHA-256 of the original Windows capture on every platform.
 artifacts/verification/unified-campus/final.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
 artifacts/verification/edge-field/campus-qualified.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+artifacts/verification/plugin-tracks/** -text whitespace=trailing-space,space-before-tab,cr-at-eol
+artifacts/verification/recording-showcase/** -text whitespace=trailing-space,space-before-tab,cr-at-eol
