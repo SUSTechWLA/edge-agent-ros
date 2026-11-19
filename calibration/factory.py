@@ -81,8 +81,8 @@ def verify(profile, capture, state, operation, trace_id=None):
             # Superseded successful evidence cannot re-qualify the assembly after an intervening check.
             if not issues and prior.get("status") == "NEEDS_CALIBRATION":
                 prior_pass = db.execute(
-                    "SELECT 1 FROM factory_attempt WHERE robot=? AND env=? AND profile_hash=? AND capture_hash=? "
-                    "AND json_extract(report, '$.status')='VERIFIED' LIMIT 1", (robot,env,ph,ch)).fetchone()
+                    "SELECT 1 FROM factory_attempt WHERE robot=? AND env=? AND capture_hash=? "
+                    "AND json_extract(report, '$.status')='VERIFIED' LIMIT 1", (robot,env,ch)).fetchone()
                 if prior_pass:
                     issues.append({"code":"capture.superseded","source":"capture",
                                    "detail":"上次复核未通过。请为当前装配重新取得静止观测窗口。"})
@@ -167,12 +167,18 @@ def main():
     args=cli.parse_args()
     try:
         if args.action=="verify":
-            result=verify(read_input(args.profile),read_input(args.capture),args.state,args.operation,args.trace_id)
+            profile=read_input(args.profile)
+            try:
+                capture=read_input(args.capture)
+            except (OSError,ValueError) as exc:
+                capture={"input_error":"capture.unreadable","acquisition_errors":{"station":str(exc)}}
+            result=verify(profile,capture,args.state,args.operation,args.trace_id)
         else:
             result=status(args.state,args.robot_id,args.environment)
     except (OSError,sqlite3.Error,ValueError,RecursionError) as error:
         result=empty(None,None,"factory.io",str(error))
-    print(json.dumps(result,ensure_ascii=False,allow_nan=False))
+    # JSON transport must remain portable when Windows stdout uses a legacy codepage.
+    print(json.dumps(result,ensure_ascii=True,allow_nan=False))
     return 0 if result["status"]=="VERIFIED" else 2
 
 

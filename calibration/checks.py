@@ -174,6 +174,9 @@ def assess(profile, capture):
           "capture.identity","capture","采样记录的机体或环境与工装档案不符。")
     check(reference(capture.get("clock_domain")) and reference(capture.get("stationary_reference")),
           "capture.fixture","capture","注明同域时间基准与实物固定台架的记录编号。")
+    for channel, detail in obj(capture.get("acquisition_errors")).items():
+        if channel in (*KINDS,"color","info","station"):
+            check(False,"capture.acquisition",channel,str(detail)[:240])
     for kind in KINDS:
         src = obj(obj(profile.get("sensors")).get(kind))
         obs = obj(obj(capture.get("sensors")).get(kind))
@@ -181,6 +184,8 @@ def assess(profile, capture):
             require(ident(src.get("serial")) and ident(src.get("frame")) and isinstance(src.get("topic"),str)
                     and re.fullmatch(r"(/[A-Za-z_][A-Za-z0-9_]*)+",src["topic"]),
                     "source.config","登记本机实物序列号、ROS 话题和传感器坐标系。")
+            require(bool(obs) and (obs.get("frame") or obs.get("samples")),
+                    "capture.missing_stream","窗口内未收到该传感器数据，请检查供电、驱动、主题与 QoS。")
             require(all(src[k] == obs.get(k) for k in ("serial","topic","frame")),
                     "source.mismatch","请核对实物序列号及该设备的 ROS 话题、坐标系。")
             stamps=sample_window(obs.get("samples"))

@@ -5,6 +5,7 @@ from contextlib import closing
 import json
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -135,6 +136,21 @@ class FactoryTests(unittest.TestCase):
             self.assertEqual(db.execute("SELECT count(*) FROM factory_input").fetchone()[0],3)
             events=[json.loads(row[0]) for row in db.execute("SELECT event FROM module_bus_events ORDER BY seq")]
             self.assertEqual(events[1]["parent_event_id"],events[0]["event_id"])
+        self.profile["extrinsics"]["imu"]["reference"]="reissued-document"
+        self.assertEqual(self.run_check("stale-updated-paperwork")["issues"][0]["code"],"capture.superseded")
+
+    def test_missing_capture_file_suspends_known_vehicle(self):
+        verified=self.run_check()
+        path=self.state/"profile.json"
+        path.write_text(json.dumps(self.profile),encoding="utf-8")
+        result=subprocess.run([sys.executable,"-m","calibration.factory","verify","--profile",str(path),
+                               "--capture",str(self.state/"absent.json"),"--state",str(self.state),
+                               "--operation","sensor-file-missing"],cwd=Path(__file__).resolve().parents[1],
+                              capture_output=True,timeout=15)
+        self.assertEqual(result.returncode,2,result.stderr)
+        self.assertEqual(self.current(),json.loads(result.stdout))
+        self.assertEqual(self.current()["last_verified_revision"],verified["revision"])
+        self.assertIsNone(self.current()["revision"])
 
     def test_parallel_replay_and_conflict_are_durable(self):
         with ThreadPoolExecutor(4) as pool:
