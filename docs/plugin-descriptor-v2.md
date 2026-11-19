@@ -1,6 +1,6 @@
 # 插件描述符 v2 与发布协议
 
-本页对应 SDD-045。`session.default` 是提供会话查询的插件，`session.read` 是它导出的服务。一次发布可以有多项能力，模型目录展示作为 Tool 导出的操作。下节说明 P1 当前可执行的接口；后文的 physical 交接和 capability pack 分别是 P2、P3 的开发目标。
+本页对应 SDD-045。`session.default` 是提供会话查询的插件，`session.read` 是它导出的服务。一次发布可以有多项能力，模型目录展示作为 Tool 导出的操作。P1 的软件安装命令见下节。P2 已实现相机试点的停采交接，P3 已提供用于锁定部署组合的 pack 和 profile。[相机交接与验收](testing/physical-camera.md) · [板端运维手册](../deploy/robot/README.md)
 
 ## P1 现场安装
 

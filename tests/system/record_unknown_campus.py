@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import socket
@@ -17,7 +18,7 @@ from unknown_campus_world import ASSETS,prepare_world,services as world_services
 
 ROOT=Path(__file__).resolve().parents[2]
 REQUEST="探索附近的陌生校园，建立初始地图，选一个已探明的安全位置停车复查，再回到出发点"
-SOURCES=["clock","rgb","map","fused_pose","world_pose","twist","mission","bus"]
+SOURCES=["clock","rgb","map","fused_pose","world_pose","twist","mission","bus","laser_scan","imu"]
 TITLES={"started":"探索工具已受理","waiting_for_observations":"等候首次有效扫描与定位","scan_ready":"第一幅在线地图就绪",
         "goal":"从当前地图选出下一段目标","accepted":"内核受理本段运动","observation_lost":"感知不再更新",
         "cancel_requested":"按原任务号请求停稳","stopped":"内核确认本段已取消","observations_restored":"已收到新的连续观测",
@@ -34,6 +35,35 @@ def free_port():
 
 def store(path,obj):
     path.write_text(json.dumps(obj,ensure_ascii=False,indent=2,allow_nan=False)+"\n","utf8")
+
+
+def recorded_sensors(directory):
+    # Independently reread stamped measurements retained from the actual simulation.
+    summary = {}
+    spec = {"laser_scan":("/scan", "sensor_msgs/msg/LaserScan", "nearest_m"),
+            "imu":("/imu", "sensor_msgs/msg/Imu", "angular_z_rad_s")}
+    rows = [json.loads(line) for line in (directory/"timeline.jsonl").read_bytes().splitlines()]
+    for kind, (topic, msg_type, metric) in spec.items():
+        selected = [r for r in rows if r["kind"] == kind]
+        valid = [r for r in selected if r["valid"]]
+        if not valid or any(r["topic"] != topic or r["source"] != msg_type for r in selected):
+            raise AssertionError(f"missing or mismatched raw sensor source: {kind}")
+        if any(r["stamp_origin"] != "header" or r["header_stamp_ns"] != r["stamp_ns"]
+               or r.get("clock_domain") != "gazebo_sim_ns" or not r["frame_id"] for r in valid):
+            raise AssertionError(f"lost original {kind} header")
+        values = [r["metrics"][metric] for r in valid]
+        if len({r["stamp_ns"] for r in valid}) < 2 or not all(map(math.isfinite, values)) or min(values) == max(values):
+            raise AssertionError(f"no changing measured {metric} over the mission")
+        summary[kind] = dict(topic=topic,source=msg_type,frames=sorted({r["frame_id"] for r in valid}),
+                             valid=len(valid),invalid=len(selected)-len(valid),metric=metric,
+                             minimum=min(values),maximum=max(values))
+    images = [r for r in rows if r["kind"] == "rgb"]
+    if (any(r.get("topic") != "/commission/overview" or r.get("source") != "gz.msgs.Image" for r in images)
+            or len({r.get("sha256") for r in images}) < 2):
+        raise AssertionError("no changing independent overview image")
+    summary["overview"] = {"topic":"/commission/overview","source":"gz.msgs.Image", "frames":len(images),
+                           "distinct_images":len({r["sha256"] for r in images})}
+    return summary
 
 
 def run(out,image,assets):
@@ -99,10 +129,13 @@ def run(out,image,assets):
             command=["python3","-B","/experiment/campus_survey_tool.py"],
             volumes=[bind(script/name,"/experiment/"+name) for name in ("campus_survey_tool.py","campus_survey_worker.py","campus_revisit.py")]
                     +[bind(out/"work","/work",False),bind(out/"factory","/factory")])
-    items["rec-source"]=dict(image=image,pull_policy="never",init=True,working_dir="/opt/edge",environment=common.copy(),
+    items["rec-source"]=dict(image=image,pull_policy="never",init=True,working_dir="/opt/edge",
+            environment={**common, "EDGE_RECORDING_DEPLOYMENT":"gazebo"},
             volumes=[bind(ROOT/"task_recorder","/opt/edge/task_recorder"),bind(out/"input","/input")],
             command=["python3","-B","-m","task_recorder.ros_source","--url","http://task-recorder:8188",
                 "--recording-id",rid,"--task-id",task,"--sim","--gz-camera","/commission/overview",
+                "--laser-scan","/scan","--imu","/imu","--sensor-hz","4",
+                "--all-map-revisions","--clock-domain","gazebo_sim_ns",
                 "--world-pose","/ground_truth","--markers","/input/mission-markers.jsonl"])
     proof=dict(passed=False,task_id=task,recording_id=rid,image=image,project=project,text=REQUEST,
                image_id=subprocess.check_output(["docker","image","inspect","--format","{{.Id}}",image],text=True).strip(),
@@ -136,7 +169,10 @@ def run(out,image,assets):
             api(f"http://127.0.0.1:{port}/recordings/start",dict(task_id=task,recording_id=rid,sources=SOURCES))
             started=True
             dc("up","-d","--no-build","rec-source","survey","core","gateway","agent","console","bridge","witness","sim")
-            wait(lambda:api(url)["counts"].get("rgb",0)>=3 and api(url)["counts"].get("world_pose",0)>1,85)
+            def observed_sources():
+                counts=api(url)["counts"]
+                return counts.get("rgb",0)>=3 and all(counts.get(k,0)>1 for k in ("world_pose","laser_scan","imu"))
+            wait(observed_sources,85)
             mark("cold_start","首次进入校园，地图为空",detail="任务端没有预置校园地图或具名路线；感知服务尚未接入")
             cap=api(endpoint+"/agent/capabilities")
             assert "survey_nearby" in {c["id"] for c in cap["capabilities"]}
@@ -185,6 +221,7 @@ def run(out,image,assets):
             proof.update(terminal=row["state"],operation=row["steps"][0]["operation_id"],recording=receipt,
                          known_gain=result["saved_known_gain"],home_error_m=result["home_error_m"],actual_steps=len(result["steps"]))
             audit(out,rid)
+            proof["measured_sources"] = recorded_sensors(out/"session"/rid/"media"/"mission")
             proof["passed"]=True
         except Exception as exc:
             proof["error"]=str(exc)

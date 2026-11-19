@@ -1,5 +1,27 @@
 # 在普通电脑上按任务录制
 
+### 从仿真或现场采集者选择传感器摘要
+
+仿真中可在开录时选择激光和陀螺仪，并限制两路各自的采样频率。
+
+```powershell
+.\scripts\record-task.ps1 sim start inspect-01 take-01 --laser-scan /scan --imu /imu --sensor-hz 4
+```
+
+Linux 和 macOS 使用 `sh scripts/record-task.sh` 并传入相同参数。留空某一路的话题就不订阅该路。每路可选 0.1～10 Hz，默认 4 Hz。激光量来自 `LaserScan.ranges` 中量程内的有限实测值，`nearest_m` 是最近回波距离。摘要中分别计数有效回波、正无穷无回波和无效量测。IMU 的 `angular_z_rad_s` 是传感器坐标系的 Z 轴实测角速度。数据行包含消息类型、话题、帧 ID、原始 ROS 时间戳和有效标记。没有发布者时该路列入 `missing_sources`。消息存在但测量无效时保留原因。失去有效头部时间时保留原字段，另标注接收时间与 `observer_unix_ns`。
+
+现场使用已部署、具备设备租约与权限的物理生产者发送同格式摘要。下面的命令为既有生产者登记两路输入。现场录制器不会为此建立原始激光或 IMU 订阅。
+
+```sh
+sh scripts/record-task.sh hardware start inspect-01 take-01 --external-sensor laser_scan --external-sensor imu
+```
+
+生产者通过既有录制 HTTP 接口 `POST /recordings/take-01/events` 上传。端口和网络访问范围由部署负责人限定。以下是协议示例，生产者需填写自己的实际设备、任务、事件 ID 和源时钟域。重发沿用原 `event_id`。已经完成授时校验的来源才能声明相同的 `clock_domain`。独立时钟按接收时间回放。
+
+```json
+{"task_id":"inspect-01","event_id":"imu-sample-971","kind":"imu","topic":"/field/imu","source":"sensor_msgs/msg/Imu","frame_id":"imu_link","stamp_ns":3200000000,"header_stamp_ns":3200000000,"stamp_origin":"header","clock_domain":"robot-01-imu-boot-03","valid":true,"metrics":{"angular_z_rad_s":0.125}}
+```
+
 录制器记录“发生了什么”。任务仍由原来的 Agent 接受、执行和验收。安装 Python 3 的开发机可以直接控制记录器。选择哪个任务、何时开始、以何种终态结束，都能按录制号查到。
 
 ## 录一条软件任务

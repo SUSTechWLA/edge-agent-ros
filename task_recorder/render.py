@@ -12,7 +12,7 @@ import shutil
 import subprocess
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from . import trace_view
+from . import showcase, trace_view
 
 W,H,FPS=1440,810,10
 BG="#101E29"
@@ -59,7 +59,7 @@ class Recording:
                 r["_path"]=path
             self.all.append(r)
             self.by[r["kind"]].append(r)
-            if r.get("phase") or r["kind"] not in ("rgb","map","twist","fused_pose","world_pose","clock","bus"):
+            if r.get("phase") or r["kind"] not in ("rgb","map","twist","fused_pose","world_pose","clock","bus","laser_scan","imu"):
                 self.marks.append(r)
         if not self.all:
             raise ValueError("no recorded events to render")
@@ -147,7 +147,64 @@ def caption(row, guide):
     return str(title),str(detail)
 
 
-def picture(record,stamp,opt,guide):
+def showcase_band(img, stamp, current, view, guide, opt):
+    """Four seconds of actual samples and the provenance of the visible event."""
+    d=ImageDraw.Draw(img)
+    def label(x,y,text,size,color,width,lines=1):
+        paragraph(d,(x,y),text,size,width,opt.font,color,lines)
+    d.rectangle((0,610,W,H),fill=BG)
+    d.rounded_rectangle((28,617,775,798),12,fill=PANEL)
+    d.rounded_rectangle((790,617,1412,798),12,fill=PANEL)
+    axis="距取样" if view.axis=="stamp_ns" else "距收到"
+    label(47,628,"现场信号",20,WHITE,175)
+    label(244,632,"最近 4 秒   ·   "+axis+"的时间标在各通道下方",15,GRAY,510)
+    if not view.signals:
+        label(47,695,"此录制没有选取数值信号",21,GRAY,680)
+    for i,signal in enumerate(view.signals):
+        x=48+i*242
+        if i: d.line((x-10,665,x-10,777),fill="#394D58")
+        reading,points=view.samples(stamp,signal)
+        state=reading["status"]
+        color=GREEN if state=="sample" else (AMBER if state in {"stale","invalid"} else GRAY)
+        label(x,664,signal["label"],18,WHITE,224)
+        value=reading["value"]
+        text="—" if value is None else f'{showcase.formatted(value)} {signal["unit"]}'
+        label(x,690,text,24,color,228)
+        values=[v for _,v in points if v is not None]
+        if values:
+            low,high=min(values),max(values)
+            prev=None
+            for when,v in points:
+                if v is None:
+                    prev=None
+                    continue
+                px=x+int(210*(1-(stamp-when)/4_000_000_000))
+                py=735 if low==high else 747-round(24*(v-low)/(high-low))
+                if prev and (when-prev[0])/1e9<=signal["max_age_s"]:
+                    d.line((prev[1],prev[2],px,py),fill="#78C8BB",width=2)
+                else:
+                    d.ellipse((px-1,py-1,px+1,py+1),fill="#78C8BB")
+                prev=(when,px,py)
+        age=f' · {reading["age_s"]:.1f} s' if "age_s" in reading else ""
+        label(x,760,showcase.STATUS[state]+age,16,color,218)
+    label(810,632,"任务事件",18,GREEN,270)
+    title,detail=caption(current,guide)
+    if current and current["kind"]=="bus":
+        source=showcase.identity(current)
+        title,detail=source.get("code","总线事件"),source.get("module","")
+    label(810,659,title,23,WHITE,572)
+    if detail: label(810,692,detail,16,GRAY,574,2)
+    related=view.related(current,stamp)
+    if related:
+        s=related["source"]
+        relation={"parent":"记录的父事件","operation":"同一操作","mission":"同一任务段","timeline":"最近另一事件 · 时间顺序"}[related["relation"]]
+        code=s.get("code") or s.get("phase") or related["evidence"]["kind"]
+        label(810,753,f'{relation}　#{related["evidence"]["seq"]}  {code}',15,AMBER,574,2)
+    elif current:
+        label(810,756,f'归档事件 #{current["seq"]}   ·   {current["kind"]}',15,GRAY,574)
+
+
+def picture(record,stamp,opt,guide,view=None):
     img=Image.new("RGB",(W,H),BG)
     d=ImageDraw.Draw(img)
     def label(x,y,value,size,color=WHITE,width=1300,lines=1):
@@ -157,7 +214,7 @@ def picture(record,stamp,opt,guide):
     label(1158,52,f"+ {(stamp-record.first)/1e9:6.1f} 秒",28,AMBER,255)
     d.rounded_rectangle((28,119,775,608),12,fill=PANEL)
     d.rounded_rectangle((790,119,1412,608),12,fill=PANEL)
-    rows=record.seen("_activity",stamp)
+    rows=view.activity(stamp) if view else record.seen("_activity",stamp)
     request=next((e.get("text") for e in rows if (e.get("phase")=="submitted" or e["kind"]=="agent_request") and e.get("text")),None)
     if request:
         label(36,97,"用户任务　"+str(request),16,GRAY,1320)
@@ -167,7 +224,9 @@ def picture(record,stamp,opt,guide):
     if rgb and rgb.get("_path"):
         frame=camera(rgb["_path"])
         img.paste(frame,(int(403-frame.width/2),int(384-frame.height/2)))
-        label(473,138,f'{rgb.get("width",frame.width)} × {rgb.get("height",frame.height)}  ·  帧龄 {(stamp-rgb["_at"])/1e9:.1f} s',16,GRAY,290)
+        image_age=(stamp-rgb["_at"])/1e9
+        age_label="距收图" if view and opt.axis=="received_ns" else "帧龄"
+        label(473,138,f'{rgb.get("width",frame.width)} × {rgb.get("height",frame.height)}  ·  {age_label} {image_age:.1f} s',16,AMBER if view and image_age>1.5 else GRAY,290)
     elif record.by["rgb"]:
         label(233,354,"等待第一帧相机观测",25,GRAY)
     else:
@@ -204,9 +263,12 @@ def picture(record,stamp,opt,guide):
         if poses: dot(poses[-1]["xy"],6,GREEN)
         label(1221,192,"整图已知格",18,GRAY,176)
         label(1221,230,str(grid.get("known","—")),31,GREEN,177)
-        label(1221,302,"地图帧龄",18,GRAY,176)
+        label(1221,302,"距收到地图" if view and opt.axis=="received_ns" else "地图帧龄",18,GRAY,176)
         age=(stamp-grid["_at"])/1e9
         label(1221,339,f'{age:.1f} s',28,AMBER if age>1.5 else WHITE,177)
+        if view and age>1.5:
+            d.rounded_rectangle((790,119,1412,608),12,outline=AMBER,width=3)
+            label(1130,139,"保留上一幅观测",16,AMBER,256)
         if goals:
             active=goals[-1]
             mode=MODES.get(active.get("mode"),"最近")
@@ -229,11 +291,28 @@ def picture(record,stamp,opt,guide):
         for i,event in enumerate(recent):
             label(818,186+i*64,trace_view.title(event)[0],19,GREEN,576)
             label(818,213+i*64,f'日志 #{event["source_seq"]}　{event.get("source_utc","")}',15,GRAY,576)
+    elif view and not record.by["rgb"] and view.signals:
+        s=view.signals[0]
+        reading,_=view.samples(stamp,s)
+        label(820,198,s["label"],24,WHITE,548)
+        if reading["value"] is not None:
+            label(820,244,showcase.formatted(reading["value"])+" "+s["unit"],45,GREEN,548)
+        else:
+            label(820,245,showcase.STATUS[reading["status"]],30,GRAY,548)
+        label(820,324,s["source"]+"."+s["field"],18,GRAY,548)
+        d.line((820,377,1382,377),fill="#3B5361")
+        for i,k in enumerate(sorted(view.sources)[:4]):
+            label(820,399+i*43,k,19,WHITE,375)
+            count=bisect_right(record.times.get(k,[]),stamp)
+            label(1210,399+i*43,f'{count} 条',19,GREEN,150)
     else:
         kinds=[k for k in record.by if not k.startswith("_") and record.by[k]]
         for i,k in enumerate(kinds[:9]):
             label(820,194+i*42,k,20,GRAY,390)
             label(1245,194+i*42,str(bisect_right(record.times.get(k,[]),stamp)),21,GREEN,135)
+    if view:
+        showcase_band(img,stamp,rows[-1] if rows else None,view,guide,opt)
+        return img
     highlight_phases=guide.get("highlights",[])
     highlight=next((row for row in reversed(rows) if row.get("phase") in highlight_phases),None)
     if highlight:
@@ -256,6 +335,7 @@ def picture(record,stamp,opt,guide):
 def render(opt):
     record=Recording(opt.recording.resolve(),opt.axis)
     guide=read(opt.guide) if opt.guide else {}
+    view=showcase.Showcase(record,guide,opt.axis) if getattr(opt,"layout","classic")=="showcase" else None
     opt.out.mkdir(parents=True,exist_ok=True)
     frames=max(FPS,math.ceil((record.end-record.first)/1e9*FPS)+1)
     if frames>opt.max_seconds*FPS: raise ValueError("time span exceeds --max-seconds; verify input clock domains")
@@ -267,7 +347,8 @@ def render(opt):
         try:
             for i in range(frames):
                 t=min(record.end,record.first+i*(10**9//FPS))
-                frame=picture(record,t,opt,guide)
+                frame=picture(record,t,opt,guide,view)
+                if view and i==0: frame.save(opt.out/"opening.png")
                 if i==frames//2: frame.save(opt.out/"cover.png")
                 ff.stdin.write(frame.tobytes())
         finally:
@@ -278,9 +359,10 @@ def render(opt):
     if (stream["codec_name"],stream["width"],stream["height"],int(stream["nb_frames"]))!=("h264",W,H,frames):
         raise ValueError("encoded stream does not match requested timeline")
     pending.replace(target)
+    activities=view.events if view else record.marks
     markers=[{"sec":(e["_at"]-record.first)/1e9,"phase":e.get("phase",e["kind"]),"title":caption(e,guide)[0],
-              "detail":caption(e,guide)[1],"event_id":e["event_id"]} for e in record.marks]
-    for row,evidence in zip(markers,record.marks):
+              "detail":caption(e,guide)[1],"event_id":e["event_id"]} for e in activities]
+    for row,evidence in zip(markers,activities):
         if evidence["kind"]=="agent_trace":
             row.update({key:evidence[key] for key in ("source_seq","source_utc","source_event_id","operation_id","call_id","tool",
                        "module","layer","code","error_type","outcome","duration_ms") if key in evidence})
@@ -288,9 +370,12 @@ def render(opt):
                  task_status=record.header.get("task_status"),missing_sources=record.header["missing_sources"],
                  axis=opt.axis,first_ns=record.first,last_ns=record.end,fps=FPS,frames=frames,duration_s=float(probe["format"]["duration"]),
                  video_sha256=sha(target),timeline_sha256=record.timeline_digest,counts=record.header["counts"],markers=markers)
+    if view:
+        summary["showcase"]=dict(signals=view.signals,window_s=4,guide_sha256=sha(opt.guide) if opt.guide else None,
+                                 chapters=[view.chapter(row) for row in activities if trace_view.milestone_key(row) is not None])
     (opt.out/"video.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2)+"\n","utf8")
     selected=guide.get("chapters",[])
-    shortlist=[(m,e) for m,e in zip(markers,record.marks) if not selected or m["phase"] in selected]
+    shortlist=[(m,e) for m,e in zip(markers,activities) if not selected or m["phase"] in selected]
     buttons=[]
     chapters=[]
     seen=set()
@@ -336,7 +421,7 @@ section{{display:grid;grid-template-columns:minmax(0,2.65fr) minmax(215px,1fr);g
 video{{width:100%;border-radius:10px;background:#101e29}}aside{{padding:14px;background:white;border-radius:10px}}
 h2{{font-size:19px;margin:0 0 8px}}button{{width:100%;border:0;border-top:1px solid #d2ded9;background:white;padding:8px;color:inherit;font:inherit;text-align:left;cursor:pointer}}button:hover,button:focus-visible{{background:#ddede5}}time{{color:#136758}}
 a{{color:#105b45}}footer{{margin-top:12px;overflow-wrap:anywhere}}details{{margin-top:20px;background:white;padding:14px;border-radius:10px}}summary{{cursor:pointer;font-weight:600}}.scroll{{overflow:auto}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;border-bottom:1px solid #d2ddd7;text-align:left;white-space:nowrap}}
-@media(max-width:780px){{section{{grid-template-columns:1fr}}}}</style>
+section>*{{min-width:0}}#note,h1,button{{overflow-wrap:anywhere}}@media(max-width:780px){{section{{grid-template-columns:minmax(0,1fr)}}}}</style>
 <main><h1>{title}</h1><p>{desc}</p><section><div><video controls playsinline preload="metadata" src="task.mp4" poster="cover.png"></video><p id="note" aria-live="polite"></p></div>
 <aside><h2>跳到现场</h2>{"".join(buttons)}</aside></section>{tool_table}{coordinates}<footer>任务 <code>{html.escape(summary["task_id"])}</code>　·　
 <a href="task.mp4">播放 MP4</a>　<a href="video.json">查看时间索引与证据哈希</a></footer></main>
@@ -359,6 +444,7 @@ if __name__=="__main__":
     cli.add_argument("--out",required=True,type=Path)
     cli.add_argument("--guide",type=Path,help="optional presentation labels and selectable chapter phases")
     cli.add_argument("--axis",choices=("stamp_ns","received_ns"),default="received_ns")
+    cli.add_argument("--layout",choices=("classic","showcase"),default="classic",help="showcase adds measured signal trends and event evidence")
     cli.add_argument("--font",required=True,help="path to a CJK font")
     cli.add_argument("--max-seconds",type=int,default=3600)
     cli.add_argument("--ffmpeg",default=shutil.which("ffmpeg"))

@@ -2,6 +2,7 @@
 import hashlib
 from http.server import ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import platform
 import struct
@@ -35,7 +36,21 @@ def exercise():
             thread.start()
             process = None
             try:
-                cli.endpoint(url, "/recordings/start", {"recording_id":"release", "task_id":"rgb", "sources":["rgb"]})
+                base_args=[sys.executable,"-B","-m","task_recorder.ros_source","--url",url,
+                           "--recording-id","release","--task-id","rgb"]
+                hardware={**os.environ,"EDGE_RECORDING_DEPLOYMENT":"hardware"}
+                for flags in (["--imu","/field/imu"], ["--sim","--laser-scan","/field/scan"], ["--sim"]):
+                    denied=subprocess.run([*base_args,*flags],env=hardware,capture_output=True,text=True,timeout=8)
+                    if denied.returncode != 2:
+                        raise AssertionError(f"hardware recorder accepted raw simulation options: {flags}")
+                cli.endpoint(url, "/recordings/start", {"recording_id":"release", "task_id":"rgb", "sources":["rgb","imu"]})
+                # An existing deployment-authorized producer sends a normalized sample over HTTP.
+                # This transport fixture never grants the hardware recording process an IMU subscription.
+                proof={"event_id":"board-fixture-gyro","task_id":"rgb","kind":"imu","topic":"/field/imu",
+                       "source":"sensor_msgs/msg/Imu","frame_id":"field_imu","stamp_ns":3200000000,
+                       "header_stamp_ns":3200000000,"stamp_origin":"header","clock_domain":"fixture_sensor_epoch",
+                       "valid":True,"metrics":{"angular_z_rad_s":.125}}
+                cli.endpoint(url,"/recordings/release/events",proof)
                 process = subprocess.Popen([sys.executable, "-B", "-m", "task_recorder.ros_source", "--url", url,
                                             "--recording-id", "release", "--task-id", "rgb", "--camera", topic])
                 deadline = time.monotonic()+35
@@ -57,7 +72,11 @@ def exercise():
                     raise RuntimeError("incomplete camera recorder shutdown")
                 media = Path(directory)/"release"/"media"/"mission"
                 items = [json.loads(row) for row in (media/"timeline.jsonl").read_bytes().splitlines()]
-                for record in items:
+                observations=[row for row in items if row["kind"]=="imu"]
+                if len(observations) != 1 or any(observations[0].get(k) != v for k,v in proof.items()):
+                    raise ValueError("deployed sensor summary lost its source identity or value")
+                frames=[row for row in items if row["kind"]=="rgb"]
+                for record in frames:
                     data = (media/record["file"]).read_bytes()
                     if (record["kind"]!="rgb" or record["task_id"]!="rgb"
                             or hashlib.sha256(data).hexdigest()!=record["sha256"]
@@ -73,7 +92,8 @@ def exercise():
                     if zlib.decompress(b"".join(blocks)) != b"\0"+pixels[:6]+b"\0"+pixels[6:]:
                         raise ValueError("exported camera pixels differ from ROS input")
                 return dict(passed=True,machine=platform.machine(),fixture="ROS 2 synthetic sensor_msgs/Image over DDS",
-                            accepted_frames=len(items),topic=topic,png_sha256=items[0]["sha256"],
+                            accepted_frames=len(frames),topic=topic,png_sha256=frames[0]["sha256"],
+                            direct_raw_rejections=3,external_gyro_fixture=observations[0]["metrics"]["angular_z_rad_s"],
                             source_exit=process.returncode,mode="hardware",network="none",actuators=False)
             finally:
                 if process and process.poll() is None:
@@ -88,4 +108,22 @@ def exercise():
 
 
 if __name__=="__main__":
-    print(json.dumps(exercise()))
+    if len(sys.argv) == 1:
+        print(json.dumps(exercise()))
+    else:
+        import argparse
+
+        parser = argparse.ArgumentParser(description="Exercise the deployed recorder profile inside a local board image.")
+        parser.add_argument("--image", required=True)
+        parser.add_argument("--out", required=True, type=Path)
+        args = parser.parse_args()
+        root = Path(__file__).resolve().parents[2]
+        sys.path.insert(0, str(root/"scripts"))
+        from package_robot import recording_smoke
+
+        arch = subprocess.check_output(["docker","image","inspect",args.image,"--format","{{.Architecture}}"],
+                                       text=True).strip()
+        result = recording_smoke(root, args.image, arch, dict(os.environ))
+        with args.out.open("x", encoding="utf-8") as output:
+            json.dump(result, output, indent=2)
+        print(json.dumps(result))

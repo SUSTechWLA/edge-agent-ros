@@ -31,7 +31,12 @@ RULES = [
     (("tests/test_soft_*.py","tests/test_v2_registry.py","tests/test_plugin_descriptor.py",
       "tests/fixtures/plugin-tracks/*"), ("planner",)),
     (("tests/system/soft_runtime_acceptance.py",), ("plugin-isolation",)),
-    (("task_recorder/*","compose.task-recorder*.yaml","scripts/record-task.*","tests/test_recorder*.py",
+    (("tests/system/recording_board_smoke.py","scripts/package_robot.py"), ("board",)),
+    (("task_recorder/collect.py","task_recorder/ros_source.py","compose.task-recorder.yaml",
+      "scripts/record-task.*","tests/test_task_recording_source.py","tests/test_recorder_cli.py"), ("board","campus-world")),
+    (("task_recorder/render.py","task_recorder/showcase.py","task_recorder/service.py",
+      "compose.task-recorder-campus.yaml","tests/test_recording_trace_view.py"), ("campus-world",)),
+    (("task_recorder/*","compose.task-recorder*.yaml","tests/test_recorder*.py",
       "tests/test_task_record*.py","tests/test_recording_trace_view.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
     (("tests/system/record_unknown_campus.py","tests/system/unknown_campus*",
       "tests/system/campus_survey*","tests/system/campus_revisit.py",
@@ -198,8 +203,14 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["tests/system/soft_runtime_acceptance.py"])[0],[R,"plugin-isolation"])
 
     def test_optional_recorder_and_campus_consumers(self):
-        self.assertEqual(selection(["task_recorder/service.py","compose.task-recorder.yaml"])[0],[R])
-        self.assertEqual(selection(["tests/system/record_unknown_campus.py"])[0],[R,"campus-world"])
+        for path in ("task_recorder/ros_source.py","task_recorder/collect.py","compose.task-recorder.yaml",
+                     "scripts/record-task.sh","scripts/record-task.ps1","tests/test_task_recording_source.py"):
+            self.assertEqual(selection([path])[0], [R,"board","campus-world"], path)
+        for path in ("scripts/package_robot.py","tests/system/recording_board_smoke.py"):
+            self.assertEqual(selection([path])[0], [R,"board"], path)
+        for path in ("task_recorder/service.py","task_recorder/render.py","task_recorder/showcase.py",
+                     "tests/test_recording_trace_view.py","tests/system/record_unknown_campus.py"):
+            self.assertEqual(selection([path])[0], [R,"campus-world"], path)
 
     def test_recording_fixtures_stay_off_board(self):
         for name in ("commission_recording", "long_mission_world", "record_long_mission", "render_rover_video", "mission_watch_page"):

@@ -153,6 +153,8 @@ def run(args, selected, reasons):
                                [*board_test,"/opt/edge/tests/test_factory_targets.py","-v"],
                                [*board_test,"/opt/edge/tests/system/factory_ros_capture.py",
                                 "--out","/evidence/factory-ros-capture.json"],
+                               test("system/recording_board_smoke.py","--image",board_image,
+                                    "--out",directory/"board-recording.json"),
                                test("system/board_smoke.py","--image",board_image,"--out",directory/"board.json"),
                                test("system/realsense_board.py","--image",board_image,"--out",directory/"realsense-board.json")])
             else:

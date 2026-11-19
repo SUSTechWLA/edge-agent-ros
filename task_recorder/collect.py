@@ -7,6 +7,7 @@ import time
 from urllib.parse import quote
 
 from .cli import endpoint, finite_positive
+from .ros_source import check_signal_scope, sensor_rate
 
 
 def main():
@@ -18,8 +19,17 @@ def main():
     cli.add_argument("--software",action="store_true")
     cli.add_argument("--sim",action="store_true")
     cli.add_argument("--camera")
+    cli.add_argument("--laser-scan")
+    cli.add_argument("--imu")
+    cli.add_argument("--sensor-hz", type=sensor_rate, default=4)
     cli.add_argument("--timeout",type=finite_positive,default=86400)
     a=cli.parse_args()
+    try:
+        check_signal_scope(a)
+    except ValueError as error:
+        cli.error(str(error))
+    if a.software and (a.camera or a.laser_scan or a.imu):
+        cli.error("device inputs require the ROS recording source")
     path="/recordings/"+quote(a.recording_id,safe="")
     pfx=[sys.executable,"-u","-B","-m"]
     workers={}
@@ -32,6 +42,9 @@ def main():
             args=pfx+["task_recorder.ros_source","--url",a.url,"--task-id",a.task_id,"--recording-id",a.recording_id]
             if a.sim: args.append("--sim")
             if a.camera: args.extend(["--camera",a.camera])
+            if a.laser_scan: args.extend(["--laser-scan",a.laser_scan])
+            if a.imu: args.extend(["--imu",a.imu])
+            if a.laser_scan or a.imu: args.extend(["--sensor-hz",str(a.sensor_hz)])
             workers[subprocess.Popen(args)]="ROS observer"
         # The archive's declared sources select live state, historical events and optional text.
         observer=subprocess.Popen(pfx+["task_recorder.cli","--recorder",a.url,"watch",a.recording_id,

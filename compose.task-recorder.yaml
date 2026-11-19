@@ -10,19 +10,26 @@ services:
     security_opt: [no-new-privileges:true]
     tmpfs: [/tmp]
     working_dir: /opt/edge
-    environment:
+    environment: &recorder-environment
       ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
       RMW_IMPLEMENTATION: ${EDGE_RMW:-rmw_cyclonedds_cpp}
       ROS_LOG_DIR: /tmp/ros-logs
       PYTHONDONTWRITEBYTECODE: "1"
+      EDGE_RECORDING_DEPLOYMENT: gazebo
     volumes:
       - ./task_recorder:/opt/edge/task_recorder:ro
   recorder-hardware-source:
     <<: *recorder-source
     network_mode: host
+    environment:
+      <<: *recorder-environment
+      EDGE_RECORDING_DEPLOYMENT: hardware
   recorder-admin:
     <<: *recorder-source
     network_mode: none
+    environment:
+      <<: *recorder-environment
+      EDGE_RECORDING_DEPLOYMENT: admin
     volumes:
       - ./task_recorder:/opt/edge/task_recorder:ro
       - ${EDGE_PLUGINS_DIR:-./plugins}:/plugins

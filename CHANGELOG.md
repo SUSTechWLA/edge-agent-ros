@@ -1,5 +1,9 @@
 # Edge Agent ROS 变更记录
 
+## SDD-046 · 任务现场、传感器和决策的同步录像
+
+按任务开启录制，归档完成后可选择 `--layout showcase`。观众可在同一时间轴观察现场、地图、实测传感器与任务事件，点击章节回看停车和恢复。仿真通过显式选项读取激光与 IMU；实机接收经批准的设备插件提交的摘要。旧归档可用原先的命令回放。[录制与导出](task_recorder/README.md) · [设计与验收](docs/specs/SDD-046-showcase-recording.md)
+
 ## SDD-045 · 插件双轨与板端组合
 
 - **软件插件。** 三类试点覆盖经 HTTP 查询任务证据、提供 Session 服务、在隔离宿主内执行 Python 数列工具。Context 管理注册与清理，Fiber 记录每次装载和卸载。部署管理员可按版本和内容摘要查在途引用；既有计划持有原操作与配置的快照。[运行时接口](docs/plugin-runtime-mapping.md)

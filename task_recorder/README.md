@@ -39,6 +39,55 @@ Invoke-RestMethod http://127.0.0.1:8765/agent/tasks -Method Post -ContentType 'a
 python -m task_recorder.render --recording artifacts/recordings/take-07 --out artifacts/recordings/take-07/video --font C:/Windows/Fonts/msyh.ttc
 ```
 
+## 把现场、传感器与任务事件剪进同一张画面
+
+选择 `--layout showcase`，一边看真实相机和地图，一边观察最近四秒的采样。校园片优先显示激光最近回波、IMU 实测角速度和下发线速度。速度指令、融合位置和实际传感器回波各有自己的单位与时间戳。感知暂停时，保留的旧地图会显示帧龄，超时的通道会断线。事件卡注明可查的父事件、同一操作或同一任务段；仅在时间上相邻的事件单独标明。
+
+```sh
+python -m task_recorder.render --recording <封存目录> --out <新的成片目录> --layout showcase --font <中文字体路径>
+```
+
+每条事件都显式标注相同仿真时钟域的校园录像可附加 `--axis stamp_ns --guide tests/system/unknown_campus_video.json`。旧归档缺少域标识，或混录了软件日志和仿真时钟时，使用默认接收时间。打开输出目录的 `index.html` 可以跳章，`opening.png` 和 `cover.png` 分别是片头和中段原帧。核对时间线或引用的源样本时查看 `video.json` 的 `showcase.chapters`。实机的传感器事实由已获设备权限的采集进程提交，视频工作站只读取归档。
+
+### 接入自己的数值通道
+
+以下例子用一个软件任务计算 SHA-256，每处理一块数据便提交累计字节数。这样可以在开发机验证第三方来源如何进入录像。有现成录制服务时直接使用它的地址。独立试用可在第一个终端执行 `python -m task_recorder.service --state artifacts/recordings/showcase-demo`，在第二个终端的 Python 中运行以下代码。
+
+```python
+import hashlib, json, time, uuid
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+rid = "hash-" + uuid.uuid4().hex[:8]
+def post(path, body):
+    req = Request("http://127.0.0.1:8188/recordings/" + path,
+                  data=json.dumps(body).encode(), headers={"Content-Type":"application/json"})
+    with urlopen(req, timeout=5) as response:
+        return json.load(response)
+
+post("start", {"task_id":rid, "recording_id":rid, "sources":["hash_progress", "mission"]})
+def emit(kind, **fields):
+    post(rid + "/events", dict(task_id=rid, event_id=uuid.uuid4().hex, stamp_ns=time.time_ns(),
+                               clock_domain="demo_unix", kind=kind, **fields))
+
+digest, total = hashlib.sha256(), 0
+emit("mission", phase="started", title="开始计算摘要")
+for block in [b"edge" * 4096] * 6:
+    digest.update(block)
+    total += len(block)
+    emit("hash_progress", metrics={"bytes":total})
+    time.sleep(.3)
+emit("mission", phase="finished", title="已完成摘要", detail=digest.hexdigest())
+post(rid + "/finish", {"task_id":rid, "status":"COMPLETE", "reason":"hash loop finished"})
+folder = Path("artifacts/recordings/showcase-demo") / rid
+guide = {"showcase":{"signals":[{"source":"hash_progress", "field":"metrics.bytes",
+          "label":"已处理数据", "unit":"B", "max_age_s":0.7}]}}
+(folder / "guide.json").write_text(json.dumps(guide, ensure_ascii=False), encoding="utf8")
+print(folder)
+```
+
+用打印的目录作为 `--recording`，加入 `--guide <打印目录>/guide.json` 即可成片。展示配置最多选择三条数值通道。字段可以使用 `metrics.temperature_c` 等键路径；单位和超时阈值由来源提供方指定。选择过但没有收到样本会显示“等首样”。显式配置的未选来源会显示“未选录”。证据索引保留样本原值、消息时间和接收时间。[设计与验收](../docs/specs/SDD-046-showcase-recording.md)
+
 ## 插件怎样接入系统
 
 | 组件 | 输入 | 输出与用途 |

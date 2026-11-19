@@ -4,12 +4,95 @@ from tempfile import TemporaryDirectory
 import sys
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from task_recorder.ros_source import Sources, task_event
+from task_recorder.ros_source import Sources, task_event, check_signal_scope, imu_metrics, scan_metrics
 
 
 class SourceTest(unittest.TestCase):
+    def test_gazebo_source_requires_deployment_and_opt_in(self):
+        args=SimpleNamespace(sim=True,laser_scan="/scan",imu="/imu")
+        for deployment in ("", "hardware", "admin"):
+            with self.subTest(deployment=deployment), patch.dict("os.environ",{"EDGE_RECORDING_DEPLOYMENT":deployment}):
+                with self.assertRaises(ValueError): check_signal_scope(args)
+        with patch.dict("os.environ",{"EDGE_RECORDING_DEPLOYMENT":"gazebo"}):
+            check_signal_scope(args)
+            args.sim=False
+            with self.assertRaises(ValueError): check_signal_scope(args)
+        with patch.dict("os.environ",{"EDGE_RECORDING_DEPLOYMENT":"hardware"}):
+            args.laser_scan=args.imu=None
+            check_signal_scope(args)
+            args.sim=True
+            with self.assertRaises(ValueError): check_signal_scope(args)
+
+    def test_laser_uses_only_finite_in_range_returns_and_retains_invalid_counts(self):
+        scan=SimpleNamespace(range_min=.1,range_max=2,ranges=[float("inf"),float("nan"),float("-inf"),.2,4.,1.3])
+        metrics,reason=scan_metrics(scan)
+        self.assertEqual(reason,"")
+        self.assertEqual(metrics,dict(beam_count=6,return_count=2,no_return_count=1,invalid_count=3,nearest_m=.2))
+        for values,reason in (([float("inf")],"no_valid_ranges"),([.4]*65537,"scan_exceeds_beam_limit")):
+            scan.ranges=values
+            result,error=scan_metrics(scan)
+            self.assertEqual(error,reason)
+            self.assertNotIn("nearest_m",result)
+        scan.ranges=[.4]
+        scan.range_max=float("nan")
+        self.assertEqual(scan_metrics(scan)[1],"invalid_range_limits")
+
+    def test_imu_rejects_missing_measurement_or_nonfinite_gyro(self):
+        m=SimpleNamespace(angular_velocity=SimpleNamespace(x=0.,y=-.3,z=.1),angular_velocity_covariance=[0.]*9)
+        self.assertEqual(imu_metrics(m)[0]["angular_z_rad_s"],.1)
+        m.angular_velocity_covariance[0]=-1.
+        self.assertEqual(imu_metrics(m),({},"gyro_unavailable"))
+        m.angular_velocity_covariance[0]=0.
+        m.angular_velocity.z=float("inf")
+        self.assertEqual(imu_metrics(m),({},"nonfinite_gyro"))
+
+    def test_rate_and_invalid_header_evidence_use_separate_clocks(self):
+        captured=[]
+        s=Sources.__new__(Sources)
+        s.args=SimpleNamespace(sensor_hz=4)
+        s.signal_next={}
+        s.sink=SimpleNamespace(emit=lambda kind,stamp,**fields:captured.append((stamp,fields)))
+        m=SimpleNamespace(header=SimpleNamespace(frame_id="laser",stamp=SimpleNamespace(sec=3,nanosec=0)),
+                          range_min=.1,range_max=2.,ranges=[.3])
+        with patch("task_recorder.ros_source.time.monotonic",side_effect=[10,10.01,10.25,10.5]), \
+             patch("task_recorder.ros_source.time.time_ns",return_value=9000):
+            s.sensor("laser_scan",m,"/scan",scan_metrics)
+            m.header.stamp.sec=1000
+            s.sensor("laser_scan",m,"/scan",scan_metrics)
+            m.header.stamp.sec=0
+            s.sensor("laser_scan",m,"/scan",scan_metrics)
+            m.header.stamp.sec=1
+            m.header.frame_id=""
+            s.sensor("laser_scan",m,"/scan",scan_metrics)
+        self.assertEqual([stamp for stamp,_ in captured],[3000000000,9000,1000000000])
+        invalid=captured[1][1]
+        self.assertEqual((invalid["valid"],invalid["stamp_origin"],invalid["header_stamp_ns"],invalid["reason"]),
+                         (False,"receipt",0,"invalid_header_stamp"))
+        self.assertEqual(captured[2][1]["reason"],"invalid_frame_id")
+        self.assertEqual(invalid["clock_domain"],"observer_unix_ns")
+
+    def test_exact_decision_maps_include_consecutive_revisions_in_audit_mode(self):
+        origin=SimpleNamespace(position=SimpleNamespace(x=0.,y=0.),orientation=SimpleNamespace(z=0.,w=1.))
+        stamp=SimpleNamespace(sec=5,nanosec=0)
+        grid=SimpleNamespace(data=[0,-1],info=SimpleNamespace(width=2,height=1,origin=origin,resolution=.1),
+                             header=SimpleNamespace(frame_id="map",stamp=stamp))
+        for audit,expected in ((False,[5000000000]), (True,[5000000000,5250000000])):
+            with self.subTest(audit=audit):
+                s=Sources.__new__(Sources)
+                stamps=[]
+                s.last={}
+                s.args=SimpleNamespace(all_map_revisions=audit)
+                s.sink=SimpleNamespace(emit=lambda kind,t,**kw:stamps.append(t))
+                stamp.nanosec=0
+                s.grid(grid)
+                stamp.nanosec=250000000
+                s.grid(grid)
+                s.grid(grid)
+                self.assertEqual(stamps,expected)
+
     def test_only_this_tasks_bus_events(self):
         self.assertTrue(task_event({"operation_id":"a/step/1"}, "a"))
         self.assertTrue(task_event({"trace_id":"a"}, "a"))

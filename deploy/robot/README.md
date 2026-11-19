@@ -84,6 +84,8 @@ sh scripts/robot.sh calibration-status
 
 ## 在板端录制一个任务
 
+若相机或激光已经由现场批准的设备插件管理，录制器可以接收该插件提供的观测摘要。开启方式示例为 `sh scripts/record-task.sh hardware start visit-lobby lobby-01 --external-sensor laser_scan --external-sensor imu`。采集插件向该录制的 `/recordings/lobby-01/events` 提交与任务匹配的时间、来源和物理量。核对 `counts` 和 `missing_sources` 后再导出。部署账号需为生产者提供受控的归档连接。`--laser-scan` 与 `--imu` 是 Gazebo 实验专用选项。视频在开发工作站从已封存的导出目录渲染，板上可专注于采集。
+
 先按现场配置启动 Agent，取一个你准备提交或已经提交的任务 ID。例如，以下命令为 `visit-lobby` 创建独立录制 `lobby-01`。录制器从第一个命令开始观察。提交任务仍使用现有工作台或 Agent 接口。
 
 ```sh
