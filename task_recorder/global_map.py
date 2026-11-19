@@ -24,6 +24,24 @@ def require(predicate, code):
         raise ValueError(code)
 
 
+def decode_observation(event, blob):
+    """Decode one recorded grid, preserving source diagnostics without trusting their text or claiming coverage."""
+    if blob is not None:
+        require(hashlib.sha256(blob).hexdigest()==event.get("sha256"), "map.attachment_digest")
+    if event.get("valid") is False:
+        code=event.get("error")
+        if isinstance(code,str) and re.fullmatch(r"map\.[a-z][a-z0-9_]{0,63}",code):
+            raise ValueError(code)
+        raise ValueError("map.source_rejected")
+    require(blob is not None, "map.attachment_missing")
+    try:
+        grid=json.loads(blob)
+    except (UnicodeError,ValueError,RecursionError) as exc:
+        raise ValueError("map.invalid_grid") from exc
+    require(isinstance(grid,dict), "map.invalid_grid")
+    return grid
+
+
 def scope(value):
     require(isinstance(value, dict) and set(value) == SCOPE_FIELDS, "map.identity_invalid")
     for field in SCOPE_FIELDS:

@@ -87,6 +87,18 @@ class LiveExploration(unittest.TestCase):
         self.assertEqual((response["last_fault"]["detail"],response["grid"]["cells"]),("map.attachment_digest",[0,100]))
         self.assertEqual(self.request("/test")["status"],"ACTIVE")
 
+    def test_declared_rejection_preserves_geometry_and_next_measurement(self):
+        self.start("sensor")
+        self.event("sensor",1,[0,-1])
+        before=self.request("/sensor/global-map")
+        self.request("/sensor/events",dict(task_id="sensor",event_id="tilt",kind="map",stamp_ns=2,
+                                         valid=False,error="map.invalid_geometry",detail="map plane tilted"))
+        rejected=self.request("/sensor/global-map")
+        self.assertEqual(rejected["last_fault"]["detail"],"map.invalid_geometry")
+        self.assertEqual(rejected["grid"],before["grid"])
+        self.event("sensor",3,[-1,100])
+        self.assertEqual(self.request("/sensor/global-map")["grid"]["cells"],[0,100])
+
     def test_unchanged_map_uses_no_body_until_next_fact_or_closure(self):
         self.start("idle")
         self.event("idle",1,[100,0])

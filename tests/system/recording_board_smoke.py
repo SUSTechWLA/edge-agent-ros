@@ -86,6 +86,25 @@ def exercise():
                             break
                     else:
                         raise TimeoutError(f"live board map did not reach {expected}")
+                healthy=view
+                for invalid in (True,False):
+                    deadline=time.monotonic()+16
+                    while time.monotonic()<deadline:
+                        observation.header.stamp=node.get_clock().now().to_msg()
+                        observation.info.origin.position.z=.5 if invalid else 0.
+                        observation.data=[0,100]
+                        map_pub.publish(observation)
+                        rclpy.spin_once(node,timeout_sec=.12)
+                        recovery=cli.endpoint(url,"/recordings/release/global-map")
+                        if not recovery["last_fault"] or recovery["last_fault"]["detail"]!="map.invalid_geometry":
+                            continue
+                        if invalid and recovery["grid"]==healthy["grid"]:
+                            rejected=recovery["last_fault"]["seq"]
+                            break
+                        if not invalid and recovery["accepted_seq"]>rejected and recovery["grid"]["cells"]==[0,0,100]:
+                            break
+                    else:
+                        raise TimeoutError(f"board failed to observe map rejection/recovery: invalid={invalid}")
                 summary = cli.endpoint(url, "/recordings/release/finish", {"task_id":"rgb", "status":"SUCCEEDED"})
                 process.wait(timeout=12)
                 if process.returncode or summary["missing_sources"]:
@@ -114,7 +133,9 @@ def exercise():
                 return dict(passed=True,machine=platform.machine(),fixture="ROS 2 synthetic sensor_msgs/Image over DDS",
                             accepted_frames=len(frames),topic=topic,png_sha256=frames[0]["sha256"],
                             direct_raw_rejections=3,external_gyro_fixture=observations[0]["metrics"]["angular_z_rad_s"],
-                            observed_map=view["grid"],map_observed_seq=view["accepted_seq"],map_faults=view["faults"],
+                            observed_map=healthy["grid"],map_observed_seq=healthy["accepted_seq"],map_faults=healthy["faults"],
+                            injected_map_error=recovery["last_fault"],recovered_map=recovery["grid"],
+                            recovered_map_seq=recovery["accepted_seq"],
                             source_exit=process.returncode,mode="hardware",network="none",actuators=False)
             finally:
                 if process and process.poll() is None:

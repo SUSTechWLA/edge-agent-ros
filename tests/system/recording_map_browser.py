@@ -47,6 +47,19 @@ def verify(recording, video, out, browser_path, ffmpeg):
             total=source_counts=0
             results=dict(task_id=head["task_id"],video_sha256=exported["video_sha256"],timeline_sha256=exported["timeline_sha256"],
                          frames=exported["frames"],duration_s=exported["duration_s"],full_decode=True,revision_samples=[])
+            faults=model.get("diagnostics",[])
+            assert faults==exported["map"].get("diagnostics",[])
+            if faults:
+                page.locator("#mapFaults summary").click()
+                assert page.locator("#faultLinks button").count()==len(faults)
+                for index,fault in enumerate(faults):
+                    row=rows[fault["seq"]]
+                    assert row["kind"]=="map" and row["event_id"]==fault["event_id"]
+                    page.locator("#faultLinks button").nth(index).click()
+                    assert int(page.locator("#time").input_value())==fault["t"]
+                    expected=next((r["known_cells"] for r in reversed(rev) if r["t"]<=fault["t"]),0)
+                    assert visible_count()==expected
+                page.locator("#mapFaults summary").click()
             if rev:
                 seek(0)
                 initial=next((r["known_cells"] for r in reversed(rev) if r["t"]<=0),0)
@@ -84,6 +97,9 @@ def verify(recording, video, out, browser_path, ffmpeg):
                     source_counts+=len(shots)
                 if not model["cameras"]: assert page.locator("#camera").is_hidden()
                 seek(0);assert visible_count()==initial
+            elif faults:
+                assert page.locator("#grid").is_visible() and visible_count()==0
+                assert page.locator("#mapFault").is_visible() and not exported["map"]["segments"]
             else:
                 assert page.locator("#grid").is_hidden() and page.locator("#software").is_visible()
                 assert page.locator("#events li").count()==len(model["events"])
@@ -91,7 +107,8 @@ def verify(recording, video, out, browser_path, ffmpeg):
             assert page.evaluate("document.documentElement.scrollWidth")<=390
             assert not errors,errors
             results.update(final_segment_known=total,segments=len(exported["map"]["segments"]),camera_preview_samples=source_counts,
-                           camera_roles=sorted(model["cameras"]),mobile_width=390,page_errors=errors)
+                           camera_roles=sorted(model["cameras"]),mobile_width=390,page_errors=errors,
+                           rejected_map_samples=len(faults))
         finally:
             browser.close()
     (out/"qa.json").write_text(json.dumps(results,ensure_ascii=False,indent=2)+"\n",encoding="utf8")

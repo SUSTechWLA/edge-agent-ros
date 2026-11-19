@@ -16,7 +16,7 @@ def payload(path):
 
 
 class MapViews(unittest.TestCase):
-    def build(self, folder, grids, request=None):
+    def build(self, folder, grids, request=None, revise=None):
         rows=[]
         for i,(frame,ox,cells) in enumerate(grids,1):
             grid=dict(frame=frame,width=len(cells),height=1,resolution=1,origin=[ox,0,0],cells=cells)
@@ -25,6 +25,8 @@ class MapViews(unittest.TestCase):
             rows.append(dict(kind="map",event_id=f"event-{i}",frame=frame,stamp_ns=i*10**9,received_ns=i*10**9,
                              seq=i,_at=i*10**9,_path=f,sha256=hashlib.sha256(f.read_bytes()).hexdigest(),
                              clock_domain="sim",task_id="A"))
+        if revise:
+            revise(rows)
         record=SimpleNamespace(header=dict(recording_id="rec-A",task_id="A"),first=0,end=max(1,len(rows))*10**9,
                                all=rows,by={"map":rows})
         events=[dict(_at=0,kind="mission",title=request,seq=1,event_id="submitted")] if request else []
@@ -84,6 +86,66 @@ class MapViews(unittest.TestCase):
         self.assertEqual(role({"kind":"rgb","source":"gz.msgs.Image","topic":"/commission/overview"}),"overview_sim")
         self.assertEqual(role({"kind":"rgb","image_role":"onboard","topic":"/head/color"}),"unknown")
         self.assertEqual(role({"kind":"rgb","source":"gz.msgs.Image","topic":"../../raw"}),"unknown")
+
+    def test_rejected_maps_keep_evidence_and_continue_from_last_trusted_grid(self):
+        def reject(rows):
+            invalid,malformed,conflict=rows[1:4]
+            invalid.pop("_path")
+            invalid.pop("sha256")
+            invalid.update(valid=False,error="map.invalid_geometry",detail="nonplanar origin")
+            malformed["_path"].write_bytes(b"broken json")
+            malformed["sha256"]=hashlib.sha256(b"broken json").hexdigest()
+            conflict["stamp_ns"]=rows[0]["stamp_ns"]
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            view=self.build(root,[("odom",0,c) for c in [[0,-1],[-1,100],[100,-1],[80,-1],[-1,60]]],revise=reject)
+            exported=view.export(root)
+            model=payload(root/"map.html")
+            self.assertEqual([(r["seq"],r["known_cells"]) for r in model["revisions"]],[(1,1),(5,2)])
+            self.assertEqual([(d["seq"],d["code"]) for d in model["diagnostics"]],
+                             [(2,"map.invalid_geometry"),(3,"map.invalid_grid"),(4,"map.stamp_conflict")])
+            self.assertEqual(model["diagnostics"],model["events"])
+            self.assertIn("nonplanar origin",model["events"][0]["detail"])
+            self.assertNotIn("sha256",model["events"][0])
+            self.assertEqual(model["events"][1]["sha256"],hashlib.sha256(b"broken json").hexdigest())
+            self.assertEqual(json.loads((root/exported[0]["folder"]/"occupancy.json").read_bytes())["cells"],[0,60])
+
+    def test_rejected_only_and_unauthenticated_attachments(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            def rejected(rows):
+                rows[0].pop("_path");rows[0].pop("sha256")
+                rows[0].update(valid=False,error="map.attachment_digest")
+            data=[("odom",0,[100])]
+            v=self.build(root,data,revise=rejected)
+            self.assertEqual(v.export(root),[])
+            model=payload(root/"map.html")
+            self.assertFalse(model["revisions"])
+            self.assertEqual(model["diagnostics"][0]["code"],"map.attachment_digest")
+            with self.assertRaisesRegex(ValueError,"map.attachment_digest"):
+                self.build(root,data,revise=lambda rows:rows[0].update(sha256="0"*64,valid=False,error="map.invalid_cells"))
+
+    def test_archive_owner_and_media_digest_remain_fatal_at_renderer_entry(self):
+        try:
+            from task_recorder.render import Recording
+        except ModuleNotFoundError as exc:
+            if exc.name=="PIL": self.skipTest("requires the media renderer's Pillow environment")
+            raise
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/"recording.json").write_text('{"task_id":"A"}',"utf8")
+            media=root/"media/mission";media.mkdir(parents=True)
+            (media/"grid.json").write_bytes(b"{}")
+            row=dict(task_id="B",kind="map",valid=False,error="map.invalid_cells",received_ns=1,
+                     file="grid.json",sha256="0"*64)
+            timeline=media/"timeline.jsonl"
+            timeline.write_text(json.dumps(row),"utf8")
+            with self.assertRaisesRegex(ValueError,"unexpected task"):
+                Recording(root,"received_ns")
+            row["task_id"]="A"
+            timeline.write_text(json.dumps(row),"utf8")
+            with self.assertRaisesRegex(ValueError,"invalid media evidence"):
+                Recording(root,"received_ns")
 
     def test_map_output_preserves_existing_assets_and_publishes_only_complete_render(self):
         with tempfile.TemporaryDirectory() as tmp:

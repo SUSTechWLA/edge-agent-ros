@@ -122,12 +122,48 @@ class SourceTest(unittest.TestCase):
         s=Sources.__new__(Sources)
         s.args=SimpleNamespace(all_map_revisions=False,map="/map")
         s.last={}
+        s.map_fault_next={}
+        s.map_fault_skipped={}
         s.sink=Mock()
         o=SimpleNamespace(position=SimpleNamespace(x=0.,y=0.,z=0.),orientation=SimpleNamespace(x=0.,y=0.,z=0.,w=1.))
         msg=SimpleNamespace(data=[0,-1],header=SimpleNamespace(frame_id="odom",stamp=SimpleNamespace(sec=3,nanosec=0)),
                             info=SimpleNamespace(width=2,height=1,origin=o,resolution=.1,
                                                  map_load_time=SimpleNamespace(sec=0,nanosec=0)))
         return s,msg
+
+    def test_invalid_dds_map_isolated_from_other_streams_and_recovers(self):
+        s,msg=self.map_fixture()
+        with patch("task_recorder.ros_source.time.monotonic",side_effect=[5,5.1,5.2]):
+            msg.info.origin.position.z=.2
+            s.on_grid(msg,{})
+            for _ in range(2): s.on_grid(msg,{})
+        first=s.sink.emit.call_args
+        self.assertEqual(first.args,("map",3_000_000_000))
+        self.assertEqual((first.kwargs["valid"],first.kwargs["error"],first.kwargs["topic"],first.kwargs["stamp_origin"]),
+                         (False,"map.invalid_geometry","/map","header"))
+        self.assertNotIn("media",first.kwargs)
+        self.assertEqual(s.sink.emit.call_count,1)
+        # Another already-admitted channel still records a real sample during the map fault.
+        s.now=lambda:3_000_000_001
+        s.twist(SimpleNamespace(linear=SimpleNamespace(x=.1),angular=SimpleNamespace(z=.2)))
+        msg.info.origin.position.z=0.
+        s.on_grid(msg,{})
+        self.assertEqual([c.args[0] for c in s.sink.emit.call_args_list],["map","twist","map"])
+        self.assertIn("media",s.sink.emit.call_args.kwargs)
+        self.assertEqual(s.sink.emit.call_args.kwargs["suppressed_map_faults"],{"map.invalid_geometry":2})
+
+    def test_invalid_map_stamp_uses_receipt_domain_and_does_not_hide_system_errors(self):
+        s,msg=self.map_fixture()
+        msg.header.stamp.sec=0
+        with patch("task_recorder.ros_source.time.time_ns",return_value=5000):
+            s.on_grid(msg,{})
+        event=s.sink.emit.call_args
+        self.assertEqual((event.args,event.kwargs["error"],event.kwargs["clock_domain"],
+                          event.kwargs["header_stamp_ns"],event.kwargs["stamp_origin"]),
+                         (("map",5000),"map.invalid_stamp","observer_unix_ns",0,"receipt"))
+        msg.header.stamp.sec=3
+        with patch.object(s,"emit_map",side_effect=RuntimeError("test transport failure")),self.assertRaisesRegex(RuntimeError,"transport"):
+            s.on_grid(msg,{})
 
     def test_conflicting_same_stamp_retains_both_raw_windows_despite_rate_limit(self):
         s,msg=self.map_fixture()

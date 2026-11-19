@@ -1,12 +1,11 @@
 """Read-only, bounded projection of committed map events from one recorder archive."""
 from collections import OrderedDict
-from collections.abc import Mapping
-import hashlib
+
 import json
 import sqlite3
 from threading import Lock
 
-from task_recorder.global_map import MapHistory
+from task_recorder.global_map import MapHistory, decode_observation
 
 
 class MapCursor:
@@ -35,11 +34,7 @@ class LiveMaps:
         seq, received, body, blob = row
         try:
             event = json.loads(body)
-            if blob is None or hashlib.sha256(blob).hexdigest() != event.get("sha256"):
-                raise ValueError("map.attachment_digest")
-            grid = json.loads(blob)
-            if not isinstance(grid, Mapping):
-                raise ValueError("map.invalid_grid")
+            grid = decode_observation(event,blob)
             delta = cursor.history.advance(dict(event, seq=seq, received_ns=received), grid)
         except (UnicodeError, ValueError, RecursionError) as exc:
             cursor.fault_count += 1

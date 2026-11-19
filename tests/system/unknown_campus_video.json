@@ -2,6 +2,10 @@
   "title": "陌生校园 · 无人车自主探索、停车复查与返航",
   "description": "从零地图进入校园教学楼门厅，车辆边行驶边建图。感知中断后先停车，等实验端恢复数据，再从探过的安全位置中选一点，停稳复查周围一米的地图，最后返回起点。左侧是 Gazebo 的现场观察相机，右侧是车端占据图。绿色是融合车位，黄色是本段目标。全程按仿真时钟原速播放。",
   "camera_title": "教学楼门厅 · Gazebo 观察相机",
+  "map_phases": {
+    "fault_injected": ["注入观测中断", "实验端暂停地图与融合位姿更新。可用其他来源见本次录制清单。"],
+    "stopped": ["内核确认已停车", "机器人等待有效感知恢复。地图旁显示最近一次可信观测的帧龄。"]
+  },
   "map_width_m": 6,
   "frontier_table": true,
   "highlights": ["waiting_for_observations","scan_ready","fault_injected","observation_lost","stopped","fault_released","observations_restored","inspection_selected","inspected","home","finished"],

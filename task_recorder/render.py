@@ -380,7 +380,7 @@ def _render(opt):
         try:
             for i in range(frames):
                 t=min(record.end,record.first+i*(10**9//FPS))
-                frame=(maps.draw((t-record.first)/1e6,opt,guide) if maps and maps.revision_ms
+                frame=(maps.draw((t-record.first)/1e6,opt,guide) if maps and (maps.revision_ms or maps.model["diagnostics"])
                        else picture(record,t,opt,guide,view))
                 if view and i==0: frame.save(opt.out/"opening.png")
                 if i==frames//2: frame.save(opt.out/"cover.png")
@@ -410,7 +410,8 @@ def _render(opt):
         summary["showcase"]=dict(signals=view.signals,window_s=4,guide_sha256=sha(opt.guide) if opt.guide else None,
                                  chapters=[view.chapter(row) for row in activities if trace_view.milestone_key(row) is not None])
     if maps:
-        summary["map"]=dict(segments=maps.export(opt.out),viewer="map.html",revisions=len(maps.revision_ms))
+        summary["map"]=dict(segments=maps.export(opt.out),viewer="map.html",revisions=len(maps.revision_ms),
+                            diagnostics=maps.model["diagnostics"])
     (opt.out/"video.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2)+"\n","utf8")
     selected=guide.get("chapters",[])
     shortlist=[(m,e) for m,e in zip(markers,activities) if not selected or m["phase"] in selected]
@@ -451,7 +452,7 @@ def _render(opt):
                     '表中保留各阶段的首次证据，重复轮询可按序号在原时间线核对。UTC 是 Agent 写入日志的时间。</p>'
                     '<div class="scroll"><table><thead><tr><th>操作 ID</th><th>工具</th><th>阶段 / 结果</th><th>日志序号</th><th>源 UTC</th><th>类型 / 代码</th>'
                     '</tr></thead><tbody>'+"".join(tool_rows)+'</tbody></table></div></details>')
-    map_link='<a href="map.html">打开逐次探索地图</a>　·　' if maps and maps.revision_ms else ""
+    map_link='<a href="map.html">查看地图回放与观测记录</a>　·　' if maps else ""
     (opt.out/"index.html").write_text(f'''<!doctype html><html lang="zh-CN"><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><style>
 *{{box-sizing:border-box}}body{{margin:0;background:#f0f4f1;color:#19332f;font:16px/1.6 "Microsoft YaHei",sans-serif}}
