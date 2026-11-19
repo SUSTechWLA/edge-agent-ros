@@ -16,7 +16,8 @@ import zlib
 
 def exercise():
     import rclpy
-    from rclpy.qos import qos_profile_sensor_data
+    from rclpy.qos import DurabilityPolicy, QoSProfile, qos_profile_sensor_data
+    from nav_msgs.msg import OccupancyGrid
     from sensor_msgs.msg import Image
     from task_recorder import cli, collect, manage
     from task_recorder.service import Archive, Handler
@@ -28,6 +29,8 @@ def exercise():
     rclpy.init()
     node = rclpy.create_node("recording_release_fixture")
     publisher = node.create_publisher(Image, topic, qos_profile_sensor_data)
+    map_pub = node.create_publisher(OccupancyGrid, "/edge/perception/map",
+                                    QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL))
     try:
         with tempfile.TemporaryDirectory() as directory, ThreadingHTTPServer(("127.0.0.1",0),Handler) as server:
             url = f"http://127.0.0.1:{server.server_port}"
@@ -43,7 +46,7 @@ def exercise():
                     denied=subprocess.run([*base_args,*flags],env=hardware,capture_output=True,text=True,timeout=8)
                     if denied.returncode != 2:
                         raise AssertionError(f"hardware recorder accepted raw simulation options: {flags}")
-                cli.endpoint(url, "/recordings/start", {"recording_id":"release", "task_id":"rgb", "sources":["rgb","imu"]})
+                cli.endpoint(url, "/recordings/start", {"recording_id":"release", "task_id":"rgb", "sources":["rgb","imu","map"]})
                 # An existing deployment-authorized producer sends a normalized sample over HTTP.
                 # This transport fixture never grants the hardware recording process an IMU subscription.
                 proof={"event_id":"board-fixture-gyro","task_id":"rgb","kind":"imu","topic":"/field/imu",
@@ -66,6 +69,23 @@ def exercise():
                         break
                 else:
                     raise TimeoutError("camera recording was empty")
+                for offset,cells,expected in ((0,[0,-1],[0,-1]),(1,[70,100],[0,70,100])):
+                    deadline=time.monotonic()+24
+                    while time.monotonic()<deadline:
+                        observation=OccupancyGrid()
+                        observation.header.frame_id="fixture_odom"
+                        observation.header.stamp=node.get_clock().now().to_msg()
+                        observation.info.width,observation.info.height,observation.info.resolution=2,1,1.
+                        observation.info.origin.orientation.w=1.
+                        observation.info.origin.position.x=float(offset)
+                        observation.data=cells
+                        map_pub.publish(observation)
+                        rclpy.spin_once(node,timeout_sec=.12)
+                        view=cli.endpoint(url,"/recordings/release/global-map")
+                        if view["grid"] and view["grid"]["cells"]==expected and view["faults"]==0:
+                            break
+                    else:
+                        raise TimeoutError(f"live board map did not reach {expected}")
                 summary = cli.endpoint(url, "/recordings/release/finish", {"task_id":"rgb", "status":"SUCCEEDED"})
                 process.wait(timeout=12)
                 if process.returncode or summary["missing_sources"]:
@@ -94,6 +114,7 @@ def exercise():
                 return dict(passed=True,machine=platform.machine(),fixture="ROS 2 synthetic sensor_msgs/Image over DDS",
                             accepted_frames=len(frames),topic=topic,png_sha256=frames[0]["sha256"],
                             direct_raw_rejections=3,external_gyro_fixture=observations[0]["metrics"]["angular_z_rad_s"],
+                            observed_map=view["grid"],map_observed_seq=view["accepted_seq"],map_faults=view["faults"],
                             source_exit=process.returncode,mode="hardware",network="none",actuators=False)
             finally:
                 if process and process.poll() is None:

@@ -18,8 +18,8 @@ def write_json(path, value):
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False)+"\n",encoding="utf8")
 
 
-def prepare_world(out, image, assets=ASSETS):
-    """Snapshot generated meshes and world into out/site, then add the independent camera."""
+def prepare_world(out, image, assets=ASSETS, *, cameras=True):
+    """Snapshot the campus with an external observer or without any imaging sensors."""
     out=Path(out).resolve()
     site=out/"site"
     site.mkdir(parents=True,exist_ok=False)
@@ -49,17 +49,34 @@ def prepare_world(out, image, assets=ASSETS):
     # Subtract upper storeys from the observer's camera mask; physical collisions
     # and the rover lidar's default all-bits visibility still include these parts.
     masked=[]
-    for visual in world.findall("./model[@name='teaching']/link/visual"):
+    for visual in world.findall("./model[@name='teaching']/link/visual") if cameras else ():
         pos=list(map(float,visual.findtext("pose","0 0 0 0 0 0").split()))
         if pos[2]>2.3:
             ET.SubElement(visual,"visibility_flags").text="2"
             masked.append(visual.get("name"))
-    world.append(ET.fromstring('''<model name="unknown_campus_observer"><static>true</static>
+    if cameras:
+        world.append(ET.fromstring('''<model name="unknown_campus_observer"><static>true</static>
       <pose>0 -3.4 7.2 0 1.14 1.5707963268</pose><link name="mount">
       <sensor type="camera" name="overview"><topic>/commission/overview</topic><always_on>true</always_on>
       <update_rate>6</update_rate><camera><visibility_mask>1</visibility_mask><horizontal_fov>1.08</horizontal_fov>
       <image><width>768</width><height>512</height><format>R8G8B8</format></image>
       <clip><near>0.05</near><far>35</far></clip></camera></sensor></link></model>'''))
+    removed=[]
+    if not cameras:
+        # This generated fixture expands robot sensors inline. Refuse future uninspected includes.
+        for uri in {inc.findtext("uri") for inc in world.iter("include")}:
+            if uri!="model://Pine Tree":
+                raise ValueError(f"uninspected camera-free world include {uri!r}")
+            tree=ET.parse(assets/"models/Pine Tree/model.sdf")
+            if tree.find(".//sensor") is not None or tree.find(".//include") is not None:
+                raise ValueError("camera-free invariant does not cover sensors inside the tree asset")
+        for parent in world.iter():
+            for sensor in list(parent.findall("sensor")):
+                if "camera" in sensor.get("type","") or sensor.find("camera") is not None:
+                    removed.append(sensor.get("name"))
+                    parent.remove(sensor)
+        if not removed or {sensor.get("type") for sensor in world.iter("sensor")}!={"gpu_lidar","imu"}:
+            raise ValueError("unexpected sensors in camera-free campus")
     if [ET.tostring(c) for c in world.iter("collision")]!=collisions:
         raise ValueError("fixture altered the campus collision geometry")
     output=site/"observed-campus.sdf"
@@ -69,7 +86,8 @@ def prepare_world(out, image, assets=ASSETS):
                     collision_elements=len(collisions), teaching_collisions=len(world.findall("./model[@name='teaching']//collision")),
                     pine_includes=sum(e.findtext("name","").startswith("pine_") for e in world.findall("include")),
                     original_scan_range_m=original_range,test_scan_range_m=SCAN_RANGE_M,
-                    masked_for_observer=len(masked),observation_topic="/commission/overview",
+                    masked_for_observer=len(masked),observation_topic="/commission/overview" if cameras else None,
+                    removed_cameras=removed,sensor_types=sorted({s.get("type") for s in world.iter("sensor")}),
                     map_source="/edge/perception/map", pose_source="/edge/perception/pose",
                     scope="full campus physical world, operation confined to teaching entrance local odometry")
     write_json(out/"campus-world.json",descriptor)
@@ -107,7 +125,7 @@ def grid_audit(raw, start, goal, radius):
     return {"checked_cells":len(required),"nonfree_cells":bad,"length_m":math.dist(start,goal)}
 
 
-def audit(out,recording_id):
+def audit(out,recording_id,truth_recording_id=None,*,continuous=False):
     """Check the successful survey against the independent ROS map, Gazebo pose and stop stream."""
     out=Path(out)
     media=out/"session"/recording_id/"media/mission"
@@ -118,7 +136,19 @@ def audit(out,recording_id):
         raise ValueError("no unique recorded worker report for "+recording_id)
     path,report=matches[0]
     raw_events=[json.loads(l) for l in (path.parent/"events.jsonl").read_bytes().splitlines()]
-    truth=sorted((r for r in events if r["kind"]=="world_pose"),key=lambda r:r["stamp_ns"])
+    witness=events
+    if truth_recording_id:
+        witness_dir=out/"session"/truth_recording_id
+        header=json.loads((witness_dir/"recording.json").read_bytes())
+        if (truth_recording_id==recording_id or header["task_id"]!=recording_id or header["status"]!="FINISHED"
+                or header["recording_id"]!=truth_recording_id or header["task_status"]!="SUCCEEDED"
+                or header["sources"]!=["world_pose"] or any(e["kind"] in {"rgb","overview","world_pose"} for e in events)):
+            raise ValueError("separate truth witness or camera-free product archive has invalid scope")
+        witness=[json.loads(line) for line in (witness_dir/"media/mission/timeline.jsonl").read_bytes().splitlines()]
+        if any(e["kind"]!="world_pose" or e["task_id"]!=recording_id or e.get("frame")!="world"
+               or e.get("clock_domain")!="gazebo_sim_ns" for e in witness):
+            raise ValueError("independent truth witness source or time basis changed")
+    truth=sorted((r for r in witness if r["kind"]=="world_pose"),key=lambda r:r["stamp_ns"])
     twists=sorted((r for r in events if r["kind"]=="twist"),key=lambda r:r["stamp_ns"])
     maps={r["stamp_ns"]:r for r in events if r["kind"]=="map"}
     if not truth or not maps or not twists:
@@ -251,7 +281,12 @@ def audit(out,recording_id):
                           interval_sim_s=(hi-lo)/1e9,motion_before_stop=motion))
         demand(len(poses)>=4 and drift is not None and drift<=.025 and cmd and max_cmd<.02 and not dispatched,
                "no confirmed stationary hold")
-    demand(bool(holds),"active-motion interruption not observed")
+    if continuous:
+        demand(bool(truth_recording_id) and not holds and report.get("recovered_interruptions")==0
+               and not any(e["phase"] in ("observation_lost","observations_restored","receipt_before_cancel","stopped")
+                           for e in raw_events),"unexpected interruption during continuous control")
+    else:
+        demand(bool(holds),"active-motion interruption not observed")
     end=truth[-1]
     tail=[r for r in truth if r["stamp_ns"]>=end["stamp_ns"]-650_000_000]
     drift=max(math.dist(r["xy"],end["xy"]) for r in tail)
@@ -260,7 +295,7 @@ def audit(out,recording_id):
     demand(len(tail)>=4 and drift<.015 and max(abs(twists[-1][k]) for k in ("linear","angular"))<.01,
            "final vehicle stop not established")
     demand(home_error<=.20 and distance>.6,"world-frame excursion or return to start not established")
-    result=dict(passed=not issues,issues=issues,recording_id=recording_id,operation_id=report["operation_id"],
+    result=dict(passed=not issues,issues=issues,recording_id=recording_id,truth_recording_id=truth_recording_id or recording_id,operation_id=report["operation_id"],
                 world_truth_frame=truth[0]["frame"],pose_samples=len(truth),world_start_xy=truth[0]["xy"],
                 world_end_xy=end["xy"],world_path_m=distance,world_home_error_m=home_error,
                 stopped_final_drift_m=drift,stopped_final_samples=len(tail),spatial_checks=steps,holds=holds,
@@ -276,5 +311,7 @@ if __name__=="__main__":
     cli.add_argument("out",type=Path)
     cli.add_argument("--image",default="edge-agent-ros:commission-0977a54")
     cli.add_argument("--audit-recording")
+    cli.add_argument("--truth-recording")
+    cli.add_argument("--continuous",action="store_true")
     args=cli.parse_args()
-    print(audit(args.out,args.audit_recording) if args.audit_recording else prepare_world(args.out,args.image))
+    print(audit(args.out,args.audit_recording,args.truth_recording,continuous=args.continuous) if args.audit_recording else prepare_world(args.out,args.image))

@@ -108,7 +108,9 @@ sh scripts/record-task.sh hardware export lobby-01 /data/exports/lobby-01
 | `src/`、`agent/`、`client/` | ROS 接口、任务与执行记录、插件管理 |
 | `calibration/`、`exploration/`、`perception/` | 标定、通用探索算法与传感器处理 |
 | `console/`、`sessions_plugin/`、`evidence/` | 本机工作台、会话与取证 |
-| `task_recorder/`、`scripts/record-task.sh`、`compose.task-recorder.yaml` | 可选的按任务录制、独立采集与归档 |
+| `task_recorder/`、`scripts/record-task.sh`、`compose.task-recorder.yaml` | 可选的按任务录制、独立采集、实时累计地图与归档 |
 | `contracts/`、`policies/`、`model_provider/` | 运行契约、恢复策略和模型适配 |
+
+要在一次现场探索中看地图，先运行 `sh scripts/record-task.sh hardware start survey-01 take-01`，随后按正常授权入口提交同名任务。终端会显示实时地图地址；只读访问即可看到新发现、已知格修订与定位重置。没有外部相机时使用相同命令。车载图像可用 `--camera /现场图像话题` 选取，已授权的场地相机可用 `--external-overview` 单独加入。导出录制到工作站后，选择 `--layout map` 生成回放和各段地图。这些步骤不授予运动控制权限。
 
 每次上板固定部署提交和镜像标签；SDK、研发资料与仿真验收留在研发分支。待设备停稳并完成在途操作交接后切换版本。回退选用先前的部署提交及配套镜像。现场配置在板外保存备份，保留设备数据卷。

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>探索地图 · Edge Agent ROS</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0c191e;color:#e5eee9;font:16px/1.5 system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:clamp(14px,3vw,42px)}header,footer,.tools{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:clamp(26px,4vw,46px);letter-spacing:.02em;margin:0}.id,dt,label,footer,.muted{color:#abc0bf}select{font:inherit;background:#162f34;color:#e8f0ed;border:1px solid #536f70;border-radius:6px;padding:5px 8px}
+figure{margin:20px 0;border:1px solid #385154;border-radius:14px;background:#172d32;overflow:hidden}canvas{width:100%;height:clamp(250px,55vh,620px);display:block;image-rendering:pixelated}figcaption{border-top:1px solid #344d50;padding:12px 18px;min-height:48px}dl{display:flex;gap:24px 48px;flex-wrap:wrap;margin:19px 0}dt{font-size:13px}dd{font-size:24px;margin:0;font-variant-numeric:tabular-nums}.legend{display:flex;gap:15px}.swatch{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px}.tags{font-size:14px}#issue{color:#ffce8d;overflow-wrap:anywhere}#status{color:#8ee2ba}#source{overflow-wrap:anywhere}
+</style>
+<main><header><div><h1>探索地图</h1><div class="id" id="source"></div></div><span id="status" role="status">正在读取录制</span></header>
+<dl><div><dt>已观测格</dt><dd id="known">—</dd></div><div><dt>已观测面积</dt><dd id="area">—</dd></div><div><dt>栅格分辨率</dt><dd id="res">—</dd></div><div><dt>最新接收时间</dt><dd id="receipt">—</dd></div></dl>
+<div class="tools"><div><label>地图段 <select id="segment" aria-label="选择地图段"><option value="">跟随最新</option></select></label> <label>视野 <select id="extent"><option value="seen">全部已观测区域</option><option value="all">整张栅格</option></select></label></div><div class="legend tags"><span><i class="swatch" style="background:#40585b"></i>未知</span><span><i class="swatch" style="background:#c1e9d9"></i>空闲</span><span><i class="swatch" style="background:#12252c"></i>占据</span></div></div>
+<figure><canvas id="map" aria-label="所选段累计占据栅格"></canvas><figcaption id="caption">等待第一份地图观测</figcaption></figure>
+<footer><span id="meta"></span><span id="seq"></span></footer><p id="issue" role="status"></p></main>
+<script>
+'use strict';
+const el=id=>document.getElementById(id), canvas=el('map'), select=el('segment');
+let latest=null, timer, busy=false, pending=false, tag=null, tagChoice=null;
+const reasons={all_unknown_reset:'收到全未知栅格，定位连续性待确认',identity_changed:'地图身份变化',source_changed:'观测来源或地图加载时间变化',clock_rewind:'源时钟回拨',explicit_reset:'发布者报告重置',frame_changed:'坐标系变化',resolution_changed:'栅格分辨率变化',orientation_changed:'坐标轴朝向变化',origin_off_lattice:'栅格原点无法对齐'};
+const palette=Array.from({length:102},(_,i)=>i===0?[64,88,91]:[193,233,217].map((v,c)=>Math.round(v+([18,37,44][c]-v)*(i-1)/100)));
+function draw() {
+ const dpr=Math.min(devicePixelRatio||1,2), w=Math.round(canvas.clientWidth*dpr), h=Math.round(canvas.clientHeight*dpr);
+ if(!w||!h)return;
+ canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d');ctx.fillStyle='#172d32';ctx.fillRect(0,0,w,h);
+ const g=latest&&latest.grid;
+ if(!g){ctx.fillStyle='#b4c8c7';ctx.font=(15*dpr)+'px system-ui';ctx.textAlign='center';ctx.fillText('等待机器人发布第一份占据栅格',w/2,h/2);return}
+ const img=document.createElement('canvas');img.width=g.width;img.height=g.height;
+ const ic=img.getContext('2d'), pixels=ic.createImageData(g.width,g.height);
+ let xmin=g.width,ymin=g.height,xmax=-1,ymax=-1;
+ for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){const v=g.cells[y*g.width+x],p=((g.height-1-y)*g.width+x)*4;
+ if(v>=0){xmin=Math.min(xmin,x);xmax=Math.max(xmax,x);ymin=Math.min(ymin,y);ymax=Math.max(ymax,y)}
+ const color=palette[v+1];for(let c=0;c<3;c++)pixels.data[p+c]=color[c];
+ pixels.data[p+3]=255}
+ ic.putImageData(pixels,0,0);
+ if(el('extent').value==='all'||xmax<0){xmin=0;ymin=0;xmax=g.width-1;ymax=g.height-1}
+ else {const pad=Math.max(2,Math.ceil(Math.max(xmax-xmin,ymax-ymin)*.1));xmin=Math.max(0,xmin-pad);xmax=Math.min(g.width-1,xmax+pad);ymin=Math.max(0,ymin-pad);ymax=Math.min(g.height-1,ymax+pad)}
+ const sw=xmax-xmin+1,sh=ymax-ymin+1,scale=Math.min((w-32*dpr)/sw,(h-44*dpr)/sh);
+ ctx.imageSmoothingEnabled=false;ctx.drawImage(img,xmin,g.height-1-ymax,sw,sh,(w-scale*sw)/2,(h-scale*sh)/2,scale*sw,scale*sh);
+ const metersPerPixel=g.resolution/scale, wanted=Math.min(w*.22,100*dpr)*metersPerPixel;
+ const unit=10**Math.floor(Math.log10(wanted)),meters=([5,2,1].find(v=>v*unit<=wanted)||1)*unit;
+ const lx=15*dpr,ly=h-14*dpr;ctx.strokeStyle='#e1f2e9';ctx.lineWidth=2*dpr;ctx.beginPath();ctx.moveTo(lx,ly-4*dpr);ctx.lineTo(lx,ly);ctx.lineTo(lx+meters/metersPerPixel,ly);ctx.lineTo(lx+meters/metersPerPixel,ly-4*dpr);ctx.stroke();
+ ctx.fillStyle='#e1f2e9';ctx.font=(12*dpr)+'px system-ui';ctx.textAlign='left';ctx.fillText(Number(meters.toPrecision(3))+' m',lx,ly-8*dpr);
+}
+function present(data){
+ latest=data;const info=data.latest||{},g=data.grid, n=data.segments.length;
+ while(select.options.length-1<n){const i=select.options.length;select.add(new Option('第 '+i+' 段',String(i)))}
+ const count=g?g.cells.reduce((s,v)=>s+Number(v>=0),0):0;
+ el('source').textContent=data.task_id===data.recording_id?data.task_id:'任务 '+data.task_id+' · 录制 '+data.recording_id;el('known').textContent=count.toLocaleString();
+ el('area').textContent=g?(count*g.resolution*g.resolution).toLocaleString(undefined,{maximumFractionDigits:2})+' m²':'—';
+ el('res').textContent=g?Number(g.resolution.toPrecision(5))+' m':'—';
+ el('receipt').textContent=data.received_ns?new Date(Number(data.received_ns)/1e6).toLocaleTimeString():'—';
+ el('status').textContent=data.catching_up?'正在重放已收到的观测':data.status==='ACTIVE'?'录制中':'录制已结束 · '+data.status;
+ el('caption').textContent=g?'第 '+data.selected_segment+' 段，共 '+n+' 段。'+(data.selected_segment===n?'本次新增 '+info.new_cells+' 格，更新 '+info.changed_cells+' 格。':'显示该段封存时的观测。'):'等待第一份地图观测';
+ el('meta').textContent=g?'坐标系 '+g.frame+' · '+g.width+' × '+g.height+' 格 · 原点角 '+Number(g.origin[2].toPrecision(4))+' rad':'已选择来源 '+data.sources.join('、');
+ const segment=data.segments[data.selected_segment-1];
+ if(segment&&reasons[segment.reason])el('caption').textContent+=' 分段原因：'+reasons[segment.reason]+'。先前地图可切换查看。';
+ el('seq').textContent='已读取地图事件序号 '+data.cursor;el('issue').textContent=data.last_fault?'累计 '+data.faults+' 份观测未接纳；最近序号 '+data.last_fault.seq+' · '+data.last_fault.detail:'';
+ draw()
+}
+async function refresh(){
+ if(busy){pending=true;return} busy=true;clearTimeout(timer);
+ const chosen=select.value;
+ let delay=1800;
+ try{const headers=tag&&chosen===tagChoice?{'If-None-Match':tag}:{};
+ const r=await fetch('global-map'+(chosen?'?segment='+encodeURIComponent(chosen):''),{cache:'no-store',headers});
+ if(r.status===304){el('status').textContent=latest.status==='ACTIVE'?'录制中':'录制已结束 · '+latest.status;delay=latest.status==='ACTIVE'?1500:15000;return}
+ if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(chosen===select.value){tag=r.headers.get('ETag');tagChoice=chosen;present(data)}
+ delay=data.catching_up?160:data.status==='ACTIVE'?1500:15000;
+ }catch(err){el('status').textContent='地图读取中断 · '+err.message;delay=3000}
+ finally{busy=false;timer=setTimeout(refresh,pending?0:delay);pending=false}
+}
+select.addEventListener('change',refresh);el('extent').addEventListener('change',draw);addEventListener('resize',draw);refresh();
+</script></html>

@@ -32,9 +32,15 @@ RULES = [
       "tests/fixtures/plugin-tracks/*"), ("planner",)),
     (("tests/system/soft_runtime_acceptance.py",), ("plugin-isolation",)),
     (("tests/system/recording_board_smoke.py","scripts/package_robot.py"), ("board",)),
+    (("task_recorder/global_map.py","task_recorder/live_map.*","task_recorder/service.py",
+      "tests/test_live_exploration_map.py","tests/test_recording_global_map.py"), ("board","campus-world")),
+    (("exploration/frontier.py","exploration/map_artifact.py"), ("board","campus-world","rover-commissioning")),
+    (("task_recorder/map_view.py","task_recorder/map-view.html","tests/test_recording_map_view.py",
+      "tests/system/recording_map_acceptance.py","tests/system/recording_map_browser.py",
+      "tests/system/recorder_campus_binding.py","tests/system/recording_camera_fixture.py"), ("campus-world",)),
     (("task_recorder/collect.py","task_recorder/ros_source.py","compose.task-recorder.yaml",
       "scripts/record-task.*","tests/test_task_recording_source.py","tests/test_recorder_cli.py"), ("board","campus-world")),
-    (("task_recorder/render.py","task_recorder/showcase.py","task_recorder/service.py",
+    (("task_recorder/render.py","task_recorder/showcase.py",
       "compose.task-recorder-campus.yaml","tests/test_recording_trace_view.py"), ("campus-world",)),
     (("task_recorder/*","compose.task-recorder*.yaml","tests/test_recorder*.py",
       "tests/test_task_record*.py","tests/test_recording_trace_view.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
@@ -209,7 +215,13 @@ class TestSelection(unittest.TestCase):
             self.assertEqual(selection([path])[0], [R,"board","campus-world"], path)
         for path in ("scripts/package_robot.py","tests/system/recording_board_smoke.py"):
             self.assertEqual(selection([path])[0], [R,"board"], path)
-        for path in ("task_recorder/service.py","task_recorder/render.py","task_recorder/showcase.py",
+        for path in ("task_recorder/service.py","task_recorder/live_map.html","task_recorder/live_map.py",
+                     "task_recorder/global_map.py","tests/test_live_exploration_map.py","tests/test_recording_global_map.py"):
+            self.assertEqual(selection([path])[0], [R,"board","campus-world"], path)
+        for path in ("tests/system/recording_map_acceptance.py","tests/system/recording_camera_fixture.py",
+                     "tests/system/recorder_campus_binding.py","tests/system/recording_map_browser.py",
+                     "task_recorder/map_view.py","task_recorder/map-view.html","tests/test_recording_map_view.py",
+                     "task_recorder/render.py","task_recorder/showcase.py",
                      "tests/test_recording_trace_view.py","tests/system/record_unknown_campus.py"):
             self.assertEqual(selection([path])[0], [R,"campus-world"], path)
 
@@ -218,7 +230,7 @@ class TestSelection(unittest.TestCase):
             self.assertEqual(selection([f"tests/system/{name}.py"])[0], [R], name)
         self.assertEqual(selection(["tests/test_mission_recording.py"])[0], [R,"rover-commissioning"])
         self.assertEqual(selection(["tests/system/record_long_mission.py","exploration/frontier.py"])[0],
-                         [R,"rover-commissioning"])
+                         [R,"board","campus-world","rover-commissioning"])
 
     def test_rover_commissioning_consumers(self):
         for name in ("scripts/release_robot.py", "tests/test_robot_release.py", "deploy/robot/README.md"):
@@ -229,7 +241,9 @@ class TestSelection(unittest.TestCase):
             self.assertEqual(selection([name])[0], [R,"board"], name)
         for name in ("calibration/checks.py", "calibration/factory.py", "tests/test_factory_calibration.py"):
             self.assertEqual(selection([name])[0], [R,"board","rover-commissioning"], name)
-        for name in ("exploration/frontier.py", "exploration/map_artifact.py", "exploration/ros_sim.py",
+        for name in ("exploration/frontier.py","exploration/map_artifact.py"):
+            self.assertEqual(selection([name])[0], [R,"board","campus-world","rover-commissioning"], name)
+        for name in ("exploration/ros_sim.py",
                      "tests/test_exploration_frontier.py", "tests/system/commission_exploration.py"):
             self.assertEqual(selection([name])[0], [R,"rover-commissioning"], name)
         for name in ("perception/node.py", "agent/module_journal.py", "sim/bridge.yaml", "sim/world.sdf",

@@ -1,5 +1,30 @@
 # 在普通电脑上按任务录制
 
+## 地图、车载画面和现场观察画面
+
+`start` 和 `status` 在标准错误输出地图页地址，在标准输出返回原始 JSON。只选地图时可以全程不接入相机。相机选项分别使用独立的归档流和文件目录。
+
+| 使用场景 | 启动参数 | 记录的来源 |
+|---|---|---|
+| 使用已接入 ROS 的车载彩色画面 | `--camera /front/image` | `rgb`，`image_role=onboard`。原有环境变量 `EDGE_RECORD_CAMERA` 也可用。 |
+| 在仿真中看场外摄像机 | `--overview /campus/view/overview/image` | `overview`，`image_role=overview`。从当前 Compose 项目的运行中 sim 读取镜像和 Gazebo partition。选择仿真世界实际发布的话题。 |
+| 在实机场地看已获准的外部摄像机 | `--external-overview` | 登记 `overview`，图像由已部署的采集者通过 HTTP 主动上传。录制器不因这个选项订阅原始设备或加入执行器网络。 |
+
+例如在已有校园仿真容器中，下面的命令同时选择两个画面。当前项目只有一个画面时，只写该路参数。已确认该录制器订阅的 ROS 与 Gazebo 消息均使用同一仿真时钟时，可加 `--clock-domain gazebo_sim_ns`。现场只在所有直接订阅均完成同域授时核验后填写相应域；独立 HTTP 生产者自行声明自己的域。
+
+```sh
+sh scripts/record-task.sh campus start inspect-01 take-01 --camera /front/image --overview /campus/view/overview/image
+sh scripts/record-task.sh campus status take-01
+```
+
+现场复测时先让获准的场地相机独立采集，以 `hardware start inspect-01 take-01 --external-overview` 开录。采集者将 PNG 原始字节编码为 Base64，向 `POST /recordings/take-01/events` 发送以下结构。将示例的占位项替换为实测数据。发送端复用同一次采样的 `event_id` 处理网络重试，并在现场部署的受限网络内传输。
+
+```json
+{"task_id":"inspect-01","event_id":"site-camera-frame-913","kind":"overview","image_role":"overview","topic":"/site/entrance/image","source":"site.camera.encoder","clock_domain":"site-entrance-camera-boot-03","stamp_origin":"header","stamp_ns":3200000000,"width":640,"height":480,"media":{"name":"overview/frame-913.png","base64":"<实际 PNG 字节的 Base64>"}}
+```
+
+先用 `status` 看 `counts.overview` 增长，再打开地图页并确认来源、徽标和画面。暂时断开该场地采集者，地图与任务应继续记录。重新连接后只补发实际缓存帧；同一事件 ID 和内容重复上传只产生一行。停止录制后，用导出文件的 SHA-256 对照源 PNG。两处时钟未经现场授时核验时分别标识，外拍图像不能用于推断机器人位置。旧 `--gz-camera` 录制继续保留在 `rgb` 下。缺少历史角色元数据的图像按原始档案显示。
+
 ### 从仿真或现场采集者选择传感器摘要
 
 仿真中可在开录时选择激光和陀螺仪，并限制两路各自的采样频率。

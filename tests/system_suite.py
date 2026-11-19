@@ -101,6 +101,8 @@ def run(args, selected, reasons):
                                 test("test_mission_recording.py","-v"),
                                 test("test_task_recorder.py","-v"),test("test_recorder_cli.py","-v"),
                                 test("test_task_recording_source.py","-v"),test("test_recording_trace_view.py","-v"),
+                                test("test_recording_global_map.py","-v"),test("test_live_exploration_map.py","-v"),
+                                test("test_recording_map_view.py","-v"),
                                 test("test_campus_revisit.py","-v"),
                                 test("test_campus_survey_worker.py","-v"),
                                 ["docker","compose","-f","compose.yaml","-f","compose.task-recorder.yaml","config","--quiet"],
@@ -268,6 +270,11 @@ def run(args, selected, reasons):
                         checks["campus-world"].append(test("system/record_unknown_campus.py","--image",image,"--assets",
                                                        str((assets or ROOT/"artifacts/sim-assets").resolve()),
                                                        "--out",directory/"unknown-campus"))
+                        for scenario,flags in (("camera-free-fault",["--no-cameras"]),("camera-free-continuous",["--no-cameras","--continuous"])):
+                            checks["campus-world"].append(test("system/record_unknown_campus.py","--image",image,"--assets",
+                                str((assets or ROOT/"artifacts/sim-assets").resolve()),*flags,"--out",directory/scenario))
+                        checks["campus-world"].append(test("system/recorder_campus_binding.py","--image",image,
+                                                           "--out",directory/"recording-camera-roles.json"))
                     else:
                         skip("campus-world-assets","optional campus assets not installed; use scene/campus_large/fetch_assets.py")
                 for name, commands in checks.items():

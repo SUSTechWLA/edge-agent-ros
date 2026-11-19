@@ -49,6 +49,7 @@ class Archive:
             import fcntl
             fcntl.flock(self.guard,fcntl.LOCK_EX|fcntl.LOCK_NB)
         self.budget=budget
+        self.live_maps=None
         self.lock=threading.RLock()
         self.db=sqlite3.connect(self.root/"recordings.sqlite",check_same_thread=False)
         self.db.row_factory=sqlite3.Row
@@ -163,6 +164,21 @@ class Archive:
             rows=self.db.execute("SELECT seq,rx,body FROM events WHERE rid=? AND seq>? ORDER BY seq LIMIT ?",(rid,after,limit))
             return [dict(json.loads(r["body"]),seq=r["seq"],received_ns=r["rx"]) for r in rows]
 
+    def map_page(self,rid):
+        with self.lock:
+            self.session(rid)
+        return Path(__file__).with_name("live_map.html").read_bytes()
+
+    def map_view(self,rid,segment,previous_etag):
+        with self.lock:
+            row=self.session(rid)
+            if self.live_maps is None:
+                from .live_map import LiveMaps
+                self.live_maps=LiveMaps(self.root/"recordings.sqlite")
+            fields=dict(recording_id=rid,task_id=row["task"],status=row["status"],sources=json.loads(row["sources"]))
+        etag,view=self.live_maps.view(rid,segment,status=fields["status"],previous_etag=previous_etag)
+        return etag, ({**fields,**view} if view is not None else None)
+
     def finish(self,rid,obj):
         with self.lock:
             row=self.session(rid)
@@ -225,6 +241,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def handle_api(self,post):
         db=self.server.archive
+        etag=None
         try:
             url=urlsplit(self.path)
             parts=url.path.strip("/").split("/")
@@ -245,6 +262,28 @@ class Handler(BaseHTTPRequestHandler):
             elif parts[0]=="recordings" and len(parts)==3 and parts[2]=="events" and not post:
                 q=parse_qs(url.query)
                 result={"events":db.events(parts[1],int(q.get("after",[0])[0]),int(q.get("limit",[100])[0]))}
+            elif not post and len(parts)==3 and parts[0]=="recordings" and parts[2]=="global-map":
+                q=parse_qs(url.query,keep_blank_values=True)
+                need(set(q)<= {"segment"} and len(q.get("segment",[]))<=1,400,"invalid map query")
+                etag,result=db.map_view(parts[1],int(q["segment"][0]) if "segment" in q else None,
+                                        self.headers.get("If-None-Match"))
+                if result is None:
+                    self.send_response(304)
+                    self.send_header("ETag",etag)
+                    self.send_header("Cache-Control","private, no-cache")
+                    self.end_headers()
+                    return
+            elif not post and len(parts)==3 and parts[0]=="recordings" and parts[2]=="map-view":
+                raw=db.map_page(parts[1])
+                self.send_response(200)
+                self.send_header("Content-Type","text/html; charset=utf-8")
+                self.send_header("Content-Length",str(len(raw)))
+                self.send_header("Cache-Control","no-store")
+                self.send_header("X-Content-Type-Options","nosniff")
+                self.send_header("Content-Security-Policy","default-src 'none'; connect-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors 'self'")
+                self.end_headers()
+                self.wfile.write(raw)
+                return
             elif parts==["recordings"] and not post:
                 task=parse_qs(url.query).get("task_id",[""])[0]
                 with db.lock:
@@ -260,6 +299,9 @@ class Handler(BaseHTTPRequestHandler):
         raw=packed(result).encode()
         self.send_response(code)
         self.send_header("Content-Type","application/json")
+        if etag:
+            self.send_header("ETag",etag)
+            self.send_header("Cache-Control","private, no-cache")
         self.send_header("Content-Length",str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)

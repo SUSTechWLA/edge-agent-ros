@@ -37,12 +37,17 @@ def store(path,obj):
     path.write_text(json.dumps(obj,ensure_ascii=False,indent=2,allow_nan=False)+"\n","utf8")
 
 
-def recorded_sensors(directory):
+def recorded_sensors(directory, *, no_cameras=False):
     # Independently reread stamped measurements retained from the actual simulation.
     summary = {}
     spec = {"laser_scan":("/scan", "sensor_msgs/msg/LaserScan", "nearest_m"),
             "imu":("/imu", "sensor_msgs/msg/Imu", "angular_z_rad_s")}
     rows = [json.loads(line) for line in (directory/"timeline.jsonl").read_bytes().splitlines()]
+    if no_cameras:
+        forbidden={"rgb","overview","world_pose"}
+        header=json.loads((directory.parents[1]/"recording.json").read_bytes())
+        if forbidden.intersection(header["sources"]) or any(r["kind"] in forbidden for r in rows) or list(directory.rglob("*.png")):
+            raise AssertionError("camera-free product contains an external image or ground truth")
     for kind, (topic, msg_type, metric) in spec.items():
         selected = [r for r in rows if r["kind"] == kind]
         valid = [r for r in selected if r["valid"]]
@@ -57,6 +62,8 @@ def recorded_sensors(directory):
         summary[kind] = dict(topic=topic,source=msg_type,frames=sorted({r["frame_id"] for r in valid}),
                              valid=len(valid),invalid=len(selected)-len(valid),metric=metric,
                              minimum=min(values),maximum=max(values))
+    if no_cameras:
+        return summary
     images = [r for r in rows if r["kind"] == "rgb"]
     if (any(r.get("topic") != "/commission/overview" or r.get("source") != "gz.msgs.Image" for r in images)
             or len({r.get("sha256") for r in images}) < 2):
@@ -66,7 +73,28 @@ def recorded_sensors(directory):
     return summary
 
 
-def run(out,image,assets):
+def continuous_map(directory,rid):
+    """Replay verified native map attachments in receipt order, without camera/truth inputs."""
+    from task_recorder.global_map import MapHistory
+    history=MapHistory(rid)
+    counts=[]
+    for line in (directory/"timeline.jsonl").read_bytes().splitlines():
+        event=json.loads(line)
+        if event["kind"]!="map": continue
+        payload=(directory/event["file"]).read_bytes()
+        assert hashlib.sha256(payload).hexdigest()==event["sha256"]
+        history.advance(event,json.loads(payload))
+        counts.append(event["known"])
+    segments=history.segments()
+    assert len(segments)==1 and len(counts)>=3, (segments,len(counts))
+    initial=next(i for i,count in enumerate(counts) if count>0)
+    assert min(counts[initial:])>0 and max(counts)-counts[initial]>=100, counts
+    return dict(revisions=len(counts),first_known=counts[initial],peak_known=max(counts),segments=segments)
+
+
+def run(out,image,assets,*,no_cameras=False,continuous=False):
+    if continuous and not no_cameras:
+        raise ValueError("continuous control requires the camera-free fixture and separate independent witness")
     out=out.resolve()
     out.mkdir(parents=True,exist_ok=False)
     for name in ("work","factory","input","session","plugins"): (out/name).mkdir()
@@ -75,9 +103,12 @@ def run(out,image,assets):
     project="unknown-"+token
     robot="rover-"+token
     rid=task
+    audit_rid=rid+"-witness" if no_cameras else None
+    sources=[k for k in SOURCES if not no_cameras or k not in {"rgb","world_pose"}]
     port,console_port=free_port(),free_port()
     while console_port==port: console_port=free_port()
     url=f"http://127.0.0.1:{port}/recordings/{rid}"
+    audit_url=f"http://127.0.0.1:{port}/recordings/{audit_rid}" if no_cameras else None
     endpoint=f"http://127.0.0.1:{console_port}"
     domain=24+int(token[:2],16)%57
     partition="commission_"+token
@@ -113,7 +144,7 @@ def run(out,image,assets):
     assert cal["status"]=="VERIFIED"
     manifest=dict(id="survey_nearby",description=REQUEST,parameters={},effect="idempotent",version="1",endpoint="http://survey:8193/survey")
     store(out/"plugins"/"survey.json",manifest)
-    prepare_world(out,image,assets)
+    prepare_world(out,image,assets,cameras=not no_cameras)
     env={k:v for k,v in os.environ.items() if not k.startswith(("EDGE_","COMPOSE_"))}
     env.update(COMPOSE_DISABLE_ENV_FILE="1",EDGE_IMAGE=image,EDGE_CONSOLE_PORT=str(console_port),EDGE_ROS_DOMAIN_ID=str(domain),
                EDGE_RECORDING_PORT=str(port),EDGE_RECORDING_STORAGE=str(out/"session"),EDGE_PLUGINS_DIR=str(out/"plugins"),
@@ -129,17 +160,24 @@ def run(out,image,assets):
             command=["python3","-B","/experiment/campus_survey_tool.py"],
             volumes=[bind(script/name,"/experiment/"+name) for name in ("campus_survey_tool.py","campus_survey_worker.py","campus_revisit.py")]
                     +[bind(out/"work","/work",False),bind(out/"factory","/factory")])
+    source_args=["python3","-B","-m","task_recorder.ros_source","--url","http://task-recorder:8188",
+                 "--task-id",task,"--sim","--clock-domain","gazebo_sim_ns"]
     items["rec-source"]=dict(image=image,pull_policy="never",init=True,working_dir="/opt/edge",
             environment={**common, "EDGE_RECORDING_DEPLOYMENT":"gazebo"},
             volumes=[bind(ROOT/"task_recorder","/opt/edge/task_recorder"),bind(out/"input","/input")],
-            command=["python3","-B","-m","task_recorder.ros_source","--url","http://task-recorder:8188",
-                "--recording-id",rid,"--task-id",task,"--sim","--gz-camera","/commission/overview",
-                "--laser-scan","/scan","--imu","/imu","--sensor-hz","4",
-                "--all-map-revisions","--clock-domain","gazebo_sim_ns",
-                "--world-pose","/ground_truth","--markers","/input/mission-markers.jsonl"])
+            command=source_args+["--recording-id",rid,"--laser-scan","/scan","--imu","/imu","--sensor-hz","4",
+                "--all-map-revisions","--markers","/input/mission-markers.jsonl"])
+    if no_cameras:
+        items["rec-audit"]=dict(image=image,pull_policy="never",init=True,working_dir="/opt/edge",
+                environment={**common,"EDGE_RECORDING_DEPLOYMENT":"gazebo"},
+                volumes=[bind(ROOT/"task_recorder","/opt/edge/task_recorder")],
+                command=source_args+["--recording-id",audit_rid,"--world-pose","/ground_truth"])
+    else:
+        items["rec-source"]["command"].extend(["--gz-camera","/commission/overview","--world-pose","/ground_truth"])
     proof=dict(passed=False,task_id=task,recording_id=rid,image=image,project=project,text=REQUEST,
                image_id=subprocess.check_output(["docker","image","inspect","--format","{{.Id}}",image],text=True).strip(),
-               calibration_revision=cal["revision"],factory="synthetic stationary fixture",submissions=0)
+               calibration_revision=cal["revision"],factory="synthetic stationary fixture",submissions=0,
+               no_cameras=no_cameras,continuous=continuous,independent_witness_recording=audit_rid)
     with tempfile.TemporaryDirectory(prefix=project) as temp:
         override=Path(temp)/"experiment.json"
         store(override,{"services":items})
@@ -150,6 +188,7 @@ def run(out,image,assets):
             if check and p.returncode: raise RuntimeError(p.stderr[-2500:] or p.stdout[-1500:])
             return p.stdout.strip()
         paused=started=closed=False
+        audit_started=audit_closed=False
         worker_file=out/"work"/task/"events.jsonl"
         seen=[]
         def synchronize():
@@ -166,12 +205,17 @@ def run(out,image,assets):
         try:
             dc("up","-d","--no-build","task-recorder")
             wait(lambda:api(f"http://127.0.0.1:{port}/health"),22)
-            api(f"http://127.0.0.1:{port}/recordings/start",dict(task_id=task,recording_id=rid,sources=SOURCES))
+            api(f"http://127.0.0.1:{port}/recordings/start",dict(task_id=task,recording_id=rid,sources=sources))
             started=True
-            dc("up","-d","--no-build","rec-source","survey","core","gateway","agent","console","bridge","witness","sim")
+            if no_cameras:
+                api(f"http://127.0.0.1:{port}/recordings/start",dict(task_id=task,recording_id=audit_rid,sources=["world_pose"]))
+                audit_started=True
+            dc("up","-d","--no-build","rec-source","survey","core","gateway","agent","console","bridge","witness","sim",
+               *(["rec-audit"] if no_cameras else []))
             def observed_sources():
                 counts=api(url)["counts"]
-                return counts.get("rgb",0)>=3 and all(counts.get(k,0)>1 for k in ("world_pose","laser_scan","imu"))
+                truth=api(audit_url)["counts"] if no_cameras else counts
+                return (no_cameras or counts.get("rgb",0)>=3) and truth.get("world_pose",0)>1 and all(counts.get(k,0)>1 for k in ("laser_scan","imu"))
             wait(observed_sources,85)
             mark("cold_start","首次进入校园，地图为空",detail="任务端没有预置校园地图或具名路线；感知服务尚未接入")
             cap=api(endpoint+"/agent/capabilities")
@@ -187,13 +231,14 @@ def run(out,image,assets):
             mark("perception_enabled","接入车载感知",detail="测试程序解除启动延迟，机器人仍需取得新鲜观测")
             dc("up","-d","--no-build","perception")
             wait(lambda:observed("accepted"),90)
-            dc("pause","perception"); paused=True
-            mark("fault_injected","行驶中切断融合位姿与地图更新",detail="仿真、相机和底盘独立运行")
-            wait(lambda:observed("observation_lost"),15)
-            wait(lambda:observed("stopped") or observed("receipt_before_cancel"),18)
-            time.sleep(2)
-            mark("fault_released","解除感知中断",detail="解除测试故障，不向机器人提供补救路点")
-            dc("unpause","perception"); paused=False
+            if not continuous:
+                dc("pause","perception"); paused=True
+                mark("fault_injected","行驶中切断融合位姿与地图更新",detail="仿真、原始传感器和底盘独立运行")
+                wait(lambda:observed("observation_lost"),15)
+                wait(lambda:observed("stopped") or observed("receipt_before_cancel"),18)
+                time.sleep(2)
+                mark("fault_released","解除感知中断",detail="解除测试故障，不向机器人提供补救路点")
+                dc("unpause","perception"); paused=False
             def terminal():
                 synchronize()
                 row=api(endpoint+"/agent/tasks?id="+task)
@@ -207,6 +252,9 @@ def run(out,image,assets):
             time.sleep(1.6)
             receipt=api(url+"/finish",dict(task_id=task,status=row["state"],reason="Agent terminal receipt"))
             closed=True
+            if no_cameras:
+                api(audit_url+"/finish",dict(task_id=task,status=row["state"],reason="independent evaluator terminal receipt"))
+                audit_closed=True
             assert row["state"]=="SUCCEEDED",row["detail"]
             assert [s["tool"] for s in row["steps"]]==["survey_nearby"]
             result=json.loads((out/"work"/task/"report.json").read_bytes())
@@ -214,14 +262,18 @@ def run(out,image,assets):
             assert observed("inspection_selected") and observed("inspected") and result["home_arrivals"]>=1
             inspection=json.loads((out/"work"/task/result["inspection_file"]).read_bytes())
             assert inspection["counts"]["free"]>0 and inspection["initial_grid_sha256"]==result["map_sha256"]["occupancy.json"]
-            assert not receipt.get("missing_sources") and all(receipt["counts"].get(source,0)>0 for source in SOURCES)
-            assert result["recovered_interruptions"]>=1 and observed("observations_restored")
+            assert not receipt.get("missing_sources") and all(receipt["counts"].get(source,0)>0 for source in sources)
+            if continuous:
+                assert result["recovered_interruptions"]==0 and not observed("observation_lost")
+                proof["continuous_map"]=continuous_map(out/"session"/rid/"media"/"mission",rid)
+            else:
+                assert result["recovered_interruptions"]>=1 and observed("observations_restored")
             for name,h in result["map_sha256"].items():
                 assert hashlib.sha256((out/"work"/task/"map"/name).read_bytes()).hexdigest()==h
             proof.update(terminal=row["state"],operation=row["steps"][0]["operation_id"],recording=receipt,
                          known_gain=result["saved_known_gain"],home_error_m=result["home_error_m"],actual_steps=len(result["steps"]))
-            audit(out,rid)
-            proof["measured_sources"] = recorded_sensors(out/"session"/rid/"media"/"mission")
+            audit(out,rid,audit_rid,continuous=continuous)
+            proof["measured_sources"] = recorded_sensors(out/"session"/rid/"media"/"mission",no_cameras=no_cameras)
             proof["passed"]=True
         except Exception as exc:
             proof["error"]=str(exc)
@@ -232,6 +284,9 @@ def run(out,image,assets):
             if started and not closed:
                 try: api(url+"/finish",{"task_id":task,"status":"INTERRUPTED","reason":"experiment interrupted"})
                 except (URLError,OSError): pass
+            if audit_started and not audit_closed:
+                try: api(audit_url+"/finish",{"task_id":task,"status":"INTERRUPTED","reason":"experiment interrupted"})
+                except (URLError,OSError): pass
             dc("down","--volumes","--remove-orphans","--timeout","4",check=False)
             store(out/"acceptance.json",proof)
 
@@ -241,5 +296,7 @@ if __name__=="__main__":
     cli.add_argument("--out",type=Path,required=True)
     cli.add_argument("--image",default="edge-agent-ros:commission-0977a54")
     cli.add_argument("--assets",type=Path,default=ASSETS)
+    cli.add_argument("--no-cameras",action="store_true",help="remove camera sensors and record separate audit-only ground truth")
+    cli.add_argument("--continuous",action="store_true",help="camera-free control without fault injection, requiring one uninterrupted map segment")
     args=cli.parse_args()
-    run(args.out,args.image,args.assets.resolve())
+    run(args.out,args.image,args.assets.resolve(),no_cameras=args.no_cameras,continuous=args.continuous)

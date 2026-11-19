@@ -335,12 +335,43 @@ def picture(record,stamp,opt,guide,view=None):
 
 
 def render(opt):
+    if getattr(opt,"layout","classic")=="map":
+        from .map_view import map_output
+        with map_output(opt.out) as staged:
+            return _render(argparse.Namespace(**{**vars(opt),"out":staged}))
+    return _render(opt)
+
+
+def _render(opt):
     record=Recording(opt.recording.resolve(),opt.axis)
     guide=read(opt.guide) if opt.guide else {}
-    view=showcase.Showcase(record,guide,opt.axis) if getattr(opt,"layout","classic")=="showcase" else None
+    layout=getattr(opt,"layout","classic")
+    if layout=="map":
+        interval="来源时钟" if opt.axis=="stamp_ns" else "接收时钟"
+        guide={**guide,"description":guide.get("map_description",
+               f"画面按{interval}展示本次任务的观测与事件。地图随实际收到的栅格累计。点击交互地图可以逐次查看与重载各分段。"),
+               "phases":{**guide.get("phases",{}),**guide.get("map_phases",{})}}
+    view=showcase.Showcase(record,guide,opt.axis) if layout in ("showcase","map") else None
     opt.out.mkdir(parents=True,exist_ok=True)
     frames=max(FPS,math.ceil((record.end-record.first)/1e9*FPS)+1)
     if frames>opt.max_seconds*FPS: raise ValueError("time span exceeds --max-seconds; verify input clock domains")
+    maps=None
+    if layout=="map":
+        from .map_view import MapPlayback
+        from . import global_map
+        base_dir=getattr(opt,"base_map",None)
+        digest=getattr(opt,"base_manifest_sha256",None)
+        if bool(base_dir)!=bool(digest):
+            raise ValueError("map base directory and expected manifest digest must be supplied together")
+        args={}
+        if base_dir:
+            info=global_map.read_map(base_dir,manifest_sha256=digest)
+            meta=info["metadata"]
+            if not meta.get("map_identity") or not meta.get("map_source",{}).get("publisher_id"):
+                raise ValueError("use the saved map viewer for an artifact without explicit alignment identity")
+            base=global_map.GlobalMap.load_base(base_dir,identity=meta["map_identity"],manifest_sha256=digest)
+            args=dict(base=base,base_publisher_id=meta["map_source"]["publisher_id"],base_info=info)
+        maps=MapPlayback(record,guide,opt.axis,view,captioner=caption,**args)
     target=opt.out/"task.mp4"
     pending=target.with_suffix(".partial.mp4")
     with subprocess.Popen([opt.ffmpeg,"-hide_banner","-loglevel","error","-y","-f","rawvideo","-pix_fmt","rgb24",
@@ -349,7 +380,8 @@ def render(opt):
         try:
             for i in range(frames):
                 t=min(record.end,record.first+i*(10**9//FPS))
-                frame=picture(record,t,opt,guide,view)
+                frame=(maps.draw((t-record.first)/1e6,opt,guide) if maps and maps.revision_ms
+                       else picture(record,t,opt,guide,view))
                 if view and i==0: frame.save(opt.out/"opening.png")
                 if i==frames//2: frame.save(opt.out/"cover.png")
                 ff.stdin.write(frame.tobytes())
@@ -362,6 +394,8 @@ def render(opt):
         raise ValueError("encoded stream does not match requested timeline")
     pending.replace(target)
     activities=view.events if view else record.marks
+    if maps:
+        activities=[r for r in activities if r["kind"] not in ("overview","rgb","map","fused_pose","world_pose","laser_scan","imu")]
     markers=[{"sec":(e["_at"]-record.first)/1e9,"phase":e.get("phase",e["kind"]),"title":caption(e,guide)[0],
               "detail":caption(e,guide)[1],"event_id":e["event_id"]} for e in activities]
     for row,evidence in zip(markers,activities):
@@ -375,6 +409,8 @@ def render(opt):
     if view:
         summary["showcase"]=dict(signals=view.signals,window_s=4,guide_sha256=sha(opt.guide) if opt.guide else None,
                                  chapters=[view.chapter(row) for row in activities if trace_view.milestone_key(row) is not None])
+    if maps:
+        summary["map"]=dict(segments=maps.export(opt.out),viewer="map.html",revisions=len(maps.revision_ms))
     (opt.out/"video.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2)+"\n","utf8")
     selected=guide.get("chapters",[])
     shortlist=[(m,e) for m,e in zip(markers,activities) if not selected or m["phase"] in selected]
@@ -415,6 +451,7 @@ def render(opt):
                     '表中保留各阶段的首次证据，重复轮询可按序号在原时间线核对。UTC 是 Agent 写入日志的时间。</p>'
                     '<div class="scroll"><table><thead><tr><th>操作 ID</th><th>工具</th><th>阶段 / 结果</th><th>日志序号</th><th>源 UTC</th><th>类型 / 代码</th>'
                     '</tr></thead><tbody>'+"".join(tool_rows)+'</tbody></table></div></details>')
+    map_link='<a href="map.html">打开逐次探索地图</a>　·　' if maps and maps.revision_ms else ""
     (opt.out/"index.html").write_text(f'''<!doctype html><html lang="zh-CN"><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><style>
 *{{box-sizing:border-box}}body{{margin:0;background:#f0f4f1;color:#19332f;font:16px/1.6 "Microsoft YaHei",sans-serif}}
@@ -426,7 +463,7 @@ a{{color:#105b45}}footer{{margin-top:12px;overflow-wrap:anywhere}}details{{margi
 section>*{{min-width:0}}#note,h1,button{{overflow-wrap:anywhere}}@media(max-width:780px){{section{{grid-template-columns:minmax(0,1fr)}}}}</style>
 <main><h1>{title}</h1><p>{desc}</p><section><div><video controls playsinline preload="metadata" src="task.mp4" poster="cover.png"></video><p id="note" aria-live="polite"></p></div>
 <aside><h2>跳到现场</h2>{"".join(buttons)}</aside></section>{tool_table}{coordinates}<footer>任务 <code>{html.escape(summary["task_id"])}</code>　·　
-<a href="task.mp4">播放 MP4</a>　<a href="video.json">查看时间索引与证据哈希</a></footer></main>
+{map_link}<a href="task.mp4">播放 MP4</a>　<a href="video.json">查看时间索引与证据哈希</a></footer></main>
 <script>const v=document.querySelector("video");for(const b of document.querySelectorAll("button"))b.onclick=()=>{{document.querySelector("#note").textContent=b.textContent+"　"+b.dataset.note;v.currentTime=+b.dataset.t;v.play().catch(()=>{{}});}};</script></html>''',"utf8")
     notes=["# "+guide.get("title",summary["task_id"]),"","[打开分章回放](index.html) · [播放完整 MP4](task.mp4)","",
            guide.get("description","本回放按时间列出录制会话中的任务和事件。"),"",
@@ -436,6 +473,10 @@ section>*{{min-width:0}}#note,h1,button{{overflow-wrap:anywhere}}@media(max-widt
     for row in chapters:
         notes.append(f'| {row["sec"]:.2f} 秒 | {row["title"].replace("|","/")} |')
     notes+=["","来源计数与 SHA-256 指纹见[时间索引](video.json)。"]
+    if maps:
+        notes+=["","[交互式探索地图](map.html)"]
+        for s in summary["map"]["segments"]:
+            notes.append(f'- [查看已保存的整图 · 分段 {s["segment"]}]({s["folder"]}/index.html) · 清单 SHA-256 `{s["manifest_sha256"]}`')
     (opt.out/"README.md").write_text("\n".join(notes)+"\n","utf8")
     return summary
 
@@ -446,7 +487,9 @@ if __name__=="__main__":
     cli.add_argument("--out",required=True,type=Path)
     cli.add_argument("--guide",type=Path,help="optional presentation labels and selectable chapter phases")
     cli.add_argument("--axis",choices=("stamp_ns","received_ns"),default="received_ns")
-    cli.add_argument("--layout",choices=("classic","showcase"),default="classic",help="showcase adds measured signal trends and event evidence")
+    cli.add_argument("--layout",choices=("classic","showcase","map"),default="classic",help="map prioritizes measured occupancy and its on-disk revisions")
+    cli.add_argument("--base-map",type=Path,help="trusted, explicitly aligned prior map for this recording")
+    cli.add_argument("--base-manifest-sha256",help="pinned SHA-256 of the prior manifest")
     cli.add_argument("--font",required=True,help="path to a CJK font")
     cli.add_argument("--max-seconds",type=int,default=3600)
     cli.add_argument("--ffmpeg",default=shutil.which("ffmpeg"))
