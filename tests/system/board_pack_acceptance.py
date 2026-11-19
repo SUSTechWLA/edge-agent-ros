@@ -35,6 +35,44 @@ assert not peer
 print(json.dumps({'public_events_http':status,'task_submit_http':denied,'direct_console_dns':bool(peer)}))
 """
 
+TASK_PROBE="""
+import json,sys,time
+from urllib.request import Request,urlopen
+def api(path,body=None):
+    request=Request('http://127.0.0.1:8765'+path,data=None if body is None else json.dumps(body).encode(),
+                    headers={'Content-Type':'application/json'})
+    with urlopen(request,timeout=4) as result:
+        return json.load(result)
+def until(read,description):
+    deadline=time.monotonic()+40
+    last=None
+    while time.monotonic()<deadline:
+        try:
+            last=read()
+            if last: return last
+        except OSError as exc:
+            last=str(exc)
+        time.sleep(.25)
+    raise RuntimeError(description+': '+str(last)[:500])
+digest,task=sys.argv[1:]
+until(lambda:api('/api/state').get('task_proxy_mode')=='agent','task API mode')
+def catalog():
+    rows=api('/agent/plugins?schema=2')['plugins']
+    return next((r for r in rows if r['id']=='derived.series_mean' and r.get('health')=='ready'),None)
+until(catalog,'software tool unavailable')
+api('/agent/tasks',{'id':task,'text':'求输入数列的平均值 [2,4,6]'})
+def finished():
+    row=api('/agent/tasks?id='+task)
+    return row if row['state'] in ('SUCCEEDED','BLOCKED','RECOVERY_REQUIRED','CANCELED') else None
+row=until(finished,'finish '+task)
+assert row['state']=='SUCCEEDED',row
+step,=row['steps']
+assert step['tool']=='derived.series_mean' and step['operation_id']==task+'/step/1',step
+assert step['soft_pin']['content_digest']==digest and step['evidence']['value']==4,step
+print(json.dumps({'task':task,'state':row['state'],'tool':step['tool'],'value':step['evidence']['value'],
+                  'operation_id':step['operation_id'],'soft_digest':digest}))
+"""
+
 
 def run(image,base,out):
     if out.exists():
@@ -56,17 +94,23 @@ def run(image,base,out):
     with tempfile.TemporaryDirectory(prefix=project+"-") as tmp:
         folder=Path(tmp)
         safe=folder/"isolate.json"
-        safe.write_text(json.dumps({"services":{k:{"network_mode":"none","environment":{"ROS_LOCALHOST_ONLY":"1"}}
-                                       for k in ("perception","console")}}),encoding="utf8")
+        confined={k:{"network_mode":"none","environment":{"ROS_LOCALHOST_ONLY":"1"}} for k in ("perception","console")}
+        confined["agent"]={"network_mode":"service:console","environment":{"ROS_LOCALHOST_ONLY":"1"}}
+        safe.write_text(json.dumps({"services":confined}),encoding="utf8")
         def files(track):
             files=["compose.hardware.yaml"]
-            files+=["compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","compose.hardware-observe.yaml"] if track=="soft" else ["compose.physical-camera.yaml"]
+            if track in ("soft","combined"):
+                files+=["compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml"]
+            if track=="soft":
+                files.append("compose.hardware-observe.yaml")
+            if track in ("physical","combined"):
+                files.append("compose.physical-camera.yaml")
             return [v for file in [*files,str(safe)] for v in ("-f",file)]
         def dc(track,*args):
             return call("docker","compose",*files(track),*args)
-        def guard(track,*args):
+        def guard(track,*args,stack=None):
             return json.loads(py("scripts/check_board_plugins.py","--track",track,"--image",image,"--source",release,
-                                "--lock",lock,"--site",site,*files(track),*args))
+                                "--lock",lock,"--site",site,*files(stack or track),*args))
         stages=report["stages"]
         started=set()
         try:
@@ -106,6 +150,22 @@ def run(image,base,out):
             assert status["phase"]=="ACTIVE" and not status["operations"],status
             stages["physical"]={"phase":status["phase"],"recorded_operations":len(status["operations"]),
                                 "site_driver_present":False,"physical_requests":0}
+            physical_services=("physical-controller","physical-camera","physical-verifier")
+            original={name:dc("physical","ps","-q",name) for name in physical_services}
+            dc("combined","up","-d","--no-build","--no-deps","console","agent","soft-facts")
+            guard("soft","--running",stack="combined")
+            guard("physical","--running",stack="combined")
+            assert original=={name:dc("combined","ps","-q",name) for name in physical_services},original
+            running=set(dc("combined","ps","--services","--status","running").splitlines())
+            assert running==set(("console","agent","perception","soft-host","soft-facts","soft-gateway",
+                                 "evidence","session",*physical_services)),running
+            config=json.loads((site/"pack.lock.json").read_text(encoding="utf8"))
+            stages["board_task"]=json.loads(dc("combined","exec","-T","console","python3","-Bc",TASK_PROBE,
+                       config["plugins"]["derived.series_mean"]["content_digest"],"board-mean-"+uuid.uuid4().hex[:12]))
+            stages["task_mode"]={"retained_containers":original,"running":sorted(running),
+                                 "public_facts":json.loads(dc("combined","exec","-T","evidence","python3","-Bc",PROBE))}
+            after=json.loads(dc("combined","run","--rm","-T","--no-deps","physical-admin","status"))
+            assert not after["operations"] and after["phase"]=="ACTIVE",after
             dc("physical","run","--rm","-T","--no-deps","physical-admin","drain")
             try:
                 dc("physical","run","--rm","-T","--no-deps","physical-admin","release")

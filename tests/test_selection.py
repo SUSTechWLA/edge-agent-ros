@@ -22,6 +22,7 @@ RULES = [
     (("agent/physical_*.py","agent/plugin_tracks.py","scripts/prepare_physical_camera.py","perception/camera/physical*.py",
       "compose.physical-camera*.yaml","tests/system/physical_camera*.py"), (*AGENT,"observations","board","plugin-isolation")),
     (("tests/test_physical_*.py","tests/test_plugin_tracks.py"), ("planner","plugin-isolation")),
+    (("tests/test_plugin_tracks_metrics.py",), ("planner","places","resilience","agent-faults")),
     (("tests/system/plugin_tracks_metrics.py","tests/fixtures/plugin-tracks/frozen-missions.json"),
      ("places","resilience","agent-faults")),
     (("agent/soft_*.py","agent/v2_registry.py","agent/plugin_descriptor.py","compose.soft-runtime.yaml",
@@ -171,6 +172,8 @@ class TestSelection(unittest.TestCase):
             self.assertEqual(selection([name])[0], [R,"board"], name)
 
     def test_frozen_mission_witnesses(self):
+        self.assertEqual(selection(["tests/test_plugin_tracks_metrics.py"])[0],
+                         [R,"planner","agent-faults","resilience","places"])
         for name in ("tests/system/plugin_tracks_metrics.py","tests/fixtures/plugin-tracks/frozen-missions.json"):
             self.assertEqual(set(selection([name])[0]),{R,"places","resilience","agent-faults"})
 

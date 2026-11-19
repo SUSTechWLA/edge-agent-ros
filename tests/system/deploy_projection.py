@@ -18,7 +18,7 @@ def git(*args):
     return subprocess.check_output(["git",*args],cwd=ROOT,text=True).strip()
 
 
-def verify(ref, directory):
+def verify(ref, directory, platform, ros_base):
     directory.mkdir(parents=True,exist_ok=False)
     directory = directory.resolve()
     revision = git("rev-parse","--verify","--end-of-options",ref+"^{commit}")
@@ -31,10 +31,14 @@ def verify(ref, directory):
                 "profiles/bench-camera.json","capabilities/camera/pack.json"}
     if required-actual.keys() or any(p.startswith(("tests/","docs/","sim/","artifacts/")) for p in actual):
         raise ValueError("incomplete board distribution or development fixtures included")
-    image = "edge-agent-ros/hardware:projection-"+source[:12]
+    image = "edge-agent-ros/hardware:projection-"+source[:12]+("-"+platform.split("/")[-1] if platform else "")
     env = {k:v for k,v in os.environ.items() if not k.startswith(("COMPOSE_","EDGE_"))}
     env.update(COMPOSE_DISABLE_ENV_FILE="1",COMPOSE_PROJECT_NAME="edge-test-release-"+uuid.uuid4().hex[:10],
                EDGE_HARDWARE_IMAGE=image,EDGE_REVISION=source,EDGE_ROS_DOMAIN_ID="194")
+    if platform:
+        env["DOCKER_DEFAULT_PLATFORM"] = platform
+    if ros_base:
+        env["EDGE_ROS_BASE"] = ros_base
     result = {"passed":False,"source":source,"deployment":revision,"tree":git("rev-parse",revision+"^{tree}"),
               "runtime_files":len(actual),"image":image,"scope":"isolated Linux containers, synthetic ROS input, no hardware"}
     def run(name,args,cwd):
@@ -53,6 +57,8 @@ def verify(ref, directory):
             run("build",[*compose,"build","core"],folder)
             info = json.loads(run("inspect",["docker","image","inspect",image],folder))[0]
             result.update(image_id=info["Id"],platform=info["Os"]+"/"+info["Architecture"])
+            if platform and result["platform"] != platform:
+                raise ValueError("built hardware image has a different CPU architecture")
             if info["Config"]["Labels"].get("org.opencontainers.image.revision") != source:
                 raise ValueError("hardware image has a different source revision")
             isolated = temp/"observe.json"
@@ -104,5 +110,7 @@ if __name__=="__main__":
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--deploy-ref",default="deploy/robot")
     parser.add_argument("--out",required=True,type=Path)
+    parser.add_argument("--platform",choices=("linux/amd64","linux/arm64"),help="target for the board image and observe")
+    parser.add_argument("--ros-base",help="approved platform-specific ROS base image")
     args=parser.parse_args()
-    verify(args.deploy_ref,args.out)
+    verify(args.deploy_ref,args.out,args.platform,args.ros_base)

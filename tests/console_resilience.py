@@ -133,6 +133,12 @@ def run():
             return state if truth["fresh"] and abs(truth["data"]["v"])>0.12 and any(
                 m["mission_id"]=="first/step/1" and m["state"]=="RUNNING" for m in state["missions"]) else None
 
+        def gateway_start_witness():
+            # This project has exactly two requested movements. Keep every start,
+            # including any unexpected ID produced by recovery or a software tool.
+            lines = [line for line in compose("logs", "--no-color", "gateway").splitlines() if "Tracking " in line]
+            return {"scope":"private_stack_lifetime", "lines":lines}
+
         try:
             compose("up","-d","--no-build","sim","bridge","witness","core","gateway","agent","console","plugin-fixture")
             wait_for(lambda: api("/api/state")["sources"]["truth"]["fresh"] and api("/agent/capabilities"),
@@ -210,9 +216,18 @@ def run():
             require(detached["state"]=="BLOCKED","unavailable local capability dispatched")
             report["cases"]["hotplug"]={"passed":True,"manifest":manifest,"calls":calls,"events":plugin["events"],
                                        "unmounted_state":detached["state"],"unmounted_catalog":catalog()}
+            witness = report["gateway_start_witness"] = gateway_start_witness()
+            expected = [action, "second/step/1/waypoint/1"]
+            observed = [line.partition("Tracking ")[2].partition(" to ")[0] for line in witness["lines"]]
+            require(observed == expected, f"unexpected Gateway starts: {observed}")
             report["passed"]=True
         except Exception as ex:
             report["error"]=f"{type(ex).__name__}: {ex}"
+            if "gateway_start_witness" not in report:
+                try:
+                    report["gateway_start_witness"] = gateway_start_witness()
+                except (RuntimeError, OSError, subprocess.TimeoutExpired) as read_error:
+                    report["gateway_witness_error"] = str(read_error)
             raise
         finally:
             output.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")

@@ -128,6 +128,7 @@ def run(args, selected, reasons):
                              test("test_soft_runtime.py","-v"),test("test_plugin_descriptor.py","-v"),
                              test("test_v2_registry.py","-v"),test("test_soft_host.py","-v"),
                              test("test_physical_ledger.py","-v"),test("test_plugin_tracks.py","-v"),
+                             test("test_plugin_tracks_metrics.py","-v"),
                              test("test_module_journal.py","-v"),test("test_author_eventbus.py","-v"),
                              test("test_plugin_manager.py","-v"),test("test_plugin_manager_watch.py","-v"),
                              [PY,str(ROOT/"examples/result-verifiers/test_verifiers.py"),"-v"],

@@ -38,6 +38,8 @@ sh scripts/robot.sh plugins bench
 sh scripts/robot.sh plugins status
 ```
 
+软件台架验收完成后，执行 `sh scripts/robot.sh plugins start`。该命令核对活动插件、锁定清单和任务账本，在同一配置中启动 Agent 并开启 Console 的任务提交接口。可在工作台下发“求输入数列的平均值 [2,4,6]”，检查任务终态、`derived.series_mean` 的执行证据和数值 4。该启动路径只拉起 Console、Agent 与只读事实桥，软件提供者沿用台架实例，底盘 Core 和设备驱动保持原有状态。发现已有 Agent、Core 或未交接任务时，应核对原任务与设备状态，再在原部署完成交接。
+
 锁定清单包含每个插件的 semver、实际代码／镜像摘要、配置摘要和策略。可通过 `--override /站点目录/override.json` 对同一 profile 派生新的工位目录。例如 `{"disable":["evidence.query_evidence"]}` 会关闭 SQL 插件。配置按描述符校验，禁止新增未知 ID、扩大效果类别、替换执行入口或取消强制审批。应先核对新旧锁并确认原任务完成；已有活动版本不一致时，整批准入失败并保留原来活动的版本。变更以新目录发布，旧目录、原镜像和任务数据卷保留，方便回退。回退到上版锁同样需完成原任务、排空、确认卸载后再按上版清单接纳。
 
 台架启动器在既有 Core 或 Agent 运行时拒绝切换。台架只启动感知、只读 Console、经过锁定的软件提供者和 GET 事实网关；不能通过 Console 提交机器人任务。调用注册表的 `soft-admin` 无外网且不挂载设备。软件提供者仅加入内部网络，GET allowlist 通过 Unix socket 读取板端回环 Console 的公开会话/事实。台架上用户看到“已接纳”后还应检查 Fiber 就绪、独立健康探测和本机观测。实际车上需要运动或读取原始设备的能力，应在相应 physical 提供者部署后，通过现场独立验收、停止协议、设备租约和原操作对账交接。为软件插件签发锁不会授予设备访问权。
@@ -54,10 +56,14 @@ export EDGE_SOFT_SITE="$HOME/edge-sites/combined-bench-001"
 python3 scripts/prepare_soft_pilots.py --image "$EDGE_HARDWARE_IMAGE" --source-commit "$(cat ROBOT_SOURCE)" \
   --physical-site "$CAMERA_APPROVAL" --profile profiles/bench-camera.json --site "$EDGE_SOFT_SITE"
 export EDGE_PACK_LOCK='<approved combined pack lock>'
+sh scripts/robot.sh plugins check
+sh scripts/robot.sh plugins bench
 sh scripts/robot.sh plugins camera-check
 sh scripts/robot.sh plugins camera-bench
 sh scripts/robot.sh plugins camera-status
 ```
+
+需要让 Agent 使用这个相机时，在同一组合站点和锁上完成上述两组台架核查，然后执行 `sh scripts/robot.sh plugins camera-start`。此入口把软件与相机的 Unix socket 一起交给 Agent。它会检查原相机控制器处于 `ACTIVE`、旧操作已对账，且切换完成后原控制器容器身份一致。启动命令本身不会提交采集或运动任务。站点缺驱动、独立见证或停稳确认时，先检查 `camera-status` 的状态与原操作；保留原进程和数据卷进行核对。
 
 `camera-check` 对照实际 Docker 平台镜像、部署提交、相机和验收器入口、传感器标识、ROS 话题、域、挂载及网络隔离。只有 `camera-bench` 明确下达后才启动相机台架，并再次核对已启动容器。站点须在板端提供正确的设备驱动、时间线和独立见证；缺项会使采集保持未证实。未装驱动时可以执行只读检查并查看台架状态。镜像不一致或活动控制服务占用当前项目时，请先查原部署与未完成租约。回退先执行 `sh scripts/robot.sh plugins camera-drain`，等待 `camera-status` 显示已确认停止，再执行 `sh scripts/robot.sh plugins camera-stop`。该命令依次释放租约、停止原相机进程、登记 Docker 退出证据。原操作保持原绑定。已锁定的 physical 条目只交给 P2 部署通道；soft 管理器不能安装它。
 

@@ -4,6 +4,8 @@
 
 本文维护**术语、当前扩展矩阵和历史设计依据**。开始新功能时读[插件开发指南](plugin-development.md)，按 [SDD 模板](specs/TEMPLATE.md)定义契约、装卸和测试；本文不替代各接口的版本化协议。
 
+SDD-045 已在 Python 中实现软件插件的 `Context`、`Fiber`、`inject` 与逆序清理。受信插件可以 `apply(ctx)` 注册工具；运行中的依赖失联时，消费者保留原实例并拒绝相关请求。原始相机采集走独立设备轨道。开发者可从接口定义进入首个真实调用，再查看部署组合。[Cordis 语义映射](plugin-runtime-mapping.md) · [软件插件试点](testing/soft-runtime.md) · [相机交接](testing/physical-camera.md)
+
 ## 团队共用的术语
 
 AI 也可作为插件作者。只读衍生工具的发布路径能从未派发的失败任务进入，以独立样本验收，将新工具提供给后续任务。管理器本身可独立装卸；现场规则匹配时，它能自动发布并验证限定工具版本的后续任务。独立服务也可走统一管理入口注册和撤回。[插件作者手册](plugin-authoring.md) · [插件管理与自主恢复](plugin-manager.md)
