@@ -12,6 +12,7 @@
 #include <string_view>
 #include <json-c/json.h>
 
+#include "body_authority.hpp"
 #include "edge_interfaces/action/navigate_to.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -36,7 +37,14 @@ public:
     require_scan_=declare_parameter<bool>("require_scan",false);
     if (require_scan_) scan_=create_subscription<sensor_msgs::msg::LaserScan>("/scan",
         rclcpp::SensorDataQoS().keep_last(1),[this](const sensor_msgs::msg::LaserScan &s){observe_scan(s);});
-    velocity_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 1);
+    if (declare_parameter<bool>("body_runtime", false)) {
+      body_.emplace();
+      body_command_ = create_publisher<std_msgs::msg::String>("/edge/body/command", 5);
+      body_state_ = create_subscription<std_msgs::msg::String>("/edge/body/state", rclcpp::QoS(5).best_effort(),
+          [this](const std_msgs::msg::String &state) { body_->observe(state.data, Clock::now()); });
+    } else {
+      velocity_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 1);
+    }
     odometry_ = create_subscription<nav_msgs::msg::Odometry>(
         "/odom", rclcpp::SensorDataQoS().keep_last(1),
         [this](const nav_msgs::msg::Odometry &sample) { observe(sample); });
@@ -72,6 +80,7 @@ public:
           started_ = Clock::now();
           moving_authorized_ = false;
           stop_outcome_.reset();
+          if (body_) body_->start("gw-" + identity_ + std::to_string(++goal_sequence_));
           event(handle->get_goal()->operation_id,"navigation.accepted","action.started","info","gateway accepted target");
           RCLCPP_INFO(get_logger(), "Tracking %s to (%.3f, %.3f)",
                       handle->get_goal()->operation_id.c_str(), handle->get_goal()->x,
@@ -94,6 +103,13 @@ private:
     field("trace_id",task);field("detail",detail);
     if(last_event_op_==op)field("parent_event_id",last_event_id_);
     auto *data=json_object_new_object();
+    if (body_ && active_ && op == active_->get_goal()->operation_id) {
+      json_object_object_add(data,"body_owner",json_object_new_string(body_->owner().c_str()));
+      if (body_->epoch()) {
+        json_object_object_add(data,"body_boot",json_object_new_string(body_->boot().c_str()));
+        json_object_object_add(data,"body_epoch",json_object_new_uint64(body_->epoch()));
+      }
+    }
     if(require_scan_ && std::isfinite(front_))json_object_object_add(data,"front_range_m",json_object_new_double(front_));
     if (require_scan_ && scan_stamp_ >= 0) {
       json_object_object_add(data,"scan_stamp_ns",json_object_new_int64(scan_stamp_));
@@ -106,6 +122,8 @@ private:
       auto *stop=json_object_new_object();
       auto number=[stop](const char *name,std::int64_t v){json_object_object_add(stop,name,json_object_new_int64(v));};
       number("accepted_samples",stop_samples_);
+      if (body_) json_object_object_add(stop,"authority_released",
+          json_object_new_boolean(body_->released(stop_started_,Clock::now())));
       number("quiet_samples",still_samples_);
       number("sample_gaps",stop_gaps_);
       number("wall_elapsed_ms",std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-stop_started_).count());
@@ -205,11 +223,23 @@ private:
     pose_ = Pose{p.x, p.y, yaw, speed, yaw_rate, stamp, now};
   }
 
-  void drive(double linear, double angular) {
+  void publish_body(const std::string& wire) {
+    if (wire.empty()) return;
+    std_msgs::msg::String msg;
+    msg.data = wire;
+    body_command_->publish(msg);
+  }
+
+  void legacy_velocity(double linear, double angular) {
     geometry_msgs::msg::Twist command;
     command.linear.x = linear;
     command.angular.z = angular;
     velocity_->publish(command);
+  }
+
+  void stop_output() {
+    if (body_) publish_body(body_->stop());
+    else legacy_velocity(0.0, 0.0);
   }
 
   void begin_stop(Outcome outcome, const std::string &reason,const char *code="navigation.cancel_requested") {
@@ -222,7 +252,7 @@ private:
     stop_reason_ = reason;
     stop_code_=code;
     event(active_->get_goal()->operation_id,code,"action.braking",outcome==Outcome::failed?"warn":"info",reason);
-    drive(0.0, 0.0);
+    stop_output();
   }
 
   double distance() const {
@@ -256,15 +286,16 @@ private:
 
   void tick() {
     if (!active_) {
-      drive(0.0, 0.0);
+      if (!body_) legacy_velocity(0.0, 0.0);
       return;
     }
     const auto now = Clock::now();
     if (active_->is_canceling() && stop_outcome_ != Outcome::canceled)
       begin_stop(Outcome::canceled, "cancel requested");
     if (stop_outcome_) {
-      drive(0.0, 0.0);
-      if (fresh(now) && still_samples_ >= 3 && pose_->arrived - still_since_ >= settle_window &&
+      stop_output();
+      if ((!body_ || body_->released(stop_started_, now)) &&
+          fresh(now) && still_samples_ >= 3 && pose_->arrived - still_since_ >= settle_window &&
           std::chrono::nanoseconds(pose_->stamp - still_stamp_) >= settle_window) finish(true);
       else if (now - stop_started_ > 3s) finish(false);
       return;
@@ -279,12 +310,26 @@ private:
     }
     const auto goal = active_->get_goal();
     if (last_heartbeat_id_ != goal->operation_id || now - last_heartbeat_at_ >= heartbeat_timeout) {
-      drive(0.0, 0.0);
+      if (!body_) legacy_velocity(0.0, 0.0);
       if (moving_authorized_ || now - started_ >= heartbeat_timeout)
         begin_stop(Outcome::failed, "operation heartbeat expired","navigation.heartbeat_expired");
       return;
     }
     moving_authorized_ = true;
+    if (body_) {
+      const auto access = body_->access(now);
+      if (access == BodyAuthority::Access::lost) {
+        begin_stop(Outcome::failed, "actuator authority lost", "navigation.body_authority_lost");
+        return;
+      }
+      if (access != BodyAuthority::Access::held) {
+        if (now - started_ >= 3s)
+          begin_stop(Outcome::failed, "actuator authority unavailable", "navigation.body_authority_timeout");
+        else if (access == BodyAuthority::Access::opening)
+          publish_body(body_->open());
+        return;
+      }
+    }
     const double remaining = distance();
     auto feedback = std::make_shared<Navigation::Feedback>();
     feedback->distance_remaining = remaining;
@@ -312,11 +357,16 @@ private:
       begin_stop(Outcome::failed,"invalid scan geometry or insufficient forward coverage",
                  "navigation.scan_invalid");return;
     }
-    drive(linear, angular);
+    if (body_) publish_body(body_->drive(linear, angular));
+    else legacy_velocity(linear, angular);
   }
 
   bool reserved_ = false;
   bool require_scan_=false;
+  std::optional<BodyAuthority> body_;
+  std::uint64_t goal_sequence_ = 0;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr body_command_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr body_state_;
   std::string identity_,last_event_id_,last_event_op_,stop_code_;
   std::uint64_t seq_=0;
   std::int64_t scan_stamp_=-1;

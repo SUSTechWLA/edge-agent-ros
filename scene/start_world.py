@@ -36,4 +36,10 @@ if __name__=="__main__":
     if path:
         output="/tmp/edge-world.sdf"
         generate(base,Layout(path),output)
+    if os.environ.get("EDGE_BODY_RUNTIME") == "1":
+        tree = ET.parse(output)
+        guard, = tree.findall(".//model/plugin[@name='edge_sim::VelocityWatchdog']")
+        ET.SubElement(guard, "body_runtime").text = "true"
+        output = "/tmp/edge-body-world.sdf"
+        tree.write(output, encoding="utf-8", xml_declaration=True)
     os.execlp("gz","gz","sim","-s","-r","--headless-rendering",output)

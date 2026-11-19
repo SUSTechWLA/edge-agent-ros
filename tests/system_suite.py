@@ -282,6 +282,13 @@ def run(args, selected, reasons):
                     if name in selected:
                         stage(name,commands)
                 if "motion-world" in selected:
+                    stage("body-runtime", [
+                        in_image("ctest", "--test-dir", "/opt/edge/build/edge_gateway", "-R", "^body_authority_contract$",
+                                 "--output-on-failure", "--no-tests=error"),
+                        in_image("ctest", "--test-dir", "/tmp/edge-sim-build", "-R", "^body_runtime_endpoint$",
+                                 "--output-on-failure", "--no-tests=error"),
+                        test("system/body_runtime_acceptance.py", "--image", image, "--out", directory/"body-runtime.json"),
+                    ])
                     override=directory/"motion.override.json"
                     override.write_text(json.dumps({"services":{"gateway":{"command":[
                         "ros2","run","edge_gateway","edge_gateway_node","--ros-args","-p",

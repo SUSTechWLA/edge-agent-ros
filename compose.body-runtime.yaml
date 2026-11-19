@@ -1,0 +1,11 @@
+# Opt-in Gazebo profile for the single-rover fenced velocity interface.
+services:
+  sim:
+    environment:
+      EDGE_BODY_RUNTIME: "1"
+  body-bridge:
+    extends: {file: compose.yaml, service: bridge}
+    command: ["ros2", "run", "ros_gz_bridge", "parameter_bridge", "--ros-args", "-r", "__node:=edge_body_bridge", "-p", "config_file:=/opt/edge/sim/body-bridge.yaml"]
+  gateway:
+    depends_on: [body-bridge]
+    command: ["ros2", "run", "edge_gateway", "edge_gateway_node", "--ros-args", "-p", "require_scan:=true", "-p", "body_runtime:=true"]

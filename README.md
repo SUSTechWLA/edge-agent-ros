@@ -36,6 +36,8 @@
 
 需要 Git、可运行 **Linux 容器**的 Docker Engine / Docker Desktop，以及 Docker Compose v2。ROS 2 Jazzy 和 Gazebo Harmonic 在容器内运行。
 
+单底盘的 Body Runtime 可通过 Compose 配置在隔离 Gazebo 中启用。使用原导航入口即可验证控制权交接、网关掉线停车和旧指令重放。[运行步骤与验收条件](docs/specs/SDD-050-body-runtime.md)
+
 ```sh
 git clone https://github.com/SUSTechWLA/edge-agent-ros.git
 cd edge-agent-ros

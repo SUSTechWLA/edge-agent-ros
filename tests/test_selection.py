@@ -15,6 +15,7 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
     (("tests/test_package_boundaries.py","tests/test_kernel.py"), (R,)),
     (("agent/kernel/*",), (*AGENT,"observations","board","plugin-isolation")),
@@ -180,6 +181,10 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_body_runtime_exercises_the_motion_world(self):
+        for path in ("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime_acceptance.py"):
+            self.assertEqual(selection([path])[0], [R, "motion-world"], path)
+
     def test_contract_package_runs_all_consumers(self):
         self.assertEqual(selection(["edge_contracts/events.py"])[0], list(STAGES))
         self.assertEqual(selection(["tests/test_package_boundaries.py"])[0], [R])
