@@ -18,6 +18,8 @@ def task_plan(journal, task, trace, *, registry, planner, read_only_planner, fre
     # then replay this request without a second LLM call or an alternate route.
     candidate = journal.soft_intent(task["id"])
     authority = read_authority.load()
+    if authority is not None:
+        read_authority.check_read_request(task["text"])
     pin = (task.get("trigger") or {}).get("read_only_tool")
     if candidate is None:
         if (hasattr(journal, "operator_intent") and journal.operator_intent(task["id"])
@@ -99,7 +101,7 @@ def worker(journal, robot, planning, verifying=False, *, keep_running, plan_task
                 journal.save(t,"RUNNING","已验证计划",kind="planned")
                 continue
             step=t["steps"][t["cursor"]]
-            read_authority.authorize_dispatch(t["steps"][t["cursor"]:])
+            read_authority.authorize_dispatch(t["steps"][t["cursor"]:], t["text"])
             if verifying:
                 result = verify_candidate(journal, t, step, op, trace, services)
                 finish_step(journal, t, step, op, result)

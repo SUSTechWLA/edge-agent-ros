@@ -217,6 +217,7 @@ def plan(text, caps, trace=None, *, model_profile=None, model_request=None, oper
             provider, steps = build_plan(text, caps, diagnostic, trace,
                                          model_profile=model_profile, model_request=model_request)
         else:
+            read_authority.check_read_request(text)
             eligible = {name:cap for name, cap in caps.items()
                         if read_authority.admitted(authority, name, cap, cap.get("_soft"))
                         and not runtime_plugins.requirements(cap, policy)}
@@ -386,10 +387,11 @@ def read_output_schema(entries, protocol, computation=None):
         # Keep the v1 HTTP envelope stable; deployed providers receive the
         # complete input contracts in capabilities and the kernel checks them.
         entry = step([item["id"] for item in entries], {"type":"object"})
-        return branch(["ready","requires_control","unsupported"], {"type":"array", "items":entry, "maxItems":16})
+        return branch(["ready","requires_control","requires_system_review","unsupported"],
+                      {"type":"array", "items":entry, "maxItems":16})
     choices = [step([item["id"]], item["input_schema"]) for item in entries]
     ready = branch(["ready"], {"type":"array", "items":{"oneOf":choices}, "minItems":1, "maxItems":16})
-    denied = branch(["requires_control","unsupported"], {"type":"array", "maxItems":0})
+    denied = branch(["requires_control","requires_system_review","unsupported"], {"type":"array", "maxItems":0})
     options = [ready, denied] if choices else [denied]
     if computation is not None:
         compose = branch(["read_compute"], {"type":"array", "maxItems":0})
@@ -402,8 +404,11 @@ def read_output_schema(entries, protocol, computation=None):
 def validate_read_answer(answer, caps, text, actor):
     if (not isinstance(answer, dict) or set(answer) != {"disposition","steps","reason"}
             or not isinstance(answer["steps"], list) or not isinstance(answer["reason"], str)
-            or not answer["reason"].strip() or answer["disposition"] not in ("ready","requires_control","unsupported")):
+            or not answer["reason"].strip()
+            or answer["disposition"] not in ("ready","requires_control","requires_system_review","unsupported")):
         raise ValueError("需要 disposition、steps 和非空 reason")
+    if answer["disposition"] == "requires_system_review":
+        raise read_authority.system_change_review()
     if answer["disposition"] == "requires_control" or authorization.explicit_motion_request(text):
         raise failure(Refused, "任务涉及机器人控制，需要单独取得操作授权",
                       "planner.control_requires_approval", "deployment")

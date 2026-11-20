@@ -2,10 +2,47 @@
 import json
 import os
 from pathlib import Path
+import re
 
 from edge_contracts.descriptor import NAME, SHA
 from edge_contracts.errors import OutcomeUnknown, Refused, failure
 from edge_contracts.spatial_facts import identifier
+
+
+# Direct change requests are stopped before any model or author runs. The DSH
+# allowlist independently enforces the absence of system-changing capabilities.
+_PROTECTED = re.compile(
+    r"系统框架|(?:agent|机器人|导航|运行时|系统)\s*(?:的)?(?:内核|框架|源码)|底层控制|底盘(?:的)?(?:参数|控制|固件|配置|限速|速度上限|PID)"
+    r"|控制器|控制参数|固件|(?:物理|执行器|底盘|运动|硬件)(?:控制|操作|写入)?(?:的)?(?:权限|授权|白名单)"
+    r"|\b(?:(?:agent|robot|system|runtime|navigation)\s+(?:framework|kernel|source(?:\s+code)?)"
+    r"|firmware|controllers?|(?:chassis|drive[- ]base)\s+(?:parameters?|configuration|limits?|PID)"
+    r"|(?:motion|hardware|actuator|physical)(?:\s+control)?\s+(?:permissions?|authority|allowlist))\b", re.I)
+_CHANGE = re.compile(
+    r"修改|更改|变更|重写|重构|优化|调优|调整|升级|更新|替换|改写|改成|改为|设为|设成|设置|调到|调成|调高|调低|提高|降低|"
+    r"刷写|烧录|下发|重刷|部署|关闭|移除|绕过|放开|开放|启用|授予|扩大|解除|撤销"
+    r"|\b(?:modify|change|rewrite|refactor|optimi[sz]e|tune|retune|adjust|upgrade|update|replace|patch|set|"
+    r"flash|reflash|deploy|disable|bypass|enable|grant|expand|revoke)\b", re.I)
+_CLAUSE = re.compile(
+    r"[,，。;；!！?？\n]|然后|随后|接着|并且?|同时|(?<!不)(?<!别)(?<!不要)再|之后|但是?|而是|"
+    r"\b(?:and(?:\s+then)?|then|but)\b|后(?=请|把|将|读取|" + _CHANGE.pattern + ")", re.I)
+_READ_OR_NEGATION = re.compile(
+    r"读取|只读|查看|分析|检查|检测|查询|解释|介绍|说明|记录|列出|探讨|评估|讨论|如何|怎么|是否|建议|"
+    r"禁止|不要|不得|不许|不用|无需|不必|不准|不能|别|不允许|不做|不对|不(?:再|去)?$"
+    r"|\b(?:read|inspect|analy[sz]e|check|explain|describe|review|compare|report|verify|suggest|"
+    r"recommend|whether|how|never|not|without|avoid|prohibit)\b|n['’]t\b", re.I)
+
+
+def system_change_review():
+    return failure(Refused, "变更机器人框架、控制器、固件或物理权限需进入部署方的独立变更审查",
+                   "planner.system_change_requires_review", "deployment")
+
+
+def check_read_request(text):
+    for clause in _CLAUSE.split(text):
+        change = _CHANGE.search(clause)
+        target = _PROTECTED.search(clause)
+        if change and target and not _READ_OR_NEGATION.search(clause[:change.start()]):
+            raise system_change_review()
 
 
 def unique_fields(pairs):
@@ -81,9 +118,12 @@ def require_steps(policy, steps):
                           "planner.read_verifier_unapproved", "deployment")
 
 
-def authorize_dispatch(steps):
+def authorize_dispatch(steps, text=None):
     try:
-        require_steps(load(), steps)
+        policy = load()
+        if policy is not None and text is not None:
+            check_read_request(text)
+        require_steps(policy, steps)
     except Refused as exc:
         if steps[0].get("operation_id") or steps[0].get("status") != "PENDING":
             raise failure(OutcomeUnknown, "已派发操作需要按原操作 ID 对账。" + str(exc),
