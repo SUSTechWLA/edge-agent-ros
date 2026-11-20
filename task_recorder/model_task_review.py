@@ -268,6 +268,62 @@ class Chapter:
     rows: list
     image: object = None
     image_label: str = ""
+    source_task: str = ""
+
+
+def blocked_attempt(path, current, submitted_ns):
+    task = read(path)
+    rows = task["events"]
+    require(task["state"] == "BLOCKED" and task["steps"] == [] and not task["events_has_more"] and
+            task["id"] != current["id"] and task["text"] == current["text"] and task["trigger"]["kind"] == "user",
+            "earlier attempt must be a separate blocked submission of the identical wording")
+    require(rows and rows[0]["kind"] == "accepted" and rows[-1]["kind"] == "blocked" and
+            all(r["kind"] not in ("dispatch", "tool.request", "tool.response", "verified") for r in rows),
+            "earlier task contains a dispatch or lacks its terminal event")
+    events = {}
+    for r in rows:
+        payload = json.loads(r["payload"]) if isinstance(r["payload"], str) else r["payload"]
+        require(r["task_id"] == task["id"] and payload["trace"]["trace_id"] == task["trace_id"]
+                and payload["trace"]["event_id"] == r["event_id"], "different source task in earlier attempt")
+        events.setdefault(r["kind"], []).append(payload)
+    request, = events["model.request"]
+    response, = events["model.response"]
+    treq, tres = request["trace"], response["trace"]
+    require(treq["protocol"] == tres["protocol"] == "ollama.chat" and treq["call_id"] == tres["call_id"],
+            "earlier model exchange mismatch")
+    req, res = contents(treq), contents(tres)
+    message, = (m for m in req["messages"] if m["role"] == "user")
+    seen = json.loads(message["content"])
+    answer = json.loads(res["message"]["content"])
+    denial = events["blocked"][0]["diagnostic"]
+    require(seen["request"] == task["text"] and req["model"] == res["model"] and
+            answer.get("disposition") == "unsupported" and answer["steps"] == [] and
+            denial["code"] == "planner.unsupported" and denial["message"] == task["detail"] == answer["reason"],
+            "earlier task has a different decision or diagnosis")
+    start, end = utc_ns(rows[0]["utc"]), utc_ns(rows[-1]["utc"])
+    require(start <= end < submitted_ns, "earlier task did not precede main submission")
+    return dict(task_id=task["id"], text=task["text"], model=req["model"], disposition=answer["disposition"],
+                reason=denial["message"], state=task["state"], code=denial["code"], dispatches=0,
+                offered=[x["id"] for x in seen["capabilities"]], first_ns=str(start), final_ns=str(end),
+                request_sha256=treq["artifact"]["sha256"], response_sha256=tres["artifact"]["sha256"],
+                task_sha256=sha(path))
+
+
+def prior_chapter(prior, face):
+    im = Image.new("RGB", (820, 515), DARK)
+    d = ImageDraw.Draw(im)
+    text(d, 36, 41, "前一次独立提交", 23, "#a3dfbd", face)
+    text(d, 35, 106, prior["state"], 55, GOLD, face)
+    d.line((36, 188, 783, 188), fill="#53756b")
+    text(d, 36, 219, prior["task_id"], 27, "#f4f3ed", face, 747)
+    text(d, 36, 282, "模型返回  " + prior["disposition"], 25, "#d5e5d9", face, 747)
+    text(d, 36, 347, "工具派发  0", 25, "#d5e5d9", face)
+    text(d, 36, 437, "账本时间  " + clock(ns(prior["first_ns"])) + " — " + clock(ns(prior["final_ns"])),
+         20, "#b5cbbf", face, 747)
+    return Chapter("回看前一次独立提交", ns(prior["final_ns"]), 6, [
+        ("同一请求的首次判断", prior["reason"]), ("当时使用的模型", prior["model"]),
+        ("内核记录的终态", prior["code"]), ("接下来", "查看新任务 ID 下的完整运行")],
+        im, "前一任务的模型回执与账本摘录", prior["task_id"])
 
 
 def program(step):
@@ -485,15 +541,20 @@ def chaptered_video(out, scenes, chapters, ffmpeg, ffprobe):
     return frames
 
 
-def render(source, destination, face, ffmpeg, ffprobe):
+def render(source, destination, face, ffmpeg, ffprobe, *, prior_attempt=None):
     task, submit, decision, results, chapters, window, receipt = mission(source, face)
+    elapsed = (chapters[-1].stamp - chapters[0].stamp) / 1e9
+    prior = blocked_attempt(prior_attempt, task, chapters[0].stamp) if prior_attempt else None
+    if prior:
+        chapters.insert(1, prior_chapter(prior, face))
     with map_output(destination) as out:
         preview_refs = []
         snapshots = []
 
         def scenes():
             for i, ch in enumerate(chapters):
-                end = chapters[min(i + 1, len(chapters) - 1)].stamp
+                following = next((other for other in chapters[i+1:] if other.source_task == ch.source_task), ch)
+                end = following.stamp
                 cached_key, cached = object(), None
                 ticks = ch.seconds * FPS
                 for n in range(ticks):
@@ -510,7 +571,7 @@ def render(source, destination, face, ffmpeg, ffprobe):
                             if not preview_refs or preview_refs[-1]["ref"] != ref:
                                 preview_refs.append(dict(stamp_ns=str(stamp), ref=ref))
                     if key != cached_key:
-                        cached = frame(ch, face, pic, label or "相机采集窗口", task["id"], i+1, len(chapters))
+                        cached = frame(ch, face, pic, label or "相机采集窗口", ch.source_task or task["id"], i+1, len(chapters))
                         cached_key = key
                     if not n:
                         name = f"stage-{i+1:02}.png"
@@ -522,7 +583,8 @@ def render(source, destination, face, ffmpeg, ffprobe):
         chapter_table = []
         offset = 0
         for ch, screenshot in zip(chapters, snapshots):
-            chapter_table.append(dict(title=ch.title, sec=offset, source_ns=str(ch.stamp), snapshot=screenshot))
+            chapter_table.append(dict(title=ch.title, sec=offset, source_ns=str(ch.stamp), snapshot=screenshot,
+                                      source_task_id=ch.source_task or task["id"]))
             offset += ch.seconds
         report = dict(task_id=task["id"], original_request=task["text"], status=task["state"], model=decision,
                       operations=results, timeline_sha256=receipt.record.timeline_digest,
@@ -530,8 +592,10 @@ def render(source, destination, face, ffmpeg, ffprobe):
                       submit_sha256=sha(source / "submit.json"), http_response_sha256=submit["response_body_sha256"],
                       video_sha256=sha(out / "task.mp4"), frames=count, fps=FPS, duration_s=count/FPS,
                       timing="guided replay of verified source events; real camera frames follow source time",
-                      source_elapsed_s=(chapters[-1].stamp - chapters[0].stamp)/1e9, chapters=chapter_table,
+                      source_elapsed_s=elapsed, chapters=chapter_table,
                       camera_previews=preview_refs)
+        if prior:
+            report["prior_attempt"] = prior
         if window:
             report["sensor_window_sha256"] = sha(source / "sensor-timeline.jsonl")
         (out / "video.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf8")
@@ -551,13 +615,14 @@ def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--source", type=Path, required=True)
     cli.add_argument("--out", type=Path, required=True)
+    cli.add_argument("--prior-attempt", type=Path, help="earlier blocked task ledger from the same user wording")
     cli.add_argument("--font", required=True)
     cli.add_argument("--ffmpeg", default=shutil.which("ffmpeg"))
     cli.add_argument("--ffprobe", default=shutil.which("ffprobe"))
     args = cli.parse_args()
     if not args.ffmpeg or not args.ffprobe:
         cli.error("FFmpeg and FFprobe are required")
-    report = render(args.source, args.out, args.font, args.ffmpeg, args.ffprobe)
+    report = render(args.source, args.out, args.font, args.ffmpeg, args.ffprobe, prior_attempt=args.prior_attempt)
     print(json.dumps({k: report[k] for k in ("task_id", "duration_s", "video_sha256")}))
 
 
