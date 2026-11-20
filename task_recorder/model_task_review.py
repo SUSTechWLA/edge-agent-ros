@@ -390,7 +390,7 @@ def fusion_chapter(view, stamp, face):
                    f"机体坐标系 {view.body}   ·   栅格边长 {grid['resolution_m']:g} m")
 
 
-def operator_chapters(operation):
+def operator_chapters(operation, operator_policy):
     sections = [Chapter("模型将感知与计算拆分", operation["decomposed_ns"], 5, [
         ("测量输入", json.dumps(operation["original_inputs"], ensure_ascii=False)), ("计算契约", operation["contract"]),
         ("契约描述", operation["spec"])])]
@@ -408,9 +408,14 @@ def operator_chapters(operation):
         elif phase == "operator.rejected":
             sections.append(Chapter("候选未通过验证", stamp, 3, [("验证诊断", r["code"]), ("候选次数", r["attempt"])]))
         elif phase == "operator.verified":
-            sections.append(Chapter("独立用例验收通过", stamp, 4, [("通过用例数", r["validation"]["case_count"]),
-                                    ("用例摘要", r["validation"]["cases_sha256"][:24] + "…"),
-                                    ("验收语言", r["validation"]["language"])]))
+            require(operator_policy, "missing the independent deployment policy")
+            cases = read(operator_policy)["contracts"][operation["contract"]]["cases"]
+            require(len(cases) == r["validation"]["case_count"], "case count differs from published validation")
+            checked = [(f"用例 {i}   ·   输入数列", f"{json.dumps(c['sample'])}  →  {c['expected']:g}")
+                       for i, c in enumerate(cases, 1)]
+            for group in pages(checked, 4):
+                sections.append(Chapter("独立用例验收通过", stamp, 4, [
+                    ("预期值与独立复算一致", str(len(cases)) + " / " + str(len(cases)) + " 个部署方用例通过"), *group]))
         elif phase in ("operator.installed", "operator.reused"):
             sections.append(Chapter("安装通过验收的程序" if phase == "operator.installed" else "直接复用已安装的程序",
                                     stamp, 4, [("算子契约", operation["contract"]), ("内容摘要", operation["digest"])]))
@@ -444,7 +449,7 @@ def mission(source, face, *, operator_file=None, operator_policy=None):
                                 [("本次模型输入", f"{decision['model']}   ·   {len(candidates)} 项只读能力"), *group]))
     choices = [(f"第 {i} 步    {step['tool']}", program(step)) for i, step in enumerate(task["steps"], 1)]
     if decision["computation"]:
-        chapters.extend(operator_chapters(decision["computation"]))
+        chapters.extend(operator_chapters(decision["computation"], operator_policy))
     else:
         for group in pages(choices, 3):
             chapters.append(Chapter("模型返回结构化计划", decision["response_ns"], 6,
