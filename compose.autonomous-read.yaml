@@ -1,0 +1,11 @@
+# Overlay for a v2 site that already exposes the Agent socket and a restricted catalog.
+services:
+  agent:
+    image: ${EDGE_READ_AGENT_IMAGE:?pin an Agent release supporting autonomous read policy}
+    environment:
+      EDGE_AUTONOMOUS_READ_POLICY: /read-policy/approved.json
+      EDGE_ACTOR_REF: ${EDGE_NAV_ACTOR:?set the approved actor for this site}
+      EDGE_CONTRACT_DIR: /planner-profile
+    volumes:
+      - ${EDGE_READ_POLICY_DIR:?directory containing approved.json}:/read-policy:ro
+      - ${EDGE_READ_PLANNER_DIR:?directory containing planner-profile.json}:/planner-profile:ro

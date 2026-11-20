@@ -34,11 +34,14 @@ OBJECT_TOOLS = {"perception.see_object": ("see_object", "perception.object_locat
 
 QUERY_SERVICES = {"perception.frame_statistics": ("/query", "analysis", ["actor_ref", "program"])}
 QUERY_TOOLS = {"perception.query_frame": ("query_frame", "perception.frame_statistics",
-               "对当前相机画面按区域测量和比较数值。program 写成英文表达式：通道 | grid(行,列) | 统计量。"
-               "通道可用 depth(光轴深度米)、brightness(亮度)、red、green、blue。"
-               "统计量可用 mean、median、min、max、coverage(有效百分比)、quantile(q)。"
-               "grid 可省略。可以在 grid 前加 crop(x0,y0,x1,y1)，坐标和 q 使用 0 到 1 的数字。"
-               "行从上到下，列从左到右。", [], ["program"])}
+               "Compute measurements on one live RGB-D image. Each call samples a NEW frame. Compare regions "
+               "of the SAME frame in ONE call using grid(rows,cols). rows is the number of bands top to bottom; "
+               "cols is the number left to right. Using grid alone partitions the entire image equally. "
+               "program grammar: channel | optional crop(x0,y0,x1,y1) | optional grid(rows,cols) | statistic. "
+               "Omit unused stages entirely. Channels: depth (optical depth in metres), brightness, red, green, blue. "
+               "Statistics: mean, median, min, max, coverage (valid %), quantile(q). crop and q accept decimal "
+               "literals between 0 and 1. No fractions or arithmetic. Output includes all region values, units, "
+               "and indices for minima and maxima.", [], ["program"])}
 
 
 def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *, objects=False, queries=False):
@@ -74,6 +77,7 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
         index = json.loads((trust / "catalog.json").read_bytes())
         pending = []
         for pid in [*services, *tools]:
+            version = "1.1.0" if queries else "1.0.0"
             if pid in services:
                 path, result_key, args = services[pid]
                 module = service_module
@@ -87,7 +91,7 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
             else:
                 name, service, description, utterance, args = tools[pid]
                 kind, module, deps = "tool", "agent.read_service_tool", [service]
-                spec = {"service": service, "legacy": {"id": name, "version": "1.0.0", "description": description,
+                spec = {"service": service, "legacy": {"id": name, "version": version, "description": description,
                         "effect": "read", "parameters": {key: "string" for key in args},
                         "utterances": [utterance] if isinstance(utterance, str) else utterance}}
                 fields = {services[service][1]: {"type": "object"}, "observations": {"type": "object"}}
@@ -107,7 +111,7 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
             index["implementations"].setdefault(cx, []).append({"id": pid, "exports": [name], "artifact": file,
                 "kind": "code", "entrypoint": entry, "class": "soft", "source_commit": source_commit,
                 "image_digest": host, "network": network})
-            item.update(id=pid, entrypoint=entry, network=network,
+            item.update(id=pid, version=version, entrypoint=entry, network=network,
                         provides=[{"type": kind, "name": name, "schema_ref": schema}],
                         requires=[{"type": "service", "name": dep, "schema_ref": dep + "/call@1"} for dep in deps],
                         parameters={"schema_ref": schema}, outcomes=obj(fields, closed=False),

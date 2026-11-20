@@ -19,7 +19,9 @@
 | AC-3 | 模型越权、伪造只读声明、撤销绑定、旧计划恢复 | 被拒的控制请求在隔离验收中派发次数为零。真实设备仅运行只读任务。 |
 | AC-4 | 现场用户任务 | 从中文 POST、能力过滤、模型返回、冻结与调用、原始传感器数据，到 Agent 终态均可关联。视频标出来源时间与回放停留。 |
 
-## 验证与回退
+## 迁移与回退
+
+部署配置见 [Agent 站点说明](../../agent/README.md#在只读站点启用模型自主规划)。站点安装命令为 `python3 scripts/prepare_perception_site.py --queries --original OLD_SITE --previous-lock OLD_LOCK --out NEW_DIR --source-commit REV --backend-digest IMAGE_DIGEST --profile RGBD_PROFILE --actor ACTOR`。生效前保存旧锁、运行镜像和 Agent 的任务卷。先启动只接收已发布帧的 `frame-query`，通过站点的 `activate` 服务加载新锁，再以受限策略运行 Agent。只读软件包引用独立的图像、深度和内参 Service，图像计算、物体识别和现有融合各自拥有版本与资源配额。
 
 保留部署前的只读站点、镜像与任务卷。恢复时按 v2 排空顺序撤回新增工具及独占 Service、恢复站点锁和读策略，重启后检查旧任务及冻结的绑定。模型可独立停启，矩阵按感知推理、权限与实机分别验证。
 
