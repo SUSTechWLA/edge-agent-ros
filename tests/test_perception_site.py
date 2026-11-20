@@ -38,6 +38,13 @@ class SiteTest(unittest.TestCase):
             legacy = descriptors["perception.measure_grid"]["config_schema"]["properties"]["profile"]["const"]["legacy"]
             self.assertEqual(legacy["_parameter_schema"]["properties"]["column_count"]["type"], "integer")
             self.assertIn("median", legacy["_parameter_schema"]["properties"]["statistic"]["enum"])
+            ops = extend(root/"q/queries", queries["queries"], root/"ops", "a"*40, "sha256:"+"c"*64,
+                         ROOT/"examples/object-perception/jetson-rover.json", "rover",
+                         operator_policy=ROOT/"profiles/region-operator-contracts.json")
+            _, installed = verify(root/"ops/operators", ops["operators"])
+            self.assertEqual({r["name"] for r in installed["perception.analyze_regions"]["requires"]},
+                             {"perception.frame_statistics", "computation.numeric"})
+            self.assertEqual(installed["computation.numeric"]["requires"], [])
         pin = {"id": "mark_target", "binding": "sha256:"+"1"*64}
         trigger_input({"kind":"agent","source":"plugin.supervisor","id":"follow","parent_task_id":"original",
                        "trace_id":"original","parent_event_id":"release","read_only_tool":pin})

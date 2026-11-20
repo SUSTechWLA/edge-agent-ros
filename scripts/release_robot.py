@@ -32,7 +32,8 @@ FILES.update({"scripts/prepare_navigation.py", "scripts/navigation_odometry_benc
              "scripts/verify_perception_candidate.py", "scripts/run_object_model_isolated.sh",
              "compose.object-perception.yaml", "examples/object-perception/jetson-rover.json",
              "capabilities/perception-objects/pack.json", "compose.frame-query.yaml", "compose.autonomous-read.yaml",
-             "capabilities/perception-queries/pack.json"})
+             "capabilities/perception-queries/pack.json", "capabilities/perception-operators/pack.json",
+             "profiles/region-operator-contracts.json", "compose.perception-operators.yaml"})
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
 BOARD_SCAFFOLD = {".gitattributes", ".gitignore", "map-inputs/.gitkeep", "observations/.gitkeep",

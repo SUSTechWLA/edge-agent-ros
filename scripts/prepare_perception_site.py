@@ -55,7 +55,8 @@ QUERY_TOOLS["perception.measure_grid"] = (
     [], list(GRID_FIELDS))
 
 
-def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *, objects=False, queries=False):
+def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *,
+            objects=False, queries=False, operator_policy=None):
     lock, old = verify(original, previous_lock)
     if not GIT.fullmatch(source_commit) or not SHA.fullmatch(backend_digest):
         raise ValueError("invalid source or backend identity")
@@ -79,6 +80,19 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
         services, tools = QUERY_SERVICES, QUERY_TOOLS
         stages = (("queries", ["perception-queries"]),)
         peer, service_module = "frame-query", "perception.spatial_facts.frame_query_service"
+    if operator_policy is not None:
+        if objects or queries or "perception.frame_statistics" not in old:
+            raise ValueError("operator projection needs the installed single-frame statistics service")
+        policy = json.loads(operator_policy.read_bytes())
+        if policy.get("runner") != "analyze_regions" or not policy.get("contracts"):
+            raise ValueError("missing numerical operator policy")
+        services = {"computation.numeric": ("/evaluate", "derived", ["operator_digest", "values"])}
+        tools = {"perception.analyze_regions": ("analyze_regions", "computation.numeric",
+                 "Evaluate one installed numerical program on the measured regions of a single live image.",
+                 [], ["operator_digest", *GRID_FIELDS])}
+        stages = (("operators", ["perception-operators"]),)
+        peer, service_module = "operator-evaluator", "agent.numeric_service"
+        config_digest = sha(operator_policy.read_bytes())
     if set(old).intersection(services) or set(old).intersection(tools):
         raise ValueError("requested capability already exists in the original site")
     with tempfile.TemporaryDirectory(dir=output) as tmp:
@@ -95,6 +109,8 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
                 name, kind = pid, "service"
                 spec = {"service": name, "path": path, "result_key": result_key}
                 deps = ["sensing.observations"]
+                if pid == "computation.numeric":
+                    deps = []
                 fields = {"ok": {"type": "boolean"}}
                 network = {"ingress": [], "egress": [peer]}
                 settings[pid] = {"backend_digest": backend_digest, "profile_digest": config_digest}
@@ -116,6 +132,16 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
                 params = obj(GRID_FIELDS)
                 spec["legacy"]["parameters"] = {k: v["type"] for k, v in GRID_FIELDS.items()}
                 # Legacy v2 hosts return this immutable projection verbatim.
+                spec["legacy"]["_parameter_schema"] = params
+            if pid == "computation.numeric":
+                params = obj({"operator_digest":{"type":"string", "minLength":71, "maxLength":71},
+                              "values":{"type":"array", "minItems":1, "maxItems":32, "items":{"type":"number"}}})
+            if pid == "perception.analyze_regions":
+                deps = ["perception.frame_statistics", "computation.numeric"]
+                module = "perception.spatial_facts.region_operator_tool"
+                args_schema = {"operator_digest":{"type":"string", "minLength":71, "maxLength":71}, **GRID_FIELDS}
+                params = obj(args_schema)
+                spec["legacy"]["parameters"] = {k:v["type"] for k,v in args_schema.items()}
                 spec["legacy"]["_parameter_schema"] = params
             filename = "assets/" + name + ".json"
             save(trust / filename, params)
@@ -163,10 +189,12 @@ if __name__ == "__main__":
     mode = cli.add_mutually_exclusive_group()
     mode.add_argument("--objects", action="store_true", help="add RGB-D object location")
     mode.add_argument("--queries", action="store_true", help="add bounded RGB-D frame queries")
+    mode.add_argument("--operator-policy", type=Path, help="add the pure operator evaluator and its RGB-D input projection")
     for key in ("original", "out", "profile"):
         cli.add_argument("--"+key, type=Path, required=True)
     for key in ("previous-lock", "source-commit", "backend-digest", "actor"):
         cli.add_argument("--"+key, required=True)
     args = cli.parse_args()
     print(json.dumps(prepare(args.original, args.previous_lock, args.out, args.source_commit,
-                             args.backend_digest, args.profile, args.actor, objects=args.objects, queries=args.queries)))
+                             args.backend_digest, args.profile, args.actor, objects=args.objects, queries=args.queries,
+                             operator_policy=args.operator_policy)))
