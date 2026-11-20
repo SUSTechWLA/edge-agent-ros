@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from agent import planning
+from agent import planning, read_operators
 from agent.kernel import read_authority, worker
 from agent.kernel.ledger import Journal
 from edge_contracts.errors import Refused, Unavailable
@@ -144,6 +144,42 @@ class OperatorTask(unittest.TestCase):
         self.assertEqual(caught.exception.code,"operator.binding_denied")
         self.assertEqual(list(self.ops.iterdir()),[])
         self.assertNotIn("planner.frozen",[k for k,_ in self.events])
+
+    def test_same_program_cannot_overwrite_another_contract_or_its_validation(self):
+        self.run_plan(self.journal.create("first","use spread"), Mock(side_effect=[self.gap,self.author_reply]))
+        target, = self.ops.glob("*.json")
+        original = target.read_bytes()
+        record = json.loads(original)
+        doc = json.loads(self.site.read_bytes())
+        doc["contracts"]["alias"] = self.contract
+        self.site.write_text(json.dumps(doc))
+        alias = deepcopy(self.gap)
+        alias["computation"]["contract"] = "alias"
+        with self.assertRaises(Refused) as conflict:
+            self.run_plan(self.journal.create("alias","use the second declared contract"),
+                          Mock(side_effect=[alias,self.author_reply]))
+        self.assertEqual(conflict.exception.code, "operator.record_conflict")
+        self.assertEqual(target.read_bytes(), original)
+        site = read_operators.Operators.configured()
+        self.assertFalse(site.pointer("alias").exists())
+        # A forged index must not make the first contract execute as the second.
+        site.pointer("alias").write_text(json.dumps(record["operator_digest"]))
+        with self.assertRaises(Refused) as mismatch:
+            site.inspect("alias")
+        self.assertEqual(mismatch.exception.code, "operator.record_invalid")
+        site.pointer("alias").unlink()
+        # Corrupt only the saved qualification; the bytecode digest still matches.
+        corrupt = deepcopy(record)
+        corrupt["validation"]["case_count"] += 1
+        target.write_text(json.dumps(corrupt))
+        corrupt_bytes = target.read_bytes()
+        with self.assertRaises(Refused) as mismatch:
+            site.inspect("spread")
+        self.assertEqual(mismatch.exception.code, "operator.record_invalid")
+        with self.assertRaises(Refused) as conflict:
+            site.install("spread",self.program,record["validation"])
+        self.assertEqual(conflict.exception.code, "operator.record_conflict")
+        self.assertEqual(target.read_bytes(), corrupt_bytes)
 
 
 if __name__ == "__main__":

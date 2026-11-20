@@ -95,6 +95,15 @@ class Operators:
         # A changed specification (including verification cases) needs fresh qualification.
         return self.directory / ".contracts" / content_hash([contract, self.contracts[contract]])
 
+    def check_record(self, contract, digest):
+        record = read_json(self.directory / (digest[7:] + ".json"))
+        spec = self.contracts[contract]
+        if (record["operator_digest"] != digest or record["contract"] != contract
+                or record["language"] != numeric.LANGUAGE or record["description"] != spec["description"]
+                or numeric.digest(record["program"]) != digest[7:]
+                or content_hash(record["validation"]) != content_hash(numeric.verify(record["program"], spec["cases"]))):
+            raise ValueError("operator qualification mismatch")
+
     def inspect(self, contract):
         pointer = self.pointer(contract)
         if not pointer.exists():
@@ -103,11 +112,7 @@ class Operators:
             digest = read_json(pointer)
             if not isinstance(digest, str) or not SHA.fullmatch(digest):
                 raise ValueError()
-            record = read_json(self.directory / (digest[7:] + ".json"))
-            if (record["operator_digest"] != digest or record["contract"] != contract
-                    or numeric.digest(record["program"]) != digest[7:]
-                    or record["validation"] != numeric.verify(record["program"], self.contracts[contract]["cases"])):
-                raise ValueError()
+            self.check_record(contract, digest)
             return digest
         except (KeyError, TypeError, ValueError, OSError, RecursionError) as exc:
             raise reject("已登记算子的内容或验收与现场契约不一致", "operator.record_invalid") from exc
@@ -127,14 +132,16 @@ class Operators:
 
     def install(self, contract, program, proof):
         digest = "sha256:" + numeric.digest(program)
+        if content_hash(proof) != content_hash(numeric.verify(program, self.contracts[contract]["cases"])):
+            raise reject("待登记的验收与当前部署契约不一致", "operator.validation_failed")
         target = self.directory / (digest[7:] + ".json")
         record = {"program":program,"language":numeric.LANGUAGE,"operator_digest":digest,"contract":contract,
                   "description":self.contracts[contract]["description"],"validation":proof}
         if not publish_once(target, record):
-            old = read_json(target)
-            if (old.get("operator_digest") != digest or numeric.digest(old.get("program")) != digest[7:]
-                    or old.get("contract") != contract or old.get("validation") != proof):
-                raise reject("已有内容摘要绑定了不同的契约或验收", "operator.record_conflict")
+            try:
+                self.check_record(contract, digest)
+            except (KeyError, TypeError, ValueError, OSError, RecursionError) as exc:
+                raise reject("已有内容摘要绑定了不同的契约或验收", "operator.record_conflict") from exc
         installed = publish_once(self.pointer(contract), digest)
         return self.inspect(contract), installed
 
