@@ -26,7 +26,13 @@ TOOLS = {
 }
 
 
-def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor):
+OBJECT_SERVICES = {"perception.object_location": ("/locate", "grounding", ["actor_ref", "target"])}
+OBJECT_TOOLS = {"perception.see_object": ("see_object", "perception.object_location",
+                 "从彩色图寻找指定物体并测量其可见表面到相机的距离",
+                 ["请帮我找到{target}，量一下它离相机有多远", "帮我看看{target}在哪里"], ["target"])}
+
+
+def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *, objects=False):
     lock, old = verify(original, previous_lock)
     if not GIT.fullmatch(source_commit) or not SHA.fullmatch(backend_digest):
         raise ValueError("invalid source or backend identity")
@@ -38,28 +44,36 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
     config_digest = sha(profile_file.read_bytes())
     host = old["sensing.published"]["provenance"]["image_digest"]
     settings = {key: json.loads((original / "config" / (key + ".json")).read_bytes()) for key in old}
+    services = OBJECT_SERVICES if objects else SERVICES
+    tools = OBJECT_TOOLS if objects else TOOLS
+    stages = (("objects", ["perception-objects"]),) if objects else (
+        ("ready", ["perception-static"]), ("candidate", ["perception-static", "perception-markup"]))
+    if set(old).intersection(services) or set(old).intersection(tools):
+        raise ValueError("requested capability already exists in the original site")
     with tempfile.TemporaryDirectory(dir=output) as tmp:
         base = Path(tmp) / "input"
         shutil.copytree(original, base)
         trust = base / "trust"
         index = json.loads((trust / "catalog.json").read_bytes())
         pending = []
-        for pid in [*SERVICES, *TOOLS]:
-            if pid in SERVICES:
-                path, result_key, args = SERVICES[pid]
-                name, kind, module = pid, "service", "perception.spatial_facts.compute_service"
+        for pid in [*services, *tools]:
+            if pid in services:
+                path, result_key, args = services[pid]
+                module = "perception.spatial_facts.object_service" if objects else "perception.spatial_facts.compute_service"
+                name, kind = pid, "service"
                 spec = {"service": name, "path": path, "result_key": result_key}
                 deps = ["sensing.observations"]
                 fields = {"ok": {"type": "boolean"}}
-                network = {"ingress": [], "egress": ["stationary-perception"]}
+                network = {"ingress": [], "egress": ["object-perception" if objects else "stationary-perception"]}
                 settings[pid] = {"backend_digest": backend_digest, "profile_digest": config_digest}
                 item = deepcopy(old["sensing.published"])
             else:
-                name, service, description, utterance, args = TOOLS[pid]
+                name, service, description, utterance, args = tools[pid]
                 kind, module, deps = "tool", "agent.read_service_tool", [service]
                 spec = {"service": service, "legacy": {"id": name, "version": "1.0.0", "description": description,
-                        "effect": "read", "parameters": {key: "string" for key in args}, "utterances": [utterance]}}
-                fields = {SERVICES[service][1]: {"type": "object"}, "observations": {"type": "object"}}
+                        "effect": "read", "parameters": {key: "string" for key in args},
+                        "utterances": [utterance] if isinstance(utterance, str) else utterance}}
+                fields = {services[service][1]: {"type": "object"}, "observations": {"type": "object"}}
                 network = {"ingress": [], "egress": []}
                 settings[pid] = {} if "actor_ref" in args else {"actor_ref": actor}
                 item = deepcopy(old["navigation.read_spatial_observations"])
@@ -89,7 +103,7 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
             item["content_digest"] = compute_content_digest(item, trust)
             save(base / "releases" / (item["id"] + ".plugin.json"), item)
         hashes = {}
-        for stage, packs in (("ready", ["perception-static"]), ("candidate", ["perception-static", "perception-markup"])):
+        for stage, packs in stages:
             profile = {"schema_version": 1, "id": "perception-" + stage, "policy": lock["policy"],
                        "packs": sorted([*lock["packs"], *packs]), "settings": dict(settings)}
             if stage == "ready":
@@ -108,10 +122,11 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
 
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
+    cli.add_argument("--objects", action="store_true", help="add the RGB-D object location service and its direct read tool")
     for key in ("original", "out", "profile"):
         cli.add_argument("--"+key, type=Path, required=True)
     for key in ("previous-lock", "source-commit", "backend-digest", "actor"):
         cli.add_argument("--"+key, required=True)
     args = cli.parse_args()
     print(json.dumps(prepare(args.original, args.previous_lock, args.out, args.source_commit,
-                             args.backend_digest, args.profile, args.actor)))
+                             args.backend_digest, args.profile, args.actor, objects=args.objects)))

@@ -1,0 +1,24 @@
+# Read-only software on the same private network as the published facts gateway.
+services:
+  object-perception:
+    image: ${EDGE_OBJECT_PERCEPTION_IMAGE:?pin the RGB-D location runtime}
+    pull_policy: never
+    profiles: [published]
+    networks: [facts]
+    read_only: true
+    cap_drop: [ALL]
+    group_add: ["${EDGE_OBJECT_SOCKET_GID:-1000}"]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    tmpfs: [/tmp]
+    pids_limit: 32
+    mem_limit: 192m
+    environment:
+      EDGE_OBJECT_PERCEPTION_DIGEST: ${EDGE_OBJECT_PERCEPTION_DIGEST:?pin release digest}
+    entrypoint: [python3, -B, -m, perception.spatial_facts.object_server, --profile, /config/object.json, --socket, /model/object.sock]
+    volumes:
+      - ${EDGE_OBJECT_PROFILE:?file with the approved camera and model references}:/config/object.json:ro
+      - ${EDGE_OBJECT_SOCKET_DIR:?private detector socket directory}:/model:ro
+      - image-facts:/inputs/color:ro
+      - depth-facts:/inputs/depth:ro
+      - camera-facts:/inputs/calibration:ro

@@ -44,12 +44,13 @@ def path_parts(value):
     return parts
 
 
-class Perception:
+class PublishedArtifacts:
+    """Read the exact bytes selected by published, actor-scoped ROS receipts."""
     def __init__(self, profile_path, inputs, backend_digest):
         raw = read_bytes(profile_path, 32768)
         profile = parse_json(raw)
-        policy(profile)
-        require(profile.get("schema_version") == 1 and digest_ref(backend_digest), "perception.invalid_release")
+        require(isinstance(profile, dict) and profile.get("schema_version") == 1
+                and identifier(profile.get("actor_ref")) and digest_ref(backend_digest), "perception.invalid_release")
         self.profile, self.inputs, self.backend_digest = profile, inputs, backend_digest
         self.profile_digest = "sha256:" + hashlib.sha256(raw).hexdigest()
         mounts = profile.get("mounts")
@@ -61,10 +62,6 @@ class Perception:
             root = inputs.joinpath(*path_parts(item.get("root")))
             require(all(path != root for path, _ in self.roots.values()), "perception.duplicate_mount")
             self.roots[sid] = (root, item["format"])
-        for sid, cfg in profile["sources"].items():
-            require(isinstance(cfg, dict) and sid in self.roots and
-                    (cfg.get("kind"), self.roots[sid][1]) in (("livox", "livox"), ("depth16", "image")),
-                    "perception.invalid_mount")
         g = self.grounding = profile.get("grounding")
         self.ground_profile = None
         if g is not None:
@@ -72,9 +69,11 @@ class Perception:
                     self.roots[g[k]][1] == fmt for k, fmt in
                     (("rgb_source", "image"), ("depth_source", "image"), ("calibration_source", "calibration")))
                     and g["rgb_source"] != g["depth_source"], "perception.invalid_grounding")
-            depth = g.get("depth_profile", profile["sources"].get(g["depth_source"]))
+            sources = profile.get("sources", {})
+            require(isinstance(sources, dict), "perception.invalid_grounding")
+            depth = g.get("depth_profile", sources.get(g["depth_source"]))
             require(isinstance(depth, dict) and depth.get("kind") == "depth16", "perception.invalid_grounding")
-            self.ground_profile = {**profile, "sources": {**profile["sources"], g["depth_source"]: depth}}
+            self.ground_profile = {**profile, "sources": {**sources, g["depth_source"]: depth}}
 
     def artifacts(self, samples, ids):
         files = {}
@@ -107,6 +106,15 @@ class Perception:
             require("sha256:" + hashlib.sha256(data).hexdigest() == ref, "perception.digest_mismatch")
             files[ref] = data
         return files
+
+class Perception(PublishedArtifacts):
+    def __init__(self, profile_path, inputs, backend_digest):
+        super().__init__(profile_path, inputs, backend_digest)
+        policy(self.profile)
+        for sid, cfg in self.profile["sources"].items():
+            require(isinstance(cfg, dict) and sid in self.roots and
+                    (cfg.get("kind"), self.roots[sid][1]) in (("livox", "livox"), ("depth16", "image")),
+                    "perception.invalid_mount")
 
     def witness(self, windows, batch):
         first = min(a for a, _ in windows.values())
@@ -159,7 +167,7 @@ class Perception:
         return {"result": result, "backend_digest": self.backend_digest, "profile_digest": self.profile_digest}
 
 
-def handler(compute):
+def handler(compute, endpoints=("/fuse", "/ground")):
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -174,7 +182,7 @@ def handler(compute):
             self.wfile.write(data)
 
         def do_POST(self):
-            if self.path not in ("/fuse", "/ground"):
+            if self.path not in endpoints:
                 return self.respond(404, {"error": {"code": "perception.endpoint_unknown"}})
             try:
                 length = self.headers.get_all("Content-Length") or []
