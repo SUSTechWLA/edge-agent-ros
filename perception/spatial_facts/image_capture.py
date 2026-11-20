@@ -105,14 +105,18 @@ def main():
     replace_bytes(args.output / "source.json", json.dumps(binding).encode())
     rclpy.init()
     node = rclpy.create_node("edge_" + args.stream + "_image_reader", enable_rosout=False, start_parameter_services=False)
-    last_read, last_issue = 0.0, 0.0
+    last_bucket, last_issue = None, 0.0
 
     def observe(msg):
-        nonlocal last_read, last_issue
+        nonlocal last_bucket, last_issue
         now = time.monotonic()
-        if now - last_read < 0.25:
+        # Aligned streams share ROS time. Select a sample from the same
+        # 250 ms epoch on independent readers, regardless of startup order.
+        stamp = msg.header.stamp.sec * 10**9 + msg.header.stamp.nanosec
+        bucket = stamp // 250_000_000
+        if bucket == last_bucket:
             return
-        last_read = now
+        last_bucket = bucket
         try:
             sample, data = frame_sample(msg, args.actor_ref, args.source_id, args.frame_id,
                                         args.calibration_dir, args.calibration_source, time.time_ns(), args.stream)

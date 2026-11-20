@@ -1,0 +1,50 @@
+# Apply after published wheel, RGB-D and lidar source overlays.
+services:
+  wheel-witness:
+    image: ${EDGE_NAV_PERCEPTION_IMAGE:?pin the perception and odometry reader image}
+    pull_policy: never
+    profiles: [published]
+    network_mode: host
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    tmpfs: [/tmp]
+    pids_limit: 64
+    mem_limit: 192m
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_NAV_MIRROR_DOMAIN:-140}
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+      ROS_LOG_DIR: /tmp/ros
+    command: [python3, -B, -m, perception.spatial_facts.stationary_odom,
+              --config, /config/odometry.json, --output, /witness]
+    volumes:
+      - ${EDGE_NAV_CAPTURE_CONFIG:-./odometry.json}:/config/odometry.json:ro
+      - stationary-facts:/witness
+  stationary-perception:
+    image: ${EDGE_NAV_PERCEPTION_IMAGE}
+    pull_policy: never
+    profiles: [published]
+    networks: [facts]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    tmpfs: [/tmp]
+    pids_limit: 32
+    mem_limit: 192m
+    environment:
+      EDGE_NAV_PERCEPTION_DIGEST: ${EDGE_NAV_PERCEPTION_DIGEST:?pin release digest}
+    entrypoint: [python3, -B, -m, perception.spatial_facts.perception_server, --profile, /config/perception.json, --port, "8140"]
+    volumes:
+      - ${EDGE_NAV_PERCEPTION_PROFILE:?path to approved geometry and evidence profile}:/config/perception.json:ro
+      - stationary-facts:/inputs/witness:ro
+      - livox-facts:/inputs/lidar:ro
+      - image-facts:/inputs/color:ro
+      - depth-facts:/inputs/depth:ro
+      - camera-facts:/inputs/calibration:ro
+volumes:
+  stationary-facts:
+    driver: local
+    driver_opts: {type: tmpfs, device: tmpfs, o: "size=2m,mode=0755"}

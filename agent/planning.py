@@ -221,7 +221,19 @@ def plan(text, caps, trace=None, *, model_profile=None, model_request=None):
 
 
 def plan_read_only(text, caps, pin):
-    """A restricted follow-up may execute only the approved local declaration."""
+    """Resolve a restricted continuation against its approved immutable binding."""
+    if "binding" in pin:
+        cap = caps.get(pin["id"])
+        if (not cap or not cap.get("_soft") or cap.get("_physical") or cap.get("endpoint")
+                or cap.get("effect") != "read" or binding(cap) != pin["binding"]):
+            raise failure(Refused, "已批准的软件绑定不可用", "planner.approved_binding_unavailable", "registry")
+        steps = match_utterances(normalized(text), {pin["id"]: cap}, text)
+        if not steps or len(steps) != 1:
+            raise failure(Refused, "原任务没有匹配已批准工具", "planner.approved_binding_unavailable", "registry")
+        step = steps[0]
+        step.update(version=cap["version"], binding=binding(cap), status="PENDING",
+                    verification=verification_plan(cap, runtime_plugins.load_policy()))
+        return "local/pinned-soft", [step]
     cap = authorization.approved_read_tool(caps, pin)
     description, args = text, {}
     if is_series(cap):

@@ -37,6 +37,12 @@ def trigger_input(data):
         raise ValueError("自主续办需要父任务、发布事件、原 trace 和只读工具绑定")
     if "read_only_tool" in data:
         pin = data["read_only_tool"]
+        if isinstance(pin, dict) and set(pin) == {"id", "binding"}:
+            if (data["source"] != "plugin.supervisor" or not isinstance(pin["id"], str)
+                    or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,63}", pin["id"])
+                    or not isinstance(pin["binding"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", pin["binding"])):
+                raise ValueError("invalid read-only software release binding")
+            return data
         if (not isinstance(pin,dict) or set(pin)!={"id","version"} or not isinstance(pin["version"],str)
                 or not re.fullmatch(r"[0-9a-f]{64}",pin["version"])):
             raise ValueError("trigger.read_only_tool 格式无效")

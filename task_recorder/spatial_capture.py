@@ -83,13 +83,16 @@ def complete(samples, expected, actor):
     return {s["source_id"] for s in samples} >= expected and all(s["actor_ref"] == actor for s in samples)
 
 
-def receipt_samples(task, key, actor, expected):
+def receipt_samples(task, key, actor, expected, tool="read_spatial_observations"):
     if task["id"] != key or task["state"] != "SUCCEEDED" or len(task["steps"]) != 1:
         raise ValueError("task did not complete a single observation read")
     step = task["steps"][0]
-    if step["tool"] != "read_spatial_observations" or step["args"] != {"actor_ref": actor}:
+    if step["tool"] != tool or step.get("operation_id") != key + "/step/1":
         raise ValueError("unexpected task tool or arguments")
-    data = step["evidence"]
+    if step.get("args", {}).get("actor_ref", actor) != actor:
+        raise ValueError("unexpected task actor")
+    receipt = step["evidence"]
+    data = receipt.get("observations", receipt)
     if data["basis"] != "published" or data["actor_ref"] != actor or not complete(data["samples"], expected, actor):
         raise ValueError("required observations missing from original task receipt")
     if any(not 0 <= int(data["as_of_ns"]) - int(s["stamp_ns"]) <= 10**9 for s in data["samples"]):
@@ -114,7 +117,7 @@ def record(options):
         while time.monotonic() - start < options.timeout:
             tick = time.monotonic()
             if task_file.is_file() and tail_start is None:
-                for sample in receipt_samples(json.loads(task_file.read_bytes()), options.task, options.actor, needed):
+                for sample in receipt_samples(json.loads(task_file.read_bytes()), options.task, options.actor, needed, options.tool):
                     archive.copy(sample)
                 tail_start = tick
             if tail_start is not None and tick - tail_start >= options.tail:
@@ -148,6 +151,7 @@ if __name__ == "__main__":
     cli.add_argument("--url", default="http://spatial-facts:8137/observations")
     cli.add_argument("--actor", required=True)
     cli.add_argument("--task", required=True)
+    cli.add_argument("--tool", default="read_spatial_observations")
     cli.add_argument("--out", type=Path, required=True)
     cli.add_argument("--source", nargs=2, action="append", default=[], metavar=("SOURCE", "ROOT"))
     cli.add_argument("--required", nargs="+", required=True)
