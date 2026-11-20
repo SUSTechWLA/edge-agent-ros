@@ -296,13 +296,18 @@ def planner_profile():
             if not isinstance(profile.get("model"),str) or not 1<=len(profile["model"])<=128:
                 raise ValueError()
             options=profile.get("options",{})
-            if not isinstance(options,dict) or set(options)-{"temperature","num_ctx"}:
+            if not isinstance(options,dict) or set(options)-{"temperature","num_ctx","num_thread"}:
                 raise ValueError()
             temp=options.get("temperature",0)
             ctx=options.get("num_ctx",4096)
             if type(temp) not in (int,float) or not 0<=temp<=2 or type(ctx) is not int or not 128<=ctx<=65536:
                 raise ValueError()
             profile["options"]={"temperature":temp,"num_ctx":ctx}
+            if "num_thread" in options:
+                threads = options["num_thread"]
+                if type(threads) is not int or not 1 <= threads <= 64:
+                    raise ValueError()
+                profile["options"]["num_thread"] = threads
         elif protocol!="http-planner" or "model" in profile or "options" in profile:
             raise ValueError()
         return profile

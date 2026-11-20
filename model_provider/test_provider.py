@@ -58,7 +58,7 @@ class ModelAdapters(unittest.TestCase):
         self.route()
         self.schema={"type":"object","properties":{"ok":{"type":"boolean"}},"required":["ok"],"additionalProperties":False}
         self.body={"model":"local-qwen","stream":False,"messages":[{"role":"user","content":"private prompt"}],
-                   "options":{"temperature":0,"num_predict":12,"num_ctx":4096},"format":self.schema}
+                   "options":{"temperature":0,"num_predict":12,"num_ctx":4096,"num_thread":3},"format":self.schema}
         self.cloud=dict(self.body,model="deepseek-flash")
 
     def route(self,local="qwen2.5:1.5b"):
