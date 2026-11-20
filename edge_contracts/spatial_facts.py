@@ -36,6 +36,20 @@ def ns(value):
     return type(value) is int and 0 <= value <= MAX_STAMP_NS
 
 
+def rotation(translation, quaternion):
+    """Convert an XYZ translation and near-unit XYZW orientation to 3 × 4 rows."""
+    if not all(math.isfinite(v) for v in (*translation, *quaternion)):
+        raise ValueError("transform_invalid")
+    x, y, z, w = quaternion
+    norm = math.sqrt(x*x + y*y + z*z + w*w)
+    if abs(norm - 1) > .01:
+        raise ValueError("transform_invalid")
+    x, y, z, w = (v/norm for v in quaternion)
+    return ((1-2*(y*y+z*z), 2*(x*y-z*w), 2*(x*z+y*w), translation[0]),
+            (2*(x*y+z*w), 1-2*(x*x+z*z), 2*(y*z-x*w), translation[1]),
+            (2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x*x+y*y), translation[2]))
+
+
 def finite_vector(value, *, variance=False):
     return (isinstance(value, list) and len(value) in (2, 3)
             and all(type(n) in (float, int)

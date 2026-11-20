@@ -6,7 +6,8 @@ import sys
 from types import SimpleNamespace
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"perception"/"map3d"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(ROOT / "perception" / "map3d"), str(ROOT)]
 from geometry import decode, rotation, Surface, IDENTITY, MAX_BYTES, SAMPLE_LIMIT
 
 

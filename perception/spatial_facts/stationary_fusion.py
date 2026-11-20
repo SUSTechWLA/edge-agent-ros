@@ -10,9 +10,8 @@ import re
 import struct
 import zlib
 
-from edge_contracts.spatial_facts import MAX_STAMP_NS, SpatialFactError, check_batch, digest_ref, identifier, require
+from edge_contracts.spatial_facts import MAX_STAMP_NS, SpatialFactError, check_batch, digest_ref, identifier, require, rotation
 from edge_contracts.image_frames import TOPIC
-from perception.map3d.geometry import rotation
 
 
 LIMITS = {
