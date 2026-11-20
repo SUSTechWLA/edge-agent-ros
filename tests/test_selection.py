@@ -142,7 +142,7 @@ RULES = [
     (("src/edge_gateway/*",), (*MOTION,"rover-commissioning")),
     (("sim/*",), MOTION),
     (("compose.hardware.yaml","compose.hardware-observe.yaml","client/hardware_preflight.py","tests/test_board_preflight.py",
-      "tests/system/board_smoke.py","tests/system/realsense_board.py"), ("board",)),
+      "tests/system/board_smoke.py","tests/system/realsense_board.py","tests/system/navigation_contract.py"), ("board",)),
     (("tests/planning_contract.py",), ("planner",)),
     (("tests/test_scene*","tests/semantic_acceptance.py","tests/scene_*acceptance.py","tests/system/scene_binding_acceptance.py"), SCENE),
     (("tests/system/motion_faults.py",), ("motion-sensors","motion-world")),
@@ -206,6 +206,11 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["tests/test_kernel.py"])[0], [R])
         self.assertEqual(set(selection(["agent/kernel/ledger.py"])[0]),
                          {R, *AGENT, "observations", "board", "plugin-isolation"})
+
+    def test_navigation_contract_runs_against_the_board_image(self):
+        self.assertEqual(selection(["tests/system/navigation_contract.py"])[0], [R, "board"])
+        self.assertIn("board", selection(["src/edge_core/src/core_node.cpp"])[0])
+        self.assertIn("board", selection(["src/edge_interfaces/action/NavigateTo.action"])[0])
 
     def test_offline_analysis_and_provider_conformance(self):
         self.assertEqual(selection(["edge_contracts/conformance.py"])[0], list(STAGES))

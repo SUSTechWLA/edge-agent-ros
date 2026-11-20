@@ -8,7 +8,7 @@
 | 给仿真、真机或软件任务按需打开和关闭录制，导出时间线与视频 | [通用录制插件](../task_recorder/README.md) |
 | 看一条真实仿真任务如何下发、运动、遇错、恢复与停车 | [完整任务录像与可点击章节](../artifacts/verification/rover-long-mission/continuous-02/video/index.html) · [原始观测与复现方法](testing/rover-mission-video.md) |
 | 给一台新车交付精简代码、工厂标定，验证第一次进场建图 | [无人车出厂、首次进场与板端交付](rover-commissioning.md) |
-| 准备真机首测，复盘多机体故障，判断哪些问题能自动恢复 | [现场验收与升级记录](testing/edge-field-readiness.md) · [首次上板](board-first-boot.md) |
+| 准备真机首测，复盘多机体故障，判断哪些问题能自动恢复 | [首测预检与只读任务](testing/hardware-first-run.md) · [现场验收与升级记录](testing/edge-field-readiness.md) · [首次上板](board-first-boot.md) |
 | 启动校园，查看四种机体、具名任务、关节测量和连通步道 | [校园部署](../scene/campus_large/README.md) · [机器人近景与验收](testing/campus-robot-view.md) · [插件边界](testing/campus-plugin.md) |
 | 给工作台加 3D 地图、相机、MID-360 或 RealSense 输入，切换本地/云端模型 | [全栈快速上手与逐项撤下](perception-model-quickstart.md) · [隔离实验](testing/map-and-model-plugins.md) · [真实模型选工具记录](evidence/workbench-model-routing.json) |
 | 部署仿真、模型或板端，知道哪些平台已有实测 | [部署](deployment.md) · [模型配置](model.md) · [板卡验收](architecture/board-validation.md) |

@@ -165,6 +165,8 @@ def run(args, selected, reasons):
                 board_test = [*board_container,*board_python]
                 stage("board",[test("test_board_preflight.py","-v"),test("test_site_pack.py","-v"),
                                test("test_board_plugins.py","-v"),
+                               [*board_test,"/opt/edge/tests/system/navigation_contract.py",
+                                "--out","/evidence/navigation-contract.json"],
                                [*board_container,"--mount",f"type=bind,source={ROOT/'task_recorder'},target=/opt/edge/task_recorder,readonly",
                                 *board_python,"/opt/edge/tests/test_plugin_conformance.py","--out","/evidence/plugin-conformance.json"],
                                test("system/board_pack_acceptance.py","--image",board_image,"--root",ROOT,

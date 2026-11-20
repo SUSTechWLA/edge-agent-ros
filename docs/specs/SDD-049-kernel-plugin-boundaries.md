@@ -152,4 +152,19 @@ AC-5/6 在 Linux/amd64 隔离 ROS 域用 `python3 -B tests/test_plugin_conforman
 
 在干净提交 `f13ed32f0a186e1ff8fba0d5ee29feba8cd11de7` 的全量中，36 个阶段行有 35 项通过、1 项失败、0 项跳过，镜像为 `sha256:46fa7273da3cecddb12ebc1d1301bc89bb53386c32a18ad465b6744f9311a137`。模拟相机收到的帧与发布端时间戳、哈希一致，一次性订阅者在两次 DDS 图查询之间收帧并退出，独立见证因此缺失订阅者 GID。原夹具四次同镜像试验中两次复现。测试发布器现在持续更新健康心跳，发现相机订阅后记录该帧和当前全部订阅者并投递。三个托管试验和单独一次复验均通过。接入第二个读者时，原唯一性断言成功拒绝。回执在 `.ci-results/k2/wp6/physical-camera-audit/candidate-summary.json`、`independent.json` 及 `patched-negative.json`。
 
-本次独立提交的干净 HEAD 全量使用运行号 `20261120T004434Z-f657f9fa`，原始报告为 `.ci-results/r/20261120T004434Z-f657f9fa/summary.json`。命名卷保留、模型缓存和校园资产沿用上次配置。
+干净提交 `736fb20fb4bb7f357d4862f62a1a3754ef323cca` 的全量运行号为 `20261120T004434Z-f657f9fa`，报告为 `.ci-results/r/20261120T004434Z-f657f9fa/summary.json`，镜像为 `sha256:71f4d3d3dc13baa1ea88e6d7527eadf00769afef8b1415fe9c3de723c043ac1d`。21 个阶段组产生 35 个阶段行，35 通过、0 失败、0 跳过。三次成功采集各匹配一个独立订阅者 GID，崩溃时在途的操作保留为未知。积压的 1,088 条记录在 22.703 秒后全部可见，core 和校园重载验收通过。命名卷、模型缓存和校园资产沿用上次配置。
+
+### WP7 首次上板前的导航契约
+
+默认系统套件的 `board` 阶段在断网的板端软件镜像里运行 `tests/system/navigation_contract.py`，通过实际 ROS 2 服务受理任务，观察 Action 反馈的目标 UUID、操作心跳与取消。夹具使用合成的 `/odom` 样本；生产 `edge_core` 使用独立的临时 SQLite 账本。板端镜像在域 184 的定向报告为 `.ci-results/k2/wp7/navigation/board-184-r2.json`，域 193 的独立镜像复测为 `.ci-results/k2/wp7/navigation/sim-193-r2.json`。两次使用相同的 core 二进制，均未启动 Gazebo。
+
+| 合成输入 | 生产 core 的实测终态 |
+|---|---|
+| Action 报告到达，随后收到独立的新位置 `(0.37, 0.10)` | `SUCCEEDED`，只登记一个核验点 |
+| Action 报告到达，随后只收到与上帧同时间戳的位置 | `FAILED`，报 `core.verification_timeout`，无核验点 |
+| 运动中取消，心跳撤回；停稳窗口中再次出现运动，随后连续静止 | `CANCELED`。运动打断原窗口；域 184 最终以连续 5 帧、约 480 ms 的静止数据确认停稳 |
+| 取消后只收到重复时间戳，适配器返回 `UNKNOWN` | `RECOVERY_REQUIRED`。重启前后新任务均被 `core.base_occupied` 拒绝 |
+
+重启 core 后，以原任务和操作号重查及重投，四项的状态、步骤回执和已验位置与原账本一致，每个操作只派发一次。现场的驱动与标定、定位和 TF、底盘导航适配器、独立急停与失联停车、台架制动距离均需另行验收。未在真机或原生 ARM64 上验证。[首测预检与第一条只读任务](../testing/hardware-first-run.md)
+
+包含本工作包的全量运行号为 `20261120T013422Z-747a6dd9`。原始报告位于 `.ci-results/r/20261120T013422Z-747a6dd9/summary.json`，同目录 `navigation-contract.json` 包含四项操作的 ROS 与 SQLite 回执。提交与镜像的完整 revision、镜像 ID 及阶段计数由报告生成，另汇于 `.ci-results/k2/wp7/verification.md`。
