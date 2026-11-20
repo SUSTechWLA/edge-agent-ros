@@ -52,7 +52,8 @@ class Evaluator:
             raise ValueError("operator.verification_mismatch")
         result = numeric_program.execute(program, values)
         return {"derived":{"operator_digest":ref, "contract":item["contract"], "program":program,
-                           "input_values":values, "value":result, "validation":check},
+                           "input_values":values, "value":result["value"], "input_sha256":result["input_sha256"],
+                           "validation":check},
                 "runtime_digest":self.release_digest, "policy_digest":"sha256:" + hashlib.sha256(raw).hexdigest()}
 
 
