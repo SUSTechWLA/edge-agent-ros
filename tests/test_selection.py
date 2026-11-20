@@ -22,6 +22,11 @@ RULES = [
     (("tests/test_capability_catalog.py", "tests/test_status_plugin.py"), ("agent-contracts",)),
     (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
+    (("navigation/*.py", "perception/spatial_facts/*.py", "scripts/prepare_navigation.py",
+      "tests/test_navigation_pack.py"), ("planner", "observations", "board", "plugin-isolation")),
+    (("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py"),
+     ("planner", "board")),
+    (("tests/test_reference_utterances.py",), ("planner",)),
     (("tests/test_package_boundaries.py","tests/test_kernel.py"), (R,)),
     (("agent/kernel/*",), (*AGENT,"observations","board","plugin-isolation")),
     (("agent/site_pack.py","profiles/*.json","capabilities/*/pack.json","scripts/robot-plugins.sh",
@@ -187,6 +192,18 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_navigation_route_observation_and_body_consumers(self):
+        for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
+                     "scripts/prepare_navigation.py", "tests/test_navigation_pack.py"):
+            self.assertEqual(selection([path])[0], [R, "planner", "observations", "board", "plugin-isolation"], path)
+        for path in ("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py"):
+            self.assertEqual(selection([path])[0], [R, "planner", "board"], path)
+        for path in ("edge_contracts/navigation.py", "edge_contracts/spatial_facts.py", "edge_contracts/occupancy.py"):
+            self.assertEqual(selection([path])[0], list(STAGES), path)
+        for path in ("agent/physical_navigation.py", "agent/kernel/catalog.py"):
+            self.assertTrue({"planner", "board", "plugin-isolation"} <= set(selection([path])[0]), path)
+        self.assertEqual(selection(["tests/test_reference_utterances.py"])[0], [R, "planner"])
+
     def test_console_facts_run_observations(self):
         self.assertEqual(selection(["tests/test_console_facts.py"])[0], [R, "observations"])
         for stage in ("observations","board","ui"):

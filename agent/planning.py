@@ -13,14 +13,14 @@ from urllib.request import Request, urlopen
 if __package__:
     from . import runtime_plugins, series_tools
     from .kernel import authorization, verification
-    from .kernel.catalog import BASE, binding, catalog, is_series, registry, valid_utterance, valid_verbatim_manifest
+    from .kernel.catalog import BASE, binding, catalog, is_series, reference_utterance, registry, valid_utterance, valid_verbatim_manifest
     from .tracing import CODE, artifact, contract, exchange
 else:
     import _contract_path
     import runtime_plugins
     import series_tools
     from kernel import authorization, verification
-    from kernel.catalog import BASE, binding, catalog, is_series, registry, valid_utterance, valid_verbatim_manifest
+    from kernel.catalog import BASE, binding, catalog, is_series, reference_utterance, registry, valid_utterance, valid_verbatim_manifest
     from tracing import CODE, artifact, contract, exchange
 
 from edge_contracts.errors import OutcomeUnknown, Refused, Unavailable, failure, remote_failure
@@ -152,14 +152,25 @@ def match_utterances(request,caps, source_text=None):
                 matches.append({"tool":cap["id"],"args":series_request[1]})
             continue
         for pattern in cap.get("utterances",[]):
-            name=next(iter(cap["parameters"]))
-            prefix,suffix=normalized(pattern).split("{"+name+"}")
-            if request.startswith(prefix) and request.endswith(suffix):
-                arg=request[len(prefix):len(request)-len(suffix)].strip()
-                if arg:
-                    step={"tool":cap["id"],"args":{name:arg}}
-                    if step not in matches:
-                        matches.append(step)
+            params = cap["parameters"]
+            if len(params) == 1:
+                name, = params
+                prefix, suffix = normalized(pattern).split("{" + name + "}")
+                if not request.startswith(prefix) or not request.endswith(suffix):
+                    continue
+                value = request[len(prefix):len(request)-len(suffix)].strip()
+                if not value:
+                    continue
+                args = {name: value}
+            else:
+                template = reference_utterance(normalized(pattern), params, cap.get("effect"))
+                matched = template.fullmatch(request) if template else None
+                if not matched:
+                    continue
+                args = matched.groupdict()
+            step = {"tool": cap["id"], "args": args}
+            if step not in matches:
+                matches.append(step)
     if len(matches)>1:
         raise Refused("多个能力可匹配这条指令，请明确子目标")
     return matches or None

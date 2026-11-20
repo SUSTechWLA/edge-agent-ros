@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # edge_contracts/ on the board. analysis/ runs on exported copies at the workstation.
 DIRS = ("src/edge_core/", "src/edge_interfaces/", "agent/", "edge_contracts/", "client/", "perception/", "console/",
         "sessions_plugin/", "evidence/", "model_provider/", "calibration/", "exploration/",
-        "contracts/", "policies/", "task_recorder/")
+        "contracts/", "policies/", "task_recorder/", "navigation/")
 FILES = {"compose.hardware.yaml", "compose.hardware-observe.yaml", "compose.sensor-health.yaml",
          "compose.camera.yaml", "compose.camera-hardware.yaml", "compose.rgbd.yaml",
          "compose.rgbd-hardware.yaml", "compose.model-provider.yaml", "compose.model-provider-hardware.yaml",
@@ -21,6 +21,9 @@ FILES.update({"compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","
               "scripts/prepare_soft_pilots.py","scripts/prepare_physical_camera.py","scripts/robot-plugins.sh","scripts/check_board_plugins.py",
               "capabilities/soft-pilots/pack.json","capabilities/camera/pack.json",
               "profiles/bench.json","profiles/bench-camera.json","profiles/observe.json"})
+FILES.update({"scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py", "profiles/navigation-bench.json", "profiles/navigation-live.json",
+              "capabilities/navigation-common/pack.json", "capabilities/spatial-replay/pack.json",
+              "capabilities/spatial-published/pack.json", "compose.navigation-readonly.yaml"})
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
 BOARD_SCAFFOLD = {".gitattributes", ".gitignore", "map-inputs/.gitkeep", "observations/.gitkeep",

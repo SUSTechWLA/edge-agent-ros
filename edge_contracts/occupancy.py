@@ -61,6 +61,32 @@ class Grid:
             yield i-self.width
 
 
+def clearance_mask(grid, radius_m):
+    """Traversable cells after conservative square inflation of obstacles, unknowns and map edges."""
+    if not finite(radius_m) or radius_m < 0:
+        raise ValueError("invalid_footprint_radius")
+    w, h = grid.width, grid.height
+    pad = math.ceil(radius_m/grid.resolution)
+    safe = bytearray(w*h)
+    if 2*pad >= min(w, h):
+        return safe, pad
+    if pad == 0:
+        return bytearray(cell == 0 for cell in grid.cells), pad
+    stride = w+1
+    prefix = [0]*(stride*(h+1))
+    for y in range(h):
+        row_sum = 0
+        for x in range(w):
+            row_sum += grid.cells[y*w+x] != 0
+            prefix[(y+1)*stride+x+1] = prefix[y*stride+x+1] + row_sum
+    for y in range(pad, h-pad):
+        top, bottom = (y-pad)*stride, (y+pad+1)*stride
+        for x in range(pad, w-pad):
+            left, right = x-pad, x+pad+1
+            safe[y*w+x] = prefix[bottom+right]-prefix[top+right]-prefix[bottom+left]+prefix[top+left] == 0
+    return safe, pad
+
+
 def _json(value):
     return (json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False,
                        separators=(",", ":"))+"\n").encode("utf-8")

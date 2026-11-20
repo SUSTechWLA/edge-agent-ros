@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "spatial-published",
+  "plugins": [
+    {
+      "id": "sensing.published",
+      "version": "1.0.0",
+      "config": {}
+    }
+  ],
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}

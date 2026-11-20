@@ -21,7 +21,28 @@ BASE = {
 }
 
 
-def valid_utterance(pattern, parameters):
+def reference_utterance(pattern, parameters, effect):
+    """Compile a read-only template with two uniquely delimited opaque reference IDs."""
+    if (effect != "read" or not isinstance(pattern, str) or len(pattern) > 256
+            or len(parameters) != 2 or any(kind != "string" for kind in parameters.values())):
+        return None
+    parts = re.split(r"\{([a-z][a-z0-9_]{0,58}_ref)\}", pattern)
+    if len(parts) != 5 or set(parts[1::2]) != set(parameters):
+        return None
+    prefix, first, delimiter, second, suffix = parts
+    # At least one non-ID character separates the slots, so a reference can
+    # never absorb their delimiter. All template text is treated literally.
+    if (any("{" in s or "}" in s for s in parts[::2])
+            or not re.search(r"[^A-Za-z0-9_./:@-]", delimiter)):
+        return None
+    token = r"[A-Za-z0-9_][A-Za-z0-9_./:@-]{0,127}"
+    return re.compile(re.escape(prefix) + f"(?P<{first}>{token})" + re.escape(delimiter)
+                      + f"(?P<{second}>{token})" + re.escape(suffix))
+
+
+def valid_utterance(pattern, parameters, effect=None):
+    if len(parameters) == 2:
+        return reference_utterance(pattern, parameters, effect) is not None
     if len(parameters)!=1 or next(iter(parameters.values()))!="string" or not isinstance(pattern,str):
         return False
     marker="{"+next(iter(parameters))+"}"
@@ -36,7 +57,7 @@ def valid_verbatim_manifest(cap):
     patterns = cap.get("utterances")
     parameters = cap.get("parameters")
     if (flag is not True or cap.get("effect") != "read" or cap.get("id") in BASE
-            or not isinstance(patterns, list) or not patterns or not isinstance(parameters, dict)
+            or not isinstance(patterns, list) or not patterns or not isinstance(parameters, dict) or len(parameters) != 1
             or not all(valid_utterance(pattern, parameters) for pattern in patterns)):
         return False
     marker = "{" + next(iter(parameters)) + "}"
@@ -79,7 +100,7 @@ def registry(*, legacy_only=False, duplicate_tools=None):
                      and url.scheme in ("http","https") and url.hostname and not url.username and not url.password
                      and item["effect"] in ("read","idempotent")
                      and isinstance(parameters,dict)
-                     and isinstance(utterances,list) and all(valid_utterance(p,parameters) for p in utterances)
+                     and isinstance(utterances,list) and all(valid_utterance(p,parameters,item["effect"]) for p in utterances)
                      and valid_verbatim_manifest(item)
                      and isinstance(outcomes,dict) and all(isinstance(k,str) and isinstance(v,str) and v
                                                          for k,v in outcomes.items())

@@ -96,6 +96,7 @@ services:
         COPY client client
         COPY console console
         COPY perception perception
+        COPY navigation navigation
         COPY calibration calibration
         COPY exploration exploration
         ENV PYTHONPATH=/opt/edge

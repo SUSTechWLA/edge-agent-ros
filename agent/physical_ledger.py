@@ -38,6 +38,11 @@ def ref(value):
 class PhysicalLedger:
     """Mutations use BEGIN IMMEDIATE; only the trusted local controller can open this file."""
 
+    claim_kind = "capture"
+
+    def check_arguments(self, device, arguments):
+        require(arguments == {}, "tool.binding_unavailable", "camera capture takes no arguments")
+
     def __init__(self, root, boot_id, clock=time.monotonic_ns):
         require(public_reference(boot_id), "plugin.fence_rejected", "host boot identity required")
         self.boot = boot_id
@@ -142,8 +147,9 @@ class PhysicalLedger:
                 device = self._match(pin)
                 require(device["phase"] == "ACTIVE", "plugin.draining", "physical admission closed")
                 require(step["tool"] == pin["name"] and step["version"] == pin["version"] and
-                        step["binding"] == pin["binding"] and step["args"] == {},
-                        "tool.binding_unavailable", "capture operation differs from catalog")
+                        step["binding"] == pin["binding"],
+                        "tool.binding_unavailable", "physical operation differs from catalog")
+                self.check_arguments(device, step["args"])
                 op = f"{task}/step/{index}"
                 require(public_reference(op), "plugin.manifest_invalid", "invalid operation identity")
                 pin["reservation_id"] = op
@@ -188,6 +194,7 @@ class PhysicalLedger:
             device = self._match(pin)
             resource = device["resource_id"]
             require(not row["settled"] and device["phase"] in ("ACTIVE","DRAINING"), "plugin.draining", "no new device work")
+            self.check_arguments(device, row["args"])
             busy = self.db.execute("""SELECT op FROM physical_ops WHERE resource=? AND state IN
                 ('OFFERED','CLAIMED','CANDIDATE','RECOVERY_REQUIRED')""", (resource,)).fetchall()
             # Unresolved older operations continue to exist after a proven physical
@@ -231,9 +238,10 @@ class PhysicalLedger:
                                            (resource,)).fetchone()
                 if selected:
                     op = selected[0]
+                    self.check_arguments(device, self.status(op)["args"])
                     self.db.execute("UPDATE physical_ops SET state='CLAIMED' WHERE op=?", (op,))
-                    self.event(resource,"capture.claimed",op)
-                    return dict(self.status(op),kind="capture")
+                    self.event(resource,self.claim_kind + ".claimed",op)
+                    return dict(self.status(op),kind=self.claim_kind)
             else:
                 selected = self.db.execute("""SELECT op FROM physical_ops WHERE resource=? AND candidate IS NOT NULL AND
                     proof IS NULL AND state IN ('CANDIDATE','RECOVERY_REQUIRED')

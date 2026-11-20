@@ -1,0 +1,79 @@
+# Independent bench stack. The ROS reader only subscribes to the selected mirror.
+name: edge-navigation-readonly
+x-runtime: &runtime
+  image: ${EDGE_NAV_IMAGE:?set the approved local platform image}
+  pull_policy: never
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  init: true
+  tmpfs: [/tmp]
+  pids_limit: 96
+  mem_limit: 256m
+services:
+  activate:
+    <<: *runtime
+    network_mode: none
+    entrypoint: [python3, -B, /opt/edge/agent/site_pack.py, activate, --site, /site, --root, /registry, --expect-lock, "${EDGE_NAV_LOCK:?set the resolved lock}"]
+    volumes:
+      - ${EDGE_NAV_SITE:?set the resolved site}:/site:ro
+      - registry:/registry
+  soft-host:
+    <<: *runtime
+    depends_on:
+      activate: {condition: service_completed_successfully}
+    networks: [facts]
+    entrypoint: [python3, -B, /opt/edge/agent/soft_host.py]
+    environment:
+      EDGE_SOFT_PLATFORM_DIGEST: ${EDGE_NAV_DIGEST:?set the pinned platform manifest}
+    volumes:
+      - ${EDGE_NAV_SITE}:/site:ro
+      - registry:/registry
+      - agent-socket:/sockets/agent
+      - session-socket:/sockets/session
+      - journal:/journal
+  agent:
+    <<: *runtime
+    depends_on: [soft-host]
+    networks: [agent-api]
+    ports: ["127.0.0.1:${EDGE_NAV_PORT:-8794}:8090"]
+    command: [python3, -B, /opt/edge/agent/service.py]
+    environment:
+      EDGE_SOFT_SOCKET: /soft/agent.sock
+      EDGE_AGENT_BIND: 0.0.0.0
+      ROS_DOMAIN_ID: 141
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+      ROS_LOG_DIR: /tmp/ros
+      EDGE_TRACE_CONTENT: redacted
+    volumes:
+      - agent-socket:/soft:ro
+      - tasks:/var/lib/edge-tasks
+  spatial-facts:
+    <<: *runtime
+    profiles: [published]
+    networks: [facts]
+    entrypoint: [python3, -B, -m, perception.spatial_facts.gateway, --file, /facts/observations.json, --max-age-ns, "1000000000"]
+    volumes: [published-facts:/facts:ro]
+  odom-reader:
+    <<: *runtime
+    profiles: [published]
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_NAV_MIRROR_DOMAIN:-140}
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+      ROS_LOG_DIR: /tmp/ros
+    command: [python3, -B, -m, perception.spatial_facts.odom_capture, --config, /config/odometry.json, --output, /facts]
+    volumes:
+      - ${EDGE_NAV_CAPTURE_CONFIG:-./odometry.json}:/config/odometry.json:ro
+      - published-facts:/facts
+networks:
+  facts: {internal: true}
+  agent-api: {}
+volumes:
+  registry: {}
+  agent-socket: {}
+  session-socket: {}
+  tasks: {}
+  journal: {}
+  published-facts: {}

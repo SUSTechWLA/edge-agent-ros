@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "navigation-bench",
+  "packs": [
+    "spatial-replay",
+    "navigation-common"
+  ],
+  "settings": {},
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}
