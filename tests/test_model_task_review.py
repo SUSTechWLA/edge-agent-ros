@@ -21,7 +21,8 @@ class ModelTaskReviewTest(unittest.TestCase):
         self.task = dict(text="compare the room", steps=[])
         cap = dict(id="measure", description="read pixels", version="1", effect="read", binding="A", parameters={})
         self.step = dict(tool="measure", args={})
-        self.task["steps"] = [dict(**self.step, version="1", binding="A", operation_id="t/step/1")]
+        self.task["steps"] = [dict(**self.step, version="1", binding="A", operation_id="t/step/1",
+                           soft_cap=cap, soft_pin=dict(name="measure", binding="A", reservation_id="t/step/1"))]
         self.answer = dict(disposition="ready", steps=[self.step], reason="result")
         self.context = dict(request=self.task["text"], capabilities=[cap], authority="deployment.read_only")
         shared = dict(protocol="ollama.chat", provider="ollama/test", call_id="C")
@@ -59,6 +60,11 @@ class ModelTaskReviewTest(unittest.TestCase):
     def test_rejects_changed_request_even_if_the_model_choice_is_plausible(self):
         self.task["text"] = "something else"
         with self.assertRaisesRegex(ValueError, "different user request"):
+            model_decision(self.journal, self.task)
+
+    def test_motion_pin_is_refused_even_when_the_model_catalog_says_read(self):
+        self.task["steps"][0]["physical_pin"] = {"class":"physical"}
+        with self.assertRaisesRegex(ValueError, "read-only DSH dispatch"):
             model_decision(self.journal, self.task)
 
     def test_sensor_report_must_reference_the_same_original_files_and_regions(self):

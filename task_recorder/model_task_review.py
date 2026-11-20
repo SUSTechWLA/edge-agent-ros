@@ -108,6 +108,11 @@ def model_decision(journal, task):
     for step, saved in zip(task["steps"], ppin["steps"]):
         require(step["tool"] in candidates and all(step[k] == saved[k] for k in ("tool", "args", "binding", "version"))
                 and saved["binding"] == registered[step["tool"]]["binding"], "frozen capability differs from proposal")
+        cap, reservation = step.get("soft_cap", {}), step.get("soft_pin", {})
+        require(not any(k in step for k in ("physical_pin", "physical_cap")) and cap.get("effect") == "read"
+                and cap.get("id") == reservation.get("name") == step["tool"] and not cap.get("endpoint")
+                and reservation.get("binding") == step["binding"]
+                and reservation.get("reservation_id") == step["operation_id"], "unproven read-only DSH dispatch")
     revisions = []
     if len(exchanges) > 1:
         rev, prev = journal.one("planner.revision")
