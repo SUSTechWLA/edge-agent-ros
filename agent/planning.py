@@ -489,7 +489,9 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
                     trace("planner.decomposed", {"layer":"planner","module":"planner","provider":provider,
                           "artifact":artifact(answer),"runner":site.runner})
                 def author(description, feedback):
-                    question = {"request":text,"calculation":description}
+                    # The sampler owns image selection, unit scaling and regional statistics.
+                    # The author receives only the computational subtask it must implement.
+                    question = {"calculation":description, "input":"An ordered vector of already measured scalar values."}
                     if feedback:
                         question["validation_feedback"] = feedback
                     _, candidate = model_proposal(question, read_operators.numeric.AUTHOR_SCHEMA,

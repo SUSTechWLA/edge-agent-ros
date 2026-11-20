@@ -70,6 +70,9 @@ class OperatorTask(unittest.TestCase):
         calls = Mock(side_effect=[self.gap, self.author_reply])
         _, (step,) = self.run_plan(original, calls)
         self.assertTrue(all(call.args[2] == 210 for call in calls.call_args_list))
+        author_request = calls.call_args_list[-1].args[1]
+        self.assertNotIn(original["text"], json.dumps(author_request))
+        self.assertIn(self.contract["description"], json.dumps(author_request))
         for call in calls.call_args_list:
             self.assertNotIn('"cases"', json.dumps(call.args[1]))
         self.assertEqual(step["soft_pin"]["reservation_id"],"parent/step/1")
