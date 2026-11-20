@@ -13,6 +13,7 @@ from edge_contracts.spatial_facts import check_batch, digest_ref, identifier
 
 
 MAX_BYTES = 128 * 1024 * 1024
+MAX_WINDOW_SECONDS = 600
 FILE_LIMIT = 4 * 1024 * 1024
 EXTENSIONS = {"application/json": ".json", "image/png": ".png", "image/jpeg": ".jpg"}
 
@@ -180,6 +181,7 @@ if __name__ == "__main__":
     cli.add_argument("--timeout", type=float, default=45.)
     cli.add_argument("--interval", type=float, default=.2, help="seconds between independent context frames")
     args = cli.parse_args()
-    if not (.1 <= args.interval <= 5 and 0 < args.lead <= 15 and 0 < args.tail <= 15 and args.lead + args.tail < args.timeout <= 600):
+    if not (.1 <= args.interval <= 5 and 0 < args.lead <= 15 and 0 < args.tail <= 15
+            and args.lead + args.tail < args.timeout <= MAX_WINDOW_SECONDS):
         cli.error("lead/tail must be positive and fit within the bounded time budget")
     print(json.dumps(record(args)), flush=True)

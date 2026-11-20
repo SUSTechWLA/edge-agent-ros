@@ -24,6 +24,7 @@ from .operator_evidence import normalized, qualified_receipt, trace_operator
 from .render import font, paragraph
 from .review_media import write_video
 from .sensor_review import FPS, H, W, TaskReceipt, clock, ns, pixels, read, require, sha, text
+from .spatial_capture import MAX_WINDOW_SECONDS
 from .target_review import artifact, paste
 
 
@@ -254,7 +255,7 @@ class QueryFrame:
             left, top, right, bottom = row["bounds_xyxy"]
             f = font(face, max(10, min(24, (bottom - top) // 4, (right - left) // 7)))
             value = row["value"]
-            label = str(number + 1) + "   " + ("—" if value is None else f"{value:.3g}") + " " + self.analysis["unit"]
+            label = str(number + 1) + "   " + display_value(value, self.analysis["unit"])
             marker = GOLD
             if number in self.analysis["minimum_indices"] and len(self.analysis["minimum_indices"]) < len(self.analysis["regions"]):
                 label += "  最小"
@@ -362,6 +363,12 @@ def prior_chapter(prior, face):
 def program(step):
     args = step["args"]
     return args["program"] if set(args) == {"program"} else json.dumps(args, ensure_ascii=False)
+
+
+def display_value(value, unit):
+    if value is None:
+        return "无有效测量"
+    return f"{value:.4g}" if unit == "0..255" else f"{value:.4g} {unit}"
 
 
 def frame_program(arguments):
@@ -525,7 +532,7 @@ def mission(source, face, *, operator_file=None, operator_policy=None):
             channels = [s["source_id"] for s in obs["samples"]]
             result.update(program=a["program"], analysis=a, sources=channels)
             chapters.append(Chapter("读取本次测量的原始帧", ns(obs["as_of_ns"]), 5, [
-                ("RGB 来源", src["rgb"]["source_id"]), ("深度来源", src["depth"]["source_id"]),
+                ("RGB 来源", src["rgb"]["source_id"]), ("同批对齐深度", src["depth"]["source_id"]),
                 ("对齐坐标系", a["frame_id"]), ("图像尺寸", f"{a['width']} × {a['height']} px")],
                 query.rgb, f"原始 RGB   ·   {clock(ns(src['rgb']['stamp_ns']))}"))
             if a["channel"] == "depth":
@@ -536,12 +543,13 @@ def mission(source, face, *, operator_file=None, operator_policy=None):
             unit = a["unit"]
             measurements = []
             for i, row in enumerate(a["regions"], 1):
-                value = "无有效测量" if row["value"] is None else f"{row['value']:.4g} {unit}"
+                value = display_value(row["value"], unit)
                 measurements.append((f"区域 {i}   ·   {row['valid_pixels']}/{row['pixels']} 有效像素", value))
             annotated = query.annotated(face)
             for group in pages(measurements, 5):
                 chapters.append(Chapter("在实拍画面标出测量结果", result["tool_response_ns"], 5,
                                         [("使用的统计量", a["statistic"]), *group], annotated,
+                                        "区域测量值   ·   影像强度刻度 0–255" if unit == "0..255" else
                                         "测量结果叠加在同批次的 RGB 原图"))
             chapters.append(Chapter("查看工具返回的测量结论", result["tool_response_ns"], 5,
                                     [("工具回执原文", a["summary"]), ("测量表达式", a["program"])],
@@ -556,10 +564,11 @@ def mission(source, face, *, operator_file=None, operator_policy=None):
                     require(normalized(last["candidate"]) == calc["program"] and verified["validation"] == calc["proof"],
                             "installed program differs from the authored and validated candidate")
                 result["calculation"] = calc
+                intensity = calc["unit"] == "0..255"
                 chapters.append(Chapter("用实测数值执行算子", result["tool_response_ns"], 5, [
-                    ("输入", "、".join(f"{v:.4g}" for v in calc["inputs"]) + "  " + calc["unit"]),
+                    ("输入（亮度刻度 0–255）" if intensity else "输入", "、".join(display_value(v, calc["unit"]) for v in calc["inputs"])),
                     ("执行的程序", json.dumps(calc["program"]["tokens"])),
-                    ("工具返回值", f"{calc['value']:.5g} {calc['unit']}")], annotated,
+                    ("工具返回值", display_value(calc["value"], calc["unit"]))], annotated,
                     "输入取自上图指定区域，数值与回执已复算"))
         else:
             fields = ", ".join(step["evidence"])
@@ -594,7 +603,7 @@ def mission(source, face, *, operator_file=None, operator_policy=None):
         ("本次调用的运动工具", "0")], chapters[-1].image, chapters[-1].image_label))
     require(all(a.stamp <= b.stamp for a, b in zip(chapters, chapters[1:])), "scene source clocks regressed")
     stream = source / "sensor-timeline.jsonl"
-    window = ColorWindow(stream, source / "artifacts", visual, max_seconds=120) if visual and stream.is_file() else None
+    window = ColorWindow(stream, source / "artifacts", visual, max_seconds=MAX_WINDOW_SECONDS) if visual and stream.is_file() else None
     if window:
         require(window.start <= chapters[0].stamp <= chapters[-1].stamp <= window.end, "incomplete live capture window")
     return task, submit, decision, results, chapters, window, receipt
