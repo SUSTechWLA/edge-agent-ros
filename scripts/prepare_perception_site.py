@@ -42,6 +42,17 @@ QUERY_TOOLS = {"perception.query_frame": ("query_frame", "perception.frame_stati
                "Statistics: mean, median, min, max, coverage (valid %), quantile(q). crop and q accept decimal "
                "literals between 0 and 1. No fractions or arithmetic. Output includes all region values, units, "
                "and indices for minima and maxima.", [], ["program"])}
+GRID_FIELDS = {"channel":{"type":"string", "enum":["depth", "brightness", "red", "green", "blue"]},
+               "row_count":{"type":"integer", "minimum":1, "maximum":8},
+               "column_count":{"type":"integer", "minimum":1, "maximum":8},
+               "statistic":{"type":"string", "enum":["median", "mean", "min", "max", "coverage"]}}
+QUERY_TOOLS["perception.measure_grid"] = (
+    "measure_grid", "perception.frame_statistics",
+    "Measure equal rectangular regions of ONE live RGB-D image. Returns all region values and the closest/"
+    "farthest indices for depth, lowest/highest indices for other channels. row_count divides top-to-bottom; "
+    "column_count divides left-to-right. Use 1 for an undivided axis. depth is optical-axis metres, brightness "
+    "and RGB use 0..255, coverage reports % valid pixels. Handles at most 32 regions per image.",
+    [], list(GRID_FIELDS))
 
 
 def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *, objects=False, queries=False):
@@ -100,6 +111,12 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
                 item = deepcopy(old["navigation.read_spatial_observations"])
             schema = name + "/call@1"
             params = obj({key: {"type": "string", "minLength": 1, "maxLength": 128} for key in args})
+            if pid == "perception.measure_grid":
+                module = "perception.spatial_facts.grid_tool"
+                params = obj(GRID_FIELDS)
+                spec["legacy"]["parameters"] = {k: v["type"] for k, v in GRID_FIELDS.items()}
+                # Legacy v2 hosts return this immutable projection verbatim.
+                spec["legacy"]["_parameter_schema"] = params
             filename = "assets/" + name + ".json"
             save(trust / filename, params)
             index["schemas"][schema] = filename

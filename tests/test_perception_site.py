@@ -31,10 +31,13 @@ class SiteTest(unittest.TestCase):
                              ROOT/"examples/object-perception/jetson-rover.json", "rover", queries=True)
             query_lock, _ = verify(root/"q/queries", queries["queries"])
             self.assertEqual(set(query_lock["plugins"]) - set(candidate["plugins"]),
-                             {"perception.query_frame", "perception.frame_statistics"})
+                             {"perception.query_frame", "perception.frame_statistics", "perception.measure_grid"})
             _, descriptors = verify(root/"q/queries", queries["queries"])
             schema = descriptors["perception.query_frame"]["config_schema"]
             self.assertEqual(schema["properties"]["profile"]["const"]["legacy"]["utterances"], [])
+            legacy = descriptors["perception.measure_grid"]["config_schema"]["properties"]["profile"]["const"]["legacy"]
+            self.assertEqual(legacy["_parameter_schema"]["properties"]["column_count"]["type"], "integer")
+            self.assertIn("median", legacy["_parameter_schema"]["properties"]["statistic"]["enum"])
         pin = {"id": "mark_target", "binding": "sha256:"+"1"*64}
         trigger_input({"kind":"agent","source":"plugin.supervisor","id":"follow","parent_task_id":"original",
                        "trace_id":"original","parent_event_id":"release","read_only_tool":pin})
