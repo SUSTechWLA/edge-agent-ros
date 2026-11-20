@@ -8,6 +8,15 @@ from agent import numeric_program as program
 
 
 class NumericProgramTest(unittest.TestCase):
+    def test_author_reply_converts_to_the_existing_program_identity(self):
+        instructions = ["max", "min", "sub"]
+        stored = {"tokens": instructions}
+        self.assertEqual(program.AUTHOR_SCHEMA["required"], ["instructions"])
+        self.assertEqual(program.digest(program.from_author({"instructions": instructions})), program.digest(stored))
+        for invalid in (stored, {"instructions": instructions, "other": []}, {"instructions": []}):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                program.from_author(invalid)
+
     def test_ordered_operands_and_reusable_versions(self):
         definition = {"tokens": ["last", "first", "sub", 2, "div"]}
         integer_receipt = program.execute(definition, [4, -8, 11])

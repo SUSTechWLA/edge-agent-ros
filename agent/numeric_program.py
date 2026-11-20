@@ -20,23 +20,31 @@ READERS = {**REDUCERS, "median": median, "first": lambda x: x[0], "last": lambda
 UNARY = {"abs": abs, "neg": operator.neg, "sqrt": math.sqrt}
 BINARY = {"add": operator.add, "sub": operator.sub, "mul": operator.mul, "div": operator.truediv}
 AUTHOR_SCHEMA = {
-    "type": "object", "additionalProperties": False, "required": ["tokens"],
-    "properties": {"tokens": {"type": "array", "minItems": 0, "maxItems": MAX_TOKENS,
-                             "items": {"anyOf": [
+    "type": "object", "additionalProperties": False, "required": ["instructions"],
+    "properties": {"instructions": {"type": "array", "minItems": 0, "maxItems": MAX_TOKENS,
+                             "items": {"oneOf": [
                                  {"type": "string", "enum": [*READERS, *UNARY, *BINARY]},
                                  {"type": "number", "minimum": -MAX_INPUT, "maximum": MAX_INPUT},
                              ]}}},
 }
 PROMPT = (
     "Write a reusable numeric.rpn.v1 program for the requested scalar calculation. "
-    "Return JSON with only a tokens array. Use the shortest correct postfix expression. "
+    "Return JSON with only an instructions array. Use the shortest correct postfix expression. "
     "Each reader pushes one scalar from the entire ordered input vector: min, max, sum, count, "
-    "mean (arithmetic mean), median, first, last. A numeric literal pushes that constant. "
+    "mean (arithmetic mean), median, first, last. For a fixed scale, offset or divisor, "
+    "put the numeric constant in the array as an unquoted JSON number at its operand position. "
     "abs, neg, sqrt transform the top scalar. add, sub, mul, div consume the two top scalars "
-    "and push their result, with the earlier operand on the left. End with exactly one scalar. "
+    "and push their result, with the earlier operand on the left. Check stack depth at each "
+    "operation and end with exactly one scalar. "
     "Preserve the requested operation, ordering and units. If this language cannot express the "
-    "calculation, return an empty tokens array. Never invent sample values."
+    "calculation, return an empty instructions array. Never invent sample values."
 )
+
+
+def from_author(proposal):
+    if not isinstance(proposal, dict) or set(proposal) != {"instructions"}:
+        raise ValueError("expected only an instructions array from the numeric author")
+    return validate({"tokens": proposal["instructions"]})
 
 
 def _hash(value):
