@@ -51,7 +51,7 @@ def milestones(view, evolution):
 
 
 class ColorWindow:
-    def __init__(self, stream, root, view):
+    def __init__(self, stream, root, view, *, max_seconds=90):
         self.root = root
         self.times = []
         self.frames = []
@@ -89,7 +89,7 @@ class ColorWindow:
                 refs[stamp] = ref
                 self.times.append(received)
                 self.frames.append((stamp, ref))
-        require(len(self.frames) >= 2 and 0 < self.end - self.start <= 90*NANO, "invalid RGB capture window")
+        require(len(self.frames) >= 2 and 0 < self.end - self.start <= max_seconds*NANO, "invalid RGB capture window")
         self.row_times = [stamp for stamp, _ in self.outages]
 
     def at(self, now):

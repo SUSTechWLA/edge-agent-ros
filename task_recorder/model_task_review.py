@@ -8,6 +8,7 @@ import json
 import math
 from pathlib import Path
 import shutil
+from types import SimpleNamespace
 
 from PIL import Image, ImageDraw
 
@@ -234,6 +235,27 @@ def pages(rows, size):
     return [rows[i:i + size] for i in range(0, len(rows), size)]
 
 
+def observed_rgb(batch, root, start, end):
+    """Find a real RGB camera in an arbitrary observation receipt, without imposing a source name."""
+    obs = batch.get("observations", batch)
+    if not obs.get("samples") or obs.get("basis") != "published":
+        return None
+    require(obs["clock_id"] == "unix" and start <= ns(obs["as_of_ns"]) <= end, "invalid observation time")
+    for sample in obs["samples"]:
+        if sample.get("media_type") != "image/png" or not sample.get("calibration_ref"):
+            continue
+        require(sample["kind"] == "artifact" and sample["actor_ref"] == obs["actor_ref"]
+                and sample["clock_id"] == "unix" and ns(sample["stamp_ns"]) <= ns(obs["as_of_ns"]),
+                "unrelated camera observation")
+        with Image.open(artifact(root, sample["artifact_ref"], ".png")) as im:
+            if im.format == "PNG" and im.mode in ("RGB", "RGBA"):
+                binding = dict(rgb_source_id=sample["source_id"], frame_id=sample["frame_id"],
+                               calibration_ref=sample["calibration_ref"])
+                return SimpleNamespace(rgb=im.convert("RGB"), actor=obs["actor_ref"], g=binding,
+                                       sample=sample, as_of_ns=ns(obs["as_of_ns"]))
+    return None
+
+
 def mission(source, face):
     file, recording = source / "task.json", source / "recording"
     receipt = TaskReceipt(file, recording, step_index=0)
@@ -320,9 +342,18 @@ def mission(source, face):
                                     annotated, "区域从上到下、从左到右编号"))
         else:
             fields = ", ".join(step["evidence"])
+            captured = observed_rgb(step["evidence"], source / "artifacts", result["tool_request_ns"],
+                                    result["tool_response_ns"])
+            if captured:
+                visual = visual or captured
+                chapters.append(Chapter("读取现场画面", captured.as_of_ns, 4, [
+                    ("选用工具", step["tool"]), ("图像来源", captured.sample["source_id"]),
+                    ("光学坐标系", captured.sample["frame_id"])], captured.rgb,
+                    "回执 RGB   ·   " + clock(ns(captured.sample["stamp_ns"]))))
             chapters.append(Chapter("工具返回证据", result["tool_response_ns"], 3,
                                     [("完成步骤   " + position, step["tool"]), ("返回字段", fields),
-                                     ("证据摘要", result["evidence_sha256"][:30] + "…")]))
+                                     ("证据摘要", result["evidence_sha256"][:30] + "…")],
+                                    captured.rgb if captured else None, "工具读取的原始彩色图像" if captured else ""))
         if index < len(task["steps"]) - 1:
             chapters.append(Chapter("内核验收本步回执", result["verified_ns"], 2,
                                     [("已验证", step["tool"]), ("执行步骤", position)]))
@@ -335,7 +366,7 @@ def mission(source, face):
         ("本次调用的运动工具", "0")], chapters[-1].image, chapters[-1].image_label))
     require(all(a.stamp <= b.stamp for a, b in zip(chapters, chapters[1:])), "scene source clocks regressed")
     stream = source / "sensor-timeline.jsonl"
-    window = ColorWindow(stream, source / "artifacts", visual) if visual is not None and stream.is_file() else None
+    window = ColorWindow(stream, source / "artifacts", visual, max_seconds=120) if visual and stream.is_file() else None
     if window:
         require(window.start <= chapters[0].stamp <= chapters[-1].stamp <= window.end, "incomplete live capture window")
     return task, submit, decision, results, chapters, window, receipt
@@ -395,12 +426,13 @@ def render(source, destination, face, ffmpeg, ffprobe):
                     key = "held" if pic is not None else None
                     if pic is None and window:
                         observed, stale = window.at(tick)
-                        if observed and not stale:
-                            stamp, key, _ = observed
-                            pic = window.image(key)
-                            label = "车载 RGB   ·   " + clock(stamp) + "  采样"
-                            if not preview_refs or preview_refs[-1]["ref"] != key:
-                                preview_refs.append(dict(stamp_ns=str(stamp), ref=key))
+                        if observed:
+                            stamp, ref, _ = observed
+                            key = (ref, stale)
+                            pic = window.image(ref)
+                            label = ("最近收到的车载 RGB" if stale else "车载 RGB") + "   ·   " + clock(stamp) + "  采样"
+                            if not preview_refs or preview_refs[-1]["ref"] != ref:
+                                preview_refs.append(dict(stamp_ns=str(stamp), ref=ref))
                     if key != cached_key:
                         cached = frame(ch, face, pic, label or "相机采集窗口", task["id"], i+1, len(chapters))
                         cached_key = key
