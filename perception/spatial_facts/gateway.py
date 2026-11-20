@@ -22,7 +22,7 @@ def read_regular(path, limit):
     return raw
 
 
-def optional_sources(directory, explicit=()):
+def optional_sources(directory, explicit=(), *, environment=None):
     """Resolve trusted per-provider manifests once, before accepting queries."""
     sources = list(explicit)
     directory = Path(directory)
@@ -38,8 +38,15 @@ def optional_sources(directory, explicit=()):
             if path.suffix == ".json":
                 require(len(files) < MAX_SOURCES, "sensing.too_many_sources")
                 files.append(path)
-    for manifest in sorted(files):
-        records = json.loads(read_regular(manifest, 16384))
+    manifests = [read_regular(manifest, 16384) for manifest in sorted(files)]
+    for key, value in sorted((environment or {}).items()):
+        if key.startswith("EDGE_SPATIAL_INPUT_"):
+            require(len(key) > len("EDGE_SPATIAL_INPUT_"), "sensing.invalid_source_manifest")
+            require(len(manifests) < MAX_SOURCES, "sensing.too_many_sources")
+            require(len(value) <= 16384 and len(value.encode("utf8")) <= 16384, "sensing.batch_too_large")
+            manifests.append(value)
+    for payload in manifests:
+        records = json.loads(payload)
         require(isinstance(records, list) and 1 <= len(records) < MAX_SOURCES, "sensing.invalid_source_manifest")
         for record in records:
             require(isinstance(record, dict) and set(record) == {"source_id", "file"}
@@ -112,7 +119,7 @@ def main():
     if not ns(args.max_age_ns) or not 0 < args.max_age_ns <= 10**10:
         cli.error("max age must be positive and at most ten seconds")
     try:
-        optional = optional_sources(args.source_dir, args.optional_source)
+        optional = optional_sources(args.source_dir, args.optional_source, environment=os.environ)
     except (OSError, ValueError, RecursionError, RuntimeError) as error:
         cli.error("invalid optional source deployment: " + str(error))
 

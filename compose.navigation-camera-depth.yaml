@@ -2,9 +2,8 @@
 services:
   spatial-facts:
     image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the approved image reader and facts gateway}
-    configs:
-      - source: depth-fact-source
-        target: /etc/edge/spatial-sources.d/depth.json
+    environment:
+      EDGE_SPATIAL_INPUT_DEPTH: '[{"source_id":"${EDGE_NAV_DEPTH_SOURCE:?approved depth source}","file":"/depth-facts/observations.json"}]'
     volumes: [depth-facts:/depth-facts:ro]
   depth-reader:
     image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the approved image reader}
@@ -33,6 +32,3 @@ volumes:
   depth-facts:
     driver: local
     driver_opts: {type: tmpfs, device: tmpfs, o: "size=400m,mode=0755"}
-configs:
-  depth-fact-source:
-    content: '[{"source_id":"${EDGE_NAV_DEPTH_SOURCE:?approved depth source}","file":"/depth-facts/observations.json"}]'

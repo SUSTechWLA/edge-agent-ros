@@ -2,9 +2,8 @@
 services:
   spatial-facts:
     image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the image with source discovery}
-    configs:
-      - source: mid360_inputs
-        target: /etc/edge/spatial-sources.d/mid360.json
+    environment:
+      EDGE_SPATIAL_INPUT_LIVOX: '[{"source_id":"mid360.front","file":"/lidar-facts/mid360.front/observations.json"},{"source_id":"mid360.rear","file":"/lidar-facts/mid360.rear/observations.json"}]'
     volumes: [livox-facts:/lidar-facts:ro]
   livox-reader:
     image: ${EDGE_NAV_IMAGE_READER_IMAGE}
@@ -26,9 +25,6 @@ services:
               --source, "${EDGE_NAV_REAR_IP:?approved rear sensor IPv4}", mid360.rear, "${EDGE_NAV_REAR_FRAME:?rear native sensor frame}",
               --actor-ref, "${EDGE_NAV_ACTOR:?approved actor}", --output, /lidar-facts]
     volumes: [livox-facts:/lidar-facts]
-configs:
-  mid360_inputs:
-    content: '[{"source_id":"mid360.front","file":"/lidar-facts/mid360.front/observations.json"},{"source_id":"mid360.rear","file":"/lidar-facts/mid360.rear/observations.json"}]'
 volumes:
   livox-facts:
     driver: local

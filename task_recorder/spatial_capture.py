@@ -51,7 +51,10 @@ class Archive:
         if filename in self.saved:
             return
         path = self.sources[sample["source_id"]] / "artifacts" / filename
-        with path.open("rb") as content:
+        if path.resolve(strict=True) != path.absolute():
+            raise ValueError("unexpected artifact path")
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0)
+        with os.fdopen(os.open(path, flags), "rb") as content:
             if not stat.S_ISREG(os.fstat(content.fileno()).st_mode):
                 raise ValueError("expected a regular sensor artifact")
             raw = content.read(FILE_LIMIT + 1)

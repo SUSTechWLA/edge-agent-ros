@@ -125,6 +125,26 @@ class SpatialGateway(unittest.TestCase):
         with self.assertRaisesRegex(SpatialFactError, "batch_too_large"):
             optional_sources(folder)
 
+    def test_environment_merges_with_files_and_cli_without_duplicate_owners(self):
+        folder = self.root / "input"
+        folder.mkdir()
+        info = self.camera / "observations.json"
+        (folder / "calibration.json").write_text(json.dumps([{"source_id": self.source, "file": str(info)}]))
+        def entry(name):
+            return json.dumps([{"source_id": name, "file": str(self.root / (name + ".json"))}])
+        first = "EDGE_SPATIAL_INPUT_COLOR"
+        second = "EDGE_SPATIAL_INPUT_RANGES"
+        env = {second: entry("range.preview"), first: entry("image.preview"), "EDGE_SPATIAL_DEBUG": "ignored"}
+        cli = [("odometry.preview", self.root / "odom-preview.json")]
+        names = [name for name, _ in optional_sources(folder, cli, environment=env)]
+        self.assertEqual(names, ["odometry.preview", self.source, "image.preview", "range.preview"])
+        for duplicate in (self.source, cli[0][0], "range.preview"):
+            with self.subTest(duplicate=duplicate), self.assertRaisesRegex(SpatialFactError, "duplicate_source"):
+                optional_sources(folder, cli, environment={**env, first: entry(duplicate)})
+        for bad_value in ("[", "[]", '{"a":1}', '[{"source_id":"rgb","file":"relative"}]', " " * 16385):
+            with self.subTest(invalid=bad_value[:20]), self.assertRaises(ValueError):
+                optional_sources(folder, cli, environment={**env, first: bad_value})
+
     def test_reject_other_actor_future_input_duplicate_and_private_metadata(self):
         self.capture()
         path = self.camera / "observations.json"

@@ -2,9 +2,8 @@
 services:
   spatial-facts:
     image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the approved image reader and facts gateway}
-    configs:
-      - source: rgb-fact-source
-        target: /etc/edge/spatial-sources.d/color.json
+    environment:
+      EDGE_SPATIAL_INPUT_RGB: '[{"source_id":"${EDGE_NAV_RGB_SOURCE:?approved RGB source}","file":"/image-facts/observations.json"}]'
     volumes: [image-facts:/image-facts:ro]
   image-reader:
     image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the approved image reader}
@@ -32,6 +31,3 @@ volumes:
   image-facts:
     driver: local
     driver_opts: {type: tmpfs, device: tmpfs, o: "size=112m,mode=0755"}
-configs:
-  rgb-fact-source:
-    content: '[{"source_id":"${EDGE_NAV_RGB_SOURCE:?approved RGB source}","file":"/image-facts/observations.json"}]'
