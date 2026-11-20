@@ -27,4 +27,6 @@
 
 ## 变更记录
 
+最终风控版本在 `jetson-readback-final-02` 复测读取到轮式里程计、相机内参、彩色图、对齐深度和前后两路 MID360 的六个真实来源。对这个仅列出数据源的目标，4B 模型仍复用了额外的区域计算，尽管原始观测已足以作答。加强直接读取提示后仍能复现，应在后续规划评测中区分取得正确数据和选择最少必要调用。
+
 2026-11-20 以 `d4a7303` 为基线。Jetson CPU 上的 Qwen2.5 1.5B 对真实提问错误拒绝。现场改用 Qwen3 4B 与可机检的区域测量契约，同一句未注册文本生成 1 行 3 列的深度中位数查询。任务 `jetson-depth-thirds-04` 的三个结果分别为 1.467、1.131 和 0.936 米。录像端用原始对齐深度图独立复算并逐帧解码 530 帧。审批过的软件工具按绑定派发，隔离的混合控制测试派发次数为零。[实机回执摘要](../../artifacts/verification/navigation-plugins/jetson-read-operator.json) · [隔离控制测试](../../artifacts/verification/navigation-plugins/isolated-autonomous-control-denial.json)
