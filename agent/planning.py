@@ -375,8 +375,11 @@ def read_output_schema(entries, protocol, computation=None):
                 "required":["tool","args"], "additionalProperties":False}
 
     def branch(dispositions, steps):
+        reason = {"type":"string", "minLength":1}
+        if protocol == "ollama":
+            reason["maxLength"] = 128
         return {"type":"object", "properties":{"disposition":{"type":"string", "enum":dispositions},
-                "reason":{"type":"string", "minLength":1}, "steps":steps},
+                "reason":reason, "steps":steps},
                 "required":["disposition","reason","steps"], "additionalProperties":False}
 
     if protocol == "http-planner" and computation is None:
