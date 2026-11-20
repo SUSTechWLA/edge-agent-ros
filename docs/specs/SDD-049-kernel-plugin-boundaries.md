@@ -144,6 +144,12 @@ AC-5/6 在 Linux/amd64 隔离 ROS 域用 `python3 -B tests/test_plugin_conforman
 
 校园重载恢复后，站点探针在打印三个站点及位置恢复的完整数据后偶发 SIGABRT（134）。隔离分区中，原实现在 40 次运行里复现三次。Gazebo 的接收线程在 `unsubscribe` 返回后仍持有 Python 回调；夹具现在等到回调实际释放再退出。60 次定向试验分别覆盖正常退出、原采样断言失败、第二个订阅创建失败各 20 次，错误退出码和断言内容均保留。另有 64 次高频和请求超时组合正常退出。见 `.ci-results/k2/wp6/gz-teardown/summary.json`。修复只涉及仿真测试进程的生命周期。完整校园验收 `.ci-results/k2/wp6/campus/corrected.json` 使用 `--verify-reload --verify-texture --verify-onboard` 返回 0。新任务核验三个位置，旧证据保留；16 路合成 onboard 来源、3 个站点的 9 帧雷达及独立小世界时钟均通过。Console 回归 50 项、独立事实服务回归 5 项通过，结果在 `.ci-results/k2/wp6/console-final.log` 和 `.ci-results/k2/wp6/task-facts-final.log`。
 
-最终提交的全量运行号为 `20261119T132402Z-b663475d`，原始回执路径为 `.ci-results/r/20261119T132402Z-b663475d/summary.json`。测试读取当前 Git SHA、检查工作树并记录镜像 ID 及其 revision 标签。核对时以此回执的 `revision`、`dirty`、`image_id`、`image_revision`、`status` 以及 `stages[].status` 计数为准。每次运行使用新目录，已存在的运行号会被拒绝。
+提交 `f13ed32` 的全量运行号为 `20261119T132402Z-b663475d`，原始回执路径为 `.ci-results/r/20261119T132402Z-b663475d/summary.json`。测试读取当前 Git SHA、检查工作树并记录镜像 ID 及其 revision 标签。核对时以此回执的 `revision`、`dirty`、`image_id`、`image_revision`、`status` 以及 `stages[].status` 计数为准。每次运行使用新目录，已存在的运行号会被拒绝。
 
 在本机，`pwsh -NoProfile -File .ci-results/k2/runner/run.ps1 -RunId <新运行号>` 以上述离线资源执行 `tests/system_suite.py --out-root .ci-results/r --campus-assets artifacts/sim-assets --ollama-cache-volume edge-agent-ros_models`，全量包含模型和校园场景。运行器在 Docker 命令执行前保留临时项目的命名卷，仿真和板端镜像各在无网络的构建阶段使用已核实的本地 SDK。快速门逐条命令、返回码及日志保存在 `.ci-results/k2/wp6/gate.json`。上述回执均为 Linux/amd64 容器及软件夹具的结果。
+
+### WP6 合成相机订阅者见证
+
+在干净提交 `f13ed32f0a186e1ff8fba0d5ee29feba8cd11de7` 的全量中，36 个阶段行有 35 项通过、1 项失败、0 项跳过，镜像为 `sha256:46fa7273da3cecddb12ebc1d1301bc89bb53386c32a18ad465b6744f9311a137`。模拟相机收到的帧与发布端时间戳、哈希一致，一次性订阅者在两次 DDS 图查询之间收帧并退出，独立见证因此缺失订阅者 GID。原夹具四次同镜像试验中两次复现。测试发布器现在持续更新健康心跳，发现相机订阅后记录该帧和当前全部订阅者并投递。三个托管试验和单独一次复验均通过。接入第二个读者时，原唯一性断言成功拒绝。回执在 `.ci-results/k2/wp6/physical-camera-audit/candidate-summary.json`、`independent.json` 及 `patched-negative.json`。
+
+本次独立提交的干净 HEAD 全量使用运行号 `20261120T004434Z-f657f9fa`，原始报告为 `.ci-results/r/20261120T004434Z-f657f9fa/summary.json`。命名卷保留、模型缓存和校园资产沿用上次配置。
