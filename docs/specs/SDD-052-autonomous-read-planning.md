@@ -27,4 +27,4 @@
 
 ## 变更记录
 
-以 `d4a7303` 为现场基线，新增可选部署策略、受限感知计算和真实模型调用回放。验收统计与现场运行后补记。
+2026-11-20 以 `d4a7303` 为基线。Jetson CPU 上的 Qwen2.5 1.5B 对真实提问错误拒绝。现场改用 Qwen3 4B 与可机检的区域测量契约，同一句未注册文本生成 1 行 3 列的深度中位数查询。任务 `jetson-depth-thirds-04` 的三个结果分别为 1.467、1.131 和 0.936 米。录像端用原始对齐深度图独立复算并逐帧解码 530 帧。审批过的软件工具按绑定派发，隔离的混合控制测试派发次数为零。[实机回执摘要](../../artifacts/verification/navigation-plugins/jetson-read-operator.json) · [隔离控制测试](../../artifacts/verification/navigation-plugins/isolated-autonomous-control-denial.json)
