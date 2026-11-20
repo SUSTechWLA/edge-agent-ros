@@ -1,5 +1,6 @@
 """Run the persistent planning, dispatch and verification queues."""
 from functools import partial
+import os
 import time
 
 from agent.tracing import diagnosis, exchange
@@ -19,6 +20,9 @@ def task_plan(journal, task, trace, *, registry, planner, read_only_planner, fre
     authority = read_authority.load()
     pin = (task.get("trigger") or {}).get("read_only_tool")
     if candidate is None:
+        if (hasattr(journal, "operator_intent") and journal.operator_intent(task["id"])
+                and (authority is None or "EDGE_READ_OPERATOR_POLICY" not in os.environ)):
+            raise failure(Refused, "原任务的数值算子策略已撤销", "operator.binding_denied", "deployment")
         try:
             caps = registry()
         except Unavailable:
@@ -38,6 +42,8 @@ def task_plan(journal, task, trace, *, registry, planner, read_only_planner, fre
             provider, steps = planner(task["text"], {pin["id"]:cap}, trace)
         elif pin:
             provider, steps = read_only_planner(task["text"],caps,pin)
+        elif authority is not None and "EDGE_READ_OPERATOR_POLICY" in os.environ:
+            provider, steps = planner(task["text"], caps, trace, operator_task=(journal, task["id"]))
         else:
             provider, steps = planner(task["text"],caps,trace)
         managed = False

@@ -59,7 +59,12 @@ def matches_actor(actor, cap, args):
 
 def require_steps(policy, steps):
     if policy is None:
+        if any("read_operator" in s for s in steps):
+            raise failure(Refused, "数值算子需要部署方的只读授权", "operator.binding_denied", "deployment")
         return
+    if "EDGE_READ_OPERATOR_POLICY" in os.environ or any("read_operator" in s for s in steps):
+        from agent.read_operators import authorize_frozen
+        authorize_frozen(steps)
     actor = actor_ref()
     for step in steps:
         tool = step.get("tool")

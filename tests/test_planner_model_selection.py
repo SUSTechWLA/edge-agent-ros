@@ -29,6 +29,19 @@ class ModelSelectionTest(unittest.TestCase):
                     with self.assertRaises(Refused):
                         planner_profile()
 
+    def test_planner_and_author_share_bounded_duration_and_token_limit(self):
+        with TemporaryDirectory() as temp, patch.dict(os.environ, {"EDGE_CONTRACT_DIR":temp}):
+            path = Path(temp) / "planner-profile.json"
+            profile = {"schema_version":1,"version":"v1","protocol":"ollama","url":"http://local","model":"qwen"}
+            path.write_text(json.dumps(dict(profile, timeout_s=210, options={"num_predict":240})))
+            self.assertEqual(planner_profile()["timeout_s"], 210)
+            self.assertEqual(planner_profile()["options"]["num_predict"], 240)
+            for field, bad in (("timeout_s", True),("timeout_s",241),("timeout_s",4),("num_predict",0),("num_predict",1025)):
+                options = {field:bad} if field == "timeout_s" else {"options":{field:bad}}
+                path.write_text(json.dumps(dict(profile, **options)))
+                with self.assertRaises(Refused):
+                    planner_profile()
+
     def test_hot_select_replay_and_restore_with_optimistic_concurrency(self):
         with TemporaryDirectory() as temp, patch.dict(os.environ, {"EDGE_CONTRACT_DIR": temp,
                 "EDGE_PLANNER_URL": "", "EDGE_OLLAMA_URL": "http://original:11434"}):

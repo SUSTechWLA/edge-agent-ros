@@ -132,7 +132,7 @@ def run(args, selected, reasons):
                                  "-f","compose.camera-hardware.yaml","-f","compose.rgbd.yaml","-f","compose.rgbd-hardware.yaml",
                                  "-f","compose.model-provider.yaml","-f","compose.model-provider-hardware.yaml","config","--quiet"]])
         if "planner" in selected:
-            stage("planner",[test("planning_contract.py","-v"),test("test_autonomous_read.py","-v"),
+            stage("planner",[test("planning_contract.py","-v"),test("test_autonomous_read.py","-v"),test("test_read_operators.py","-v"),
                              test("test_derived_tools.py","-v"),
                              test("test_reference_utterances.py","-v"),test("test_spatial_facts.py","-v"),
                              test("test_spatial_gateway.py","-v"),

@@ -11,7 +11,7 @@ import time
 import uuid
 
 from agent.tracing import artifact
-from edge_contracts.errors import Refused
+from edge_contracts.errors import Refused, failure
 from edge_contracts.soft_transport import SoftError
 from edge_contracts.trace_content import clean_text, sanitized
 from .authorization import check_id
@@ -83,6 +83,8 @@ class Journal:
             CREATE INDEX IF NOT EXISTS tasks_ready ON tasks(state,due,created);
             CREATE TABLE IF NOT EXISTS soft_settlements(operation TEXT PRIMARY KEY, pin TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS soft_plan_intents(task TEXT PRIMARY KEY, plan TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS read_operator_intents(task TEXT PRIMARY KEY, intent TEXT NOT NULL,
+                author_attempts INTEGER NOT NULL DEFAULT 0, program TEXT, feedback TEXT);
             CREATE TABLE IF NOT EXISTS task_triggers(
               task_id TEXT PRIMARY KEY REFERENCES tasks(id), kind TEXT NOT NULL, source TEXT NOT NULL,
               source_key TEXT NOT NULL, context TEXT NOT NULL, trace_id TEXT NOT NULL,
@@ -312,6 +314,33 @@ class Journal:
                                 (task,json.dumps(candidate,allow_nan=False)))
             row = self.db.execute("SELECT plan FROM soft_plan_intents WHERE task=?",(task,)).fetchone()
             return json.loads(row[0]) if row else None
+
+    def operator_intent(self, task, intent=None):
+        with self.lock,self.db:
+            if intent is not None:
+                self.db.execute("INSERT OR IGNORE INTO read_operator_intents(task,intent) VALUES(?,?)",
+                                (task,json.dumps(intent, allow_nan=False)))
+            row = self.db.execute("SELECT intent,program,feedback FROM read_operator_intents WHERE task=?", (task,)).fetchone()
+            return ({"intent":json.loads(row[0]), "program":json.loads(row[1]) if row[1] else None,
+                     "feedback":json.loads(row[2]) if row[2] else None} if row else None)
+
+    def author_attempt(self, task):
+        with self.lock,self.db:
+            cur = self.db.execute("UPDATE read_operator_intents SET author_attempts=author_attempts+1"
+                                  " WHERE task=? AND author_attempts<2 AND program IS NULL", (task,))
+            if cur.rowcount != 1:
+                raise failure(Refused, "本任务的算子创作预算已用尽", "operator.attempts_exhausted", "read-operators")
+            return self.db.execute("SELECT author_attempts FROM read_operator_intents WHERE task=?", (task,)).fetchone()[0]
+
+    def save_operator_program(self, task, program):
+        with self.lock,self.db:
+            self.db.execute("UPDATE read_operator_intents SET program=? WHERE task=? AND program IS NULL",
+                            (json.dumps(program, allow_nan=False), task))
+
+    def operator_feedback(self, task, feedback):
+        with self.lock,self.db:
+            self.db.execute("UPDATE read_operator_intents SET feedback=? WHERE task=? AND program IS NULL",
+                            (json.dumps(feedback, allow_nan=False), task))
 
     def settle_soft_batch(self, stop):
         with self.lock:

@@ -24,6 +24,7 @@ else:
     from tracing import CODE, artifact, contract, exchange
 
 from edge_contracts.descriptor import validate_instance
+from agent import read_operators
 from edge_contracts.errors import OutcomeUnknown, Refused, Unavailable, failure, remote_failure
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -207,7 +208,7 @@ def local_plan(text, caps):
     return match_utterances(request,caps, text)
 
 
-def plan(text, caps, trace=None, *, model_profile=None, model_request=None):
+def plan(text, caps, trace=None, *, model_profile=None, model_request=None, operator_task=None):
     diagnostic = {"stage":"capability_check"}
     try:
         policy = runtime_plugins.load_policy()
@@ -219,7 +220,7 @@ def plan(text, caps, trace=None, *, model_profile=None, model_request=None):
             eligible = {name:cap for name, cap in caps.items()
                         if read_authority.admitted(authority, name, cap, cap.get("_soft"))
                         and not runtime_plugins.requirements(cap, policy)}
-            provider, steps = autonomous_read_plan(text, eligible, diagnostic, trace, model_profile, model_request)
+            provider, steps = autonomous_read_plan(text, eligible, diagnostic, trace, model_profile, model_request, operator_task)
         for step in steps:
             step["verification"] = verification_plan(caps[step["tool"]], policy)
         return provider, steps
@@ -284,7 +285,9 @@ def planner_profile():
         if len(raw)>16384:
             raise ValueError()
         profile=json.loads(raw)
-        if not isinstance(profile,dict) or set(profile)-{"schema_version","version","protocol","url","model","options"}:
+        if not isinstance(profile,dict) or set(profile)-{"schema_version","version","protocol","url","model","options","timeout_s"}:
+            raise ValueError()
+        if "timeout_s" in profile and (type(profile["timeout_s"]) is not int or not 5 <= profile["timeout_s"] <= 240):
             raise ValueError()
         if profile.get("schema_version")!=1 or not isinstance(profile.get("version"),str) or not 1<=len(profile["version"])<=64:
             raise ValueError()
@@ -296,7 +299,7 @@ def planner_profile():
             if not isinstance(profile.get("model"),str) or not 1<=len(profile["model"])<=128:
                 raise ValueError()
             options=profile.get("options",{})
-            if not isinstance(options,dict) or set(options)-{"temperature","num_ctx","num_thread"}:
+            if not isinstance(options,dict) or set(options)-{"temperature","num_ctx","num_thread","num_predict"}:
                 raise ValueError()
             temp=options.get("temperature",0)
             ctx=options.get("num_ctx",4096)
@@ -308,6 +311,11 @@ def planner_profile():
                 if type(threads) is not int or not 1 <= threads <= 64:
                     raise ValueError()
                 profile["options"]["num_thread"] = threads
+            if "num_predict" in options:
+                limit = options["num_predict"]
+                if type(limit) is not int or not 1 <= limit <= 1024:
+                    raise ValueError()
+                profile["options"]["num_predict"] = limit
         elif protocol!="http-planner" or "model" in profile or "options" in profile:
             raise ValueError()
         return profile
@@ -321,7 +329,7 @@ def planner_profile():
                       "planner.profile_invalid","registry") from exc
 
 
-def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile, model_request):
+def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile, model_request, prompt_text=None):
     profile = planner_profile() if model_profile is None else model_profile
     request = http_json if model_request is None else model_request
     url = profile["url"]
@@ -332,18 +340,22 @@ def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile
     plugin = profile["protocol"] == "http-planner"
     provider = "http-planner" if plugin else "ollama/" + profile["model"]
     diagnostic.update(stage="planner", provider=provider)
+    module = "operator-author" if prompt_text is not None else "planner"
+    timeout = profile.get("timeout_s", 90)
     if plugin:
         body = {"schema_version":1, **context, "output_schema":schema}
         if prompt_key != "planner.system":
-            body["instructions"] = contract("prompts", prompt_key)["text"]
-        answer = exchange(trace, "model", "planner", body, lambda:request(url, body, 90),
+            body["instructions"] = prompt_text or contract("prompts", prompt_key)["text"]
+        answer = exchange(trace, "model", module, body, lambda:request(url, body, timeout),
                           meta={"provider":provider, "protocol":"planner.http.v1", "profile":revision})
     else:
-        prompt = contract("prompts", prompt_key)
+        prompt = (contract("prompts", prompt_key) if prompt_text is None else
+                  {"id":prompt_key,"text":prompt_text,"version":read_operators.numeric.LANGUAGE,
+                   "sha256":hashlib.sha256(prompt_text.encode()).hexdigest()})
         body = {"model":profile["model"], "stream":False, "format":schema, "options":profile["options"],
                 "messages":[{"role":"system", "content":prompt["text"]},
                             {"role":"user", "content":json.dumps(context, ensure_ascii=False)}]}
-        reply = exchange(trace, "model", "planner", body, lambda:request(url.rstrip("/") + "/api/chat", body, 90),
+        reply = exchange(trace, "model", module, body, lambda:request(url.rstrip("/") + "/api/chat", body, timeout),
                          meta={"provider":provider, "protocol":"ollama.chat", "profile":revision,
                                "prompt":{k:prompt[k] for k in ("id","version","sha256")}})
         answer = json.loads(reply["message"]["content"], parse_constant=finite_number, parse_float=finite_number)
@@ -357,7 +369,7 @@ def autonomous_argument_schema(cap):
             "required":list(cap["parameters"]), "additionalProperties":False}
 
 
-def read_output_schema(entries, protocol):
+def read_output_schema(entries, protocol, computation=None):
     def step(names, arguments):
         return {"type":"object", "properties":{"tool":{"type":"string", "enum":names}, "args":arguments},
                 "required":["tool","args"], "additionalProperties":False}
@@ -367,7 +379,7 @@ def read_output_schema(entries, protocol):
                 "reason":{"type":"string", "minLength":1}, "steps":steps},
                 "required":["disposition","reason","steps"], "additionalProperties":False}
 
-    if protocol == "http-planner":
+    if protocol == "http-planner" and computation is None:
         # Keep the v1 HTTP envelope stable; deployed providers receive the
         # complete input contracts in capabilities and the kernel checks them.
         entry = step([item["id"] for item in entries], {"type":"object"})
@@ -375,7 +387,13 @@ def read_output_schema(entries, protocol):
     choices = [step([item["id"]], item["input_schema"]) for item in entries]
     ready = branch(["ready"], {"type":"array", "items":{"oneOf":choices}, "minItems":1, "maxItems":16})
     denied = branch(["requires_control","unsupported"], {"type":"array", "maxItems":0})
-    return {"type":"object", "oneOf":[ready, denied]}
+    options = [ready, denied] if choices else [denied]
+    if computation is not None:
+        compose = branch(["read_compute"], {"type":"array", "maxItems":0})
+        compose["properties"]["computation"] = computation
+        compose["required"].append("computation")
+        options.append(compose)
+    return {"type":"object", "oneOf":options}
 
 
 def validate_read_answer(answer, caps, text, actor):
@@ -410,7 +428,7 @@ def validate_read_answer(answer, caps, text, actor):
     return steps
 
 
-def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_request):
+def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_request, operator_task=None):
     entries = [dict(item, input_schema=autonomous_argument_schema(caps[item["id"]]),
                     binding=binding(caps[item["id"]])) for item in catalog(caps)]
     if trace:
@@ -420,17 +438,65 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
     if not caps:
         raise failure(Refused, "没有已获部署方批准且可用的只读软件能力", "planner.read_catalog_empty", "deployment")
     profile = planner_profile() if model_profile is None else model_profile
-    schema = read_output_schema(entries, profile["protocol"])
     actor = read_authority.actor_ref()
     context = {"request":text, "authority":"deployment.read_only", "capabilities":entries}
+    site = read_operators.Operators.configured()
+    ordinary = caps if site is None else {k:v for k,v in caps.items() if k != site.runner}
+    computation = None
+    saved = operator_task[0].operator_intent(operator_task[1]) if operator_task else None
+    if saved and (not site or site.runner not in caps):
+        raise read_operators.reject("原任务已保存的计算工具不再可用", "operator.binding_denied")
+    if site and site.runner in caps and operator_task:
+        input_schema = site.input_schema(caps[site.runner])
+        computation = {"type":"object","properties":{"contract":{"type":"string","enum":list(site.contracts)},
+                       "input":input_schema},"required":["contract","input"],"additionalProperties":False}
+        context["numeric_computation"] = {"runner":site.runner,"input_schema":input_schema,"contracts":site.describe(),
+            "instructions":"For a requested numeric result that requires combining sensor measurements, choose "
+            "read_compute, the matching mathematical contract, and the input measurement. This path also reuses "
+            "installed operators. A sensor measurement alone cannot deliver an additional calculation. "
+            "The runtime supplies the verified program digest. Never choose the runner as a direct ready step."}
+    schema = read_output_schema([c for c in entries if c["id"] in ordinary], profile["protocol"], computation)
     if actor is not None:
         context["actor_ref"] = actor
     for attempt in range(2):
         try:
-            provider, answer = model_proposal(context, schema, "planner.autonomous_read", diagnostic, trace,
-                                              profile, model_request)
+            if saved:
+                provider, answer = saved["intent"]["provider"], saved["intent"]["answer"]
+            else:
+                provider, answer = model_proposal(context, schema, "planner.autonomous_read", diagnostic, trace,
+                                                  profile, model_request)
             diagnostic["stage"] = "plan_validation"
-            steps = validate_read_answer(answer, caps, text, actor)
+            if isinstance(answer, dict) and answer.get("disposition") == "read_compute" and computation:
+                if authorization.explicit_motion_request(text):
+                    raise failure(Refused, "任务需要控制授权", "planner.control_requires_approval", "deployment")
+                if (set(answer) != {"disposition","steps","reason","computation"} or answer["steps"] != []
+                        or not isinstance(answer["reason"], str) or not answer["reason"].strip()):
+                    raise ValueError("read_compute requires one computation, reason and empty steps")
+                gap = answer["computation"]
+                validate_instance(computation, gap)
+                name = gap["contract"]
+                intent = {"provider":provider, "answer":answer, "runner_binding":binding(caps[site.runner]),
+                          "contract_hash":read_operators.content_hash(site.contracts[name])}
+                journal, task_id = operator_task
+                if journal.operator_intent(task_id, intent)["intent"] != intent:
+                    raise read_operators.reject("原任务的算子契约或绑定已改变", "operator.binding_denied")
+                if not saved and trace:
+                    trace("planner.decomposed", {"layer":"planner","module":"planner","provider":provider,
+                          "artifact":artifact(answer),"runner":site.runner})
+                def author(description, feedback):
+                    question = {"request":text,"calculation":description}
+                    if feedback:
+                        question["validation_feedback"] = feedback
+                    _, candidate = model_proposal(question, read_operators.numeric.AUTHOR_SCHEMA,
+                        "operator.author", diagnostic, trace, profile, model_request, read_operators.numeric.PROMPT)
+                    return read_operators.numeric.from_author(candidate)
+                invocation = site.resolve(gap, journal, task_id, trace, author)
+                final = {"disposition":"ready", "reason":answer["reason"], "steps":[invocation]}
+                steps = validate_read_answer(final, {site.runner:caps[site.runner]}, text, actor)
+                steps[0]["read_operator"] = name
+                answer = final
+            else:
+                steps = validate_read_answer(answer, ordinary, text, actor)
             if trace:
                 trace("planner.selected", {"layer":"planner", "module":"planner", "provider":provider,
                                            "artifact":artifact(answer)})
