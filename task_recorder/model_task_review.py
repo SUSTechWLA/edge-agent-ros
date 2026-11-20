@@ -294,8 +294,9 @@ def blocked_attempt(path, current, submitted_ns):
         require(r["task_id"] == task["id"] and payload["trace"]["trace_id"] == task["trace_id"]
                 and payload["trace"]["event_id"] == r["event_id"], "different source task in earlier attempt")
         events.setdefault(r["kind"], []).append(payload)
-    request, = events["model.request"]
-    response, = events["model.response"]
+    plans = [v for v in events["model.request"] if v["trace"]["module"] == "planner"]
+    request = plans[-1]
+    response, = [v for v in events["model.response"] if v["trace"]["call_id"] == request["trace"]["call_id"]]
     treq, tres = request["trace"], response["trace"]
     require(treq["protocol"] == tres["protocol"] == "ollama.chat" and treq["call_id"] == tres["call_id"],
             "earlier model exchange mismatch")
@@ -305,16 +306,34 @@ def blocked_attempt(path, current, submitted_ns):
     answer = json.loads(res["message"]["content"])
     denial = events["blocked"][0]["diagnostic"]
     require(seen["request"] == task["text"] and req["model"] == res["model"] and
-            answer.get("disposition") == "unsupported" and answer["steps"] == [] and
-            denial["code"] == "planner.unsupported" and denial["message"] == task["detail"] == answer["reason"],
+            answer["steps"] == [] and denial["message"] == task["detail"],
             "earlier task has a different decision or diagnosis")
+    candidates = []
+    if denial["code"] == "operator.validation_failed":
+        require(answer["disposition"] == "read_compute" and contents(events["planner.decomposed"][0]["trace"]) == answer
+                and all(k not in events for k in ("operator.verified", "operator.installed", "operator.reused",
+                                                  "planner.resumed")), "earlier task published a candidate")
+        authors = [r for r in events["model.request"] if r["trace"]["module"] == "operator-author"]
+        denied = events["operator.rejected"]
+        require(len(authors) == len(denied) == len(events["operator.author_request"]), "missing rejected attempt")
+        for i, (issued, failed) in enumerate(zip(authors, denied), 1):
+            result, = [r for r in events["model.response"] if r["trace"]["call_id"] == issued["trace"]["call_id"]]
+            body = contents(result["trace"])
+            candidate = json.loads(body["message"]["content"])
+            require(body["model"] == contents(issued["trace"])["model"] and failed["trace"]["attempt"] == i
+                    and set(candidate) == {"instructions"} and isinstance(candidate["instructions"], list),
+                    "earlier rejected candidate lacks its author's response")
+            candidates.append(dict(model=body["model"], instructions=candidate["instructions"], code=failed["trace"]["code"]))
+    else:
+        require(denial["code"] == "planner.unsupported" and answer["disposition"] == "unsupported"
+                and answer["reason"] == task["detail"], "unsupported prior attempt type")
     start, end = utc_ns(rows[0]["utc"]), utc_ns(rows[-1]["utc"])
     require(start <= end < submitted_ns, "earlier task did not precede main submission")
     return dict(task_id=task["id"], text=task["text"], model=req["model"], disposition=answer["disposition"],
                 reason=denial["message"], state=task["state"], code=denial["code"], dispatches=0,
                 offered=[x["id"] for x in seen["capabilities"]], first_ns=str(start), final_ns=str(end),
                 request_sha256=treq["artifact"]["sha256"], response_sha256=tres["artifact"]["sha256"],
-                task_sha256=sha(path))
+                task_sha256=sha(path), rejected_authors=candidates)
 
 
 def prior_chapter(prior, face):
@@ -325,9 +344,15 @@ def prior_chapter(prior, face):
     d.line((36, 188, 783, 188), fill="#53756b")
     text(d, 36, 219, prior["task_id"], 27, "#f4f3ed", face, 747)
     text(d, 36, 282, "模型返回  " + prior["disposition"], 25, "#d5e5d9", face, 747)
-    text(d, 36, 347, "工具派发  0", 25, "#d5e5d9", face)
+    authors = prior.get("rejected_authors", [])
+    text(d, 36, 347, "算子安装  0     工具派发  0" if authors else "工具派发  0", 25, "#d5e5d9", face)
     text(d, 36, 437, "账本时间  " + clock(ns(prior["first_ns"])) + " — " + clock(ns(prior["final_ns"])),
          20, "#b5cbbf", face, 747)
+    if authors:
+        info = [(f"被拒的候选 {i}", json.dumps(r["instructions"], ensure_ascii=False)) for i,r in enumerate(authors, 1)]
+        return Chapter("回看先前被拒的候选程序", ns(prior["final_ns"]), 7, [
+            ("前一次独立提交", prior["reason"]), *info, ("后续", "相同原文随后以新任务 ID 提交")],
+            im, "前一任务的模型响应与验收拒绝记录", prior["task_id"])
     return Chapter("回看前一次独立提交", ns(prior["final_ns"]), 6, [
         ("同一请求的首次判断", prior["reason"]), ("当时使用的模型", prior["model"]),
         ("内核记录的终态", prior["code"]), ("接下来", "查看新任务 ID 下的完整运行")],
