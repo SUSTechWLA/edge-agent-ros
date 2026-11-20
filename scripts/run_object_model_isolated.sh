@@ -15,6 +15,7 @@ socket_dir=$(realpath -e -- "$5")
 test -s "$source_root/perception/spatial_facts/object_worker.py"
 exec bwrap --unshare-all --die-with-parent --new-session --clearenv \
   --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /etc/ld.so.cache /etc/ld.so.cache \
+  --ro-bind-try /etc/alternatives /etc/alternatives \
   --dir /sys/devices/system --ro-bind /sys/devices/system/cpu /sys/devices/system/cpu \
   --proc /proc --dev /dev --tmpfs /tmp --dir /tmp/yolo --dir /app \
   --ro-bind "$source_root/perception" /app/perception --ro-bind "$source_root/edge_contracts" /app/edge_contracts \

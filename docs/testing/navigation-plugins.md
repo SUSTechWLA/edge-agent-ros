@@ -1,5 +1,13 @@
 # Jetson 只读导航插件验收
 
+### 直接下发室内物体测距任务
+
+在车端直接提交“请帮我找到盆栽，量一下它离相机有多远。”。Agent 将原句绑定到只读工具 `see_object`。工具通过 `perception.object_location` 取得同一次调用选择的 D435 彩色图、对齐深度与 CameraInfo。CPU 模型返回整株候选框，几何提供者在候选内找到具有周围深度支持的可见绿色表面，量出相机光心到选定像素的直线距离。存在多个符合描述的候选、模型与原图摘要不匹配或深度不足时，保留阻塞原因。这个读数只对应画面中选定的表面。
+
+2026-11-20 实车直接任务 `jetson-find-plant-20261120-01` 中，整株盆栽位于 640×480 实拍的左侧。模型框为 `[21,0,304,404)`，测距像素为 `(154,42)`，光轴深度 1.439 m，斜距 1.573 m。从客户端 POST 到步骤 verified 历时 2.192 s，任务成功。回放在原始提交、工具派发、读取 RGB-D、二维标注和三维测量各阶段停留，保留车端实际时刻。主片长 21 秒。对应的摘要见[实测记录](../../artifacts/verification/navigation-plugins/jetson-perception.json)。
+
+部署以 `scripts/prepare_perception_site.py --objects` 增加独立站点包，复用原站点锁。`compose.object-perception.yaml` 将计算服务接入事实网络并只读挂载已发布采样；站点 CPU 模型进程通过 `scripts/run_object_model_isolated.sh` 在私有网络、设备和文件命名空间中运行，双方仅以 Unix socket 交换单帧 PNG 和带摘要的识别结果。重建录像时将 `submit.json`、`task.json`、`recording/`、`artifacts/` 和 `sensor-timeline.jsonl` 保存在同一导出目录，运行 `python -m task_recorder.direct_target_demo --source 导出目录 --out 新目录 --font 中文字体文件`。
+
 ### 静止融合与自然语言目标定位
 
 在车端可输入 `获取 rover 的静止融合感知`。工具调用 `perception.fused_scene`，从冻结的 `sensing.observations` 取得两台 MID360 的原始来源、收包时间和采样摘要。采样时间段由连续里程计覆盖后，按车上 URDF 固定外参将命中点投到 `base_foot`。栅格保留每个观测源的位掩码，空格表示未知。该图包含近车体回波，不能直接用作规划器的可通行空间。此次实测的两路点云命中 103 格，其中 18 格共享；196 个三维体素中有 11 个共享。

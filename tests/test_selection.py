@@ -24,6 +24,7 @@ RULES = [
     (("edge_contracts/*",), STAGES),
     (("navigation/*.py", "perception/spatial_facts/*.py", "scripts/prepare_navigation.py",
       "scripts/prepare_perception_site.py", "examples/stationary-perception/*", "compose.stationary-perception.yaml",
+      "examples/object-perception/*", "compose.object-perception.yaml", "scripts/run_object_model_isolated.sh",
       "scripts/navigation_odometry_bench.py", "compose.navigation-*.yaml",
       "tests/test_navigation_pack.py"), ("planner", "observations", "board", "plugin-isolation")),
     (("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
@@ -31,6 +32,7 @@ RULES = [
      ("planner", "board")),
     (("tests/test_spatial_image_capture.py", "tests/test_livox_capture.py", "tests/test_stationary_odom.py",
       "tests/test_stationary_fusion.py", "tests/test_visual_grounding.py", "tests/test_perception_server.py",
+      "tests/test_object_grounding.py", "tests/test_object_site.py", "tests/test_direct_target_demo.py", "task_recorder/direct_target_demo.py",
       "tests/test_perception_site.py", "task_recorder/spatial_capture.py", "tests/test_spatial_capture_archive.py",
       "task_recorder/review_media.py", "task_recorder/evolution_live.py", "task_recorder/sensor_review.py", "tests/test_sensor_review.py",
       "task_recorder/fusion_review.py", "tests/test_fusion_review.py", "task_recorder/target_review.py",
@@ -211,7 +213,8 @@ class TestSelection(unittest.TestCase):
                      "scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py",
                      "compose.navigation-camera-info.yaml", "compose.navigation-readonly.yaml", "tests/test_navigation_pack.py",
                      "scripts/prepare_perception_site.py", "examples/stationary-perception/jetson-rover.json",
-                     "compose.stationary-perception.yaml"):
+                     "compose.stationary-perception.yaml", "examples/object-perception/jetson-rover.json",
+                     "compose.object-perception.yaml", "scripts/run_object_model_isolated.sh"):
             self.assertEqual(selection([path])[0], [R, "planner", "observations", "board", "plugin-isolation"], path)
         for path in ("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
                      "tests/test_spatial_gateway.py"):
@@ -223,6 +226,7 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["tests/test_reference_utterances.py"])[0], [R, "planner"])
         for file in ("tests/test_spatial_image_capture.py", "tests/test_livox_capture.py", "tests/test_stationary_odom.py",
                      "tests/test_stationary_fusion.py", "tests/test_visual_grounding.py", "tests/test_perception_server.py",
+                     "tests/test_object_grounding.py", "tests/test_object_site.py", "tests/test_direct_target_demo.py", "task_recorder/direct_target_demo.py",
                      "tests/test_perception_site.py", "task_recorder/spatial_capture.py", "tests/test_spatial_capture_archive.py",
                      "task_recorder/review_media.py", "task_recorder/evolution_live.py", "task_recorder/sensor_review.py", "tests/test_sensor_review.py",
                      "task_recorder/fusion_review.py", "tests/test_fusion_review.py", "task_recorder/target_review.py",
@@ -270,6 +274,7 @@ class TestSelection(unittest.TestCase):
 
     def test_packs_run_their_board_consumers(self):
         for path in ("agent/site_pack.py","profiles/bench-camera.json","capabilities/camera/pack.json",
+                     "capabilities/perception-objects/pack.json",
                      "scripts/robot-plugins.sh","scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"):
             self.assertEqual(selection([path])[0], [R,"planner","board","plugin-isolation"], path)
         for name in ("tests/system/board_pack_acceptance.py","tests/system/deploy_projection.py"):

@@ -16,7 +16,7 @@ from test_selection import STAGES, changed_paths, selection
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
 SPATIAL_TESTS = ("test_spatial_image_capture.py", "test_stationary_odom.py", "test_stationary_fusion.py",
-                 "test_visual_grounding.py", "test_perception_server.py")
+                 "test_visual_grounding.py", "test_perception_server.py", "test_object_grounding.py")
 
 
 def utc():
@@ -137,6 +137,7 @@ def run(args, selected, reasons):
                              test("test_spatial_gateway.py","-v"),
                              *[test(name,"-v") for name in SPATIAL_TESTS],
                              test("test_livox_capture.py","-v"),test("test_perception_site.py","-v"),
+                             test("test_object_site.py","-v"),test("test_direct_target_demo.py","-v"),
                              test("test_spatial_capture_archive.py","-v"),test("test_verify_perception_candidate.py","-v"),
                              [PY,"-m","unittest","discover","-s","tests","-p","test_*review.py","-v"],
                              test("test_navigation_planner.py","-v"),test("test_navigation_physical.py","-v"),
@@ -170,6 +171,7 @@ def run(args, selected, reasons):
                               "-e","ROS_DOMAIN_ID=184","-e","ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST",
                               "-e",f"FACTORY_TEST_IMAGE={board_image}",
                               "--mount",f"type=bind,source={ROOT/'tests'},target=/opt/edge/tests,readonly",
+                              "--mount",f"type=bind,source={ROOT/'examples'/'stationary-perception'/'jetson-rover.json'},target=/opt/edge/examples/stationary-perception/jetson-rover.json,readonly",
                               "--mount",f"type=bind,source={directory},target=/evidence"]
                 board_python = [board_image,"python3","-B"]
                 board_test = [*board_container,*board_python]
@@ -180,6 +182,9 @@ def run(args, selected, reasons):
                                [*board_test,"/opt/edge/tests/test_spatial_facts.py","-v"],
                                [*board_test,"/opt/edge/tests/test_spatial_gateway.py","-v"],
                                *[[*board_test,"/opt/edge/tests/" + name,"-v"] for name in SPATIAL_TESTS],
+                               [*board_test,"/opt/edge/tests/test_object_site.py",
+                                "ObjectRelease.test_end_to_end_two_peers_and_pinned_evidence",
+                                "ObjectRelease.test_protocol_size_and_partial_frame_rejected","-v"],
                                [*board_container,"--cap-drop","ALL","--cap-add","NET_RAW","-e","EDGE_LIVOX_ISOLATED_LOOPBACK=1",
                                 *board_python,"/opt/edge/tests/test_livox_capture.py","-v"],
                                [*board_test,"/opt/edge/tests/test_soft_projection_evolution.py","-v"],
