@@ -19,7 +19,7 @@ def position_sample(msg, cfg):
     sample = {key: cfg[key] for key in ("actor_ref", "source_id", "clock_id", "calibration_ref",
                                          "localization_epoch", "map_ref", "frame_id")}
     sample.update(kind="position", stamp_ns=stamp.sec * 10**9 + stamp.nanosec,
-                  position_m=[pose.x, pose.y], variance_m2=[cov[0], cov[7]])
+                  position_m=[float(pose.x), float(pose.y)], variance_m2=[float(cov[0]), float(cov[7])])
     check_sample(sample, cfg["actor_ref"])
     return sample
 
@@ -53,7 +53,12 @@ def main():
 
     def observe(msg):
         nonlocal last_stamp, last_write
-        sample = position_sample(msg, cfg)
+        try:
+            sample = position_sample(msg, cfg)
+        except ValueError:
+            # Withhold the previous position when the driver invalidates its binding or uncertainty.
+            target.unlink(missing_ok=True)
+            return
         stamp = sample["stamp_ns"]
         if last_stamp is not None and stamp < last_stamp:
             raise ValueError("odometry clock regressed; bind a new epoch")

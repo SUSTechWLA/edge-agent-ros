@@ -12,6 +12,7 @@ from edge_contracts.navigation import validate_route
 from edge_contracts.spatial_facts import SpatialFactError
 from module_journal import ModuleJournal
 from perception.spatial_facts.gateway import published_batch
+from perception.spatial_facts.odom_capture import position_sample
 from perception.spatial_facts.replay import capture
 from planning import local_plan
 from prepare_navigation import bench_settings, prepare
@@ -26,6 +27,21 @@ STAMP = 1770911200000000001
 
 
 class NavigationPack(unittest.IsolatedAsyncioTestCase):
+    def test_ros_covariance_scalars_become_interoperable_numbers(self):
+        from types import SimpleNamespace as Row
+        class DriverFloat(float):
+            pass
+        cfg = {"actor_ref": "rover", "source_id": "wheel", "clock_id": "unix", "calibration_ref": "reported",
+               "localization_epoch": "e1", "frame_id": "odom", "child_frame_id": "base",
+               "map_ref": "sha256:" + "a" * 64}
+        cov = [0.0] * 36
+        cov[0] = cov[7] = DriverFloat(.001)
+        msg = Row(header=Row(frame_id="odom", stamp=Row(sec=1, nanosec=0)), child_frame_id="base",
+                  pose=Row(covariance=cov, pose=Row(position=Row(x=0., y=0.))))
+        sample = position_sample(msg, cfg)
+        self.assertEqual(sample["variance_m2"], [.001, .001])
+        self.assertIs(type(sample["variance_m2"][0]), float)
+
     async def asyncSetUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
