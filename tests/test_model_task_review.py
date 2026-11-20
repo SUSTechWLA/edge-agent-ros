@@ -8,7 +8,7 @@ import unittest
 
 try:
     from PIL import Image
-    from task_recorder.model_task_review import Journal, QueryFrame, model_decision, query_geometry, region_value
+    from task_recorder.model_task_review import Journal, QueryFrame, frame_program, model_decision, query_geometry, region_value
 except ModuleNotFoundError as exc:
     if exc.name != "PIL":
         raise
@@ -55,6 +55,13 @@ class ModelTaskReviewTest(unittest.TestCase):
         for bad in ("depth | grid(8,8) | mean", "blue|crop(0,0,2,2)|max", "red|quantile(2)", "red|eval(1)"):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 query_geometry(bad)
+
+    def test_typed_grid_arguments_bind_the_exact_service_expression(self):
+        args = dict(channel="depth", row_count=1, column_count=3, statistic="median")
+        self.assertEqual(frame_program(args), "depth | grid(1,3) | median")
+        self.assertEqual(frame_program({"program":" depth|min "}), " depth|min ")
+        with self.assertRaisesRegex(ValueError, "unknown frame query"):
+            frame_program({**args, "row_count":True})
 
     def test_rejects_unrelated_response_and_different_reservation(self):
         self.journal.events[2][1]["trace"]["call_id"] = "different"

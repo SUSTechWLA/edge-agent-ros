@@ -18,6 +18,7 @@ from edge_contracts.trace_content import encoded
 from .agent_trace import utc_ns
 from .direct_target_demo import client_exchange, depth_preview
 from .evolution_live import ColorWindow
+from .fusion_review import Fusion, SOURCE_COLORS, draw_map, source_name
 from .map_view import map_output
 from .render import font, paragraph
 from .review_media import write_video
@@ -179,7 +180,7 @@ class QueryFrame:
         require(obs["basis"] == "published" and obs["clock_id"] == "unix" and
                 ns(receipt.events[1]["stamp_ns"]) <= ns(obs["as_of_ns"]) <= ns(receipt.events[2]["stamp_ns"]),
                 "measurement outside recorded call")
-        require(a["program"] == arguments["program"], "returned analysis ran a different program")
+        require(a["program"] == frame_program(arguments), "returned analysis ran a different program")
         self.samples = {}
         for role in ("rgb", "depth", "calibration"):
             ref = a[role + "_ref"]
@@ -331,6 +332,15 @@ def program(step):
     return args["program"] if set(args) == {"program"} else json.dumps(args, ensure_ascii=False)
 
 
+def frame_program(arguments):
+    if isinstance(arguments.get("program"), str):
+        return arguments["program"]
+    rows, cols = arguments.get("row_count"), arguments.get("column_count")
+    require(type(rows) is int and type(cols) is int and isinstance(arguments.get("channel"), str)
+            and isinstance(arguments.get("statistic"), str), "unknown frame query arguments")
+    return f"{arguments['channel']} | grid({rows},{cols}) | {arguments['statistic']}"
+
+
 def pages(rows, size):
     return [rows[i:i + size] for i in range(0, len(rows), size)]
 
@@ -354,6 +364,23 @@ def observed_rgb(batch, root, start, end):
                 return SimpleNamespace(rgb=im.convert("RGB"), actor=obs["actor_ref"], g=binding,
                                        sample=sample, as_of_ns=ns(obs["as_of_ns"]))
     return None
+
+
+def fusion_chapter(view, stamp, face):
+    im = Image.new("RGB", (820, 515), DARK)
+    d = ImageDraw.Draw(im)
+    grid = view.grid
+    tick = draw_map(d, (18, 53, 803, 463), grid, view.sources, face)
+    width = 796 // len(view.sources)
+    for i, identifier in enumerate(view.sources):
+        x = 18 + i * width
+        d.rectangle((x, 16, x+13, 29), fill=SOURCE_COLORS[i])
+        text(d, x+21, 13, source_name(identifier), 16, "#dceade", face, width-26)
+    text(d, 22, 477, f"上方为机体前方 +X   ·   左侧为 +Y   ·   网线间隔 {tick} m", 18, "#dceade", face, 770)
+    rows = [(source_name(identifier), f"{n} 个命中格") for identifier, n in zip(view.sources, view.counts)]
+    rows += [("多源共同命中", str(view.data["overlap_cells"]) + " 格")]
+    return Chapter("返回静止多传感器融合图", stamp, 5, rows, im,
+                   f"机体坐标系 {view.body}   ·   栅格边长 {grid['resolution_m']:g} m")
 
 
 def mission(source, face):
@@ -450,10 +477,17 @@ def mission(source, face):
                     ("选用工具", step["tool"]), ("图像来源", captured.sample["source_id"]),
                     ("光学坐标系", captured.sample["frame_id"])], captured.rgb,
                     "回执 RGB   ·   " + clock(ns(captured.sample["stamp_ns"]))))
-            chapters.append(Chapter("工具返回证据", result["tool_response_ns"], 3,
-                                    [("完成步骤   " + position, step["tool"]), ("返回字段", fields),
-                                     ("证据摘要", result["evidence_sha256"][:30] + "…")],
-                                    captured.rgb if captured else None, "工具读取的原始彩色图像" if captured else ""))
+            fusion = step["evidence"].get("fusion", step["evidence"])
+            if fusion.get("type") == "perception.stationary_fusion":
+                validated = Fusion(file, recording, source / "artifacts", step_index=index)
+                chapters.append(fusion_chapter(validated, result["tool_response_ns"], face))
+                result.update(fusion_sources=validated.sources, occupied_cells=fusion["occupied_cells"],
+                              overlap_cells=fusion["overlap_cells"])
+            else:
+                chapters.append(Chapter("工具返回证据", result["tool_response_ns"], 3,
+                                        [("完成步骤   " + position, step["tool"]), ("返回字段", fields),
+                                         ("证据摘要", result["evidence_sha256"][:30] + "…")],
+                                        captured.rgb if captured else None, "工具读取的原始彩色图像" if captured else ""))
         if index < len(task["steps"]) - 1:
             chapters.append(Chapter("内核验收本步回执", result["verified_ns"], 2,
                                     [("已验证", step["tool"]), ("执行步骤", position)]))

@@ -71,8 +71,8 @@ def validate_result(result):
 
 
 class Fusion(TaskReceipt):
-    def __init__(self, task, recording, artifacts, stream=None):
-        super().__init__(task, recording)
+    def __init__(self, task, recording, artifacts, stream=None, *, step_index=None):
+        super().__init__(task, recording, step_index=step_index)
         self.data = self.batch if self.batch.get("type") == "perception.stationary_fusion" else self.batch["fusion"]
         self.counts = validate_result(self.data)
         self.actor = self.data["actor_ref"]
