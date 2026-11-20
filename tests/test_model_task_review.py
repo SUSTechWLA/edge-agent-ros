@@ -8,7 +8,7 @@ import unittest
 
 try:
     from PIL import Image
-    from task_recorder.model_task_review import Journal, QueryFrame, model_decision
+    from task_recorder.model_task_review import Journal, QueryFrame, model_decision, query_geometry, region_value
 except ModuleNotFoundError as exc:
     if exc.name != "PIL":
         raise
@@ -47,6 +47,14 @@ class ModelTaskReviewTest(unittest.TestCase):
         self.assertEqual(choice["decisions"], [dict(tool="measure", args={})])
         self.assertEqual(choice["offered"][0]["effect"], "read")
         self.assertNotIn("reason", choice)
+
+    def test_independent_query_reader_handles_crop_grid_and_quantile(self):
+        parsed = query_geometry("depth | crop(0,.2,1,.9) | grid(2, 3) | quantile(.75)")
+        self.assertEqual(parsed, ("depth", (0,.2,1,.9), 2, 3, "quantile(.75)", .75))
+        self.assertAlmostEqual(region_value([400, 200, 100], parsed[-2], parsed[-1], 3, .001), .3)
+        for bad in ("depth | grid(8,8) | mean", "blue|crop(0,0,2,2)|max", "red|quantile(2)", "red|eval(1)"):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                query_geometry(bad)
 
     def test_rejects_unrelated_response_and_different_reservation(self):
         self.journal.events[2][1]["trace"]["call_id"] = "different"

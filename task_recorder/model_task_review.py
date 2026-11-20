@@ -7,6 +7,7 @@ from html import escape
 import json
 import math
 from pathlib import Path
+import re
 import shutil
 import subprocess
 from types import SimpleNamespace
@@ -14,7 +15,6 @@ from types import SimpleNamespace
 from PIL import Image, ImageDraw
 
 from edge_contracts.trace_content import encoded
-from perception.spatial_facts.frame_query import parse, reduce_samples
 from .agent_trace import utc_ns
 from .direct_target_demo import client_exchange, depth_preview
 from .evolution_live import ColorWindow
@@ -27,6 +27,44 @@ from .target_review import artifact, paste
 
 PAPER, INK, TEAL, MUTED = "#f4f3ed", "#102c2a", "#006852", "#4f6861"
 DARK, GOLD, RULE = "#192f2c", "#f8c958", "#becbc2"
+
+
+def query_geometry(program):
+    # Independent reader of the published expression. The recorder never imports or executes a plugin.
+    number = r"(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)"
+    comma = r"\s*,\s*"
+    fraction = "(" + number + ")"
+    crop = r"crop\(\s*" + comma.join([fraction]*4) + r"\s*\)"
+    grid = r"grid\(\s*([1-8])" + comma + r"([1-8])\s*\)"
+    statistic = r"(mean|median|min|max|coverage|quantile\(\s*" + fraction + r"\s*\))"
+    separator = r"\s*\|\s*"
+    expression = (r"\s*(depth|brightness|red|green|blue)" + separator + "(?:" + crop + separator + ")?"
+                  + "(?:" + grid + separator + ")?" + statistic + r"\s*")
+    require(isinstance(program, str) and program.isascii() and 0 < len(program) <= 128,
+            "invalid recorded frame query")
+    match = re.fullmatch(expression, program)
+    require(match is not None, "invalid recorded frame query")
+    channel, *coordinates, rows, cols, stat, q = match.groups()
+    bounds = tuple(map(float, coordinates)) if coordinates[0] else (0., 0., 1., 1.)
+    rows, cols = (int(rows), int(cols)) if rows else (1, 1)
+    quantile = float(q) if q is not None else None
+    require(0 <= bounds[0] < bounds[2] <= 1 and 0 <= bounds[1] < bounds[3] <= 1 and rows*cols <= 32
+            and (quantile is None or 0 <= quantile <= 1), "query outside supported frame geometry")
+    return channel, bounds, rows, cols, stat, quantile
+
+
+def region_value(values, statistic, quantile, count, scale):
+    if statistic == "coverage":
+        return 100 * len(values) / count
+    if not values:
+        return None
+    if statistic == "mean":
+        return sum(values) / len(values) * scale
+    ordered = sorted(values)
+    q = {"min":0, "median":.5, "max":1}.get(statistic, quantile)
+    point = (len(ordered) - 1) * q
+    lo, hi = math.floor(point), math.ceil(point)
+    return (ordered[lo] + (ordered[hi] - ordered[lo]) * (point - lo)) * scale
 
 
 def contents(trace):
@@ -170,7 +208,7 @@ class QueryFrame:
 
     def verify_pixels(self):
         a = self.analysis
-        channel, crop, rows, cols, statistic, quantile = parse(a["program"])
+        channel, crop, rows, cols, statistic, quantile = query_geometry(a["program"])
         w, h = self.rgb.size
         left, top, right, bottom = (math.floor(w*crop[0]), math.floor(h*crop[1]),
                                     math.ceil(w*crop[2]), math.ceil(h*crop[3]))
@@ -191,7 +229,7 @@ class QueryFrame:
                 values = [(299*r + 587*g + 114*b)/1000 for r,g,b in pixels(self.rgb.crop(bounds))]
             else:
                 values = list(pixels(self.rgb.crop(bounds).getchannel(channel[0].upper())))
-            measured = reduce_samples(values, statistic, quantile, count, a["depth_scale_m"] if channel == "depth" else 1)
+            measured = region_value(values, statistic, quantile, count, a["depth_scale_m"] if channel == "depth" else 1)
             value = region["value"]
             require(region["valid_pixels"] == len(values) and (value is measured is None or
                     measured is not None and type(value) in (int, float) and math.isclose(measured, value, abs_tol=1e-9)),
