@@ -84,6 +84,29 @@ def qualified_receipt(evidence, installed, policy, digest, contract):
                 installed_file_sha256=sha(installed), policy_file_sha256=sha(policy))
 
 
+def author_input(question, text, description, history):
+    require(isinstance(question, dict), "invalid author question")
+    base = {k:v for k,v in question.items() if k != "validation_feedback"}
+    legacy = {"request":text, "calculation":description}
+    subtask = {"input":"An ordered vector of already measured scalar values.", "calculation":description}
+    require(base in (legacy, subtask), "author received a different computational request")
+    feedback = question.get("validation_feedback")
+    if feedback is not None:
+        previous, = [r for r in history if r["phase"] == "operator.rejected"]
+        require(isinstance(feedback, dict) and feedback.get("code") == previous["code"],
+                "author received unrelated validation feedback")
+        if previous["code"] == "operator.invalid_program":
+            require(set(feedback) == {"code"}, "unexpected feedback value")
+        else:
+            prior, = [r for r in history if r["phase"] == "model.response"]
+            require(previous["code"] == "operator.independent_verification_mismatch" and
+                    set(feedback) == {"code", "prior_program"} and
+                    normalized(feedback["prior_program"]) == normalized(prior["candidate"]),
+                    "validation feedback refers to another program")
+    return {"question_scope":"task_and_contract" if base == legacy else "calculation_only",
+            "feedback_code":None if feedback is None else feedback["code"]}
+
+
 def trace_operator(journal, task, context, answer, final, read_artifact):
     gap = answer["computation"]
     name, inputs = gap["contract"], gap["input"]
@@ -119,8 +142,7 @@ def trace_operator(journal, task, context, answer, final, read_artifact):
             req = read_artifact(tr)
             user, = (m for m in req["messages"] if m["role"] == "user")
             obj = json.loads(user["content"])
-            require(obj == {"request":task["text"], "calculation":offered["description"]},
-                    "author input differs from the stated task and public contract")
+            row.update(author_input(obj, task["text"], offered["description"], rows))
             authors[tr["call_id"]] = req["model"]
             row.update(model=req["model"], call_id=tr["call_id"], request_sha256=tr["artifact"]["sha256"])
         elif phase == "model.response":

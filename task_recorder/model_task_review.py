@@ -400,8 +400,11 @@ def operator_chapters(operation, operator_policy):
             sections.append(Chapter("发现尚未安装的算子", stamp, 3, [("缺失契约", operation["contract"]),
                                     ("账本诊断", r["code"])]))
         elif phase == "model.request":
-            sections.append(Chapter("调用模型编写数值程序", stamp, 3, [("作者模型", r["model"]),
-                                    ("允许处理的输入", "已测量的有限数列"), ("算子规格", operation["spec"])]))
+            context = "数值子任务与已测量的有序数列" if r["question_scope"] == "calculation_only" else "原始任务与计算规格"
+            rows = [("作者模型", r["model"]), ("作者收到的任务范围", context), ("算子规格", operation["spec"])]
+            if r["feedback_code"]:
+                rows.append(("上一次验证反馈", r["feedback_code"]))
+            sections.append(Chapter("调用模型编写数值程序", stamp, 3, rows))
         elif phase == "model.response":
             sections.append(Chapter("模型返回候选程序", stamp, 5, [("原始程序指令",
                 json.dumps(r["candidate"], ensure_ascii=False)), ("作者模型", r["model"])]))

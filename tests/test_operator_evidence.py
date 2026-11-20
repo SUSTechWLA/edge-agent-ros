@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 try:
-    from task_recorder.operator_evidence import checksum, evaluate, normalized, qualified_receipt, validation
+    from task_recorder.operator_evidence import author_input, checksum, evaluate, normalized, qualified_receipt, validation
 except ModuleNotFoundError as exc:
     if exc.name != "PIL":
         raise
@@ -21,6 +21,19 @@ class OperatorEvidenceTest(unittest.TestCase):
         self.assertEqual(evaluate({"instructions":["last","first","sub"]}, [4, 2, 1]), -3)
         with self.assertRaisesRegex(ValueError, "invalid operator or stack"):
             evaluate({"tokens":["min","sub"]}, [1, 2])
+
+    def test_bounded_author_repair_is_tied_to_the_rejected_candidate(self):
+        q = {"calculation":"difference", "input":"An ordered vector of already measured scalar values."}
+        self.assertEqual(author_input(q, "measure an image", "difference", [])["question_scope"], "calculation_only")
+        failed = {"instructions":["min","max","sub"]}
+        events = [dict(phase="model.response", candidate=failed),
+                  dict(phase="operator.rejected", code="operator.independent_verification_mismatch")]
+        feedback = dict(code=events[1]["code"], prior_program=failed)
+        checked = author_input({**q, "validation_feedback":feedback}, "measure an image", "difference", events)
+        self.assertEqual(checked["feedback_code"], feedback["code"])
+        feedback["prior_program"] = {"instructions":["sum"]}
+        with self.assertRaisesRegex(ValueError, "another program"):
+            author_input({**q, "validation_feedback":feedback}, "measure an image", "difference", events)
 
     def test_rejects_wrong_policy_receipt_and_substituted_sensor_values(self):
         with TemporaryDirectory() as tmp:
