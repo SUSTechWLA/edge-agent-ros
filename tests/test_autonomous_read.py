@@ -77,10 +77,12 @@ class AutonomousRead(unittest.TestCase):
 
     def test_partial_read_cannot_complete_explicit_motion_and_negative_is_observation(self):
         call = Mock(return_value=ready({"tool":"count","args":{}}))
-        with self.assertRaises(Refused) as caught:
-            self.plan(call, "先看下当前情况，然后向前移动一米")
-        self.assertEqual(caught.exception.code, "planner.control_requires_approval")
-        self.plan(call, "不要移动，查看静止时的前景")
+        for text in ("先看下当前情况，然后向前移动一米", "读一下深度并向前移动一米", "read the depth and drive forward"):
+            with self.subTest(text=text), self.assertRaises(Refused) as caught:
+                self.plan(call, text)
+            self.assertEqual(caught.exception.code, "planner.control_requires_approval")
+        for text in ("不要移动，查看静止时的前景", "前进方向的区域深度是多少"):
+            self.plan(call, text)
         call.return_value = {"disposition":"requires_control","steps":[], "reason":"任务需要控制"}
         with self.assertRaises(Refused) as caught:
             self.plan(call, "perform the entire multistage chore")
