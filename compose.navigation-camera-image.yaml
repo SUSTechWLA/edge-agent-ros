@@ -1,0 +1,37 @@
+# Apply after compose.navigation-readonly.yaml and compose.navigation-camera-info.yaml.
+services:
+  spatial-facts:
+    image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the approved image reader and facts gateway}
+    configs:
+      - source: rgb-fact-source
+        target: /etc/edge/spatial-sources.d/color.json
+    volumes: [image-facts:/image-facts:ro]
+  image-reader:
+    image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the approved image reader}
+    pull_policy: never
+    profiles: [published]
+    network_mode: host
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    tmpfs: [/tmp]
+    pids_limit: 64
+    mem_limit: 256m
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_NAV_CAMERA_DOMAIN:?approved ROS domain}
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+      ROS_LOG_DIR: /tmp/ros
+    command: [python3, -B, -m, perception.spatial_facts.image_capture, --actor-ref, "${EDGE_NAV_ACTOR:?approved actor}",
+              --source-id, "${EDGE_NAV_RGB_SOURCE}", --topic, "${EDGE_NAV_RGB_TOPIC:?approved Image topic}",
+              --frame-id, "${EDGE_NAV_CAMERA_FRAME:?approved optical frame}", --calibration-dir, /camera-facts,
+              --calibration-source, "${EDGE_NAV_CAMERA_SOURCE}", --output, /image-facts]
+    volumes: [camera-facts:/camera-facts:ro, image-facts:/image-facts]
+volumes:
+  image-facts:
+    driver: local
+    driver_opts: {type: tmpfs, device: tmpfs, o: "size=112m,mode=0755"}
+configs:
+  rgb-fact-source:
+    content: '[{"source_id":"${EDGE_NAV_RGB_SOURCE:?approved RGB source}","file":"/image-facts/observations.json"}]'

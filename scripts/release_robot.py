@@ -24,7 +24,8 @@ FILES.update({"compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml","
 FILES.update({"scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py", "profiles/navigation-bench.json", "profiles/navigation-live.json",
               "capabilities/navigation-common/pack.json", "capabilities/spatial-replay/pack.json",
               "capabilities/spatial-published/pack.json", "compose.navigation-readonly.yaml",
-              "compose.navigation-camera-info.yaml"})
+              "compose.navigation-camera-info.yaml", "compose.navigation-camera-image.yaml",
+              "compose.navigation-camera-depth.yaml", "compose.navigation-livox.yaml"})
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
 BOARD_SCAFFOLD = {".gitattributes", ".gitignore", "map-inputs/.gitkeep", "observations/.gitkeep",

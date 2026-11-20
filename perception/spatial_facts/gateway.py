@@ -10,16 +10,53 @@ import time
 from edge_contracts.spatial_facts import MAX_SOURCES, check_batch, identifier, ns, require
 
 
-def read_source(path, actor, now_ns):
-    # Paths are fixed at process startup; HTTP inputs never participate in file selection.
-    # Reject symlinked input and non-regular files, including a replaced FIFO.
+def read_regular(path, limit):
+    # Paths are fixed by the deployment. Never follow a symlink or block on a FIFO.
     path = Path(path)
     require(path.resolve(strict=True) == path.absolute(), "sensing.invalid_source_file")
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0)
     with os.fdopen(os.open(path, flags), "rb") as stream:
         require(stat.S_ISREG(os.fstat(stream.fileno()).st_mode), "sensing.invalid_source_file")
-        raw = stream.read(65537)
-    require(len(raw) <= 65536, "sensing.batch_too_large")
+        raw = stream.read(limit + 1)
+    require(len(raw) <= limit, "sensing.batch_too_large")
+    return raw
+
+
+def optional_sources(directory, explicit=()):
+    """Resolve trusted per-provider manifests once, before accepting queries."""
+    sources = list(explicit)
+    directory = Path(directory)
+    try:
+        directory_mode = directory.lstat().st_mode
+    except FileNotFoundError:
+        files = []
+    else:
+        require(stat.S_ISDIR(directory_mode) and directory.resolve(strict=True) == directory.absolute(),
+                "sensing.invalid_source_directory")
+        files = []
+        for path in directory.iterdir():
+            if path.suffix == ".json":
+                require(len(files) < MAX_SOURCES, "sensing.too_many_sources")
+                files.append(path)
+    for manifest in sorted(files):
+        records = json.loads(read_regular(manifest, 16384))
+        require(isinstance(records, list) and 1 <= len(records) < MAX_SOURCES, "sensing.invalid_source_manifest")
+        for record in records:
+            require(isinstance(record, dict) and set(record) == {"source_id", "file"}
+                    and isinstance(record["file"], str) and 0 < len(record["file"]) <= 1024
+                    and record["file"].isprintable(), "sensing.invalid_source_manifest")
+            source_file = Path(record["file"])
+            require(source_file.is_absolute() and ".." not in source_file.parts, "sensing.invalid_source_path")
+            sources.append((record["source_id"], source_file))
+            require(len(sources) < MAX_SOURCES, "sensing.too_many_sources")
+    names = [name for name, _ in sources]
+    require(len(names) < MAX_SOURCES and all(identifier(name) for name in names), "sensing.invalid_source_manifest")
+    require(len(names) == len(set(names)), "sensing.duplicate_source")
+    return sources
+
+
+def read_source(path, actor, now_ns):
+    raw = read_regular(path, 65536)
     batch = json.loads(raw)
     require(isinstance(batch, dict)
             and set(batch) <= {"schema_version", "actor_ref", "clock_id", "basis", "samples", "as_of_ns"},
@@ -69,12 +106,15 @@ def main():
     cli.add_argument("--file", type=Path, required=True)
     cli.add_argument("--max-age-ns", type=int, required=True)
     cli.add_argument("--optional-source", action="append", nargs=2, default=[], metavar=("SOURCE_ID", "FILE"))
+    cli.add_argument("--source-dir", type=Path, default=Path("/etc/edge/spatial-sources.d"),
+                     help="directory of immutable site-approved optional source manifests")
     args = cli.parse_args()
     if not ns(args.max_age_ns) or not 0 < args.max_age_ns <= 10**10:
         cli.error("max age must be positive and at most ten seconds")
-    names = [name for name, _ in args.optional_source]
-    if len(names) >= MAX_SOURCES or len(set(names)) != len(names) or not all(identifier(name) for name in names):
-        cli.error("optional sources require unique bounded identifiers")
+    try:
+        optional = optional_sources(args.source_dir, args.optional_source)
+    except (OSError, ValueError, RecursionError, RuntimeError) as error:
+        cli.error("invalid optional source deployment: " + str(error))
 
     class Reader(BaseHTTPRequestHandler):
         def do_POST(self):
@@ -88,7 +128,7 @@ def main():
                 if not isinstance(request, dict) or set(request) != {"actor_ref"}:
                     return self.send_error(400)
                 batch = published_batch(args.file, request["actor_ref"], time.time_ns(), args.max_age_ns,
-                                        args.optional_source)
+                                        optional)
                 content = json.dumps(batch, allow_nan=False).encode()
             except (OSError, ValueError, KeyError, TypeError, RuntimeError, RecursionError):
                 return self.send_error(503, "Observation unavailable")

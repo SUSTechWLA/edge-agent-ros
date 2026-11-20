@@ -11,7 +11,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from edge_contracts.spatial_facts import SpatialFactError
 from perception.spatial_facts.camera_info_capture import camera_info, publish
-from perception.spatial_facts.gateway import published_batch
+from perception.spatial_facts.gateway import optional_sources, published_batch
 from perception.spatial_facts.weighted import localize
 
 
@@ -90,6 +90,41 @@ class SpatialGateway(unittest.TestCase):
         with self.assertRaisesRegex(SpatialFactError, "sample_stale"):
             self.collect(now=120)
 
+    def test_independent_dropins_merge_at_startup_preserving_cli_and_missing_sources(self):
+        source_dir = self.root / "spatial-sources.d"
+        cli = [("range", self.root / "future-range.json")]
+        self.assertEqual(optional_sources(source_dir, cli), cli)
+        source_dir.mkdir()
+        self.capture()
+        (source_dir / "b-image.json").write_text(json.dumps([
+            {"source_id": "rgb.preview", "file": str(self.root / "future-image.json")}]), encoding="utf8")
+        (source_dir / "a-calibration.json").write_text(json.dumps([
+            {"source_id": self.source, "file": str(self.camera / "observations.json")}]), encoding="utf8")
+        (source_dir / "deployment.txt").write_text("operator note", encoding="utf8")
+        discovered = optional_sources(source_dir, cli)
+        self.assertEqual([s for s,_ in discovered], ["range", self.source, "rgb.preview"])
+        batch = published_batch(self.required, "rover", 105, 8, discovered)
+        self.assertEqual([s["source_id"] for s in batch["samples"]], ["wheel", self.source])
+        self.assertEqual([s["source_id"] for s in batch["source_gaps"]], ["range", "rgb.preview"])
+        with self.assertRaisesRegex(SpatialFactError, "duplicate_source"):
+            optional_sources(source_dir, [(self.source, self.root / "different.json")])
+
+    def test_invalid_dropin_or_scope_never_partially_admitted(self):
+        test_cases = [({"source_id": "c", "file": "relative"}, "invalid_source_path"),
+                      ({"source_id": [], "file": str(self.required)}, "invalid_source_manifest"),
+                      ({"source_id": "c", "file": str(self.root / ".." / "bad.json")}, "invalid_source_path"),
+                      ({"source_id": "c", "file": str(self.required), "other": True}, "invalid_source_manifest")]
+        folder = self.root / "manifests"
+        folder.mkdir()
+        path = folder / "definition.json"
+        for record, reason in test_cases:
+            with self.subTest(record=record), self.assertRaisesRegex(SpatialFactError, reason):
+                path.write_text(json.dumps([record]), encoding="utf8")
+                optional_sources(folder)
+        path.write_bytes(b" " * 16385)
+        with self.assertRaisesRegex(SpatialFactError, "batch_too_large"):
+            optional_sources(folder)
+
     def test_reject_other_actor_future_input_duplicate_and_private_metadata(self):
         self.capture()
         path = self.camera / "observations.json"
@@ -130,6 +165,11 @@ class SpatialGateway(unittest.TestCase):
         os.mkfifo(link)
         with self.assertRaisesRegex(SpatialFactError, "invalid_source_file"):
             self.collect(path=link)
+        folder = self.root / "drop-ins"
+        folder.mkdir()
+        (folder / "config.json").symlink_to(link)
+        with self.assertRaisesRegex(SpatialFactError, "invalid_source_file"):
+            optional_sources(folder)
 
 
 if __name__ == "__main__":

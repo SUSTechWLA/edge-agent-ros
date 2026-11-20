@@ -39,3 +39,9 @@ python -m perception.spatial_facts.gateway --file /run/edge/site-odom/observatio
 ```
 
 话题与帧名采用设备实际配置。相机进程使用自己的可写目录，网关以只读方式挂载各源目录。必需里程计过期时网关拒绝返回整个批次。可选源文件暂缺或时间超窗时，批次保留其他新鲜样本，在 `source_gaps` 记录配置的来源 ID 和原因。跨主体、源名冲突、坐标系错误和非普通文件无法作为有效观测发布。相机内参可以被标定巡检、录制等消费方复用。位置融合只选站点策略登记的 `position` 来源。 [相机订阅器](camera_info_capture.py) · [汇聚网关](gateway.py) · [多源隔离测试](../../tests/test_spatial_gateway.py)
+
+### 在任务回执中取得像素和深度
+
+彩色和对齐深度各有一个只读 ROS Image 订阅进程。彩色读取 `rgb8` 或 `bgr8` 并生成最大 640 × 480 的 PNG；深度完整保存 `16UC1` 的分辨率和每个像素的原始整数值。实际物距换算需要同一设备的深度比例。两种读者都核对独立发布的 CameraInfo 的主体、光学帧、源尺寸、有效时间和文件摘要。对齐深度读者应绑定其注册目标的相机网格。两路订阅和取样可以有不同的采样时刻，任务回执保留各自 ROS 头时间。[图像读者](image_capture.py) · [彩色部署](../../compose.navigation-camera-image.yaml) · [深度部署](../../compose.navigation-camera-depth.yaml)
+
+部署者可以从各自授权卷取回 `artifacts/<artifact_ref 去掉 sha256: 前缀>.png`，核对原件 SHA-256。任务录像应立即复制回执引用的原件，结合 `index.json` 中的时间和摘要找回相邻真实帧。每路最多约 4 Hz，环形索引保留最近 96 份取样，重复画面复用文件，记录永久保留的范围由任务归档决定。站点卷位于内存，进程和卷的生命周期由部署者管理。原始画面未随轻量 JSON 回执传输。[独立的像素与字节序测试](../../tests/test_spatial_image_capture.py)
