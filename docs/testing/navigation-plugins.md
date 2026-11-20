@@ -1,5 +1,15 @@
 # Jetson 只读导航插件验收
 
+### 静止融合与自然语言目标定位
+
+在车端可输入 `获取 rover 的静止融合感知`。工具调用 `perception.fused_scene`，从冻结的 `sensing.observations` 取得两台 MID360 的原始来源、收包时间和采样摘要。采样时间段由连续里程计覆盖后，按车上 URDF 固定外参将命中点投到 `base_foot`。栅格保留每个观测源的位掩码，空格表示未知。该图包含近车体回波，不能直接用作规划器的可通行空间。此次实测的两路点云命中 103 格，其中 18 格共享；196 个三维体素中有 11 个共享。
+
+输入 `在二维和三维标注画面右侧的大块浅灰色平面` 可调用 `mark_target`。它分别返回彩色像素框、区域掩膜、选中像素的原始深度、相机光学坐标及三份输入摘要。当前算法支持位置、浅灰色和大面积平面描述，拒绝未知目标。D435 彩色和对齐深度以 ROS 时间选帧，检查两者时间差，CameraInfo 通过标定摘要、尺寸、时效和坐标系绑定。米制比例来自已部署 RealSense ROS 驱动。未接入相机到车体的经验证外参。RTK 无有效发布源，其驱动的默认串口已由底盘占用。实测数据和任务摘要见[板端记录](../../artifacts/verification/navigation-plugins/jetson-perception.json)。
+
+**部署及续办。** `scripts/prepare_perception_site.py` 校验原站点锁，构建仅新增只读 Service 的初始站点和包含可选 Tool 的候选站点。初始站点同时提供融合 Tool。使用 `compose.stationary-perception.yaml` 启动独立计算服务与里程计见证；软宿主持有预置候选的只读信任目录。原任务未派发且确实受阻后，`scripts/evolve_read_projection.sh` 从已有 Service 和部署者预授权的工具模板产生发布提案。在独立感知网络验收真实图像、测点、负例及摘要，通过后事务接纳并绑定原文续办。父任务保留原终态。录制器在父任务保存用户原文，在子任务保存带发布事件的 Agent 受理记录。使用 `python -m task_recorder.target_review --help` 或 `fusion_review --help` 从原始任务、录制和采样导出重建回放。
+
+**回退。** 对需要撤回的单个工具使用现有软件注册表的 drain、待原调用结束、remove 路径。卸载消费者后再处理仅由该消费者使用的 Service，按保留的站点锁重新接纳其余版本。Agent 的任务卷与注册事件卷分别保留父任务、续办和发布来源。仅需故障隔离时，可停止独立的 stationary-perception 软件计算服务，原传感器采集仍可供其他插件读取。
+
 本轮在 Jetson Orin NX 上分别调用了空间观测、定位和路线试算。车端采集器订阅专用镜像域中已有的 `/lingao/odom`，保留驱动提供的坐标系、采样时间和 XY 协方差。采集进程写专用卷，事实网关只读该卷。Agent 通过 Unix socket 使用软插件，软宿主只连接内部事实网络。板端未部署 `nav_execute` 的物理控制器。
 
 ## 复现只读站点

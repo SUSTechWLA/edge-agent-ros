@@ -27,7 +27,9 @@ FILES.update({"scripts/prepare_navigation.py", "scripts/navigation_odometry_benc
               "compose.navigation-camera-info.yaml", "compose.navigation-camera-image.yaml",
              "compose.navigation-camera-depth.yaml", "compose.navigation-livox.yaml", "compose.stationary-perception.yaml",
              "capabilities/perception-static/pack.json", "capabilities/perception-markup/pack.json",
-             "examples/stationary-perception/jetson-rover.json"})
+             "examples/stationary-perception/jetson-rover.json", "scripts/prepare_perception_site.py",
+             "scripts/evolve_read_projection.sh", "scripts/evolve_read_projection.py",
+             "scripts/verify_perception_candidate.py"})
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
 BOARD_SCAFFOLD = {".gitattributes", ".gitignore", "map-inputs/.gitkeep", "observations/.gitkeep",

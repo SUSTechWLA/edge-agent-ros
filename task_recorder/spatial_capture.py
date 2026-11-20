@@ -87,7 +87,7 @@ def receipt_samples(task, key, actor, expected, tool="read_spatial_observations"
     if task["id"] != key or task["state"] != "SUCCEEDED" or len(task["steps"]) != 1:
         raise ValueError("task did not complete a single observation read")
     step = task["steps"][0]
-    if step["tool"] != tool or step.get("operation_id") != key + "/step/1":
+    if step["tool"] != tool or step.get("status") != "SUCCEEDED" or step.get("operation_id") != key + "/step/1":
         raise ValueError("unexpected task tool or arguments")
     if step.get("args", {}).get("actor_ref", actor) != actor:
         raise ValueError("unexpected task actor")

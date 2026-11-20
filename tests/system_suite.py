@@ -15,6 +15,8 @@ from test_selection import STAGES, changed_paths, selection
 
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
+SPATIAL_TESTS = ("test_spatial_image_capture.py", "test_stationary_odom.py", "test_stationary_fusion.py",
+                 "test_visual_grounding.py", "test_perception_server.py")
 
 
 def utc():
@@ -133,6 +135,10 @@ def run(args, selected, reasons):
             stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
                              test("test_reference_utterances.py","-v"),test("test_spatial_facts.py","-v"),
                              test("test_spatial_gateway.py","-v"),
+                             *[test(name,"-v") for name in SPATIAL_TESTS],
+                             test("test_livox_capture.py","-v"),test("test_perception_site.py","-v"),
+                             test("test_spatial_capture_archive.py","-v"),test("test_verify_perception_candidate.py","-v"),
+                             [PY,"-m","unittest","discover","-s","tests","-p","test_*review.py","-v"],
                              test("test_navigation_planner.py","-v"),test("test_navigation_physical.py","-v"),
                              test("test_navigation_pack.py","-v"),
                              test("test_planner_model_selection.py","-v"),
@@ -173,6 +179,16 @@ def run(args, selected, reasons):
                                [*board_test,"/opt/edge/tests/test_navigation_physical.py","-v"],
                                [*board_test,"/opt/edge/tests/test_spatial_facts.py","-v"],
                                [*board_test,"/opt/edge/tests/test_spatial_gateway.py","-v"],
+                               *[[*board_test,"/opt/edge/tests/" + name,"-v"] for name in SPATIAL_TESTS],
+                               [*board_container,"--cap-drop","ALL","--cap-add","NET_RAW","-e","EDGE_LIVOX_ISOLATED_LOOPBACK=1",
+                                *board_python,"/opt/edge/tests/test_livox_capture.py","-v"],
+                               [*board_test,"/opt/edge/tests/test_soft_projection_evolution.py","-v"],
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'scripts'/'evolve_read_projection.py'},target=/opt/edge/scripts/evolve_read_projection.py,readonly",
+                                *board_python,"/opt/edge/tests/test_evolve_read_projection.py","-v"],
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'scripts'/'verify_perception_candidate.py'},target=/opt/edge/scripts/verify_perception_candidate.py,readonly",
+                                *board_python,"/opt/edge/tests/test_verify_perception_candidate.py","-v"],
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'task_recorder'/'spatial_capture.py'},target=/opt/edge/task_recorder/spatial_capture.py,readonly",
+                                *board_python,"/opt/edge/tests/test_spatial_capture_archive.py","-v"],
                                [*board_test,"/opt/edge/tests/system/navigation_contract.py",
                                 "--out","/evidence/navigation-contract.json"],
                                [*board_container,"--mount",f"type=bind,source={ROOT/'task_recorder'},target=/opt/edge/task_recorder,readonly",

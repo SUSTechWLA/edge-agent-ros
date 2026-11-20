@@ -35,7 +35,9 @@ def save(path, value):
 
 def api(path, body=None):
     data = None if body is None else json.dumps(body).encode()
-    req = Request("http://127.0.0.1:8794/agent/" + path, data, {"Content-Type":"application/json"})
+    port = int(os.environ.get("EDGE_EVOLUTION_AGENT_PORT", "8794"))
+    require(1 <= port <= 65535, "invalid local Agent port")
+    req = Request(f"http://127.0.0.1:{port}/agent/" + path, data, {"Content-Type":"application/json"})
     with urlopen(req, timeout=5) as response:
         raw = response.read(1024*1024+1)
     require(len(raw) <= 1024*1024, "agent response exceeds limit")
@@ -57,13 +59,14 @@ def selection(task, base, admitted):
             and item["runtime"] == "inproc" and item["entrypoint"] == "agent.read_service_tool:apply"
             and not item["mounts"] and item["network"] == {"ingress": [], "egress": []}
             and len(item["requires"]) == 1 and item["requires"][0]["name"] == spec["service"]
-            and item["requires"][0]["type"] == "service"
-            and any(c in p["provides"] for p in base.values() for c in item["requires"]),
+            and item["requires"][0]["type"] == "service",
             "new tool is not a projection of a previously available service")
+    owners = [pid for pid, p in base.items() if item["requires"][0] in p["provides"]]
+    require(len(owners) == 1, "read service has no unique installed provider")
     cap = spec["legacy"]
     steps = match_utterances(normalized(task["text"]), {cap["id"]:cap}, task["text"])
     require(steps and len(steps) == 1, "original text does not match the approved projection")
-    return {"plugin":item["id"], "tool":cap["id"], "capability":cap, "service":spec["service"],
+    return {"plugin":item["id"], "tool":cap["id"], "capability":cap, "service":spec["service"], "provider":owners[0],
             "arguments":steps[0]["args"], "candidate_digest":item["content_digest"],
             "code_digest":item["provenance"]["code_digest"], "gap_event":gap["event_id"], "gap_code":diagnostic}
 
@@ -72,8 +75,10 @@ def run(args):
     root = args.out
     with (root/"supervisor.lock").open("a") as lock:
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        _, base = verify(args.ready_site, args.ready_lock)
+        original, base = verify(args.ready_site, args.ready_lock)
         release, approved = verify(args.approved_site, args.approved_lock)
+        require(all(release["plugins"].get(k)==v for k,v in original["plugins"].items()),
+                "approved pack changes existing configuration or authority")
         require(all(not p["site_approval"] and p["effects"] == "read" and p["class"] == "soft"
                     for p in release["plugins"].values()), "site requires external handoff")
         task = api("tasks?id="+args.task)
@@ -100,10 +105,12 @@ def run(args):
         raw = args.validation.read_bytes()
         require(args.validation_digest == digest(raw), "independent validation digest changed")
         receipt = json.loads(raw)
-        settings = json.loads((args.approved_site/"config"/(proposal["service"]+".json")).read_bytes())
+        settings = json.loads((args.approved_site/"config"/(proposal["provider"]+".json")).read_bytes())
+        expected_actor = json.loads((args.approved_site/"config"/(proposal["plugin"]+".json")).read_bytes()).get("actor_ref")
         require(receipt.get("passed") is True and receipt.get("schema_version")==1 and receipt.get("checks")
                 and receipt.get("candidate_digest")==proposal["candidate_digest"]
                 and receipt.get("tool_id")==proposal["tool"]
+                and (not expected_actor or receipt.get("actor_ref")==expected_actor)
                 and receipt.get("arguments", {"target":receipt.get("query")})==proposal["arguments"]
                 and all(receipt.get(k)==settings[k] for k in ("backend_digest","profile_digest")),
                 "validation failed or belongs to a different provider, query or release")

@@ -23,11 +23,22 @@ RULES = [
     (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
     (("navigation/*.py", "perception/spatial_facts/*.py", "scripts/prepare_navigation.py",
+      "scripts/prepare_perception_site.py", "examples/stationary-perception/*", "compose.stationary-perception.yaml",
       "scripts/navigation_odometry_bench.py", "compose.navigation-*.yaml",
       "tests/test_navigation_pack.py"), ("planner", "observations", "board", "plugin-isolation")),
     (("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
       "tests/test_spatial_gateway.py"),
      ("planner", "board")),
+    (("tests/test_spatial_image_capture.py", "tests/test_livox_capture.py", "tests/test_stationary_odom.py",
+      "tests/test_stationary_fusion.py", "tests/test_visual_grounding.py", "tests/test_perception_server.py",
+      "tests/test_perception_site.py", "task_recorder/spatial_capture.py", "tests/test_spatial_capture_archive.py",
+      "task_recorder/review_media.py", "task_recorder/evolution_live.py", "task_recorder/sensor_review.py", "tests/test_sensor_review.py",
+      "task_recorder/fusion_review.py", "tests/test_fusion_review.py", "task_recorder/target_review.py",
+      "tests/test_target_review.py", "scripts/verify_perception_candidate.py", "tests/test_verify_perception_candidate.py",
+      "tests/test_soft_projection_evolution.py", "scripts/evolve_read_projection.py",
+      "scripts/evolve_read_projection.sh", "tests/test_evolve_read_projection.py"),
+     ("planner", "board")),
+    (("client/soft_projection_evolution.py",), ("planner", "observations", "agent-faults", "board")),
     (("tests/test_reference_utterances.py",), ("planner",)),
     (("tests/system/navigation_recording_check.py",), ("board",)),
     (("tests/test_package_boundaries.py","tests/test_kernel.py"), (R,)),
@@ -198,7 +209,9 @@ class TestSelection(unittest.TestCase):
     def test_navigation_route_observation_and_body_consumers(self):
         for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
                      "scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py",
-                     "compose.navigation-camera-info.yaml", "compose.navigation-readonly.yaml", "tests/test_navigation_pack.py"):
+                     "compose.navigation-camera-info.yaml", "compose.navigation-readonly.yaml", "tests/test_navigation_pack.py",
+                     "scripts/prepare_perception_site.py", "examples/stationary-perception/jetson-rover.json",
+                     "compose.stationary-perception.yaml"):
             self.assertEqual(selection([path])[0], [R, "planner", "observations", "board", "plugin-isolation"], path)
         for path in ("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
                      "tests/test_spatial_gateway.py"):
@@ -208,6 +221,17 @@ class TestSelection(unittest.TestCase):
         for path in ("agent/physical_navigation.py", "agent/kernel/catalog.py"):
             self.assertTrue({"planner", "board", "plugin-isolation"} <= set(selection([path])[0]), path)
         self.assertEqual(selection(["tests/test_reference_utterances.py"])[0], [R, "planner"])
+        for file in ("tests/test_spatial_image_capture.py", "tests/test_livox_capture.py", "tests/test_stationary_odom.py",
+                     "tests/test_stationary_fusion.py", "tests/test_visual_grounding.py", "tests/test_perception_server.py",
+                     "tests/test_perception_site.py", "task_recorder/spatial_capture.py", "tests/test_spatial_capture_archive.py",
+                     "task_recorder/review_media.py", "task_recorder/evolution_live.py", "task_recorder/sensor_review.py", "tests/test_sensor_review.py",
+                     "task_recorder/fusion_review.py", "tests/test_fusion_review.py", "task_recorder/target_review.py",
+                     "tests/test_target_review.py", "scripts/verify_perception_candidate.py",
+                     "tests/test_verify_perception_candidate.py", "tests/test_soft_projection_evolution.py",
+                     "scripts/evolve_read_projection.py", "scripts/evolve_read_projection.sh", "tests/test_evolve_read_projection.py"):
+            self.assertEqual(selection([file])[0], [R, "planner", "board"], file)
+        self.assertEqual(selection(["client/soft_projection_evolution.py"])[0],
+                         [R, "planner", "observations", "agent-faults", "board"])
         self.assertEqual(selection(["tests/system/navigation_recording_check.py"])[0], [R, "board"])
 
     def test_console_facts_run_observations(self):

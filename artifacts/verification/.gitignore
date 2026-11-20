@@ -4,6 +4,7 @@
 !/.gitignore
 !/README.md
 !/navigation-plugins/jetson-readonly.json
+!/navigation-plugins/jetson-perception.json
 !/body-runtime/gazebo.json
 !/recorder-ops/run03/results.json
 !/recorder-ops/run04/results.json
