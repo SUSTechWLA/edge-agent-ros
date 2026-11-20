@@ -16,7 +16,7 @@ from test_selection import STAGES, changed_paths, selection
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
 SPATIAL_TESTS = ("test_spatial_image_capture.py", "test_stationary_odom.py", "test_stationary_fusion.py",
-                 "test_visual_grounding.py", "test_perception_server.py", "test_object_grounding.py")
+                 "test_visual_grounding.py", "test_perception_server.py", "test_object_grounding.py", "test_frame_query.py")
 
 
 def utc():
@@ -132,7 +132,8 @@ def run(args, selected, reasons):
                                  "-f","compose.camera-hardware.yaml","-f","compose.rgbd.yaml","-f","compose.rgbd-hardware.yaml",
                                  "-f","compose.model-provider.yaml","-f","compose.model-provider-hardware.yaml","config","--quiet"]])
         if "planner" in selected:
-            stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
+            stage("planner",[test("planning_contract.py","-v"),test("test_autonomous_read.py","-v"),
+                             test("test_derived_tools.py","-v"),
                              test("test_reference_utterances.py","-v"),test("test_spatial_facts.py","-v"),
                              test("test_spatial_gateway.py","-v"),
                              *[test(name,"-v") for name in SPATIAL_TESTS],

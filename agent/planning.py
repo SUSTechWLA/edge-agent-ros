@@ -12,17 +12,18 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 if __package__:
     from . import runtime_plugins, series_tools
-    from .kernel import authorization, verification
+    from .kernel import authorization, read_authority, verification
     from .kernel.catalog import BASE, binding, catalog, is_series, reference_utterance, registry, valid_utterance, valid_verbatim_manifest
     from .tracing import CODE, artifact, contract, exchange
 else:
     import _contract_path
     import runtime_plugins
     import series_tools
-    from kernel import authorization, verification
+    from kernel import authorization, read_authority, verification
     from kernel.catalog import BASE, binding, catalog, is_series, reference_utterance, registry, valid_utterance, valid_verbatim_manifest
     from tracing import CODE, artifact, contract, exchange
 
+from edge_contracts.descriptor import validate_instance
 from edge_contracts.errors import OutcomeUnknown, Refused, Unavailable, failure, remote_failure
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -89,6 +90,8 @@ def http_json(url, data, timeout=6):
             reply=json.loads(raw, parse_constant=finite_number, parse_float=finite_number) if len(raw)<=16384 else {}
         except (ValueError,UnicodeError):
             reply={}
+        if isinstance(reply, dict) and reply.get("error") == "model.schema_mismatch":
+            reply = {"error":{"code":"model.schema_mismatch", "message":"模型返回值不符合输出契约"}}
         err=remote_failure(cls,reply if isinstance(reply,dict) else {},"transport.http_"+str(exc.code))
         err.args=(f"adapter HTTP {exc.code}: {err}",)
         raise err from exc
@@ -208,8 +211,15 @@ def plan(text, caps, trace=None, *, model_profile=None, model_request=None):
     diagnostic = {"stage":"capability_check"}
     try:
         policy = runtime_plugins.load_policy()
-        provider, steps = build_plan(text, caps, diagnostic, trace,
-                                     model_profile=model_profile, model_request=model_request)
+        authority = read_authority.load()
+        if authority is None:
+            provider, steps = build_plan(text, caps, diagnostic, trace,
+                                         model_profile=model_profile, model_request=model_request)
+        else:
+            eligible = {name:cap for name, cap in caps.items()
+                        if read_authority.admitted(authority, name, cap, cap.get("_soft"))
+                        and not runtime_plugins.requirements(cap, policy)}
+            provider, steps = autonomous_read_plan(text, eligible, diagnostic, trace, model_profile, model_request)
         for step in steps:
             step["verification"] = verification_plan(caps[step["tool"]], policy)
         return provider, steps
@@ -306,6 +316,120 @@ def planner_profile():
                       "planner.profile_invalid","registry") from exc
 
 
+def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile, model_request):
+    profile = planner_profile() if model_profile is None else model_profile
+    request = http_json if model_request is None else model_request
+    url = profile["url"]
+    if not url:
+        raise failure(Refused, "需要连接部署方配置的模型规划器", "planner.not_configured", "planner")
+    revision = {"version":profile["version"], "sha256":hashlib.sha256(
+        json.dumps(profile, sort_keys=True, ensure_ascii=False).encode()).hexdigest()}
+    plugin = profile["protocol"] == "http-planner"
+    provider = "http-planner" if plugin else "ollama/" + profile["model"]
+    diagnostic.update(stage="planner", provider=provider)
+    if plugin:
+        body = {"schema_version":1, **context, "output_schema":schema}
+        if prompt_key != "planner.system":
+            body["instructions"] = contract("prompts", prompt_key)["text"]
+        answer = exchange(trace, "model", "planner", body, lambda:request(url, body, 90),
+                          meta={"provider":provider, "protocol":"planner.http.v1", "profile":revision})
+    else:
+        prompt = contract("prompts", prompt_key)
+        body = {"model":profile["model"], "stream":False, "format":schema, "options":profile["options"],
+                "messages":[{"role":"system", "content":prompt["text"]},
+                            {"role":"user", "content":json.dumps(context, ensure_ascii=False)}]}
+        reply = exchange(trace, "model", "planner", body, lambda:request(url.rstrip("/") + "/api/chat", body, 90),
+                         meta={"provider":provider, "protocol":"ollama.chat", "profile":revision,
+                               "prompt":{k:prompt[k] for k in ("id","version","sha256")}})
+        answer = json.loads(reply["message"]["content"], parse_constant=finite_number, parse_float=finite_number)
+    return provider, answer
+
+
+def autonomous_argument_schema(cap):
+    if "_parameter_schema" in cap:
+        return cap["_parameter_schema"]
+    return {"type":"object", "properties":{k:{"type":v} for k,v in cap["parameters"].items()},
+            "required":list(cap["parameters"]), "additionalProperties":False}
+
+
+def validate_read_answer(answer, caps, text, actor):
+    if (not isinstance(answer, dict) or set(answer) != {"disposition","steps","reason"}
+            or not isinstance(answer["steps"], list) or not isinstance(answer["reason"], str)
+            or not answer["reason"].strip() or answer["disposition"] not in ("ready","requires_control","unsupported")):
+        raise ValueError("需要 disposition、steps 和非空 reason")
+    if answer["disposition"] == "requires_control" or authorization.explicit_motion_request(text):
+        raise failure(Refused, "任务涉及机器人控制，需要单独取得操作授权",
+                      "planner.control_requires_approval", "deployment")
+    if answer["disposition"] == "unsupported":
+        raise failure(Refused, answer["reason"][:1200], "planner.unsupported", "planner")
+    if not 1 <= len(answer["steps"]) <= 16:
+        raise ValueError("ready 须提供 1–16 个步骤")
+    steps = []
+    for item in answer["steps"]:
+        if (not isinstance(item, dict) or set(item) != {"tool","args"} or not isinstance(item["tool"], str)
+                or item["tool"] not in caps or not isinstance(item["args"], dict)):
+            raise ValueError("步骤只能使用本轮目录中的 tool 和对象 args")
+        cap = caps[item["tool"]]
+        if not read_authority.matches_actor(actor, cap, item["args"]):
+            raise ValueError(f"{cap['id']} 的 actor_ref 必须取本机部署身份 {actor}")
+        try:
+            validate_instance(autonomous_argument_schema(cap), item["args"])
+        except ValueError as exc:
+            raise ValueError(f"{cap['id']} 参数与契约不一致：{exc}") from exc
+        if cap.get("verbatim_argument") and item != verbatim_step(text, {cap["id"]:cap}):
+            raise ValueError("该工具的输入必须与用户原文完全一致")
+        if is_series(cap):
+            validate_series_input(text, item["args"], cap)
+        steps.append({**item, "version":cap["version"], "binding":binding(cap), "status":"PENDING"})
+    return steps
+
+
+def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_request):
+    entries = [dict(item, input_schema=autonomous_argument_schema(caps[item["id"]]),
+                    binding=binding(caps[item["id"]])) for item in catalog(caps)]
+    if trace:
+        trace("planner.context", {"layer":"planner", "module":"registry", "authority":"deployment.read_only",
+                                 "artifact":artifact(entries)})
+    diagnostic["eligible_tools"] = list(caps)
+    if not caps:
+        raise failure(Refused, "没有已获部署方批准且可用的只读软件能力", "planner.read_catalog_empty", "deployment")
+    # Full DSH schemas (including enum, const, ranges and nested properties)
+    # appear in the context and are enforced locally. Keep the model's output
+    # envelope portable across site providers that support fewer schema keywords.
+    entry = {"type":"object", "properties":{"tool":{"type":"string", "enum":list(caps)},
+                                           "args":{"type":"object"}},
+             "required":["tool","args"], "additionalProperties":False}
+    schema = {"type":"object", "properties":{"disposition":{"type":"string",
+              "enum":["ready","requires_control","unsupported"]}, "reason":{"type":"string", "minLength":1},
+              "steps":{"type":"array", "items":entry, "maxItems":16}},
+              "required":["disposition","reason","steps"], "additionalProperties":False}
+    actor = read_authority.actor_ref()
+    context = {"request":text, "authority":"deployment.read_only", "capabilities":entries}
+    if actor is not None:
+        context["actor_ref"] = actor
+    for attempt in range(2):
+        try:
+            provider, answer = model_proposal(context, schema, "planner.autonomous_read", diagnostic, trace,
+                                              model_profile, model_request)
+            diagnostic["stage"] = "plan_validation"
+            steps = validate_read_answer(answer, caps, text, actor)
+            if trace:
+                trace("planner.selected", {"layer":"planner", "module":"planner", "provider":provider,
+                                           "artifact":artifact(answer)})
+            return provider, steps
+        except (ValueError, KeyError, TypeError) as exc:
+            feedback = {"code":"planner.invalid_proposal", "message":str(exc)[:480]}
+        except (Refused, Unavailable) as exc:
+            if getattr(exc, "code", "") not in ("schema_mismatch", "model.schema_mismatch", "transport.invalid_json"):
+                raise
+            feedback = {"code":"planner.invalid_proposal", "message":"模型返回值不符合输出契约"}
+        if attempt:
+            raise failure(Refused, feedback["message"], feedback["code"], "planner")
+        context = {**context, "validation_feedback":feedback}
+        if trace:
+            trace("planner.revision", {"layer":"planner", "module":"planner", **feedback})
+
+
 def build_plan(text, caps, diagnostic, trace=None, *, model_profile=None, model_request=None):
     if trace:
         trace("planner.context",{"layer":"planner","module":"registry",
@@ -323,17 +447,6 @@ def build_plan(text, caps, diagnostic, trace=None, *, model_profile=None, model_
     steps = local_plan(text,caps)
     provider = "local"
     if steps is None:
-        profile = planner_profile() if model_profile is None else model_profile
-        request = http_json if model_request is None else model_request
-        url=profile["url"]
-        plugin=profile["protocol"]=="http-planner"
-        revision={"version":profile["version"],"sha256":hashlib.sha256(
-            json.dumps(profile,sort_keys=True,ensure_ascii=False).encode()).hexdigest()}
-        if not url:
-            raise failure(Refused,"本地策略无法解析这项请求。可输入明确坐标巡检、查询状态，或连接模型规划器并注册所需能力。",
-                          "planner.not_configured","planner")
-        model = profile.get("model")
-        provider = f"ollama/{model}"
         # Navigation by this adapter requires explicit coordinates. Withhold a
         # capability that could never pass validation for the current request.
         points = points_in(text)
@@ -346,23 +459,10 @@ def build_plan(text, caps, diagnostic, trace=None, *, model_profile=None, model_
             step_limit = min(16,len(points))
         schema = response_schema(eligible,points,step_limit)
         context = {"request":text,"capabilities":catalog(eligible),"requested_points":points}
-        diagnostic.update(stage="planner",provider="http-planner" if plugin else provider,
-                          eligible_tools=list(eligible))
+        diagnostic.update(eligible_tools=list(eligible))
         try:
-            if plugin:
-                provider = "http-planner"
-                body={"schema_version":1,**context,"output_schema":schema}
-                answer=exchange(trace,"model","planner",body,lambda:request(url,body,90),
-                                meta={"provider":provider,"protocol":"planner.http.v1","profile":revision})
-            else:
-                prompt=contract("prompts","planner.system")
-                body={"model":model,"stream":False,"format":schema,"options":profile["options"],
-                      "messages":[{"role":"system","content":prompt["text"]},
-                                  {"role":"user","content":json.dumps(context,ensure_ascii=False)}]}
-                reply=exchange(trace,"model","planner",body,lambda:request(url.rstrip("/")+"/api/chat",body,90),
-                               meta={"provider":provider,"protocol":"ollama.chat","profile":revision,
-                                     "prompt":{k:prompt[k] for k in ("id","version","sha256")}})
-                answer=json.loads(reply["message"]["content"], parse_constant=finite_number, parse_float=finite_number)
+            provider, answer = model_proposal(context, schema, "planner.system", diagnostic, trace,
+                                              model_profile, model_request)
             diagnostic.update(stage="plan_validation",proposal=json.dumps(answer,ensure_ascii=False)[:4096])
             steps=answer["steps"]
             if not steps:

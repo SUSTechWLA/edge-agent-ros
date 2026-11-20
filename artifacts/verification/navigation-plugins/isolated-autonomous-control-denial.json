@@ -1,0 +1,47 @@
+{
+  "test": "isolated_agent_http_mixed_control",
+  "model": "deliberately incorrect local test double",
+  "request": "先读取传感器，然后向前移动一米",
+  "proposed": {
+    "disposition": "ready",
+    "reason": "fixture proposes a partial read",
+    "steps": [
+      {
+        "tool": "look",
+        "args": {}
+      }
+    ]
+  },
+  "state": "BLOCKED",
+  "reason_code": "planner.control_requires_approval",
+  "events": [
+    {
+      "seq": 1,
+      "kind": "accepted",
+      "event_id": "5e5b01e6271040dcbfb9eabe7d1be48f"
+    },
+    {
+      "seq": 2,
+      "kind": "planner.context",
+      "event_id": "a276ba27cfd64cbcadd0f1b68d2e3fe7"
+    },
+    {
+      "seq": 3,
+      "kind": "model.request",
+      "event_id": "7e309819f25b48c182e25604e6e86738"
+    },
+    {
+      "seq": 4,
+      "kind": "model.response",
+      "event_id": "5618a1bae8b144588cfa4b29fb68b600"
+    },
+    {
+      "seq": 5,
+      "kind": "blocked",
+      "event_id": "34bec6ae9b2645a288dafbe2822127a9"
+    }
+  ],
+  "frozen_plans": 0,
+  "dispatch_events": 0,
+  "executor_calls": 0
+}

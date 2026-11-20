@@ -291,7 +291,7 @@ class Host:
                                      "parameters":{k:v["type"] for k,v in schema.get("properties", {}).items()}})
                 if cap["id"] != ref["name"] or cap["effect"] != item["effects"] or cap["id"] in ("inspect","status"):
                     raise problem("plugin.permission_denied", "invalid tool takeover")
-                cap.update(_soft=pin, _legacy_contract=legacy)
+                cap.update(_soft=pin, _legacy_contract=legacy, _parameter_schema=schema)
                 tools.append(cap)
         return {"plugins":list(rows.values()), "tools":tools, "services":services, "claims":claims}
 

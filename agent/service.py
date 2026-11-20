@@ -21,7 +21,7 @@ import soft_client
 from planning import (OutcomeUnknown, Refused, Unavailable, binding, is_series,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
-from kernel import host, task_facts, verification
+from kernel import host, read_authority, task_facts, verification
 from kernel.catalog import capability_view, plugin_view
 from kernel.ledger import Journal, project_step, trigger_input, utc
 from kernel.verification import finish_step
@@ -32,8 +32,9 @@ from edge_contracts.errors import OperationCanceled
 class Robot(Node):
     def __init__(self):
         super().__init__("edge_language_agent")
-        self.submit = self.create_client(SubmitMission,"/edge/submit_mission")
-        self.query = self.create_client(GetMission,"/edge/get_mission")
+        if "EDGE_AUTONOMOUS_READ_POLICY" not in os.environ:
+            self.submit = self.create_client(SubmitMission,"/edge/submit_mission")
+            self.query = self.create_client(GetMission,"/edge/get_mission")
         self.sample = None
         self.create_subscription(Odometry,"/odom",self.receive_odom,qos_profile_sensor_data)
 
@@ -72,6 +73,7 @@ class Robot(Node):
                 "yaw":math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z)),"speed":msg.twist.twist.linear.x}
 
     def run(self,step,op,cap,trace=None,context=None):
+        read_authority.authorize_dispatch([step])
         if step["tool"] == "status" and not cap.get("endpoint"):
             return self.odometry()
         if "derived" in cap and not cap.get("endpoint") and "soft_pin" not in step:

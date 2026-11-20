@@ -2,8 +2,10 @@
 import os
 if __package__:
     from . import soft_client
+    from .kernel import read_authority
 else:
     import soft_client
+    from kernel import read_authority
 from edge_contracts.errors import Refused, failure
 from edge_contracts.soft_transport import proposal_digest
 
@@ -57,6 +59,7 @@ def freeze(task, candidate):
             raise soft_client.SoftError("tool.binding_unavailable","original soft runtime unavailable")
         provider, steps = soft_client.request("freeze_plan",task=task,provider=provider,steps=steps)
     if any("physical_pin" in step for step in steps):
+        read_authority.require_steps(read_authority.load(), steps)
         try:
             provider, steps = physical_request("freeze_plan",task=task,provider=provider,steps=steps)
         except soft_client.SoftError as error:

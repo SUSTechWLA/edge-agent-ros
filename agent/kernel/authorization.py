@@ -31,6 +31,21 @@ def require_effect_allowed(cap, text):
         raise Refused("含否定或条件的执行请求需要明确后再派发")
 
 
+def explicit_motion_request(text):
+    """Independently catch direct movement commands if a model proposes a partial read."""
+    for clause in re.split(r"[,，。;；!！?？\n]|然后|接着|并且|随后|\band then\b|\bthen\b", text, flags=re.I):
+        imperative = re.match(
+            r"\s*(?:(?:请|麻烦|先|并|再|让|将|把|控制|让你|机器人|小车|无人机|机器狗|底盘|你)\s*)*"
+            r"(?:(?:往|向|朝)(?:前|后|左|右)(?:方|边)?(?:移|行|开|走|退|转)|前进|后退|左转|右转|起飞|降落|"
+            r"导航到|移动到|驶向|驶到|开到|走到|前往|去往|去(?!除|噪|掉|重)|(?:移动|挪动|转动)(?:一下|底盘|机器人)|"
+            r"(?:开启|启动)(?:电机|马达|底盘)|(?:please\s+)?(?:move|drive|fly|walk|go)\s+"
+            r"(?:forward|backward|back|to|toward|left|right)\b|(?:please\s+)?(?:turn|rotate)\s+(?:left|right)\b)",
+            clause, re.I)
+        if imperative:
+            return True
+    return False
+
+
 def retry_exhausted(attempts):
     return attempts > int(os.getenv("EDGE_RETRY_LIMIT", "7"))
 

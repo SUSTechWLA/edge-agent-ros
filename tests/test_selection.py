@@ -164,7 +164,7 @@ RULES = [
     (("sim/*",), MOTION),
     (("compose.hardware.yaml","compose.hardware-observe.yaml","client/hardware_preflight.py","tests/test_board_preflight.py",
       "tests/system/board_smoke.py","tests/system/realsense_board.py","tests/system/navigation_contract.py"), ("board",)),
-    (("tests/planning_contract.py",), ("planner",)),
+    (("tests/planning_contract.py","tests/test_autonomous_read.py"), ("planner",)),
     (("tests/test_scene*","tests/semantic_acceptance.py","tests/scene_*acceptance.py","tests/system/scene_binding_acceptance.py"), SCENE),
     (("tests/system/motion_faults.py",), ("motion-sensors","motion-world")),
     (("tests/verify.py","tests/stop_witness.py","tests/export_ledger.py","scripts/verify.ps1"), ("core",)),
