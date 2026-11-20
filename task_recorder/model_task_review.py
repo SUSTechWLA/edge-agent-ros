@@ -20,6 +20,7 @@ from .direct_target_demo import client_exchange, depth_preview
 from .evolution_live import ColorWindow
 from .fusion_review import Fusion, SOURCE_COLORS, draw_map, source_name
 from .map_view import map_output
+from .operator_evidence import normalized, qualified_receipt, trace_operator
 from .render import font, paragraph
 from .review_media import write_video
 from .sensor_review import FPS, H, W, TaskReceipt, clock, ns, pixels, read, require, sha, text
@@ -100,7 +101,8 @@ class Journal:
 
 def model_decision(journal, task):
     ctx, pctx = journal.one("planner.context")
-    exchanges = [(r,p) for r,p in journal.events if r["phase"] == "model.request"]
+    exchanges = [(r,p) for r,p in journal.events if r["phase"] == "model.request"
+                 and p["trace"].get("module", "planner") == "planner"]
     require(1 <= len(exchanges) <= 2, "missing model request or unsupported number of attempts")
     req, preq = exchanges[-1]
     matching = [(r, p) for r, p in journal.events if r["phase"] == "model.response"
@@ -139,8 +141,13 @@ def model_decision(journal, task):
         require(cap["effect"] == "read" and all(original.get(k) == v for k, v in cap.items()),
                 "model saw an unregistered or non-read capability")
     ordered = [{"tool": s["tool"], "args": s["args"]} for s in task["steps"]]
-    require(answer["disposition"] == "ready" and contents(pchosen["trace"]) == answer and
-            answer["steps"] == ordered and len(ppin["steps"]) == len(ordered), "model output differs from execution")
+    final = contents(pchosen["trace"])
+    computation = None
+    if answer["disposition"] == "read_compute":
+        computation = trace_operator(journal, task, context, answer, final, contents)
+    else:
+        require(answer["disposition"] == "ready" and final == answer, "model output differs from execution")
+    require(final["steps"] == ordered and len(ppin["steps"]) == len(ordered), "model output differs from execution")
     pins = [{k:s[k] for k in ("tool", "binding", "operation_id")} for s in task["steps"]]
     require(pfrozen["trace"]["steps"] == pins, "reservation differs from dispatched bindings")
     candidates = {c["id"] for c in offered}
@@ -169,7 +176,7 @@ def model_decision(journal, task):
                 response_sha256=tres["artifact"]["sha256"], duration_ms=tres["duration_ms"],
                 context_ns=ns(ctx["stamp_ns"]), request_ns=ns(req["stamp_ns"]),
                 response_ns=ns(res["stamp_ns"]), frozen_ns=ns(frozen["stamp_ns"]), planned_ns=ns(pin["stamp_ns"]),
-                revisions=revisions)
+                revisions=revisions, computation=computation)
 
 
 class QueryFrame:
@@ -383,7 +390,36 @@ def fusion_chapter(view, stamp, face):
                    f"机体坐标系 {view.body}   ·   栅格边长 {grid['resolution_m']:g} m")
 
 
-def mission(source, face):
+def operator_chapters(operation):
+    sections = [Chapter("模型将感知与计算拆分", operation["decomposed_ns"], 5, [
+        ("测量输入", json.dumps(operation["original_inputs"], ensure_ascii=False)), ("计算契约", operation["contract"]),
+        ("契约描述", operation["spec"])])]
+    for r in operation["events"]:
+        phase, stamp = r["phase"], r["stamp_ns"]
+        if phase == "operator.gap":
+            sections.append(Chapter("发现尚未安装的算子", stamp, 3, [("缺失契约", operation["contract"]),
+                                    ("账本诊断", r["code"])]))
+        elif phase == "model.request":
+            sections.append(Chapter("调用模型编写数值程序", stamp, 3, [("作者模型", r["model"]),
+                                    ("允许处理的输入", "已测量的有限数列"), ("算子规格", operation["spec"])]))
+        elif phase == "model.response":
+            sections.append(Chapter("模型返回候选程序", stamp, 5, [("原始程序指令",
+                json.dumps(r["candidate"], ensure_ascii=False)), ("作者模型", r["model"])]))
+        elif phase == "operator.rejected":
+            sections.append(Chapter("候选未通过验证", stamp, 3, [("验证诊断", r["code"]), ("候选次数", r["attempt"])]))
+        elif phase == "operator.verified":
+            sections.append(Chapter("独立用例验收通过", stamp, 4, [("通过用例数", r["validation"]["case_count"]),
+                                    ("用例摘要", r["validation"]["cases_sha256"][:24] + "…"),
+                                    ("验收语言", r["validation"]["language"])]))
+        elif phase in ("operator.installed", "operator.reused"):
+            sections.append(Chapter("安装通过验收的程序" if phase == "operator.installed" else "直接复用已安装的程序",
+                                    stamp, 4, [("算子契约", operation["contract"]), ("内容摘要", operation["digest"])]))
+    sections.append(Chapter("同一任务继续执行", operation["resumed_ns"], 3, [
+        ("已锁定的运行器", operation["runner"]), ("采用的程序", operation["digest"])]))
+    return sections
+
+
+def mission(source, face, *, operator_file=None, operator_policy=None):
     file, recording = source / "task.json", source / "recording"
     receipt = TaskReceipt(file, recording, step_index=0)
     task = receipt.task
@@ -407,9 +443,12 @@ def mission(source, face):
         chapters.append(Chapter("模型读取可用能力", decision["request_ns"], 5,
                                 [("本次模型输入", f"{decision['model']}   ·   {len(candidates)} 项只读能力"), *group]))
     choices = [(f"第 {i} 步    {step['tool']}", program(step)) for i, step in enumerate(task["steps"], 1)]
-    for group in pages(choices, 3):
-        chapters.append(Chapter("模型返回结构化计划", decision["response_ns"], 6,
-                                [("返回模型", f"{decision['model']}   ·   {decision['duration_ms']/1000:.2f} s"), *group]))
+    if decision["computation"]:
+        chapters.extend(operator_chapters(decision["computation"]))
+    else:
+        for group in pages(choices, 3):
+            chapters.append(Chapter("模型返回结构化计划", decision["response_ns"], 6,
+                                    [("返回模型", f"{decision['model']}   ·   {decision['duration_ms']/1000:.2f} s"), *group]))
     frozen = [(s["tool"], s["version"] + "    " + s["binding"][:23] + "…") for s in task["steps"]]
     for group in pages(frozen, 4):
         chapters.append(Chapter("内核校验并锁定工具版本", decision["frozen_ns"], 4,
@@ -418,6 +457,7 @@ def mission(source, face):
     results = []
     for index, step in enumerate(task["steps"]):
         op = step["operation_id"]
+        evidence = step["evidence"]
         for event, key in (("dispatch", "dispatch_ns"), ("tool.request", "tool_request_ns"),
                            ("tool.response", "tool_response_ns"), ("verified", "verified_ns")):
             record, payload = journal.one(event, op)
@@ -428,10 +468,16 @@ def mission(source, face):
             elif event == "tool.request":
                 require(contents(payload["trace"])["arguments"] == step["args"], "different tool arguments")
             elif event == "tool.response":
-                require(payload["trace"]["artifact"]["sha256"] == sha256(encoded(step["evidence"])).hexdigest(),
+                digest = payload["trace"]["artifact"]["sha256"]
+                # Older public receipts redact the numeric language's "tokens" key. Recover only this typed
+                # field from the archived installed artifact, and require the entire original receipt hash.
+                derived = evidence.get("derived", {})
+                if operator_file and derived.get("program") == {"tokens":"[REDACTED]"}:
+                    evidence = {**evidence, "derived":{**derived, "program":read(operator_file)["program"]}}
+                require(digest == sha256(encoded(evidence)).hexdigest(),
                         "tool response digest differs from final evidence")
             result[key] = ns(record["stamp_ns"])
-        result["evidence_sha256"] = sha256(encoded(step["evidence"])).hexdigest()
+        result["evidence_sha256"] = sha256(encoded(evidence)).hexdigest()
         results.append(result)
         position = f"{index+1} / {len(task['steps'])}"
         chapters.append(Chapter("派发只读调用", result["tool_request_ns"], 3, [
@@ -467,6 +513,21 @@ def mission(source, face):
             chapters.append(Chapter("查看工具返回的测量结论", result["tool_response_ns"], 5,
                                     [("工具回执原文", a["summary"]), ("测量表达式", a["program"])],
                                     annotated, "区域从上到下、从左到右编号"))
+            if decision["computation"]:
+                op = decision["computation"]
+                require(operator_file and operator_policy, "need the installed operator and the deployed policy bytes")
+                calc = qualified_receipt(evidence, operator_file, operator_policy, op["digest"], op["contract"])
+                if op["mode"] == "installed":
+                    last = [row for row in op["events"] if row["phase"] == "model.response"][-1]
+                    verified, = [row for row in op["events"] if row["phase"] == "operator.verified"]
+                    require(normalized(last["candidate"]) == calc["program"] and verified["validation"] == calc["proof"],
+                            "installed program differs from the authored and validated candidate")
+                result["calculation"] = calc
+                chapters.append(Chapter("用实测数值执行算子", result["tool_response_ns"], 5, [
+                    ("输入", "、".join(f"{v:.4g}" for v in calc["inputs"]) + "  " + calc["unit"]),
+                    ("执行的程序", json.dumps(calc["program"]["tokens"])),
+                    ("工具返回值", f"{calc['value']:.5g} {calc['unit']}")], annotated,
+                    "输入取自上图指定区域，数值与回执已复算"))
         else:
             fields = ", ".join(step["evidence"])
             captured = observed_rgb(step["evidence"], source / "artifacts", result["tool_request_ns"],
@@ -575,9 +636,37 @@ def chaptered_video(out, scenes, chapters, ffmpeg, ffprobe):
     return frames
 
 
-def render(source, destination, face, ffmpeg, ffprobe, *, prior_attempt=None):
-    task, submit, decision, results, chapters, window, receipt = mission(source, face)
+def render(source, destination, face, ffmpeg, ffprobe, *, prior_attempt=None, reuse_source=None,
+           operator_file=None, operator_policy=None):
+    bindings = {"operator_file":operator_file, "operator_policy":operator_policy}
+    task, submit, decision, results, chapters, window, receipt = mission(source, face, **bindings)
     elapsed = (chapters[-1].stamp - chapters[0].stamp) / 1e9
+    windows = {"":window}
+    followup = None
+    if reuse_source:
+        other, posted, chosen, steps, more, other_window, record = mission(reuse_source, face, **bindings)
+        first, second = decision["computation"], chosen["computation"]
+        require(first and second and first["mode"] == "installed" and second["mode"] == "reused"
+                and first["digest"] == second["digest"] and first["contract"] == second["contract"]
+                and task["id"] != other["id"] and task["trace_id"] != other["trace_id"]
+                and chapters[-1].stamp <= more[0].stamp, "second task did not independently reuse the installed operator")
+        left, = [s for s in results if "calculation" in s]
+        right, = [s for s in steps if "calculation" in s]
+        require(left["operation_id"] != right["operation_id"] and
+                ns(left["analysis"]["rgb_stamp_ns"]) < ns(right["analysis"]["rgb_stamp_ns"]) and
+                ns(left["analysis"]["depth_stamp_ns"]) < ns(right["analysis"]["depth_stamp_ns"]),
+                "second task failed to capture a separate measurement")
+        for chapter in more:
+            chapter.source_task = other["id"]
+        more[0].title = "再次提交独立感知任务"
+        windows[other["id"]] = other_window
+        followup = dict(task_id=other["id"], original_request=other["text"], status=other["state"], model=chosen,
+                        operations=steps, task_sha256=record.task_sha, timeline_sha256=record.record.timeline_digest,
+                        post_sha256=posted["request_body_sha256"], http_response_sha256=posted["response_body_sha256"],
+                        source_elapsed_s=(more[-1].stamp - more[0].stamp) / 1e9)
+        if other_window:
+            followup["sensor_window_sha256"] = sha(reuse_source / "sensor-timeline.jsonl")
+        chapters.extend(more)
     prior = blocked_attempt(prior_attempt, task, chapters[0].stamp) if prior_attempt else None
     if prior:
         chapters.insert(1, prior_chapter(prior, face))
@@ -587,6 +676,7 @@ def render(source, destination, face, ffmpeg, ffprobe, *, prior_attempt=None):
 
         def scenes():
             for i, ch in enumerate(chapters):
+                source_window = windows.get(ch.source_task)
                 following = next((other for other in chapters[i+1:] if other.source_task == ch.source_task), ch)
                 end = following.stamp
                 cached_key, cached = object(), None
@@ -595,15 +685,15 @@ def render(source, destination, face, ffmpeg, ffprobe, *, prior_attempt=None):
                     tick = ch.stamp + (end - ch.stamp) * n // ticks
                     pic, label = ch.image, ch.image_label
                     key = "held" if pic is not None else None
-                    if pic is None and window:
-                        observed, stale = window.at(tick)
+                    if pic is None and source_window:
+                        observed, stale = source_window.at(tick)
                         if observed:
                             stamp, ref, _ = observed
                             key = (ref, stale)
-                            pic = window.image(ref)
+                            pic = source_window.image(ref)
                             label = ("最近收到的车载 RGB" if stale else "车载 RGB") + "   ·   " + clock(stamp) + "  采样"
                             if not preview_refs or preview_refs[-1]["ref"] != ref:
-                                preview_refs.append(dict(stamp_ns=str(stamp), ref=ref))
+                                preview_refs.append(dict(task_id=ch.source_task or task["id"], stamp_ns=str(stamp), ref=ref))
                     if key != cached_key:
                         cached = frame(ch, face, pic, label or "相机采集窗口", ch.source_task or task["id"], i+1, len(chapters))
                         cached_key = key
@@ -630,6 +720,8 @@ def render(source, destination, face, ffmpeg, ffprobe, *, prior_attempt=None):
                       camera_previews=preview_refs)
         if prior:
             report["prior_attempt"] = prior
+        if followup:
+            report["reuse"] = followup
         if window:
             report["sensor_window_sha256"] = sha(source / "sensor-timeline.jsonl")
         (out / "video.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf8")
@@ -650,13 +742,17 @@ def main():
     cli.add_argument("--source", type=Path, required=True)
     cli.add_argument("--out", type=Path, required=True)
     cli.add_argument("--prior-attempt", type=Path, help="earlier blocked task ledger from the same user wording")
+    cli.add_argument("--reuse-source", type=Path, help="later task which reuses the independently qualified operator")
+    cli.add_argument("--operator-file", type=Path, help="installed numeric definition exported from the edge host")
+    cli.add_argument("--operator-policy", type=Path, help="unaltered deployed qualification policy")
     cli.add_argument("--font", required=True)
     cli.add_argument("--ffmpeg", default=shutil.which("ffmpeg"))
     cli.add_argument("--ffprobe", default=shutil.which("ffprobe"))
     args = cli.parse_args()
     if not args.ffmpeg or not args.ffprobe:
         cli.error("FFmpeg and FFprobe are required")
-    report = render(args.source, args.out, args.font, args.ffmpeg, args.ffprobe, prior_attempt=args.prior_attempt)
+    report = render(args.source, args.out, args.font, args.ffmpeg, args.ffprobe, prior_attempt=args.prior_attempt,
+                    reuse_source=args.reuse_source, operator_file=args.operator_file, operator_policy=args.operator_policy)
     print(json.dumps({k: report[k] for k in ("task_id", "duration_s", "video_sha256")}))
 
 

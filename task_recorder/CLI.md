@@ -94,6 +94,8 @@ python -m task_recorder.model_task_review --source ./mission-export --out ./miss
 
 输出包括可直接播放的 `task.mp4`、可跳转章节的 `index.html` 及含源时间戳、文件哈希、候选能力、模型选择和实际操作 ID 的 `video.json`。需要 Pillow、FFmpeg 和 FFprobe。模型回放要求部署权限为只读，且注册目录、选用的能力版本、调用和成功回执能在同一任务中互相核对。帧查询的区域统计值由回放程序使用归档的 RGB 和深度像素复算。视频对事件分段停留，实际用时见画面和 `source_elapsed_s`。
 
+如有相同原文的较早独立失败任务，可附加 `--prior-attempt <earlier-task.json>`。对于由作者模型产生数值算子的任务，传入 `--operator-file <installed-digest.json>` 和 `--operator-policy <deployed-policy.json>`。若希望在同一影片展示下一个任务如何复用算子，再提供 `--reuse-source <second-export>`。回放会重新执行部署方的独立用例，核对模型返回的指令、安装记录、两次操作 ID、独立传感器采样及结果。
+
 已完成任务的分页测试校验 38 条工具事件，两次启动观察后核验源序号、去重结果、跨任务污染拦截、受限字段与用户原文开关。单独 Docker 项目另验真实 ROS 输入与“第一条成功回执随附两页工具历史”的场景。[HTTP 测试](../tests/test_recorder_cli.py) · [Docker 运维实测](../artifacts/verification/recorder-ops/run04/results.json)
 
 四组本机 HTTP 试验启动真实录制服务，由独立软件任务响应端合成“尚未提交、临时 503、执行中、相同执行中、成功”的状态序列，实际归档四条记录，并按源身份核验请求仅有 GET。另覆盖手工停止、重复导出、身份错配，以及运行中手工结束录制时观察进程自动退出。人工结束和任务完成同时发生时，两端取回同一份最先写入的结束回执。测试输入含原文、参数及凭证占位值，逐行核验导出结果中均无这些字段。[复跑测试](../tests/test_recorder_cli.py)
