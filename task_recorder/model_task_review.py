@@ -8,6 +8,7 @@ import json
 import math
 from pathlib import Path
 import shutil
+import subprocess
 from types import SimpleNamespace
 
 from PIL import Image, ImageDraw
@@ -409,6 +410,38 @@ def frame(ch, face, pic, label, task_id, chapter_no, total):
     return canvas
 
 
+def chaptered_video(out, scenes, chapters, ffmpeg, ffprobe):
+    raw = out / "pictures.mp4"
+    _, frames = write_video(raw, scenes, ffmpeg, ffprobe)
+    meta = out / "chapters.ffmeta"
+    rows, offset = [";FFMETADATA1"], 0
+    for chapter in chapters:
+        rows.extend(("[CHAPTER]", "TIMEBASE=1/1000", f"START={offset*1000}",
+                     f"END={(offset+chapter.seconds)*1000}", "title=" + chapter.title))
+        offset += chapter.seconds
+    meta.write_text("\n".join(rows) + "\n", encoding="utf8")
+    video = out / "task.mp4"
+    subprocess.run([ffmpeg, "-v", "error", "-i", str(raw), "-f", "ffmetadata", "-i", str(meta),
+                    "-map", "0:v:0", "-map_chapters", "1", "-c", "copy", "-movflags", "+faststart",
+                    str(video)], check=True)
+    decoded = json.loads(subprocess.check_output([ffprobe, "-v", "error", "-select_streams", "v:0",
+                         "-count_frames", "-show_entries", "stream=codec_name,nb_read_frames,width,height:"
+                         "chapter=start_time,end_time:chapter_tags=title", "-of", "json", str(video)]))
+    track, = decoded["streams"]
+    require((track["codec_name"], int(track["nb_read_frames"]), track["width"], track["height"])
+            == ("h264", frames, W, H), "chaptered video failed decode")
+    original = decoded.get("chapters", [])
+    require(len(original) == len(chapters), "MP4 lost source chapters")
+    offset = 0
+    for ch, expected in zip(original, chapters):
+        require(ch["tags"]["title"] == expected.title and float(ch["start_time"]) == offset
+                and float(ch["end_time"]) == offset + expected.seconds, "MP4 chapter mismatch")
+        offset += expected.seconds
+    raw.unlink()
+    meta.unlink()
+    return frames
+
+
 def render(source, destination, face, ffmpeg, ffprobe):
     task, submit, decision, results, chapters, window, receipt = mission(source, face)
     with map_output(destination) as out:
@@ -442,7 +475,7 @@ def render(source, destination, face, ffmpeg, ffprobe):
                         snapshots.append(name)
                     yield ch.title, 1 / FPS, cached
 
-        _, count = write_video(out / "task.mp4", scenes(), ffmpeg, ffprobe)
+        count = chaptered_video(out, scenes(), chapters, ffmpeg, ffprobe)
         chapter_table = []
         offset = 0
         for ch, screenshot in zip(chapters, snapshots):
