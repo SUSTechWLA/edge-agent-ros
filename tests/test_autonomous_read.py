@@ -13,6 +13,7 @@ from agent import planning, runtime_plugins
 from agent.kernel import read_authority, worker
 from agent.kernel.ledger import Journal
 from edge_contracts.errors import OutcomeUnknown, Refused
+from model_provider.structured import current_schema, matches
 
 
 def capability(name, char, parameters=None):
@@ -61,10 +62,36 @@ class AutonomousRead(unittest.TestCase):
         first, second = [c.args[1] for c in request.call_args_list]
         self.assertEqual([s["id"] for s in first["capabilities"]], ["observe","count"])
         self.assertEqual(first["capabilities"][0]["input_schema"], self.first["_parameter_schema"])
+        self.assertEqual(first["output_schema"]["properties"]["steps"]["items"]["properties"]["args"], {"type":"object"})
         self.assertNotIn("validation_feedback", first)
         self.assertEqual(second["validation_feedback"]["code"], "planner.invalid_proposal")
         self.assertEqual([k for k,v in self.events], ["planner.context","model.request","model.response",
                          "planner.revision","model.request","model.response","planner.selected"])
+
+    def test_ollama_format_binds_tool_to_full_input_contract_and_refusals_to_empty_steps(self):
+        self.profile.update(protocol="ollama", model="fixture", options={})
+        grid = capability("grid", "d", {"rows":"integer"})
+        grid["_parameter_schema"] = {"type":"object", "properties":{"rows":{"type":"integer",
+            "minimum":1, "maximum":8, "description":"top to bottom", "unit":"bands"}},
+            "required":["rows"],"additionalProperties":False}
+        self.caps["grid"] = grid
+        self.allow(self.first, grid)
+        valid = ready({"tool":"grid","args":{"rows":3}}, {"tool":"observe","args":{"region":"far"}})
+        call = Mock(return_value={"message":{"content":json.dumps(valid)}})
+        provider, steps = self.plan(call)
+        self.assertEqual(provider, "ollama/fixture")
+        schema = call.call_args.args[1]["format"]
+        self.assertTrue(current_schema(schema))  # The same format can traverse the site's Ollama-compatible adapter.
+        choices = schema["oneOf"][0]["properties"]["steps"]["items"]["oneOf"]
+        actual = {v["properties"]["tool"]["enum"][0]:v["properties"]["args"] for v in choices}
+        self.assertEqual(actual, {"grid":grid["_parameter_schema"],"observe":self.first["_parameter_schema"]})
+        self.assertTrue(matches(valid, schema, [1000]))
+        for bad in (ready(), ready({"tool":"observe","args":{"rows":3}}), ready({"tool":"grid","args":{"rows":"3"}}),
+                    ready({"tool":"grid","args":{"rows":9}}), ready({"tool":"observe","args":{"region":"other"}})):
+            self.assertFalse(matches(bad, schema, [1000]))
+        for disposition in ("unsupported","requires_control"):
+            self.assertTrue(matches(dict(valid, disposition=disposition, steps=[]), schema, [1000]))
+            self.assertFalse(matches(dict(valid, disposition=disposition), schema, [1000]))
 
     def test_forces_model_even_for_exact_utterance_and_builtin_local_shortcut(self):
         request = Mock(return_value=ready({"tool":"count", "args":{}}))

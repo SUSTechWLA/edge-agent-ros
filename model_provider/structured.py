@@ -1,8 +1,10 @@
 """Validate the object-schema vocabulary used by the planner and existing tool authors."""
+import math
+
 TYPES = {"object":dict, "array":list, "string":str, "integer":int, "number":(int,float),
          "boolean":bool, "null":type(None)}
 KEYS = {"type","properties","required","additionalProperties","items","oneOf","enum",
-        "minItems","maxItems","minLength","maxLength"}
+        "minItems","maxItems","minLength","maxLength","minimum","maximum","const","description","title","unit"}
 
 
 def current_schema(schema, depth=0):
@@ -13,6 +15,12 @@ def current_schema(schema, depth=0):
     for field in ("minItems","maxItems","minLength","maxLength"):
         if field in schema and (type(schema[field]) is not int or schema[field]<0):
             return False
+    for field in ("minimum","maximum"):
+        if field in schema and not (type(schema[field]) is int or
+                                    type(schema[field]) is float and math.isfinite(schema[field])):
+            return False
+    if any(field in schema and not isinstance(schema[field], str) for field in ("description","title","unit")):
+        return False
     if "enum" in schema and (not isinstance(schema["enum"],list) or not schema["enum"]):
         return False
     if "additionalProperties" in schema and type(schema["additionalProperties"]) is not bool:
@@ -39,7 +47,7 @@ def matches(value, schema, budget):
     typ = schema.get("type")
     if typ and (not isinstance(value,TYPES[typ]) or type(value) is bool and typ in ("number","integer")):
         return False
-    if "enum" in schema:
+    if "enum" in schema or "const" in schema:
         def equal(x,y):
             # JSON booleans differ from numbers, while integer and float may be equal.
             if type(x) in (int,float) and type(y) in (int,float):
@@ -49,7 +57,9 @@ def matches(value, schema, budget):
             if isinstance(x,dict) and isinstance(y,dict):
                 return x.keys()==y.keys() and all(equal(x[k],y[k]) for k in x)
             return type(x) is type(y) and x==y
-        if not any(equal(value,option) for option in schema["enum"]):
+        if "const" in schema and not equal(value, schema["const"]):
+            return False
+        if "enum" in schema and not any(equal(value,option) for option in schema["enum"]):
             return False
     if "oneOf" in schema and sum(matches(value,item,budget) for item in schema["oneOf"])!=1:
         return False
@@ -66,4 +76,6 @@ def matches(value, schema, budget):
         return "items" not in schema or all(matches(v,schema["items"],budget) for v in value)
     if isinstance(value,str):
         return schema.get("minLength",0)<=len(value)<=schema.get("maxLength",len(value))
+    if type(value) in (int,float):
+        return schema.get("minimum",value) <= value <= schema.get("maximum",value)
     return True

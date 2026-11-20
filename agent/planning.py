@@ -357,6 +357,27 @@ def autonomous_argument_schema(cap):
             "required":list(cap["parameters"]), "additionalProperties":False}
 
 
+def read_output_schema(entries, protocol):
+    def step(names, arguments):
+        return {"type":"object", "properties":{"tool":{"type":"string", "enum":names}, "args":arguments},
+                "required":["tool","args"], "additionalProperties":False}
+
+    def branch(dispositions, steps):
+        return {"type":"object", "properties":{"disposition":{"type":"string", "enum":dispositions},
+                "reason":{"type":"string", "minLength":1}, "steps":steps},
+                "required":["disposition","reason","steps"], "additionalProperties":False}
+
+    if protocol == "http-planner":
+        # Keep the v1 HTTP envelope stable; deployed providers receive the
+        # complete input contracts in capabilities and the kernel checks them.
+        entry = step([item["id"] for item in entries], {"type":"object"})
+        return branch(["ready","requires_control","unsupported"], {"type":"array", "items":entry, "maxItems":16})
+    choices = [step([item["id"]], item["input_schema"]) for item in entries]
+    ready = branch(["ready"], {"type":"array", "items":{"oneOf":choices}, "minItems":1, "maxItems":16})
+    denied = branch(["requires_control","unsupported"], {"type":"array", "maxItems":0})
+    return {"type":"object", "oneOf":[ready, denied]}
+
+
 def validate_read_answer(answer, caps, text, actor):
     if (not isinstance(answer, dict) or set(answer) != {"disposition","steps","reason"}
             or not isinstance(answer["steps"], list) or not isinstance(answer["reason"], str)
@@ -398,16 +419,8 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
     diagnostic["eligible_tools"] = list(caps)
     if not caps:
         raise failure(Refused, "没有已获部署方批准且可用的只读软件能力", "planner.read_catalog_empty", "deployment")
-    # Full DSH schemas (including enum, const, ranges and nested properties)
-    # appear in the context and are enforced locally. Keep the model's output
-    # envelope portable across site providers that support fewer schema keywords.
-    entry = {"type":"object", "properties":{"tool":{"type":"string", "enum":list(caps)},
-                                           "args":{"type":"object"}},
-             "required":["tool","args"], "additionalProperties":False}
-    schema = {"type":"object", "properties":{"disposition":{"type":"string",
-              "enum":["ready","requires_control","unsupported"]}, "reason":{"type":"string", "minLength":1},
-              "steps":{"type":"array", "items":entry, "maxItems":16}},
-              "required":["disposition","reason","steps"], "additionalProperties":False}
+    profile = planner_profile() if model_profile is None else model_profile
+    schema = read_output_schema(entries, profile["protocol"])
     actor = read_authority.actor_ref()
     context = {"request":text, "authority":"deployment.read_only", "capabilities":entries}
     if actor is not None:
@@ -415,7 +428,7 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
     for attempt in range(2):
         try:
             provider, answer = model_proposal(context, schema, "planner.autonomous_read", diagnostic, trace,
-                                              model_profile, model_request)
+                                              profile, model_request)
             diagnostic["stage"] = "plan_validation"
             steps = validate_read_answer(answer, caps, text, actor)
             if trace:
