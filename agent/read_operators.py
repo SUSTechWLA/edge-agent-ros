@@ -7,6 +7,7 @@ import tempfile
 
 from edge_contracts.descriptor import NAME, SHA
 from edge_contracts.errors import Refused, failure
+from agent.kernel import read_authority
 if __package__:
     from . import numeric_program as numeric
 else:
@@ -137,7 +138,14 @@ class Operators:
         installed = publish_once(self.pointer(contract), digest)
         return self.inspect(contract), installed
 
-    def resolve(self, gap, journal, task_id, trace, author):
+    def authorize_publication(self, name, runner_binding):
+        latest = Operators.configured()
+        reads = read_authority.load()
+        if (not latest or not reads or reads.get(self.runner) != runner_binding or latest.runner != self.runner
+                or latest.directory != self.directory or latest.contracts.get(name) != self.contracts[name]):
+            raise reject("生成算子期间部署授权已改变", "operator.binding_denied")
+
+    def resolve(self, gap, journal, task_id, trace, author, runner_binding):
         name = gap["contract"]
         spec = self.contracts[name]
         def event(kind, **fields):
@@ -173,6 +181,7 @@ class Operators:
                     break
             proof = numeric.verify(program, spec["cases"])
             event("operator.verified", operator_digest="sha256:" + numeric.digest(program), validation=proof)
+            self.authorize_publication(name, runner_binding)
             digest, installed = self.install(name, program, proof)
             event("operator.installed" if installed else "operator.reused", operator_digest=digest)
         event("planner.resumed", operator_digest=digest)

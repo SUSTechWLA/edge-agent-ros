@@ -474,6 +474,8 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
                     raise ValueError("read_compute requires one computation, reason and empty steps")
                 gap = answer["computation"]
                 validate_instance(computation, gap)
+                if not read_authority.matches_actor(actor, caps[site.runner], gap["input"]):
+                    raise ValueError("计算的观测源必须使用部署方的本机 actor_ref")
                 name = gap["contract"]
                 intent = {"provider":provider, "answer":answer, "runner_binding":binding(caps[site.runner]),
                           "contract_hash":read_operators.content_hash(site.contracts[name])}
@@ -490,7 +492,7 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
                     _, candidate = model_proposal(question, read_operators.numeric.AUTHOR_SCHEMA,
                         "operator.author", diagnostic, trace, profile, model_request, read_operators.numeric.PROMPT)
                     return read_operators.numeric.from_author(candidate)
-                invocation = site.resolve(gap, journal, task_id, trace, author)
+                invocation = site.resolve(gap, journal, task_id, trace, author, intent["runner_binding"])
                 final = {"disposition":"ready", "reason":answer["reason"], "steps":[invocation]}
                 steps = validate_read_answer(final, {site.runner:caps[site.runner]}, text, actor)
                 steps[0]["read_operator"] = name

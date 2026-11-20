@@ -132,6 +132,19 @@ class OperatorTask(unittest.TestCase):
         self.assertNotIn('"sample"',json.dumps(revision))
         self.assertNotIn('"expected"',json.dumps(revision))
 
+    def test_revocation_during_authoring_stops_publication_and_dispatch(self):
+        task = self.journal.create("revoked","calculate the requested range")
+        def request(url, body, timeout):
+            if "calculation" not in body:
+                return self.gap
+            self.reads.write_text(json.dumps({"schema_version":1,"bindings":{}}))
+            return self.author_reply
+        with self.assertRaises(Refused) as caught:
+            self.run_plan(task,request)
+        self.assertEqual(caught.exception.code,"operator.binding_denied")
+        self.assertEqual(list(self.ops.iterdir()),[])
+        self.assertNotIn("planner.frozen",[k for k,_ in self.events])
+
 
 if __name__ == "__main__":
     unittest.main()
