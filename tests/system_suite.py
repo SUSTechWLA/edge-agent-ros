@@ -132,6 +132,7 @@ def run(args, selected, reasons):
         if "planner" in selected:
             stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
                              test("test_reference_utterances.py","-v"),test("test_spatial_facts.py","-v"),
+                             test("test_spatial_gateway.py","-v"),
                              test("test_navigation_planner.py","-v"),test("test_navigation_physical.py","-v"),
                              test("test_navigation_pack.py","-v"),
                              test("test_planner_model_selection.py","-v"),
@@ -171,6 +172,7 @@ def run(args, selected, reasons):
                                [*board_test,"/opt/edge/tests/test_navigation_planner.py","-v"],
                                [*board_test,"/opt/edge/tests/test_navigation_physical.py","-v"],
                                [*board_test,"/opt/edge/tests/test_spatial_facts.py","-v"],
+                               [*board_test,"/opt/edge/tests/test_spatial_gateway.py","-v"],
                                [*board_test,"/opt/edge/tests/system/navigation_contract.py",
                                 "--out","/evidence/navigation-contract.json"],
                                [*board_container,"--mount",f"type=bind,source={ROOT/'task_recorder'},target=/opt/edge/task_recorder,readonly",

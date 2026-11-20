@@ -24,7 +24,8 @@ RULES = [
     (("edge_contracts/*",), STAGES),
     (("navigation/*.py", "perception/spatial_facts/*.py", "scripts/prepare_navigation.py",
       "tests/test_navigation_pack.py"), ("planner", "observations", "board", "plugin-isolation")),
-    (("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py"),
+    (("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
+      "tests/test_spatial_gateway.py"),
      ("planner", "board")),
     (("tests/test_reference_utterances.py",), ("planner",)),
     (("tests/test_package_boundaries.py","tests/test_kernel.py"), (R,)),
@@ -196,7 +197,8 @@ class TestSelection(unittest.TestCase):
         for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
                      "scripts/prepare_navigation.py", "tests/test_navigation_pack.py"):
             self.assertEqual(selection([path])[0], [R, "planner", "observations", "board", "plugin-isolation"], path)
-        for path in ("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py"):
+        for path in ("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
+                     "tests/test_spatial_gateway.py"):
             self.assertEqual(selection([path])[0], [R, "planner", "board"], path)
         for path in ("edge_contracts/navigation.py", "edge_contracts/spatial_facts.py", "edge_contracts/occupancy.py"):
             self.assertEqual(selection([path])[0], list(STAGES), path)

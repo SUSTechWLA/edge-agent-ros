@@ -28,3 +28,14 @@ async def position_for(actor_ref):
 新增观测生产者可独立发布同一批次契约。读取实时 ROS、相机设备或原始传感器的适配器归物理 runtime 所有，持有其资源租约，并负责登记采集证据。此处的消费者读取已获准发布的事实。消费者选用其他融合方法时，通过站点绑定换 Provider，保留已有任务的冻结版本。
 
 可用 `python tests/test_spatial_facts.py -v` 复测两源二维及三维融合，独立图像引用读取，以及地图、时钟、标定、定位代次或输入相互矛盾时的拒绝行为。
+
+### 从相机订阅内参与里程计共同发布
+
+`camera_info_capture` 只订阅部署时指定的 ROS `sensor_msgs/msg/CameraInfo` 话题，并要求 `header.frame_id` 匹配。它将分辨率、畸变模型、D/K/R/P、ROI、binning 和坐标系以规范 JSON 保存。每帧的采样时间记录在观测的 `stamp_ns` 中。相同标定在多帧间复用同一 SHA-256。可以从相机专属发布目录 `artifacts/<64位小写摘要>.json` 读取原件，并对原始字节计算 SHA-256 与观测的 `artifact_ref` 核对。该路径由本地部署者按权限提供给消费方。相机发布目录最多保留 32 种标定，超过上限会撤下该源快照，保留现有工件。
+
+```sh
+python -m perception.spatial_facts.camera_info_capture --actor-ref rover --source-id d435.color.info --topic /camera/color/camera_info --frame-id camera_color_optical_frame --output /run/edge/site-camera
+python -m perception.spatial_facts.gateway --file /run/edge/site-odom/observations.json --max-age-ns 2000000000 --optional-source d435.color.info /run/edge/site-camera/observations.json
+```
+
+话题与帧名采用设备实际配置。相机进程使用自己的可写目录，网关以只读方式挂载各源目录。必需里程计过期时网关拒绝返回整个批次。可选源文件暂缺或时间超窗时，批次保留其他新鲜样本，在 `source_gaps` 记录配置的来源 ID 和原因。跨主体、源名冲突、坐标系错误和非普通文件无法作为有效观测发布。相机内参可以被标定巡检、录制等消费方复用。位置融合只选站点策略登记的 `position` 来源。 [相机订阅器](camera_info_capture.py) · [汇聚网关](gateway.py) · [多源隔离测试](../../tests/test_spatial_gateway.py)

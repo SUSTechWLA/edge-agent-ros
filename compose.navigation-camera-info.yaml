@@ -1,0 +1,31 @@
+# Optional published CameraInfo artifact. Apply together with compose.navigation-readonly.yaml.
+services:
+  spatial-facts:
+    image: ${EDGE_NAV_SENSOR_IMAGE:?pin the approved facts gateway and CameraInfo reader image}
+    entrypoint: [python3, -B, -m, perception.spatial_facts.gateway, --file, /facts/observations.json,
+                 --max-age-ns, "1000000000", --optional-source, "${EDGE_NAV_CAMERA_SOURCE:?approved source ID}", /camera-facts/observations.json]
+    volumes:
+      - camera-facts:/camera-facts:ro
+  camera-info-reader:
+    image: ${EDGE_NAV_SENSOR_IMAGE}
+    pull_policy: never
+    profiles: [published]
+    network_mode: host
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    tmpfs: [/tmp]
+    pids_limit: 64
+    mem_limit: 256m
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_NAV_CAMERA_DOMAIN:?set the domain of the published calibration topic}
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+      ROS_LOG_DIR: /tmp/ros
+    command: [python3, -B, -m, perception.spatial_facts.camera_info_capture, --actor-ref, "${EDGE_NAV_ACTOR:?approved actor}",
+              --source-id, "${EDGE_NAV_CAMERA_SOURCE}", --topic, "${EDGE_NAV_CAMERA_TOPIC:?approved CameraInfo topic}",
+              --frame-id, "${EDGE_NAV_CAMERA_FRAME:?approved optical frame}", --output, /camera-facts]
+    volumes: [camera-facts:/camera-facts]
+volumes:
+  camera-facts: {}
