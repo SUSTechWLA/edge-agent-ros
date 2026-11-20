@@ -10,12 +10,17 @@ import uuid
 from author_tool import public_reference
 from module_journal import ModuleJournal, canonical
 from plugin_descriptor import SHA
+from edge_contracts.soft_transport import proposal_digest
 
 
 class PhysicalError(ValueError):
     def __init__(self, code, detail):
         self.code = code
         super().__init__(detail)
+
+
+class InvalidPhysicalArguments(PhysicalError):
+    """The same immutable site and arguments cannot become admissible on retry."""
 
 
 def require(ok, code, detail):
@@ -41,7 +46,8 @@ class PhysicalLedger:
     claim_kind = "capture"
 
     def check_arguments(self, device, arguments):
-        require(arguments == {}, "tool.binding_unavailable", "camera capture takes no arguments")
+        if arguments != {}:
+            raise InvalidPhysicalArguments("tool.binding_unavailable", "camera capture takes no arguments")
 
     def __init__(self, root, boot_id, clock=time.monotonic_ns):
         require(public_reference(boot_id), "plugin.fence_rejected", "host boot identity required")
@@ -53,6 +59,7 @@ class PhysicalLedger:
             CREATE TABLE IF NOT EXISTS physical_device(resource TEXT PRIMARY KEY,epoch INTEGER NOT NULL,boot TEXT NOT NULL,
                 phase TEXT NOT NULL,deployment TEXT NOT NULL,camera TEXT,verifier TEXT,stop_proof TEXT,exit_proof TEXT);
             CREATE TABLE IF NOT EXISTS physical_plans(task TEXT PRIMARY KEY,plan TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS physical_denials(task TEXT PRIMARY KEY,proposal TEXT NOT NULL,reason TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS physical_ops(op TEXT PRIMARY KEY,resource TEXT NOT NULL,pin TEXT NOT NULL,args TEXT NOT NULL,
                 state TEXT NOT NULL,lease TEXT,candidate TEXT,proof TEXT,reason TEXT,settled INTEGER NOT NULL DEFAULT 0);
             CREATE INDEX IF NOT EXISTS physical_work ON physical_ops(resource,state);
@@ -139,6 +146,10 @@ class PhysicalLedger:
             prior = self.db.execute("SELECT plan FROM physical_plans WHERE task=?", (task,)).fetchone()
             if prior:
                 return json.loads(prior[0])
+            self.check_not_denied(task)
+            # Later validation can roll the entire transaction back; preserve the
+            # submitted proposal for the caller's exact refusal/retry comparison.
+            steps = json.loads(canonical(steps))
             for index, step in enumerate(steps, 1):
                 if "physical_pin" not in step:
                     continue
@@ -160,6 +171,50 @@ class PhysicalLedger:
             plan = [provider,steps]
             self.db.execute("INSERT INTO physical_plans VALUES(?,?)",(task,canonical(plan)))
         return plan
+
+    def check_not_denied(self, task):
+        prior = self.db.execute("SELECT reason FROM physical_denials WHERE task=?", (task,)).fetchone()
+        if prior:
+            raise PhysicalError(prior[0], "original physical admission was permanently denied")
+
+    def original_plan(self, plan):
+        proposal = json.loads(canonical(plan))
+        for step in proposal[1]:
+            if "physical_pin" in step:
+                step["physical_pin"].pop("reservation_id", None)
+        return proposal
+
+    def reconcile_denial(self, task, provider, steps, deployment):
+        """Seal a proven immutable argument failure, or recover a concurrently admitted plan."""
+        require(public_reference(task), "plugin.manifest_invalid", "invalid task identity")
+        proposal = proposal_digest(provider, steps)
+        with self.write():
+            admitted = self.db.execute("SELECT plan FROM physical_plans WHERE task=?", (task,)).fetchone()
+            if admitted:
+                original = json.loads(admitted[0])
+                require(self.original_plan(original) == [provider,steps], "tool.binding_unavailable",
+                        "another proposal already admitted")
+                return {"admission":"accepted", "plan":original}
+            prior = self.db.execute("SELECT proposal,reason FROM physical_denials WHERE task=?", (task,)).fetchone()
+            if prior:
+                require(prior[0] == proposal, "tool.binding_unavailable", "another proposal already sealed")
+                reason = prior[1]
+            else:
+                local = [step for step in steps if "physical_pin" in step]
+                require(local and all(step["physical_pin"] == deployment["pin"] for step in local),
+                        "tool.binding_unavailable", "refusal must come from every original physical binding")
+                device = self._match(deployment["pin"])
+                reason = None
+                for step in local:
+                    try:
+                        self.check_arguments(device, step["args"])
+                    except InvalidPhysicalArguments as error:
+                        reason = error.code
+                        break
+                require(reason, "plugin.admission_unconfirmed", "no permanent argument refusal on this deployment")
+                self.db.execute("INSERT INTO physical_denials VALUES(?,?,?)", (task,proposal,reason))
+                self.event(device["resource_id"], "admission.denied", task_id=task, reason=reason, proposal=proposal)
+            return {"admission":"denied", "task":task, "reason":reason, "proposal":proposal}
 
     def status(self, op):
         item = self.db.execute("SELECT pin,args,state,lease,candidate,proof,reason,settled FROM physical_ops WHERE op=?",

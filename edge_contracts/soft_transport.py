@@ -1,4 +1,5 @@
 """Bounded local protocol between the task owner and the optional soft plugin host."""
+import hashlib
 import json
 import os
 import socket
@@ -6,6 +7,11 @@ import struct
 
 
 LIMIT = 1024 * 1024
+
+
+def proposal_digest(provider, steps):
+    data = json.dumps([provider,steps],ensure_ascii=False,sort_keys=True,allow_nan=False,separators=(",",":"))
+    return "sha256:" + hashlib.sha256(data.encode()).hexdigest()
 
 
 class SoftError(Exception):

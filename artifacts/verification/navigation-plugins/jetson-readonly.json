@@ -1,0 +1,34 @@
+{
+  "environment": "Jetson Orin NX; real published odometry and camera calibration; synthetic planar grid",
+  "plan": {
+    "task_id": "jetson-nav-plan-41bfb8-01",
+    "counts": {
+      "agent_request": 1,
+      "agent_state": 3,
+      "agent_trace": 9
+    },
+    "length_m": 2.730752722286758,
+    "waypoints": 16,
+    "age_ms": 76.554967,
+    "route_ref": "sha256:db272d5848d078cbac14bb20725366e8dfb0612f1a5e6a71234d350ac48fe636"
+  },
+  "observation": {
+    "task_id": "jetson-nav-sensors-9b5e66-01",
+    "counts": {
+      "agent_request": 1,
+      "agent_state": 1,
+      "agent_trace": 9
+    },
+    "age_ms": {
+      "wheel.odometry": 150.469295,
+      "d435.color.info": 177.505077
+    },
+    "calibration_ref": "sha256:b0082c5120d524f619c74222b45ca6a690fa7a848e08dface7e07a3698401c47",
+    "width": 640,
+    "height": 480
+  },
+  "images": [
+    "sha256:266de00a5d1b5d3977b6bda09ec6a4fef93d38e00fd663047fd90e2732ad61cc",
+    "sha256:88716fbfcfb0441b0c6ed71f6bee35956624055f413eb010f5980864fe862733"
+  ]
+}

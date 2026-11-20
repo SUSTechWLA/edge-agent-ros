@@ -119,7 +119,8 @@ def worker(journal, robot, planning, verifying=False, *, keep_running, plan_task
             diagnostic=event_diagnosis(exc,planning,"tool.rejected")
             if planning and diagnostic.get("provider"):
                 t["provider"]=diagnostic["provider"]
-            journal.save(t,"BLOCKED",str(exc),kind="blocked",op=None if planning else op,diagnostic=diagnostic)
+            cleanup = {"unissued_pins":exc.unissued_pins} if planning and hasattr(exc,"unissued_pins") else {}
+            journal.save(t,"BLOCKED",str(exc),kind="blocked",op=None if planning else op,diagnostic=diagnostic,**cleanup)
         except OutcomeUnknown as exc:
             journal.save(t,"RECOVERY_REQUIRED",str(exc),kind="error",op=op,diagnostic=event_diagnosis(exc,planning,"tool.receipt_invalid"))
         except OperationCanceled as exc:

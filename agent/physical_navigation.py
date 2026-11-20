@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 
 from physical_controller import Controller, deployment_owner, serve
-from physical_ledger import PhysicalLedger, digest, number, ref, require
+from physical_ledger import InvalidPhysicalArguments, PhysicalLedger, digest, number, ref, require
 from plugin_descriptor import SHA
 from edge_contracts import navigation as route_contract
 
@@ -55,12 +55,12 @@ class NavigationLedger(PhysicalLedger):
     claim_kind = "execute"
 
     def check_arguments(self, device, arguments):
-        require(isinstance(arguments, dict) and set(arguments) == {"route_ref"}
-                and isinstance(arguments["route_ref"], str) and SHA.fullmatch(arguments["route_ref"]),
-                "tool.binding_unavailable", "expected a content-addressed route_ref")
+        if not (isinstance(arguments, dict) and set(arguments) == {"route_ref"}
+                and isinstance(arguments["route_ref"], str) and SHA.fullmatch(arguments["route_ref"])):
+            raise InvalidPhysicalArguments("tool.binding_unavailable", "expected a content-addressed route_ref")
         site = device["deployment"]
-        require(arguments["route_ref"] in site["routes"], "navigation.route_unapproved",
-                "route has no local execution approval for this resource")
+        if arguments["route_ref"] not in site["routes"]:
+            raise InvalidPhysicalArguments("navigation.route_unapproved", "route has no local approval for this resource")
 
     def cancel(self, pin):
         """Withdraw unclaimed work atomically. An accepted stop request keeps the lease outstanding."""
@@ -188,13 +188,9 @@ class NavigationController(Controller):
             prior = self.ledger.db.execute("SELECT plan FROM physical_plans WHERE task=?", (data["task"],)).fetchone()
             if prior:
                 previous = json.loads(prior[0])
-                requested = deepcopy([data["provider"], data["steps"]])
-                normalized = deepcopy(previous)
-                for plan in (requested, normalized):
-                    for step in plan[1]:
-                        if "physical_pin" in step:
-                            step["physical_pin"].pop("reservation_id", None)
-                require(requested == normalized, "tool.binding_unavailable", "task already bound to another plan")
+                original = self.ledger.original_plan
+                require(original([data["provider"], data["steps"]]) == original(previous), "tool.binding_unavailable",
+                        "task already bound to another plan")
                 return previous
         if role == "agent" and action in ("operation_status", "cancel"):
             pin = data["pin"]

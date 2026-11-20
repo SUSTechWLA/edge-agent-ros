@@ -90,7 +90,8 @@ class Journal:
         self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS events_by_id ON events(event_id) WHERE event_id IS NOT NULL")
         settlement_fields = {r[1] for r in self.db.execute("PRAGMA table_info(soft_settlements)")}
         for name, declaration in (("next_attempt","REAL NOT NULL DEFAULT 0"),
-                                  ("attempts","INTEGER NOT NULL DEFAULT 0"), ("last_code","TEXT")):
+                                  ("attempts","INTEGER NOT NULL DEFAULT 0"), ("last_code","TEXT"),
+                                  ("unissued","INTEGER NOT NULL DEFAULT 0")):
             if name not in settlement_fields:
                 self.db.execute(f"ALTER TABLE soft_settlements ADD COLUMN {name} {declaration}")
         self.db.execute("CREATE INDEX IF NOT EXISTS soft_settlements_due ON soft_settlements(next_attempt)")
@@ -240,10 +241,23 @@ class Journal:
                       kind="retry_requested",op=op)
             return self.get(key)
 
-    def save(self,t, state, detail, delay=0, kind=None, op=None, diagnostic=None, tool_response=None):
+    def save(self,t, state, detail, delay=0, kind=None, op=None, diagnostic=None, tool_response=None, unissued_pins=()):
         now=utc()
         with self.lock,self.db:
             prior=self.db.execute("SELECT state FROM tasks WHERE id=?",(t["id"],)).fetchone()[0]
+            if unissued_pins:
+                saved = self.db.execute("SELECT plan FROM soft_plan_intents WHERE task=?", (t["id"],)).fetchone()
+                dispatched = self.db.execute("SELECT 1 FROM events WHERE task_id=? AND kind='dispatch' LIMIT 1",
+                                             (t["id"],)).fetchone()
+                proposal = json.loads(saved[0])[1] if saved else []
+                expected = [dict(step["soft_pin"],reservation_id=f"{t['id']}/step/{index}")
+                            for index,step in enumerate(proposal,1) if "soft_pin" in step]
+                if (prior == "PLANNING" and state == "BLOCKED" and kind == "blocked" and not t["steps"]
+                        and not dispatched and expected == unissued_pins):
+                    self.db.executemany("""INSERT OR IGNORE INTO soft_settlements(operation,pin,next_attempt,unissued)
+                        VALUES(?,?,?,1)""", ((pin["reservation_id"],json.dumps(pin),time.time()) for pin in unissued_pins))
+                else:
+                    self.append(t,"admission_cleanup_withheld","预约与本机原计划不一致，保留原绑定待核对",{},step=None)
             if tool_response is not None:
                 self.append(t, "tool.response", "tool.response", {}, step=t["cursor"], op=op, trace=tool_response)
             if kind is None and prior!=state:
@@ -295,9 +309,9 @@ class Journal:
 
     def settle_soft_batch(self, stop):
         with self.lock:
-            rows = self.db.execute("""SELECT operation,pin,attempts,last_code FROM soft_settlements
+            rows = self.db.execute("""SELECT operation,pin,attempts,last_code,unissued FROM soft_settlements
                 WHERE next_attempt <= ? ORDER BY next_attempt,rowid LIMIT 64""",(time.time(),)).fetchall()
-        for op, raw, attempts, previous_code in rows:
+        for op, raw, attempts, previous_code, unissued in rows:
             if stop.is_set():
                 break
             code = None
@@ -305,7 +319,7 @@ class Journal:
                 pin = json.loads(raw)
                 if not isinstance(pin,dict) or pin.get("reservation_id") != op:
                     raise ValueError("stored settlement pin mismatch")
-                if host.call_for(pin,"settle") is not True:
+                if host.call_for(pin,"settle_unissued" if unissued else "settle") is not True:
                     code = "plugin.settlement_unconfirmed"
             except SoftError as exc:
                 code = exc.code if isinstance(exc.code,str) and re.fullmatch(r"[a-z][a-z0-9_.-]{0,95}",exc.code) else "plugin.transport"

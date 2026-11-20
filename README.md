@@ -10,6 +10,8 @@
 
 ## 现在可以做什么
 
+导航试算可按机体、地图和算法组合。Agent 能独立读取空间观测、查询融合定位、解析地点及生成路线。Jetson 只读站点使用实时里程计，四种机体的路线和地面执行交接另有隔离夹具。[导航插件边界](navigation/README.md) · [板端接入与复测](docs/testing/navigation-plugins.md)
+
 **看一次有人能读懂的运行录像。** 在校园门厅给无人车一句没有坐标的中文任务，点击“内核确认已停车”，同时观察地图帧龄、现场画面、激光回波、IMU 角速度和下发线速度；再看它在哪一刻取得新观测并重新选点。视频由已封存的十路数据离线生成。纯软件任务也能用同一插件。[分章回放](artifacts/verification/recording-showcase/mission-01/index.html) · [独立观测与原始归档](artifacts/verification/recording-showcase/mission-01/README.md) · [录制自己的任务](task_recorder/README.md)
 
 

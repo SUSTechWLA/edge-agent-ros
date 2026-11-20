@@ -413,6 +413,11 @@ class Host:
                              restored_settings=self.restored_settings(pin))
         item = self.items[pin["plugin_id"]][0]
         self.validate_payload(pin["plugin_id"], "parameters", wire["arguments"])
+        if self.registry.reservations_for(op) != expected:
+            # freeze() can yield. A never-issued compensation may have fenced
+            # this invocation during that await, before it recorded its intent.
+            await self.rt.release(op)
+            raise problem("tool.binding_unavailable", "reservation was released before operation intent")
         # The persisted intent prevents retrying an unknown software write after a lost response.
         raw = json.dumps(wire, ensure_ascii=False, allow_nan=False, sort_keys=True).encode()
         fingerprint = hashlib.sha256(raw).hexdigest()
@@ -478,13 +483,23 @@ class Host:
             return await self.freeze_plan(data)
         if action == "call":
             return await self.invoke(data["pin"], data["wire"])
-        if action == "settle":
+        if action in ("settle","settle_unissued"):
             pin = data["pin"]
             self.pinned_step(pin)
             if pin["reservation_id"] in self.invocations:
                 raise problem("plugin.draining", "managed operation is active")
-            await self.rt.release(pin["reservation_id"])
-            self.registry.settle_operation(pin["reservation_id"], {k:v[1] for k,v in pin["dependencies"].items()})
+            op = pin["reservation_id"]
+            expected = {k:v[1] for k,v in pin["dependencies"].items()}
+            if action == "settle_unissued":
+                if self.journal.db.execute("SELECT 1 FROM soft_operations WHERE operation=?", (op,)).fetchone():
+                    raise problem("plugin.handoff_unconfirmed", "operation already has a durable dispatch intent")
+                # No await between checking the operation journal and durably
+                # fencing admission. One deployed host owns both ledgers.
+                self.registry.settle_operation(op, expected)
+                await self.rt.release(op)
+            else:
+                await self.rt.release(op)
+                self.registry.settle_operation(op, expected)
             return True
         if action == "session_pin":
             view = self.catalog()

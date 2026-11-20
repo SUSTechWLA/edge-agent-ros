@@ -1,0 +1,34 @@
+# Jetson 只读导航插件验收
+
+本轮在 Jetson Orin NX 上分别调用了空间观测、定位和路线试算。车端采集器订阅专用镜像域中已有的 `/lingao/odom`，保留驱动提供的坐标系、采样时间和 XY 协方差。采集进程写专用卷，事实网关只读该卷。Agent 通过 Unix socket 使用软插件，软宿主只连接内部事实网络。板端未部署 `nav_execute` 的物理控制器。
+
+## 复现只读站点
+
+在包含本次源码的 Linux ARM64 镜像和对应项目目录运行。以下操作需要现场已有的只读 ROS 话题镜像。示例生成一张绑定 `odom` 的小型合成栅格，地点 `bench-marker` 只属于该测试地图。操作人应选择与现场一致的源话题、机体坐标和时钟。此适配器要求 ROS 消息采用本机 Unix 时钟。
+
+```sh
+python3 scripts/navigation_odometry_bench.py --topic /lingao/odom --frame odom \
+  --child-frame base_foot --actor rover --out ./nav-bindings
+python3 scripts/prepare_navigation.py --image "$IMAGE" --source-commit "$SOURCE_COMMIT" \
+  --live-settings ./nav-bindings/settings.json --site ./nav-site >nav-lock.json
+export EDGE_NAV_SITE="$PWD/nav-site" EDGE_NAV_CAPTURE_CONFIG="$PWD/nav-bindings/odometry.json"
+export EDGE_NAV_DIGEST="$(docker image inspect --platform linux/arm64 --format '{{.Descriptor.digest}}' "$IMAGE")"
+export EDGE_NAV_IMAGE="$EDGE_NAV_DIGEST" EDGE_NAV_MIRROR_DOMAIN=140
+export EDGE_NAV_LOCK="$(python3 -c 'import json;print(json.load(open("nav-lock.json"))["lock"])')"
+docker compose -f compose.navigation-readonly.yaml --profile published up -d
+curl -fsS http://127.0.0.1:8794/agent/capabilities
+curl -fsS -H 'Content-Type: application/json' http://127.0.0.1:8794/agent/tasks \
+  -d '{"id":"nav-smoke-01","text":"为 rover 试算到 bench-marker 的路线"}'
+curl -fsS 'http://127.0.0.1:8794/agent/tasks?id=nav-smoke-01'
+```
+
+`nav-smoke-01/step/1` 的回执含发布定位、原采集时间、时效窗口、机体与地图摘要、路径及算法。请求“读取 rover 的空间观测”或“查询 rover 的定位”可独立验证前两项能力。回放站点省略 `--live-settings`，并以 Compose 默认 profile 启动，地图与输入来自四种机体的基准样本。现场地点的可达性需要在真实地图、有效 TF 和相应机体 profile 上另行验收。随包内嵌的地图受站点 JSON 大小上限约束，大地图服务可实现相同的目录与路线契约。
+
+第二路校准观测使用可选的 [CameraInfo 部署](../../compose.navigation-camera-info.yaml)。它按站点指定的域、话题、光学帧和主体订阅 ROS 发布的相机内参，把校准文件按内容摘要保存。事实网关可提供带不同原始帧的观测，定位仍只消费策略允许的位置来源。部署可单独撤下该读者，网关将记录缺样。它的状态与航迹控制权各由自己的进程持有。
+
+## 验收与回退
+
+- 现场路线任务产生 16 个路点，总长 2.731 米，起点观测帧龄 76.6 毫秒。第二次录制同时读到实时轮式里程计和 D435 彩色相机校准，内参工件的内容摘要与原回执一致。离线执行 `python tests/system/navigation_recording_check.py EXPORT_DIRECTORY` 可复核两份终态、采样窗口、膨胀栅格上的路径以及校准文件身份。[本次实机摘要](../../artifacts/verification/navigation-plugins/jetson-readonly.json)
+- 软件组合、独立装卸、重复调用及四种机体的路线证据见[导航集成用例](../../tests/test_navigation_pack.py)。物理租约、取消、原操作对账和独立到点及停稳见证见[隔离执行用例](../../tests/test_navigation_physical.py)。
+- 车端证据按任务 ID 保存。录像是 Agent 操作及证据的时间线。只有另行启用了相应图像或运动源的录制才包含车载画面或运动轨迹。
+- 撤回只读现场测试时，用启动时的项目名、环境文件和 Compose 文件调用 `docker compose stop`。保留任务、注册和证据卷。换采集进程或重设坐标后，为新定位代次重新生成绑定与站点，再按新部署启用；旧任务仍可按原站点及原操作回读。物理夹具独立按原操作排空、确认安全和交接。[物理协议](../architecture/plugin-physical-handoff.md)

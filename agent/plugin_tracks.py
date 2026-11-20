@@ -4,6 +4,8 @@ if __package__:
     from . import soft_client
 else:
     import soft_client
+from edge_contracts.errors import Refused, failure
+from edge_contracts.soft_transport import proposal_digest
 
 
 def physical_enabled():
@@ -55,5 +57,27 @@ def freeze(task, candidate):
             raise soft_client.SoftError("tool.binding_unavailable","original soft runtime unavailable")
         provider, steps = soft_client.request("freeze_plan",task=task,provider=provider,steps=steps)
     if any("physical_pin" in step for step in steps):
-        provider, steps = physical_request("freeze_plan",task=task,provider=provider,steps=steps)
+        try:
+            provider, steps = physical_request("freeze_plan",task=task,provider=provider,steps=steps)
+        except soft_client.SoftError as error:
+            soft_pins = [step["soft_pin"] for step in steps if "soft_pin" in step]
+            if (not soft_pins or error.origin != "physical.controller" or error.code in (
+                    "plugin.transport","plugin.dependency_unavailable","plugin.draining","plugin.lease_conflict")):
+                raise
+            try:
+                receipt = physical_request("reconcile_denial", task=task, provider=provider, steps=steps)
+            except soft_client.SoftError:
+                # Old controllers, changed ownership and uncertain replies give
+                # no authority to release a reservation. Retry the exact intent.
+                raise error
+            if not isinstance(receipt,dict):
+                raise error
+            if receipt.get("admission") == "accepted":
+                return receipt["plan"]
+            if (receipt.get("admission") != "denied" or receipt.get("task") != task or receipt.get("reason") != error.code
+                    or receipt.get("proposal") != proposal_digest(provider, steps)):
+                raise error
+            refused = failure(Refused, str(error), error.code, "physical.controller")
+            refused.unissued_pins = soft_pins
+            raise refused from error
     return provider, steps

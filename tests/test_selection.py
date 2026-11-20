@@ -23,11 +23,13 @@ RULES = [
     (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
     (("navigation/*.py", "perception/spatial_facts/*.py", "scripts/prepare_navigation.py",
+      "scripts/navigation_odometry_bench.py", "compose.navigation-*.yaml",
       "tests/test_navigation_pack.py"), ("planner", "observations", "board", "plugin-isolation")),
     (("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
       "tests/test_spatial_gateway.py"),
      ("planner", "board")),
     (("tests/test_reference_utterances.py",), ("planner",)),
+    (("tests/system/navigation_recording_check.py",), ("board",)),
     (("tests/test_package_boundaries.py","tests/test_kernel.py"), (R,)),
     (("agent/kernel/*",), (*AGENT,"observations","board","plugin-isolation")),
     (("agent/site_pack.py","profiles/*.json","capabilities/*/pack.json","scripts/robot-plugins.sh",
@@ -195,7 +197,8 @@ def selection(files=None):
 class TestSelection(unittest.TestCase):
     def test_navigation_route_observation_and_body_consumers(self):
         for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
-                     "scripts/prepare_navigation.py", "tests/test_navigation_pack.py"):
+                     "scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py",
+                     "compose.navigation-camera-info.yaml", "compose.navigation-readonly.yaml", "tests/test_navigation_pack.py"):
             self.assertEqual(selection([path])[0], [R, "planner", "observations", "board", "plugin-isolation"], path)
         for path in ("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
                      "tests/test_spatial_gateway.py"):
@@ -205,6 +208,7 @@ class TestSelection(unittest.TestCase):
         for path in ("agent/physical_navigation.py", "agent/kernel/catalog.py"):
             self.assertTrue({"planner", "board", "plugin-isolation"} <= set(selection([path])[0]), path)
         self.assertEqual(selection(["tests/test_reference_utterances.py"])[0], [R, "planner"])
+        self.assertEqual(selection(["tests/system/navigation_recording_check.py"])[0], [R, "board"])
 
     def test_console_facts_run_observations(self):
         self.assertEqual(selection(["tests/test_console_facts.py"])[0], [R, "observations"])

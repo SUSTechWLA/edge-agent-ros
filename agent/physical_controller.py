@@ -114,11 +114,14 @@ class Controller:
         if role == "agent":
             if action == "catalog":
                 return self.catalog()
+            if action == "reconcile_denial":
+                return ledger.reconcile_denial(data["task"],data["provider"],data["steps"],self.site)
             if action == "freeze_plan":
                 # Always return an already admitted immutable plan, even while draining.
                 prior = ledger.db.execute("SELECT plan FROM physical_plans WHERE task=?", (data["task"],)).fetchone()
                 if prior:
                     return json.loads(prior[0])
+                ledger.check_not_denied(data["task"])
                 require(self.catalog()["tools"],"plugin.dependency_unavailable","provider or independent verifier unavailable")
                 return ledger.freeze_plan(data["task"],data["provider"],data["steps"])
             if action == "call":
