@@ -84,15 +84,33 @@ def complete(samples, expected, actor):
 
 
 def receipt_samples(task, key, actor, expected, tool="read_spatial_observations"):
-    if task["id"] != key or task["state"] != "SUCCEEDED" or len(task["steps"]) != 1:
-        raise ValueError("task did not complete a single observation read")
-    step = task["steps"][0]
-    if step["tool"] != tool or step.get("status") != "SUCCEEDED" or step.get("operation_id") != key + "/step/1":
-        raise ValueError("unexpected task tool or arguments")
-    if step.get("args", {}).get("actor_ref", actor) != actor:
-        raise ValueError("unexpected task actor")
-    receipt = step["evidence"]
-    data = receipt.get("observations", receipt)
+    steps = task["steps"]
+    if task["id"] != key or task["state"] != "SUCCEEDED" or not steps or (tool is not None and len(steps) != 1):
+        raise ValueError("expected a completed observation task")
+    samples = []
+    for index, step in enumerate(steps, 1):
+        if step.get("status") != "SUCCEEDED" or step.get("operation_id") != f"{key}/step/{index}":
+            raise ValueError("unexpected operation or status")
+        if tool is None:
+            pin = step.get("soft_pin", {})
+            if ("physical_pin" in step or step.get("soft_cap", {}).get("effect") != "read" or
+                    pin.get("name") != step["tool"] or not digest_ref(step.get("binding")) or
+                    pin.get("binding") != step["binding"]):
+                raise ValueError("expected a frozen DSH read")
+        elif step["tool"] != tool:
+            raise ValueError("unexpected task tool")
+        if step.get("args", {}).get("actor_ref", actor) != actor:
+            raise ValueError("unexpected task actor")
+        evidence = step["evidence"]
+        if tool is None and "observations" not in evidence and "basis" not in evidence:
+            continue
+        samples.extend(batch_receipt(evidence.get("observations", evidence), actor, expected))
+    if not samples:
+        raise ValueError("no published observations in the completed steps")
+    return samples
+
+
+def batch_receipt(data, actor, expected):
     if data["basis"] != "published" or data["actor_ref"] != actor or not complete(data["samples"], expected, actor):
         raise ValueError("required observations missing from original task receipt")
     if any(not 0 <= int(data["as_of_ns"]) - int(s["stamp_ns"]) <= 10**9 for s in data["samples"]):
@@ -142,7 +160,7 @@ def record(options):
                         put(out / "ready.json", json.dumps({"task_id": options.task, "ready_ns": str(time.time_ns())}).encode())
                 else:
                     complete_since = None
-            time.sleep(max(0, 0.2 - (time.monotonic() - tick)))
+            time.sleep(max(0, getattr(options, "interval", .2) - (time.monotonic() - tick)))
     raise RuntimeError("timed out waiting for a complete live task receipt")
 
 
@@ -151,14 +169,17 @@ if __name__ == "__main__":
     cli.add_argument("--url", default="http://spatial-facts:8137/observations")
     cli.add_argument("--actor", required=True)
     cli.add_argument("--task", required=True)
-    cli.add_argument("--tool", default="read_spatial_observations")
+    selection = cli.add_mutually_exclusive_group()
+    selection.add_argument("--tool", default="read_spatial_observations")
+    selection.add_argument("--planned-reads", action="store_const", dest="tool", const=None)
     cli.add_argument("--out", type=Path, required=True)
     cli.add_argument("--source", nargs=2, action="append", default=[], metavar=("SOURCE", "ROOT"))
     cli.add_argument("--required", nargs="+", required=True)
     cli.add_argument("--lead", type=float, default=3.)
     cli.add_argument("--tail", type=float, default=5.)
     cli.add_argument("--timeout", type=float, default=45.)
+    cli.add_argument("--interval", type=float, default=.2, help="seconds between independent context frames")
     args = cli.parse_args()
-    if not (0 < args.lead <= 15 and 0 < args.tail <= 15 and args.lead + args.tail < args.timeout <= 120):
+    if not (.1 <= args.interval <= 2 and 0 < args.lead <= 15 and 0 < args.tail <= 15 and args.lead + args.tail < args.timeout <= 120):
         cli.error("lead/tail must be positive and fit within the bounded time budget")
     print(json.dumps(record(args)), flush=True)

@@ -73,12 +73,23 @@ class SpatialCaptureArchiveTest(unittest.TestCase):
                 self.samples(task)
 
     def test_int64_time_budget_is_inclusive_and_rejects_future(self):
+        # The interval bounds apply identically to dynamically chosen tools.
         self.original["stamp_ns"] = str(self.now - 1_000_000_000)
         self.assertEqual(self.samples(self.task), [self.original])
         for stamp in (self.now - 1_000_000_001, self.now + 1):
             self.original["stamp_ns"] = str(stamp)
             with self.subTest(stamp=stamp), self.assertRaisesRegex(ValueError, "one-second"):
                 self.samples(self.task)
+
+    def test_model_selected_steps_require_frozen_read_bindings(self):
+        step = self.task["steps"][0]
+        pin = "sha256:"+"a"*64
+        step.update(binding=pin, soft_cap={"effect":"read"}, soft_pin={"name":step["tool"],"binding":pin})
+        self.task["steps"].append({**step, "operation_id":self.tid+"/step/2"})
+        self.assertEqual(self.samples(self.task, None), [self.original, self.original])
+        self.task["steps"][1]["binding"] = "sha256:"+"b"*64
+        with self.assertRaisesRegex(ValueError, "frozen"):
+            self.samples(self.task, None)
 
     def test_gateway_response_is_size_limited_and_bound_to_requested_actor(self):
         def request(wire):

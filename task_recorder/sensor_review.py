@@ -50,7 +50,7 @@ def age(sample, when):
 
 class TaskReceipt:
     """Match a completed tool receipt with its original request, call and recorder terminal."""
-    def __init__(self, task, recording):
+    def __init__(self, task, recording, *, step_index=None):
         self.task = read(task)
         self.inputs = {"task.json": task, "recording.json": recording / "recording.json",
                        "timeline.jsonl": recording / "media/mission/timeline.jsonl"}
@@ -76,8 +76,12 @@ class TaskReceipt:
             require(not header["missing_sources"], "missing user task source")
             request, = self.record.by["agent_request"]
             require(request["text"] == self.task["text"], "recorded request mismatch")
-        self.op = self.task["id"] + "/step/1"
-        step, = self.task["steps"]
+        if step_index is None:
+            require(len(self.task["steps"]) == 1, "expected one completed task operation")
+            step_index = 0
+        require(type(step_index) is int and 0 <= step_index < len(self.task["steps"]), "step outside task")
+        self.op = f"{self.task['id']}/step/{step_index + 1}"
+        step = self.task["steps"][step_index]
         require(step["status"] == "SUCCEEDED" and step.get("operation_id") == self.op,
                 "expected one completed task operation")
         self.tool = step["tool"]

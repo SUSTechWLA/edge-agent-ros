@@ -32,7 +32,16 @@ OBJECT_TOOLS = {"perception.see_object": ("see_object", "perception.object_locat
                  ["请帮我找到{target}，量一下它离相机有多远", "帮我看看{target}在哪里"], ["target"])}
 
 
-def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *, objects=False):
+QUERY_SERVICES = {"perception.frame_statistics": ("/query", "analysis", ["actor_ref", "program"])}
+QUERY_TOOLS = {"perception.query_frame": ("query_frame", "perception.frame_statistics",
+               "对当前相机画面按区域测量和比较数值。program 写成英文表达式：通道 | grid(行,列) | 统计量。"
+               "通道可用 depth(光轴深度米)、brightness(亮度)、red、green、blue。"
+               "统计量可用 mean、median、min、max、coverage(有效百分比)、quantile(q)。"
+               "grid 可省略。可以在 grid 前加 crop(x0,y0,x1,y1)，坐标和 q 使用 0 到 1 的数字。"
+               "行从上到下，列从左到右。", [], ["program"])}
+
+
+def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *, objects=False, queries=False):
     lock, old = verify(original, previous_lock)
     if not GIT.fullmatch(source_commit) or not SHA.fullmatch(backend_digest):
         raise ValueError("invalid source or backend identity")
@@ -48,6 +57,14 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
     tools = OBJECT_TOOLS if objects else TOOLS
     stages = (("objects", ["perception-objects"]),) if objects else (
         ("ready", ["perception-static"]), ("candidate", ["perception-static", "perception-markup"]))
+    peer = "object-perception" if objects else "stationary-perception"
+    service_module = "perception.spatial_facts.object_service" if objects else "perception.spatial_facts.compute_service"
+    if queries:
+        if objects:
+            raise ValueError("select a single release stage")
+        services, tools = QUERY_SERVICES, QUERY_TOOLS
+        stages = (("queries", ["perception-queries"]),)
+        peer, service_module = "frame-query", "perception.spatial_facts.frame_query_service"
     if set(old).intersection(services) or set(old).intersection(tools):
         raise ValueError("requested capability already exists in the original site")
     with tempfile.TemporaryDirectory(dir=output) as tmp:
@@ -59,12 +76,12 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
         for pid in [*services, *tools]:
             if pid in services:
                 path, result_key, args = services[pid]
-                module = "perception.spatial_facts.object_service" if objects else "perception.spatial_facts.compute_service"
+                module = service_module
                 name, kind = pid, "service"
                 spec = {"service": name, "path": path, "result_key": result_key}
                 deps = ["sensing.observations"]
                 fields = {"ok": {"type": "boolean"}}
-                network = {"ingress": [], "egress": ["object-perception" if objects else "stationary-perception"]}
+                network = {"ingress": [], "egress": [peer]}
                 settings[pid] = {"backend_digest": backend_digest, "profile_digest": config_digest}
                 item = deepcopy(old["sensing.published"])
             else:
@@ -122,11 +139,13 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
 
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument("--objects", action="store_true", help="add the RGB-D object location service and its direct read tool")
+    mode = cli.add_mutually_exclusive_group()
+    mode.add_argument("--objects", action="store_true", help="add RGB-D object location")
+    mode.add_argument("--queries", action="store_true", help="add bounded RGB-D frame queries")
     for key in ("original", "out", "profile"):
         cli.add_argument("--"+key, type=Path, required=True)
     for key in ("previous-lock", "source-commit", "backend-digest", "actor"):
         cli.add_argument("--"+key, required=True)
     args = cli.parse_args()
     print(json.dumps(prepare(args.original, args.previous_lock, args.out, args.source_commit,
-                             args.backend_digest, args.profile, args.actor, objects=args.objects)))
+                             args.backend_digest, args.profile, args.actor, objects=args.objects, queries=args.queries)))

@@ -27,6 +27,14 @@ class SiteTest(unittest.TestCase):
             candidate, _ = verify(root/"out/candidate", locks["candidate"])
             self.assertEqual({"perception.mark_target"}, set(candidate["plugins"]) - set(initial["plugins"]))
             self.assertTrue(all(candidate["plugins"][k] == v for k,v in initial["plugins"].items()))
+            queries = extend(root/"out/candidate", locks["candidate"], root/"q", "e"*40, "sha256:"+"f"*64,
+                             ROOT/"examples/object-perception/jetson-rover.json", "rover", queries=True)
+            query_lock, _ = verify(root/"q/queries", queries["queries"])
+            self.assertEqual(set(query_lock["plugins"]) - set(candidate["plugins"]),
+                             {"perception.query_frame", "perception.frame_statistics"})
+            _, descriptors = verify(root/"q/queries", queries["queries"])
+            schema = descriptors["perception.query_frame"]["config_schema"]
+            self.assertEqual(schema["properties"]["profile"]["const"]["legacy"]["utterances"], [])
         pin = {"id": "mark_target", "binding": "sha256:"+"1"*64}
         trigger_input({"kind":"agent","source":"plugin.supervisor","id":"follow","parent_task_id":"original",
                        "trace_id":"original","parent_event_id":"release","read_only_tool":pin})
