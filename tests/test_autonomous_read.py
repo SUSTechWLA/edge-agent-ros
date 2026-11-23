@@ -52,6 +52,74 @@ class AutonomousRead(unittest.TestCase):
         return planning.plan(text, self.caps, lambda k,v:self.events.append((k,v)),
                              model_profile=self.profile, model_request=request)
 
+    def enable_family(self):
+        path = self.policy.parent / "families.json"
+        path.write_text(json.dumps({"schema_version":1, "families":{
+            "column_review":{"description":"Classify measured columns and rank them for review.", "provider_prefix":"field."}}}))
+        env = patch.dict(os.environ, {"EDGE_READ_PLUGIN_FAMILIES":str(path)})
+        env.start()
+        self.addCleanup(env.stop)
+        return path
+
+    def test_authorized_family_gap_schema_event_and_no_dispatch(self):
+        self.enable_family()
+        # A name resembling the family, published by an unrelated provider, never suppresses the gap.
+        cap = capability("field.fake", "d")
+        self.caps[cap["id"]] = cap
+        self.allow(self.first, cap)
+        gap = {"disposition":"design_plugin", "steps":[], "family":"column_review", "reason":"missing classification"}
+        self.profile = {"protocol":"ollama","model":"fixture","version":"fixture","url":"http://example.invalid","options":{}}
+        call = Mock(return_value={"message":{"content":json.dumps(gap)}})
+        with self.assertRaises(Refused) as caught:
+            self.plan(call)
+        self.assertEqual(caught.exception.code, "planner.plugin_design_requested")
+        body = call.call_args.args[1]
+        self.assertTrue(current_schema(body["format"]))
+        self.assertTrue(matches(gap, body["format"], [1000]))
+        self.assertIn("design_plugin", body["messages"][0]["content"])
+        events = [v for k,v in self.events if k == "planner.plugin_gap"]
+        self.assertEqual([e["family"] for e in events], ["column_review"])
+        self.assertFalse(any(k == "planner.selected" for k,_ in self.events))
+
+    def test_installed_family_uses_frozen_provider_identity_and_accepts_new_args(self):
+        self.enable_family()
+        published = capability("measure_custom", "c", {"columns":"integer"})
+        published["_soft"]["plugin_id"] = "field.measured"
+        self.caps[published["id"]] = published
+        self.allow(self.first, published)
+        gap = {"disposition":"design_plugin", "steps":[], "family":"column_review", "reason":"redundant"}
+        call = Mock(side_effect=[gap, ready({"tool":"measure_custom","args":{"columns":5}})])
+        _, steps = self.plan(call)
+        self.assertEqual(steps[0]["args"]["columns"], 5)
+        ctx = call.call_args_list[0].args[1]
+        self.assertEqual(ctx["plugin_families"]["families"][0]["installed_tools"], ["measure_custom"])
+        self.assertNotIn("design_plugin", json.dumps(ctx["output_schema"]))
+        self.assertFalse(any(k == "planner.plugin_gap" for k,_ in self.events))
+        # An existing descriptor without current site binding is not an installed option for this request.
+        self.allow(self.first)
+        with self.assertRaises(Refused) as denied:
+            self.plan(Mock(return_value=gap))
+        self.assertEqual(denied.exception.code, "planner.plugin_design_requested")
+
+    def test_no_family_event_on_mixed_motion_unoffered_family_and_invalid_policy(self):
+        path = self.enable_family()
+        good = {"disposition":"design_plugin","steps":[],"family":"column_review","reason":"missing review"}
+        for proposal, text, code in (
+            (dict(good,family="secret"),"查看周边","planner.invalid_proposal"),
+            (dict(good,steps=[{"tool":"count","args":{}}]),"查看周边","planner.invalid_proposal"),
+            (good,"分析前方障碍，然后向前走两米","planner.control_requires_approval"),
+            (good,"检查相机并修改底盘参数","planner.system_change_requires_review")):
+            with self.subTest(text=text), self.assertRaises(Refused) as caught:
+                self.plan(Mock(return_value=proposal),text)
+            self.assertEqual(caught.exception.code,code)
+        path.write_text(json.dumps({"schema_version":1,"families":{"a":{"description":"any","provider_prefix":"field"}}}))
+        call = Mock(return_value=good)
+        with self.assertRaises(Refused) as caught:
+            self.plan(call)
+        self.assertEqual(caught.exception.code,"planner.plugin_families_invalid")
+        call.assert_not_called()
+        self.assertFalse(any(k == "planner.plugin_gap" for k,_ in self.events))
+
     def test_dynamic_composition_and_parameter_repair_before_any_dispatch(self):
         request = Mock(side_effect=[ready({"tool":"observe","args":{"region":"wrong"}}),
                                    ready({"tool":"count","args":{}}, {"tool":"observe","args":{"region":"near"}})])

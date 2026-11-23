@@ -1,0 +1,57 @@
+"""Deployment-authorized scopes for requesting independent read-only plugin design."""
+import json
+import os
+from pathlib import Path
+import re
+
+from edge_contracts.descriptor import NAME
+from edge_contracts.errors import Refused, failure
+
+
+NAMESPACE = re.compile(r"(?:[a-z][a-z0-9_-]*\.)+")
+INSTRUCTIONS = (
+    "Check each requested result, statistic, classification and ordering against the exact outputs of installed tools. "
+    "Select ready only if those tools can deliver all of them. Measurement alone does not produce missing classification "
+    "or review ordering. When an uninstalled design family matches that missing capability, select design_plugin, "
+    "give its family id and reason, with an empty steps array. If a family already has installed_tools, select the "
+    "matching installed tool in a ready step and choose arguments for this new request. Do not request development "
+    "for movement or system modifications. Unrelated gaps are unsupported."
+)
+
+
+def catalog(caps):
+    path = os.environ.get("EDGE_READ_PLUGIN_FAMILIES")
+    if path is None:
+        return []
+    try:
+        with Path(path).open("rb") as stream:
+            raw = stream.read(65537)
+        if len(raw) > 65536:
+            raise ValueError("policy too large")
+        obj = json.loads(raw)
+        if (not isinstance(obj, dict) or set(obj) != {"schema_version", "families"}
+                or type(obj["schema_version"]) is not int or obj["schema_version"] != 1
+                or not isinstance(obj["families"], dict) or not 1 <= len(obj["families"]) <= 32):
+            raise ValueError("invalid family policy")
+        entries, prefixes = [], []
+        for name, spec in obj["families"].items():
+            if (not NAME.fullmatch(name) or not isinstance(spec, dict) or set(spec) != {"description", "provider_prefix"}
+                    or not isinstance(spec["description"], str) or not spec["description"].strip()
+                    or len(spec["description"]) > 2048 or not isinstance(spec["provider_prefix"], str)):
+                raise ValueError("invalid family")
+            prefix = spec["provider_prefix"]
+            if (len(prefix) >= 64 or not NAMESPACE.fullmatch(prefix)
+                    or any(p.startswith(prefix) or prefix.startswith(p) for p in prefixes)):
+                raise ValueError("invalid or overlapping provider namespaces")
+            prefixes.append(prefix)
+            installed = []
+            # caps have already passed the deployment read binding, soft pin, and verification-policy gates.
+            for tool, cap in caps.items():
+                plugin_id = cap["_soft"].get("plugin_id")
+                if isinstance(plugin_id, str) and NAME.fullmatch(plugin_id) and plugin_id.startswith(prefix) and plugin_id != prefix:
+                    installed.append(tool)
+            entries.append({"id": name, "description": spec["description"], "installed_tools": sorted(installed)})
+        return entries
+    except (ValueError, TypeError, OSError, RecursionError) as exc:
+        raise failure(Refused, "站点允许创作的软件插件范围无效", "planner.plugin_families_invalid", "deployment") from exc
+

@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import time
+import uuid
 
 from edge_contracts.spatial_facts import check_sample, identifier
 
@@ -33,10 +34,14 @@ def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--config", type=Path, required=True)
     cli.add_argument("--output", type=Path, required=True)
+    cli.add_argument("--new-epoch-on-start", action="store_true",
+                     help="Start a distinct observation epoch on every process start. Fixed-epoch localization consumers must rebind.")
     args = cli.parse_args()
     cfg = json.loads(args.config.read_bytes())
     if cfg["clock_id"] != "unix" or not identifier(cfg["localization_epoch"]):
         raise ValueError("this adapter requires ROS stamps on the Unix clock and an approved epoch")
+    if args.new_epoch_on_start:
+        cfg["localization_epoch"] = uuid.uuid4().hex
     args.output.mkdir(parents=True, exist_ok=True)
     writer_lock = (args.output / "writer.lock").open("a")
     fcntl.flock(writer_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

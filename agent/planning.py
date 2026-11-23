@@ -24,7 +24,7 @@ else:
     from tracing import CODE, artifact, contract, exchange
 
 from edge_contracts.descriptor import validate_instance
-from agent import read_operators
+from agent import read_operators, read_plugin_families
 from edge_contracts.errors import OutcomeUnknown, Refused, Unavailable, failure, remote_failure
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -342,15 +342,21 @@ def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile
     provider = "http-planner" if plugin else "ollama/" + profile["model"]
     diagnostic.update(stage="planner", provider=provider)
     module = "operator-author" if prompt_text is not None else "planner"
+    family_prompt = None
+    if prompt_key == "planner.autonomous_read" and "plugin_families" in context:
+        base = contract("prompts", prompt_key)
+        instructions = base["text"] + "\nAn exception to unsupported is a site-approved design family. " + read_plugin_families.INSTRUCTIONS
+        family_prompt = {**base, "text":instructions, "version":str(base["version"])+"+plugin-design.1",
+                         "sha256":hashlib.sha256(instructions.encode()).hexdigest()}
     timeout = profile.get("timeout_s", 90)
     if plugin:
         body = {"schema_version":1, **context, "output_schema":schema}
         if prompt_key != "planner.system":
-            body["instructions"] = prompt_text or contract("prompts", prompt_key)["text"]
+            body["instructions"] = prompt_text or (family_prompt or contract("prompts", prompt_key))["text"]
         answer = exchange(trace, "model", module, body, lambda:request(url, body, timeout),
                           meta={"provider":provider, "protocol":"planner.http.v1", "profile":revision})
     else:
-        prompt = (contract("prompts", prompt_key) if prompt_text is None else
+        prompt = family_prompt or (contract("prompts", prompt_key) if prompt_text is None else
                   {"id":prompt_key,"text":prompt_text,"version":read_operators.numeric.LANGUAGE,
                    "sha256":hashlib.sha256(prompt_text.encode()).hexdigest()})
         body = {"model":profile["model"], "stream":False, "format":schema, "options":profile["options"],
@@ -370,7 +376,7 @@ def autonomous_argument_schema(cap):
             "required":list(cap["parameters"]), "additionalProperties":False}
 
 
-def read_output_schema(entries, protocol, computation=None):
+def read_output_schema(entries, protocol, computation=None, design_families=()):
     def step(names, arguments):
         return {"type":"object", "properties":{"tool":{"type":"string", "enum":names}, "args":arguments},
                 "required":["tool","args"], "additionalProperties":False}
@@ -383,7 +389,7 @@ def read_output_schema(entries, protocol, computation=None):
                 "reason":reason, "steps":steps},
                 "required":["disposition","reason","steps"], "additionalProperties":False}
 
-    if protocol == "http-planner" and computation is None:
+    if protocol == "http-planner" and computation is None and not design_families:
         # Keep the v1 HTTP envelope stable; deployed providers receive the
         # complete input contracts in capabilities and the kernel checks them.
         entry = step([item["id"] for item in entries], {"type":"object"})
@@ -393,6 +399,11 @@ def read_output_schema(entries, protocol, computation=None):
     ready = branch(["ready"], {"type":"array", "items":{"oneOf":choices}, "minItems":1, "maxItems":16})
     denied = branch(["requires_control","requires_system_review","unsupported"], {"type":"array", "maxItems":0})
     options = [ready, denied] if choices else [denied]
+    if design_families:
+        design = branch(["design_plugin"], {"type":"array", "maxItems":0})
+        design["properties"]["family"] = {"type":"string", "enum":list(design_families)}
+        design["required"].append("family")
+        options.append(design)
     if computation is not None:
         compose = branch(["read_compute"], {"type":"array", "maxItems":0})
         compose["properties"]["computation"] = computation
@@ -443,7 +454,9 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
         trace("planner.context", {"layer":"planner", "module":"registry", "authority":"deployment.read_only",
                                  "artifact":artifact(entries)})
     diagnostic["eligible_tools"] = list(caps)
-    if not caps:
+    families = read_plugin_families.catalog(caps)
+    missing_families = [family["id"] for family in families if not family["installed_tools"]]
+    if not caps and not missing_families:
         raise failure(Refused, "没有已获部署方批准且可用的只读软件能力", "planner.read_catalog_empty", "deployment")
     profile = planner_profile() if model_profile is None else model_profile
     actor = read_authority.actor_ref()
@@ -463,7 +476,10 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
             "read_compute, the matching mathematical contract, and the input measurement. This path also reuses "
             "installed operators. A sensor measurement alone cannot deliver an additional calculation. "
             "The runtime supplies the verified program digest. Never choose the runner as a direct ready step."}
-    schema = read_output_schema([c for c in entries if c["id"] in ordinary], profile["protocol"], computation)
+    if families:
+        context["plugin_families"] = {"families":families, "instructions":read_plugin_families.INSTRUCTIONS}
+    schema = read_output_schema([c for c in entries if c["id"] in ordinary], profile["protocol"], computation,
+                                missing_families)
     if actor is not None:
         context["actor_ref"] = actor
     for attempt in range(2):
@@ -474,6 +490,18 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
                 provider, answer = model_proposal(context, schema, "planner.autonomous_read", diagnostic, trace,
                                                   profile, model_request)
             diagnostic["stage"] = "plan_validation"
+            if isinstance(answer, dict) and answer.get("disposition") == "design_plugin" and families:
+                if authorization.explicit_motion_request(text):
+                    raise failure(Refused, "任务需要控制授权", "planner.control_requires_approval", "deployment")
+                if (set(answer) != {"disposition","family","reason","steps"} or answer["steps"] != []
+                        or answer["family"] not in missing_families or not isinstance(answer["reason"], str)
+                        or not 1 <= len(answer["reason"].strip()) <= 1200):
+                    raise ValueError("design_plugin requires one uninstalled site-approved family, a reason and empty steps")
+                if trace:
+                    trace("planner.plugin_gap", {"layer":"planner","module":"planner","provider":provider,
+                          "family":answer["family"], "reason":answer["reason"], "artifact":artifact(answer)})
+                diagnostic["family"] = answer["family"]
+                raise failure(Refused, "模型已请求开发站点授权的只读插件", "planner.plugin_design_requested", "planner")
             if isinstance(answer, dict) and answer.get("disposition") == "read_compute" and computation:
                 if authorization.explicit_motion_request(text):
                     raise failure(Refused, "任务需要控制授权", "planner.control_requires_approval", "deployment")

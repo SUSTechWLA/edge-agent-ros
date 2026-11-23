@@ -90,6 +90,42 @@ class SpatialGateway(unittest.TestCase):
         with self.assertRaisesRegex(SpatialFactError, "sample_stale"):
             self.collect(now=120)
 
+    def test_independent_source_mode_preserves_sensor_identity_and_requires_a_fresh_source(self):
+        info = self.camera / "observations.json"
+        def read(now=105):
+            return published_batch(self.required, "rover", now, 8, [(self.source, info)], primary_source_id="wheel")
+        original = self.required.read_bytes()
+        self.assertEqual(read()["samples"], [self.sample])
+        self.required.unlink()
+        with self.assertRaisesRegex(SpatialFactError, "no_fresh_source"):
+            read()
+        sample, _ = self.capture(104)
+        batch = read()
+        self.assertEqual(batch["samples"], [sample])
+        self.assertEqual(batch["as_of_ns"], 105)
+        self.assertEqual(batch["source_gaps"], [{"source_id":"wheel", "reason":"sensing.source_missing"}])
+        with self.assertRaises(FileNotFoundError):
+            self.collect()
+        self.required.write_bytes(original)
+        self.assertEqual(read()["samples"], [self.sample, sample])
+        sample, _ = self.capture(114)
+        stale = read(115)
+        self.assertEqual(stale["samples"], [sample])
+        self.assertEqual(stale["source_gaps"], [{"source_id":"wheel", "reason":"sensing.sample_stale"}])
+        with self.assertRaisesRegex(SpatialFactError, "no_fresh_source"):
+            read(130)
+
+    def test_independent_source_mode_preserves_deployment_binding(self):
+        self.capture()
+        info = self.camera / "observations.json"
+        with self.assertRaisesRegex(SpatialFactError, "source_mismatch"):
+            published_batch(self.required, "rover", 105, 8, [(self.source, info)], primary_source_id="another")
+        with self.assertRaisesRegex(SpatialFactError, "duplicate_source"):
+            published_batch(self.required, "rover", 105, 8, [("wheel", info)], primary_source_id="wheel")
+        self.required.write_text(json.dumps({"samples":[]}), encoding="utf8")
+        with self.assertRaisesRegex(SpatialFactError, "invalid_batch"):
+            published_batch(self.required, "rover", 105, 8, [(self.source, info)], primary_source_id="wheel")
+
     def test_independent_dropins_merge_at_startup_preserving_cli_and_missing_sources(self):
         source_dir = self.root / "spatial-sources.d"
         cli = [("range", self.root / "future-range.json")]

@@ -76,12 +76,19 @@ def read_source(path, actor, now_ns):
     return batch
 
 
-def published_batch(path, actor, now_ns, max_age_ns, optional=()):
+def published_batch(path, actor, now_ns, max_age_ns, optional=(), *, primary_source_id=None):
     require(identifier(actor) and ns(now_ns) and ns(max_age_ns), "sensing.invalid_request")
-    batch = read_source(path, actor, now_ns)
     def fresh(sample):
         return 0 <= now_ns - sample["stamp_ns"] <= max_age_ns
-    require(all(fresh(s) for s in batch["samples"]), "sensing.sample_stale")
+    if primary_source_id is None:
+        batch = read_source(path, actor, now_ns)
+        require(all(fresh(s) for s in batch["samples"]), "sensing.sample_stale")
+    else:
+        require(identifier(primary_source_id), "sensing.invalid_source_manifest")
+        # The named file now has the same single-source ownership and freshness contract as its peers.
+        optional = [(primary_source_id, path), *optional]
+        batch = {"schema_version": 1, "actor_ref": actor, "clock_id": "unix", "basis": "published",
+                 "as_of_ns": now_ns, "samples": []}
     claimed = {s["source_id"] for s in batch["samples"]}
     require(len(claimed) == len(batch["samples"]), "sensing.duplicate_source")
     require(len(claimed) + len(optional) <= MAX_SOURCES, "sensing.too_many_sources")
@@ -103,6 +110,7 @@ def published_batch(path, actor, now_ns, max_age_ns, optional=()):
             batch["samples"].append(sample)
     if gaps:
         batch["source_gaps"] = gaps
+    require(batch["samples"], "sensing.no_fresh_source")
     check_batch(batch)
     require(len(json.dumps(batch, ensure_ascii=True).encode()) <= 65536, "sensing.batch_too_large")
     return batch
@@ -111,6 +119,8 @@ def published_batch(path, actor, now_ns, max_age_ns, optional=()):
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--file", type=Path, required=True)
+    cli.add_argument("--primary-source-id", default=os.environ.get("EDGE_SPATIAL_PRIMARY_SOURCE_ID"),
+                     help="treat --file as one independently available named source; at least one source must be fresh")
     cli.add_argument("--max-age-ns", type=int, required=True)
     cli.add_argument("--optional-source", action="append", nargs=2, default=[], metavar=("SOURCE_ID", "FILE"))
     cli.add_argument("--source-dir", type=Path, default=Path("/etc/edge/spatial-sources.d"),
@@ -120,6 +130,9 @@ def main():
         cli.error("max age must be positive and at most ten seconds")
     try:
         optional = optional_sources(args.source_dir, args.optional_source, environment=os.environ)
+        if args.primary_source_id is not None:
+            require(identifier(args.primary_source_id), "sensing.invalid_source_manifest")
+            require(all(name != args.primary_source_id for name, _ in optional), "sensing.duplicate_source")
     except (OSError, ValueError, RecursionError, RuntimeError) as error:
         cli.error("invalid optional source deployment: " + str(error))
 
@@ -135,7 +148,7 @@ def main():
                 if not isinstance(request, dict) or set(request) != {"actor_ref"}:
                     return self.send_error(400)
                 batch = published_batch(args.file, request["actor_ref"], time.time_ns(), args.max_age_ns,
-                                        optional)
+                                        optional, primary_source_id=args.primary_source_id)
                 content = json.dumps(batch, allow_nan=False).encode()
             except (OSError, ValueError, KeyError, TypeError, RuntimeError, RecursionError):
                 return self.send_error(503, "Observation unavailable")
