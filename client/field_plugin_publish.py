@@ -63,11 +63,12 @@ def write(path, raw, *, immutable=False):
             tmp.unlink(missing_ok=True)
             raise
     try:
+        # A publisher with CAP_CHOWN and no CAP_FOWNER can set the mode only while it owns the temp file.
+        tmp.chmod(mode)
         if previous is not None and hasattr(os, "chown"):
             current = tmp.stat()
             if (previous.st_uid, previous.st_gid) != (current.st_uid, current.st_gid):
                 os.chown(tmp, previous.st_uid, previous.st_gid)
-        tmp.chmod(mode)
         os.replace(tmp, path)
     finally:
         tmp.unlink(missing_ok=True)
