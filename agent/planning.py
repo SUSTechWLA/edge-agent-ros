@@ -24,7 +24,7 @@ else:
     from tracing import CODE, artifact, contract, exchange
 
 from edge_contracts.descriptor import validate_instance
-from agent import read_operators, read_plugin_families
+from agent import read_capability_index, read_operators, read_plugin_families
 from edge_contracts.errors import OutcomeUnknown, Refused, Unavailable, failure, remote_failure
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -440,6 +440,8 @@ def select_read_family(text, families, diagnostic, trace, profile, model_request
     if authorization.explicit_motion_request(text):
         raise failure(Refused, "任务需要控制授权", "planner.control_requires_approval", "deployment")
     by_id = {f["id"]:f for f in families}
+    if len(by_id) != len(families):
+        raise failure(Refused, "站点语义契约名称重复", "planner.capability_index_invalid", "deployment")
     schema = read_plugin_families.selection_schema(by_id)
     context = {"request":text, "contracts":[{"id":f["id"], "returns":f["description"]} for f in families]}
     provider, answer = model_proposal(context, schema, "planner.select_read_family", diagnostic, trace,
@@ -455,6 +457,16 @@ def select_read_family(text, families, diagnostic, trace, profile, model_request
              "artifact":artifact(answer)}
     if trace:
         trace("planner.family_selected", {**event,"selected":answer["selected"]})
+    if selected and "candidates" in selected:
+        choice = selected["preferred"]
+        if trace:
+            trace("planner.implementation_selected", {"layer":"planner", "module":"registry",
+                  "contract":selected["id"], "index_digest":selected["index_digest"],
+                  "candidates":selected["candidates"], "tool":choice["tool"] if choice else None,
+                  "reason":"first authorized live DSH binding in site priority order"})
+        if choice is None:
+            raise failure(Unavailable, "该结果契约暂时没有可接收新任务的已授权实现",
+                          "planner.implementation_unavailable", "registry")
     if selected and not selected["installed_tools"]:
         diagnostic.update(stage="plan_validation",family=selected["id"])
         if trace:
@@ -470,7 +482,8 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
         trace("planner.context", {"layer":"planner", "module":"registry", "authority":"deployment.read_only",
                                  "artifact":artifact(entries)})
     diagnostic["eligible_tools"] = list(caps)
-    families = read_plugin_families.catalog(caps)
+    implementations = read_capability_index.catalog(caps)
+    families = read_plugin_families.catalog(caps) + implementations
     missing_families = [family["id"] for family in families if not family["installed_tools"]]
     if not caps and not missing_families:
         raise failure(Refused, "没有已获部署方批准且可用的只读软件能力", "planner.read_catalog_empty", "deployment")
@@ -488,9 +501,11 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
         raise failure(Refused, "没有获准的现场工具可执行普通任务", "planner.read_catalog_empty", "deployment")
     if family:
         ordinary = {name:caps[name] for name in family["installed_tools"]}
-        context["capabilities"] = [entry for entry in entries if entry["id"] in ordinary]
         context["matched_read_contract"] = {"id":family["id"], "description":family["description"]}
-    elif site and site.runner in caps and operator_task:
+    elif implementations:
+        managed = {row["tool"] for spec in implementations for row in spec["candidates"]}
+        ordinary = {k:v for k,v in ordinary.items() if k not in managed}
+    if not family and site and site.runner in caps and operator_task:
         input_schema = site.input_schema(caps[site.runner])
         computation = {"type":"object","properties":{"contract":{"type":"string","enum":list(site.contracts)},
                        "input":input_schema},"required":["contract","input"],"additionalProperties":False}
@@ -499,7 +514,17 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
             "read_compute, the matching mathematical contract, and the input measurement. This path also reuses "
             "installed operators. A sensor measurement alone cannot deliver an additional calculation. "
             "The runtime supplies the verified program digest. Never choose the runner as a direct ready step."}
-    schema = read_output_schema([c for c in entries if c["id"] in ordinary], profile["protocol"], computation)
+    choice = family.get("preferred") if family else None
+    selected_entries = []
+    for entry in entries:
+        if entry["id"] in ordinary:
+            inputs = read_capability_index.task_input_schema(entry["input_schema"], choice)
+            selected_entries.append({**entry, "input_schema":inputs,
+                                     "parameters":{k:v for k,v in entry["parameters"].items()
+                                                   if k in inputs.get("properties", entry["parameters"])}})
+    if family or implementations:
+        context["capabilities"] = selected_entries
+    schema = read_output_schema(selected_entries, profile["protocol"], computation)
     if actor is not None:
         context["actor_ref"] = actor
     for attempt in range(2):
@@ -544,6 +569,18 @@ def autonomous_read_plan(text, caps, diagnostic, trace, model_profile, model_req
                 steps[0]["read_operator"] = name
                 answer = final
             else:
+                if choice and isinstance(answer, dict) and answer.get("disposition") == "ready":
+                    calls = answer.get("steps")
+                    if (not isinstance(calls, list) or len(calls) != 1 or not isinstance(calls[0], dict)
+                            or set(calls[0]) != {"tool","args"} or calls[0]["tool"] != choice["tool"]):
+                        raise ValueError("该契约需要一个已选择的实现和一组调用参数")
+                    if "graph_language" in choice:
+                        from agent import read_graph_composition
+                        arguments = calls[0]["args"]
+                        validate_instance(selected_entries[0]["input_schema"], arguments)
+                        arguments = read_graph_composition.compose(text, choice, arguments, diagnostic, trace,
+                                                                  profile, model_request)
+                        answer = {**answer, "steps":[{"tool":choice["tool"], "args":arguments}]}
                 steps = validate_read_answer(answer, ordinary, text, actor)
             if trace:
                 trace("planner.selected", {"layer":"planner", "module":"planner", "provider":provider,
