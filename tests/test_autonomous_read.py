@@ -67,7 +67,7 @@ class AutonomousRead(unittest.TestCase):
         cap = capability("field.fake", "d")
         self.caps[cap["id"]] = cap
         self.allow(self.first, cap)
-        gap = {"disposition":"design_plugin", "steps":[], "family":"column_review", "reason":"missing classification"}
+        gap = {"selected":"column_review", "reason":"missing classification"}
         self.profile = {"protocol":"ollama","model":"fixture","version":"fixture","url":"http://example.invalid","options":{}}
         call = Mock(return_value={"message":{"content":json.dumps(gap)}})
         with self.assertRaises(Refused) as caught:
@@ -76,7 +76,8 @@ class AutonomousRead(unittest.TestCase):
         body = call.call_args.args[1]
         self.assertTrue(current_schema(body["format"]))
         self.assertTrue(matches(gap, body["format"], [1000]))
-        self.assertIn("design_plugin", body["messages"][0]["content"])
+        self.assertNotIn("read_compute", str(body["messages"]))
+        self.assertIn("complete user request", body["messages"][0]["content"])
         events = [v for k,v in self.events if k == "planner.plugin_gap"]
         self.assertEqual([e["family"] for e in events], ["column_review"])
         self.assertFalse(any(k == "planner.selected" for k,_ in self.events))
@@ -87,13 +88,21 @@ class AutonomousRead(unittest.TestCase):
         published["_soft"]["plugin_id"] = "field.measured"
         self.caps[published["id"]] = published
         self.allow(self.first, published)
-        gap = {"disposition":"design_plugin", "steps":[], "family":"column_review", "reason":"redundant"}
+        gap = {"selected":"column_review", "reason":"rank the measured columns"}
         call = Mock(side_effect=[gap, ready({"tool":"measure_custom","args":{"columns":5}})])
-        _, steps = self.plan(call)
+        operator_journal = Mock()
+        operator_journal.operator_intent.return_value = None
+        numeric_site = Mock(runner=self.first["id"])
+        with patch.object(planning.read_operators.Operators, "configured", return_value=numeric_site):
+            _, steps = planning.plan("按距离排序复核视区", self.caps, lambda k,v:self.events.append((k,v)),
+                                     model_profile=self.profile, model_request=call, operator_task=(operator_journal,"task"))
+        numeric_site.input_schema.assert_not_called()
+        numeric_site.resolve.assert_not_called()
         self.assertEqual(steps[0]["args"]["columns"], 5)
-        ctx = call.call_args_list[0].args[1]
-        self.assertEqual(ctx["plugin_families"]["families"][0]["installed_tools"], ["measure_custom"])
-        self.assertNotIn("design_plugin", json.dumps(ctx["output_schema"]))
+        ctx = call.call_args_list[1].args[1]
+        self.assertEqual([c["id"] for c in ctx["capabilities"]], ["measure_custom"])
+        self.assertNotIn("numeric_computation", ctx)
+        self.assertNotIn("read_compute", json.dumps(ctx["output_schema"]))
         self.assertFalse(any(k == "planner.plugin_gap" for k,_ in self.events))
         # An existing descriptor without current site binding is not an installed option for this request.
         self.allow(self.first)
@@ -103,9 +112,9 @@ class AutonomousRead(unittest.TestCase):
 
     def test_no_family_event_on_mixed_motion_unoffered_family_and_invalid_policy(self):
         path = self.enable_family()
-        good = {"disposition":"design_plugin","steps":[],"family":"column_review","reason":"missing review"}
+        good = {"selected":"column_review","reason":"missing review"}
         for proposal, text, code in (
-            (dict(good,family="secret"),"查看周边","planner.invalid_proposal"),
+            (dict(good,selected="secret"),"查看周边","planner.invalid_proposal"),
             (dict(good,steps=[{"tool":"count","args":{}}]),"查看周边","planner.invalid_proposal"),
             (good,"分析前方障碍，然后向前走两米","planner.control_requires_approval"),
             (good,"检查相机并修改底盘参数","planner.system_change_requires_review")):
@@ -119,6 +128,20 @@ class AutonomousRead(unittest.TestCase):
         self.assertEqual(caught.exception.code,"planner.plugin_families_invalid")
         call.assert_not_called()
         self.assertFalse(any(k == "planner.plugin_gap" for k,_ in self.events))
+
+    def test_family_preselection_does_not_intercept_ordinary_measurements_or_scalar_tasks(self):
+        self.enable_family()
+        for text in ("只读一下相机的传感器信息", "只想比较两列的深度极差"):
+            model = Mock(side_effect=[{"selected":"ordinary","reason":"general measurement or scalar calculation"},
+                                      ready({"tool":"count","args":{}})])
+            _, steps = self.plan(model, text)
+            self.assertEqual(steps[0]["tool"], "count")
+            selection, original = [c.args[1] for c in model.call_args_list]
+            self.assertNotIn("capabilities", selection)
+            self.assertNotIn("numeric_computation", selection)
+            self.assertNotIn("matched_read_contract", original)
+            self.assertEqual({c["id"] for c in original["capabilities"]}, {"count","observe"})
+            self.assertFalse(any(k == "planner.plugin_gap" for k,_ in self.events))
 
     def test_dynamic_composition_and_parameter_repair_before_any_dispatch(self):
         request = Mock(side_effect=[ready({"tool":"observe","args":{"region":"wrong"}}),
