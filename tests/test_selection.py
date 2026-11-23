@@ -15,6 +15,9 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
+    (("client/field_plugin_*.py","perception/spatial_facts/authored_screen.py",
+      "tests/test_field_plugin_*.py","tests/test_authored_screen.py","tests/system/field_author_*.py"),
+     ("planner","plugin-isolation")),
     (("analysis/*","tests/test_offline_analysis.py","tests/test_conformance.py"), (R,)),
     (("tests/test_plugin_conformance.py","tests/fixtures/plugin-conformance/*"), ("board",)),
     (("agent/facts_server.py",), ("observations","board","ui")),
@@ -212,6 +215,10 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_field_author_and_replay_reach_planning_and_admission_checks(self):
+        for path in ("client/field_plugin_watch.py","tests/system/field_author_repair.py"):
+            self.assertTrue({"planner","plugin-isolation"} <= set(selection([path])[0]))
+
     def test_navigation_route_observation_and_body_consumers(self):
         for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
                      "scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py",

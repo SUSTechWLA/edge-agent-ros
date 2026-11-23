@@ -133,6 +133,8 @@ def run(args, selected, reasons):
                                  "-f","compose.model-provider.yaml","-f","compose.model-provider-hardware.yaml","config","--quiet"]])
         if "planner" in selected:
             stage("planner",[test("planning_contract.py","-v"),test("test_autonomous_read.py","-v"),test("test_read_operators.py","-v"),
+                             test("test_field_plugin_watch.py","-v"),test("test_field_plugin_publish.py","-v"),
+                             test("test_authored_screen.py","-v"),
                              test("test_numeric_program.py","-v"),test("test_region_operator_service.py","-v"),
                              test("test_derived_tools.py","-v"),
                              test("test_reference_utterances.py","-v"),test("test_spatial_facts.py","-v"),
