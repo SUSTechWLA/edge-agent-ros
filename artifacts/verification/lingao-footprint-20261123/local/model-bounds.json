@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "profile_id": "lingao.archive.planar.v1",
+  "profile_sha256": "fcd2ddaad3fad99e6a31f1f4296bdecfa3421985a3c4fb4f8f74d4540077e7dc",
+  "source_sha256": {
+    "lingao_mid360.urdf.xacro": "43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8",
+    "mid-360-asm-z.dae": "30c6cf30ee68e69fb64c0b9f23bffa5f3145366297f0dbabaea59c1ade244753"
+  },
+  "profile_contains_archive_model": true,
+  "frame": "base_foot",
+  "bounds_units": "m",
+  "lidar_instanced_position_count": 56294,
+  "part_aabb_m": {
+    "base": {
+      "x": [
+        -0.2335,
+        0.2335
+      ],
+      "y": [
+        -0.1645,
+        0.1645
+      ],
+      "z": [
+        0.065,
+        0.255
+      ]
+    },
+    "payload": {
+      "x": [
+        -0.15,
+        0.15
+      ],
+      "y": [
+        -0.125,
+        0.125
+      ],
+      "z": [
+        0.255,
+        0.41200000000000003
+      ]
+    },
+    "front_left_wheel": {
+      "x": [
+        0.045,
+        0.195
+      ],
+      "y": [
+        0.1155,
+        0.1655
+      ],
+      "z": [
+        0.0,
+        0.15
+      ]
+    },
+    "front_right_wheel": {
+      "x": [
+        0.045,
+        0.195
+      ],
+      "y": [
+        -0.1655,
+        -0.1155
+      ],
+      "z": [
+        0.0,
+        0.15
+      ]
+    },
+    "rear_left_wheel": {
+      "x": [
+        -0.195,
+        -0.045
+      ],
+      "y": [
+        0.1155,
+        0.1655
+      ],
+      "z": [
+        0.0,
+        0.15
+      ]
+    },
+    "rear_right_wheel": {
+      "x": [
+        -0.195,
+        -0.045
+      ],
+      "y": [
+        -0.1655,
+        -0.1155
+      ],
+      "z": [
+        0.0,
+        0.15
+      ]
+    },
+    "front_mid360": {
+      "x": [
+        0.17114767754680213,
+        0.25885244856175216
+      ],
+      "y": [
+        -0.025917,
+        0.03418
+      ],
+      "z": [
+        0.15614755143824788,
+        0.24385244856175214
+      ]
+    },
+    "rear_mid360": {
+      "x": [
+        -0.20248145750503485,
+        -0.12969208780491562
+      ],
+      "y": [
+        0.07581999997421075,
+        0.13591700011456248
+      ],
+      "z": [
+        0.21751854241646715,
+        0.2824814575835328
+      ]
+    }
+  },
+  "envelope_aabb_m": {
+    "x": [
+      -0.2335,
+      0.25885244856175216
+    ],
+    "y": [
+      -0.1655,
+      0.1655
+    ],
+    "z": [
+      0.0,
+      0.41200000000000003
+    ]
+  },
+  "profile_minus_model_m": {
+    "front_m": 0.00014755143824785044,
+    "rear_m": 0.0005000000000000004,
+    "left_m": 0.0005000000000000004,
+    "right_m": 0.0005000000000000004
+  },
+  "kinematics": {
+    "wheelbase_m": 0.24,
+    "track_m": 0.281,
+    "wheel_radius_m": 0.075
+  },
+  "model_tire_width_m": 0.05,
+  "mesh_axis_conversion": "Y_UP to Z_UP: (x,-z,y)",
+  "source_basis": "Site Xacro describes measured chassis dimensions and wheel spacing. Lidar positions and visual mesh transforms are nominal.",
+  "limitations": [
+    "Xacro estimates tire width; the payload box is illustrative.",
+    "No confirmed installed D435 or RTK exterior, brackets, or cable envelope.",
+    "No loaded braking, slip, latency or current mount-position measurement.",
+    "XY/yaw of simulation base_link are aligned with the archive base_foot by profile."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "profile_id":"lingao.archive.planar.v1",
+  "supported_body_frames":["base_foot","base_link"],
+  "front_m":0.259,
+  "rear_m":0.234,
+  "left_m":0.166,
+  "right_m":0.166,
+  "margin_m":0.55,
+  "horizon_m":2.6,
+  "curvature_limit_inv_m":5.0
+}

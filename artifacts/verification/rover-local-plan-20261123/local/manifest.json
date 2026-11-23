@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "target": "local Gazebo campus, rover, clear and centered only",
+  "image": {
+    "platform": "linux/amd64",
+    "manifest": "sha256:39c6089c70d93e62b9e794f84c3cc991d9c247e2d2fa6d664b9522ff1c5a9b28",
+    "build_revision": "19484d2a6ea5+local.68bb8adba5a6"
+  },
+  "cases": {
+    "clear": {
+      "sha256": "a71dc69a529e20836e78bb0c219a31459f24c5397e483579f497bcf4d7dee6ec",
+      "raw_archive": "clear.tar.gz",
+      "audit_files": {
+        "core-ledger.json": "f87f02a52d2b4c7ffc399f1f10bb9d7939b111da51b8bf44e5776b9f5f203835",
+        "mission.json": "ebbb867210d59ee072d64c9946057ece132ccc964ac4ffe662375d5ddbf64854",
+        "record.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "run.json": "7cecd3e1adaa5e6e2158c78c17454a6ac3dd550dec7ba8a6db90e7ddacc6c1df",
+        "score.log": "70ee99298bf960af5260e584de3691c2ad8a8e96d28127e4bd520f88627fd498",
+        "services.log": "2e15e1e7d6864fae386d9c39cc875f67b1fb358efc91379b19881e4f8af89c13",
+        "witness/clearance.json": "20b79e2e68f39ea38a32efb43af4e92adce04e2f8d0b9e0e72138e226cea344c",
+        "witness/complete.json": "6a47eed4432cd2bfd98ff3b81a3ed63a10064f43af49b724084b340bfe22f4ae",
+        "witness/crosscheck.json": "40ea147449620ece8501092e2a016bbdca012de07c91360d8f81091ca74b0b9b",
+        "witness/geometry.json": "d683b4f3f3275633767e77c46690306a561e0e214280cf9bac7a2b905fa80d26",
+        "witness/measurements.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "witness/observations.jsonl": "9ded914373b8fe52585ef2845eb2a51ea961c4aac52e56ccc3b832b89f4f39b4",
+        "witness/ready.json": "d2558f53dd7c0abbbfcfcd8627b080a73af05812e65988198b12d448845a51cf",
+        "witness/score.json": "e415995cac6575ceab245911630a1c66c78f7e38321dcf20ae55be3095aa7fbe",
+        "witness/world.sdf": "e0ebed3d852d31bab6c2f6c162ce1eed838ff74f538953fc6cd12f1364b56d79"
+      },
+      "sample_kinds": [
+        "clock",
+        "contacts",
+        "event",
+        "odom",
+        "report",
+        "scan",
+        "truth"
+      ],
+      "task": "local-clear-a6964e00e6",
+      "operation": "local-clear-a6964e00e6/waypoint/1",
+      "core_terminal_state": "SUCCEEDED",
+      "image_id": "sha256:ea2ff584436e998f4514016335dafa2a86f1a84dd5a2872ab69d0faea0a580e7",
+      "score": {
+        "passed": true,
+        "checks": {
+          "truth_scan_odom_clock_present": true,
+          "world_truth_frame": true,
+          "monotonic_truth": true,
+          "truth_coverage": true,
+          "scan_coverage": true,
+          "start_pose": true,
+          "goal_reached": true,
+          "footprint_swept_clearance": true,
+          "sweep_within_geometry_extent": true,
+          "scenario_geometry": true,
+          "event_identity": true,
+          "arrived_event": true,
+          "no_hard_stop": true,
+          "plan_events": true,
+          "report_identity": true,
+          "plan_binding": true,
+          "scan_and_report_source": true,
+          "published_report_matches_event": true,
+          "full_operation_observed": true,
+          "all_active_scans_have_reports": true,
+          "contact_stream_ground_witness": true,
+          "no_non_ground_contact": true,
+          "contact_coverage": true
+        },
+        "scenario": "clear",
+        "operation": "local-clear-a6964e00e6/waypoint/1",
+        "start": [
+          6.0,
+          0.0
+        ],
+        "goal": [
+          9.8,
+          0.0
+        ],
+        "arrival_error_m": 0.05825575406677608,
+        "min_swept_clearance_m": 2.5229405207500646,
+        "max_truth_gap_s": 0.034,
+        "max_scan_gap_s": 0.126,
+        "samples": 516,
+        "active_scans": 118,
+        "unmatched_scan_stamps": [],
+        "visible_box_samples": 0,
+        "max_bearing_error_deg": null,
+        "max_range_error_m": null,
+        "failure_samples": 0,
+        "contact_packets": 26246,
+        "max_contact_gap_s": {
+          "left_wheel": 0.006,
+          "right_wheel": 0.006,
+          "rear_caster": 0.12400000000000001
+        },
+        "ground_contact_pairs": [
+          [
+            "edge_rover::left_wheel::tyre",
+            "floor::floor_link::floor"
+          ],
+          [
+            "edge_rover::rear_caster::ball",
+            "floor::floor_link::floor"
+          ],
+          [
+            "edge_rover::right_wheel::tyre",
+            "floor::floor_link::floor"
+          ]
+        ],
+        "unexpected_contact_pairs": [],
+        "event_codes": {
+          "navigation.accepted": 1,
+          "navigation.local_plan": 114,
+          "perception.front_obstacle": 117,
+          "navigation.local_stop": 1,
+          "navigation.arrived": 2
+        },
+        "source_sdf_sha256": "e0ebed3d852d31bab6c2f6c162ce1eed838ff74f538953fc6cd12f1364b56d79"
+      }
+    },
+    "centered": {
+      "sha256": "5c3679e041c5fd5ec690787d1b59b5781cde4675a8ccba22ced70ed2c847dbbe",
+      "raw_archive": "centered.tar.gz",
+      "audit_files": {
+        "core-ledger.json": "a5f0ff68b88e2c573fab860f49abb9356a4f628a0e6cbc18a2c1f91bd2209b0c",
+        "mission.json": "cc4f5219046efd42c4cb40be117b3345d9ca3215d7b9fc6419f4b5b8c29ea2c8",
+        "record.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "run.json": "eedf0e2896dd7800ed2e314cbaf5d7b296bbd4fc0f23ac1012898b793ef2b95d",
+        "score.log": "e628033ecdd7a3d3d896949113913ec4b6ce48ec0f12f501a4d68dbb5d48a76b",
+        "services.log": "026027ad585fd7ba961f4de39f5f5978c1a61ca8c043e9cfdf7508491f02f4ff",
+        "witness/clearance.json": "36db7130f1623a923fdec9ab0ba0c3cd965218ccca451ec3f750d95107d54fa1",
+        "witness/complete.json": "cfbdbca4c8bd0b92b3713b294ce5cf98a428f9b0f34d453aeb549027c3245abd",
+        "witness/crosscheck.json": "6262e9228e4575bbb0d99bd6ebbc00e0dd216244f66915df4152d1fe14ef45a6",
+        "witness/geometry.json": "043c0b1e553f321a8c68a9bfc0bf8a702bf80f58d044f8046db3234490586668",
+        "witness/measurements.json": "88b0ea4f52f57bc83b8020b2685d9739f7b26d78b0d1be92604e079d49c8c6b7",
+        "witness/observations.jsonl": "f192642a6a7725f43ac28d8fe4eff118ee581b4c96a73d5fbd9556af2b9cd11c",
+        "witness/ready.json": "0f9f7c39ce38c03ea6d55a6ad8d6e63fff763513fbc8400b382fdd99d936dcad",
+        "witness/score.json": "a5013a4aacb25f62436c8283483b788d6fb0db1e7f0173ba178b1f50ec99cdbb",
+        "witness/world.sdf": "3c838414f17e7d87e5dda8a2882b983c5b47e86edb30cce6b1c8137d2d94e67e"
+      },
+      "sample_kinds": [
+        "clock",
+        "contacts",
+        "event",
+        "odom",
+        "report",
+        "scan",
+        "truth"
+      ],
+      "task": "local-centered-104ea42107",
+      "operation": "local-centered-104ea42107/waypoint/1",
+      "core_terminal_state": "SUCCEEDED",
+      "image_id": "sha256:ea2ff584436e998f4514016335dafa2a86f1a84dd5a2872ab69d0faea0a580e7",
+      "score": {
+        "passed": true,
+        "checks": {
+          "truth_scan_odom_clock_present": true,
+          "world_truth_frame": true,
+          "monotonic_truth": true,
+          "truth_coverage": true,
+          "scan_coverage": true,
+          "start_pose": true,
+          "goal_reached": true,
+          "footprint_swept_clearance": true,
+          "sweep_within_geometry_extent": true,
+          "scenario_geometry": true,
+          "event_identity": true,
+          "arrived_event": true,
+          "no_hard_stop": true,
+          "plan_events": true,
+          "report_identity": true,
+          "plan_binding": true,
+          "scan_and_report_source": true,
+          "published_report_matches_event": true,
+          "full_operation_observed": true,
+          "all_active_scans_have_reports": true,
+          "all_visible_box_measurements": true,
+          "straight_path_would_hit": true,
+          "observed_lateral_bypass": true,
+          "contact_stream_ground_witness": true,
+          "no_non_ground_contact": true,
+          "contact_coverage": true
+        },
+        "scenario": "centered",
+        "operation": "local-centered-104ea42107/waypoint/1",
+        "start": [
+          6.0,
+          0.0
+        ],
+        "goal": [
+          9.8,
+          0.0
+        ],
+        "arrival_error_m": 0.06545038998353692,
+        "min_swept_clearance_m": 0.6144859773261406,
+        "max_truth_gap_s": 0.034,
+        "max_scan_gap_s": 0.126,
+        "samples": 675,
+        "active_scans": 161,
+        "unmatched_scan_stamps": [],
+        "visible_box_samples": 21,
+        "max_bearing_error_deg": 0.9604383651299603,
+        "max_range_error_m": 0.024836873438982554,
+        "failure_samples": 0,
+        "contact_packets": 33737,
+        "max_contact_gap_s": {
+          "left_wheel": 0.012,
+          "right_wheel": 0.012,
+          "rear_caster": 0.128
+        },
+        "ground_contact_pairs": [
+          [
+            "edge_rover::left_wheel::tyre",
+            "floor::floor_link::floor"
+          ],
+          [
+            "edge_rover::rear_caster::ball",
+            "floor::floor_link::floor"
+          ],
+          [
+            "edge_rover::right_wheel::tyre",
+            "floor::floor_link::floor"
+          ]
+        ],
+        "unexpected_contact_pairs": [],
+        "event_codes": {
+          "navigation.accepted": 1,
+          "navigation.local_plan": 159,
+          "navigation.local_avoid": 7,
+          "perception.front_obstacle": 160,
+          "navigation.local_stop": 1,
+          "navigation.arrived": 2
+        },
+        "source_sdf_sha256": "3c838414f17e7d87e5dda8a2882b983c5b47e86edb30cce6b1c8137d2d94e67e"
+      }
+    }
+  },
+  "retained_failures": {
+    "centered-ambiguous-bearing.tar.gz": "c7fb90c05e7869f3df84cf415feaf23f6cb69277cb1da43b2d8f87954b9665a6",
+    "centered-conservative-corridor.tar.gz": "dd91f7fd6845e1d4999da8a84f4ec087d7e3236e51de131526ed85aa44d6b6ca",
+    "clear-contact-topic.tar.gz": "4de3b41de483bf91272666311ea74ffa87a7b6fa1238bfa11a5ea9136ad6fdf6"
+  },
+  "reproduction_inputs": {
+    "reproduction/ctest.txt": "5d37de18b0de2eeac945701fbf17e2afee415df87f484c80ba4eb153dd3d4f13",
+    "reproduction/image.json": "594b6ed334faa7ea78255dc5ec4a1dd0625beeade7bc10b959ead1c026eb92ff",
+    "reproduction/independent_audit.py": "4cb9c4803acba975dd704e453780b6e47508e4ccaf0b187bb762f85cc9af7295",
+    "reproduction/source.json": "fcaac046463e19f2e04cd100c6a5ab569b78c2a5b620bcf540502b6166796317"
+  },
+  "acceptance_sources": {
+    "tests/system/campus_local_plan_acceptance.py": "548d20f4c08aead8d18130389281c8d54691471701f1ea4183383af75b313932",
+    "tests/system/campus_local_plan_witness.py": "f3bac2f0b6f8e05e73c537238f6891c8abec4e6678f1262f411176623a7a10d0",
+    "tests/system/campus_route_geometry.py": "4d1b14143cd96148b8c0193d941520f313269216c1e05c95d8a618a0c1547931",
+    "compose.yaml": "d342c9cbaf5b2348923d1302b287964607ccc11f109f9f562a302324ad23f796",
+    "compose.campus.yaml": "384b45a70d44e0eaeebf2242e58397ee2defdaf8f80229a968e6d57e5288897f",
+    "sim/world.sdf": "782cbd4de778dc6db432b28bbf4cb6af962177c43dea87ed603f891b308d6a90"
+  },
+  "replay_command": [
+    "<signed project Python>",
+    "tests/system/campus_local_plan_acceptance.py",
+    "run",
+    "--image",
+    "<local image with recorded platform manifest>",
+    "--assets",
+    "<cached campus assets directory>",
+    "--out",
+    "<new run directory>",
+    "--scenario",
+    "both"
+  ]
+}

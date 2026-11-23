@@ -1,0 +1,5 @@
+{
+  "platform": "linux/amd64",
+  "manifest": "sha256:39c6089c70d93e62b9e794f84c3cc991d9c247e2d2fa6d664b9522ff1c5a9b28",
+  "build_revision": "19484d2a6ea5+local.68bb8adba5a6"
+}

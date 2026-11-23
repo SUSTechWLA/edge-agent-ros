@@ -1,0 +1,8 @@
+{
+  "id": "status",
+  "version": "1.0.0",
+  "description": "读取本机当前实测里程计、位置、朝向和有符号前向速度，返回来源坐标系、采样时间和可用的地图定位。",
+  "parameters": {},
+  "effect": "read",
+  "endpoint": "http://rover-status:8151/invoke"
+}

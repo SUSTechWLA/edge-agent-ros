@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "profile_id": "lingao.archive.planar.v1",
+  "kinematics": "differential_drive",
+  "reference_frame": "base_link",
+  "reference_point": "drive_center",
+  "front_m": 0.259,
+  "rear_m": 0.234,
+  "left_m": 0.166,
+  "right_m": 0.166,
+  "track_m": 0.281,
+  "wheelbase_m": 0.240,
+  "wheel_radius_m": 0.075,
+  "source": {
+    "model": "lingao_mid360.urdf.xacro",
+    "sha256": "43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8",
+    "lidar_mesh": "mid-360-asm-z.dae",
+    "mesh_sha256": "30c6cf30ee68e69fb64c0b9f23bffa5f3145366297f0dbabaea59c1ade244753",
+    "archive_origin": "base_foot",
+    "chassis_length_m": 0.467,
+    "chassis_width_m": 0.329,
+    "assumed_tire_width_m": 0.050,
+    "coverage": "Archived chassis, four nominal tires and two lidar housings. XY dimensions rounded outward to millimeters. The simulation base_link is aligned in XY and yaw with the archive base_foot.",
+    "unmeasured": ["installed tire width", "camera and RTK mounts", "wiring and brackets", "current mounting angles", "loaded braking and tire slip"]
+  }
+}

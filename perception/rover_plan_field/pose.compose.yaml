@@ -1,0 +1,28 @@
+name: edge-field-plan-pose
+services:
+  pose-observer:
+    image: ${EDGE_FIELD_POSE_IMAGE:?pin the locally installed ROS image digest}
+    pull_policy: never
+    container_name: edge-field-plan-odom-v1
+    command: [python3, -B, /observer/pose_capture.py]
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    network_mode: host
+    tmpfs: [/tmp]
+    mem_limit: 192m
+    pids_limit: 80
+    environment:
+      ROS_DOMAIN_ID: ${EDGE_FIELD_ROS_DOMAIN:?set the domain of the real odometry publisher}
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      ROS_LOG_DIR: /tmp/ros
+    volumes:
+      - ./pose_capture.py:/observer/pose_capture.py:ro
+      - measured-pose:/pose
+volumes:
+  measured-pose:
+    name: edge-field-plan-pose-v1
+    driver_opts: {type: tmpfs, device: tmpfs, o: "size=4m,mode=0755"}

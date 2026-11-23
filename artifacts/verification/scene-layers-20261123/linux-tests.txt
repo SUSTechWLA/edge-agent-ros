@@ -1,0 +1,9 @@
+os=Linux arch=x86_64 python=3.12.3
+runner=sequential repo=read-only network=none cap_drop=ALL tmpfs=/tmp
+test_scene_layers_057.py (map representations and frozen scene queries): ran=7 skipped=0 failures=0 errors=0
+test_scene_layer_runtime.py (DSH service admission, draining and recovery): ran=4 skipped=0 failures=0 errors=0
+test_scene_workbench_057.py (workbench loopback end to end): ran=1 skipped=0 failures=0 errors=0
+test_rover_preview.py (existing rover geometric planner): ran=8 skipped=0 failures=0 errors=0
+test_rover_snapshot_service.py (existing rover HTTP planner): ran=5 skipped=0 failures=0 errors=0
+test_field_scene.py (existing rover field evidence): ran=4 skipped=0 failures=0 errors=0
+PASS

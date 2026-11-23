@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>地图图层与场景查询 · Edge Agent ROS</title>
+  <link rel="stylesheet" href="/scene-layers.css">
+  <script defer src="/plan-scene.js"></script>
+  <script defer src="/scene-layers.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand"><span aria-hidden="true">◇</span> Edge Agent <b>ROS</b></div>
+    <span class="separator"></span><span class="product">机器人观测台</span>
+    <span id="connection" class="connection" role="status">连接中</span>
+  </header>
+  <main>
+    <div class="heading">
+      <div><h1>地图图层与场景查询</h1><p>核对独立传感器观测，按任务查询配准与规划结果。</p></div>
+      <div class="archive">
+        <label for="archive">数据归档</label>
+        <select id="archive" disabled><option>正在读取</option></select>
+        <button type="button" id="open-archive" class="primary" disabled>读取归档</button>
+      </div>
+    </div>
+    <div class="workspace">
+      <section class="observations" aria-label="独立观测图层">
+        <article class="map-card">
+          <div class="card-heading">
+            <div><span class="kind">车体空间</span><h2 id="occupancy-heading">近场占用</h2></div>
+            <span class="instrument" id="occupancy-source">双 MID‑360</span>
+          </div>
+          <div class="viewport">
+            <canvas id="occupancy-map" tabindex="0" aria-label="双雷达车体占用图，可拖动旋转"></canvas>
+            <canvas id="plan-map" hidden tabindex="0" aria-label="当前规划输入与实际候选路径，可拖动旋转"></canvas>
+            <div class="empty" id="occupancy-empty">等待读取归档</div>
+            <div class="view-tools" id="occupancy-controls" hidden>
+              <button type="button" id="view-top">正俯视</button>
+              <button type="button" id="view-reset">复位</button>
+            </div>
+          </div>
+          <dl class="facts">
+            <div><dt>参考系</dt><dd id="occupancy-frame">—</dd></div>
+            <div><dt>采样时刻</dt><dd id="occupancy-time">—</dd></div>
+            <div><dt id="occupancy-metric">占用单元</dt><dd id="occupancy-value">—</dd></div>
+          </dl>
+          <div class="card-foot"><span id="occupancy-caption">雷达占用图层</span><button id="restore-observation" type="button" hidden>返回实车观测</button></div>
+        </article>
+        <article class="map-card">
+          <div class="card-heading">
+            <div><span class="kind">相机空间</span><h2>彩色深度表面</h2></div>
+            <span class="instrument">RealSense D435</span>
+          </div>
+          <div class="viewport">
+            <canvas id="texture-map" tabindex="0" aria-label="相机光学帧中的实测纹理表面，可拖动旋转"></canvas>
+            <div class="empty" id="texture-empty">等待读取归档</div>
+            <div class="view-tools" id="texture-controls" hidden>
+              <button type="button" id="texture-grid" aria-pressed="false">网格</button>
+              <button type="button" id="texture-reset">复位</button>
+            </div>
+            <figure id="texture-photo" class="source-photo" hidden>
+              <img id="texture-image" alt="该深度表面对应的 RealSense 彩色曝光">
+              <figcaption>同帧 RGB</figcaption>
+            </figure>
+          </div>
+          <dl class="facts">
+            <div><dt>参考系</dt><dd id="texture-frame">—</dd></div>
+            <div><dt>采样时刻</dt><dd id="texture-time">—</dd></div>
+            <div><dt>纹理三角面</dt><dd id="texture-value">—</dd></div>
+          </dl>
+          <div class="card-foot"><span id="texture-caption">RGB-D 纹理图层</span></div>
+        </article>
+      </section>
+      <aside class="operations" aria-label="场景与规划操作">
+        <section class="operation">
+          <div class="row"><h2>纹理插件</h2><strong id="texture-state" class="tag" data-tone="muted">读取中</strong></div>
+          <button type="button" id="toggle-texture" disabled>管理纹理插件</button>
+        </section>
+        <section class="operation">
+          <div class="row"><h2>场景查询</h2><span class="kind">两份观测</span></div>
+          <button type="button" id="check-registration" disabled>查询联合场景</button>
+          <div id="query-result" class="result" aria-live="polite">
+            <h3 id="query-title">等待查询</h3><p id="query-detail">联合读取需要可验证的时间和坐标关系。</p>
+          </div>
+        </section>
+        <section class="operation">
+          <div class="row"><h2>局部避障规划</h2><span class="kind">只读</span></div>
+          <div class="plan-input"><select id="plan-case" aria-label="规划输入">
+            <option value="field_hold">实车 · 近场观测</option>
+            <option value="centered">Gazebo · 中央箱体</option>
+            <option value="clear">Gazebo · 空场</option>
+          </select><button type="button" id="run-plan" disabled>重新规划</button></div>
+          <div id="plan-result" class="result" aria-live="polite">
+            <h3 id="plan-title">等待规划</h3><p id="plan-detail">向原有轮式车规划服务发起新请求。</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <section class="activity" aria-label="本页操作记录">
+      <div class="activity-head"><h2>操作记录</h2><span id="history-count">本次会话</span></div>
+      <ol id="history" aria-live="polite"><li class="placeholder">等待读取或查询</li></ol>
+    </section>
+    <div id="error" role="alert" hidden></div>
+  </main>
+</body>
+</html>

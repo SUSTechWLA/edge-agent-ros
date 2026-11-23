@@ -1,0 +1,254 @@
+{
+  "utc": "2026-11-23T06:59:06.732682+00:00",
+  "source_revision": "19484d2a6ea5+local.68bb8adba5a6",
+  "mode": "ros_sensor_fixture",
+  "cases": [
+    {
+      "case": "central_gap",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": 0.0499,
+      "action_status": 6,
+      "receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]",
+      "passed": true,
+      "braking_event": {
+        "code": "navigation.scan_invalid",
+        "data": {
+          "scan_stamp_ns": 40821974941,
+          "scan_geometry_valid": true,
+          "forward_gap_rad": 0.47999998927116394,
+          "odom_stamp_ns": 40821974941
+        }
+      },
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 329,
+        "quiet_arrival_ms": 329,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "sparse_obstacle",
+      "expected_code": "navigation.path_blocked",
+      "brake_command_s": 0.0503,
+      "action_status": 6,
+      "receipt": "forward clearance below 0.42 m; stationary odometry confirmed [code:navigation.path_blocked]",
+      "passed": true,
+      "braking_event": {
+        "code": "navigation.path_blocked",
+        "data": {
+          "front_range_m": 0.2199999988079071,
+          "scan_stamp_ns": 61841907466,
+          "scan_geometry_valid": true,
+          "forward_gap_rad": 0.4200000111758709,
+          "odom_stamp_ns": 61841907466
+        }
+      },
+      "stop_evidence": {
+        "accepted_samples": 11,
+        "quiet_samples": 11,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 300,
+        "quiet_arrival_ms": 300,
+        "last_odom_age_ms": 27,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "too_close",
+      "expected_code": "navigation.path_blocked",
+      "brake_command_s": 0.0502,
+      "action_status": 6,
+      "receipt": "forward clearance below 0.42 m; stationary odometry confirmed [code:navigation.path_blocked]",
+      "passed": true,
+      "braking_event": {
+        "code": "navigation.path_blocked",
+        "data": {
+          "front_range_m": 0.0,
+          "scan_stamp_ns": 82772006901,
+          "scan_geometry_valid": true,
+          "forward_gap_rad": 0.019999999552965164,
+          "odom_stamp_ns": 82772006901
+        }
+      },
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 350,
+        "quiet_acquisition_ms": 330,
+        "quiet_arrival_ms": 330,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "bad_ranges",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": 0.0498,
+      "action_status": 6,
+      "receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]",
+      "passed": true,
+      "braking_event": {
+        "code": "navigation.scan_invalid",
+        "data": {
+          "scan_stamp_ns": 103792156092,
+          "scan_geometry_valid": true,
+          "forward_gap_rad": 0.84,
+          "odom_stamp_ns": 103792156092
+        }
+      },
+      "stop_evidence": {
+        "accepted_samples": 13,
+        "quiet_samples": 13,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 400,
+        "quiet_acquisition_ms": 359,
+        "quiet_arrival_ms": 359,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "bad_geometry",
+      "expected_code": "navigation.scan_invalid",
+      "brake_command_s": 0.05,
+      "action_status": 6,
+      "receipt": "invalid scan geometry or insufficient forward coverage; stationary odometry confirmed [code:navigation.scan_invalid]",
+      "passed": true,
+      "braking_event": {
+        "code": "navigation.scan_invalid",
+        "data": {
+          "scan_stamp_ns": 124842013200,
+          "scan_geometry_valid": false,
+          "odom_stamp_ns": 124842013200
+        }
+      },
+      "stop_evidence": {
+        "accepted_samples": 11,
+        "quiet_samples": 11,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 300,
+        "quiet_arrival_ms": 300,
+        "last_odom_age_ms": 27,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "clock_ahead",
+      "expected_code": "navigation.scan_time_mismatch",
+      "brake_command_s": 0.0505,
+      "action_status": 6,
+      "receipt": "laser and odometry acquisition times differ by over one second; stationary odometry confirmed [code:navigation.scan_time_mismatch]",
+      "passed": true,
+      "braking_event": {
+        "code": "navigation.scan_time_mismatch",
+        "data": {
+          "scan_stamp_ns": 153772086505,
+          "scan_geometry_valid": true,
+          "forward_gap_rad": 0.019999999552965164,
+          "odom_stamp_ns": 145772086505
+        }
+      },
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 330,
+        "quiet_arrival_ms": 330,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "duplicate",
+      "expected_code": "navigation.scan_stale",
+      "brake_command_s": 1.0498,
+      "action_status": 6,
+      "receipt": "laser scan unavailable; stationary odometry confirmed [code:navigation.scan_stale]",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 350,
+        "quiet_acquisition_ms": 329,
+        "quiet_arrival_ms": 329,
+        "last_odom_age_ms": 7,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "drop",
+      "expected_code": "navigation.scan_stale",
+      "brake_command_s": 1.0002,
+      "action_status": 6,
+      "receipt": "laser scan unavailable; stationary odometry confirmed [code:navigation.scan_stale]",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 349,
+        "quiet_acquisition_ms": 329,
+        "quiet_arrival_ms": 329,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "wrong_frame",
+      "expected_code": "navigation.scan_stale",
+      "brake_command_s": 0.9997,
+      "action_status": 6,
+      "receipt": "laser scan unavailable; stationary odometry confirmed [code:navigation.scan_stale]",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 12,
+        "quiet_samples": 12,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 350,
+        "quiet_acquisition_ms": 330,
+        "quiet_arrival_ms": 330,
+        "last_odom_age_ms": 17,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      }
+    },
+    {
+      "case": "rewind",
+      "expected_code": "navigation.stop_unconfirmed",
+      "brake_command_s": 0.9,
+      "action_status": 6,
+      "receipt": "UNKNOWN: stop unconfirmed after odometry timeout; gateway inhibited [code:navigation.stop_unconfirmed]",
+      "passed": true,
+      "stop_evidence": {
+        "accepted_samples": 0,
+        "quiet_samples": 0,
+        "sample_gaps": 0,
+        "wall_elapsed_ms": 3050,
+        "quiet_acquisition_ms": 0,
+        "quiet_arrival_ms": 0,
+        "last_odom_age_ms": 3967,
+        "last_linear_mps": 0.0,
+        "last_angular_rad_s": 0.0
+      },
+      "new_action_refused": true
+    }
+  ],
+  "passed": true
+}

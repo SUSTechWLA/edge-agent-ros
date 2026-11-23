@@ -1,0 +1,19 @@
+{
+  "local_digest": "68bb8adba5a689786a077210c47b748f82aafc71c73d6011ef27f754116b8eda",
+  "revision": "19484d2a6ea5+local.68bb8adba5a6",
+  "base": "19484d2a6ea56920698bff148805db0876603482",
+  "files": [
+    "bb94dea784a1d966d5d3c0572ed4c8b1c0bd2c2900ce5ca47c375e6a1661ed1b docs/specs/SDD-056-rover-local-plan.md",
+    "c8619a570e4d9d8434a777d10a9960c798722c5143a1b8602177981b841abab6 src/edge_gateway/CMakeLists.txt",
+    "ebc5c4f9c321fe93cd075b11b1ccef536fd77d72b041e0efb3f13e81cfc40fbd src/edge_gateway/src/edge_gateway_node.cpp",
+    "8f5ccf7f6b4bc1b0076f92f05ace492f4d425007b10db2f63d1f91f481dbef59 src/edge_gateway/src/local_plan_json.hpp",
+    "a0065808ccecf5271005c82b8f0f8d5f15600a713f88a00c14c89e8d25a8015f src/edge_gateway/src/local_planner.cpp",
+    "04f037bd78d6587a6dfe6612847d3bc03ffc3d6ef91baf2aa68c65a7510c734e src/edge_gateway/src/local_planner.hpp",
+    "5943f528659a1e8b8e283dd319b97027e32ad3932841a2e8575caf3b65b5ce73 src/edge_gateway/test/local_planner_test.cpp",
+    "9063668c9a7ceb73676b152f14ff1bbae9376b1cae71078aa9b7bb8cd2b8265c tests/system_suite.py",
+    "f414ce7b742f06ff8db038cf55f85be1e198dd95ec04c40a968357429fa3140a tests/system/campus_local_plan_acceptance.py",
+    "f3bac2f0b6f8e05e73c537238f6891c8abec4e6678f1262f411176623a7a10d0 tests/system/campus_local_plan_witness.py",
+    "4d1b14143cd96148b8c0193d941520f313269216c1e05c95d8a618a0c1547931 tests/system/campus_route_geometry.py",
+    "7a6c3d5041523099f79cabbf29d81611aba6b761f937b9f715d9fc5223e62a80 tests/test_selection.py"
+  ]
+}

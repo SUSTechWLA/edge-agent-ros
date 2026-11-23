@@ -1,0 +1,25 @@
+# Apply last, explicitly, with compose.hardware.yaml and compose.rover-maneuver.yaml.
+x-commissioning: &commissioning
+  type: bind
+  source: ${EDGE_ROVER_COMMISSIONING_DIR:?set the independently reviewed bench evidence directory}
+  target: /commissioning
+  read_only: true
+  bind: {create_host_path: false}
+x-bench: &bench
+  command: [--profile, bench.json]
+  environment:
+    EDGE_ROVER_REQUIRE_BENCH: "1"
+    EDGE_ROVER_BENCH_APPROVAL: /commissioning/review.json
+    EDGE_ROVER_BENCH_APPROVAL_SHA256: ${EDGE_ROVER_BENCH_APPROVAL_SHA256:?set the approved review.json digest}
+  volumes: [*commissioning]
+services:
+  agent:
+    environment: {EDGE_ROVER_REQUIRE_BENCH: "1"}
+  maneuver-controller:
+    <<: *bench
+  rover-execute:
+    <<: *bench
+    network_mode: host
+  rover-verify:
+    <<: *bench
+    network_mode: host

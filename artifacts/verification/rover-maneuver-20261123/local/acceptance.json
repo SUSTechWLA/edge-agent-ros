@@ -1,0 +1,393 @@
+{
+  "centered": {
+    "agent_task": "local-centered-492f81b83e",
+    "model": {
+      "model": "qwen3:4b-instruct",
+      "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen3",
+        "families": [
+          "qwen3"
+        ],
+        "parameter_size": "4.0B",
+        "quantization_level": "Q4_K_M"
+      }
+    },
+    "model_steps": [
+      {
+        "args": {},
+        "tool": "avoid_front_obstacle"
+      }
+    ],
+    "model_response_sha256": "35569005014555ceafab626bbe9b425a40250be6a61bc2671e14b2ebe1e1ade2",
+    "physical_op": "local-centered-492f81b83e/step/1",
+    "site_resource": "sim.lingao.base",
+    "core_operation": "local-centered-492f81b83e/step/1/waypoint/1",
+    "profile": {
+      "binding": "sha256:da0dd16bf575aca2b7625c283a34d914160406f333c200aa0e003e93fb035ff3",
+      "class": "physical",
+      "content_digest": "sha256:77ddcd13a870f29e880cc4612a5423e3d4747dbd28810b7162bc1ba2b7c355a3",
+      "image_digest": "sha256:92d101f215f30d47038749987cea5f6c01a7fe0eb5e6bbd9dce7ca4ec61664a7",
+      "name": "avoid_front_obstacle",
+      "plugin_id": "rover.local_maneuver",
+      "provider_id": "rover.core_adapter",
+      "reservation_id": "local-centered-492f81b83e/step/1",
+      "resource_id": "sim.lingao.base",
+      "sensor": {
+        "approval_digest": null,
+        "ros_domain_id": 135,
+        "site_digest": "sha256:c95e9e3d41163124d0475183637624efa92dfc6876a67991817ae14fcb9d8924"
+      },
+      "verifier_id": "rover.world_witness",
+      "version": "1.0.0"
+    },
+    "goal_in_odom": [
+      3.450095896720886,
+      9.449424591527496e-17
+    ],
+    "verified_steps": 1,
+    "arrival_error_m": 0.030191937107603883,
+    "swept_clearance_m": 0.5630387875630931,
+    "peak_lateral_m": 1.073514970688336,
+    "no_non_ground_contact": true,
+    "passed_checks": 39,
+    "crossing": null,
+    "independent_verification": {
+      "arrival_error_m": 0.030191937107603883,
+      "boot_id": "4dc33c62-2ff1-418d-9c06-94c16b67e0c1",
+      "epoch": 1,
+      "first_ns": 48450000000,
+      "last_ns": 48960000000,
+      "max_angular_radps": 7.183796041692189e-14,
+      "max_linear_mps": 8.933136693098524e-06,
+      "observed_path_m": 4.776276449069508,
+      "operation_id": "local-centered-492f81b83e/step/1",
+      "resource_id": "sim.lingao.base",
+      "samples": 16,
+      "source": "/ground_truth",
+      "world_final": [
+        9.458584653648296,
+        0.028974024107384033
+      ],
+      "world_frame": "world",
+      "world_goal": [
+        9.450095896735732,
+        1.0118954359397443e-11
+      ],
+      "world_initial": [
+        6.000000000014846,
+        1.0118945845566175e-11,
+        2.4677085864650078e-18
+      ]
+    },
+    "artifacts": {
+      "archive": "centered.tar.gz",
+      "sha256": "d229a418913a1fc19f20241f2746256a73b475fbdf8e35ec886d4a4df40bc99a",
+      "entries": {
+        "agent-task.json": "7831f94e1b85659a59999127c340cd2e185757430158ff6f11899677b82e9dbd",
+        "authorization-denied.json": "6a8d463d6875e51fd972bb164731608aba64b79afb7e0cb1acd5b65afa2eaa06",
+        "catalog.json": "9825662573103a3e61cf6ac856f052db2377fcdd869115e8ef36ee11c7929c34",
+        "core-ledger.json": "fe7515abe9a081fb71850efb2327fba668f496e57577ea20a94b12d15107c1db",
+        "deployment.json": "f9fe20ecb82b8c30eb228f874720113385c86b5755a0d9510f964c0ad57bd37b",
+        "mission.json": "4f28f626b9a77c51448f9630cc6064faade40e56c882851a9b68c3089cfd48d0",
+        "model.json": "aaac62664bf063839492e28a82d450fb1bde2e43d7a3388412e56fa9862a94c0",
+        "physical-ledger.json": "b9d476bb1eeeb172d86555089641104faa79ec1632e807a43e6d271f5a278e16",
+        "run.json": "853368cce525eadf7352e025b29842ffd3d11eba1370c82bd9e41709b782495d",
+        "score.log": "6a1ba521fa9967429798b7eb968b1c3b9222a19e571d033176dd3d50de25c23b",
+        "services.log": "89cfa9e58b0294fc80972aebf34c1c6365f5236c1d7bc53d8bf0dbc7c1940c6b",
+        "site/platform.json": "92d101f215f30d47038749987cea5f6c01a7fe0eb5e6bbd9dce7ca4ec61664a7",
+        "site/sim.json": "c95e9e3d41163124d0475183637624efa92dfc6876a67991817ae14fcb9d8924",
+        "submitted.json": "58b50f9fee743119ae41f723bfc3dbdf3d939835b436f5abfc42d500784c87cb",
+        "vehicle-profile.json": "fcd2ddaad3fad99e6a31f1f4296bdecfa3421985a3c4fb4f8f74d4540077e7dc",
+        "witness/clearance.json": "b1ac5d86ab1ff402b4d497bb6475b2bae70cf77cffa01847d3a6dfd696726fb3",
+        "witness/complete.json": "0298bbe8a14a908777ec3a7289234dfbd91d51049e8b784a668fe0c8ffdfa4e5",
+        "witness/geometry.json": "3b3bc86ed18eebd5628452cd6d3224b33ebe1b409ffa14695935bfb854ff8237",
+        "witness/measurements.json": "359e2f7f7d1cf919d54b84041a78ca1b8414b18f276ebbbb421a0bf0990a3d14",
+        "witness/observations.jsonl": "de65c75eb376db14d3a80641c4b417a85a2e974be89a6b64dab4c870699ec755",
+        "witness/ready.json": "d66070b94a75585167929b1597641dcf4da9bdba418d33413d39134cc1fbdff0",
+        "witness/score.json": "465e77d9b9f3ddd55827a4ec85b22114acfb0b43736a115b9794dfd9a6230325",
+        "witness/world.sdf": "dda32d5782f124856e982b97cfe62ff420e799b1c911441bdde90dcb84dbce23"
+      }
+    }
+  },
+  "crossing": {
+    "agent_task": "local-crossing-38daf497c9",
+    "model": {
+      "model": "qwen3:4b-instruct",
+      "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen3",
+        "families": [
+          "qwen3"
+        ],
+        "parameter_size": "4.0B",
+        "quantization_level": "Q4_K_M"
+      }
+    },
+    "model_steps": [
+      {
+        "args": {},
+        "tool": "avoid_front_obstacle"
+      }
+    ],
+    "model_response_sha256": "4c5d455a8c144eabb5ebb0d7031699d563e7bd8392ef363e0cdb832800718e8a",
+    "physical_op": "local-crossing-38daf497c9/step/1",
+    "site_resource": "sim.lingao.base",
+    "core_operation": "local-crossing-38daf497c9/step/1/waypoint/1",
+    "profile": {
+      "binding": "sha256:7beb327b7a2a667fba8a41e7465572732a9abf03faf88f1d603303073095f622",
+      "class": "physical",
+      "content_digest": "sha256:77ddcd13a870f29e880cc4612a5423e3d4747dbd28810b7162bc1ba2b7c355a3",
+      "image_digest": "sha256:92d101f215f30d47038749987cea5f6c01a7fe0eb5e6bbd9dce7ca4ec61664a7",
+      "name": "avoid_front_obstacle",
+      "plugin_id": "rover.local_maneuver",
+      "provider_id": "rover.core_adapter",
+      "reservation_id": "local-crossing-38daf497c9/step/1",
+      "resource_id": "sim.lingao.base",
+      "sensor": {
+        "approval_digest": null,
+        "ros_domain_id": 154,
+        "site_digest": "sha256:c95e9e3d41163124d0475183637624efa92dfc6876a67991817ae14fcb9d8924"
+      },
+      "verifier_id": "rover.world_witness",
+      "version": "1.0.0"
+    },
+    "goal_in_odom": [
+      3.2566751346638902,
+      9.225314154854255e-17
+    ],
+    "verified_steps": 1,
+    "arrival_error_m": 0.02019362680735721,
+    "swept_clearance_m": 0.9402625769141676,
+    "peak_lateral_m": 0.003866985640304531,
+    "no_non_ground_contact": true,
+    "passed_checks": 48,
+    "crossing": {
+      "conflict_prediction_ns": 30518857142,
+      "cart_at_unyielded_arrival_xy": [
+        7.65,
+        0.3730714284597645
+      ],
+      "cart_cleared_ns": 34320000000,
+      "rover_entered_ns": 41378000000,
+      "longest_stopped_before_entry_s": 9.588000000000001,
+      "actor_truth_samples": 1954,
+      "actor_start_xy": [
+        7.65,
+        -0.38
+      ],
+      "actor_end_xy": [
+        7.65,
+        1.4394799999995702
+      ],
+      "peak_cart_speed_mps": 0.130000000000019,
+      "yield_events": 1,
+      "clear_events": 1,
+      "tracked_ids": [
+        4
+      ],
+      "eligible_velocity_scans": 89,
+      "compared_velocity_samples": 71,
+      "matched_track_samples": 71,
+      "max_track_outside_cart_m": 0.00048089135318746257,
+      "max_transverse_speed_error_mps": 0.06568871039286159,
+      "max_vector_velocity_error_mps": 0.22500041648153238,
+      "vector_velocity_error_over_0p075_samples": 11,
+      "angular_ambiguity_samples": 0,
+      "laser_range_resolution_m": 0.01,
+      "max_observed_rover_speed_mps": 0.2800000212221057,
+      "max_observed_rover_yaw_radps": 0.0025556591540596136
+    },
+    "independent_verification": {
+      "arrival_error_m": 0.02019362680735721,
+      "boot_id": "4dc33c62-2ff1-418d-9c06-94c16b67e0c1",
+      "epoch": 1,
+      "first_ns": 49742000000,
+      "last_ns": 50252000000,
+      "max_angular_radps": 4.191085006487273e-14,
+      "max_linear_mps": 7.5792808988544e-06,
+      "observed_path_m": 3.2368584614636955,
+      "operation_id": "local-crossing-38daf497c9/step/1",
+      "resource_id": "sim.lingao.base",
+      "samples": 16,
+      "source": "/ground_truth",
+      "world_final": [
+        9.236855220811796,
+        0.003866985650361902
+      ],
+      "world_frame": "world",
+      "world_goal": [
+        9.256675134678737,
+        1.0118953882091367e-11
+      ],
+      "world_initial": [
+        6.000000000014846,
+        1.0118945845566175e-11,
+        2.4677085864650078e-18
+      ]
+    },
+    "artifacts": {
+      "archive": "crossing.tar.gz",
+      "sha256": "2ee74f7afec66e9d965a44679d7156b596dbc7b6e7074edd4a7f05d58afcb5de",
+      "entries": {
+        "agent-task.json": "b4eb013baf00a5de476bfd4ae2e5f98ab627e375fb69d779a088f5f88346d2b5",
+        "authorization-denied.json": "6a8d463d6875e51fd972bb164731608aba64b79afb7e0cb1acd5b65afa2eaa06",
+        "cart.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "catalog.json": "9825662573103a3e61cf6ac856f052db2377fcdd869115e8ef36ee11c7929c34",
+        "core-ledger.json": "75730caee2c3b0298cc1245fcf076cdae220aeec2ce9573ce5f1560e01028dc5",
+        "deployment.json": "f9fe20ecb82b8c30eb228f874720113385c86b5755a0d9510f964c0ad57bd37b",
+        "mission.json": "7942f3e5bd2052ed02c3c42712796fe5fe9d212f69ab390a081228fce9253021",
+        "model.json": "aaac62664bf063839492e28a82d450fb1bde2e43d7a3388412e56fa9862a94c0",
+        "physical-ledger.json": "bb02e5ee3038966623264cdeaa36c57a553f7f987abaf8c2253249068307e343",
+        "run.json": "e1ea9f153681660096d84abca2512869ac832b19482e221219db34e16aee9886",
+        "score.log": "d0c34544b537e8ecbea4697cad85563b77344b4363315ec1b2ed43964db923f4",
+        "services.log": "12351aa354f07c6a8d32c346c532944fb189f451863fc8ff61f187bb03a18dad",
+        "site/platform.json": "92d101f215f30d47038749987cea5f6c01a7fe0eb5e6bbd9dce7ca4ec61664a7",
+        "site/sim.json": "c95e9e3d41163124d0475183637624efa92dfc6876a67991817ae14fcb9d8924",
+        "submitted.json": "248ab571bcbf0909e4084e39f446930814433b5129f949363ff42b81b08abdce",
+        "vehicle-profile.json": "fcd2ddaad3fad99e6a31f1f4296bdecfa3421985a3c4fb4f8f74d4540077e7dc",
+        "witness/cart-armed.json": "4589e820ab81414fcf9359ac9c2c209ebc68872a3d8515476c31d6b13c682b26",
+        "witness/cart-motion.json": "e7fb07c3122c5d4ea47b5f91e8f4eb3a4cf3b6daa645a16e7ae3702355f3df85",
+        "witness/clearance.json": "e97b1892f859f25348b9d7623e2355a1660733a41ff2025ed39848d70b26280a",
+        "witness/complete.json": "581b6ac23b870150c87a884b2a330e567f4821c54ae1e85cd1119b68ee53595d",
+        "witness/geometry.json": "86819f6097513da44e442b99380a3d7cd44ad6fe80144f8fe2e21564bc366d65",
+        "witness/measurements.json": "8608a267d65c5f5150e66baccaea857643b0768d9be216434ab71696b5a72153",
+        "witness/observations.jsonl": "7ced74ba24b7ab1bbb0e72fe83d7a7c80923c174e2494065988688cc041b5e24",
+        "witness/ready.json": "c26b4e99cde5a91dfc69b2ce96e79c6e648d26a5bc7653a3c6e05b71a26203ee",
+        "witness/score.json": "71bfa88a6ac36a1ae4e6644554a3b933d9fef7ea97f35f74ef541f0c4a6ca685",
+        "witness/world.sdf": "44824f2bda3e0cb28af49454780996144def5089b35197e76c30e00a7a8a670b"
+      }
+    }
+  },
+  "build": {
+    "archive": "build.tar.gz",
+    "sha256": "a0ed2d170945b6071194d68b37268a63d48784cb17af35e83c74ab838b95eaff",
+    "entries": {
+      "ctest.txt": "98b7de2e060e742a92574f6508482611fb3d358a2a3b7a7336e956711f5ab9d2",
+      "image.txt": "3fff317b0b240f6fa6d793ae841aa19b5551d128d5b158ff21d0827d89e4e604",
+      "source.txt": "1f55343bc1a74584b202642f09b679786f2e5ac043f703b22f23b065703c6dd3"
+    }
+  },
+  "earlier_runs": {
+    "archive": "earlier-runs.tar.gz",
+    "sha256": "b99335980601dd2f3e5823d1484fa3e21e904e35f01f22a7ad97c844c0e3e893",
+    "entries": {
+      "dynamic-surface/agent-task.json": "0fe05e65609ebef5e09b540bc7f3c07a2556f55456f5b812d442669b0a58b26c",
+      "dynamic-surface/deployment.json": "eb1a3b83bae84ba1409c89001ad769a95a8644446e8eba0be0bb9ad4357b1f0a",
+      "dynamic-surface/run.json": "4113557d85daec8dbe21466d96257fb85220af7b264d4b7e377e20b37fe3d46a",
+      "dynamic-surface/submitted.json": "0579a5748bf12b626aaa79447449aa3485b60728899c0deaf386d0caf44c1863",
+      "dynamic-surface/witness/cart-motion.json": "3ac17e0e954856c61c1401e3d5060a3f2002aba0b97d4e53f80f65a3507640bf",
+      "dynamic-surface/witness/observations.jsonl": "6b268bc3c29a9c1a8ea25bc8d76cbf87cde5320adb0fde02d9e5a04b079b0f14",
+      "dynamic-surface/witness/score.json": "3db805e35a96e5cdb03a6473dda1a450c7d619eb4fa5d3930bbc7ed9dedb865c",
+      "dynamic-surface/witness/world.sdf": "7445f96f4bc87760b65592207dae8f4a58936d18125082eaa6c4fc20e096948b",
+      "false-reentry/agent-task.json": "70bada13bf2ac9000fc4e0d34094814e1b140b5498344404edcf793ad6a2d694",
+      "false-reentry/deployment.json": "17e40d0aafaaf5c5bd937ad76abfe8b539f1e12efe461f8f31fc45e58d58df82",
+      "false-reentry/run.json": "116adeea814ece7e668e47eb7858d2d3baf54bab2254acf7ba6542f1878acb4f",
+      "false-reentry/submitted.json": "9d861899ea4220d24e05e13ab9d1245fd8596f95f55d7e7c280c9d86bcc1c5cc",
+      "false-reentry/witness/cart-motion.json": "ca8dad38b559496c76fd64b19a3fba5649c66c8933001495d166c21a6cf4a403",
+      "false-reentry/witness/observations.jsonl": "f3db4d89d62bf16f6a15f0d041d563369503b09821cbee9c56c7a3cb7243dcee",
+      "false-reentry/witness/world.sdf": "712dc65c9bd27d5123e511f77e6a3ff7e0ad38e90ef100775706a23e75cf4f18",
+      "static-view-change/agent-task.json": "d0d8c5faa8578532c07d3a6a9e4fc5fc9e5ede86fa0d2b6de3b7239f846c1dc1",
+      "static-view-change/deployment.json": "eb1a3b83bae84ba1409c89001ad769a95a8644446e8eba0be0bb9ad4357b1f0a",
+      "static-view-change/run.json": "1cad1d4425f78edda7957edeb57143e382724ad4fb4ad6c73f92b968c436bee9",
+      "static-view-change/submitted.json": "510ae6719f94a9153d2f741c76492cf1d8c854f20905e1a1bb1ca80b46992226",
+      "static-view-change/witness/observations.jsonl": "4bde48f788145abf6d21af8d816ed8404b83a239be499cbc37fbcecd41583986",
+      "static-view-change/witness/world.sdf": "e25b92226d6417408a3a376460024e964ff79a126d400c80d723389cbf63c4fa"
+    }
+  },
+  "supplement": {
+    "archive": "additional-checks.tar.gz",
+    "sha256": "c38740bbe4240212b4b94716cfce904d5f854bd4c8b5ed640fd470df97e25f78",
+    "entries": {
+      "bench-witness-result.json": "ba144d1058b29a03f43343b01055aa238c7fc2674279713ad0a5d6aa86062125",
+      "bench-witness-test.py": "cea94b172b20609b40d4727efa677f5071b3f3fa322cbe6b147a8f5f7c4e377e",
+      "false-reentry-truth.json": "3dff7259627d1fc078724460cf7ef874d76dff917bb88659584e44d8ec852cf4",
+      "negative-velocity.json": "c66f43a80a5b6f9beaa8ec47afe2c56631bc073894689cafcbe5118770ebbd4d",
+      "scan-corpus.json": "dba9e97686861726db5571deabc7bdc9eee46f0ab04566b49342aa6f151d937b",
+      "stationary-input/bad-tf.json": "365abed70e1341ce81646eb817e13e6d7bf384a63bbb07df1d182bbcaa819ebe",
+      "stationary-input/missing.json": "d208bb362853485ab32622b30487e31dbd41b849233ddece427aa9f9c866ff82",
+      "stationary-input/nominal.json": "d3bfb62337d57436e9912703aa839db4c48ff7e966d61f16cf4629f0cc38e542",
+      "stationary-input/result.json": "f92e8755c944142407b9403090a02551077355aae89078135c6fa852640ca91d",
+      "synonym-plan.json": "556cb7b0e4d0b052afd6ff48456ca514953de12f416a45161cfc296cb391b790",
+      "system-contracts.log": "3a179f50084e8948341ba738c6041e59d058b88c23d79ea63bb6d0f6eb22488e"
+    }
+  },
+  "core_repeat": {
+    "scope": "direct Core control experiment in a fresh world",
+    "arrival_error_m": 0.017800798539521198,
+    "swept_clearance_m": 0.9401787575515899,
+    "crossing": {
+      "conflict_prediction_ns": 24142857142,
+      "cart_at_unyielded_arrival_xy": [
+        7.65,
+        0.3655314284597634
+      ],
+      "cart_cleared_ns": 28000000000,
+      "rover_entered_ns": 35156000000,
+      "longest_stopped_before_entry_s": 9.588000000000001,
+      "actor_truth_samples": 1567,
+      "actor_start_xy": [
+        7.65,
+        -0.38
+      ],
+      "actor_end_xy": [
+        7.65,
+        1.4392199999995703
+      ],
+      "peak_cart_speed_mps": 0.130000000000019,
+      "yield_events": 1,
+      "clear_events": 1,
+      "tracked_ids": [
+        4
+      ],
+      "eligible_velocity_scans": 89,
+      "compared_velocity_samples": 74,
+      "matched_track_samples": 74,
+      "max_track_outside_cart_m": 0.00048089135318746257,
+      "max_transverse_speed_error_mps": 0.065688619841485,
+      "max_vector_velocity_error_mps": 0.18531208685093842,
+      "vector_velocity_error_over_0p075_samples": 8,
+      "angular_ambiguity_samples": 0,
+      "laser_range_resolution_m": 0.01,
+      "max_observed_rover_speed_mps": 0.28000000989684154,
+      "max_observed_rover_yaw_radps": 0.002644907453071233
+    },
+    "artifacts": {
+      "archive": "core-repeat.tar.gz",
+      "sha256": "2fa7f9699d3427d6715f94a26d134d4fbed9106590e94ae167e0097b68405d9b",
+      "entries": {
+        "core-ledger.json": "319c5167d8797e7151f3ebcda5748633ba0fd40c23687b2aa9a019342c8bc166",
+        "mission.json": "e0f5efc31199f2cfb414118509d96547bca628cb1e69e8236a66919bf306c478",
+        "run.json": "4cca8ee40cb6101faa7ab4583154496d6640db01b49b76d26f02164995ae059f",
+        "witness/cart-motion.json": "85ab9533926f7db2c23f8da84eabc21ca6664ca3763875c3518ba7447b3ea5c3",
+        "witness/measurements.json": "f299b5f8ed3814b762f69a2821b5b23d02440fc34f7571f5419de4ede5e91720",
+        "witness/observations.jsonl": "97d5ebf47a4f195c22c502a58c0b408c7c9221507cb9dbb9e530966c70b02693",
+        "witness/score.json": "c309fd2526906f434c81134c88c63e2c05e8915fd7c1d302208d237a44696a86",
+        "witness/world.sdf": "44824f2bda3e0cb28af49454780996144def5089b35197e76c30e00a7a8a670b"
+      }
+    }
+  },
+  "arm64": {
+    "scope": "local Docker QEMU linux/arm64 on the projected hardware ROS image, no robot attached",
+    "platform_manifest": "sha256:7100de77cd322c4d63889a2f4fcd4697f8e66575ce3a2e3a9918defe812e79b4",
+    "kernel_contracts": 2,
+    "agent_contracts": 8,
+    "artifacts": {
+      "archive": "arm64-checks.tar.gz",
+      "sha256": "e252491f5293a70732d7856c2c8abda8eb548a5bf3ba9ac61aba4cd5e975bdf6",
+      "entries": {
+        "Dockerfile.arm64-delivery": "d852b9fa8ebb4356ba4d56c0c1d68b15cb4a7e138ce70927c2042b54e81eb4af",
+        "Dockerfile.arm64-qa": "20c45d341f313c003129662ad4f2f87b66df2c42abd36f42af4c8e8df2245d63",
+        "arm64-build.log": "e91d1a98bd624b153e002515d0a7e72e04f03ce562911a929af7ceeb53cb6c69",
+        "arm64-contracts.txt": "967cab91e472f7916fa13790c11465e835979ab15a673db96e5b2034f3a71c94",
+        "arm64-ctest.txt": "978740df1373fffeeb2b62949c87bd510110ee2fc343882b63614a5a32cb7f7f",
+        "arm64-final-build.log": "8db10eadcccb104abb5d91793d23217420d5fbbc7a63e24812510aec0e7148d2",
+        "arm64-image.txt": "99383a0c983de0c491250bc0c4d51eb52ff2a343055475251dc907dca315da51"
+      }
+    }
+  }
+}

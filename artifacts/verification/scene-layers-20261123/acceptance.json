@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "source": "Chromium page screencast of loopback archive workbench",
+  "clock": "Chapter offsets use the monotonic capture clock; sensor and admission stamps are separate.",
+  "passed": true,
+  "chapters": [
+    {
+      "title": "打开 Jetson 归档工作台",
+      "sec": 0.489
+    },
+    {
+      "title": "在各自坐标系读取实测观测",
+      "sec": 2.476
+    },
+    {
+      "title": "核对未配准原因和采样时差",
+      "sec": 6.144
+    },
+    {
+      "title": "停用前 · 实车近障保持原位",
+      "sec": 10.42
+    },
+    {
+      "title": "停用前 · 仿真中央箱体绕行",
+      "sec": 13.79
+    },
+    {
+      "title": "热停用纹理插件，再次读取被拒绝",
+      "sec": 17.607
+    },
+    {
+      "title": "停用后 · 再次请求实车近障规划",
+      "sec": 22.37
+    },
+    {
+      "title": "停用后 · 同一输入生成同一条绕行曲线",
+      "sec": 26.327
+    },
+    {
+      "title": "俯视复核候选路径",
+      "sec": 29.65
+    }
+  ],
+  "calls": [
+    {
+      "path": "/api/state",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/layers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/layers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/compose",
+      "method": "POST",
+      "status": 422
+    },
+    {
+      "path": "/api/plan",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/plan",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/texture",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/state",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/layers",
+      "method": "POST",
+      "status": 409
+    },
+    {
+      "path": "/api/plan",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/plan",
+      "method": "POST",
+      "status": 200
+    }
+  ],
+  "issues": [],
+  "before": {
+    "archive": "jetson-20261123",
+    "texture_enabled": true,
+    "plugins": [
+      {
+        "id": "map.mid360.occupancy",
+        "service": "map.mid360.occupancy",
+        "kind": "occupancy",
+        "version": "1.0.0",
+        "status": "ready",
+        "binding": "7959d6c16f1f7bd12206a4d4b967ae764ec97c1305ca875feb26907ddba3e470",
+        "pid": 48588,
+        "process_alive": true
+      },
+      {
+        "id": "map.rgbd.surface",
+        "service": "map.rgbd.surface",
+        "kind": "texture",
+        "version": "1.0.0",
+        "status": "ready",
+        "binding": "9e806bbfa3783db4b9ea90bb391ad83cb5bce058409e1c2e6b88be1824da6d3b",
+        "pid": 19008,
+        "process_alive": true
+      },
+      {
+        "id": "map.scene.query",
+        "service": "map.scene.query",
+        "kind": "query",
+        "version": "1.0.0",
+        "status": "ready",
+        "binding": "48a029c099e4c45331d0974b4368ddf80e2d3d67e47bf1d6df104d6a30b90971",
+        "pid": 12568,
+        "process_alive": true
+      },
+      {
+        "id": "planning.rover_preview",
+        "version": "1.1.0",
+        "status": "ready",
+        "binding": "229ade535127c4fabeebafe961d45b6443ebe9459fd92e2a8837b2bc43ccacd5"
+      }
+    ]
+  },
+  "layers": {
+    "occupancy": {
+      "scene_ref": "sha256:5c221bd2bdcf702f3b8dd832f128737d4e88865d0f41094c877b70f95c79612c",
+      "layer_ref": "sha256:f76bd412a653ea5869be986aa60ff8931c2ffb349671682df5d6c4bfd08cbce2",
+      "frame_id": "base_foot",
+      "stamp_ns": "1795426860849442708",
+      "voxel_count": 330,
+      "cell_m": 0.1
+    },
+    "texture": {
+      "scene_ref": "sha256:7601c253d79044c01f72cb07a5d7362b794c2aac80eb8f0c1d7d6ef83ab5df86",
+      "layer_ref": "sha256:cc3e10be7fa3cb817bf746e2df8b6d9f6e57ef87d9bb87b905fe836564c15047",
+      "frame_id": "camera_color_optical_frame",
+      "stamp_ns": "1795428078267543457",
+      "registration": "camera_only",
+      "triangles": 3824,
+      "color_ref": "sha256:3cbe0c9882155330cc7d26e3cba5820dd09960f71603e1dbb8c37f049cd1c934"
+    }
+  },
+  "compose": {
+    "status": "refused",
+    "scene_ref": null,
+    "reasons": [
+      {
+        "code": "scene.missing_registration",
+        "requested_frame": "base_foot",
+        "available_frames": [
+          "base_foot",
+          "camera_color_optical_frame"
+        ]
+      },
+      {
+        "code": "scene.time_skew",
+        "span_ms": 1217540.091903,
+        "allowed_ms": 250
+      }
+    ],
+    "time_span_ms": 1217418.100749,
+    "motion_authorized": false
+  },
+  "planning_before": {
+    "field_hold": {
+      "case": "field_hold",
+      "request_id": "f445a80ecebd4fd0bf2eccdb6ed227b3",
+      "service": "planning.local_path",
+      "provider_version": "1.1.0",
+      "binding": "229ade535127c4fabeebafe961d45b6443ebe9459fd92e2a8837b2bc43ccacd5",
+      "evaluation_seq": 3,
+      "snapshot_ref": "sha256:e6121757697909e785edc0fa528718e9fcd4a9f38e81a1e8834a8a82079e8374",
+      "geometry_ref": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "Jetson 双 MID-360 归档",
+      "source_clock": "unix",
+      "source_stamp_ns": "1795426860849442708",
+      "admission_stamp_ns": "1795426860849442708",
+      "clock_mode": "frozen_archive_clock",
+      "profile_id": "lingao.archive.planar.v1",
+      "status": "blocked",
+      "reason": "current_footprint_below_margin",
+      "base_frame": "base_foot",
+      "margin_m": 0.55,
+      "present_min_clearance_m": 0.04099999999999998,
+      "coverage_fraction_on_path": null,
+      "path_points": 0,
+      "motion_authorized": false
+    },
+    "centered": {
+      "case": "centered",
+      "request_id": "106f7dd0c49f43a88d7f3a10c5b9062c",
+      "service": "planning.local_path",
+      "provider_version": "1.1.0",
+      "binding": "b0c5558ad3452b008f15647a855952c0d4db16a190b7f48fc904c501ee0d139c",
+      "evaluation_seq": 3,
+      "snapshot_ref": "sha256:26d8fa00d07306d0a0daacb22c6b57ae24fa1cc8d4f60d9755743315427b3cb7",
+      "geometry_ref": "sha256:c69a019a85feec3ef29869aa5d7603d2c17850afb2011dd7c2fcefff833b5c08",
+      "source": "Gazebo 归档",
+      "source_clock": "simulation",
+      "source_stamp_ns": "13876000000",
+      "admission_stamp_ns": "1704067213876000000",
+      "clock_mode": "frozen_archive_clock",
+      "profile_id": "lingao.archive.planar.v1",
+      "status": "partial",
+      "reason": "candidate_with_unknown_coverage",
+      "base_frame": "base_link",
+      "margin_m": 0.55,
+      "present_min_clearance_m": 1.390262460916752,
+      "coverage_fraction_on_path": 0.8263254113345521,
+      "path_points": 123,
+      "motion_authorized": false
+    }
+  },
+  "disable": {
+    "state": "absent",
+    "service": "map.rgbd.surface",
+    "pid": 19008,
+    "exit_code": 0,
+    "drain": {
+      "action": "publish",
+      "id": "map.rgbd.surface",
+      "previous": "2340c692cc0d14535d8d9d1d725d44c299181417a178fc982af94e9b757f994f",
+      "change_id": "44a09934c43d4f518b8ee012dcee4508",
+      "event_id": "9a6a1130e3f5432ab8c24450ecef3c2f",
+      "version": "036e69ba5fb0664b6f8849659f1cabf0feaeea5039a1eda25ff1dd0c9f3d7eb4",
+      "declared_version": "1.0.0"
+    },
+    "remove": {
+      "action": "remove",
+      "id": "map.rgbd.surface",
+      "previous": "036e69ba5fb0664b6f8849659f1cabf0feaeea5039a1eda25ff1dd0c9f3d7eb4",
+      "change_id": "902b96a4f4a4471bbb157aa109fe3f58",
+      "event_id": "dc5c15eb1b264b4f94940767ec28ad78"
+    }
+  },
+  "after": {
+    "archive": "jetson-20261123",
+    "texture_enabled": false,
+    "plugins": [
+      {
+        "id": "map.mid360.occupancy",
+        "service": "map.mid360.occupancy",
+        "kind": "occupancy",
+        "version": "1.0.0",
+        "status": "ready",
+        "binding": "7959d6c16f1f7bd12206a4d4b967ae764ec97c1305ca875feb26907ddba3e470",
+        "pid": 48588,
+        "process_alive": true
+      },
+      {
+        "id": "map.scene.query",
+        "service": "map.scene.query",
+        "kind": "query",
+        "version": "1.0.0",
+        "status": "ready",
+        "binding": "48a029c099e4c45331d0974b4368ddf80e2d3d67e47bf1d6df104d6a30b90971",
+        "pid": 12568,
+        "process_alive": true
+      },
+      {
+        "id": "planning.rover_preview",
+        "version": "1.1.0",
+        "status": "ready",
+        "binding": "229ade535127c4fabeebafe961d45b6443ebe9459fd92e2a8837b2bc43ccacd5"
+      }
+    ]
+  },
+  "texture_read_after_disable": {
+    "http_status": 409,
+    "code": "plugin.service_missing",
+    "scene_ref": null
+  },
+  "planning_after": {
+    "field_hold": {
+      "case": "field_hold",
+      "request_id": "e48b05e2a20e4a55802bed9d0cbf7c33",
+      "service": "planning.local_path",
+      "provider_version": "1.1.0",
+      "binding": "229ade535127c4fabeebafe961d45b6443ebe9459fd92e2a8837b2bc43ccacd5",
+      "evaluation_seq": 4,
+      "snapshot_ref": "sha256:e6121757697909e785edc0fa528718e9fcd4a9f38e81a1e8834a8a82079e8374",
+      "geometry_ref": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "Jetson 双 MID-360 归档",
+      "source_clock": "unix",
+      "source_stamp_ns": "1795426860849442708",
+      "admission_stamp_ns": "1795426860849442708",
+      "clock_mode": "frozen_archive_clock",
+      "profile_id": "lingao.archive.planar.v1",
+      "status": "blocked",
+      "reason": "current_footprint_below_margin",
+      "base_frame": "base_foot",
+      "margin_m": 0.55,
+      "present_min_clearance_m": 0.04099999999999998,
+      "coverage_fraction_on_path": null,
+      "path_points": 0,
+      "motion_authorized": false
+    },
+    "centered": {
+      "case": "centered",
+      "request_id": "32fb86e5bb2a4efc9e412171291a8bb5",
+      "service": "planning.local_path",
+      "provider_version": "1.1.0",
+      "binding": "b0c5558ad3452b008f15647a855952c0d4db16a190b7f48fc904c501ee0d139c",
+      "evaluation_seq": 4,
+      "snapshot_ref": "sha256:26d8fa00d07306d0a0daacb22c6b57ae24fa1cc8d4f60d9755743315427b3cb7",
+      "geometry_ref": "sha256:c69a019a85feec3ef29869aa5d7603d2c17850afb2011dd7c2fcefff833b5c08",
+      "source": "Gazebo 归档",
+      "source_clock": "simulation",
+      "source_stamp_ns": "13876000000",
+      "admission_stamp_ns": "1704067213876000000",
+      "clock_mode": "frozen_archive_clock",
+      "profile_id": "lingao.archive.planar.v1",
+      "status": "partial",
+      "reason": "candidate_with_unknown_coverage",
+      "base_frame": "base_link",
+      "margin_m": 0.55,
+      "present_min_clearance_m": 1.390262460916752,
+      "coverage_fraction_on_path": 0.8263254113345521,
+      "path_points": 123,
+      "motion_authorized": false
+    }
+  },
+  "media": {
+    "codec_name": "h264",
+    "width": 1600,
+    "height": 1000,
+    "r_frame_rate": "24/1",
+    "duration": "32.291667",
+    "nb_frames": "775",
+    "side_data_list": [
+      {}
+    ],
+    "file": "scene-layers.mp4",
+    "sha256": "97ca5b7f5ed941f44784f676d5a47b5ca89db82db242019bbe8aa69f151fba8b",
+    "full_decode": true,
+    "captured_frames": 28,
+    "capture_duration_sec": 32.290297699999996,
+    "cover": "cover.png",
+    "cover_sha256": "95c91448b7115d89fffba0cb7d8af4c9a83308464077743a8e434933638bdd17"
+  }
+}

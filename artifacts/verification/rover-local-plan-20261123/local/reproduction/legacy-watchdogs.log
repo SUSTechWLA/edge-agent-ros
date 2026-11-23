@@ -1,0 +1,14 @@
+[WARN] [1795416921.054653923] [edge_gateway]: Refused navigation goal wrong-frame
+[INFO] [1795416921.414510453] [edge_gateway]: Tracking cancel to (1.000, 0.000)
+[WARN] [1795416921.467577707] [edge_gateway]: Refused navigation goal competing
+[INFO] [1795416922.616903474] [edge_gateway]: cancel: cancel requested; stationary odometry confirmed [code:navigation.cancel_requested]
+[WARN] [1795416922.617795456] [edge_gateway]: Refused navigation goal cancel
+PASS frame validation, exclusivity, operation replay, physical cancel
+[INFO] [1795416922.619080168] [edge_gateway]: Tracking heartbeat-expiry to (1.000, 0.000)
+[INFO] [1795416924.517089753] [edge_gateway]: heartbeat-expiry: operation heartbeat expired; stationary odometry confirmed [code:navigation.heartbeat_expired]
+PASS operation watchdog stopped motion and confirmed stationary samples
+[INFO] [1795416924.518334719] [edge_gateway]: Tracking lost-odometry to (1.000, 0.000)
+[INFO] [1795416928.467047184] [edge_gateway]: lost-odometry: UNKNOWN: stop unconfirmed after odometry timeout; gateway inhibited [code:navigation.stop_unconfirmed]
+PASS odometry watchdog and unknown-outcome resource fence
+[WARN] [1795416928.792559866] [edge_gateway]: Refused navigation goal after-unknown
+[INFO] [1795416928.793054311] [rclcpp]: signal_handler(SIGINT/SIGTERM)

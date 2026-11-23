@@ -1,0 +1,55 @@
+{
+  "method": "Two warmups, repeated caller JSON encode, loopback connection, provider work, reply decode.",
+  "clock": "Source geometry replayed with fresh admission stamps; no acquisition, ROS, LLM or actuation.",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "machine": "x86_64",
+  "python": "3.12.3",
+  "iterations_per_case": 60,
+  "inputs_file_sha256": "f1d8d0629ee9809d858fd445b0aa58aa99a013116479428a0f468d8eb294910c",
+  "provider_version": "1.1.0",
+  "service_budget_ms": 50,
+  "source_sha256": {
+    "planner.py": "1607c350cdf135d6ccd75f9fadb6447ab0d37434da654b15520742a8aca51364",
+    "trajectory.py": "8a6b8559959de5d323a79e9747d4815b8def87244531c5f219b029a7e5df302c",
+    "evaluator.py": "d053fdf9eb376a5fc7d90e0ff1853c065b7e5cb194969c421b480a5d6bd0f052",
+    "provider.py": "d9910f8a42dc10e701917d743256d1f10c292bafce426a05867f4f7ec78e3e4e"
+  },
+  "cases": {
+    "clear": {
+      "p50_ms": 2.584642,
+      "p95_ms": 3.3983,
+      "max_ms": 3.673547,
+      "responses": {
+        "planned": 60
+      },
+      "round_trips_over_50ms": 0
+    },
+    "centered": {
+      "p50_ms": 11.151562,
+      "p95_ms": 13.968943,
+      "max_ms": 15.881752,
+      "responses": {
+        "partial": 60
+      },
+      "round_trips_over_50ms": 0
+    },
+    "field_hold": {
+      "p50_ms": 2.32014,
+      "p95_ms": 2.98647,
+      "max_ms": 10.265581,
+      "responses": {
+        "blocked": 60
+      },
+      "round_trips_over_50ms": 0
+    },
+    "dense": {
+      "p50_ms": 38.8178245,
+      "p95_ms": 43.906661,
+      "max_ms": 45.908263,
+      "responses": {
+        "partial": 60
+      },
+      "round_trips_over_50ms": 0
+    }
+  }
+}

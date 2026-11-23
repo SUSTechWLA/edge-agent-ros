@@ -102,7 +102,7 @@ def obj(path):
 
 
 @lru_cache(maxsize=8)
-def pine_envelope(path,z):
+def pine_envelope(path,z,slab=(.065,.60)):
     """Bound the actual DAE triangles intersecting the rover's body-height slab."""
     root=ET.parse(path)
     check(root.findtext(".//{*}up_axis")=="Z_UP","Unexpected pine up axis")
@@ -124,13 +124,13 @@ def pine_envelope(path,z):
             stride=max(int(i.get("offset")) for i in inputs)+1
             idx=list(map(int,tri.findtext("{*}p").split()))[int(v.get("offset"))::stride]
             for i in range(0,len(idx),3):
-                slab=clip_z(clip_z([positions[k] for k in idx[i:i+3]],.065,True),.60,False)
-                for p in slab:radius=max(radius,math.hypot(*p[:2]))
+                clipped=clip_z(clip_z([positions[k] for k in idx[i:i+3]],slab[0],True),slab[1],False)
+                for p in clipped:radius=max(radius,math.hypot(*p[:2]))
     check(radius>0,"No pine geometry at robot height")
     return radius
 
 
-def obstacles(models,world_dir):
+def obstacles(models,world_dir,slab=(.065,.60)):
     result=[]
     def add(name,polygon,radius=0.):
         xmin=min(v[0] for v in polygon)-radius; xmax=max(v[0] for v in polygon)+radius
@@ -140,7 +140,7 @@ def obstacles(models,world_dir):
         if model.tag=="include":
             if model.findtext("uri")=="model://Pine Tree":
                 p=pose(model)
-                add(name,[p[:2]],pine_envelope(Path("/assets/models/Pine Tree/meshes/pine_tree.dae"),p[2]))
+                add(name,[p[:2]],pine_envelope(Path("/assets/models/Pine Tree/meshes/pine_tree.dae"),p[2],slab))
             continue
         if model.findtext("static","false") not in ("1","true"):
             continue
@@ -153,14 +153,14 @@ def obstacles(models,world_dir):
                 if g.tag=="mesh":
                     path=resolve(g.findtext("uri"),world_dir)
                     if path.name=="pine_tree.dae":
-                        add(label,[t[:2]],pine_envelope(path,t[2]));continue
+                        add(label,[t[:2]],pine_envelope(path,t[2],slab));continue
                     check(path.suffix.lower()==".obj",f"Unsupported static collision mesh {path}")
                     verts,_,faces=obj(path)
                     scale=tuple(map(float,g.findtext("scale","1 1 1").split()))
                     verts=[transform(t,[v[i]*scale[i] for i in range(3)]) for v in verts]
                     for group,refs in faces:
                         pts=[verts[int(r[0])-1] for r in refs]
-                        pts=clip_z(clip_z(pts,.065,True),.60,False)
+                        pts=clip_z(clip_z(pts,slab[0],True),slab[1],False)
                         if pts:
                             add(label+"/"+group,[p[:2] for p in pts])
                     continue
@@ -174,7 +174,7 @@ def obstacles(models,world_dir):
                     a=b=h=float(g.findtext("radius"))
                 else:
                     raise ValueError(f"Unhandled physical obstacle {g.tag}")
-                if t[2]+h<.065 or t[2]-h>.60:continue
+                if t[2]+h<slab[0] or t[2]-h>slab[1]:continue
                 if g.tag=="box":
                     add(label,[transform(t,[a*i,b*j,0])[:2] for i,j in ((-1,-1),(1,-1),(1,1),(-1,1))])
                 else:

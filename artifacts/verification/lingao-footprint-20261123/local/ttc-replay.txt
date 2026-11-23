@@ -1,0 +1,13 @@
+178 22126000000 odom=22134000000 v=0.28 w=0.0408671 ttc=-1 single=0 proceed navigation.proceed confirmations=0 cmd=0.28,0.0466932
+179 22250000000 odom=22236000000 v=0.28 w=0.0393722 ttc=-1 single=0 proceed navigation.proceed confirmations=0 cmd=0.28,0.0450747
+180 22376000000 odom=22372000000 v=0.28 w=0.0372355 ttc=-1 single=0 proceed navigation.proceed confirmations=0 cmd=0.28,0.0428765
+181 22500000000 odom=22508000000 v=0.28 w=0.0347765 ttc=-1 single=0 proceed navigation.proceed confirmations=0 cmd=0.28,0.0401013
+182 22626000000 odom=22610000000 v=0.28 w=0.0340043 ttc=-1 single=0 proceed navigation.proceed confirmations=0 cmd=0.28,0.0395143
+183 22750000000 odom=22746000000 v=0.28 w=0.0326751 ttc=-1 single=0 wait navigation.ttc_unobserved confirmations=0 cmd=0,0
+184 22876000000 odom=22882000000 v=3.42726e-10 w=0.0296019 ttc=0.78751 single=1 wait navigation.ttc_confirmation_pending confirmations=0 cmd=0,0
+185 23000000000 odom=22984000000 v=1.28786e-12 w=-2.31862e-12 ttc=-1 single=1 wait navigation.ttc_confirmation_pending confirmations=1 cmd=0,0
+186 23126000000 odom=23120000000 v=2.66454e-13 w=-6.43801e-13 ttc=-1 single=1 wait navigation.ttc_confirmation_pending confirmations=2 cmd=0,0
+187 23250000000 odom=23256000000 v=0 w=-1.92099e-13 ttc=-1 single=1 proceed navigation.proceed confirmations=3 cmd=0.28,0.0376418
+188 23376000000 odom=23392000000 v=0 w=-6.29175e-14 ttc=-1 single=1 proceed navigation.proceed confirmations=0 cmd=0.28,0.0376418
+189 23500000000 odom=23494000000 v=0 w=-2.93209e-14 ttc=-1 single=1 proceed navigation.proceed confirmations=0 cmd=0.28,0.0376418
+190 23626000000 odom=23630000000 v=0 w=-1.16799e-14 ttc=-1 single=1 proceed navigation.proceed confirmations=0 cmd=0.28,0.0376418

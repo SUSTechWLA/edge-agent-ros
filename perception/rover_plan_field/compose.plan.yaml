@@ -1,0 +1,68 @@
+name: edge-field-plan-v1
+x-field: &field
+  image: ${FIELD_PLAN_IMAGE:?built release tag required}
+  pull_policy: never
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  init: true
+  tmpfs: [/tmp]
+services:
+  agent:
+    <<: *field
+    command: [python3, -B, /opt/edge/agent/service.py]
+    environment:
+      ROS_LOCALHOST_ONLY: "1"
+      ROS_DOMAIN_ID: "178"
+      EDGE_PLUGIN_DIR: /site/tools
+      EDGE_EXTRA_PLUGIN_DIR: ""
+      EDGE_CONTRACT_DIR: /site/contracts
+      EDGE_OLLAMA_URL: http://edge-read-llm:11434
+      EDGE_OLLAMA_MODEL: qwen3:4b-instruct
+      EDGE_MOTION_TOKEN_FILE: /run/no-motion-grant
+      EDGE_TRACE_CONTENT: redacted
+    volumes: [tasks:/var/lib/edge-tasks]
+    networks: [private, model]
+  facts:
+    <<: *field
+    image: ${FIELD_SCENE_IMAGE:-${FIELD_PLAN_IMAGE:?built release tag required}}
+    entrypoint: [python3, -B, /opt/edge/perception/rover_plan_field/facts.py]
+    volumes: [lidar:/lidar:ro, rgb:/rgb:ro, depth:/depth:ro, camera-info:/camera-info:ro, pose:/pose:ro, evidence:/evidence]
+    networks: [private]
+  rover-preview:
+    <<: *field
+    entrypoint: [python3, -B, /opt/edge/perception/rover_preview/provider.py]
+    command: [--bind, 0.0.0.0, --facts, "http://facts:8150", --state, /state]
+    volumes: [receipts:/state]
+    networks: [private]
+  rover-status:
+    <<: *field
+    entrypoint: [python3, -B, /opt/edge/perception/rover_preview/status.py]
+    command: [--bind, 0.0.0.0, --facts, "http://facts:8150", --state, /state]
+    volumes: [status-receipts:/state]
+    networks: [private]
+  web:
+    <<: *field
+    image: ${FIELD_SCENE_IMAGE:-${FIELD_PLAN_IMAGE:?built release tag required}}
+    entrypoint: [python3, -B, /opt/edge/perception/rover_plan_field/frontend.py]
+    environment:
+      PLAN_PUBLIC_HOST: 192.168.0.144:8774
+    volumes: ["/home/cas/edge-integration/jetson-workstation-console/access:/access:ro", audit:/audit]
+    ports: ["192.168.0.144:8774:8089"]
+    networks: [private, lan]
+networks:
+  private: {internal: true}
+  lan: {}
+  model: {external: true, name: edge-review055-model}
+volumes:
+  tasks: {}
+  receipts: {}
+  status-receipts: {}
+  evidence: {}
+  audit: {}
+  lidar: {external: true, name: edge-nav-spatial_livox-facts}
+  rgb: {external: true, name: edge-nav-spatial_image-facts}
+  depth: {external: true, name: edge-nav-spatial_depth-facts}
+  camera-info: {external: true, name: edge-nav-spatial_camera-facts}
+  pose: {external: true, name: edge-field-plan-pose-v1}

@@ -38,6 +38,8 @@ def ref(value):
 class PhysicalLedger:
     """Mutations use BEGIN IMMEDIATE; only the trusted local controller can open this file."""
 
+    claim_kind = "capture"
+
     def __init__(self, root, boot_id, clock=time.monotonic_ns):
         require(public_reference(boot_id), "plugin.fence_rejected", "host boot identity required")
         self.boot = boot_id
@@ -143,7 +145,7 @@ class PhysicalLedger:
                 require(device["phase"] == "ACTIVE", "plugin.draining", "physical admission closed")
                 require(step["tool"] == pin["name"] and step["version"] == pin["version"] and
                         step["binding"] == pin["binding"] and step["args"] == {},
-                        "tool.binding_unavailable", "capture operation differs from catalog")
+                        "tool.binding_unavailable", "physical operation differs from catalog")
                 op = f"{task}/step/{index}"
                 require(public_reference(op), "plugin.manifest_invalid", "invalid operation identity")
                 pin["reservation_id"] = op
@@ -232,8 +234,8 @@ class PhysicalLedger:
                 if selected:
                     op = selected[0]
                     self.db.execute("UPDATE physical_ops SET state='CLAIMED' WHERE op=?", (op,))
-                    self.event(resource,"capture.claimed",op)
-                    return dict(self.status(op),kind="capture")
+                    self.event(resource,self.claim_kind+".claimed",op)
+                    return dict(self.status(op),kind=self.claim_kind)
             else:
                 selected = self.db.execute("""SELECT op FROM physical_ops WHERE resource=? AND candidate IS NOT NULL AND
                     proof IS NULL AND state IN ('CANDIDATE','RECOVERY_REQUIRED')

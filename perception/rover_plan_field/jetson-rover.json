@@ -1,0 +1,46 @@
+{
+  "sources": {
+    "mid360.front": {
+      "kind": "livox",
+      "frame_id": "front_mid360",
+      "joint": "front_lidar_joint",
+      "translation_m": [
+        0.215,
+        0,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0,
+        0.3418173023326381,
+        0,
+        0.9397664240788973
+      ],
+      "extrinsic_basis": "nominal_urdf",
+      "extrinsic_ref": "sha256:43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8"
+    },
+    "mid360.rear": {
+      "kind": "livox",
+      "frame_id": "rear_mid360",
+      "joint": "rear_lidar_joint",
+      "translation_m": [
+        -0.17,
+        0.11,
+        0.25
+      ],
+      "quaternion_xyzw": [
+        0,
+        0,
+        1,
+        1.7948965149208059E-09
+      ],
+      "extrinsic_basis": "nominal_urdf",
+      "extrinsic_ref": "sha256:43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8"
+    }
+  },
+  "model_evidence": {
+    "basis": "nominal_urdf",
+    "file": "/home/cas/humble_ws/install/casdog_urdf/share/casdog_urdf/urdf/lingao_mid360.urdf.xacro",
+    "digest": "sha256:43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8",
+    "joint_type": "fixed"
+  }
+}

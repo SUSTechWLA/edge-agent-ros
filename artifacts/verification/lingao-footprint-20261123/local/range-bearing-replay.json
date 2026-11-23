@@ -1,0 +1,172 @@
+{
+  "mode": "archived laser observations replayed in native C++ against independent visible-surface truth",
+  "candidate_platform_manifest": "sha256:30895f1d7f4c7797705c1b9c6d173fcc1b1a58c7fc81ec12ae9cbf3d1f3432b4",
+  "operations": 14,
+  "frames": 469.0,
+  "candidate_passed": 469.0,
+  "runs": [
+    {
+      "operation": "local-centered-104ea42107/waypoint/1",
+      "frames": 21,
+      "previous_passed": 21,
+      "candidate_passed": 21,
+      "max_range_error_m": 0.024836039667832432,
+      "max_bearing_error_deg": 0.9604400154210282,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-c771310a62/waypoint/1",
+      "frames": 23,
+      "previous_passed": 23,
+      "candidate_passed": 23,
+      "max_range_error_m": 0.02743632328554435,
+      "max_bearing_error_deg": 1.3947566381687087,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-73edd54fe9/waypoint/1",
+      "frames": 23,
+      "previous_passed": 23,
+      "candidate_passed": 23,
+      "max_range_error_m": 0.02188472011360476,
+      "max_bearing_error_deg": 1.3255332485486715,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-c501edd55d/waypoint/1",
+      "frames": 32,
+      "previous_passed": 32,
+      "candidate_passed": 32,
+      "max_range_error_m": 0.011957185936493309,
+      "max_bearing_error_deg": 1.906851095597919,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-dd12f83abf/waypoint/1",
+      "frames": 49,
+      "previous_passed": 48,
+      "candidate_passed": 49,
+      "max_range_error_m": 0.0004550901114110939,
+      "max_bearing_error_deg": 0.1728283515816772,
+      "resolved": [
+        [
+          9626000000,
+          2.9399,
+          0.0187
+        ]
+      ],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-c53d2003bb/waypoint/1",
+      "frames": 50,
+      "previous_passed": 50,
+      "candidate_passed": 50,
+      "max_range_error_m": 0.0015213251818446683,
+      "max_bearing_error_deg": 0.9344845205135944,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-bde52e28f7/waypoint/1",
+      "frames": 51,
+      "previous_passed": 50,
+      "candidate_passed": 51,
+      "max_range_error_m": 0.004112977624893821,
+      "max_bearing_error_deg": 1.9095719059545493,
+      "resolved": [
+        [
+          10000000000,
+          2.8275,
+          0.9503
+        ]
+      ],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-d8cfe3c024/waypoint/1",
+      "frames": 33,
+      "previous_passed": 33,
+      "candidate_passed": 33,
+      "max_range_error_m": 0.015227196304342439,
+      "max_bearing_error_deg": 1.9080448649438784,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-08b0a5bb3c/waypoint/1",
+      "frames": 42,
+      "previous_passed": 42,
+      "candidate_passed": 42,
+      "max_range_error_m": 0.0020659792229977825,
+      "max_bearing_error_deg": 1.912691964169408,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-6a77902bda/waypoint/1",
+      "frames": 36,
+      "previous_passed": 36,
+      "candidate_passed": 36,
+      "max_range_error_m": 0.0005226323130023136,
+      "max_bearing_error_deg": 1.1597210676671357,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-5bfd429742/waypoint/1",
+      "frames": 32,
+      "previous_passed": 32,
+      "candidate_passed": 32,
+      "max_range_error_m": 0.0002780757014364532,
+      "max_bearing_error_deg": 1.2062131016941025,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-c50a0177ac/waypoint/1",
+      "frames": 23,
+      "previous_passed": 23,
+      "candidate_passed": 23,
+      "max_range_error_m": 0.02537593201686983,
+      "max_bearing_error_deg": 0.8480677399077858,
+      "resolved": [],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-17a88ae7ee/waypoint/1",
+      "frames": 15,
+      "previous_passed": 13,
+      "candidate_passed": 15,
+      "max_range_error_m": 0.021814195720047058,
+      "max_bearing_error_deg": 0.9612595926761696,
+      "resolved": [
+        [
+          9000000000,
+          85.4093,
+          0.5287
+        ],
+        [
+          10250000000,
+          85.2234,
+          0.9613
+        ]
+      ],
+      "remaining": []
+    },
+    {
+      "operation": "local-centered-92df821821/waypoint/1",
+      "frames": 39,
+      "previous_passed": 39,
+      "candidate_passed": 39,
+      "max_range_error_m": 0.0036368601623562036,
+      "max_bearing_error_deg": 1.7968688110351436,
+      "resolved": [],
+      "remaining": []
+    }
+  ]
+}

@@ -4,6 +4,11 @@
 
 | 要查什么 | 路径 |
 |---|---|
+| 双雷达与 RGB-D 缺少配准时怎样处理、停用纹理后局部规划是否可用 | [归档工作台、插件卸载与规划复测](scene-layers-20261123/README.md) |
+| 常驻局部规划响应多快、平滑曲线离障碍多近 | [配对复算、响应时间与前端回放](rover-smooth-planning-20261123/README.md) |
+| 按灵遨车头、车侧和车尾规划后，绕箱少偏了多远 | [同车模、同定位、同障碍的真值对照](lingao-footprint-20261123/local/README.md) |
+| 对 Agent 说「躲避前方障碍物」实际发生了什么 | [同一指令的静态、横穿、停车与恢复回执](rover-maneuver-20261123/local/README.md) |
+| 轮式车在空场的直行、中央箱体的绕行净距与到达误差 | [校园 Gazebo 首轮真值验收](rover-local-plan-20261123/local/README.md) |
 | 一条巡检任务从中文下发、超时重试、在途 Agent 重启直至归位 | [带章节的录像](rover-long-mission/continuous-02/video/index.html) · [七站世界位姿审计](rover-long-mission/continuous-02/waypoint-audit.json) |
 | 工作台上实际怎样提交中文；机器人如何依据地图自主选点 | [工作台只读任务操作](rover-console-recording/20261119T020956Z/console-position-task.mp4) · [探索与取消的两轮补充实验](commission-exploration/filmed-01/video/rover-exploration.mp4) |
 | 车体回弹时的取消失败 | [第一次实测](20261117-031103-3a9cc1/cancel.json) |

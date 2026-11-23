@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "method": "Independent raw ROS and runtime SDF cross-check. Axis-aligned slabs, visible face projection, wheel spheres and oriented chassis. Source archive validation is independent of Gateway.",
+  "clear": {
+    "scenario": "clear",
+    "passed": true,
+    "world_sha256": "e0ebed3d852d31bab6c2f6c162ce1eed838ff74f538953fc6cd12f1364b56d79",
+    "truth_samples": 516,
+    "all_samples_including_setup": {
+      "scan": 140,
+      "report": 140,
+      "contacts": 26246
+    },
+    "full_operation_scan_count": 118,
+    "all_scans_have_report": true,
+    "checked_all_box_measurements": 0,
+    "bearing_failures": 0,
+    "box_surface_to_footprint_min_sample_m": null,
+    "arrival_error_independent_m": 0.05825575406677608,
+    "clearance_from_whole_scene_m": 2.5229405207500646,
+    "contact_set": {
+      "edge_rover::right_wheel::tyre // floor::floor_link::floor": 8777,
+      "edge_rover::left_wheel::tyre // floor::floor_link::floor": 8777,
+      "edge_rover::rear_caster::ball // floor::floor_link::floor": 8692
+    },
+    "contact_sensor_targets": {
+      "base_link": [
+        "/sdd056/contacts/base_link",
+        "body"
+      ],
+      "left_wheel": [
+        "/sdd056/contacts/left_wheel",
+        "tyre"
+      ],
+      "right_wheel": [
+        "/sdd056/contacts/right_wheel",
+        "tyre"
+      ],
+      "rear_caster": [
+        "/sdd056/contacts/rear_caster",
+        "ball"
+      ]
+    },
+    "model_geometry_file": "witness/world.sdf",
+    "core_state": "SUCCEEDED",
+    "crosscheck_max_range_error_m": null,
+    "crosscheck_max_bearing_error_deg": null,
+    "unique_event_ids": true
+  },
+  "centered": {
+    "scenario": "centered",
+    "passed": true,
+    "world_sha256": "3c838414f17e7d87e5dda8a2882b983c5b47e86edb30cce6b1c8137d2d94e67e",
+    "truth_samples": 675,
+    "all_samples_including_setup": {
+      "scan": 183,
+      "report": 183,
+      "contacts": 33737
+    },
+    "full_operation_scan_count": 161,
+    "all_scans_have_report": true,
+    "checked_all_box_measurements": 21,
+    "bearing_failures": 0,
+    "box_surface_to_footprint_min_sample_m": 0.6264709773261407,
+    "arrival_error_independent_m": 0.06545038998353692,
+    "clearance_from_whole_scene_m": 0.6144859773261406,
+    "contact_set": {
+      "edge_rover::rear_caster::ball // floor::floor_link::floor": 10842,
+      "edge_rover::right_wheel::tyre // floor::floor_link::floor": 11448,
+      "edge_rover::left_wheel::tyre // floor::floor_link::floor": 11447
+    },
+    "contact_sensor_targets": {
+      "base_link": [
+        "/sdd056/contacts/base_link",
+        "body"
+      ],
+      "left_wheel": [
+        "/sdd056/contacts/left_wheel",
+        "tyre"
+      ],
+      "right_wheel": [
+        "/sdd056/contacts/right_wheel",
+        "tyre"
+      ],
+      "rear_caster": [
+        "/sdd056/contacts/rear_caster",
+        "ball"
+      ]
+    },
+    "model_geometry_file": "witness/world.sdf",
+    "core_state": "SUCCEEDED",
+    "crosscheck_max_range_error_m": 0.024836873438988105,
+    "crosscheck_max_bearing_error_deg": 0.9604383651299603,
+    "unique_event_ids": true
+  }
+}

@@ -122,6 +122,8 @@ def run(args, selected, reasons):
                              test("test_planner_model_selection.py","-v"),
                              [PY,str(ROOT/"model_provider/test_provider.py"),"-v"],
                              test("test_map3d.py","-v"),test("test_rgbd.py","-v"),
+                             test("test_scene_layers_057.py","-v"),test("test_scene_layer_runtime.py","-v"),
+                             test("test_scene_workbench_057.py","-v"),
                              [PY,str(ROOT/"perception/camera/test_frames.py"),"-v"],
                              test("test_series_tools.py","-v"),test("test_plugin_design.py","-v"),
                              test("test_plugin_design_watch.py","-v"),
@@ -130,7 +132,7 @@ def run(args, selected, reasons):
                              test("test_runtime_plugins.py","-v"),
                              test("test_soft_runtime.py","-v"),test("test_plugin_descriptor.py","-v"),
                              test("test_v2_registry.py","-v"),test("test_soft_host.py","-v"),
-                             test("test_physical_ledger.py","-v"),test("test_plugin_tracks.py","-v"),
+                             test("test_physical_ledger.py","-v"),test("test_rover_maneuver.py","-v"),test("test_plugin_tracks.py","-v"),
                              test("test_plugin_tracks_metrics.py","-v"),test("test_model_readiness.py","-v"),
                              test("test_module_journal.py","-v"),test("test_author_eventbus.py","-v"),
                              test("test_plugin_manager.py","-v"),test("test_plugin_manager_watch.py","-v"),
@@ -263,8 +265,17 @@ def run(args, selected, reasons):
                                               test("test_campus_route_overlay.py","-v"),
                                               test("test_campus_robot_assets.py","-v"),
                                               test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
-                                              test("test_campus_capture.py","-v")]
+                                              test("test_campus_capture.py","-v"),
+                                              test("system/test_campus_scan_translation.py","-v"),
+                                              test("system/test_campus_crossing_witness.py","-v")]
                     if assets or (ROOT / "artifacts/sim-assets/models/Pine Tree/model.sdf").is_file():
+                        checks["campus-world"].append(test("system/campus_local_plan_acceptance.py","run","--image",image,
+                                                       "--assets",str((assets or ROOT/"artifacts/sim-assets").resolve()),
+                                                       "--out",directory/"rover-local-plan"))
+                        checks["campus-world"].append(test("system/campus_local_plan_acceptance.py","run","--image",image,
+                                                       "--assets",str((assets or ROOT/"artifacts/sim-assets").resolve()),
+                                                       "--vehicle","lingao","--planner","footprint_follow",
+                                                       "--out",directory/"lingao-footprint"))
                         checks["campus-world"].append(test("system/campus_acceptance.py","--image",image,"--assets",
                                                        str((assets or ROOT/"artifacts/sim-assets").resolve()),
                                                        "--verify-reload","--verify-texture","--verify-onboard","--out",directory/"campus-world.json"))
@@ -284,6 +295,8 @@ def run(args, selected, reasons):
                 if "motion-world" in selected:
                     stage("body-runtime", [
                         in_image("ctest", "--test-dir", "/opt/edge/build/edge_gateway", "-R", "^body_authority_contract$",
+                                 "--output-on-failure", "--no-tests=error"),
+                        in_image("ctest", "--test-dir", "/opt/edge/build/edge_gateway", "-R", "^rover_local_planner_contract$",
                                  "--output-on-failure", "--no-tests=error"),
                         in_image("ctest", "--test-dir", "/tmp/edge-sim-build", "-R", "^body_runtime_endpoint$",
                                  "--output-on-failure", "--no-tests=error"),

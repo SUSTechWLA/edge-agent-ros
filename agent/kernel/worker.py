@@ -6,7 +6,7 @@ from agent.tracing import diagnosis, exchange
 from edge_contracts.descriptor import binding
 from edge_contracts.errors import OperationCanceled, OutcomeUnknown, Refused, Unavailable, failure
 from edge_contracts.soft_transport import SoftError
-from .authorization import retry_exhausted, step_timed_out
+from .authorization import retry_exhausted, step_timed_out, task_capabilities
 from .catalog import is_series
 from .verification import finish_step, prepare_verification, save_candidate, verify_candidate
 
@@ -27,11 +27,14 @@ def task_plan(journal, task, trace, *, registry, planner, read_only_planner, fre
             if legacy["status"].get("endpoint"):
                 raise
             caps = {"status":legacy["status"]}
+        caps = task_capabilities(caps, task.get("motion_resource"))
         pin = (task.get("trigger") or {}).get("read_only_tool")
         if pin:
             provider, steps = read_only_planner(task["text"],caps,pin)
         else:
             provider, steps = planner(task["text"],caps,trace)
+        if sum(caps[s["tool"]]["effect"] == "actuation" for s in steps) > 1:
+            raise Refused("一次运动授权只允许一个有界操作")
         managed = False
         for step in steps:
             cap = caps[step["tool"]]

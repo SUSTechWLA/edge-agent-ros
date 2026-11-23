@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>三维感知与路径规划 · Edge Agent ROS</title>
+<link rel="stylesheet" href="/plan-observe.css">
+<script defer src="/plan-scene.js"></script><script defer src="/plan-observe.js"></script>
+</head>
+<body><header><div class="brand"><i aria-hidden="true">◇</i> Edge Agent <b>ROS</b></div><span class="divider"></span><span>机器人观测台</span><span id="connection" class="connection" role="status">连接中</span></header>
+<main><div class="heading"><h1>三维感知与路径规划</h1><span class="mode">只读规划</span></div>
+<form id="request"><label for="task-text">自然语言任务</label><textarea rows="1" id="task-text" required maxlength="4096" placeholder="输入现场感知或规划任务"></textarea><button id="submit" type="submit">提交任务 ↗</button></form>
+<div class="layout"><section class="plot panel" aria-label="三维观测">
+<nav class="scene-nav" aria-label="选择观测数据"><button id="scene-field" type="button" aria-pressed="true">实车障碍图</button><button id="view-rgbd" type="button" aria-pressed="false">相机彩色 3D</button><button id="scene-example" type="button" aria-pressed="false">仿真绕行轨迹</button></nav>
+<div class="canvas-wrap">
+<canvas id="map" tabindex="0" aria-label="交互式三维场景，拖动旋转，按住 Shift 拖动平移，滚轮缩放"></canvas>
+<div class="scene-heading"><h2 id="scene-title">车身周围的占用网格</h2><span id="scene-meta">等待任务采样</span></div>
+<div class="camera-controls" aria-label="视角"><button type="button" id="view-orbit" aria-pressed="true">斜俯视</button><button type="button" id="view-top" aria-pressed="false">正俯视</button></div>
+<div class="zoom-controls"><button type="button" id="zoom-in" aria-label="放大" title="放大">＋</button><button type="button" id="zoom-out" aria-label="缩小" title="缩小">−</button><button type="button" id="reset-camera" aria-label="复位视角" title="复位视角">⌖</button></div>
+<div id="map-empty" role="status">等待读取三维观测</div>
+</div>
+<div class="map-controls"><div class="layers" aria-label="地图图层"><button data-layer="occupied" type="button" aria-pressed="true"><i></i>占用</button><button data-layer="ground" type="button" aria-pressed="true"><i></i>观测地面</button><button data-layer="route" type="button" aria-pressed="true"><i></i><span id="route-label">规划标记</span></button></div><button type="button" id="rgb-grid" data-layer="rgbGrid" aria-pressed="true" hidden>10 cm 占用网格</button><span class="gesture">拖动旋转 · Shift 拖动平移 · 滚轮缩放</span><button type="button" id="refresh-rgb" hidden>重新采样</button></div>
+<div class="metrics"><div><small id="range-label">车头到前方表面</small><strong id="range">—</strong></div><div><small id="clearance-label">车身最近净距</small><strong id="clearance">—</strong></div><div><small id="coverage-label">规划预留</small><strong id="coverage">—</strong></div></div>
+</section>
+<aside class="sidebar"><figure class="camera panel"><figcaption><strong id="rgb-title">任务相机画面</strong><span id="rgb-source">RealSense D435</span></figcaption><div class="camera-stage"><img id="rgb" hidden alt="RealSense 实机彩色观测"><span id="rgb-empty">等待读取彩色帧</span></div></figure>
+<section id="task-panel" class="timeline panel"><div class="bar"><h2>Agent 任务过程</h2><span id="state" role="status">待提交</span></div><div class="mission"><p id="message">等待自然语言任务</p><div class="meta"><code id="task-id">—</code><span id="elapsed">—</span></div></div><ol id="events" aria-label="任务事件"></ol><footer><div id="model">模型 · 等待回执</div><div id="tool">工具 · 等待回执</div></footer></section>
+<section class="context panel" id="other-panel" hidden><div class="bar"><h2 id="other-title"></h2></div><div class="mission"><p id="other-decision"></p><p id="other-info"></p></div><div class="provenance" id="other-source"></div></section></aside></div>
+<section class="poses panel" id="pose-panel"><div class="bar"><h2>任务位姿</h2><span id="motion">等待位姿观测</span></div>
+<div class="pose-grid"><div><h3>初始实测位姿</h3><strong id="start-value">—</strong><small id="start-meta">等待采样</small></div><div><h3>结束实测位姿</h3><strong id="end-value">—</strong><small id="end-meta">等待采样</small></div><div><h3>建议路径终点</h3><strong id="goal-value">—</strong><small id="goal-meta">等待规划回执</small></div></div>
+<div class="source"><code id="plot-frame">—</code><span id="source">等待传感器回执</span><span id="anchor"></span><button type="button" id="download" disabled>导出任务回执 ↓</button></div></section>
+<p id="error" role="alert" hidden></p></main></body></html>

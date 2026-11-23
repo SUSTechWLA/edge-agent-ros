@@ -76,6 +76,7 @@ class Journal:
             CREATE INDEX IF NOT EXISTS tasks_ready ON tasks(state,due,created);
             CREATE TABLE IF NOT EXISTS soft_settlements(operation TEXT PRIMARY KEY, pin TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS soft_plan_intents(task TEXT PRIMARY KEY, plan TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS task_motion_grants(task TEXT PRIMARY KEY, resource TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS task_triggers(
               task_id TEXT PRIMARY KEY REFERENCES tasks(id), kind TEXT NOT NULL, source TEXT NOT NULL,
               source_key TEXT NOT NULL, context TEXT NOT NULL, trace_id TEXT NOT NULL,
@@ -132,6 +133,7 @@ class Journal:
     def get(self, key):
         with self.lock:
             row = self.db.execute("""SELECT tasks.*,tr.context,tr.trace_id,
+                       (SELECT resource FROM task_motion_grants WHERE task=tasks.id) AS motion_resource,
                        (SELECT kind FROM events WHERE task_id=tasks.id
                         AND kind NOT IN ('settlement_deferred','settlement_recovered') ORDER BY seq DESC LIMIT 1) AS latest_event
                        FROM tasks LEFT JOIN task_triggers tr ON tr.task_id=tasks.id WHERE tasks.id=?""",(key,)).fetchone()
@@ -145,7 +147,7 @@ class Journal:
         item["can_retry"] = item.pop("latest_event")=="retry_exhausted" and item["state"] in ("BLOCKED","RECOVERY_REQUIRED")
         return item
 
-    def create(self,key,text,trigger=None):
+    def create(self,key,text,trigger=None,*,motion_resource=None):
         with self.lock, self.db:
             if trigger is not None:
                 trigger=trigger_input(trigger)
@@ -160,7 +162,8 @@ class Journal:
             key=key or uuid.uuid4().hex
             existing = self.get(key)
             if existing:
-                if existing["text"]!=text or (trigger is not None and existing["trigger"]!=trigger):
+                if (existing["text"]!=text or existing.get("motion_resource") != motion_resource
+                        or (trigger is not None and existing["trigger"]!=trigger)):
                     raise Refused("同一任务 ID 已用于不同请求或触发来源")
                 return existing
             trigger=trigger or {"kind":"user","source":"user","id":key}
@@ -181,6 +184,8 @@ class Journal:
             now = utc()
             self.db.execute("INSERT INTO tasks VALUES(?,?,'PLANNING','等待生成计划',NULL,'[]',0,0,0,?,?)",
                             (key,text,now,now))
+            if motion_resource:
+                self.db.execute("INSERT INTO task_motion_grants VALUES(?,?)",(key,motion_resource))
             self.db.execute("INSERT INTO task_triggers VALUES(?,?,?,?,?,?)",
                 (key,trigger["kind"],trigger["source"],trigger["id"],json.dumps(trigger),trace_id))
             task=self.get(key)

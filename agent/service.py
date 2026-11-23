@@ -22,6 +22,7 @@ from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog, is
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
 from kernel import host, verification
+from kernel.authorization import motion_grant
 from kernel.catalog import plugin_view
 from kernel.ledger import Journal, project_step, trigger_input, utc
 from kernel.verification import finish_step
@@ -224,10 +225,18 @@ class Handler(BaseHTTPRequestHandler):
                     not isinstance(key,str) or not re.fullmatch(r"[\w.-]{1,96}",key)):
                 raise ValueError("ID 格式无效")
             if self.path=="/agent/retry":
+                prior=self.server.journal.get(key)
+                if prior and prior.get("motion_resource"):
+                    motion_grant(prior["motion_resource"], self.headers.get("Authorization"))
                 return self.send(202,self.server.journal.retry(key))
             if not isinstance(text,str) or not 1<=len(text.strip())<=4096:
                 raise ValueError("任务文本长度应为 1–4096 字符")
-            self.send(202,self.server.journal.create(key,text.strip(),request.get("trigger")))
+            grant=motion_grant(request.get("motion_resource"), self.headers.get("Authorization"))
+            if grant and request.get("trigger") is not None:
+                raise PermissionError("运动授权仅适用于操作员直接提交的任务")
+            self.send(202,self.server.journal.create(key,text.strip(),request.get("trigger"),motion_resource=grant))
+        except PermissionError as exc:
+            self.send(403,{"detail":str(exc)})
         except (TypeError,ValueError) as exc:
             self.send(400,{"detail":str(exc)})
         except Refused as exc:

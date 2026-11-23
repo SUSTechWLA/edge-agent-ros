@@ -1,0 +1,8 @@
+{
+  "id":"preview_rover_obstacle_path",
+  "version":"1.1.0",
+  "description":"只读静态环境的轮式车局部路线规划。采样障碍物和车体位姿，计算轮廓净距、平滑绕障候选和观测覆盖，记录规划开始及结束的实测位姿。仅提供预览。",
+  "parameters":{},
+  "effect":"read",
+  "endpoint":"http://rover-preview:8149/invoke"
+}

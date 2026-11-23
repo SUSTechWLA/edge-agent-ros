@@ -1,0 +1,46 @@
+{
+  "run": "g1-footprint/final/centered",
+  "method": "Replay of the archived raw scan with the production oriented sweep, plus single-ray diagnostic replacements from the independent runtime SDF laser-height slice. Replacements are restricted to this offline counterfactual.",
+  "initial": {
+    "stamp_ns": 7250000000,
+    "angle_candidate_deg": 35,
+    "actual_left_m": 0.399790942,
+    "actual_right_m": 0.582943061,
+    "isolated_beam_deg": 45,
+    "actual_echo_m": 2.89352,
+    "world_returns_within_8m": 0,
+    "left_with_world_beam_m": 0.582943376,
+    "right_with_world_beam_m": 0.582943061
+  },
+  "switch": {
+    "stamp_ns": [
+      10000000000,
+      10126000000,
+      10250000000,
+      10376000000
+    ],
+    "isolated_beam_deg": -45,
+    "actual_echo_m": [
+      1.12716,
+      1.09748,
+      1.07378,
+      1.06894
+    ],
+    "world_returns_within_8m": 0,
+    "max_right_full_m": [
+      0.584164136,
+      0.573981466,
+      0.563087475,
+      0.573717278
+    ],
+    "max_right_short_m": [
+      0.602207422,
+      0.585326664,
+      0.570559177,
+      0.577858756
+    ],
+    "right_full_m_at_switch_with_world_beam": 0.816804283,
+    "preferred_clearance_m": 0.582,
+    "hard_planning_clearance_m": 0.55
+  }
+}

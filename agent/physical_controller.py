@@ -71,6 +71,7 @@ def deployment_owner(state):
 
 
 class Controller:
+    failure_code = "camera.verification_failed"
     def __init__(self, ledger, deployment):
         self.ledger = ledger
         self.site = deployment
@@ -120,7 +121,7 @@ class Controller:
                 if row["state"] == "RECOVERY_REQUIRED":
                     raise PhysicalError("tool.outcome_unknown", row["reason"] + ": reconcile original camera operation")
                 if row["state"] in ("FAILED","CANCELED"):
-                    return {"operation_id":op,"state":row["state"],"error":{"code":"camera.verification_failed"}}
+                    return {"operation_id":op,"state":row["state"],"error":{"code":row["reason"] or self.failure_code}}
                 return {"operation_id":op,"state":"RUNNING"}
             if action == "settle":
                 return ledger.settle(data["pin"])

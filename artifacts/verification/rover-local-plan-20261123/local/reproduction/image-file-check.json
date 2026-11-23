@@ -1,0 +1,68 @@
+{
+  "platform_manifest": "sha256:39c6089c70d93e62b9e794f84c3cc991d9c247e2d2fa6d664b9522ff1c5a9b28",
+  "files": [
+    {
+      "path": "src/edge_gateway/src/edge_gateway_node.cpp",
+      "effective_source": "built image",
+      "workspace_sha256": "ebc5c4f9c321fe93cd075b11b1ccef536fd77d72b041e0efb3f13e81cfc40fbd",
+      "image_sha256": "ebc5c4f9c321fe93cd075b11b1ccef536fd77d72b041e0efb3f13e81cfc40fbd",
+      "verified": true
+    },
+    {
+      "path": "src/edge_gateway/src/local_planner.cpp",
+      "effective_source": "built image",
+      "workspace_sha256": "a0065808ccecf5271005c82b8f0f8d5f15600a713f88a00c14c89e8d25a8015f",
+      "image_sha256": "a0065808ccecf5271005c82b8f0f8d5f15600a713f88a00c14c89e8d25a8015f",
+      "verified": true
+    },
+    {
+      "path": "src/edge_gateway/src/local_planner.hpp",
+      "effective_source": "built image",
+      "workspace_sha256": "04f037bd78d6587a6dfe6612847d3bc03ffc3d6ef91baf2aa68c65a7510c734e",
+      "image_sha256": "04f037bd78d6587a6dfe6612847d3bc03ffc3d6ef91baf2aa68c65a7510c734e",
+      "verified": true
+    },
+    {
+      "path": "src/edge_gateway/src/local_plan_json.hpp",
+      "effective_source": "built image",
+      "workspace_sha256": "8f5ccf7f6b4bc1b0076f92f05ace492f4d425007b10db2f63d1f91f481dbef59",
+      "image_sha256": "8f5ccf7f6b4bc1b0076f92f05ace492f4d425007b10db2f63d1f91f481dbef59",
+      "verified": true
+    },
+    {
+      "path": "src/edge_gateway/test/local_planner_test.cpp",
+      "effective_source": "built image",
+      "workspace_sha256": "5943f528659a1e8b8e283dd319b97027e32ad3932841a2e8575caf3b65b5ce73",
+      "image_sha256": "5943f528659a1e8b8e283dd319b97027e32ad3932841a2e8575caf3b65b5ce73",
+      "verified": true
+    },
+    {
+      "path": "src/edge_gateway/CMakeLists.txt",
+      "effective_source": "built image",
+      "workspace_sha256": "c8619a570e4d9d8434a777d10a9960c798722c5143a1b8602177981b841abab6",
+      "image_sha256": "c8619a570e4d9d8434a777d10a9960c798722c5143a1b8602177981b841abab6",
+      "verified": true
+    },
+    {
+      "path": "tests/system/campus_local_plan_acceptance.py",
+      "effective_source": "local read-only audit bind",
+      "workspace_sha256": "548d20f4c08aead8d18130389281c8d54691471701f1ea4183383af75b313932",
+      "image_sha256": "f414ce7b742f06ff8db038cf55f85be1e198dd95ec04c40a968357429fa3140a",
+      "verified": true
+    },
+    {
+      "path": "tests/system/campus_local_plan_witness.py",
+      "effective_source": "local read-only audit bind",
+      "workspace_sha256": "f3bac2f0b6f8e05e73c537238f6891c8abec4e6678f1262f411176623a7a10d0",
+      "image_sha256": "f3bac2f0b6f8e05e73c537238f6891c8abec4e6678f1262f411176623a7a10d0",
+      "verified": true
+    },
+    {
+      "path": "tests/system/campus_route_geometry.py",
+      "effective_source": "local read-only audit bind",
+      "workspace_sha256": "4d1b14143cd96148b8c0193d941520f313269216c1e05c95d8a618a0c1547931",
+      "image_sha256": "4d1b14143cd96148b8c0193d941520f313269216c1e05c95d8a618a0c1547931",
+      "verified": true
+    }
+  ]
+}

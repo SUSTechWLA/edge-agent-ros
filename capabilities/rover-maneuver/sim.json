@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "deployment": "isolated_gazebo",
+  "resource_id": "sim.lingao.base",
+  "source_base_commit": "19484d2a6ea56920698bff148805db0876603482",
+  "profile_id": "lingao.archive.planar.v1",
+  "report_source": "rover.scan",
+  "report_calibration": "lingao_sim_planar_laser_v1",
+  "ros": {
+    "odom": "/odom",
+    "odom_frame": "odom",
+    "base_frame": "base_link",
+    "report": "/edge/perception/front_obstacle",
+    "witness": "/ground_truth",
+    "witness_frame": "world",
+    "submit": "/edge/submit_mission",
+    "query": "/edge/get_mission",
+    "cancel": "/edge/cancel_mission"
+  },
+  "activation_range_m": 2.7,
+  "clearance_beyond_surface_m": 1.8,
+  "max_forward_m": 3.8,
+  "max_path_m": 6.3,
+  "timeout_s": 90.0,
+  "arrival_tolerance_m": 0.12
+}

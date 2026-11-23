@@ -1,12 +1,40 @@
 """Kernel admission for pinned follow-ups, side effects and execution budgets."""
 import os
+import hmac
 import re
 import time
+from pathlib import Path
 
 from edge_contracts.errors import Refused, Unavailable, failure
 
 
 _ID = re.compile(r"derived\.[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
+
+
+def motion_grant(resource, header):
+    """An operator grants a resource independently of the task prompt."""
+    if resource is None:
+        return None
+    path = os.environ.get("EDGE_MOTION_TOKEN_FILE")
+    if not path or not isinstance(resource, str) or not re.fullmatch(r"[a-z][a-z0-9_.-]{1,79}", resource):
+        raise PermissionError("运动授权无效")
+    try:
+        token = Path(path).read_bytes().strip()
+        presented = (header or "").encode("ascii")
+    except (OSError, UnicodeError):
+        raise PermissionError("运动授权不可用") from None
+    if not 16 <= len(token) <= 256 or not hmac.compare_digest(presented, b"Bearer " + token):
+        raise PermissionError("此操作需要站点操作员授权")
+    return resource
+
+
+def task_capabilities(caps, resource):
+    scoped = (bool(os.environ.get("EDGE_MOTION_TOKEN_FILE")) or os.getenv("EDGE_ROVER_REQUIRE_BENCH") == "1"
+              or any(cap.get("_physical") and cap.get("effect") == "actuation" for cap in caps.values()))
+    return {name: cap for name, cap in caps.items()
+            if cap["effect"] == "read"
+            or (cap["effect"] == "actuation" and resource and cap.get("_physical", {}).get("resource_id") == resource)
+            or (not scoped and cap["effect"] != "actuation")}
 
 
 def check_id(key):

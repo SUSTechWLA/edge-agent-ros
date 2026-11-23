@@ -1,0 +1,74 @@
+# Opt-in overlay. The default adapter profile is /site/sim.json.
+# The manifest of the selected OS/architecture is pinned separately from the image index.
+x-image: &image ${EDGE_ROVER_IMAGE_REPOSITORY:?set the trusted image repository}@${EDGE_ROVER_IMAGE_DIGEST:?set the immutable repository digest}
+x-platform: &platform ${EDGE_ROVER_PLATFORM:?set the OS and architecture of the reviewed image}
+x-role: &role
+  image: *image
+  platform: *platform
+  pull_policy: never
+  init: true
+  restart: "no"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  cpus: 1
+  mem_limit: 256m
+  pids_limit: 96
+  tmpfs: [/tmp]
+  environment:
+    ROS_DOMAIN_ID: ${EDGE_ROS_DOMAIN_ID:-72}
+    RMW_IMPLEMENTATION: ${EDGE_RMW:-rmw_cyclonedds_cpp}
+    ROS_LOG_DIR: /tmp/ros
+    EDGE_PHYSICAL_PLATFORM_DIGEST: ${EDGE_PHYSICAL_PLATFORM_DIGEST:?set the reviewed platform manifest digest}
+x-site: &site
+  type: bind
+  source: ${EDGE_ROVER_SITE:?set the directory containing the site profile and platform.json}
+  target: /site
+  read_only: true
+  bind: {create_host_path: false}
+
+services:
+  agent:
+    image: *image
+    platform: *platform
+    pull_policy: never
+    environment:
+      EDGE_PHYSICAL_SOCKET: /physical/physical.sock
+      EDGE_MOTION_TOKEN_FILE: /run/operator/motion
+    volumes:
+      - maneuver-agent:/physical:ro
+      - operator-token:/run/operator:ro
+  maneuver-controller:
+    <<: *role
+    network_mode: none
+    entrypoint: [/usr/local/bin/edge-entrypoint, python3, -B, /opt/edge/agent/physical_maneuver.py, serve, --site, /site, --state, /ledger, --sockets, /sockets]
+    command: []
+    volumes:
+      - *site
+      - maneuver-ledger:/ledger
+      - maneuver-agent:/sockets/agent
+      - maneuver-executor:/sockets/camera
+      - maneuver-verifier:/sockets/verifier
+  rover-execute:
+    <<: *role
+    entrypoint: [/usr/local/bin/edge-entrypoint, python3, -B, /opt/edge/agent/rover_maneuver_ros.py, execute, --site, /site, --socket, /role/physical.sock]
+    command: []
+    volumes:
+      - *site
+      - maneuver-executor:/role:ro
+  rover-verify:
+    <<: *role
+    entrypoint: [/usr/local/bin/edge-entrypoint, python3, -B, /opt/edge/agent/rover_maneuver_ros.py, verify, --site, /site, --socket, /role/physical.sock]
+    command: []
+    volumes:
+      - *site
+      - maneuver-verifier:/role:ro
+
+volumes:
+  maneuver-agent:
+  maneuver-executor:
+  maneuver-verifier:
+  maneuver-ledger:
+  operator-token:
+    external: true
+    name: ${EDGE_ROVER_TOKEN_VOLUME:?set the independently provisioned operator token volume}
