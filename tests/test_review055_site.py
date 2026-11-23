@@ -96,6 +96,29 @@ class ReviewSite(unittest.TestCase):
             self.plan(caps,"review_builtin")
         self.assertEqual(denied.exception.code,"planner.implementation_unavailable")
 
+    def test_graph_is_compiled_from_separate_model_reply_on_normal_planner_entry(self):
+        caps = self.live()
+        (self.cfg/"implementations.json").write_bytes((self.cfg/"review_composed.json").read_bytes())
+        wanted = {"columns":3, "distance_m":1.2}
+        graph = {"nodes":[{"id":"a","op":"measure_p10","input":"frame"},
+                          {"id":"b","op":"classify_near","input":"a"},
+                          {"id":"c","op":"rank_nearest","input":"b"}],"output":"c"}
+        replies = [{"selected":"obstacle_review","reason":"human near-surface review"},
+                   {"disposition":"ready","reason":"classify the regions",
+                    "steps":[{"tool":"review_composed","args":wanted}]}, graph]
+        request = Mock(side_effect=replies)
+        events = []
+        _, steps = planning.plan("以1.2米为界识别三列中优先复核的近距表面", caps,
+                                 lambda k,v:events.append(k), model_profile=self.model, model_request=request)
+        self.assertIn("planner.graph_composed",events)
+        self.assertEqual(steps[0]["args"],{**wanted,"graph":graph})
+        self.assertEqual(request.call_count,3)
+        base, compiler = (call.args[1] for call in request.call_args_list[1:])
+        self.assertNotIn("graph",base["capabilities"][0]["input_schema"]["properties"])
+        self.assertEqual(compiler["arguments"],wanted)
+        self.assertEqual(set(compiler["operations"]),{"measure_p10","measure_median","classify_near",
+                                                     "rank_nearest","rank_image"})
+
     def test_corrupt_index_rejected_and_graph_language_is_station_owned(self):
         caps = self.live()
         (self.cfg/"implementations.json").write_bytes((self.cfg/"review_composed.json").read_bytes())

@@ -8,11 +8,13 @@ import sys
 import tempfile
 import unittest
 import zlib
+from collections import Counter
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from edge_contracts.spatial_facts import SpatialFactError
 from perception.review055 import adapters
 from perception.review055.server import Worker
+from perception.review055.site_workflow import lower_decile
 
 def sha(data):
     return "sha256:"+hashlib.sha256(data).hexdigest()
@@ -138,3 +140,21 @@ class Review(unittest.TestCase):
         for expected in (None,sha(b"wrong")):
             with self.assertRaises(SpatialFactError):
                 Worker("workflow",self.dir,self.ref,bad,expected)
+
+    def test_site_histogram_handles_interpolation_and_single_valid_pixel(self):
+        self.assertEqual(lower_decile(Counter({1200:1,300:1}),2),390)
+        self.assertEqual(lower_decile(Counter({400:1}),1),400)
+        self.assertIsNone(lower_decile(Counter(),0))
+
+    def test_all_missing_preserves_region_coverage_and_unknown(self):
+        payload=png(12,10,16,0,[b"\0"*24]*10)
+        self.meta["depth_ref"]=sha(payload)
+        (self.dir/(sha(payload)[7:]+".png")).write_bytes(payload)
+        self.ref=self.save_manifest()
+        self.user=Worker("workflow",self.dir,self.ref)
+        response=self.run_tool("user")
+        self.assertEqual(response["state"],"SUCCEEDED")
+        review=response["evidence"]["review"]
+        self.assertEqual(review["review_order"],[])
+        self.assertEqual(review["unknown_columns"],[1,2,3])
+        self.assertTrue(all(r["depth_m"] is None for r in review["regions"]))
