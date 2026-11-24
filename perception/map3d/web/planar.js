@@ -55,6 +55,7 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     for (const {bounds:[x0,y0,x1,y1]} of zones) { include(x0,y0); include(x1,y1); }
     for (const {xyz:[x,y],size:[w,h]} of features) { include(x-w/2,y-h/2); include(x+w/2,y+h/2); }
     for (const source of clouds) for (const [x,y] of source.points) include(x,y);
+    for (const route of options.taskRoutes||[]) for (const [x,y] of route.points) include(x,y);
     if (robot) include(...robot.xyz);
     if (!Number.isFinite(xmin)) { xmin=ymin=-2; xmax=ymax=2; }
     camera = {
@@ -104,13 +105,19 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
   }
 
   function drawRoute() {
-    if(!options.route)return;
-    const points=options.route.points.map(screen);
-    ctx.save();ctx.beginPath();ctx.moveTo(...points[0]);
-    for(const p of points.slice(1))ctx.lineTo(...p);
-    ctx.lineJoin="round";ctx.lineCap="round";
-    ctx.lineWidth=5;ctx.strokeStyle="#0f3b48";ctx.stroke();
-    ctx.lineWidth=2.8;ctx.strokeStyle="#22dfe9";ctx.stroke();ctx.restore();
+    const routes=[];
+    if(options.route)routes.push({kind:"site",points:options.route.points});
+    routes.push(...(options.taskRoutes||[]));
+    for(const {kind,points} of routes){
+      const projected=points.map(screen);
+      ctx.save();ctx.beginPath();ctx.moveTo(...projected[0]);
+      for(const p of projected.slice(1))ctx.lineTo(...p);
+      ctx.lineJoin="round";ctx.lineCap="round";
+      ctx.lineWidth=kind==="global"?8:5;ctx.strokeStyle="#153a35";ctx.stroke();
+      ctx.lineWidth=kind==="global"?5:2.8;
+      ctx.strokeStyle=kind==="global"?"#9af1b5":kind==="local"?"#ffb35c":"#22dfe9";
+      ctx.stroke();ctx.restore();
+    }
   }
   function drawAreaNames() {
     if (!texture || !options.scene) return;
@@ -246,7 +253,7 @@ window.createPlanarRenderer = function createPlanarRenderer(canvas, {invalidate,
     layers(data,opt);
     const key=JSON.stringify([data?.frame,data?.generation]);
     if (frameKey!==key) { frameKey=key; interacted=false; selection=null; camera=null; }
-    const source=texture || (grid?"grid":zones.length || features.length?"scene":clouds.length?"cloud":robot?"pose":"none");
+    const source=texture || (grid?"grid":zones.length || features.length?"scene":clouds.length?"cloud":robot?"pose":options.taskRoutes?.length?"task":"none");
     if (requestedBounds) {frameBounds(requestedBounds); requestedBounds=null; interacted=true;}
     else if (!camera || (!interacted && (fitSource!==source || resized))) fit();
     fitSource=source;

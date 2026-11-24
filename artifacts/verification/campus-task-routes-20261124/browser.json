@@ -1,0 +1,1225 @@
+{
+  "passed": true,
+  "task": "teaching-1124-route-overlay-02",
+  "source": "http://127.0.0.1:8876/campus-mission.html?task_id=teaching-1124-route-overlay-02",
+  "samples": [
+    {
+      "timestamp": 1795488504.6724195,
+      "receivedUtc": "2026-11-24T02:48:24.887Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0327,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488505.7898974,
+      "receivedUtc": "2026-11-24T02:48:26.205Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0265,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488506.9186118,
+      "receivedUtc": "2026-11-24T02:48:27.022Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.016,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488508.0710244,
+      "receivedUtc": "2026-11-24T02:48:28.253Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.033,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488509.1926923,
+      "receivedUtc": "2026-11-24T02:48:29.497Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0062,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488510.3151674,
+      "receivedUtc": "2026-11-24T02:48:30.725Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0167,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488511.4678774,
+      "receivedUtc": "2026-11-24T02:48:31.543Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0304,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488512.5905344,
+      "receivedUtc": "2026-11-24T02:48:32.771Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.008,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488513.7202477,
+      "receivedUtc": "2026-11-24T02:48:34.005Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.004,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488514.860891,
+      "receivedUtc": "2026-11-24T02:48:35.221Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0323,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488515.982296,
+      "receivedUtc": "2026-11-24T02:48:36.041Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0089,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488517.1071453,
+      "receivedUtc": "2026-11-24T02:48:37.274Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0183,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488518.2546818,
+      "receivedUtc": "2026-11-24T02:48:38.483Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0143,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488519.3686774,
+      "receivedUtc": "2026-11-24T02:48:39.719Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.013,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488520.4912527,
+      "receivedUtc": "2026-11-24T02:48:40.550Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0123,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488521.6368544,
+      "receivedUtc": "2026-11-24T02:48:41.772Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.009,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488522.7530494,
+      "receivedUtc": "2026-11-24T02:48:42.981Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.03,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488523.8680437,
+      "receivedUtc": "2026-11-24T02:48:44.202Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.034,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488525.0028994,
+      "receivedUtc": "2026-11-24T02:48:45.407Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0328,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488526.1210303,
+      "receivedUtc": "2026-11-24T02:48:46.226Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0127,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488527.2538414,
+      "receivedUtc": "2026-11-24T02:48:47.435Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.03,
+      "marker": [
+        3.24870238463247,
+        0.012288853952008665
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新",
+      "overlays": {
+        "dashboard": {
+          "global": 3,
+          "local": 2,
+          "greenPixels": 1518,
+          "orangePixels": 8
+        },
+        "grid": {
+          "global": 0,
+          "local": 2,
+          "greenPixels": 0,
+          "orangePixels": 0
+        },
+        "planar": {
+          "global": 3,
+          "local": 2,
+          "greenPixels": 1610,
+          "orangePixels": 2
+        },
+        "spatial": {
+          "global": 3,
+          "local": 2,
+          "greenPixels": 1313,
+          "orangePixels": 21
+        }
+      }
+    },
+    {
+      "timestamp": 1795488528.4289465,
+      "receivedUtc": "2026-11-24T02:48:48.687Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.2487023846310397,
+        0.012288853952877632
+      ],
+      "observedSpeed": -1.7763568394002505e-12,
+      "sourceAgeSeconds": 0.03,
+      "marker": [
+        3.2487023846310397,
+        0.012288853952877632
+      ],
+      "headline": "运动中 · 0.000 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新",
+      "overlays": {
+        "dashboard": {
+          "global": 3,
+          "local": 2,
+          "greenPixels": 1005,
+          "orangePixels": 461
+        },
+        "grid": {
+          "global": 0,
+          "local": 2,
+          "greenPixels": 0,
+          "orangePixels": 141
+        },
+        "planar": {
+          "global": 3,
+          "local": 2,
+          "greenPixels": 1027,
+          "orangePixels": 248
+        },
+        "spatial": {
+          "global": 3,
+          "local": 2,
+          "greenPixels": 974,
+          "orangePixels": 224
+        }
+      }
+    },
+    {
+      "timestamp": 1795488529.5757835,
+      "receivedUtc": "2026-11-24T02:48:49.938Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.2487023846313123,
+        0.012288853954725312
+      ],
+      "observedSpeed": -1.7763568394002505e-12,
+      "sourceAgeSeconds": 0.0081,
+      "marker": [
+        3.2487023846313123,
+        0.012288853954725312
+      ],
+      "headline": "运动中 · 0.000 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488530.7162826,
+      "receivedUtc": "2026-11-24T02:48:50.758Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.07,
+        -0.01
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        3.0654188530269337,
+        -0.013779026246817152
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.01,
+      "marker": [
+        3.0654188530269337,
+        -0.013779026246817152
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488531.8465903,
+      "receivedUtc": "2026-11-24T02:48:52.041Z",
+      "frame": "odom",
+      "displayedXY": [
+        2.73,
+        -0.01
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        2.7282062670751297,
+        -0.012175776335971132
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.032,
+      "marker": [
+        2.7282062670751297,
+        -0.012175776335971132
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488532.9993439,
+      "receivedUtc": "2026-11-24T02:48:53.272Z",
+      "frame": "odom",
+      "displayedXY": [
+        2.37,
+        0
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        2.369315492521234,
+        -0.001831678136860011
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.016,
+      "marker": [
+        2.369315492521234,
+        -0.001831678136860011
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488534.1413875,
+      "receivedUtc": "2026-11-24T02:48:54.479Z",
+      "frame": "odom",
+      "displayedXY": [
+        2.02,
+        0.01
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        2.0213055083196836,
+        0.008387598845812338
+      ],
+      "observedSpeed": 0.32000000000032003,
+      "sourceAgeSeconds": 0.024,
+      "marker": [
+        2.0213055083196836,
+        0.008387598845812338
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488535.2799206,
+      "receivedUtc": "2026-11-24T02:48:55.299Z",
+      "frame": "odom",
+      "displayedXY": [
+        1.79,
+        0.02
+      ],
+      "displayedSpeed": 0.108,
+      "observedXY": [
+        1.7908056752636698,
+        0.01506391928799685
+      ],
+      "observedSpeed": 0.10762397207240149,
+      "sourceAgeSeconds": 0.0266,
+      "marker": [
+        1.7908056752636698,
+        0.01506391928799685
+      ],
+      "headline": "运动中 · 0.108 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488536.4232478,
+      "receivedUtc": "2026-11-24T02:48:56.527Z",
+      "frame": "odom",
+      "displayedXY": [
+        1.69,
+        0.02
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        1.6901242500932954,
+        0.017751056742392347
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.002,
+      "marker": [
+        1.6901242500932954,
+        0.017751056742392347
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488537.5758011,
+      "receivedUtc": "2026-11-24T02:48:57.741Z",
+      "frame": "odom",
+      "displayedXY": [
+        1.34,
+        0.02
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        1.3419767729669156,
+        0.020033362100920292
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.0206,
+      "marker": [
+        1.3419767729669156,
+        0.020033362100920292
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488538.7092245,
+      "receivedUtc": "2026-11-24T02:48:58.965Z",
+      "frame": "odom",
+      "displayedXY": [
+        1,
+        0.02
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        1.0046968775932215,
+        0.019819773456204108
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.0546,
+      "marker": [
+        1.0046968775932215,
+        0.019819773456204108
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488539.8351867,
+      "receivedUtc": "2026-11-24T02:49:00.185Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.69,
+        0.02
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        0.6891771527617648,
+        0.019403484339578517
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.0326,
+      "marker": [
+        0.6891771527617648,
+        0.019403484339578517
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488540.9832897,
+      "receivedUtc": "2026-11-24T02:49:01.397Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.34,
+        0.02
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        0.34101750741244075,
+        0.0189065679151765
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.0114,
+      "marker": [
+        0.34101750741244075,
+        0.0189065679151765
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488542.1288092,
+      "receivedUtc": "2026-11-24T02:49:02.203Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.1,
+        0.02
+      ],
+      "displayedSpeed": 0.117,
+      "observedXY": [
+        0.09754849803191695,
+        0.01855258328851526
+      ],
+      "observedSpeed": 0.11690382743094752,
+      "sourceAgeSeconds": 0.02,
+      "marker": [
+        0.09754849803191695,
+        0.01855258328851526
+      ],
+      "headline": "运动中 · 0.117 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488543.2608871,
+      "receivedUtc": "2026-11-24T02:49:03.409Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.05,
+        0.02
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        0.05145214920246765,
+        0.018485173356730847
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.014,
+      "marker": [
+        0.05145214920246765,
+        0.018485173356730847
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488544.4077125,
+      "receivedUtc": "2026-11-24T02:49:04.633Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.05,
+        0.02
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        0.05145214920246765,
+        0.018485173356730847
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.014,
+      "marker": [
+        0.05145214920246765,
+        0.018485173356730847
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "执行中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795488545.5526881,
+      "receivedUtc": "2026-11-24T02:49:05.843Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.05,
+        0.02
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        0.05145214920246765,
+        0.018485173356730847
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0281,
+      "marker": [
+        0.05145214920246765,
+        0.018485173356730847
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-route-overlay-02",
+      "text": "回到教学楼门厅",
+      "taskState": "已完成",
+      "connection": "实时观测更新",
+      "stoppedOverlays": {
+        "dashboard": {
+          "global": 3,
+          "local": 0,
+          "greenPixels": 1496,
+          "orangePixels": 0
+        },
+        "grid": {
+          "global": 0,
+          "local": 0,
+          "greenPixels": 0,
+          "orangePixels": 0
+        },
+        "planar": {
+          "global": 3,
+          "local": 0,
+          "greenPixels": 1601,
+          "orangePixels": 0
+        },
+        "spatial": {
+          "global": 3,
+          "local": 0,
+          "greenPixels": 1358,
+          "orangePixels": 0
+        }
+      }
+    }
+  ],
+  "deniedRequests": [],
+  "routed": {
+    "timestamp": 1795488528.4289465,
+    "receivedUtc": "2026-11-24T02:48:48.687Z",
+    "frame": "odom",
+    "displayedXY": [
+      3.25,
+      0.01
+    ],
+    "displayedSpeed": 0,
+    "observedXY": [
+      3.2487023846310397,
+      0.012288853952877632
+    ],
+    "observedSpeed": -1.7763568394002505e-12,
+    "sourceAgeSeconds": 0.03,
+    "marker": [
+      3.2487023846310397,
+      0.012288853952877632
+    ],
+    "headline": "运动中 · 0.000 m/s",
+    "state": "运动中",
+    "selected": "teaching-1124-route-overlay-02",
+    "text": "回到教学楼门厅",
+    "taskState": "执行中",
+    "connection": "实时观测更新",
+    "overlays": {
+      "dashboard": {
+        "global": 3,
+        "local": 2,
+        "greenPixels": 1005,
+        "orangePixels": 461
+      },
+      "grid": {
+        "global": 0,
+        "local": 2,
+        "greenPixels": 0,
+        "orangePixels": 141
+      },
+      "planar": {
+        "global": 3,
+        "local": 2,
+        "greenPixels": 1027,
+        "orangePixels": 248
+      },
+      "spatial": {
+        "global": 3,
+        "local": 2,
+        "greenPixels": 974,
+        "orangePixels": 224
+      }
+    },
+    "operationId": "teaching-1124-route-overlay-02/step/1/waypoint/2",
+    "sourceStamp": 1303.5,
+    "localPoints": [
+      [
+        3.2487023846310144,
+        0.012288853952931902
+      ],
+      [
+        1.9987417347763876,
+        0.0023704964780481216
+      ]
+    ],
+    "sceneRevision": "3.4b916e7ae0b95c41"
+  },
+  "local3d": {
+    "mode": "local 3d",
+    "global": 0,
+    "local": 2,
+    "greenPixels": 0,
+    "orangePixels": 179
+  },
+  "start": {
+    "timestamp": 1795488504.6724195,
+    "receivedUtc": "2026-11-24T02:48:24.887Z",
+    "frame": "odom",
+    "displayedXY": [
+      3.25,
+      0.01
+    ],
+    "displayedSpeed": 0,
+    "observedXY": [
+      3.24870238463247,
+      0.012288853952008665
+    ],
+    "observedSpeed": 0,
+    "sourceAgeSeconds": 0.0327,
+    "marker": [
+      3.24870238463247,
+      0.012288853952008665
+    ],
+    "headline": "静止 · 0.000 m/s",
+    "state": "静止",
+    "selected": "teaching-1124-route-overlay-02",
+    "text": "正在读取任务详情",
+    "taskState": "等待读取",
+    "connection": "实时观测更新"
+  },
+  "moving": {
+    "timestamp": 1795488530.7162826,
+    "receivedUtc": "2026-11-24T02:48:50.758Z",
+    "frame": "odom",
+    "displayedXY": [
+      3.07,
+      -0.01
+    ],
+    "displayedSpeed": 0.32,
+    "observedXY": [
+      3.0654188530269337,
+      -0.013779026246817152
+    ],
+    "observedSpeed": 0.31999999999996476,
+    "sourceAgeSeconds": 0.01,
+    "marker": [
+      3.0654188530269337,
+      -0.013779026246817152
+    ],
+    "headline": "运动中 · 0.320 m/s",
+    "state": "运动中",
+    "selected": "teaching-1124-route-overlay-02",
+    "text": "回到教学楼门厅",
+    "taskState": "等待中",
+    "connection": "实时观测更新"
+  },
+  "stopped": {
+    "timestamp": 1795488545.5526881,
+    "receivedUtc": "2026-11-24T02:49:05.843Z",
+    "frame": "odom",
+    "displayedXY": [
+      0.05,
+      0.02
+    ],
+    "displayedSpeed": 0,
+    "observedXY": [
+      0.05145214920246765,
+      0.018485173356730847
+    ],
+    "observedSpeed": 0,
+    "sourceAgeSeconds": 0.0281,
+    "marker": [
+      0.05145214920246765,
+      0.018485173356730847
+    ],
+    "headline": "静止 · 0.000 m/s",
+    "state": "静止",
+    "selected": "teaching-1124-route-overlay-02",
+    "text": "回到教学楼门厅",
+    "taskState": "已完成",
+    "connection": "实时观测更新",
+    "stoppedOverlays": {
+      "dashboard": {
+        "global": 3,
+        "local": 0,
+        "greenPixels": 1496,
+        "orangePixels": 0
+      },
+      "grid": {
+        "global": 0,
+        "local": 0,
+        "greenPixels": 0,
+        "orangePixels": 0
+      },
+      "planar": {
+        "global": 3,
+        "local": 0,
+        "greenPixels": 1601,
+        "orangePixels": 0
+      },
+      "spatial": {
+        "global": 3,
+        "local": 0,
+        "greenPixels": 1358,
+        "orangePixels": 0
+      }
+    }
+  },
+  "stopWitness": "提交自然语言任务\n10:48:46\n前往登记地点 · 已完成\n教学楼门厅 · 路线 3.35 m · 已核验 3 个航点\n停稳见证 · 里程计 (0.05, 0.00) m"
+}

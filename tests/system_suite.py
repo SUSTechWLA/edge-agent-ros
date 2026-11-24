@@ -142,7 +142,7 @@ def run(args, selected, reasons):
                              test("test_object_site.py","-v"),test("test_direct_target_demo.py","-v"),
                              test("test_spatial_capture_archive.py","-v"),test("test_verify_perception_candidate.py","-v"),
                              [PY,"-m","unittest","discover","-s","tests","-p","test_*review.py","-v"],
-                             test("test_navigation_planner.py","-v"),test("test_navigation_physical.py","-v"),
+                             test("test_navigation_planner.py","-v"),test("test_local_preview.py","-v"),test("test_navigation_physical.py","-v"),
                              test("test_navigation_pack.py","-v"),
                              test("test_planner_model_selection.py","-v"),
                              [PY,str(ROOT/"model_provider/test_provider.py"),"-v"],

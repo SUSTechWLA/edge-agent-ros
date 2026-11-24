@@ -10,6 +10,7 @@
 <body>
 <header><div class="brand"><i aria-hidden="true">⬡</i> Edge Agent <b>ROS</b></div><span class="bar"></span><span>感知工作台</span>
   <nav id="workbench" data-port="__CONSOLE_PORT__" aria-label="任务与回溯" hidden>
+    <a data-page="/campus-mission.html">校园任务</a>
     <a data-view="sessions">任务会话</a><a data-view="review">运行复盘</a><a data-view="events">事件记录</a>
   </nav>
 </header>
@@ -33,6 +34,10 @@
       <div class="plot">
         <canvas tabindex="0" id="viewport" aria-label="三维空间地图" aria-describedby="gestures"></canvas>
         <canvas tabindex="0" id="planar-viewport" aria-label="二维占据与语义地图" aria-describedby="gestures" hidden></canvas>
+        <div class="mission-route-key" id="mission-route-key" hidden>
+          <span id="mission-global"></span><span id="mission-local"></span>
+          <button type="button" id="mission-fit" hidden>定位路线</button>
+        </div>
         <div id="empty" role="status">等待地图数据</div>
         <div class="height" id="height-key"><small>点云高度 · m</small><i></i><div><span id="z-min">—</span><span id="z-max">—</span></div></div>
         <div id="grid-key" class="grid-key" hidden><span><i class="unknown"></i>未知</span><span><i class="free"></i>空闲</span><span><i class="occupied"></i>占据</span></div>

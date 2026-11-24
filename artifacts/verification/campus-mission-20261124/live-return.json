@@ -1,0 +1,685 @@
+{
+  "passed": true,
+  "task": "teaching-1124-live-ui-return-03",
+  "source": "http://127.0.0.1:8876/campus-mission.html?task_id=teaching-1124-live-ui-return-03",
+  "samples": [
+    {
+      "timestamp": 1795487293.25685,
+      "receivedUtc": "2026-11-24T02:28:13.667Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.024,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487295.7756457,
+      "receivedUtc": "2026-11-24T02:28:15.834Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0302,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487298.1918838,
+      "receivedUtc": "2026-11-24T02:28:18.265Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.002,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487300.6330042,
+      "receivedUtc": "2026-11-24T02:28:20.720Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.022,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487303.0481422,
+      "receivedUtc": "2026-11-24T02:28:23.153Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.002,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487305.4915404,
+      "receivedUtc": "2026-11-24T02:28:25.581Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.018,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487307.9106693,
+      "receivedUtc": "2026-11-24T02:28:27.999Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.026,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487310.34913,
+      "receivedUtc": "2026-11-24T02:28:30.422Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.018,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487312.7663028,
+      "receivedUtc": "2026-11-24T02:28:32.855Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.026,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487315.2088017,
+      "receivedUtc": "2026-11-24T02:28:35.297Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0325,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487317.6383636,
+      "receivedUtc": "2026-11-24T02:28:37.728Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0191,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487320.0817993,
+      "receivedUtc": "2026-11-24T02:28:40.156Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0206,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487322.5096614,
+      "receivedUtc": "2026-11-24T02:28:42.597Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.002,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487324.9497914,
+      "receivedUtc": "2026-11-24T02:28:45.039Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.0209,
+      "marker": [
+        3.249531847299021,
+        2.673211380490764e-12
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "正在读取任务详情",
+      "taskState": "等待读取",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487327.3633742,
+      "receivedUtc": "2026-11-24T02:28:47.451Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.25,
+        0
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        3.2495318472979005,
+        3.2332110429750922e-12
+      ],
+      "observedSpeed": -1.5099033134902129e-12,
+      "sourceAgeSeconds": 0.0124,
+      "marker": [
+        3.2495318472979005,
+        3.2332110429750922e-12
+      ],
+      "headline": "运动中 · -0.000 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487329.7964642,
+      "receivedUtc": "2026-11-24T02:28:49.901Z",
+      "frame": "odom",
+      "displayedXY": [
+        3.07,
+        -0.02
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        3.0736513332237103,
+        -0.02416974763466449
+      ],
+      "observedSpeed": 0.31999999999995365,
+      "sourceAgeSeconds": 0.0053,
+      "marker": [
+        3.0736513332237103,
+        -0.02416974763466449
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487332.2126405,
+      "receivedUtc": "2026-11-24T02:28:52.393Z",
+      "frame": "odom",
+      "displayedXY": [
+        2.34,
+        -0.01
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        2.344906010662463,
+        -0.012321362705939877
+      ],
+      "observedSpeed": 0.3200000000001424,
+      "sourceAgeSeconds": 0.0254,
+      "marker": [
+        2.344906010662463,
+        -0.012321362705939877
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487334.6504147,
+      "receivedUtc": "2026-11-24T02:28:54.814Z",
+      "frame": "odom",
+      "displayedXY": [
+        1.77,
+        0
+      ],
+      "displayedSpeed": 0.082,
+      "observedXY": [
+        1.7715500586310484,
+        0.0034999628643829703
+      ],
+      "observedSpeed": 0.08202782979278567,
+      "sourceAgeSeconds": 0.0026,
+      "marker": [
+        1.7715500586310484,
+        0.0034999628643829703
+      ],
+      "headline": "运动中 · 0.082 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487337.0666232,
+      "receivedUtc": "2026-11-24T02:28:57.230Z",
+      "frame": "odom",
+      "displayedXY": [
+        1.26,
+        0.01
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        1.2584784165003675,
+        0.007689767094878741
+      ],
+      "observedSpeed": 0.320000000000098,
+      "sourceAgeSeconds": 0.0085,
+      "marker": [
+        1.2584784165003675,
+        0.007689767094878741
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487339.5075977,
+      "receivedUtc": "2026-11-24T02:28:59.660Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.52,
+        0.01
+      ],
+      "displayedSpeed": 0.32,
+      "observedXY": [
+        0.5186389130426245,
+        0.006854403682447495
+      ],
+      "observedSpeed": 0.31999999999996476,
+      "sourceAgeSeconds": 0.037,
+      "marker": [
+        0.5186389130426245,
+        0.006854403682447495
+      ],
+      "headline": "运动中 · 0.320 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487341.920806,
+      "receivedUtc": "2026-11-24T02:29:02.118Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.05,
+        0.01
+      ],
+      "displayedSpeed": 0.046,
+      "observedXY": [
+        0.05300321777062657,
+        0.006213577713045705
+      ],
+      "observedSpeed": 0.0458375190868221,
+      "sourceAgeSeconds": 0.0304,
+      "marker": [
+        0.05300321777062657,
+        0.006213577713045705
+      ],
+      "headline": "运动中 · 0.046 m/s",
+      "state": "运动中",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487344.3589556,
+      "receivedUtc": "2026-11-24T02:29:04.538Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.05,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        0.0530032177701172,
+        0.006213577713044997
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.028,
+      "marker": [
+        0.0530032177701172,
+        0.006213577713044997
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "等待中",
+      "connection": "实时观测更新"
+    },
+    {
+      "timestamp": 1795487346.7811966,
+      "receivedUtc": "2026-11-24T02:29:06.977Z",
+      "frame": "odom",
+      "displayedXY": [
+        0.05,
+        0.01
+      ],
+      "displayedSpeed": 0,
+      "observedXY": [
+        0.0530032177701172,
+        0.006213577713044997
+      ],
+      "observedSpeed": 0,
+      "sourceAgeSeconds": 0.006,
+      "marker": [
+        0.0530032177701172,
+        0.006213577713044997
+      ],
+      "headline": "静止 · 0.000 m/s",
+      "state": "静止",
+      "selected": "teaching-1124-live-ui-return-03",
+      "text": "回到教学楼门厅",
+      "taskState": "已完成",
+      "connection": "实时观测更新"
+    }
+  ],
+  "deniedRequests": [],
+  "start": {
+    "timestamp": 1795487293.25685,
+    "receivedUtc": "2026-11-24T02:28:13.667Z",
+    "frame": "odom",
+    "displayedXY": [
+      3.25,
+      0
+    ],
+    "displayedSpeed": 0,
+    "observedXY": [
+      3.249531847299021,
+      2.673211380490764e-12
+    ],
+    "observedSpeed": 0,
+    "sourceAgeSeconds": 0.024,
+    "marker": [
+      3.249531847299021,
+      2.673211380490764e-12
+    ],
+    "headline": "静止 · 0.000 m/s",
+    "state": "静止",
+    "selected": "teaching-1124-live-ui-return-03",
+    "text": "正在读取任务详情",
+    "taskState": "等待读取",
+    "connection": "实时观测更新"
+  },
+  "moving": {
+    "timestamp": 1795487329.7964642,
+    "receivedUtc": "2026-11-24T02:28:49.901Z",
+    "frame": "odom",
+    "displayedXY": [
+      3.07,
+      -0.02
+    ],
+    "displayedSpeed": 0.32,
+    "observedXY": [
+      3.0736513332237103,
+      -0.02416974763466449
+    ],
+    "observedSpeed": 0.31999999999995365,
+    "sourceAgeSeconds": 0.0053,
+    "marker": [
+      3.0736513332237103,
+      -0.02416974763466449
+    ],
+    "headline": "运动中 · 0.320 m/s",
+    "state": "运动中",
+    "selected": "teaching-1124-live-ui-return-03",
+    "text": "回到教学楼门厅",
+    "taskState": "等待中",
+    "connection": "实时观测更新"
+  },
+  "stopped": {
+    "timestamp": 1795487346.7811966,
+    "receivedUtc": "2026-11-24T02:29:06.977Z",
+    "frame": "odom",
+    "displayedXY": [
+      0.05,
+      0.01
+    ],
+    "displayedSpeed": 0,
+    "observedXY": [
+      0.0530032177701172,
+      0.006213577713044997
+    ],
+    "observedSpeed": 0,
+    "sourceAgeSeconds": 0.006,
+    "marker": [
+      0.0530032177701172,
+      0.006213577713044997
+    ],
+    "headline": "静止 · 0.000 m/s",
+    "state": "静止",
+    "selected": "teaching-1124-live-ui-return-03",
+    "text": "回到教学楼门厅",
+    "taskState": "已完成",
+    "connection": "实时观测更新"
+  },
+  "stopWitness": "提交自然语言任务\n10:28:45\n前往登记地点 · 已完成\n教学楼门厅 · 路线 3.35 m · 已核验 3 个航点\n停稳见证 · 里程计 (0.05, 0.00) m"
+}

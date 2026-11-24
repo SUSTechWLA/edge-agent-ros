@@ -92,6 +92,8 @@ RULES = [
       "tests/system/sensor_health_restart.py","tests/test_sensor_incidents.py"),
      ("plugin-isolation",)),
     (("tests/test_map_texture_pack.py","tests/system/campus_texture_browser.mjs"),("plugin-isolation","campus-world")),
+    (("console/web/campus-mission.*","console/server/campus_planning.py","tests/system/campus_mission_browser.cjs",
+      "navigation/local_preview.py","tests/test_local_preview.py"), ("planner","ui","campus-world")),
     (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_*.py","tests/test_campus_*.py",
       "tests/system/field_sensor_task.py","tests/system/field_observation_soak.py"),
      ("campus-world",)),

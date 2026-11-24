@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlsplit
 import rclpy
 
 from history import TRACE_FIELDS, encode
+from campus_planning import request_preview
 from observer import Observer
 from session_service import SessionUnavailable, read_session
 from task_data import FactsQueryError, FactsUnavailable
@@ -23,6 +24,19 @@ def integer(params, key, default=None, ceiling=2**63-1):
     if number < 0 or number > ceiling:
         raise ValueError(f"{key} must be between 0 and {ceiling}")
     return number
+
+
+def campus_mission_views():
+    def url(setting, path):
+        port = os.environ.get(setting, "")
+        if len(port) <= 5 and port.isascii() and port.isdecimal() and 1 <= int(port) <= 65535:
+            return f"http://127.0.0.1:{int(port)}{path}"
+        return None
+
+    return {"campus_2d": url("EDGE_CAMPUS_MAP_PORT", "/?view=2d"),
+            "campus_3d": url("EDGE_CAMPUS_MAP_PORT", "/?view=3d&place=teaching"),
+            "overview": url("EDGE_CAMPUS_OVERVIEW_PORT", "/"),
+            "recording": "/#review"}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -135,6 +149,12 @@ class Handler(SimpleHTTPRequestHandler):
                 snapshot = self.observer.snapshot()
                 snapshot["task_proxy_mode"] = "observe" if os.getenv("EDGE_CONSOLE_OBSERVE_ONLY")=="1" else "agent"
                 self.respond(200,snapshot)
+            elif url.path=="/api/campus-mission/views":
+                self.respond(200,campus_mission_views())
+            elif url.path=="/api/campus-mission/local-preview":
+                if set(params) != {"task_id"} or len(params["task_id"]) != 1:
+                    raise ValueError("provide one task ID")
+                self.respond(200,request_preview(self.observer,params["task_id"][0]))
             elif url.path=="/api/task-detail":
                 if set(params) - {"id","after","limit"} or not params.get("id",[""])[0] or any(
                         len(values) != 1 for values in params.values()):

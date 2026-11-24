@@ -1,0 +1,177 @@
+{
+  "passed": true,
+  "source": "http://127.0.0.1:8876",
+  "task": {
+    "id": "teaching-1124-live-ui-return-03",
+    "text": "回到教学楼门厅",
+    "state": "SUCCEEDED",
+    "destination": "teaching_lobby",
+    "verified": 3
+  },
+  "views": {
+    "campus_2d": "http://127.0.0.1:8873/?view=2d",
+    "campus_3d": "http://127.0.0.1:8873/?view=3d&place=teaching",
+    "overview": "http://127.0.0.1:8880/",
+    "recording": "/#review"
+  },
+  "screens": {
+    "390": {
+      "route": {
+        "registered": [
+          "teaching_lobby",
+          "teaching_door",
+          "teaching_exit"
+        ],
+        "waypoints": [
+          [
+            3.3,
+            0
+          ],
+          [
+            1.7,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "measured": "true",
+        "palette": 40
+      },
+      "views": {
+        "2d": {
+          "href": "http://127.0.0.1:8873/?view=2d&embed=1",
+          "places": [
+            "",
+            "campus",
+            "teaching",
+            "robots",
+            "track",
+            "lawn",
+            "woods",
+            "road",
+            "teaching_interior",
+            "campus_street",
+            "delft"
+          ],
+          "palette": 214,
+          "visibleCanvasFraction": 0.5828571428571429
+        },
+        "3d": {
+          "href": "http://127.0.0.1:8873/?view=3d&place=teaching&embed=1",
+          "places": [
+            "",
+            "campus",
+            "teaching",
+            "robots",
+            "track",
+            "lawn",
+            "woods",
+            "road",
+            "teaching_interior",
+            "campus_street",
+            "delft"
+          ],
+          "palette": 162,
+          "visibleCanvasFraction": 0.5828571428571429
+        }
+      },
+      "taskStatus": "已完成",
+      "progress": "任务记录的终点 (0.05, 0.00) m",
+      "sensors": [
+        "新鲜观测",
+        "新鲜观测"
+      ]
+    },
+    "1440": {
+      "route": {
+        "registered": [
+          "teaching_lobby",
+          "teaching_door",
+          "teaching_exit"
+        ],
+        "waypoints": [
+          [
+            3.3,
+            0
+          ],
+          [
+            1.7,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "measured": "true",
+        "palette": 20
+      },
+      "views": {
+        "2d": {
+          "href": "http://127.0.0.1:8873/?view=2d&embed=1",
+          "places": [
+            "",
+            "campus",
+            "teaching",
+            "robots",
+            "track",
+            "lawn",
+            "woods",
+            "road",
+            "teaching_interior",
+            "campus_street",
+            "delft"
+          ],
+          "palette": 201,
+          "visibleCanvasFraction": 0.7027027027027027
+        },
+        "3d": {
+          "href": "http://127.0.0.1:8873/?view=3d&place=teaching&embed=1",
+          "places": [
+            "",
+            "campus",
+            "teaching",
+            "robots",
+            "track",
+            "lawn",
+            "woods",
+            "road",
+            "teaching_interior",
+            "campus_street",
+            "delft"
+          ],
+          "palette": 165,
+          "visibleCanvasFraction": 0.7027027027027027
+        }
+      },
+      "taskStatus": "已完成",
+      "progress": "任务记录的终点 (0.05, 0.00) m",
+      "sensors": [
+        "新鲜观测",
+        "新鲜观测"
+      ]
+    }
+  },
+  "errors": [],
+  "deniedRequests": [],
+  "switchedTask": "teaching-1124-live-ui-02",
+  "overview": {
+    "revision": "3.4b916e7ae0b95c41",
+    "locations": 10,
+    "walk": "教学楼 → 广场 → 运动场 → 草甸 → 林道 → Mekelweg。中心线约 777 米，共 25 段。"
+  },
+  "draft": {
+    "text": "前往教学楼门外",
+    "openedConfirmation": true,
+    "submitted": false
+  },
+  "observationFaults": {
+    "live": "实时观测更新",
+    "stale": "实时观测过期",
+    "offline": "连接中断",
+    "recovered": "实时观测更新",
+    "taskRetained": "teaching-1124-live-ui-return-03"
+  }
+}

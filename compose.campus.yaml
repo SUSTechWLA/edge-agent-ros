@@ -131,6 +131,8 @@ services:
     depends_on: [campus-task-facts]
     environment:
       EDGE_FACTS_URL: http://campus-task-facts:8091
+      EDGE_CAMPUS_MAP_PORT: ${EDGE_CAMPUS_MAP_PORT:-8773}
+      EDGE_CAMPUS_OVERVIEW_PORT: ${EDGE_CAMPUS_OVERVIEW_PORT:-8780}
     ports: !override
       - "127.0.0.1:${EDGE_CAMPUS_CONSOLE_PORT:-8766}:8080"
     volumes:
@@ -189,6 +191,12 @@ services:
       - "127.0.0.1:${EDGE_CAMPUS_OVERVIEW_PORT:-8780}:8080"
     volumes: [campus-world:/campus:ro]
     command: ["python3","-B","-m","http.server","8080","--bind","0.0.0.0","--directory","/campus/overview"]
+
+  campus-local-preview:
+    <<: *campus-tool
+    profiles: [campus-planning-preview]
+    restart: unless-stopped
+    entrypoint: ["python3","-B","-m","navigation.local_preview","--bind","0.0.0.0","--port","8129"]
 
   campus-texture:
     <<: *campus-tool

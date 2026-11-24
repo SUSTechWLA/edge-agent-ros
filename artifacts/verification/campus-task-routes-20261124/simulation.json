@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "checks": {
+    "agent_and_global_route": true,
+    "local_geometry_scoped_bound_and_read_only": true,
+    "wrong_task_during_motion_no_geometry": true,
+    "updated_local_candidates": true,
+    "local_polyline_in_observed_free_grid_with_32cm_margin": true,
+    "withdrawn_after_arrival": true,
+    "physical_door_crossing_and_park": true
+  },
+  "task_id": "teaching-1124-route-overlay-01",
+  "mission_id": "teaching-1124-route-overlay-01/step/1",
+  "frame": "odom",
+  "scene_revision": "3.4b916e7ae0b95c41",
+  "waypoints": [
+    [
+      0,
+      0
+    ],
+    [
+      1.7,
+      0
+    ],
+    [
+      3.3,
+      0
+    ]
+  ],
+  "preview_samples": 63,
+  "total_samples": 70,
+  "preview_samples_by_operation": {
+    "teaching-1124-route-overlay-01/step/1/waypoint/2": 34,
+    "teaching-1124-route-overlay-01/step/1/waypoint/3": 29
+  },
+  "source_stamps": 17,
+  "wrong_task_samples_while_active": 65,
+  "unchanged_grid_samples_checked": 60,
+  "bounded_ledger_visibility_lags_s": [
+    0.2819402
+  ],
+  "preview_max_length_m": 1.2500000000000002,
+  "preview_min_length_m": 0.051989465737121134,
+  "max_start_error_to_observed_pose_m": 0.010879999999998313,
+  "local_reply_codes": {
+    "planning.observation_unsynchronized": 2,
+    "static_occupancy_preview": 63,
+    "planning.no_active_waypoint": 5
+  },
+  "final_preview": {
+    "status": "waiting",
+    "code": "planning.no_active_waypoint"
+  },
+  "world_pose_samples": 172,
+  "world_final_error_m": 0.07128204542519803,
+  "world_final_speed_mps": 0.0,
+  "mismatches": []
+}

@@ -29,7 +29,7 @@ const section=()=>{
   return name==='review'||name==='events'?name:'monitor';
 };
 const displayed=()=>replay||live;
-const taskWritesEnabled=()=>!!live && live.task_proxy_mode!=='observe' && !replay;
+const taskWritesEnabled=()=>liveOk && !!live && live.task_proxy_mode!=='observe' && !replay;
 async function readTask(id,limit){
   if(!live)await initialStateRead;
   const query=new URLSearchParams({id});
@@ -311,7 +311,7 @@ async function capabilities(){
     el('cap-list').textContent='可用能力　'+(r.capabilities||[]).map(x=>x.id).join(' · ');
   }catch(e){el('cap-list').textContent='能力目录暂不可用 · '+e.message;}
 }
-el('open-task').onclick=()=>{if(!taskWritesEnabled())return;el('task-modal').showModal();el('task-text').focus();capabilities();};
+el('open-task').onclick=()=>{if(!taskWritesEnabled() || el('task-modal').open)return;el('task-modal').showModal();el('task-text').focus();capabilities();};
 el('close-task').onclick=()=>el('task-modal').close();
 el('task-example').onclick=()=>{el('task-text').value='依次巡检 (0.8,0) 和 (0.8,0.7)，然后报告状态';el('task-text').focus();};
 el('task-form').onsubmit=async e=>{
@@ -335,6 +335,17 @@ async function refreshTask(id,silent=false){
 el('refresh-task').onclick=()=>refreshTask(taskRecord?.id);
 el('trace-task').onclick=()=>{if(!taskRecord)return;clearFilterInputs();el('task-filter').value=taskRecord.id;pageBefore=null;applyFilter();location.hash='events';};
 const initialStateRead=poll();
+initialStateRead.then(async()=>{
+  if(live?.environment!=='simulation')return;
+  try{const views=await api('/api/campus-mission/views');el('nav-campus').hidden=!views.campus_2d;}
+  catch{/* This deployment can serve the console without a campus map. */}
+});
+const draft = new URLSearchParams(location.search).get('task_draft')?.trim();
+if(draft && draft.length<=2048)initialStateRead.then(()=>{
+  if(!taskWritesEnabled())return;
+  el('task-text').value=draft;
+  el('open-task').click();
+});
 route();refreshTask(localStorage.getItem('edge-last-task'),true);
 setInterval(()=>{if(!document.hidden)poll();},1000);
 setInterval(()=>{if(!document.hidden && !replay && taskRecord && !['SUCCEEDED','CANCELED','FAILED','REJECTED','BLOCKED','RECOVERY_REQUIRED'].includes(taskRecord.state))refreshTask(taskRecord.id,true);},1800);
