@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>传感器融合地图 · Edge Agent ROS</title>
+  <link rel="stylesheet" href="/scene-layers.css">
+  <link rel="stylesheet" href="/fusion-map.css">
+  <script defer src="/fusion-grid.js"></script>
+  <script defer src="/fusion-spatial.js"></script>
+  <script defer src="/fusion-map.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand"><span aria-hidden="true">◇</span> Edge Agent <b>ROS</b></div>
+    <span class="separator"></span><span class="product">机器人观测台</span>
+    <span class="connection" id="status" role="status">连接中</span>
+  </header>
+  <main>
+    <div class="heading">
+      <div><h1>传感器融合地图</h1><p id="provenance">正在读取冻结的地图图层</p></div>
+      <a id="download" class="primary" aria-disabled="true">下载点云 · PLY</a>
+    </div>
+    <div class="workspace">
+      <article class="map-card">
+        <div class="card-heading"><h2>三维点云</h2><span class="instrument" id="frame"></span></div>
+        <div class="viewport">
+          <canvas id="cloud" tabindex="0" aria-label="三维融合点云。拖动旋转，滚轮缩放，点击读取三维坐标。"></canvas>
+          <div class="empty" id="empty" role="status">正在读取点云</div>
+          <div class="view-tools" id="tools" hidden>
+            <button type="button" id="top">俯视</button><button type="button" id="reset">复位</button>
+          </div>
+        </div>
+        <div class="card-foot"><span id="pick" aria-live="polite">拖动旋转 · 滚轮缩放 · 点击点云查询坐标</span><span id="shown"></span></div>
+      </article>
+      <aside class="operations">
+        <section class="operation">
+          <h2>颜色覆盖</h2>
+          <span id="percent">—</span>
+          <progress id="bar" max="1" value="0" aria-label="已着色点比例"></progress>
+          <dl class="pairs"><div><dt>已取得 RGB</dt><dd id="colored">—</dd></div><div><dt>保留几何</dt><dd id="uncolored">—</dd></div></dl>
+        </section>
+        <section class="operation">
+          <h2>显示图层</h2>
+          <div id="sources"></div>
+          <label class="filter unknown"><input type="checkbox" id="unknown" checked disabled> 显示未着色点 <i aria-hidden="true"></i></label>
+        </section>
+        <section class="operation" id="gaps" hidden>
+          <h2>未着色原因</h2><dl class="pairs" id="reasons"></dl>
+        </section>
+        <section class="operation"><h2>采样与配准</h2>
+          <dl class="pairs"><div><dt>采集时钟</dt><dd id="clock">—</dd></div><div><dt id="skew-name">采样跨度</dt><dd id="skew">—</dd></div><div id="tolerance-row" hidden><dt>深度容差</dt><dd id="tolerance"></dd></div></dl>
+          <details id="survey" hidden><summary>采集位姿 · 世界坐标 XYZ（米）</summary><dl class="pairs" id="stations"></dl></details>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

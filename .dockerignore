@@ -25,6 +25,10 @@
 !evidence/**
 !sessions_plugin
 !sessions_plugin/**
+!task_recorder
+!task_recorder/global_map.py
+!scripts
+!scripts/export_field_scene_example.py
 **/__pycache__
 !docker
 !docker/**

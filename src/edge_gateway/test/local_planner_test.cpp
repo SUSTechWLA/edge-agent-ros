@@ -1,3 +1,4 @@
+#include "reference_path.hpp"
 #include "local_planner.hpp"
 #include "dynamic_obstacles.hpp"
 
@@ -125,6 +126,31 @@ void choices() {
   near(legacy.plan({3,.4},nullptr).linear_mps,0.,1e-9,"legacy turn");
 }
 
+void nearest_rank_switch_ttc() {
+  Sensor sensor;
+  sensor.scan.sensor_x_m=0.;
+  auto faces=[&](double left,double right,bool isolated=false) {
+    sensor.sample({},{});
+    for(int offset=-3;offset<=3;++offset){
+      const auto radial=1./std::cos(offset*pi/180.);
+      if(std::isfinite(left)) sensor.rays[150+offset]=left*radial;
+      if(std::isfinite(right) && (!isolated || !offset)) sensor.rays[210+offset]=right*radial;
+    }
+  };
+  faces(.82,.83);auto first=assess(sensor.scan);
+  faces(.84,.70);auto closing=assess(sensor.scan,&first);
+  check(closing.ttc_alternate_surface_pair && closing.ttc_s && *closing.ttc_s<.8,
+        "existing side face becoming nearest must still trigger urgent TTC");
+  faces(.68,.69);first=assess(sensor.scan);
+  faces(.70,.68);auto ranked=assess(sensor.scan,&first);
+  check(ranked.ttc_alternate_surface_pair && ranked.ttc_status=="closing","rank swap needs paired observations");
+  faces(.82,INFINITY);first=assess(sensor.scan);
+  faces(.84,.70);check(assess(sensor.scan,&first).ttc_status=="unobserved","new surface has no TTC pair");
+  faces(.82,.83,true);first=assess(sensor.scan);
+  faces(.84,.70,true);check(assess(sensor.scan,&first).ttc_status=="unobserved","new rank cannot invent singleton evidence");
+  faces(.82,1.8);first=assess(sensor.scan);
+  faces(.84,.70);check(assess(sensor.scan,&first).ttc_status=="unobserved","depth jump cannot qualify a prior patch");
+}
 void competing_surfaces() {
   // One isolated return lies within a calibrated range bin of a visible wall.
   // Mirror the geometry to test scan-order independence.
@@ -307,6 +333,71 @@ void shaped_kinematic_pass() {
   check(false,"shape goal timeout");
 }
 
+void regulated_pursuit_tracking() {
+  const auto shape=lingao();
+  for (double mirror:{-1.,1.}) {
+    Sensor sensor;
+    auto free=steady(sensor,{});
+    FootprintGapFollow planner(shape,{},TrajectoryTracker::regulated_pursuit);
+    Pose pose;
+    const Point goal{1.3,.75*mirror};
+    double v=0.,w=0.,turning_distance=0.;
+    constexpr double dt=.05;
+    for (int i=0;i<400;++i) {
+      const double dx=goal.x-pose.x,dy=goal.y-pose.y;
+      const double distance=std::hypot(dx,dy);
+      if (distance<=.055) break;
+      const auto cmd=planner.plan({distance,std::atan2(dy,dx)-pose.yaw,true,true,v,w},&free);
+      check(cmd.decision=="proceed" && cmd.tracking_mode=="regulated_pursuit" && cmd.tracking_arc_m &&
+            cmd.clearance_m.value()>=footprint_hard_margin_m,"receive a proven moving arc");
+      check(cmd.linear_mps>0. && cmd.linear_mps-v<=.40*dt+1e-8 &&
+            std::abs(cmd.angular_radps-w)<=1.5*dt+1e-8,"smooth ramp from measured twist");
+      near(cmd.linear_mps*cmd.curvature_per_m.value(),cmd.angular_radps,1e-10,"executed curvature");
+      v=cmd.linear_mps; w=cmd.angular_radps;
+      const double mid=pose.yaw+w*dt/2;
+      pose.x+=v*dt*std::cos(mid); pose.y+=v*dt*std::sin(mid); pose.yaw+=w*dt;
+      if (std::abs(w)>.05) turning_distance+=v*dt;
+    }
+    check(turning_distance>1.2 && std::hypot(goal.x-pose.x,goal.y-pose.y)<=.055,
+          "drive a continuous turn to an off-axis goal");
+    auto blocked=steady(sensor,{{.69,-.4,.81,.4}});
+    auto stopped=planner.plan({1.,.3,true,true,.2,.15},&blocked);
+    check(stopped.decision=="stop" && stopped.linear_mps==0. && stopped.angular_radps==0.,
+          "hard margin stop bypasses acceleration ramp");
+    free.ttc_s=.5;
+    stopped=planner.plan({1.,.3,true,true,.2,.15},&free);
+    check(stopped.reason_code=="navigation.ttc_insufficient" && stopped.linear_mps==0.,
+          "TTC overrides pursuit");
+  }
+}
+
+void crossing_inside_tracking_arc() {
+  Sensor sensor;
+  auto scan=steady(sensor,{});
+  const auto shape=lingao();
+  constexpr double bearing=1.;
+  PlanInput goal{2.,bearing};
+  DynamicObstacleReport observed;
+  observed.valid=true; observed.scan_ref=scan.report_ref;
+  observed.scan_seq=scan.scan_seq; observed.stamp_ns=scan.stamp_ns;
+  observed.pose.odom_stamp_ns=scan.stamp_ns; goal.measured_odom_stamp_ns=scan.stamp_ns;
+  // The pedestrian moves along the goal chord, 1.03 m to its right. The
+  // chord is clear, but the turning rover sweeps towards the pedestrian.
+  const double c=std::cos(bearing),s=std::sin(bearing);
+  ObstacleTrack person;
+  person.id=19; person.radius_m=.15; person.span_s=.4; person.velocity_valid=true;
+  person.center={1.2*c+1.03*s,1.2*s-1.03*c}; person.velocity={.2*c,.2*s};
+  person.early_displacement=person.late_displacement={.04*c,.04*s};
+  observed.observed.push_back(person); goal.dynamic_obstacles=&observed;
+  CrossingYield straight(shape);
+  LocalPlan receipt;
+  check(straight.permit(goal,scan,receipt),"person outside the straight prediction band");
+  FootprintGapFollow planner(shape,std::make_unique<CrossingYield>(shape),TrajectoryTracker::regulated_pursuit);
+  const auto held=planner.plan(goal,&scan);
+  check(held.dynamic_phase=="yielding" && held.dynamic_track_id==19 &&
+        held.linear_mps==0. && held.angular_radps==0.,"inner arc must yield before moving");
+}
+
 void transient_side_observation() {
   // On the campus failure trace a previously clear side acquired one nearby
   // return: only the long preview was lost. Replaying the same scan must not
@@ -440,6 +531,57 @@ void dynamic_observer_and_policy() {
   }
 }
 
+void stationary_reference_departures() {
+  {
+    Sensor sensor; ScanClusterTracker tracker;
+    bool saw_protrusion=false;
+    for (int i=0;i<25;++i) {
+      std::vector<Box> boxes{{1.45,-1.3,1.65,1.3}};
+      if (i>13) {
+        const double y=-.48+.035*(i-14);
+        boxes.push_back({1.36,y-.13,1.50,y+.13});
+      }
+      sensor.sample({},boxes);
+      const auto scan=assess(sensor.scan);
+      const auto report=tracker.observe(scan,ScanPose{{},0.,scan.stamp_ns});
+      if (i==12) tracker.freeze_reference();
+      if (i>16) for (const auto& t:report.observed) {
+        if (!t.matches_stationary_surface && t.center.x<1.41 && t.velocity_valid && t.velocity.y>.10)
+          saw_protrusion=true;
+      }
+    }
+    check(saw_protrusion,"new moving silhouette must survive association with an oversized static wall");
+  }
+  for (bool present_at_start:{true,false}) {
+    const auto shape=lingao();
+    Sensor sensor; ScanClusterTracker tracker; CrossingYield policy(shape);
+    bool matched=false,yielded=false;
+    for (int i=0;i<38;++i) {
+      // The obstacle moves parallel to a long observed wall. Only its exposed
+      // silhouette can support tangential motion. The other case first enters
+      // view as a new object after the stationary reference is frozen.
+      const double y=-1.18+.045*std::max(0,i-14);
+      std::vector<Box> boxes{{1.95,-2.8,2.15,-1.25}};
+      if (present_at_start || i>=14) boxes.push_back({1.45,y-.12,1.72,y+.12});
+      sensor.sample({},boxes);
+      const auto scan=assess(sensor.scan);
+      auto report=tracker.observe(scan,ScanPose{{},0.,scan.stamp_ns});
+      if (i==12) tracker.freeze_reference();
+      if (i==13) for (const auto& t:report.observed) {
+        if (std::abs(t.center.x-1.45)<.20 && t.matches_stationary_surface) matched=true;
+      }
+      if (i<14) continue;
+      PlanInput input{2.,0.};input.dynamic_obstacles=&report;input.measured_odom_stamp_ns=scan.stamp_ns;
+      LocalPlan plan;policy.permit(input,scan,plan);
+      if (plan.dynamic_phase=="yielding") {
+        check(i<=22,"a departing person must trigger while still outside the safety lane");
+        yielded=true;break;
+      }
+    }
+    check(matched==present_at_start && yielded,"novel or departing object must retain full crossing prediction");
+  }
+}
+
 void one_sided_static_occlusion() {
   // A fixed front face progressively disappears behind a sight-line edge.
   // Its centre moves at crossing speed while the opposite edge stays fixed.
@@ -503,10 +645,134 @@ void ambiguous_patch_and_reentry() {
     check(tick(-1.3,0,0,0).dynamic_phase=="cleared","second verified departure restores planning");
   }
 }
+
+void dynamic_recheck_after_identity_change() {
+  Sensor sensor;
+  const auto shape=lingao();
+  CrossingYield policy(shape);
+  PlanInput input{3.5,0.};
+  FrontObstacleReport scan;
+  DynamicObstacleReport report;
+  auto track=[](std::uint64_t id,Point center,Point velocity={}) {
+    ObstacleTrack t;
+    t.id=id; t.center=center; t.velocity=velocity; t.radius_m=.18;
+    t.samples=4; t.support_rays=3; t.span_s=.375; t.velocity_valid=true;
+    t.early_displacement={velocity.x*.18,velocity.y*.18};
+    t.late_displacement=t.early_displacement;
+    return t;
+  };
+  auto current=[&]() {
+    LocalPlan plan;
+    const bool allowed=policy.permit(input,scan,plan);
+    if (!allowed)
+      check(plan.decision=="wait" && plan.linear_mps==0. && plan.angular_radps==0.,"recheck must hold still");
+    return plan;
+  };
+  auto tick=[&](const std::vector<Box>& boxes,std::vector<ObstacleTrack> observed,bool fresh_odom=true) {
+    sensor.sample({},boxes);
+    scan=assess(sensor.scan);
+    report.valid=true; report.stamp_ns=scan.stamp_ns; report.scan_ref=scan.report_ref;
+    report.scan_seq=scan.scan_seq; report.pose.odom_stamp_ns=scan.stamp_ns;
+    report.observed=std::move(observed); input.dynamic_obstacles=&report;
+    if (fresh_odom) input.measured_odom_stamp_ns=scan.stamp_ns;
+    return current();
+  };
+
+  check(tick({{1.45,-.45,1.69,-.21}},{track(7,{1.57,-.33},{0.,.30})}).dynamic_phase=="yielding",
+        "confirm crossing before losing its identity");
+  for (int i=0;i<12;++i) {
+    const auto hold=tick({{2.15,-.12,2.45,.12}},{});  // A return beyond the original crossing slice.
+    check(hold.dynamic_clear_samples==0 && hold.dynamic_recheck && !hold.dynamic_recheck->corridor_clear,
+          "missing ID cannot free an obstructed downstream corridor");
+  }
+  for (int i=0;i<3;++i) {
+    const auto hold=tick({}, {track(8,{1.67,1.4},{0.,-.35})});  // A second person approaches the corridor.
+    check(hold.dynamic_clear_samples==0 && hold.dynamic_recheck && !hold.dynamic_recheck->tracks_clear,
+          "a second predicted incursion must suppress the old track release");
+  }
+  const auto exterior=track(9,{1.65,-1.45});  // A new ID, outside the lane on the other side.
+  const std::vector<Box> outside{{1.53,-1.57,1.77,-1.33}};
+  auto p=tick(outside,{exterior});
+  check(p.dynamic_clear_samples==1 && p.dynamic_recheck->mode=="observed_corridor","start sustained re-observation");
+  check(current().dynamic_clear_samples==1,"one scan cannot count twice");
+  check(tick(outside,{exterior},false).dynamic_clear_samples==0,"reused independent odom cannot qualify");
+  for (unsigned i=1;i<=8;++i) {
+    p=tick(outside,{exterior});
+    check(p.dynamic_clear_samples==i && p.dynamic_recheck->stationary && p.dynamic_recheck->tracks_clear,
+          "distinct fresh scan and quiet odom should accumulate");
+    check((p.dynamic_phase=="cleared")== (i==8),"release only after the longer observed corridor interval");
+  }
+
+  policy.reset();
+  check(tick({{1.45,-.45,1.69,-.21}},{track(7,{1.57,-.33},{0.,.30})}).dynamic_phase=="yielding",
+        "track must begin with a positive predicted departure");
+  for (int i=0;i<2;++i) {
+    p=tick(outside,{track(7,{1.65,-1.45})});
+    check(p.dynamic_phase=="yielding" && p.dynamic_recheck->mode=="stationary_exterior",
+          "same target parked on either side still needs fresh evidence");
+  }
+  p=tick(outside,{track(7,{1.65,-1.45})});
+  check(p.dynamic_phase=="cleared" && p.dynamic_recheck->dwell_ns>=240'000'000,
+        "stationary exterior target must release on either side");
+}
+void campus_facade_recheck() {
+  const VehicleFootprint shape{"campus",.155,.275,.28,.28,.36};
+  Sensor sensor;
+  const ScanPose pose{{.203709,-.004989},-.048422,0};
+  const double dx=.65-pose.position.x,dy=-.05-pose.position.y;
+  const double bearing=std::atan2(dy,dx)-pose.yaw;
+  PlanInput goal{std::hypot(dx,dy),bearing};
+  auto track=[](unsigned id,Point p,double radius,Point v={}) {
+    ObstacleTrack t; t.id=id; t.center=p; t.radius_m=radius; t.velocity=v; t.velocity_valid=true;
+    t.span_s=.875; t.early_displacement=t.late_displacement={.18*v.x,.18*v.y};
+    return t;
+  };
+  auto scan=steady(sensor,{});
+  DynamicObstacleReport dynamic;
+  dynamic.valid=true; dynamic.pose=pose; goal.dynamic_obstacles=&dynamic;
+  for (int scenario=0;scenario<5;++scenario) {
+    FootprintGapFollow planner(shape,std::make_unique<CrossingYield>(shape),TrajectoryTracker::regulated_pursuit);
+    auto step=[&](std::vector<ObstacleTrack> objects) {
+      ++scan.scan_seq; scan.stamp_ns+=125'000'000;
+      dynamic.scan_ref=scan.report_ref; dynamic.scan_seq=scan.scan_seq; dynamic.stamp_ns=scan.stamp_ns;
+      dynamic.pose.odom_stamp_ns=scan.stamp_ns; goal.measured_odom_stamp_ns=scan.stamp_ns;
+      dynamic.observed=std::move(objects);
+      return planner.plan(goal,&scan);
+    };
+    check(step({track(20,{.55,0.},.17,{0.,-.22})}).dynamic_phase=="yielding","establish campus hold");
+    for (int i=1;i<=3;++i) {
+      auto facade=track(31,{1.41861,scenario==1 ? -1.27 : -1.57821},.695551);
+      if (scenario>=2) {
+        facade.center={.72,scenario==3 ? .83 : 1.20};
+        facade.half_extent={.60,.04};
+        facade.radius_m=std::hypot(.60,.04)+.08;
+        facade.samples=scenario==4 ? 2 : 8;
+        facade.support_rays=20;
+      }
+      const auto p=step({track(20,{1.42814,1.69483},.676984),facade});
+      if (scenario==1 || scenario==3 || scenario==4) {
+        check(p.dynamic_recheck && p.dynamic_recheck->blocking_track_id==31 && p.linear_mps==0.,
+              "intruding or unproven extent keeps the same stationary hold");
+      } else {
+        check(p.dynamic_recheck && p.dynamic_recheck->tracks_clear && p.dynamic_clear_samples==unsigned(i) &&
+              ((i==3)==(p.dynamic_phase=="cleared")),"outside diagonal facade permits independent recheck");
+      }
+    }
+  }
+}
 }  // namespace
 int main() {
-  observations(); competing_surfaces(); sampled_edge_competing_with_isolated_echo(); mixed_edge_bearing();
+  {
+    edge::local::ReferencePath path({{0,0},{.3,0},{.6,0},{.6,.6},{0,.6},{0,0}});
+    const auto start=path.target({0,0});
+    check(start.remaining>2.3 && std::abs(start.point.y-.05)<1e-6,"loop start looks through via points without false arrival");
+    const auto bend=path.target({.55,.10});
+    check(bend.point.x<.48 && bend.remaining>1.6,"lookahead continues through corner");
+    check(path.target({.53,.07}).remaining<=bend.remaining,"backward noise must not rewind progress");
+  }
+  observations(); nearest_rank_switch_ttc(); competing_surfaces(); sampled_edge_competing_with_isolated_echo(); mixed_edge_bearing();
   short_observed_faces(); choices(); kinematic_pass();
-  vehicle_checks(); shaped_kinematic_pass(); transient_side_observation(); singleton_ttc_confirmation();
-  dynamic_observer_and_policy(); one_sided_static_occlusion(); ambiguous_patch_and_reentry();
+  vehicle_checks(); shaped_kinematic_pass(); regulated_pursuit_tracking(); transient_side_observation(); singleton_ttc_confirmation();
+  stationary_reference_departures(); dynamic_observer_and_policy(); one_sided_static_occlusion(); ambiguous_patch_and_reentry();
+  dynamic_recheck_after_identity_change(); crossing_inside_tracking_arc(); campus_facade_recheck();
 }

@@ -67,10 +67,21 @@ inline json_object *encode_plan(const LocalPlan &p) {
   if (!p.footprint_ref.empty()) {
     text_field(obj, "footprint_ref", p.footprint_ref);
     metric(obj, "curvature_per_m", p.curvature_per_m);
+    if (!p.tracking_mode.empty()) {
+      text_field(obj,"tracking_mode",p.tracking_mode);
+      metric(obj,"tracking_arc_m",p.tracking_arc_m);
+    }
     if (p.ttc_hold_stamp_ns) {
       json_object_object_add(obj,"ttc_hold_stamp_ns",json_object_new_int64(*p.ttc_hold_stamp_ns));
       json_object_object_add(obj,"ttc_clear_samples",json_object_new_uint64(p.ttc_clear_samples));
     }
+  }
+  if (p.tracking_target) {
+    auto* xy=json_object_new_array();
+    json_object_array_add(xy,json_object_new_double(p.tracking_target->x));
+    json_object_array_add(xy,json_object_new_double(p.tracking_target->y));
+    json_object_object_add(obj,"tracking_target_xy",xy);
+    text_field(obj,"tracking_target_frame","odom");
   }
   text_field(obj, "reason_code", p.reason_code);
   if (!p.dynamic_report_ref.empty() || !p.dynamic_phase.empty()) {
@@ -78,6 +89,22 @@ inline json_object *encode_plan(const LocalPlan &p) {
     text_field(obj,"dynamic_phase",p.dynamic_phase);
     json_object_object_add(obj,"dynamic_track_id",json_object_new_uint64(p.dynamic_track_id));
     json_object_object_add(obj,"dynamic_clear_samples",json_object_new_uint64(p.dynamic_clear_samples));
+    if (p.dynamic_recheck) {
+      const auto& check=*p.dynamic_recheck;
+      auto* evidence=json_object_new_object();
+      text_field(evidence,"mode",check.mode);
+      if (!check.blocking_region.empty()) {
+        text_field(evidence,"blocking_region",check.blocking_region);
+        json_object_object_add(evidence,"blocking_track_id",json_object_new_uint64(check.blocking_track_id));
+      }
+      json_object_object_add(evidence,"corridor_clear",json_object_new_boolean(check.corridor_clear));
+      json_object_object_add(evidence,"stationary",json_object_new_boolean(check.stationary));
+      json_object_object_add(evidence,"tracks_clear",json_object_new_boolean(check.tracks_clear));
+      json_object_object_add(evidence,"scan_stamp_ns",json_object_new_int64(check.scan_stamp_ns));
+      json_object_object_add(evidence,"odom_stamp_ns",json_object_new_int64(check.odom_stamp_ns));
+      json_object_object_add(evidence,"dwell_ns",json_object_new_int64(check.dwell_ns));
+      json_object_object_add(obj,"dynamic_recheck",evidence);
+    }
   }
   text_field(obj, "report_ref", p.report_ref);
   metric(obj, "linear_mps", p.linear_mps);
@@ -99,6 +126,9 @@ inline json_object *encode_dynamic(const DynamicObstacleReport& r) {
   for(const auto& t:r.observed) {
     auto* row=json_object_new_object(); json_object_object_add(row,"track_id",json_object_new_uint64(t.id));
     metric(row,"x_m",t.center.x);metric(row,"y_m",t.center.y);metric(row,"visible_radius_m",t.radius_m);
+    metric(row,"visible_half_extent_x_m",t.half_extent.x);metric(row,"visible_half_extent_y_m",t.half_extent.y);
+    if (t.observed_face_normal) text_field(row,"motion_evidence","cropped_face_normal_flow");
+    json_object_object_add(row,"matches_stationary_surface",json_object_new_boolean(t.matches_stationary_surface));
     json_object_object_add(row,"velocity_valid",json_object_new_boolean(t.velocity_valid));
     if (t.velocity_valid) {
       metric(row,"vx_mps",t.velocity.x); metric(row,"vy_mps",t.velocity.y);

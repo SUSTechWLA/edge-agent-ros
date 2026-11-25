@@ -23,6 +23,8 @@ COPY agent agent
 COPY scene scene
 COPY evidence evidence
 COPY sessions_plugin sessions_plugin
+COPY task_recorder/global_map.py task_recorder/global_map.py
+COPY scripts/export_field_scene_example.py scripts/export_field_scene_example.py
 ARG EDGE_REVISION=unknown
 ENV EDGE_REVISION=${EDGE_REVISION}
 LABEL org.opencontainers.image.revision=${EDGE_REVISION}

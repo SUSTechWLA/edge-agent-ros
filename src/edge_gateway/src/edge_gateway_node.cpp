@@ -12,6 +12,10 @@
 #include <string_view>
 #include <json-c/json.h>
 
+#include "reference_path.hpp"
+#include <edge_interfaces/navigation_site.hpp>
+#include "edge_interfaces/action/navigate_path.hpp"
+#include <functional>
 #include "body_authority.hpp"
 #include "local_plan_json.hpp"
 #include "vehicle_profile.hpp"
@@ -26,11 +30,20 @@
 using namespace std::chrono_literals;
 using Clock = std::chrono::steady_clock;
 using Navigation = edge_interfaces::action::NavigateTo;
-using GoalHandle = rclcpp_action::ServerGoalHandle<Navigation>;
+using PathAction = edge_interfaces::action::NavigatePath;
+using Point = edge::local::Point;
+struct Motion {
+  std::string operation_id;
+  Point target;
+  std::optional<edge::local::ReferencePath> path;
+  std::function<bool()> is_canceling;
+  std::function<void(double)> feedback;
+  std::function<void(const Navigation::Result&)> complete;
+};
 
 class EdgeGateway final : public rclcpp::Node {
 public:
-  EdgeGateway() : rclcpp::Node("edge_gateway") {
+  EdgeGateway() : rclcpp::Node("edge_gateway"), site_(edge::NavigationSite::load(*this, 75)) {
     events_=create_publisher<std_msgs::msg::String>("/edge/events",100);
     std::random_device random;
     std::ostringstream instance;
@@ -38,6 +51,9 @@ public:
     identity_=instance.str();
     require_scan_=declare_parameter<bool>("require_scan",false);
     const auto planner_name=declare_parameter<std::string>("local_planner","stop_on_clearance");
+    const auto tracker_name=declare_parameter<std::string>("trajectory_tracker","heading");
+    if (tracker_name!="heading" && (tracker_name!="regulated_pursuit" || planner_name!="footprint_follow"))
+      throw std::invalid_argument("regulated_pursuit requires footprint_follow");
     const auto observer_name=declare_parameter<std::string>("dynamic_observer","none");
     const auto policy_name=declare_parameter<std::string>("dynamic_policy","none");
     if (observer_name!="none") {
@@ -64,7 +80,9 @@ public:
         footprint_=edge::local::load_vehicle_profile(declare_parameter<std::string>("vehicle_profile",""));
         std::unique_ptr<edge::local::LocalMotionPolicyPort> policy;
         if (policy_name=="yield_crossing") policy=std::make_unique<edge::local::CrossingYield>(*footprint_);
-        planner_=std::make_unique<edge::local::FootprintGapFollow>(*footprint_,std::move(policy));
+        const auto tracker=tracker_name=="regulated_pursuit" ? edge::local::TrajectoryTracker::regulated_pursuit
+                                                             : edge::local::TrajectoryTracker::heading;
+        planner_=std::make_unique<edge::local::FootprintGapFollow>(*footprint_,std::move(policy),tracker);
       } else {
         planner_=std::make_unique<edge::local::GapFollow>();
       }
@@ -91,46 +109,80 @@ public:
           last_heartbeat_id_ = message.data;
           last_heartbeat_at_ = Clock::now();
         });
-    action_ = rclcpp_action::create_server<Navigation>(
-        this, "/edge/navigate_to",
-        [this](const rclcpp_action::GoalUUID &,
-               const std::shared_ptr<const Navigation::Goal> goal) {
-          if (reserved_ || inhibited_ || !fresh(Clock::now()) ||
-              goal->operation_id.empty() || seen_.contains(goal->operation_id) ||
-              !std::isfinite(goal->x) || !std::isfinite(goal->y) ||
-              std::abs(goal->x) > 4.0 || std::abs(goal->y) > 4.0) {
-            RCLCPP_WARN(get_logger(), "Refused navigation goal %s", goal->operation_id.c_str());
-            event(goal->operation_id,"navigation.goal_rejected","action.rejected","warn","gateway admission rejected");
-            return rclcpp_action::GoalResponse::REJECT;
-          }
-          reserved_ = true;
-          return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-        },
-        [this](const std::shared_ptr<GoalHandle> handle) {
-          if (handle != active_) return rclcpp_action::CancelResponse::REJECT;
-          begin_stop(Outcome::canceled, "cancel requested");
-          return rclcpp_action::CancelResponse::ACCEPT;
-        },
-        [this](const std::shared_ptr<GoalHandle> handle) {
-          active_ = handle;
-          seen_.insert(handle->get_goal()->operation_id);
-          started_ = Clock::now();
-          moving_authorized_ = false;
-          planner_->reset();
-          last_plan_seq_.reset();
-          last_decision_.clear();
-          last_dynamic_phase_.clear();
-          stop_outcome_.reset();
-          if (body_) body_->start("gw-" + identity_ + std::to_string(++goal_sequence_));
-          event(handle->get_goal()->operation_id,"navigation.accepted","action.started","info","gateway accepted target");
-          RCLCPP_INFO(get_logger(), "Tracking %s to (%.3f, %.3f)",
-                      handle->get_goal()->operation_id.c_str(), handle->get_goal()->x,
-                      handle->get_goal()->y);
-        });
+    action_=server<Navigation>("/edge/navigate_to");
+    if (tracker_name=="regulated_pursuit" && policy_name=="yield_crossing")
+      path_action_=server<PathAction>("/edge/navigate_path");
     timer_ = create_wall_timer(50ms, [this] { tick(); });
   }
 
 private:
+  const edge::NavigationSite site_;
+
+  static std::vector<Point> points(const Navigation::Goal& goal) { return {{goal.x,goal.y}}; }
+  static std::vector<Point> points(const PathAction::Goal& goal) {
+    std::vector<Point> out;
+    if (goal.path.size()<2 || goal.path.size()>256) return out;
+    for (const auto& p:goal.path) {
+      if (p.z!=0.) return {};
+      out.push_back({p.x,p.y});
+    }
+    return out;
+  }
+  template<typename Action>
+  typename rclcpp_action::Server<Action>::SharedPtr server(const char* name) {
+    using Handle=rclcpp_action::ServerGoalHandle<Action>;
+    return rclcpp_action::create_server<Action>(this,name,
+      [this](const rclcpp_action::GoalUUID&,std::shared_ptr<const typename Action::Goal> goal) {
+        const auto route=points(*goal);
+        const bool valid=!route.empty() && std::all_of(route.begin(),route.end(),[this](Point p) {
+          return site_.contains(p.x, p.y);
+        });
+        if (reserved_ || inhibited_ || !fresh(Clock::now()) || !valid ||
+            (route.size()>1 && std::hypot(route.front().x-pose_->x,route.front().y-pose_->y)>.25) ||
+            goal->operation_id.empty() || seen_.contains(goal->operation_id)) {
+          event(goal->operation_id,"navigation.goal_rejected","action.rejected","warn","gateway admission rejected");
+          return rclcpp_action::GoalResponse::REJECT;
+        }
+        reserved_=true;
+        return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+      },
+      [this](std::shared_ptr<Handle> h) {
+        if (!active_ || active_->operation_id!=h->get_goal()->operation_id) return rclcpp_action::CancelResponse::REJECT;
+        begin_stop(Outcome::canceled,"cancel requested");
+        return rclcpp_action::CancelResponse::ACCEPT;
+      },
+      [this](std::shared_ptr<Handle> h) {
+        auto route=points(*h->get_goal());
+        auto &motion=active_.emplace();
+        motion.operation_id=h->get_goal()->operation_id;
+        motion.target=route.back();
+        if (route.size()>1) motion.path.emplace(std::move(route));
+        motion.is_canceling=[h] {return h->is_canceling();};
+        motion.feedback=[h](double remaining) {
+          auto fb=std::make_shared<typename Action::Feedback>();
+          fb->distance_remaining=remaining; h->publish_feedback(fb);
+        };
+        motion.complete=[h](const Navigation::Result& r) {
+          auto result=std::make_shared<typename Action::Result>();
+          result->reached=r.reached; result->final_x=r.final_x; result->final_y=r.final_y; result->detail=r.detail;
+          if (h->is_canceling()) h->canceled(result);
+          else if (r.reached) h->succeed(result);
+          else h->abort(result);
+        };
+        seen_.insert(motion.operation_id);
+        started_ = Clock::now();
+        moving_authorized_ = false;
+        planner_->reset();
+        if (tracker_) tracker_->freeze_reference();
+        last_plan_seq_.reset();
+        last_decision_.clear();
+        last_dynamic_phase_.clear();
+        last_dynamic_recheck_ns_.reset();
+        stop_outcome_.reset();
+        if (body_) body_->start("gw-" + identity_ + std::to_string(++goal_sequence_));
+        event(motion.operation_id,"navigation.accepted","action.started","info","gateway accepted target");
+      });
+  }
   void event(const std::string &op,const char *code,const char *kind,const char *level,const std::string &detail,
              const char *record=nullptr,json_object *value=nullptr) {
     if(op.empty()) return;
@@ -148,7 +200,7 @@ private:
     if(record) json_object_object_add(data,record,value);
     if (footprint_ && std::string_view(kind)=="action.started")
       json_object_object_add(data,"vehicle_footprint",edge::local::encode_footprint(*footprint_));
-    if (body_ && active_ && op == active_->get_goal()->operation_id) {
+    if (body_ && active_ && op == active_->operation_id) {
       json_object_object_add(data,"body_owner",json_object_new_string(body_->owner().c_str()));
       if (body_->epoch()) {
         json_object_object_add(data,"body_boot",json_object_new_string(body_->boot().c_str()));
@@ -218,26 +270,10 @@ private:
       std_msgs::msg::String msg; msg.data=json_object_to_json_string_ext(wire,JSON_C_TO_STRING_PLAIN);
       report_pub_->publish(msg);
       if (active_)
-        event(active_->get_goal()->operation_id,"perception.front_obstacle","perception.front_obstacle",
+        event(active_->operation_id,"perception.front_obstacle","perception.front_obstacle",
               report_->valid?"info":"warn",report_->reason,"report",json_object_get(wire));
       json_object_put(wire);
-      if (tracker_) {
-        std::optional<edge::local::ScanPose> projected;
-        if (pose_ && std::abs(stamp-pose_->stamp)<=90'000'000) {
-          // Project the latest measured odometry by at most 90 ms to scan time.
-          const double dt=(stamp-pose_->stamp)*1e-9;
-          const double dyaw=dt*pose_->yaw_velocity,mid=pose_->yaw+dyaw/2;
-          const double ds=dt*pose_->forward_velocity;
-          projected=edge::local::ScanPose{{pose_->x+ds*std::cos(mid),pose_->y+ds*std::sin(mid)},pose_->yaw+dyaw,pose_->stamp};
-        }
-        dynamic_report_=tracker_->observe(*report_,projected);
-        auto* observation=edge::local::encode_dynamic(*dynamic_report_);
-        std_msgs::msg::String value; value.data=json_object_to_json_string_ext(observation,JSON_C_TO_STRING_PLAIN);
-        dynamic_pub_->publish(value);
-        if (active_) event(active_->get_goal()->operation_id,"perception.dynamic_obstacles","perception.dynamic_obstacles",
-                           dynamic_report_->valid?"info":"warn",dynamic_report_->reason,"dynamic",json_object_get(observation));
-        json_object_put(observation);
-      }
+      if (tracker_) pair_dynamic_scan();
     }
     front_ = std::numeric_limits<double>::infinity();
     forward_gap_ = std::numeric_limits<double>::infinity();
@@ -312,6 +348,42 @@ private:
       } else still_samples_ = 0;
     }
     pose_ = Pose{p.x, p.y, yaw, speed, yaw_rate, twist.linear.x, twist.angular.z, stamp, now};
+    if (tracker_) {
+      pose_history_.push_back(*pose_);
+      while (pose_history_.size()>40 || stamp-pose_history_.front().stamp>600'000'000) pose_history_.pop_front();
+      pair_dynamic_scan();
+    }
+  }
+
+  void pair_dynamic_scan() {
+    if (!report_ || (dynamic_report_ && dynamic_report_->scan_ref==report_->report_ref)) return;
+    const auto stamp=report_->stamp_ns;
+    const Pose *before=nullptr,*after=nullptr;
+    for (const auto& p:pose_history_) {
+      if (std::abs(p.stamp-stamp)>90'000'000) continue;
+      if (p.stamp<=stamp) before=&p;
+      if (p.stamp>=stamp) {after=&p;break;}
+    }
+    if (!before && !after) return; // A mismatched dynamic_report cannot authorize motion.
+    const Pose& p=!before ? *after : !after ? *before :
+      stamp-before->stamp<=after->stamp-stamp ? *before : *after;
+    edge::local::ScanPose projected{{p.x,p.y},p.yaw,p.stamp};
+    if (before && after && before!=after) {
+      const double t=double(stamp-before->stamp)/(after->stamp-before->stamp);
+      projected.position={std::lerp(before->x,after->x,t),std::lerp(before->y,after->y,t)};
+      projected.yaw=before->yaw+t*std::remainder(after->yaw-before->yaw,2.*std::acos(-1.));
+    } else {
+      const double dt=(stamp-p.stamp)*1e-9,dyaw=dt*p.yaw_velocity,mid=p.yaw+dyaw/2.;
+      projected.position={p.x+dt*p.forward_velocity*std::cos(mid),p.y+dt*p.forward_velocity*std::sin(mid)};
+      projected.yaw=p.yaw+dyaw;
+    }
+    dynamic_report_=tracker_->observe(*report_,projected);
+    auto* observation=edge::local::encode_dynamic(*dynamic_report_);
+    std_msgs::msg::String value; value.data=json_object_to_json_string_ext(observation,JSON_C_TO_STRING_PLAIN);
+    dynamic_pub_->publish(value);
+    if (active_) event(active_->operation_id,"perception.dynamic_obstacles","perception.dynamic_obstacles",
+                       dynamic_report_->valid?"info":"warn",dynamic_report_->reason,"dynamic",json_object_get(observation));
+    json_object_put(observation);
   }
 
   void publish_body(const std::string& wire) {
@@ -343,20 +415,19 @@ private:
         halt.decision="stop"; halt.reason_code=code;
         if (footprint_) halt.footprint_ref=footprint_->profile_id;
         if (report_) { halt.report_ref=report_->report_ref; halt.ttc_s=report_->ttc_s; }
-        event(active_->get_goal()->operation_id,"navigation.local_stop","navigation.local_stop",
+        event(active_->operation_id,"navigation.local_stop","navigation.local_stop",
               outcome==Outcome::failed?"warn":"info",reason,"plan",edge::local::encode_plan(halt));
       }
     }
     stop_outcome_ = outcome;
     stop_reason_ = reason;
     stop_code_=code;
-    event(active_->get_goal()->operation_id,code,"action.braking",outcome==Outcome::failed?"warn":"info",reason);
+    event(active_->operation_id,code,"action.braking",outcome==Outcome::failed?"warn":"info",reason);
     stop_output();
   }
 
   double distance() const {
-    const auto goal = active_->get_goal();
-    return std::hypot(goal->x - pose_->x, goal->y - pose_->y);
+    return std::hypot(active_->target.x-pose_->x,active_->target.y-pose_->y);
   }
 
   void finish(bool stopped) {
@@ -372,12 +443,11 @@ private:
     else result->detail = stop_reason_ + "; stationary odometry confirmed";
     const auto terminal_code=stopped?stop_code_:"navigation.stop_unconfirmed";
     result->detail+=" [code:"+terminal_code+"]";
-    event(active_->get_goal()->operation_id,terminal_code.c_str(),"action.result",stopped?"info":"error",result->detail);
-    RCLCPP_INFO(get_logger(), "%s: %s", active_->get_goal()->operation_id.c_str(),
+    event(active_->operation_id,terminal_code.c_str(),"action.result",stopped?"info":"error",result->detail);
+    RCLCPP_INFO(get_logger(), "%s: %s", active_->operation_id.c_str(),
                 result->detail.c_str());
-    if (active_->is_canceling()) active_->canceled(result);
-    else if (result->reached) active_->succeed(result);
-    else active_->abort(result);
+    active_->complete(*result);
+    if (stopped && tracker_) tracker_->begin_idle_reference();
     active_.reset();
     reserved_ = false;
     stop_outcome_.reset();
@@ -403,12 +473,11 @@ private:
       begin_stop(Outcome::failed, "odometry timeout","navigation.odom_timeout");
       return;
     }
-    if (now - started_ > 75s) {
+    if (now - started_ > site_.motion_deadline) {
       begin_stop(Outcome::failed, "navigation deadline","navigation.deadline");
       return;
     }
-    const auto goal = active_->get_goal();
-    if (last_heartbeat_id_ != goal->operation_id || now - last_heartbeat_at_ >= heartbeat_timeout) {
+    if (last_heartbeat_id_ != active_->operation_id || now - last_heartbeat_at_ >= heartbeat_timeout) {
       if (!body_) legacy_velocity(0.0, 0.0);
       if (moving_authorized_ || now - started_ >= heartbeat_timeout)
         begin_stop(Outcome::failed, "operation heartbeat expired","navigation.heartbeat_expired");
@@ -430,14 +499,19 @@ private:
       }
     }
     const double remaining = distance();
-    auto feedback = std::make_shared<Navigation::Feedback>();
-    feedback->distance_remaining = remaining;
-    active_->publish_feedback(feedback);
-    if (!report_pub_ && remaining <= target_tolerance) {
+    auto target=active_->target;
+    double path_remaining=remaining;
+    if (active_->path) {
+      const auto reference=active_->path->target({pose_->x,pose_->y});
+      target=reference.point; path_remaining=reference.remaining;
+    }
+    const bool arrived=remaining<=target_tolerance && path_remaining<=target_tolerance;
+    active_->feedback(std::max(remaining,path_remaining));
+    if (!report_pub_ && arrived) {
       begin_stop(Outcome::reached, "braked at goal","navigation.arrived");
       return;
     }
-    const double desired = std::atan2(goal->y - pose_->y, goal->x - pose_->x);
+    const double desired = std::atan2(target.y-pose_->y,target.x-pose_->x);
     const double delta = desired - pose_->yaw;
     const double error = std::atan2(std::sin(delta), std::cos(delta));
     if(require_scan_ && (scan_stamp_<0 || now-scan_received_>1s)){
@@ -447,7 +521,7 @@ private:
       begin_stop(Outcome::failed,"laser and odometry acquisition times differ by over one second",
                  "navigation.scan_time_mismatch");return;
     }
-    const bool wants_forward=std::abs(error)<=0.35 && remaining>target_tolerance;
+    const bool wants_forward=std::abs(error)<=0.35 && !arrived;
     if(require_scan_ && wants_forward && front_<clearance_m){
       begin_stop(Outcome::failed,"forward clearance below 0.42 m","navigation.path_blocked");return;
     }
@@ -458,15 +532,16 @@ private:
     if (report_pub_ && (!report_ || !report_->valid)) {
       begin_stop(Outcome::failed,"local obstacle observation invalid","navigation.scan_invalid");return;
     }
-    if (report_pub_ && remaining <= target_tolerance) {
+    if (report_pub_ && arrived) {
       begin_stop(Outcome::reached,"braked at goal","navigation.arrived");return;
     }
     edge::local::PlanInput input{};
-    input.goal_distance_m=remaining; input.goal_bearing_rad=error;
+    input.goal_distance_m=std::hypot(target.x-pose_->x,target.y-pose_->y); input.goal_bearing_rad=error;
     input.measured_linear_mps=pose_->forward_velocity; input.measured_angular_radps=pose_->yaw_velocity;
     input.measured_odom_stamp_ns=pose_->stamp;
     input.dynamic_obstacles=dynamic_report_ ? &*dynamic_report_ : nullptr;
     auto plan=planner_->plan(input,report_ ? &*report_ : nullptr);
+    if (active_->path) plan.tracking_target=target;
     if (!std::isfinite(plan.linear_mps) || !std::isfinite(plan.angular_radps)) {
       begin_stop(Outcome::failed,"invalid planner output","navigation.local_plan_invalid");return;
     }
@@ -477,17 +552,27 @@ private:
     const double angular=std::clamp(plan.angular_radps,-1.1,1.1);
     if (report_pub_ && (!last_plan_seq_ || *last_plan_seq_!=report_->scan_seq || plan.decision!=last_decision_)) {
       plan.linear_mps=linear; plan.angular_radps=angular;
-      event(goal->operation_id,"navigation.local_plan","navigation.local_plan","info",
+      event(active_->operation_id,"navigation.local_plan","navigation.local_plan","info",
             plan.reason_code,"plan",edge::local::encode_plan(plan));
       if (plan.dynamic_phase=="yielding" && last_dynamic_phase_!="yielding")
-        event(goal->operation_id,"navigation.dynamic_yield","navigation.dynamic_yield","info",
+        event(active_->operation_id,"navigation.dynamic_yield","navigation.dynamic_yield","info",
               plan.reason_code,"plan",edge::local::encode_plan(plan));
-      if (plan.dynamic_phase=="cleared" && last_dynamic_phase_!="cleared")
-        event(goal->operation_id,"navigation.dynamic_clear","navigation.dynamic_clear","info",
-              "observed exit, clear corridor and stationary odometry","plan",edge::local::encode_plan(plan));
+      const bool dynamic_released=plan.dynamic_phase=="cleared" || plan.dynamic_phase=="observation_resolved";
+      if (plan.dynamic_recheck) {
+        const auto stamp=plan.dynamic_recheck->scan_stamp_ns;
+        if (!last_dynamic_recheck_ns_ || stamp-*last_dynamic_recheck_ns_>=1'000'000'000LL ||
+            dynamic_released || plan.dynamic_clear_samples==1) {
+          event(active_->operation_id,"navigation.dynamic_recheck","navigation.dynamic_recheck","info",
+                "stationary odometry and observed corridor recheck","plan",edge::local::encode_plan(plan));
+          last_dynamic_recheck_ns_=stamp;
+        }
+      }
+      if (dynamic_released && plan.dynamic_phase!=last_dynamic_phase_)
+        event(active_->operation_id,"navigation.dynamic_clear","navigation.dynamic_clear","info",
+              "observed corridor clear with stationary odometry and no conflicting tracks","plan",edge::local::encode_plan(plan));
       if (!plan.dynamic_phase.empty()) last_dynamic_phase_=plan.dynamic_phase;
       if (plan.decision!=last_decision_ && (plan.decision=="avoid_left" || plan.decision=="avoid_right"))
-        event(goal->operation_id,"navigation.local_avoid","navigation.local_avoid","info",
+        event(active_->operation_id,"navigation.local_avoid","navigation.local_avoid","info",
               plan.reason_code,"plan",edge::local::encode_plan(plan));
       last_plan_seq_=report_->scan_seq; last_decision_=plan.decision;
     }
@@ -504,6 +589,7 @@ private:
   std::unique_ptr<edge::local::DynamicObserverPort> tracker_;
   std::optional<edge::local::DynamicObstacleReport> dynamic_report_;
   std::string last_dynamic_phase_;
+  std::optional<std::int64_t> last_dynamic_recheck_ns_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr dynamic_pub_;
   std::optional<edge::local::VehicleFootprint> footprint_;
   std::optional<edge::local::FrontObstacleReport> report_;
@@ -534,12 +620,14 @@ private:
   std::string last_heartbeat_id_, stop_reason_;
   Clock::time_point last_heartbeat_at_, started_, stop_started_;
   std::optional<Pose> pose_;
+  std::deque<Pose> pose_history_;
   std::optional<Outcome> stop_outcome_;
-  std::shared_ptr<GoalHandle> active_;
+  std::optional<Motion> active_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr velocity_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr heartbeat_;
   rclcpp_action::Server<Navigation>::SharedPtr action_;
+  rclcpp_action::Server<PathAction>::SharedPtr path_action_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
 

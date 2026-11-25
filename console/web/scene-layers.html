@@ -47,17 +47,24 @@
           </dl>
           <div class="card-foot"><span id="occupancy-caption">雷达占用图层</span><button id="restore-observation" type="button" hidden>返回实车观测</button></div>
         </article>
-        <article class="map-card">
+        <article class="map-card" id="texture-card">
           <div class="card-heading">
-            <div><span class="kind">相机空间</span><h2>彩色深度表面</h2></div>
+            <div><span class="kind">相机空间</span><h2>RGB-D 纹理地图</h2></div>
             <span class="instrument">RealSense D435</span>
           </div>
           <div class="viewport">
             <canvas id="texture-map" tabindex="0" aria-label="相机光学帧中的实测纹理表面，可拖动旋转"></canvas>
             <div class="empty" id="texture-empty">等待读取归档</div>
-            <div class="view-tools" id="texture-controls" hidden>
-              <button type="button" id="texture-grid" aria-pressed="false">网格</button>
-              <button type="button" id="texture-reset">复位</button>
+            <div class="texture-tools" id="texture-controls" hidden>
+              <div class="surface-modes" role="group" aria-label="表面显示">
+                <button type="button" id="surface-rgb" aria-pressed="false" disabled>RGB 纹理</button>
+                <button type="button" id="surface-geometry" aria-pressed="false">深度几何</button>
+              </div>
+              <div class="view-tools">
+                <button type="button" id="texture-grid" aria-pressed="false" title="切换 10 cm 网格">网格</button>
+                <button type="button" id="texture-reset">复位</button>
+                <button type="button" id="texture-expand" aria-pressed="false">放大</button>
+              </div>
             </div>
             <figure id="texture-photo" class="source-photo" hidden>
               <img id="texture-image" alt="该深度表面对应的 RealSense 彩色曝光">
@@ -69,7 +76,10 @@
             <div><dt>采样时刻</dt><dd id="texture-time">—</dd></div>
             <div><dt>纹理三角面</dt><dd id="texture-value">—</dd></div>
           </dl>
-          <div class="card-foot"><span id="texture-caption">RGB-D 纹理图层</span></div>
+          <div class="card-foot">
+            <div><span id="texture-caption">RGB-D 纹理图层</span><span id="texture-coverage" hidden></span></div>
+            <a id="download-texture-map" download="rgbd-surface.glb" aria-disabled="true" tabindex="-1">下载纹理地图</a>
+          </div>
         </article>
       </section>
       <aside class="operations" aria-label="场景与规划操作">
@@ -92,7 +102,7 @@
             <option value="clear">Gazebo · 空场</option>
           </select><button type="button" id="run-plan" disabled>重新规划</button></div>
           <div id="plan-result" class="result" aria-live="polite">
-            <h3 id="plan-title">等待规划</h3><p id="plan-detail">向原有轮式车规划服务发起新请求。</p>
+            <h3 id="plan-title">等待规划</h3><p id="plan-detail">用所选激光观测直接计算车体坐标下的候选路径。</p>
           </div>
         </section>
       </aside>

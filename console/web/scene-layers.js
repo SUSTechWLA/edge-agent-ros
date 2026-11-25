@@ -13,11 +13,13 @@
   });
   const caseNames = {field_hold: 'Jetson 近场', centered: 'Gazebo 中央箱体', clear: 'Gazebo 空场'};
   const viewers = Object.fromEntries(['occupancy', 'texture', 'plan'].map(name =>
-    [name, window.FieldScene.create(el(name+'-map'))]));
+    [name, window.FieldScene.create(el(name+'-map'),name==='texture' ?
+      {requireTextureMapping:true,onTextureState:textureState} : {})]));
   viewers.texture.setLayer('rgbGrid', false);
   const observations = {occupancy: null, texture: null};
   const previousPlans = new Map();
   let status = null, opened = null, busy = false, inspectingPlan = false, entries = 0;
+  let rgbState='none', requestedRGB=true;
 
   class ApiError extends Error {
     constructor(httpStatus, payload) {
@@ -66,8 +68,9 @@
     el('open-archive').disabled = !status || busy;
     el('toggle-texture').disabled = !status || busy;
     el('check-registration').disabled = !opened || !status || busy;
-    el('plan-case').disabled = busy;
-    el('run-plan').disabled = !opened || !status || busy;
+    const planAvailable = status?.cases?.includes(el('plan-case').value);
+    el('plan-case').disabled = !planAvailable || busy;
+    el('run-plan').disabled = !planAvailable || busy;
   }
   async function action(fn) {
     if (busy) return;
@@ -92,6 +95,7 @@
     if (kind === 'texture') {
       hidden('texture-photo',true);
       el('texture-image').removeAttribute('src');
+      textureState('none');
     }
     if (kind === 'occupancy') restoreObservation();
     for (const suffix of ['frame','time','value']) set(kind+'-'+suffix, '—');
@@ -186,31 +190,80 @@
       : Math.round(item.scene.voxel_size_m*100)+' cm 体素 · 双雷达';
     return detail+(ref?' · '+ref:'');
   }
+  function imageCoverage(scene) {
+    const {grid_width:cols,grid_height:rows,stride_px:step,image_width:w,image_height:h,texture_mapping:m}=scene;
+    if(!Number.isInteger(step)||step<1||cols!==Math.ceil(w/step)||rows!==Math.ceil(h/step)||
+        m?.coordinates!=='normalized_pixel_centers'||m.origin!=='top_left'||
+        m.image_ref!==scene.source_evidence?.color?.artifact_ref||m.uv?.length!==cols*rows)return null;
+    // On this sampling lattice each cell has one shared diagonal and two distinct
+    // half-cells. Prove non-overlap before summing their projected image areas.
+    const seen=new Set();
+    for(const tri of scene.triangles){
+      if(!Array.isArray(tri)||tri.length!==3||!tri.every(i=>Number.isInteger(i)&&i>=0&&i<cols*rows))return null;
+      const [lo,mid,hi]=[...tri].sort((a,b)=>a-b);
+      const first=lo%cols<cols-1 && mid===lo+1 && hi===lo+cols;
+      const second=lo%cols>0 && mid===lo+cols-1 && hi===lo+cols;
+      const key=lo+','+mid+','+hi;
+      if((!first&&!second)||seen.has(key))return null;
+      seen.add(key);
+      for(const i of tri){
+        const uv=m.uv[i];
+        if(!Array.isArray(uv)||uv.length!==2||!uv.every(Number.isFinite)||
+          Math.abs(uv[0]*w-.5-i%cols*step)>.0001||Math.abs(uv[1]*h-.5-Math.floor(i/cols)*step)>.0001)return null;
+      }
+    }
+    return seen.size*step*step/(2*w*h);
+  }
+  function textureControls() {
+    const item=observations.texture, ready=rgbState==='ready';
+    const showingRGB=ready && requestedRGB;
+    viewers.texture.setLayer('sourceRGB',showingRGB);
+    el('texture-map').dataset.appearance=item?(showingRGB?'rgb':'geometry'):'none';
+    el('surface-rgb').disabled=!ready;
+    el('surface-rgb').setAttribute('aria-pressed',String(showingRGB));
+    el('surface-geometry').setAttribute('aria-pressed',String(Boolean(item) && !showingRGB));
+    const link=el('download-texture-map');
+    const isRef=v=>typeof v==='string' && /^sha256:[0-9a-f]{64}$/.test(v);
+    const printable=ready && isRef(item?.scene_ref) && isRef(item?.layer_ref);
+    if(printable)link.href='/api/maps/'+item.scene_ref.slice(7)+'/'+item.layer_ref.slice(7)+'.glb';
+    else link.removeAttribute('href');
+    link.setAttribute('aria-disabled',String(!printable));
+    link.tabIndex=printable?0:-1;
+    const coverage=item?.imageCoverage;
+    hidden('texture-coverage',!Number.isFinite(coverage));
+    if(Number.isFinite(coverage))set('texture-coverage','覆盖原图 '+(coverage*100).toFixed(1)+'% · 深度不连续处留空');
+    if(!item)return;
+    const labels={loading:'正在加载同帧 RGB',unavailable:'纹理或像素映射不可用 · 显示几何'};
+    set('texture-caption',labels[rgbState] || (showingRGB?'RGB 已贴合深度表面':'深度几何')+
+      ' · '+item.scene.image_width+' × '+item.scene.image_height+' px');
+  }
+  function textureState(state,image) {
+    rgbState=state;
+    if(state==='ready' && image){
+      const old=el('texture-image');
+      if(old!==image){
+        image.id='texture-image';
+        image.alt=old.alt;
+        old.replaceWith(image);
+      }
+    }
+    hidden('texture-photo',state!=='ready');
+    textureControls();
+  }
   async function readLayer(kind) {
     const item = await api('layers', {archive: opened, layer: kind});
     const scene = item.scene;
     const valid = kind === 'texture' ? scene?.registration === 'camera_only' && Array.isArray(scene.triangles)
       : scene?.registration !== 'camera_only' && Array.isArray(scene?.voxels);
     if (!valid || !scene.frame_id) throw new Error('图层返回的坐标或表示不匹配');
+    if(kind==='texture')item.imageCoverage=imageCoverage(scene);
     observations[kind] = item;
     if (kind === 'occupancy') restoreObservation();
-    if (kind === 'texture') {
-      const ref = scene.source_evidence?.color?.artifact_ref;
-      const expected = typeof ref === 'string' && /^sha256:[0-9a-f]{64}$/.test(ref) ? '/camera/'+ref.slice(7)+'.png' : '';
-      hidden('texture-photo',true);
-      if (expected && scene.texture_url === expected) {
-        const img = el('texture-image');
-        img.onload = () => {
-          if (observations.texture === item && img.naturalWidth === scene.image_width &&
-              img.naturalHeight === scene.image_height) hidden('texture-photo',false);
-        };
-        img.src = expected;
-      }
-    }
     viewers[kind].setData(scene, null);
     viewers[kind].reset();
     metrics(kind, scene);
-    set(kind+'-caption', layerCaption(kind, item));
+    if(kind==='texture')textureControls();
+    else set(kind+'-caption', layerCaption(kind, item));
     el(kind+'-caption').title = item.layer_ref || '';
     hidden(kind+'-empty', true);
     hidden(kind+'-controls', false);
@@ -315,29 +368,28 @@
     const isField = name === 'field_hold';
     const observation = observations.occupancy?.scene;
     const sameSnapshot = isField && item.snapshot_ref && item.snapshot_ref === observation?.source_evidence?.snapshot_ref;
-    const scene = item.scene ?? (sameSnapshot ? observation : null);
-    const drawable = scene && scene.frame_id === item.plan.base_frame;
-    viewers.plan.setData(drawable ? scene : null, drawable ? item.plan : null);
+    const backdrop = item.scene ?? (sameSnapshot ? observation : null);
+    const scene = backdrop?.frame_id === item.plan.base_frame ? backdrop : null;
+    viewers.plan.setData(scene, item.plan);
     viewers.plan.reset();
     hidden('occupancy-map',true);
-    hidden('plan-map',!drawable);
-    hidden('occupancy-empty',Boolean(drawable));
-    if (!drawable) set('occupancy-empty','本次计划未提供同帧三维场景');
-    hidden('occupancy-controls',!drawable);
+    hidden('plan-map',false);
+    hidden('occupancy-empty',true);
+    hidden('occupancy-controls',false);
     hidden('restore-observation',!observations.occupancy);
     set('occupancy-heading','局部避障预览');
     set('occupancy-source',caseNames[name]);
     set('occupancy-frame',item.plan.base_frame);
-    set('occupancy-time',scene ? stamp(scene.stamp_ns,!isField) : '—');
-    el('occupancy-time').title = scene ? scene.stamp_ns+' ns' : '';
+    set('occupancy-time',stamp(item.source_stamp_ns,!isField));
+    el('occupancy-time').title = item.source_stamp_ns+' ns';
     set('occupancy-metric','候选路径点');
     set('occupancy-value',result.points);
-    set('occupancy-caption',result.title+' · '+caseNames[name]);
+    set('occupancy-caption',result.title+' · '+caseNames[name]+(scene?'':' · 仅显示车体坐标与规划结果'));
   }
   async function runPlan() {
     const name = el('plan-case').value;
     const item = await api('plan',{case:name});
-    if (item.case !== name || !item.request_id || item.plan?.motion_authorized !== false ||
+    if (item.case !== name || !item.request_id || item.plan?.motion_authorized !== false || !item.plan.base_frame ||
         !['planned','partial','blocked'].includes(item.plan.status) || !Array.isArray(item.plan.path_body_m)) {
       throw new Error('规划回执的输入、状态或只读范围不匹配');
     }
@@ -370,6 +422,29 @@
     viewers.texture.setLayer('rgbGrid',next);
   };
   el('texture-reset').onclick = () => viewers.texture.reset();
+  for(const [id,rgb] of [['surface-rgb',true],['surface-geometry',false]]){
+    el(id).onclick=()=>{
+      requestedRGB=rgb;
+      textureControls();
+    };
+  }
+  const card=el('texture-card');
+  el('texture-expand').hidden=!document.fullscreenEnabled;
+  el('texture-expand').onclick=()=>action(async()=>{
+    if(document.fullscreenElement===card)await document.exitFullscreen();
+    else await card.requestFullscreen();
+  });
+  document.addEventListener('fullscreenchange',()=>{
+    const expanded=document.fullscreenElement===card;
+    el('texture-expand').setAttribute('aria-pressed',String(expanded));
+    set('texture-expand',expanded?'收起':'放大');
+  });
   window.addEventListener('focus', () => { if (!busy) action(refresh); });
-  action(refresh);
+  action(async()=>{
+    await refresh();
+    if(new URLSearchParams(location.search).get('view')==='texture'){
+      await openArchive();
+      card.scrollIntoView({block:'nearest'});
+    }
+  });
 })();

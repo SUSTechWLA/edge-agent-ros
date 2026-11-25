@@ -124,6 +124,8 @@ def run(args, selected, reasons):
                              test("test_map3d.py","-v"),test("test_rgbd.py","-v"),
                              test("test_scene_layers_057.py","-v"),test("test_scene_layer_runtime.py","-v"),
                              test("test_scene_workbench_057.py","-v"),
+                             test("test_lidar_rgb_fusion.py","-v"),test("test_registered_fusion_map.py","-v"),
+                             test("test_rover_preview.py","-v"),test("test_rover_snapshot_service.py","-v"),
                              [PY,str(ROOT/"perception/camera/test_frames.py"),"-v"],
                              test("test_series_tools.py","-v"),test("test_plugin_design.py","-v"),
                              test("test_plugin_design_watch.py","-v"),
@@ -176,6 +178,11 @@ def run(args, selected, reasons):
                                                   '{{index .Config.Labels "org.opencontainers.image.revision"}}'],env)
                 report["docker"]=output(["docker","version","--format","{{.Server.Version}}"],env)
                 report["compose"]=output(["docker","compose","version","--short"],env)
+                if "ui" in selected:
+                    fusion = ROOT / "artifacts/verification/rgb-lidar-fusion-20261124"
+                    stage("scene-workbench-image", [["docker","run","--rm","--network","none","--read-only",
+                          "--cap-drop","ALL","--tmpfs","/tmp","--mount",f"type=bind,source={fusion},target=/survey,readonly",
+                          image,"python3","-B","/opt/edge/tests/system/scene_workbench_image.py","/survey"]])
                 checks={
                     "rover-commissioning":[in_image("python3","-B","/opt/edge/tests/test_factory_calibration.py","-v"),
                                            in_image("python3","-B","/opt/edge/tests/test_exploration_frontier.py","-v"),

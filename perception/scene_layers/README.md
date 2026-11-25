@@ -21,14 +21,23 @@ Windows 可用项目的 PSF 签名 Python 启动器运行同一模块。本机�
 | DSH 服务 | 拥有的结果 |
 |---|---|
 | `map.mid360.occupancy` | 归档车体坐标中的三维占用体素、已观测和占用地面格。依据双雷达数据和绑定标定重建、与原制品比较。 |
-| `map.rgbd.surface` | 光学帧中的单次曝光纹理表面及同帧 PNG。依据彩色、深度和 CameraInfo 重建，深度跳变处保留空洞。 |
+| `map.rgbd.surface` | 1.1.0 版提供相机光学帧中的单曝光表面、每个有效顶点的 UV、原始 RGB PNG 和标定来源。深度跳变处保留空洞。 |
 | `map.scene.query` | 按图层、坐标、参与采样的时间范围和质量要求固定场景快照。每次按站点目录选择实际图层提供者。 |
 | `map.nav2.grid` | 可选，读取已有二维地图及其清单，保留原地图身份。 |
+| `map.lidar_rgb.fused` | 可选，在有标定的同窗内给激光回波赋 RGB，保留未知颜色与每个点的来源。支持在独立仿真站点使用已知位姿登记多窗到同一静态世界。 |
 | `planning.local_path` | 沿用版本 1.1.0 原有的静态路径评估接口。机器端接收原始车体射线与回波，独立于纹理。 |
 
 三个默认地图服务在各自的只读业务进程计算。站点管理者以现有 DSH v1 的 `plugin_manager.change` 写入受管清单，使用期望修订比较交换并落下管理事件。消费者通过 `ServiceSnapshot.pin` 固定服务及依赖。停用纹理时，先排空，等待受理中的读取结束和进程退出，再移除导出。旧快照元数据可按摘要查阅；再次读取纹理须重新核验原提供者绑定。变化过程可用登记事件、进程退出状态及新的消费者请求独立检查。
 
-工作台 `POST /api/compose` 可以传入 `archive`、`layers`、可选的 `limits`。质量限制包括 `frame_id`、`max_skew_ms`、`max_resolution_m`、`max_error_m` 和以米计的三轴 `roi_m`。回放的稀疏表面和体素没有完整三维覆盖证明，要求整个体积已观测时会返回原因。现有局部场景仅组合共享已验证空间身份、符合时间要求的图层；跨坐标融合需要后续的标定和配准提供者。
+工作台 `POST /api/compose` 可以传入 `archive`、`layers`、可选的 `limits`。质量限制包括 `frame_id`、`max_skew_ms`、`max_resolution_m`、`max_error_m` 和以米计的三轴 `roi_m`。回放的稀疏表面和体素没有完整三维覆盖证明，要求整个体积已观测时会返回原因。场景查询要求共享已验证的空间身份并核对时间。跨传感器着色由独立的配准图层生产者核验，现有实车 RGB-D 与雷达归档仍然分别显示。
+
+在跨传感器工作台打开 `/fusion`，页面通过 `GET /api/fusion/map` 读取固定版本。PLY 下载引用同一个场景和图层；颜色未知的点带 `color_valid=0`，每个观察均可定位到雷达、原始点索引和采集站。累计地图的时间戳是检查点创建时间，各站采样时间属于各自仿真运行。软件注册、查询与排空复用现有 DSH 生命周期。[地图下载与启动指令](../../artifacts/verification/rgb-lidar-fusion-20261124/README.md)
+
+### 查看或下载 RGB 纹理地图
+
+工作台的 `/?view=texture#texture-card` 直接打开归档。在「RGB 纹理」和「深度几何」之间切换会保留观察角度，可以拖动旋转、放大并对照同一时刻的彩色照片。深度无效或跨越遮挡边缘的区域保持空白。
+
+「下载纹理地图」导出单个 GLB 文件，内含米制三角面、按原始像素中心生成的 UV 和原始 PNG。HTTP 入口为 `GET /api/maps/<scene_ref 的 64 位摘要>/<layer_ref 的 64 位摘要>.glb`。每次下载都校验冻结场景、提供者绑定和图像摘要。模型保留相机光学帧及采集时间，顶点从光学轴转换为 glTF 轴 `(x, -y, -z)`，可供其他三维工具读取。[glTF 2.0 规范](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html)
 
 ```json
 {"archive":"jetson-20261123","layers":["occupancy","texture"],"limits":{"frame_id":"base_foot","max_skew_ms":250}}
@@ -48,9 +57,24 @@ Windows 可用项目的 PSF 签名 Python 启动器运行同一模块。本机�
 
 ## 复现验证
 
+从仓库根目录可构建仿真镜像并运行封装验收。回放测试只挂载公开的 Gazebo 归档，检查镜像内工作台的启动、HTTP 地图与冻结 PLY 导出。
+
+```sh
+docker build -f docker/Dockerfile -t edge-rover-local:sdd057-container .
+docker run --rm --network none --read-only --cap-drop ALL --tmpfs /tmp \
+  --mount "type=bind,source=$PWD/artifacts/verification/rgb-lidar-fusion-20261124,target=/survey,readonly" \
+  edge-rover-local:sdd057-container python3 -B /opt/edge/tests/system/scene_workbench_image.py /survey
+```
+
 ```sh
 python -B -m unittest discover -s tests -p 'test_scene*057.py'
 python -B -m unittest discover -s tests -p 'test_scene_layer_runtime.py'
+```
+
+有现场归档时，可对独立启动的回放站点运行浏览器验收。测试会在该站点停用、恢复纹理，并对照三角面内部的真实像素和导出文件；截图和回执保存在指定输出目录。
+
+```sh
+node tests/system/scene_texture_browser.cjs --url http://127.0.0.1:8758 --out .ci-results/rgb-browser --browser /path/to/chrome --puppeteer /path/to/puppeteer-core
 ```
 
 现场规划保留原传感器时戳，隔离的 HTTP 提供者使用冻结的归档时钟。Gazebo 的独立对照站点把仿真时钟平移到声明的回放原点，回执同时列出原时间和准入时间。每次请求的路径由原 `/evaluate` 重新计算。回执包含传感器快照摘要、提供者绑定、几何摘要及下游实际评估序号。两种时钟均用于回放，实机实时性须另测。[规格与验收范围](../../docs/specs/SDD-057-map-layers-and-planning-scenes.md)

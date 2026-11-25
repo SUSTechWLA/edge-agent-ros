@@ -3,9 +3,13 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import struct
+import sys
 import tempfile
 import unittest
 import zlib
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from edge_contracts.image_frames import chunk
 from edge_contracts.occupancy import save_map
@@ -14,18 +18,19 @@ from perception.rover_plan_field.scene import build_scene
 from perception.scene_layers.core import Archive, GridArchive, SceneError, canonical, check_read, digest, freeze_scene, make_layer
 
 
-SITE_ARCHIVE = Path(__file__).resolve().parents[1]/"artifacts/verification/jetson-field-scene-20261123/sensor-evidence"
+SITE_ARCHIVE = ROOT/"artifacts/verification/jetson-field-scene-20261123/sensor-evidence"
 
 
-def small_png(depth):
-    pixel = struct.pack(">H", 620) if depth else bytes((70, 80, 90))
-    size = 9
-    header = struct.pack(">IIBBBBB", size, size, 16 if depth else 8, 0 if depth else 2, 0, 0, 0)
+def small_png(depth, width=9, height=9, pixel_at=None):
+    default = struct.pack(">H", 620) if depth else bytes((70, 80, 90))
+    rows = [b"\0" + b"".join(pixel_at(x, y) if pixel_at else default for x in range(width))
+            for y in range(height)]
+    header = struct.pack(">IIBBBBB", width, height, 16 if depth else 8, 0 if depth else 2, 0, 0, 0)
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header)
-            + chunk(b"IDAT", zlib.compress((b"\0" + pixel * size) * size)) + chunk(b"IEND", b""))
+            + chunk(b"IDAT", zlib.compress(b"".join(rows))) + chunk(b"IEND", b""))
 
 
-def write_fixture(root):
+def write_fixture(root, *, width=9, height=9, stride=8, colour=None, depth=None):
     # A small geometrically reproducible archive is always available in CI.
     files = {}
     def put(name, record):
@@ -58,12 +63,16 @@ def write_fixture(root):
 
     stamp_rgb = str(int(stamp) + 9_000_000_000)
     optical = "camera_color_optical_frame"
-    intrinsics = {"type": "sensor_msgs/msg/CameraInfo", "frame_id": optical, "width": 9, "height": 9,
-                  "distortion_model": "plumb_bob", "d": [0]*5, "k": [100, 0, 4, 0, 100, 4, 0, 0, 1]}
-    colour, depth = small_png(False), small_png(True)
+    intrinsics = {"type": "sensor_msgs/msg/CameraInfo", "frame_id": optical, "width": width, "height": height,
+                  "distortion_model": "plumb_bob", "d": [0]*5,
+                  "k": [100, 0, (width-1)/2, 0, 100, (height-1)/2, 0, 0, 1]}
+    if colour is None:
+        colour = small_png(False, width, height)
+    if depth is None:
+        depth = small_png(True, width, height)
     refs = {"color": put("rgbd-color.png", colour), "depth": put("rgbd-depth.png", depth),
             "calibration": put("rgbd-calibration.json", intrinsics)}
-    mesh = build_rgbd(colour, depth, intrinsics, optical)
+    mesh = build_rgbd(colour, depth, intrinsics, optical, stride=stride)
     mesh.update(stamp_ns=stamp_rgb, skew_ms=0, texture_url="/camera/" + refs["color"][7:] + ".png")
     mesh["source_evidence"] = {key: {"frame_id": optical, "stamp_ns": stamp_rgb, "artifact_ref": ref}
                                for key, ref in refs.items()}
@@ -107,6 +116,57 @@ class ArchiveTests(unittest.TestCase):
             check_read(ready["scene_ref"], modified, "occupancy", occ["layer_ref"])
         with self.assertRaises(SceneError):
             self.archive.read("texture", occ["layer_ref"])
+
+    def test_texture_uv_matches_source_pixels_and_keeps_unobserved_tiles_open(self):
+        # An asymmetric image and a right margin shorter than one stride detect flips and stretching.
+        width, height, stride = 11, 9, 4
+        def pixel(x, y):
+            return bytes((x * 11, y * 17, x + y))
+        def depth(x, y):
+            return struct.pack(">H", {(0, 0): 0, (6, 2): 1800}.get((x, y), 620))
+        colour = small_png(False, width, height, pixel)
+        write_fixture(self.root, width=width, height=height, stride=stride, colour=colour,
+                      depth=small_png(True, width, height, depth))
+        archive = Archive(self.root)
+        desc = archive.describe("texture")
+        mesh = archive.read("texture", desc["layer_ref"])["data"]
+        mapping = mesh["texture_mapping"]
+        self.assertEqual((mapping["schema_version"], mapping["origin"], mapping["coordinates"]),
+                         (1, "top_left", "normalized_pixel_centers"))
+        self.assertEqual(mapping["image_ref"], digest(archive.texture_png(desc["layer_ref"])))
+        self.assertEqual(desc["content_ref"], digest(canonical(mesh)))
+        self.assertEqual(desc["source_refs"]["surface"], digest((self.root / "rgbd-scene.json").read_bytes()))
+        self.assertEqual(len(mapping["uv"]), len(mesh["vertices"]))
+        self.assertIsNone(mapping["uv"][0])
+        for index, (coord, vertex) in enumerate(zip(mapping["uv"], mesh["vertices"])):
+            if vertex is None:
+                continue
+            row, col = divmod(index, 3)
+            x, y = col * stride, row * stride
+            self.assertAlmostEqual(coord[0] * width, x + .5)
+            self.assertAlmostEqual(coord[1] * height, y + .5)
+            self.assertEqual(vertex[3:], list(pixel(x, y)))
+        # A missing corner removes the upper left tile. The depth jump lies between the
+        # four valid samples of the upper right tile. Only the two lower tiles can be drawn.
+        self.assertEqual(mesh["triangles"], [[3, 6, 4], [4, 6, 7], [4, 7, 5], [5, 7, 8]])
+
+    def test_colour_detail_between_vertices_is_bound_to_the_texture_revision(self):
+        before = self.archive.describe("texture")
+        previous = self.archive.read("texture", before["layer_ref"])["data"]
+        colour = small_png(False, pixel_at=lambda x, y: bytes((255, 0, 10) if (x, y) == (4, 4) else (70, 80, 90)))
+        write_fixture(self.root, colour=colour)
+        archive = Archive(self.root)
+        after = archive.describe("texture")
+        current = archive.read("texture", after["layer_ref"])["data"]
+        for key in ("vertices", "triangles"):
+            self.assertEqual(previous[key], current[key])
+        self.assertEqual(previous["texture_mapping"]["uv"], current["texture_mapping"]["uv"])
+        self.assertEqual(current["texture_mapping"]["image_ref"], digest(colour))
+        self.assertNotEqual(before["content_ref"], after["content_ref"])
+        self.assertNotEqual(before["layer_ref"], after["layer_ref"])
+        self.assertEqual(archive.texture_png(after["layer_ref"]), colour)
+        with self.assertRaises(SceneError):
+            archive.texture_png(before["layer_ref"])
 
     def test_independent_of_unrelated_bundle_files_but_provider_binding_is_frozen(self):
         occ = self.archive.describe("occupancy")
@@ -214,3 +274,7 @@ class GridArchiveTests(unittest.TestCase):
             (site/"map.pgm").write_bytes(b"corrupted")
             with self.assertRaises(ValueError):
                 GridArchive(site, original)
+
+
+if __name__ == "__main__":
+    unittest.main()

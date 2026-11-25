@@ -122,7 +122,8 @@ class Archive:
         return make_layer(desc, self.archive_ref), raw
 
     def _texture(self):
-        raw = self._blob("rgbd-scene.json", self.manifest["rgbd_scene_ref"])
+        surface_ref = self.manifest["rgbd_scene_ref"]
+        raw = self._blob("rgbd-scene.json", surface_ref)
         saved = json.loads(raw)
         evidence = saved["source_evidence"]
         stamp = saved["stamp_ns"]
@@ -140,19 +141,30 @@ class Archive:
         require(all(saved.get(k) == value for k, value in rebuilt.items())
                 and saved["texture_url"] == "/camera/" + refs["color"][7:] + ".png",
                 "scene.derived_mismatch", "Surface geometry or texture differs from the bound RGB-D exposure")
+        # The archived XYZ values were rounded to 0.1 mm. The integer sampling lattice
+        # preserves the exact source texel even where reprojecting that XYZ would not.
+        width, height, stride = rebuilt["image_width"], rebuilt["image_height"], rebuilt["stride_px"]
+        uv = []
+        for index, vertex in enumerate(rebuilt["vertices"]):
+            row, col = divmod(index, rebuilt["grid_width"])
+            uv.append(None if vertex is None else [(col * stride + .5) / width, (row * stride + .5) / height])
+        saved["texture_mapping"] = {"schema_version": 1, "image_ref": refs["color"], "origin": "top_left",
+                                    "coordinates": "normalized_pixel_centers", "uv": uv}
+        mapped = canonical(saved)
+        refs["surface"] = surface_ref
         points = [v for v in saved["vertices"] if v is not None]
         bounds = {axis: [min(v[i] for v in points), max(v[i] for v in points)] for i, axis in enumerate("xyz")}
         desc = {"schema_version": 1, "kind": "texture", "representation": "rgbd_textured_surface",
                 "frame_id": frame, "stamp_ns": stamp, "clock_id": evidence["clock_id"],
                 "acquisition": [stamp, stamp], "stamp_basis": "registered_rgbd_exposure",
                 "space_ref": reference(["local_optical_capture", refs["calibration"], stamp, evidence["actor_ref"]]),
-                "calibration_ref": refs["calibration"], "content_ref": digest(raw), "source_refs": refs,
+                "calibration_ref": refs["calibration"], "content_ref": digest(mapped), "source_refs": refs,
                 "quality": {"resolution_m": None, "stride_px": saved["stride_px"], "error_bound_m": None,
                             "bounds_m": bounds, "outside_observations": "unknown", "registration": "camera_only",
                             "coordinate_unit": "m"},
                 "stats": {"width": saved["image_width"], "height": saved["image_height"],
                           "valid_vertices": len(points), "triangles": len(saved["triangles"])}}
-        return make_layer(desc, self.archive_ref), raw
+        return make_layer(desc, self.archive_ref), mapped
 
     def _layer(self, kind):
         builders = {"occupancy": self._occupancy, "texture": self._texture}

@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "frame": "world",
+  "source_count": 2,
+  "point_count": 25986,
+  "colored": 16886,
+  "uncolored": 9100,
+  "acquisition": [
+    {
+      "station": "station-a",
+      "clock": "gazebo_sim",
+      "range": [
+        "1000000000",
+        "1000000000"
+      ]
+    },
+    {
+      "station": "station-b",
+      "clock": "gazebo_sim",
+      "range": [
+        "1000000000",
+        "1000000000"
+      ]
+    }
+  ],
+  "render": {
+    "source_colors": 8,
+    "projected_pixels": 41767,
+    "unknown_pixels": 45069
+  },
+  "filtered_count": 8756,
+  "ply_sha256": "f5a1af14ac994c859b9bc6d398d031ac65011f5fec14bd583dc59f589c8724f3",
+  "download_bytes": 572138
+}

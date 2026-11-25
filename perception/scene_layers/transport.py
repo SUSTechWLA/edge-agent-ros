@@ -14,6 +14,7 @@ SERVICES = {
     "occupancy": "map.mid360.occupancy",
     "texture": "map.rgbd.surface",
     "grid2d": "map.nav2.grid",
+    "fusion": "map.lidar_rgb.fused",
     "query": "map.scene.query",
 }
 

@@ -8,6 +8,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetMission.srv"
   "srv/CancelMission.srv"
   "action/NavigateTo.action"
+  "action/NavigatePath.action"
   DEPENDENCIES geometry_msgs)
 ament_export_dependencies(rosidl_default_runtime)
+install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 ament_package()

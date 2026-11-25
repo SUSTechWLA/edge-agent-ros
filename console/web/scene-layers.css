@@ -79,6 +79,24 @@ h1 { font-size: clamp(24px, 2.35vw, 40px); letter-spacing: -.9px; line-height: 1
   font-size: 11px; color: #c9dcd5; padding: 3px 8px; background: #152529e8;
 }
 .view-tools button[aria-pressed="true"] { color: var(--green); border-color: #84a982; }
+.texture-tools {
+  position: absolute; top: 8px; left: 8px; right: 8px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 5px;
+  pointer-events: none;
+}
+.texture-tools .view-tools { position: static; }
+.texture-tools button, .surface-modes { pointer-events: auto; }
+.surface-modes {
+  display: inline-flex; background: #142529ed; border: 1px solid #47605e;
+  border-radius: 6px; padding: 2px; gap: 2px;
+}
+.surface-modes button { padding: 2px 7px; border: 0; border-radius: 3px; font-size: 11px; background: transparent; }
+.surface-modes button[aria-pressed="true"] { color: #172d22; background: var(--green); font-weight: 700; }
+.card-foot a { color: var(--green); text-underline-offset: 3px; white-space: nowrap; }
+.card-foot a[aria-disabled="true"] { color: var(--muted); opacity: .5; text-decoration: none; }
+#texture-card:fullscreen { border-radius: 0; border: 0; }
+#texture-card:fullscreen .facts { grid-template-columns: repeat(3, minmax(0,1fr)); }
+#texture-card:fullscreen .facts div:first-child { grid-column: auto; }
 .source-photo {
   position: absolute; bottom: 9px; right: 9px; margin: 0; width: clamp(78px, 22%, 144px);
   overflow: hidden; border: 1px solid #506663; border-radius: 5px; pointer-events: none;
@@ -95,6 +113,7 @@ h1 { font-size: clamp(24px, 2.35vw, 40px); letter-spacing: -.9px; line-height: 1
 .facts dd { font: 600 clamp(12px, 1.04vw, 17px)/1.5 var(--mono); overflow-wrap: anywhere; }
 .card-foot { min-height: 33px; padding: 5px 13px; border-top: 1px solid var(--line); justify-content: space-between; }
 .card-foot span { overflow-wrap: anywhere; }
+#texture-coverage { display: block; color: var(--ink); }
 .operations { display: flex; flex-direction: column; }
 .operation { padding: clamp(10px, 1.05vw, 18px); display: flex; flex-direction: column; align-items: stretch; gap: 9px; }
 .operation + .operation { border-top: 1px solid var(--line); }

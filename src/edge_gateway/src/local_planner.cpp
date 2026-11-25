@@ -36,6 +36,7 @@ struct Surface {
   double distance,bearing,width;
   std::size_t support;
   double edge_step_m{};
+  double first_bearing{}, last_bearing{};
 };
 double median(std::span<double> values) {
   const auto middle=values.begin()+values.size()/2;
@@ -96,7 +97,8 @@ void visible_surface(std::span<const Point> points, double width, double range_r
       const Point p=closest(points[i-1],points[i],{});
       if (dot(p,p)<dot(best,best)) best=p;
     }
-    surfaces.push_back({norm(best),std::atan2(best.y,best.x),width,points.size()});
+    surfaces.push_back({norm(best),std::atan2(best.y,best.x),width,points.size(),0.,
+                        std::atan2(first.y,first.x),std::atan2(last.y,last.x)});
     return;
   }
   double worst = fit_error;
@@ -139,7 +141,8 @@ void visible_surface(std::span<const Point> points, double width, double range_r
   const auto n=points.size();
   const double edge_step=std::max(first_edge ? radial_step(0,1,2) : 0.,
                                   last_edge ? radial_step(n-1,n-2,n-3) : 0.);
-  surfaces.push_back({distance,bearing,width,points.size(),edge_step});
+  surfaces.push_back({distance,bearing,width,points.size(),edge_step,
+                      std::atan2(first.y,first.x),std::atan2(last.y,last.x)});
 }
 
 void flush(std::vector<Point>& points, double range_resolution, std::vector<Surface>& surfaces) {
@@ -167,6 +170,10 @@ void select_surface(const std::vector<Surface>& surfaces, double resolution, Fro
     return best;
   };
   const Surface* safety=select(false);
+  out.ttc_surface_index=static_cast<std::size_t>(safety-surfaces.data());
+  for (const auto& s:surfaces)
+    out.front_surfaces.push_back({s.distance,s.bearing,std::min(s.first_bearing,s.last_bearing),
+                                  std::max(s.first_bearing,s.last_bearing),s.support});
   const Surface* best=nearest->support==1 ? select(true) : safety;
   out.ttc_source_range_m=safety->distance; out.ttc_source_bearing_rad=safety->bearing;
   out.ttc_source_support_rays=safety->support; out.nearest_uses_edge_tie=(safety!=best);
@@ -180,8 +187,29 @@ void estimate_ttc(FrontObstacleReport& report, const FrontObstacleReport* prev, 
       prev->clock_id!=report.clock_id || prev->clock_epoch!=report.clock_epoch ||
       prev->source_id!=report.source_id || prev->calibration_ref!=report.calibration_ref) return;
   const double dt=(report.stamp_ns-prev->stamp_ns)*1e-9;
-  if (dt<=0 || dt>.5 || std::abs(*report.ttc_source_bearing_rad-*prev->ttc_source_bearing_rad)>.16) return;
-  const double speed=(*prev->ttc_source_range_m-*report.ttc_source_range_m)/dt;
+  if (dt<=0 || dt>.5) return;
+  double previous_range=*prev->ttc_source_range_m;
+  if (std::abs(*report.ttc_source_bearing_rad-*prev->ttc_source_bearing_rad)>.16) {
+    // A change in nearest rank need not be a new detection. Require measured
+    // angular overlap of two multi-ray patches at compatible ranges. A new
+    // echo, an occlusion or a time discontinuity still yields unknown TTC.
+    const auto& current=report.front_surfaces[report.ttc_surface_index];
+    if (current.support<2) return;
+    std::optional<double> previous;
+    for (const auto& p:prev->front_surfaces) {
+      const double overlap=std::min(current.last_bearing_rad,p.last_bearing_rad)-
+                           std::max(current.first_bearing_rad,p.first_bearing_rad);
+      if (p.support<2 || overlap<.25*report.angle_step_rad ||
+          std::abs(p.bearing_rad-current.bearing_rad)>.16) continue;
+      if (std::abs(p.range_m-current.range_m)>2.*dt) return;
+      // Use the strongest observed closure if adjacent fitted faces overlap.
+      previous=std::max(previous.value_or(p.range_m),p.range_m);
+    }
+    if (!previous) return;
+    previous_range=*previous;
+    report.ttc_alternate_surface_pair=true;
+  }
+  const double speed=(previous_range-*report.ttc_source_range_m)/dt;
   // Large range jumps under a turn indicate changed correspondence.
   if (std::abs(speed)>2.) return;
   report.closing_speed_mps=speed;

@@ -49,15 +49,12 @@ function fragment(start,end){
 }
 const panel=fragment('<div class="layout">','<section id="task-panel"');
 const css=text(path.join(web,'plan-observe.css'));
-const original=text(path.join(web,'plan-scene.js'));
-const textureAssignment='img.src=next;';
-assert.equal(original.split(textureAssignment).length,2,'texture source adapter changed');
-const renderer=original.replace(textureAssignment,'img.src=REPLAY.images[next];');
+const renderer=text(path.join(web,'plan-scene.js'));
 
 function replay(){
   const id=name=>document.getElementById(name);
   const set=(name,value)=>{id(name).textContent=value;};
-  const renderer=window.FieldScene.create(id('map'),{onChange(s){
+  const renderer=window.FieldScene.create(id('map'),{resolveTextureURL:url=>REPLAY.images[url],onChange(s){
     id('view-top').setAttribute('aria-pressed',s.view==='top');
     id('view-orbit').setAttribute('aria-pressed',s.view==='orbit');
   }});

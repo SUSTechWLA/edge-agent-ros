@@ -122,3 +122,17 @@
 !/scene-layers-20261123/README.md
 !/scene-layers-20261123/acceptance.json
 !/scene-layers-20261123/linux-tests.txt
+!/rgbd-texture-20261123/gltf-validation.json
+!/rgbd-texture-20261123/browser.json
+!/rgb-lidar-fusion-20261124/README.md
+!/map-optional-planning-20261124.json
+!/rgb-lidar-fusion-20261124/map.json
+!/rgb-lidar-fusion-20261124/acceptance.json
+!/rgb-lidar-fusion-20261124/browser.json
+!/rgb-lidar-fusion-20261124/fusion-map.ply
+!/rgb-lidar-fusion-20261124/fusion-map.png
+!/rgb-lidar-fusion-20261124/fusion-top.png
+!/rgb-lidar-fusion-20261124/station-a.tar.gz
+!/rgb-lidar-fusion-20261124/station-b.tar.gz
+!/rgb-lidar-fusion-20261124/station-a-score.json
+!/rgb-lidar-fusion-20261124/station-b-score.json

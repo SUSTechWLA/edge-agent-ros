@@ -1,4 +1,5 @@
 #include "local_planner.hpp"
+#include "swept_geometry.hpp"
 
 #include <algorithm>
 #include <array>
@@ -11,7 +12,7 @@
 namespace edge::local {
 namespace {
 constexpr double pi = std::numbers::pi;
-constexpr double hard_margin_m = .55;
+constexpr double hard_margin_m = footprint_hard_margin_m;
 constexpr double speed_limit = .28;
 constexpr double wheel_speed_limit = .32;
 constexpr double reaction_time = .175; // One 8 Hz scan and one 20 Hz control period.
@@ -20,26 +21,9 @@ constexpr double distance_cap = .85; // Report a lower bound beyond the planning
 
 struct Pose { Point xy; double yaw; };
 struct Segment { Point a, b; double xlo, xhi, ylo, yhi; };
-double sq(double a) { return a*a; }
-double to_segment2(Point p, Point a, Point b) {
-  const double dx=b.x-a.x, dy=b.y-a.y, len2=sq(dx)+sq(dy);
-  const double f=len2 ? std::clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/len2,0.,1.) : 0.;
-  return sq(p.x-a.x-f*dx)+sq(p.y-a.y-f*dy);
-}
-// Segment vs axis-aligned rectangle, expressed about its centre in body coordinates.
-double box_distance2(Point a, Point b, double hx, double hy) {
-  const double dx=b.x-a.x, dy=b.y-a.y;
-  if (std::min(a.x,b.x)<=hx && std::max(a.x,b.x)>=-hx &&
-      std::min(a.y,b.y)<=hy && std::max(a.y,b.y)>=-hy &&
-      std::abs(a.x*dy-a.y*dx)<=hx*std::abs(dy)+hy*std::abs(dx)) return 0.;
-  auto endpoint=[&](Point p) {
-    return sq(std::max(0.,std::abs(p.x)-hx))+sq(std::max(0.,std::abs(p.y)-hy));
-  };
-  double result=std::min(endpoint(a),endpoint(b));
-  for (double x:{-hx,hx}) for (double y:{-hy,hy})
-    result=std::min(result,to_segment2({x,y},a,b));
-  return result;
-}
+using geometry::sq;
+using geometry::to_segment2;
+using geometry::box_distance2;
 Pose arc(double length, double angle) {
   if (std::abs(angle)<1e-8) return {{length,.5*length*angle},angle};
   return {{length*std::sin(angle)/angle,length*2*sq(std::sin(angle/2))/angle},angle};
@@ -119,11 +103,13 @@ private:
 struct Candidate {
   double v{}, w{}, clearance{};
   int side{};
+  double tracking_arc{};
 };
 } // namespace
 
-FootprintGapFollow::FootprintGapFollow(VehicleFootprint footprint, std::unique_ptr<LocalMotionPolicyPort> policy)
-  : footprint_(std::move(footprint)), policy_(std::move(policy)) {
+FootprintGapFollow::FootprintGapFollow(VehicleFootprint footprint, std::unique_ptr<LocalMotionPolicyPort> policy,
+                                     TrajectoryTracker tracker)
+  : footprint_(std::move(footprint)), policy_(std::move(policy)), tracker_(tracker) {
   const auto& f=footprint_;
   for (double value:{f.front_m,f.rear_m,f.left_m,f.right_m,f.track_m})
     if (!std::isfinite(value) || value<=0.) throw std::invalid_argument("invalid positive footprint extent or track");
@@ -211,7 +197,12 @@ LocalPlan FootprintGapFollow::plan(const PlanInput& in,const FrontObstacleReport
   // angular braking time, so the stopping arc has the current curvature.
   const double stopping_time=reaction_time+.5*std::max(std::abs(v)/brake_mps2,std::abs(w)/brake_radps2);
   const double horizon=std::min(2.4,in.goal_distance_m);
-  Sweep sweep(*report,footprint_,std::max(horizon,std::abs(v)*stopping_time));
+  constexpr double pursuit_bearing_limit=1.25;
+  // A rate-limited yaw can temporarily straighten the entire target arc.
+  // Retain scan edges out to that arc length when building the sweep.
+  const double sweep_distance=tracker_==TrajectoryTracker::regulated_pursuit
+    ? horizon*pursuit_bearing_limit/std::sin(pursuit_bearing_limit) : horizon;
+  Sweep sweep(*report,footprint_,std::max(sweep_distance,std::abs(v)*stopping_time));
   const double here=sweep.rectangle({{},0.});
   output.clearance_m=here;
   if (here<hard_margin_m || sweep.trajectory(v*stopping_time,w*stopping_time,0.,hard_margin_m)<hard_margin_m)
@@ -220,12 +211,45 @@ LocalPlan FootprintGapFollow::plan(const PlanInput& in,const FrontObstacleReport
   if (report->ttc_status=="unobserved") {
     output.decision="wait"; return stop("navigation.ttc_unobserved");
   }
-  if (policy_ && !policy_->permit(in,*report,output)) return output;
+  const bool review_applied_arc=policy_ && tracker_==TrajectoryTracker::regulated_pursuit;
+  if (policy_ && !review_applied_arc && !policy_->permit(in,*report,output)) return output;
   // Reserve extra tracking room where available. In a tight corridor leave
   // some of the excess for scan quantization and the rotating corner bound.
   const double required=hard_margin_m+std::min(.032,(here-hard_margin_m)*.5);
   const double goal=std::remainder(in.goal_bearing_rad,2*pi);
   auto corridor=[&](double heading,int side,double preview,double max_speed,bool align=false)->std::optional<Candidate> {
+    if (tracker_==TrajectoryTracker::regulated_pursuit && !align && std::abs(heading)<=pursuit_bearing_limit && preview>0.) {
+      // A circle tangent to body +x through the lookahead point has k=2*y/L².
+      // Plan and check the same arc whose v and w are sent to the drive.
+      const double curvature=2.*std::sin(heading)/preview;
+      const double travel=std::abs(heading)<1e-6 ? preview : preview*heading/std::sin(heading);
+      double gap=sweep.trajectory(travel,travel*curvature,0.,required);
+      if (gap<required) return {};
+
+      // Accelerate from measured odometry, including rest after a yield.
+      // Protective stops bypass these nominal tracking limits.
+      constexpr double control_period_s=.05;
+      double speed=std::min({max_speed,1.1*in.goal_distance_m,
+                             std::max(0.,v)+.40*control_period_s,
+                             wheel_speed_limit/(1.+std::abs(curvature)*footprint_.track_m/2.)});
+      if (std::abs(curvature)>1e-8) speed=std::min(speed,1.1/std::abs(curvature));
+      const double max_change=1.5*control_period_s;
+      const double desired_w=speed*curvature;
+      const double angular=std::clamp(std::clamp(desired_w,w-max_change,w+max_change),-1.1,1.1);
+      speed=std::min(speed,wheel_speed_limit-std::abs(angular)*footprint_.track_m/2.);
+      if (speed<=0.) return {};
+      // After a sharp change of bearing the rate-limited arc differs from
+      // the target arc. Prove this applied command for the entire preview.
+      if (std::abs(angular-speed*curvature)>1e-7) {
+        const double yaw=travel*angular/speed;
+        if (std::abs(yaw)>pi) return {};
+        gap=std::min(gap,sweep.trajectory(travel,yaw,0.,required));
+        if (gap<required) return {};
+      }
+      const double brake=reaction_time+.5*std::max(speed/brake_mps2,std::abs(angular)/brake_radps2);
+      if (sweep.trajectory(speed*brake,angular*brake,0.,hard_margin_m)<hard_margin_m) return {};
+      return Candidate{speed,angular,gap,side,travel};
+    }
     // Skid steering changes body yaw before its velocity vector has aligned.
     // For substantial heading changes, first rotate about the drive centre;
     // blend the remaining small error with a moving arc and straight tangent.
@@ -279,9 +303,18 @@ LocalPlan FootprintGapFollow::plan(const PlanInput& in,const FrontObstacleReport
     const double short_preview=footprint_.front_m+footprint_.rear_m+creep*(reaction_time+creep/(2*brake_mps2));
     candidate=search(side_,std::min(horizon,short_preview),creep);
     if (!candidate && (restricted_scans_<3 || std::abs(v)>.04 || std::abs(w)>.10)) {
+      if (review_applied_arc && !policy_->permit(in,*report,output)) return output;
       output.decision="wait"; return stop("navigation.reassessing_corridor");
     }
     if (!candidate) candidate=search(-side_,horizon,speed_limit);
+  }
+  if (review_applied_arc) {
+    auto proposed=in;
+    if (candidate && candidate->tracking_arc>0.) {
+      proposed.tracking_arc_m=candidate->tracking_arc;
+      proposed.tracking_curvature_per_m=candidate->w/candidate->v;
+    }
+    if (!policy_->permit(proposed,*report,output)) return output;
   }
   if (!candidate) return stop("navigation.no_safe_path");
   if (!restricted || side_!=candidate->side) { restricted_scans_=0; restricted_seq_.reset(); }
@@ -291,6 +324,10 @@ LocalPlan FootprintGapFollow::plan(const PlanInput& in,const FrontObstacleReport
   output.clearance_m=candidate->clearance;
   output.linear_mps=candidate->v; output.angular_radps=candidate->w;
   if (candidate->v>0.) output.curvature_per_m=candidate->w/candidate->v;
+  if (tracker_==TrajectoryTracker::regulated_pursuit) {
+    output.tracking_mode=candidate->tracking_arc>0. ? "regulated_pursuit" : "heading_alignment";
+    if (candidate->tracking_arc>0.) output.tracking_arc_m=candidate->tracking_arc;
+  }
   return output;
 }
 } // namespace edge::local

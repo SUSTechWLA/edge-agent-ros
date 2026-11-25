@@ -40,6 +40,19 @@ def stable_bytes(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
 
 
+def display_scene(path, archive_ref, snapshot):
+    """Attach an optional display backdrop only when it matches the planned observation."""
+    try:
+        example = json.loads(path.read_bytes())
+        scene = example["scene"]
+        if ("sha256:" + example["provenance"]["archive_sha256"] == archive_ref
+                and scene["stamp_ns"] == snapshot["scan_stamp_ns"] and scene["frame_id"] == snapshot["base_frame"]):
+            return scene
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return None
+
+
 class PlanningFixture:
     """One provider per recorded site profile, version and source clock."""
     def __init__(self, resources, state, snapshot, profile, metadata):
@@ -123,14 +136,7 @@ class ReplayPlanning:
                     "snapshot_ref": digest(stable_bytes(window.snapshot))}
             self.fixtures[case] = PlanningFixture(resources, site_state / "gazebo" / case, window.snapshot, window.profile, meta)
             if case == "centered":
-                # Only the display backdrop is taken from the archived visualization.
-                # The path comes from a new HTTP response on every button press.
-                example = json.loads((ROOT / "console/web/plan-example.json").read_bytes())
-                if ("sha256:" + example["provenance"]["archive_sha256"] != meta["archive_ref"]
-                        or example["scene"]["stamp_ns"] != window.snapshot["scan_stamp_ns"]
-                        or example["scene"]["frame_id"] != window.snapshot["base_frame"]):
-                    raise ValueError("comparison scene does not match the recorded sensor observation")
-                self.simulation_scene = example["scene"]
+                self.simulation_scene = display_scene(ROOT / "console/web/plan-example.json", meta["archive_ref"], window.snapshot)
 
     def run(self, case):
         if case not in self.fixtures:

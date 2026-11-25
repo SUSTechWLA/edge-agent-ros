@@ -15,9 +15,16 @@ OBS = ("observations", "console-missions", "places", "scene-binding", "scene-out
 MOTION = ("core", "motion-sensors", "motion-world", "resilience", "agent-faults", "console-missions",
           "places", "scene-binding", "scene-outage")
 RULES = [
-    (("perception/scene_layers/*", "console/web/scene-layers.*", "tests/test_scene_layers_057.py",
+    (("perception/scene_layers/*", "console/web/scene-layers.*", "console/web/plan-scene.js", "tests/test_scene_layers_057.py",
       "tests/test_scene_workbench_057.py", "tests/test_scene_layer_runtime.py", "tests/system/record_scene_layers.cjs",
-      "scripts/export_field_scene_example.py"), ("planner","ui")),
+      "tests/system/scene_texture_browser.cjs", "tests/system/scene_workbench_image.py",
+      "scripts/export_field_map_replay.cjs", "scripts/export_field_scene_example.py"), ("planner","ui")),
+    (("console/web/fusion-map.*", "tests/test_lidar_rgb_fusion.py", "tests/test_registered_fusion_map.py",
+      "tests/system/fusion_map_browser.cjs", "sim/rgb_lidar_bench.sdf", "tests/system/*rgb_lidar_sim.py"),
+     ("planner", "ui")),
+    (("perception/map3d/web/spatial.js",), ("planner", "ui", "observations", "board", "plugin-isolation", "campus-world")),
+    (("perception/rover_preview/*",), ("planner", *OBS, "board")),
+    (("tests/test_rover_preview.py", "tests/test_rover_snapshot_service.py"), ("planner", "ui")),
     (("src/edge_gateway/src/local_plan*","src/edge_gateway/test/local_planner*",
       "src/edge_gateway/src/footprint_gap_follow.cpp","src/edge_gateway/src/dynamic_obstacles.*","src/edge_gateway/src/vehicle_profile.hpp",
       "src/edge_gateway/config/footprints/*","tests/system/lingao_model_bounds.py",
@@ -195,9 +202,17 @@ def selection(files=None):
 
 class TestSelection(unittest.TestCase):
     def test_scene_layers_run_real_service_and_view_consumers(self):
-        for path in ("perception/scene_layers/worker.py", "console/web/scene-layers.js",
-                     "tests/test_scene_layer_runtime.py", "tests/system/record_scene_layers.cjs"):
+        for path in ("perception/scene_layers/worker.py", "console/web/scene-layers.js", "console/web/plan-scene.js",
+                     "tests/test_scene_layer_runtime.py", "tests/system/record_scene_layers.cjs",
+                     "tests/system/scene_texture_browser.cjs", "tests/system/scene_workbench_image.py"):
             self.assertTrue({"planner","ui"} <= set(selection([path])[0]), path)
+        for path in ("perception/scene_layers/fusion_map.py", "sim/rgb_lidar_bench.sdf", "console/web/fusion-map.js"):
+            self.assertTrue({"planner","ui"} <= set(selection([path])[0]), path)
+        for path in ("perception/rover_preview/evaluator.py", "tests/test_rover_snapshot_service.py"):
+            self.assertTrue({"planner", "ui"} <= set(selection([path])[0]), path)
+        self.assertTrue({*OBS, "board"} <= set(selection(["perception/rover_preview/evaluator.py"])[0]))
+        self.assertTrue({"planner", "ui", "observations", "board", "plugin-isolation", "campus-world"}
+                        <= set(selection(["perception/map3d/web/spatial.js"])[0]))
 
     def test_local_planner_runs_gateway_and_independent_campus_witness(self):
         for path in ("src/edge_gateway/src/local_planner.cpp","src/edge_gateway/src/edge_gateway_node.cpp",

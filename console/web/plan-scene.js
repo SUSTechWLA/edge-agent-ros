@@ -66,6 +66,38 @@ window.FieldScene = (() => {
     return {vertices,triangles,center,span,colorCells:occupied.size};
   }
 
+  function sourcePixels(scene, requireMapping) {
+    const {image_width:w,image_height:h,texture_mapping:m,vertices}=scene;
+    if(!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w*h>4194304)return null;
+    if(!m){
+      // Historical field viewers used the sampling lattice before explicit UVs existed.
+      if(requireMapping||!Number.isInteger(scene.grid_width)||!Number.isInteger(scene.stride_px)||
+         scene.stride_px<1||scene.grid_width!==Math.ceil(w/scene.stride_px)||
+         vertices.length!==scene.grid_width*Math.ceil(h/scene.stride_px))return null;
+      return vertices.map((p,i)=>p?[(i%scene.grid_width)*scene.stride_px,Math.floor(i/scene.grid_width)*scene.stride_px]:null);
+    }
+    if(m.schema_version!==1||m.origin!=='top_left'||m.coordinates!=='normalized_pixel_centers'||
+       m.image_ref!==scene.source_evidence?.color?.artifact_ref||!Array.isArray(m.uv)||m.uv.length!==vertices.length)return null;
+    const pixels=[];
+    for(let i=0;i<m.uv.length;i++){
+      const uv=m.uv[i];
+      if(vertices[i]===null && uv===null){pixels.push(null);continue;}
+      if(!vertices[i]||!Array.isArray(uv)||uv.length!==2||!uv.every(Number.isFinite))return null;
+      const x=uv[0]*w-.5, y=uv[1]*h-.5;
+      if(x<-.0001||y<-.0001||x>w-1+.0001||y>h-1+.0001)return null;
+      pixels.push([x,y]);
+    }
+    return pixels;
+  }
+
+  function surfaceGray(a,b,c){
+    // Use the measured optical XYZ to light the geometry independently of source RGB.
+    const ab=[b[9]-a[9],b[10]-a[10],b[8]-a[8]],ac=[c[9]-a[9],c[10]-a[10],c[8]-a[8]];
+    const nx=ab[1]*ac[2]-ab[2]*ac[1],ny=ab[2]*ac[0]-ab[0]*ac[2],nz=ab[0]*ac[1]-ab[1]*ac[0];
+    const length=Math.hypot(nx,ny,nz);
+    return length ? 76+138*Math.abs((.32*nx+.65*ny+.69*nz)/length) : 76;
+  }
+
   // Distance in pixels to a 10 cm lattice plane at this visible surface.
   // Suppress tangential and sub-pixel crossings to avoid a solid or aliased wash.
   function boundaryInk(metres,gradient){
@@ -77,7 +109,7 @@ window.FieldScene = (() => {
 
   // Orthographic barycentric RGB and depth interpolation. Each pixel belongs
   // to the closest measured triangle, even when rotating through folded surfaces.
-  function rasterTriangle(image,depth,a,b,c,texture,showGrid) {
+  function rasterTriangle(image,depth,a,b,c,texture,showGrid,gray) {
     const left=Math.max(0,Math.floor(Math.min(a[0],b[0],c[0]))), right=Math.min(image.width-1,Math.ceil(Math.max(a[0],b[0],c[0])));
     const top=Math.max(0,Math.floor(Math.min(a[1],b[1],c[1]))), bottom=Math.min(image.height-1,Math.ceil(Math.max(a[1],b[1],c[1])));
     if(left>right||top>bottom)return;
@@ -112,6 +144,8 @@ window.FieldScene = (() => {
             const bottom=texture.data[l+nextY]*(1-fx)+texture.data[l+nextX+nextY]*fx;
             image.data[i+ch]=top*(1-fy)+bottom*fy;
           }
+        }else if(gray!==null){
+          image.data[i]=image.data[i+1]=image.data[i+2]=gray;
         }else{
           image.data[i]=w*a[3]+u*b[3]+v*c[3];image.data[i+1]=w*a[4]+u*b[4]+v*c[4];
           image.data[i+2]=w*a[5]+u*b[5]+v*c[5];
@@ -138,9 +172,10 @@ window.FieldScene = (() => {
     let scene=null, plan=null, frame=0, disposed=false, selected=null, pickable=[];
     let yaw=.39, pitch=.92, zoom=1, center=[.53,0], view='orbit', home=true;
     let width=0, height=0, scale=1, cos=1, sin=0, sinPitch=1, cosPitch=0, centerZ=0;
-    let mesh=null, meshImage=null, meshDepth=null, texture=null, textureURL=null;
+    let mesh=null, meshImage=null, meshDepth=null, texture=null, textureLoad=0, pixels=null;
+    let loadedImage=null;
     const meshCanvas=document.createElement('canvas'),meshCtx=meshCanvas.getContext('2d');
-    const layers={ground:true, occupied:true, route:true, rgbGrid:true};
+    const layers={ground:true, occupied:true, route:true, rgbGrid:true, sourceRGB:true};
     const touches=new Map(), listeners=new AbortController();
     let born=null, dragged=false;
     canvas.style.touchAction='none';
@@ -292,6 +327,8 @@ window.FieldScene = (() => {
     }
     function drawCamera(){
       if(!mesh)return;
+      const sampled=layers.sourceRGB?texture:null;
+      const geometryOnly=!sampled && (!layers.sourceRGB || options.requireTextureMapping);
       const ratio=Math.min(1.25,window.devicePixelRatio||1,Math.sqrt(950000/(width*height)));
       const w=Math.max(1,Math.round(width*ratio)),h=Math.max(1,Math.round(height*ratio));
       if(!meshImage||meshImage.width!==w||meshImage.height!==h){
@@ -302,41 +339,63 @@ window.FieldScene = (() => {
       const projected=mesh.vertices.map((v,index)=>{
         if(!v)return null;
         const [x,y,z,r,g,b]=v, [sx,sy]=project(x,y,z);
-        return [sx*ratio,sy*ratio,cameraDepth(x,y,z),r,g,b,
-          x*(index%scene.grid_width)*scene.stride_px,x*Math.floor(index/scene.grid_width)*scene.stride_px,x,-y,-z];
+        const uv=pixels?.[index];
+        return [sx*ratio,sy*ratio,cameraDepth(x,y,z),r,g,b,uv?x*uv[0]:0,uv?x*uv[1]:0,x,-y,-z];
       });
-      for(const [a,b,c] of mesh.triangles)rasterTriangle(meshImage,meshDepth,projected[a],projected[b],projected[c],texture,layers.rgbGrid);
+      for(const triangle of mesh.triangles){
+        const a=projected[triangle[0]],b=projected[triangle[1]],c=projected[triangle[2]];
+        rasterTriangle(meshImage,meshDepth,a,b,c,sampled,layers.rgbGrid,geometryOnly?surfaceGray(a,b,c):null);
+      }
       // Retain real samples on fine edges and isolated surfaces where depth
       // discontinuities deliberately leave holes in the triangulation.
       for(const p of projected){
         if(!p)continue;
         const x=Math.floor(p[0]),y=Math.floor(p[1]),i=y*w+x;
         if(x<0||y<0||x>=w||y>=h||p[2]<meshDepth[i])continue;
-        meshImage.data.set([p[3],p[4],p[5],255],4*i); meshDepth[i]=p[2];
+        const rgba=geometryOnly?[153,153,153,255]:[p[3],p[4],p[5],255];
+        if(sampled){
+          const u=clamp(Math.round(p[6]/p[8]),0,sampled.width-1),v=clamp(Math.round(p[7]/p[8]),0,sampled.height-1);
+          const source=4*(v*sampled.width+u);
+          for(let ch=0;ch<3;ch++)rgba[ch]=sampled.data[source+ch];
+        }
+        meshImage.data.set(rgba,4*i);meshDepth[i]=p[2];
       }
       meshCtx.putImageData(meshImage,0,0);ctx.drawImage(meshCanvas,0,0,width,height);
       pickable=[];
     }
     function useTexture(input){
+      const load=++textureLoad;
+      pixels=input?sourcePixels(input,options.requireTextureMapping):null;
+      const update=(state,image)=>{
+        canvas.dataset.texture=state==='ready'?'source_png':state;
+        options.onTextureState?.(state,image);
+        drawSoon();
+      };
       const hash=input?.source_evidence?.color?.artifact_ref;
       const url=typeof hash==='string'&&/^sha256:[0-9a-f]{64}$/.test(hash)?'/camera/'+hash.slice(7)+'.png':null;
-      const usable=url && input.texture_url===url && Number.isInteger(input.grid_width) && Number.isInteger(input.stride_px);
-      const next=usable?url:null;
-      if(next===textureURL)return;
-      textureURL=next;texture=null;canvas.dataset.texture='vertex';
-      if(!next)return;
+      const source=url && pixels && input.texture_url===url ? (options.resolveTextureURL?options.resolveTextureURL(url):url) : null;
+      if(source && loadedImage?.getAttribute('src')===source &&
+         input.image_width===texture?.width && input.image_height===texture.height){update('ready',loadedImage);return;}
+      loadedImage=null;texture=null;
+      if(!input){update('none');return;}
+      if(!source){update('unavailable');return;}
+      update('loading');
       const img=new Image();
+      const current=()=>!disposed && load===textureLoad;
+      img.onerror=()=>{if(current())update('unavailable');};
       img.onload=()=>{
-        if(disposed||textureURL!==next||img.naturalWidth!==input.image_width||img.naturalHeight!==input.image_height||
-           img.naturalWidth*img.naturalHeight>4194304)return;
-        const tex=document.createElement('canvas');
-        tex.width=img.naturalWidth;tex.height=img.naturalHeight;
-        const tx=tex.getContext('2d',{willReadFrequently:true});
-        tx.drawImage(img,0,0);
-        try{texture=tx.getImageData(0,0,tex.width,tex.height);canvas.dataset.texture='source_png';drawSoon();}
-        catch{texture=null;}
+        if(!current())return;
+        if(img.naturalWidth!==input.image_width||img.naturalHeight!==input.image_height){update('unavailable');return;}
+        try{
+          const tex=document.createElement('canvas');
+          tex.width=img.naturalWidth;tex.height=img.naturalHeight;
+          const tx=tex.getContext('2d',{willReadFrequently:true});
+          tx.drawImage(img,0,0);
+          texture=tx.getImageData(0,0,tex.width,tex.height);
+          loadedImage=img;update('ready',img);
+        }catch{texture=null;update('unavailable');}
       };
-      img.src=next;
+      img.src=source;
     }
     function routeArrows(points){
       // Space direction markers by display distance, independently of the planner's sampling density.
@@ -513,7 +572,7 @@ window.FieldScene = (() => {
       setData(nextScene,nextPlan){
         const previousCamera=cameraOnly(), nextCamera=nextScene?.registration==='camera_only';
         const sameFrame=nextCamera||!nextPlan?.base_frame||!nextScene?.frame_id||nextPlan.base_frame===nextScene.frame_id;
-        if(nextScene!==scene){mesh=cameraMesh(nextScene);useTexture(nextCamera?nextScene:null);}
+        if(nextScene!==scene){mesh=cameraMesh(nextScene);useTexture(nextCamera && mesh?nextScene:null);}
         scene=sameFrame?nextScene:null;plan=nextPlan;
         if(previousCamera!==nextCamera){reset();return;}
         selected=null;if(home)fitTarget();changed();

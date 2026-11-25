@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "coverage": "覆盖原图 39.8% · 深度不连续处留空",
+  "probe": {
+    "pixel": [
+      339,
+      4
+    ],
+    "source_rgb": [
+      165,
+      171,
+      152
+    ],
+    "vertex_rgb": [
+      [
+        29,
+        52,
+        0
+      ],
+      [
+        28,
+        36,
+        5
+      ],
+      [
+        41,
+        40,
+        12
+      ]
+    ],
+    "matching_render_pixels": 136,
+    "texture": "source_png"
+  },
+  "appearance": {
+    "rgb": "0e067bce036c455ab07068eb70a98701cea4d65e24ae84b376aa853940353e70",
+    "geometry": "3ee4afd66f4131a44d6f473ba12fbb1caf1804792c0848a128dbe14adbadd25d",
+    "radar": "d43625f02766d10f0ca722b539dd31668be4c5a01715df2f63eb929f1f0b32e4",
+    "view": [
+      "-0.200",
+      "0.400",
+      "1.000",
+      "1.662",
+      "0.005"
+    ],
+    "same_view": true,
+    "replot_changed_fraction": 0
+  },
+  "hot_reload": {
+    "stopped_download": 409,
+    "restored": true,
+    "deep_link_read_only": true
+  }
+}

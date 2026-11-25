@@ -67,12 +67,17 @@ class Worker:
 
 
 class ReplaySite:
-    def __init__(self, archive_dir, state_dir, *, grid_directory=None, grid_manifest_ref=None):
-        self.archive = Path(archive_dir).resolve()
+    def __init__(self, archive_dir, state_dir, *, grid_directory=None, grid_manifest_ref=None,
+                 fusion_directory=None, fusion_manifest_ref=None):
+        self.archive = Path(archive_dir).resolve() if archive_dir is not None else None
         self.state = Path(state_dir).resolve()
         self.directory = self.state/"runtime"
         self.grid_directory = Path(grid_directory).resolve() if grid_directory else None
         self.grid_manifest_ref = grid_manifest_ref
+        self.fusion_directory = Path(fusion_directory).resolve() if fusion_directory else None
+        self.fusion_manifest_ref = fusion_manifest_ref
+        if bool(fusion_directory) != bool(fusion_manifest_ref):
+            raise ValueError("fusion_directory and fusion_manifest_ref must be supplied together")
         if bool(grid_directory) != bool(grid_manifest_ref):
             raise ValueError("grid_directory and grid_manifest_ref must be supplied together")
         self.state.mkdir(parents=True, exist_ok=True)
@@ -81,7 +86,11 @@ class ReplaySite:
         self.start_errors = {}
         self.changes = threading.RLock()
         self.closed = False
-        self.configured = ("occupancy", "texture", "query") + (("grid2d",) if grid_directory else ())
+        self.configured = (("occupancy", "texture") if self.archive else ()) + ("query",)
+        if grid_directory:
+            self.configured += ("grid2d",)
+        if fusion_directory:
+            self.configured += ("fusion",)
         try:
             self.inactive = self._load_intent()
             for kind in self.configured:
@@ -137,10 +146,16 @@ class ReplaySite:
         with tempfile.TemporaryDirectory(dir=self.state) as startup:
             ready = Path(startup)/"ready"
             data = self.grid_directory if kind == "grid2d" else self.archive
+            if kind == "fusion":
+                data = self.fusion_directory
+            elif kind == "query":
+                data = self.state
             command = [sys.executable, "-B", "-m", "perception.scene_layers.worker",
                        kind, str(data), str(self.state), str(ready)]
             if kind == "grid2d":
                 command.extend(["--grid-manifest-ref", self.grid_manifest_ref])
+            elif kind == "fusion":
+                command.extend(["--fusion-manifest-ref", self.fusion_manifest_ref])
             # Write errors to a bounded-lifetime, per-service startup log. No
             # filesystem or network service accepts arbitrary provider commands.
             with (self.state/(kind+".log")).open("wb") as log:
@@ -195,7 +210,7 @@ class ReplaySite:
             except SceneRuntimeError as exc:
                 self.start_errors[kind] = {"code":exc.code, "reason":str(exc)}
                 raise
-            descriptor = {"schema_version":1, "id":service, "version":VERSION, "endpoint":endpoint,
+            descriptor = {"schema_version":1, "id":service, "version":"1.1.0" if kind == "texture" else VERSION, "endpoint":endpoint,
                           "provides":[service], "requires":[]}
             try:
                 receipt = managed_change(self.state, descriptor, "publish", previous)
@@ -280,5 +295,5 @@ class ReplaySite:
             return call(self.directory, "query", "read", scene_ref=scene_ref, kind=kind, layer_ref=layer_ref)
         return call(self.directory, kind, "read", layer_ref=layer_ref)
 
-    def texture_png(self, layer_ref):
-        return call(self.directory, "texture", "texture_png", layer_ref=layer_ref)
+    def texture_png(self, layer_ref, *, expected=None):
+        return call(self.directory, "texture", "texture_png", expected=expected, layer_ref=layer_ref)

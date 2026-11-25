@@ -5,6 +5,7 @@ import math
 import os
 from pathlib import Path
 import sqlite3
+import sys
 import tempfile
 import threading
 import unittest
@@ -13,13 +14,16 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
 from agent import runtime_plugins
 from perception.rover_preview.evaluator import EvaluationError, SERVICE, SnapshotEvaluator, VERSION
 from perception.rover_preview.provider import Handler, Provider
 from perception.rover_preview.status import StatusProvider
 
 
-DIRECTORY = Path(__file__).resolve().parents[1] / "perception/rover_preview"
+DIRECTORY = ROOT / "perception/rover_preview"
 PROFILE = json.loads((DIRECTORY / "lingao.json").read_bytes())
 
 
@@ -197,3 +201,7 @@ class SnapshotServiceTests(unittest.TestCase):
                 self.assertEqual(provider.invoke(other), refused)
             finally:
                 provider.pool.shutdown()
+
+
+if __name__ == "__main__":
+    unittest.main()

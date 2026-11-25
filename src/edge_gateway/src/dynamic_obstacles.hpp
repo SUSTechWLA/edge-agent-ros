@@ -16,7 +16,8 @@ struct ObstacleTrack {
   Point early_displacement, late_displacement; // disjoint acquisition intervals
   double radius_m{}, span_s{}, fit_error_m{};
   unsigned samples{}, support_rays{};
-  bool velocity_valid{};
+  std::optional<Point> observed_face_normal;
+  bool velocity_valid{}, matches_stationary_surface{};
 };
 struct DynamicObstacleReport {
   std::string observer_id, report_ref, scan_ref, reason;
@@ -29,12 +30,21 @@ struct DynamicObstacleReport {
 class DynamicObserverPort {
 public:
   virtual ~DynamicObserverPort() = default;
+  virtual void freeze_reference() {}
+  virtual void begin_idle_reference() {}
   virtual DynamicObstacleReport observe(const FrontObstacleReport&,const std::optional<ScanPose>&) = 0;
 };
 class ScanClusterTracker final : public DynamicObserverPort {
 public:
   DynamicObstacleReport observe(const FrontObstacleReport&,const std::optional<ScanPose>&) override;
+  void freeze_reference() override { reference_frozen_=true; }
+  void begin_idle_reference() override { reference_frozen_=false; reference_.clear(); first_pose_.reset(); }
 private:
+  using Surface = std::vector<std::pair<Point,Point>>;
+  std::vector<Surface> reference_;
+  std::optional<ScanPose> first_pose_;
+  std::int64_t reference_stamp_{};
+  bool reference_frozen_{};
   struct Sample { std::int64_t stamp; Point position, half_extent; };
   struct History { ObstacleTrack track; std::deque<Sample> points; };
   std::vector<History> histories_;
@@ -52,9 +62,11 @@ private:
     std::uint64_t id{}, last_seq{};
     Point crossing, direction;
     double radius{}, departure_sign{};
-    bool confirmed{}, observed_exit{};
+    bool confirmed{};
     unsigned clear_count{};
     std::int64_t first_clear{}, first_odom{}, last_odom{}, last_scan{}, started{};
+    std::string source, calibration, clock, mode;
+    std::uint64_t epoch{};
   };
   VehicleFootprint footprint_;
   std::optional<Hold> hold_;

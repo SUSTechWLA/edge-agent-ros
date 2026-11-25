@@ -238,6 +238,23 @@
       }
       distance=Math.max(distance,1.1*scaleRadius);
     }
+    // Fit the edges of the viewing frustum to the complete observation so
+    // empty corners of its axis-aligned bounding box do not shrink a sparse survey.
+    function fitPoints(points){
+      const kx=surface.w*.45/surface.focal, ky=surface.h*.43/surface.focal;
+      let left=Infinity,rightEdge=-Infinity,bottom=Infinity,top=-Infinity,far=Infinity,near=-Infinity;
+      for(const p of points){
+        const x=dot(p,right),y=dot(p,up),z=dot(p,out);
+        left=Math.min(left,x-kx*z);rightEdge=Math.max(rightEdge,x+kx*z);
+        bottom=Math.min(bottom,y-ky*z);top=Math.max(top,y+ky*z);
+        far=Math.min(far,z);near=Math.max(near,z);
+      }
+      const x=(left+rightEdge)/2,y=(bottom+top)/2,z=(far+near)/2;
+      target=right.map((v,i)=>x*v+y*up[i]+z*out[i]);
+      const front=near+Math.max(.1,(near-far)*.01);
+      distance=Math.max((rightEdge-left)/(2*kx),(top-bottom)/(2*ky),front)-z;
+      scaleRadius=Math.max(1,distance/2);
+    }
     function record(name,position,stale=false){items.push({name,position,stale});return items.length-1;}
     // Intersect screen rays with the horizontal grid once per row. Depth is
     // constant along that scanline, so columns/rows advance by a fixed increment.
@@ -380,7 +397,8 @@
       }else if(autoFit && tex){
         const [a,b,c,d]=tex.bounds;
         fit([a,b,mesh.zMin],[c,d,mesh.zMax]);
-      }else if(autoFit)fit(geometry.min,geometry.max);
+      }else if(autoFit && options.fitPoints?.length)fitPoints(options.fitPoints);
+      else if(autoFit)fit(geometry.min,geometry.max);
       renderedCamera={right,up,out,target,distance};
       const near=Math.max(.0001,distance*.003);
       items=[null];frame=snapshot?.frame||"";
@@ -441,11 +459,20 @@
       }
       const range=Math.max(.01,geometry.zMax-geometry.zMin);
       for(const source of geometry.clouds){
-        const label="实测点 · "+(source.name||source.source_frame||source.topic||"主点云");
+        const registered=options.cloudAppearance==="registered_rgb" && Array.isArray(source.colors)
+          && source.colors.length===source.points?.length;
+        const label=(registered?"归档点 · ":"实测点 · ")+(source.name||source.source_frame||source.topic||"主点云");
         const live=options.connected && source.status==="online" && !source.error;
-        for(const p of source.points||[])if(xyz(p)){
+        for(const [i,p] of (source.points||[]).entries())if(xyz(p)){
           const index=clamp(Math.round(127*(p[2]-geometry.zMin)/range),0,127);
-          surface.marker(camera(p),near,1.85,live?heights[index]:colors.stale,record(label,p,!live));
+          let color=live?heights[index]:colors.stale;
+          const id=record(label,p,!registered && !live);
+          if(registered){
+            const c=source.colors[i];
+            color=c?rgb(c[0],c[1],c[2]):rgb(106,129,135);
+            items[id].rgb=c;
+          }
+          surface.marker(camera(p),near,1.85,color,id);
         }
       }
       if(geometry.pose && !following){
@@ -482,6 +509,7 @@
       if(item.grid&&!cell){clearPick();return;}
       const gridInfo=cell?" · 列 "+cell.col+" 行 "+cell.row+" · "+window.EdgeGrid.describe(cell.value)+" · 值 "+cell.value:"";
       let appearance="";
+      if("rgb" in item)appearance=item.rgb?" · RGB ("+item.rgb.join(", ")+")":" · 无颜色观测";
       if(item.texture){
         const area=(item.texture.areas||[]).filter(({bounds:[a,b,c,d]})=>selected[0]>=a && selected[0]<=c && selected[1]>=b && selected[1]<=d)
           .sort((p,q)=>{const size=({bounds:[a,b,c,d]})=>(c-a)*(d-b);return size(p)-size(q);})[0];

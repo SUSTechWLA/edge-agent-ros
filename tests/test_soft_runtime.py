@@ -42,6 +42,39 @@ class SoftRuntimeTests(unittest.IsolatedAsyncioTestCase):
     def row(self, name="math"):
         return next(item for item in self.runtime.catalog() if item["id"] == name)
 
+    async def test_visual_language_tool_binds_observations_without_a_map(self):
+        # A test double for the model. Exercise the dependency and result boundary, not language understanding.
+        camera = descriptor("camera", provides=[ref("camera.frames")])
+        visual = descriptor("visual", provides=[ref("inspect_landmark", "tool")], requires=[ref("camera.frames")])
+        metric = descriptor("metric", provides=[ref("metric_route", "tool")], requires=[ref("map.grid")])
+        pixels = bytes((8, 31, 240))
+        frame = {"rgb": list(pixels), "frame_ref": "sha256:" + hashlib.sha256(pixels).hexdigest()}
+
+        def load_visual(ctx):
+            read = ctx.require("camera.frames")
+
+            async def inspect(args):
+                observed = await read({})
+                return {"kind": "observation_request", "instruction": args["instruction"],
+                        "frame_ref": observed["frame_ref"], "motion_authorized": False}
+
+            ctx.tools.register("inspect_landmark", inspect)
+
+        await self.runtime.install(metric, lambda ctx: ctx.tools.register("metric_route", ctx.require("map.grid")))
+        await self.runtime.install(visual, load_visual)
+        self.assertEqual(self.row("visual")["lifecycle"], "PENDING")
+        await self.runtime.install(camera, lambda ctx: ctx.provide("camera.frames", lambda _: frame))
+        self.assertEqual(self.row("metric")["lifecycle"], "PENDING")
+        pin = await self.runtime.freeze("visual", "inspect_landmark", "test/step-1")
+        self.assertEqual(set(pin["dependencies"]), {"visual", "camera"})
+        instruction = "沿走廊找有蓝色门牌的办公室"
+        self.assertEqual(await self.runtime.call(pin, {"instruction": instruction}), {
+            "kind": "observation_request", "instruction": instruction, "frame_ref": frame["frame_ref"],
+            "motion_authorized": False})
+        await self.runtime.release(pin["reservation_id"])
+        await self.runtime.remove("camera")
+        await self.reject("plugin.dependency_unavailable", self.runtime.freeze("visual", "inspect_landmark", "test/step-2"))
+
     async def test_frozen_undispatched_plan_drains_before_explicit_dispose_and_apply(self):
         order = []
 

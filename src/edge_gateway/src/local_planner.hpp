@@ -31,6 +31,10 @@ struct Ray {
   Point endpoint;
   bool known{}, hit{};
 };
+struct SurfaceObservation {
+  double range_m{}, bearing_rad{}, first_bearing_rad{}, last_bearing_rad{};
+  std::size_t support{};
+};
 struct FrontObstacleReport {
   int schema_version{1};
   std::string source_id, frame_id{"base_link"}, calibration_ref, clock_id, report_ref, reason, ttc_status;
@@ -47,6 +51,10 @@ struct FrontObstacleReport {
   std::size_t ttc_source_support_rays{};
   bool nearest_uses_edge_tie{};
   bool ttc_singleton_pair{};
+  // Visible front-sector patches for association if a different obstacle becomes nearest.
+  std::vector<SurfaceObservation> front_surfaces;
+  std::size_t ttc_surface_index{};
+  bool ttc_alternate_surface_pair{};
   std::vector<Ray> rays;
   // Known endpoints bound visible space even for max-range (no-return) rays.
   double angle_step_rad{};
@@ -61,18 +69,35 @@ struct PlanInput {
   double measured_linear_mps{}, measured_angular_radps{};
   std::int64_t measured_odom_stamp_ns{};
   const DynamicObstacleReport* dynamic_obstacles{};
+  // The applied, rate-limited arc in base_link at the paired odometry pose.
+  double tracking_arc_m{}, tracking_curvature_per_m{};
 };
+// Shared minimum for the shaped sweep and dynamic recovery policy.
+inline constexpr double footprint_hard_margin_m = .55;
+
+struct DynamicRecheck {
+  bool corridor_clear{}, stationary{}, tracks_clear{};
+  std::int64_t scan_stamp_ns{}, odom_stamp_ns{}, dwell_ns{};
+  std::string mode;
+  std::uint64_t blocking_track_id{};
+  std::string blocking_region;
+};
+
 struct LocalPlan {
   std::string decision{"stop"}, reason_code, report_ref;
   double linear_mps{}, angular_radps{};
   std::optional<double> clearance_m, ttc_s;
   std::string footprint_ref;
   std::optional<double> curvature_per_m;
+  std::string tracking_mode;
+  std::optional<double> tracking_arc_m;
+  std::optional<Point> tracking_target;
   std::optional<std::int64_t> ttc_hold_stamp_ns;
   unsigned ttc_clear_samples{};
   std::string dynamic_report_ref, dynamic_phase;
   std::uint64_t dynamic_track_id{};
   unsigned dynamic_clear_samples{};
+  std::optional<DynamicRecheck> dynamic_recheck;
 };
 class LocalPlannerPort {
 public:
@@ -99,9 +124,11 @@ public:
 private:
   int side_{};
 };
+enum class TrajectoryTracker { heading, regulated_pursuit };
 class FootprintGapFollow final : public LocalPlannerPort {
 public:
-  explicit FootprintGapFollow(VehicleFootprint footprint, std::unique_ptr<LocalMotionPolicyPort> policy = {});
+  explicit FootprintGapFollow(VehicleFootprint footprint, std::unique_ptr<LocalMotionPolicyPort> policy = {},
+                              TrajectoryTracker tracker = TrajectoryTracker::heading);
   LocalPlan plan(const PlanInput&, const FrontObstacleReport*) override;
   void reset() override {
     side_=0; restricted_scans_=0; restricted_seq_.reset(); ttc_hold_.reset();
@@ -117,6 +144,7 @@ private:
   };
   VehicleFootprint footprint_;
   std::unique_ptr<LocalMotionPolicyPort> policy_;
+  TrajectoryTracker tracker_;
   int side_{};
   unsigned restricted_scans_{};
   std::optional<std::uint64_t> restricted_seq_;

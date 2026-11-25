@@ -32,7 +32,7 @@ void exercise(const std::string &path) {
     db.intent("complete",1,"two");
     db.result("complete",1,"stopped");
     db.verified("complete",1,{0.79,0.69},200,true);
-    db.create("interrupted",points);
+    db.create("interrupted",{points.back()},points);
     db.intent("interrupted",0,"unconfirmed");
   }
   {
@@ -42,6 +42,8 @@ void exercise(const std::string &path) {
     require(complete->targets==points,"lost target binding");
     require(complete->evidence==std::vector<edge::Position>{{0.78,0.0},{0.79,0.69}},"evidence mismatch");
     require(db.find("interrupted")->state=="RECOVERY_REQUIRED","unconfirmed action became executable");
+    require(db.find("interrupted")->reference_path==points && db.find("interrupted")->targets.size()==1,
+            "continuous geometry and terminal verification must survive restart");
     require(db.owner()=="interrupted","restart released unresolved resource");
     must_refuse([&] { db.create("after-restart",points); }, "recovery hold ignored");
   }

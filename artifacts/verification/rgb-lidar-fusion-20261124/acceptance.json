@@ -1,0 +1,303 @@
+{
+  "source": "Gazebo Harmonic and ROS 2, two stationary runs",
+  "motion_authorized": false,
+  "service": "map.lidar_rgb.fused",
+  "scene_ref": "sha256:915893f97e3412c0cd5b9cde6eefe43246b53d65633983a45ef9bfdbf24692b8",
+  "layer_ref": "sha256:9d4c90bf43b149a02cf0df7b29eaa3320b6cd250e99ddf793d5fa89db99f9690",
+  "manifest_ref": "sha256:750a90554b595bb5e4d204f0778881e791fe8222ba8a796256cd3dbeddb2fab0",
+  "clock_basis": "map_checkpoint",
+  "windows": [
+    {
+      "id": "station-a",
+      "points": 12680,
+      "colored": 8184,
+      "capture_ref": "sha256:c6fc5b858b916696304501d81eb3ec0b2e12b8d6f7a20528123999c7e045f5b2",
+      "pose_source": "gazebo_pose_info",
+      "T_world_rig": [
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      "within_window_ns": [
+        "1000000000",
+        "1000000000"
+      ],
+      "correct_calibration": {
+        "scored_visible_colored": 7537,
+        "eligible_visible": 7809,
+        "correct_material": 7536,
+        "material_accuracy": 0.9998673212153376,
+        "visible_interior_color_coverage": 0.9651683954411576,
+        "eligible_occluded": 430,
+        "colored_occluded": 0,
+        "silhouette_occlusions_excluded": 124,
+        "map_coordinate_max_error_m": 0,
+        "surface_distance_p95_m": 0.007474849093016208,
+        "surface_distance_p99_m": 0.01051883518695831,
+        "by_material": {
+          "red_wall": {
+            "scored": 1297,
+            "correct": 1297
+          },
+          "green_wall": {
+            "scored": 1297,
+            "correct": 1297
+          },
+          "blue_wall": {
+            "scored": 1121,
+            "correct": 1121
+          },
+          "yellow_post": {
+            "scored": 780,
+            "correct": 780
+          },
+          "magenta_crate": {
+            "scored": 644,
+            "correct": 644
+          },
+          "cyan_side": {
+            "scored": 427,
+            "correct": 427
+          },
+          "floor": {
+            "scored": 1971,
+            "correct": 1970
+          }
+        }
+      },
+      "wrong_camera_small_offset": {
+        "scored_visible_colored": 5993,
+        "eligible_visible": 7809,
+        "correct_material": 5817,
+        "material_accuracy": 0.9706324044718838,
+        "visible_interior_color_coverage": 0.7674478166218466,
+        "eligible_occluded": 430,
+        "colored_occluded": 93,
+        "silhouette_occlusions_excluded": 124,
+        "map_coordinate_max_error_m": 0,
+        "surface_distance_p95_m": 0.007474849093016208,
+        "surface_distance_p99_m": 0.01051883518695831,
+        "by_material": {
+          "red_wall": {
+            "scored": 1048,
+            "correct": 1048
+          },
+          "green_wall": {
+            "scored": 1253,
+            "correct": 1089
+          },
+          "blue_wall": {
+            "scored": 879,
+            "correct": 879
+          },
+          "yellow_post": {
+            "scored": 519,
+            "correct": 519
+          },
+          "magenta_crate": {
+            "scored": 473,
+            "correct": 472
+          },
+          "cyan_side": {
+            "scored": 0,
+            "correct": 0
+          },
+          "floor": {
+            "scored": 1821,
+            "correct": 1810
+          }
+        }
+      },
+      "admission": {
+        "undeclared_extrinsic_change": "scene.missing_registration",
+        "200ms_lidar_skew": "scene.time_skew"
+      }
+    },
+    {
+      "id": "station-b",
+      "points": 13306,
+      "colored": 8702,
+      "capture_ref": "sha256:480266c0849f667f36384ca8a62f57d0a232b66eb739a9bed52f4543d15d7cb1",
+      "pose_source": "gazebo_pose_info",
+      "T_world_rig": [
+        [
+          0.9950041652780258,
+          -0.09983341664682813,
+          0,
+          0.32
+        ],
+        [
+          0.09983341664682813,
+          0.9950041652780258,
+          0,
+          -0.48
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      "within_window_ns": [
+        "1000000000",
+        "1000000000"
+      ],
+      "correct_calibration": {
+        "scored_visible_colored": 7935,
+        "eligible_visible": 8088,
+        "correct_material": 7933,
+        "material_accuracy": 0.9997479521109011,
+        "visible_interior_color_coverage": 0.9810830860534124,
+        "eligible_occluded": 532,
+        "colored_occluded": 0,
+        "silhouette_occlusions_excluded": 195,
+        "map_coordinate_max_error_m": 1.831026719408895e-15,
+        "surface_distance_p95_m": 0.006979989859783875,
+        "surface_distance_p99_m": 0.009817966138234645,
+        "by_material": {
+          "red_wall": {
+            "scored": 359,
+            "correct": 359
+          },
+          "green_wall": {
+            "scored": 2173,
+            "correct": 2173
+          },
+          "blue_wall": {
+            "scored": 1485,
+            "correct": 1485
+          },
+          "yellow_post": {
+            "scored": 1170,
+            "correct": 1170
+          },
+          "magenta_crate": {
+            "scored": 775,
+            "correct": 775
+          },
+          "cyan_side": {
+            "scored": 305,
+            "correct": 305
+          },
+          "floor": {
+            "scored": 1668,
+            "correct": 1666
+          }
+        }
+      },
+      "wrong_camera_small_offset": {
+        "scored_visible_colored": 6289,
+        "eligible_visible": 8088,
+        "correct_material": 6167,
+        "material_accuracy": 0.9806010494514231,
+        "visible_interior_color_coverage": 0.7775717111770524,
+        "eligible_occluded": 532,
+        "colored_occluded": 130,
+        "silhouette_occlusions_excluded": 195,
+        "map_coordinate_max_error_m": 1.831026719408895e-15,
+        "surface_distance_p95_m": 0.006979989859783875,
+        "surface_distance_p99_m": 0.009817966138234645,
+        "by_material": {
+          "red_wall": {
+            "scored": 30,
+            "correct": 0
+          },
+          "green_wall": {
+            "scored": 2098,
+            "correct": 2016
+          },
+          "blue_wall": {
+            "scored": 1275,
+            "correct": 1275
+          },
+          "yellow_post": {
+            "scored": 741,
+            "correct": 740
+          },
+          "magenta_crate": {
+            "scored": 656,
+            "correct": 656
+          },
+          "cyan_side": {
+            "scored": 0,
+            "correct": 0
+          },
+          "floor": {
+            "scored": 1489,
+            "correct": 1480
+          }
+        }
+      },
+      "admission": {
+        "undeclared_extrinsic_change": "scene.missing_registration",
+        "200ms_lidar_skew": "scene.time_skew"
+      }
+    }
+  ],
+  "stats": {
+    "colored": 16886,
+    "points": 25986,
+    "rejections": {
+      "depth_boundary": 491,
+      "depth_disagreement": 180,
+      "occluded": 1428,
+      "outside_fov": 6968,
+      "unknown_depth": 33
+    },
+    "sources": {
+      "lidar_left": {
+        "colored": 8130,
+        "finite": 14366,
+        "input": 14366
+      },
+      "lidar_right": {
+        "colored": 8756,
+        "finite": 11620,
+        "input": 11620
+      }
+    },
+    "station_count": 2,
+    "uncolored": 9100
+  },
+  "observed_colored_10cm_cells": {
+    "station_a": 3012,
+    "station_b": 2692,
+    "overlap": 1946,
+    "new_at_b": 746,
+    "union": 3758
+  },
+  "ply": {
+    "points_verified": 25986,
+    "sha256": "sha256:f5a1af14ac994c859b9bc6d398d031ac65011f5fec14bd583dc59f589c8724f3",
+    "bytes": 572138
+  },
+  "passed": true
+}

@@ -67,6 +67,8 @@ Ledger::Ledger(const std::string &path) {
              "CREATE TABLE IF NOT EXISTS steps(mission_id TEXT REFERENCES missions,step INTEGER NOT NULL,"
              "x REAL NOT NULL,y REAL NOT NULL,operation_id TEXT UNIQUE,action_result TEXT,"
              "evidence_x REAL,evidence_y REAL,odom_stamp_ns INTEGER,PRIMARY KEY(mission_id,step));");
+    sql(db_, "CREATE TABLE IF NOT EXISTS reference_path(mission_id TEXT REFERENCES missions,idx INTEGER NOT NULL,"
+             "x REAL NOT NULL,y REAL NOT NULL,PRIMARY KEY(mission_id,idx));");
     sql(db_, audit_schema);
     sql(db_, "UPDATE missions SET state='RECOVERY_REQUIRED',detail='restart: unresolved mission; inspect physical state' "
              "WHERE state IN ('RUNNING','CANCELING');");
@@ -83,13 +85,16 @@ std::optional<Mission> Ledger::find(const std::string &id) const {
   Query m(db_, "SELECT state,detail FROM missions WHERE mission_id=?");
   m.bind(1,id);
   if (!m.row()) return std::nullopt;
-  Mission mission{id, m.text(0), m.text(1), {}, {}};
+  Mission mission{id, m.text(0), m.text(1), {}, {}, {}};
   Query p(db_, "SELECT x,y,evidence_x,evidence_y FROM steps WHERE mission_id=? ORDER BY step");
   p.bind(1,id);
   while (p.row()) {
     mission.targets.push_back({p.number(0),p.number(1)});
     if (sqlite3_column_type(p.q,2)!=SQLITE_NULL) mission.evidence.push_back({p.number(2),p.number(3)});
   }
+  Query path(db_, "SELECT x,y FROM reference_path WHERE mission_id=? ORDER BY idx");
+  path.bind(1,id);
+  while (path.row()) mission.reference_path.push_back({path.number(0),path.number(1)});
   return mission;
 }
 std::optional<std::string> Ledger::owner() const {
@@ -97,13 +102,17 @@ std::optional<std::string> Ledger::owner() const {
   if (q.row()) return q.text(0);
   return std::nullopt;
 }
-void Ledger::create(const std::string &id, const std::vector<Position> &targets) {
+void Ledger::create(const std::string &id, const std::vector<Position> &targets, const std::vector<Position> &reference_path) {
   Transaction tx(db_);
   Query m(db_, "INSERT INTO missions VALUES(?,'RUNNING','accepted')");
   m.bind(1,id); m.row();
   for (std::size_t i=0;i<targets.size();++i) {
     Query p(db_, "INSERT INTO steps(mission_id,step,x,y) VALUES(?,?,?,?)");
     p.bind(1,id); p.bind(2,static_cast<int>(i)); p.bind(3,targets[i].x); p.bind(4,targets[i].y); p.row();
+  }
+  for (std::size_t i=0;i<reference_path.size();++i) {
+    Query p(db_, "INSERT INTO reference_path VALUES(?,?,?,?)");
+    p.bind(1,id); p.bind(2,static_cast<int>(i)); p.bind(3,reference_path[i].x); p.bind(4,reference_path[i].y); p.row();
   }
   tx.commit();
 }

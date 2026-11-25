@@ -1,0 +1,25 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/plan"
+    }
+  ],
+  "request_id": "25004228fb4a4c08b21ab2bdfac75428",
+  "service": "planning.local_path",
+  "binding": "7e3eb31dc5381c556585b8f66c5cc9de12a750021c5d3ad40f466512f86df664",
+  "snapshot_ref": "sha256:d3c7175bb496b57f6343fa1af9861c4e1157ac18c965482601615f5e38bd926f",
+  "evaluation_seq": 1,
+  "motion_authorized": false,
+  "map_anchor": null,
+  "canvas": {
+    "visible": true,
+    "points": 2,
+    "voxels": 0,
+    "routePixels": 1104
+  }
+}

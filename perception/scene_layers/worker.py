@@ -26,6 +26,8 @@ def implementation_ref(kind):
         "occupancy": ["perception/rover_plan_field/scene.py"],
         "texture": ["perception/rover_plan_field/rgb_scene.py", "perception/rover_plan_field/scene.py"],
         "grid2d": ["task_recorder/global_map.py", "edge_contracts/occupancy.py"],
+        "fusion": ["perception/scene_layers/lidar_rgb.py", "perception/scene_layers/fusion_map.py",
+                   "calibration/checks.py", "perception/map3d/geometry.py"],
     }
     manifest = {name: hashlib.sha256((root/name).read_bytes()).hexdigest()
                 for name in [*sources, *geometry.get(kind, [])]}
@@ -190,16 +192,20 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("kind", choices=("occupancy","texture","grid2d","query"))
+    parser.add_argument("kind", choices=("occupancy","texture","grid2d","fusion","query"))
     parser.add_argument("archive_dir", type=Path)
     parser.add_argument("state_dir", type=Path)
     parser.add_argument("ready_file", type=Path)
     parser.add_argument("--grid-manifest-ref")
+    parser.add_argument("--fusion-manifest-ref")
     args = parser.parse_args()
     try:
         if args.kind == "grid2d":
             from .core import GridArchive
             backend = GridArchive(args.archive_dir, args.grid_manifest_ref)
+        elif args.kind == "fusion":
+            from .fusion_map import open_fusion
+            backend = open_fusion(args.archive_dir, args.fusion_manifest_ref)
         elif args.kind == "query":
             backend = Query(args.state_dir/"runtime", Snapshots(args.state_dir/"snapshots"))
         else:
