@@ -83,6 +83,15 @@ RULES = [
       "tests/system/record_long_mission.py", "tests/system/render_rover_video.py", "tests/system/mission_watch_page.py"),
      (R,)),
     (("scripts/release_robot.py", "tests/test_robot_release.py"), (R,"board")),
+    (("compose.calibration-*.yaml", "calibration/board_*.py", "calibration/station/recognizers/*",
+      "calibration/station/tools/*", "calibration/station/plugins/*", "calibration/station/feedback.json",
+      "perception/target_detection.py", "perception/target_providers.py", "tests/system/calibration_*.py", "tests/system/calibration_board_browser.cjs",
+      "calibration/clock_*.py", "calibration/time_*.py", "calibration/hardware_profile.py",
+      "calibration/camera_geometry.py", "calibration/station/hardware-clock.example.json",
+      "perception/color_marker.py", "tests/test_time_*.py", "tests/test_calibration_ingress.py",
+      "tests/test_board_*.py", "tests/test_feedback_planner.py", "docker/Dockerfile.board-calibration",
+      "docker/Dockerfile.calibration-observer", "docker/calibration-entrypoint.sh"),
+     ("planner","board","observations","plugin-isolation","ui","rover-commissioning")),
     (("scripts/robot.sh", "calibration/ros_capture.py", "calibration/targets.py", "calibration/station/*",
       "tests/test_factory_targets.py", "tests/system/factory_ros_capture.py"), ("board",)),
     (("calibration/*", "tests/test_factory_calibration.py"), ("board","rover-commissioning")),
@@ -214,6 +223,14 @@ def selection(files=None):
 
 
 class TestSelection(unittest.TestCase):
+    def test_guided_calibration_shared_detection(self):
+        for path in ("perception/target_detection.py","compose.calibration-board.yaml",
+                     "calibration/station/recognizers/checkerboard.json","tests/test_feedback_planner.py",
+                     "calibration/time_offset.py","calibration/time_pairing.py","calibration/clock_observer.py",
+                     "docker/Dockerfile.calibration-observer","calibration/hardware_profile.py"):
+            self.assertTrue({"planner","board","observations","plugin-isolation","ui","rover-commissioning"}
+                            <= set(selection([path])[0]), path)
+
     def test_navigation_route_observation_and_body_consumers(self):
         for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
                      "scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py",

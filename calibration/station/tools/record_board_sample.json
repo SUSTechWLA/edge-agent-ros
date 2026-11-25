@@ -1,0 +1,9 @@
+{
+  "id": "record_board_sample",
+  "version": "1",
+  "effect": "idempotent",
+  "description": "Arm automatic recording of one new distinct board pose. Saves synchronized raw RGB, camera intrinsics, depth when present, and both clouds only after board detection. Duplicates need another user-held pose.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/record"
+}

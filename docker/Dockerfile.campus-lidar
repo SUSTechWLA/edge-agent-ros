@@ -1,0 +1,20 @@
+# Backport gazebosim/gz-rendering#1319 for the campus Gazebo Harmonic renderer.
+ARG BASE_IMAGE=edge-rover-local:sdd058-dynamic-recovery
+FROM ${BASE_IMAGE}
+RUN python3 - <<'PY'
+from pathlib import Path
+import re
+
+material = Path("/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz/gz-rendering8/ogre2/media/materials/scripts/gpu_rays.material")
+source = material.read_text()
+before, marker, remainder = source.partition("\nmaterial GpuRaysScan2nd\n")
+body, end, after = remainder.partition("\n}\n")
+if not marker or not end:
+    raise ValueError("Unrecognized Ogre2 second-pass material")
+for name in ("cubeUVTex", *(f"tex{i}" for i in range(6))):
+    pattern = rf"(texture_unit {name}\s*\{{\s*filtering none\n)(?:\s*tex_address_mode clamp\n)?(\s*\}})"
+    body, count = re.subn(pattern, r"\g<1>        tex_address_mode clamp\n\g<2>", body)
+    if count != 1:
+        raise ValueError(f"Unrecognized second-pass sampler {name}")
+material.write_text(before + marker + body + end + after)
+PY

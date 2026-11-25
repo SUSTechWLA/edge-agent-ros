@@ -240,12 +240,13 @@ class Journal:
                 raise Refused("仅可续办因暂时故障耗尽重试的任务")
             task["retries"] = 0
             op = None
-            if task["steps"]:
+            pending = task["cursor"] < len(task["steps"])
+            if pending:
                 step = task["steps"][task["cursor"]]
                 op = step.get("operation_id")
                 if op:
                     step["resumed_at"] = time.time()
-            self.save(task,"RUNNING" if task["steps"] else "PLANNING","操作员已请求用原步骤继续核对",
+            self.save(task,"RUNNING" if pending else "PLANNING","操作员已请求用原任务继续核对",
                       kind="retry_requested",op=op)
             return self.get(key)
 

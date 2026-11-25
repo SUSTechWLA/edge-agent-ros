@@ -124,6 +124,9 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         url=urlsplit(self.path)
+        if url.path in ("/api/calibration-status", "/api/calibration-clock") and not url.query:
+            self.calibration_status(clock=url.path == "/api/calibration-clock")
+            return
         if url.path in ("/agent/tasks","/agent/capabilities","/agent/plugins","/agent/services"):
             self.agent("GET",url)
             return
@@ -148,6 +151,8 @@ class Handler(SimpleHTTPRequestHandler):
             if url.path=="/api/state":
                 snapshot = self.observer.snapshot()
                 snapshot["task_proxy_mode"] = "observe" if os.getenv("EDGE_CONSOLE_OBSERVE_ONLY")=="1" else "agent"
+                if os.getenv("EDGE_CALIBRATION_URL"):
+                    snapshot["calibration_status_available"] = True
                 self.respond(200,snapshot)
             elif url.path=="/api/campus-mission/views":
                 self.respond(200,campus_mission_views())
@@ -245,6 +250,41 @@ class Handler(SimpleHTTPRequestHandler):
     def list_directory(self,path):
         self.respond(404,{"error":"not found"})
         return None
+
+    def calibration_status(self, clock=False):
+        source = os.getenv("EDGE_CALIBRATION_URL")
+        if not source:
+            self.respond(404, {"error": "此站未安装标定服务"})
+            return
+        conn = None
+        try:
+            dest = urlsplit(source)
+            if dest.scheme not in ("http", "https") or not dest.hostname or dest.query or dest.fragment:
+                raise ValueError("invalid calibration source")
+            transport = http.client.HTTPSConnection if dest.scheme == "https" else http.client.HTTPConnection
+            conn = transport(dest.hostname, dest.port, timeout=2)
+            conn.request("GET", dest.path.rstrip("/") + ("/clock-status" if clock else "/status"))
+            response = conn.getresponse()
+            raw = response.read(65537)
+            if response.status != 200 or len(raw) > 65536:
+                raise ValueError("calibration status unavailable")
+            data = json.loads(raw)
+            if not isinstance(data, dict) or not isinstance(data.get("state"), str):
+                raise ValueError("invalid calibration status")
+            if not clock and (not isinstance(data.get("message"), str) or data["state"] not in (
+                    "NEEDS_CALIBRATION", "CALIBRATING", "VERIFIED", "RECOVERY_REQUIRED")):
+                raise ValueError("invalid spatial calibration status")
+            if data.get("robot_id") != self.observer.robot_id or data.get("environment") != self.observer.environment:
+                raise ValueError("calibration station identity mismatch")
+            keys = (("state", "revision", "spatial_revision", "clock_epoch", "sources", "reason", "message")
+                    if clock else ("state", "message", "active_operation", "phase", "revision", "scope",
+                                   "unobserved", "samples", "task_id"))
+            self.respond(200, {key: data.get(key) for key in keys})
+        except (OSError, ValueError, http.client.HTTPException):
+            self.respond(503, {"error": "暂时无法读取当前装配的标定状态"})
+        finally:
+            if conn is not None:
+                conn.close()
 
 
 def main():

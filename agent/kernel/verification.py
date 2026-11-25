@@ -57,4 +57,9 @@ def finish_step(journal, task, step, op, result):
     task["cursor"] += 1
     task["retries"] = 0
     last = task["cursor"] == len(task["steps"])
+    if last and "feedback" in step:
+        goal = step["feedback"]["goal"]
+        if step["tool"] != goal["tool"] or not isinstance(result, dict) or result.get(goal["field"]) != goal["equals"]:
+            journal.save(task, "PLANNING", "已取得现场反馈，重新选择下一项能力", kind="verified", op=op)
+            return
     journal.save(task, "SUCCEEDED" if last else "RUNNING", "已取得步骤证据", kind="verified", op=op)

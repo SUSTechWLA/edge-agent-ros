@@ -12,6 +12,12 @@
 <div class="heading"><div><p class="context"><span class="env-icon" aria-hidden="true">◈</span><span id="env">ROS 2</span><span class="slash">/</span><span id="robot">Edge</span></p><h1 id="page-title">机器人观测台</h1></div><div class="heading-right"><div class="clock"><span id="clock-label">状态更新时间</span><strong id="clock">—</strong></div><button id="open-task" class="primary">＋ 下发任务</button></div></div>
 <aside id="history-bar" class="history-bar" hidden><span id="history-msg"></span><div><a id="replay-review" class="more" hidden>返回本次复盘</a> <button id="resume">返回实时</button></div></aside>
 <div id="notice" role="status" class="notice" hidden></div>
+<aside id="calibration-panel" class="history-bar" aria-label="传感器标定" hidden>
+  <div aria-live="polite"><strong id="calibration-title"></strong> <span id="calibration-message"></span></div>
+  <button id="calibration-draft" type="button" hidden>填写标定任务</button>
+  <div id="calibration-clock" aria-live="polite"></div>
+  <button id="clock-draft" type="button" hidden>填写时间标定任务</button>
+</aside>
 <section id="sessions" aria-label="任务会话" hidden>
   <div class="session-live"><div><span class="session-live-label">实时观测</span><strong id="session-motion">正在连接机器人…</strong><span id="session-live-time"></span></div><a href="#monitor">查看机器人与地图 →</a></div>
   <div class="session-filters" aria-label="任务分类">

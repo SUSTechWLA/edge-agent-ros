@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640mm" height="480mm" viewBox="0 0 640 480">
+  <title>7 × 5 checkerboard, 80 mm squares, 40 mm white margin</title>
+  <defs>
+    <pattern id="checks" x="40" y="40" width="160" height="160" patternUnits="userSpaceOnUse" viewBox="0 0 160 160">
+      <path d="M0 0h80v80H0z M80 80h80v80H80z"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="480" fill="white"/>
+  <rect x="40" y="40" width="560" height="400" fill="url(#checks)"/>
+</svg>

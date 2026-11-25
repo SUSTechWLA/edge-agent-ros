@@ -10,6 +10,8 @@
 
 ## 现在可以做什么
 
+在静止 Gazebo 工位输入「请帮我标定当前传感器」。Agent 识别操作者出示的棋盘，采集不同板姿，估计并独立核验双雷达到相机的外参。普通标牌识别复用同一感知工具。[启动工位与实车标定方法](docs/testing/guided-calibration.md) · [独立仿真验收](artifacts/verification/autocalibration-20261125/run-04/gazebo-truth.json)
+
 导航试算可按机体、地图和算法组合。Agent 能独立读取空间观测、查询融合定位、解析地点及生成路线。Jetson 只读站点使用实时里程计，四种机体的路线和地面执行交接另有隔离夹具。[导航插件边界](navigation/README.md) · [板端接入与复测](docs/testing/navigation-plugins.md)
 
 **看一次有人能读懂的运行录像。** 在校园门厅给无人车一句没有坐标的中文任务，点击“内核确认已停车”，同时观察地图帧龄、现场画面、激光回波、IMU 角速度和下发线速度；再看它在哪一刻取得新观测并重新选点。视频由已封存的十路数据离线生成。纯软件任务也能用同一插件。[分章回放](artifacts/verification/recording-showcase/mission-01/index.html) · [独立观测与原始归档](artifacts/verification/recording-showcase/mission-01/README.md) · [录制自己的任务](task_recorder/README.md)

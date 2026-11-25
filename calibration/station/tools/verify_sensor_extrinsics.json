@@ -1,0 +1,9 @@
+{
+  "id": "verify_sensor_extrinsics",
+  "version": "1",
+  "effect": "idempotent",
+  "description": "Evaluate the fitted candidate on separate held-out board poses. Requires a candidate. Publish a versioned calibration receipt only when every requested transform passes.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/verify"
+}

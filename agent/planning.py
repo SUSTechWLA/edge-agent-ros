@@ -351,7 +351,8 @@ def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile
                           meta={"provider":provider, "protocol":"planner.http.v1", "profile":revision})
     else:
         prompt = (contract("prompts", prompt_key) if prompt_text is None else
-                  {"id":prompt_key,"text":prompt_text,"version":("family-selection.1" if prompt_key == "planner.select_read_family" else read_operators.numeric.LANGUAGE),
+                  {"id":prompt_key,"text":prompt_text,"version":{"planner.select_read_family":"family-selection.1",
+                   "planner.station_feedback":"station-feedback.1"}.get(prompt_key,read_operators.numeric.LANGUAGE),
                    "sha256":hashlib.sha256(prompt_text.encode()).hexdigest()})
         body = {"model":profile["model"], "stream":False, "format":schema, "options":profile["options"],
                 "messages":[{"role":"system", "content":prompt["text"]},
@@ -361,6 +362,93 @@ def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile
                                "prompt":{k:prompt[k] for k in ("id","version","sha256")}})
         answer = json.loads(reply["message"]["content"], parse_constant=finite_number, parse_float=finite_number)
     return provider, answer
+
+
+def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_request=None):
+    """Select one installed station capability against persisted tool observations."""
+    policy = json.loads(Path(policy_file).read_bytes())
+    history = task["steps"]
+    goals = dict(policy["goals"])
+    if history:
+        prior = history[0]["feedback"]["goal"]
+        goals = {name:goal for name,goal in goals.items() if goal["tool"] == prior["tool"]}
+    else:
+        explicit = {name:g for name,g in goals.items() if g.get("required_outcome_pattern")
+                    and re.search(g["required_outcome_pattern"], task["text"], re.I)}
+        if explicit:
+            goals = explicit
+    allowed = {name for goal in goals.values() for name in goal["tools"]}
+    tools = {key:caps[key] for key in allowed if key in caps and caps[key].get("endpoint")
+             and not caps[key].get("_soft") and not caps[key].get("_physical")}
+    if not tools or len(history) >= min(64, policy["max_steps"]):
+        raise Refused("本站没有可调用能力或已用尽决策预算")
+    if authorization.explicit_motion_request(task["text"]):
+        raise Refused("本站没有机体运动权限")
+    def summary(step):
+        evidence = step.get("evidence") or {}
+        # Detailed arrays, imagery and transforms belong in the operation archive.
+        # Project bounded scalar facts only, even for third-party tool receipts.
+        facts = {k:(v[:200] if isinstance(v,str) else v) for k,v in evidence.items()
+                 if isinstance(v,(bool,int,float,str)) and not k.endswith("sha256")}
+        return {"tool":step["tool"], "args":step.get("args",{}),"facts":dict(list(facts.items())[:18])}
+    recent = [summary(s) for s in history[-5:]]
+    if recent:
+        last = recent[-1]
+        key = last["tool"]
+        if (key in tools and tools[key]["effect"]=="read" and len(tools)>1 and
+                last["facts"].get("outcome") and not last["facts"].get("waiting_for_operator") and
+                last["facts"].get("detected") is not False):
+            tools.pop(key)
+    context = {"task": task["text"], "goals": {key:{"description":g["description"],
+               "required_evidence":{"tool":g["tool"],"field":g["field"]}} for key,g in goals.items()},
+               "tools": {key:{"description":cap["description"],"arguments":cap["parameters"]} for key,cap in tools.items()},
+               "observations": recent,
+               "prior_calls": len(history)}
+    values_by_tool = dict(policy.get("argument_values",{}))
+    for tool, parameters in policy.get("argument_catalogs",{}).items():
+        values_by_tool[tool] = {}
+        for arg, source in parameters.items():
+            installed = []
+            for path in sorted((Path(policy_file).parent/source["directory"]).glob("*.json")):
+                installed.extend(json.loads(path.read_bytes())[source["field"]])
+            values_by_tool[tool][arg] = sorted(name for name in set(installed) if installed.count(name)==1)
+    branches = []
+    for name in [*sorted(tools),"decline"]:
+        arg_schema = autonomous_argument_schema(tools[name]) if name in tools else {"type":"object","properties":{}}
+        for arg,values in values_by_tool.get(name,{}).items():
+            arg_schema["properties"][arg]["enum"]=values
+        branches.append({"type":"object","properties":{"goal":{"type":"string","enum":list(goals)},
+                         "tool":{"type":"string","enum":[name]},"args":arg_schema,"reason":{"type":"string"}},
+                         "required":["goal","tool","args","reason"],"additionalProperties":False})
+    schema={"oneOf":branches}
+    instructions = ("Choose one available tool that makes progress on the user's task based on the latest facts. "
+                    "If initial state is unknown inspect it. Respect prerequisites. Reobserve when the situation "
+                    "changes. A person may take minutes to respond; when waiting for external input use a suitable "
+                    "observation or armed recording tool to wait, even if prior attempts did not see anything. "
+                    "Once a condition is verified, do not keep checking it. Use an action that advances the requested "
+                    "outcome. Multiple distinct samples require repeated acquisitions until the required count is met. "
+                    "Choose decline only for an unsupported "
+                    "request. Give a short reason in Chinese based on observable evidence.")
+    provider, answer = model_proposal(context,schema,"planner.station_feedback",{},trace,model_profile,
+                                      model_request,prompt_text=instructions)
+    if not isinstance(answer,dict) or not isinstance(answer.get("reason"),str) or answer.get("tool") not in tools:
+        raise Refused("模型未选择可用能力: "+str(answer.get("reason",""))[:260] if isinstance(answer,dict)
+                      else "模型返回了无效决策")
+    cap = tools[answer["tool"]]
+    goal=goals.get(answer.get("goal"))
+    if not goal or cap["id"] not in goal["tools"]:
+        raise Refused("所选工具超出本次目标的登记权限")
+    args=answer.get("args")
+    validate_instance(autonomous_argument_schema(cap),args)
+    if any(args.get(k) not in vals for k,vals in values_by_tool.get(cap["id"],{}).items()):
+        raise Refused("模型参数超出站点登记范围")
+    authorization.require_effect_allowed(cap, task["text"])
+    if cap["effect"] != "read" and not any(w in task["text"].lower() for w in goal.get("write_intent",[])):
+        raise Refused("用户任务未授权本工位的写入操作")
+    step = {"tool":cap["id"],"args":args,"status":"PENDING","version":cap["version"],"binding":binding(cap),
+            "verification":verification_plan(cap,runtime_plugins.load_policy()),
+            "feedback":{"rationale":answer["reason"][:400], "goal":{k:goal[k] for k in ("tool","field","equals")}}}
+    return provider, [*history, step]
 
 
 def autonomous_argument_schema(cap):

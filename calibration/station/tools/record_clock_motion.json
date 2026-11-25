@@ -1,0 +1,9 @@
+{
+  "id": "record_clock_motion",
+  "version": "1",
+  "effect": "idempotent",
+  "description": "Record one independent timestamp series from the moving board for each clock. Use when there is no motion window yet. The robot remains stationary and the operator moves only the target.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/capture_clock"
+}

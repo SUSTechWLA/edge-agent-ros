@@ -1,0 +1,9 @@
+{
+  "id": "sensor_calibration_status",
+  "version": "1",
+  "effect": "read",
+  "description": "Read current sensor inventory, which extrinsics are missing, target visibility and accumulated samples. Use for initial assessment.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/status"
+}

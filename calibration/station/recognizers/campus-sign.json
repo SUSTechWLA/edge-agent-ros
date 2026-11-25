@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "vision.campus-sign",
+  "version": "1.0.1",
+  "targets": ["campus_sign"],
+  "entrypoint": "perception.target_providers:campus_sign",
+  "source_modules": ["perception.color_marker"]
+}

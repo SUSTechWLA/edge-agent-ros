@@ -1,0 +1,48 @@
+{
+  "max_steps": 42,
+  "goals": {
+    "sensor_calibration": {
+      "required_outcome_pattern": "^(?!.*(?:同步|时差|时间偏|时间戳|时钟|clock|synchron|time offset)).*(?:(?:标定|校准)(?!板)|calibrate(?:\\s|$))",
+      "description": "Estimate and independently validate sensor extrinsics when the user requests calibration.",
+      "tool": "verify_sensor_extrinsics",
+      "field": "verified",
+      "equals": true,
+      "write_intent": [
+        "标定",
+        "校准",
+        "calibrat"
+      ],
+      "tools": [
+        "sensor_calibration_status",
+        "observe_target",
+        "record_board_sample",
+        "fit_sensor_extrinsics",
+        "verify_sensor_extrinsics"
+      ]
+    },
+    "clock_calibration": {
+      "required_outcome_pattern": "同步|时差|时间偏|时钟|clock|synchron|time offset",
+      "description": "Measure bounded LiDAR-to-camera acquisition time offsets from observations of a manually moving board and verify on held-out motion.",
+      "tool": "verify_clock_offsets",
+      "field": "verified",
+      "equals": true,
+      "write_intent": ["标定", "校准", "同步", "calibrat", "synchron"],
+      "tools": ["record_clock_motion", "verify_clock_offsets"]
+    },
+    "object_observation": {
+      "required_outcome_pattern": "(?:识别|检测|观察)(?!.*(?:标定|校准)(?!板))|(?:recognize|detect)\\s",
+      "description": "Locate or recognize a visual object in the current camera scene.",
+      "tool": "observe_target",
+      "field": "detected",
+      "equals": true,
+      "tools": [
+        "observe_target"
+      ]
+    }
+  },
+  "argument_catalogs": {
+    "observe_target": {
+      "target": {"directory":"recognizers", "field":"targets"}
+    }
+  }
+}

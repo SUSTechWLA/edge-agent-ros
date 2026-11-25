@@ -1,0 +1,71 @@
+name: edge-board-calibration
+x-cal-service: &cal-service
+  image: ${EDGE_CALIBRATION_IMAGE:-edge-rover-local:sdd058-dynamic-recovery}
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: [/tmp]
+  working_dir: /opt/edge
+  environment: &cal-env
+    PYTHONDONTWRITEBYTECODE: "1"
+    PYTHONPATH: /opt/edge
+    EDGE_CALIBRATION_PROFILE: /opt/edge/calibration/station/gazebo-board.json
+    ROS_LOG_DIR: /tmp/ros
+    ROS_DOMAIN_ID: "198"
+    RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    GZ_PARTITION: edge_autocalibration_198
+  volumes: &cal-src
+    - ./calibration:/opt/edge/calibration:ro
+    - ./edge_contracts:/opt/edge/edge_contracts:ro
+services:
+  agent:
+    <<: *cal-service
+    environment:
+      <<: *cal-env
+      EDGE_PLUGIN_DIR: /opt/edge/calibration/station/plugins
+      EDGE_EXTRA_PLUGIN_DIR: /opt/edge/calibration/station/tools
+      EDGE_OLLAMA_URL: http://calibration-model:11434
+      EDGE_OLLAMA_MODEL: qwen3:4b-instruct
+      EDGE_CONTRACT_DIR: /opt/edge/calibration/station/model
+      EDGE_FEEDBACK_POLICY: /opt/edge/calibration/station/feedback.json
+      EDGE_TRACE_CONTENT: redacted
+      EDGE_PLANNER_URL: ""
+      EDGE_STEP_TIMEOUT: "1200"
+    volumes:
+      - ./calibration:/opt/edge/calibration:ro
+      - ./agent:/opt/edge/agent:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./contracts:/etc/edge/contracts:ro
+      - calibration-tasks:/var/lib/edge-tasks
+    command: ["python3", "/opt/edge/agent/service.py"]
+  calibration-session:
+    <<: *cal-service
+    volumes:
+      - ./calibration:/opt/edge/calibration:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - calibration-state:/var/lib/edge-calibration
+    command: ["python3", "-m", "calibration.board_session"]
+  calibration-observer:
+    <<: *cal-service
+    command: ["python3", "-m", "calibration.board_provider", "observe"]
+  calibration-algorithms:
+    <<: *cal-service
+    image: ${EDGE_CALIBRATION_COMPUTE_IMAGE:-edge-agent-ros:board-calibration-1}
+    volumes:
+      - ./calibration:/opt/edge/calibration:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./perception:/opt/edge/perception:ro
+      - ./exploration:/opt/edge/exploration:ro
+    command: ["python3", "-m", "calibration.board_provider", "compute"]
+  calibration-clock-observer:
+    <<: *cal-service
+    image: ${EDGE_CALIBRATION_COMPUTE_IMAGE:-edge-agent-ros:board-calibration-1}
+    volumes:
+      - ./calibration:/opt/edge/calibration:ro
+      - ./perception:/opt/edge/perception:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+    command: ["python3", "-m", "calibration.clock_observer"]
+volumes:
+  calibration-state:
+  calibration-tasks:

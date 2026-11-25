@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "board.plane-observation",
+  "version": "1.0.0",
+  "endpoint": "http://calibration-algorithms:8142/measure-board",
+  "provides": ["calibration.board_plane_measurement"],
+  "requires": []
+}

@@ -1,0 +1,11 @@
+{
+  "id": "observe_target",
+  "version": "1",
+  "description": "Observe a requested target from the installed target catalog using the live camera. Wait for visibility and return detections without recording or changing calibration.",
+  "effect": "read",
+  "parameters": {
+    "target": "string"
+  },
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/observe"
+}

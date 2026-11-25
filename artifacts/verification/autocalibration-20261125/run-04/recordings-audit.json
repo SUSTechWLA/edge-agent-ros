@@ -1,0 +1,225 @@
+{
+  "task_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05",
+  "revision": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7",
+  "records": [
+    {
+      "sha256": "c14d06782a790b2405b19cf42de39c3b23a39cb59745277e031c1cb037a64827",
+      "bytes": 28643,
+      "observation_id": "948400000000",
+      "stream_stamps_ns": {
+        "camera": 948400000000,
+        "info": 948400000000,
+        "lidar_left": 948400000000,
+        "lidar_right": 948400000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 1144,
+        "lidar_right": 1149
+      },
+      "set": "fit"
+    },
+    {
+      "sha256": "242518a7ab13057b215bb9aabe3ebd65551b1fd1ae87fcd6d97dcf97cb79b429",
+      "bytes": 21146,
+      "observation_id": "960400000000",
+      "stream_stamps_ns": {
+        "camera": 960400000000,
+        "info": 960400000000,
+        "lidar_left": 960400000000,
+        "lidar_right": 960400000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 805,
+        "lidar_right": 791
+      },
+      "set": "fit"
+    },
+    {
+      "sha256": "715d6d1a28977081c1bb4de1a10337619036c758832be33d719fe4128c12cb7e",
+      "bytes": 27936,
+      "observation_id": "968200000000",
+      "stream_stamps_ns": {
+        "camera": 968200000000,
+        "info": 968200000000,
+        "lidar_left": 968200000000,
+        "lidar_right": 968200000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 981,
+        "lidar_right": 1141
+      },
+      "set": "fit"
+    },
+    {
+      "sha256": "be64c936994b816babb1f0201c137a2fca88aa564d51b7420fd0780c3b205587",
+      "bytes": 19585,
+      "observation_id": "973000000000",
+      "stream_stamps_ns": {
+        "camera": 973000000000,
+        "info": 973000000000,
+        "lidar_left": 973000000000,
+        "lidar_right": 973000000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 747,
+        "lidar_right": 707
+      },
+      "set": "fit"
+    },
+    {
+      "sha256": "8af16c2675cb519059651a797b6cd0d3af035e38e10ab0f875ab11aa5cdcb0b5",
+      "bytes": 23207,
+      "observation_id": "978200000000",
+      "stream_stamps_ns": {
+        "camera": 978200000000,
+        "info": 978200000000,
+        "lidar_left": 978200000000,
+        "lidar_right": 978200000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 757,
+        "lidar_right": 946
+      },
+      "set": "fit"
+    },
+    {
+      "sha256": "1ad3e350a296cac2aa743405af1e4bc464b3331f5c86440bf8e12542f3b944f1",
+      "bytes": 19024,
+      "observation_id": "983400000000",
+      "stream_stamps_ns": {
+        "camera": 983400000000,
+        "info": 983400000000,
+        "lidar_left": 983400000000,
+        "lidar_right": 983400000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 732,
+        "lidar_right": 622
+      },
+      "set": "fit"
+    },
+    {
+      "sha256": "3fe18995bc3057efa5fc54f72a59f1aed586c45aa4b39a5bbbbee254736b3e45",
+      "bytes": 26454,
+      "observation_id": "988800000000",
+      "stream_stamps_ns": {
+        "camera": 988800000000,
+        "info": 988800000000,
+        "lidar_left": 988800000000,
+        "lidar_right": 988800000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 1026,
+        "lidar_right": 949
+      },
+      "set": "holdout"
+    },
+    {
+      "sha256": "87782f57bde865753acda73ab4f4931c388ab01e686564cff128c6964f5b0951",
+      "bytes": 22696,
+      "observation_id": "994600000000",
+      "stream_stamps_ns": {
+        "camera": 994600000000,
+        "info": 994600000000,
+        "lidar_left": 994600000000,
+        "lidar_right": 994600000000
+      },
+      "skew_ns": 0,
+      "frame_ids": {
+        "camera": "rgbd_optical",
+        "lidar_left": "lidar_left",
+        "lidar_right": "lidar_right"
+      },
+      "rgb_shape": [
+        480,
+        640,
+        3
+      ],
+      "point_counts": {
+        "lidar_left": 827,
+        "lidar_right": 842
+      },
+      "set": "holdout"
+    }
+  ],
+  "fit_count": 6,
+  "holdout_count": 2,
+  "passed": true
+}

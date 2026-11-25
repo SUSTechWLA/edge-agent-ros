@@ -1,0 +1,40 @@
+{
+  "robot_id": "gazebo-board-rig",
+  "environment": "simulation",
+  "clock_domain": "gazebo_sim",
+  "camera": {
+    "id": "camera",
+    "serial": "gz-rgbd",
+    "frame": "rgbd_optical",
+    "topic": "/calibration/rgbd/image",
+    "info_topic": "/calibration/rgbd/camera_info"
+  },
+  "lidars": [
+    {
+      "id": "lidar_left",
+      "serial": "gz-lidar-left",
+      "frame": "lidar_left",
+      "topic": "/calibration/lidar_left/points"
+    },
+    {
+      "id": "lidar_right",
+      "serial": "gz-lidar-right",
+      "frame": "lidar_right",
+      "topic": "/calibration/lidar_right/points"
+    }
+  ],
+  "max_skew_ns": 25000000,
+  "solver": {
+    "inner_corners": [
+      6,
+      4
+    ],
+    "square_m": 0.08,
+    "margin_m": 0.04,
+    "camera_frame": "rgbd_optical",
+    "lidar_frames": {
+      "lidar_left": "lidar_left",
+      "lidar_right": "lidar_right"
+    }
+  }
+}

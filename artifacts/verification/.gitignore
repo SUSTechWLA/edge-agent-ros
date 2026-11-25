@@ -75,3 +75,17 @@
 !/recording-showcase/mission-01/viewer-qa.json
 !/recording-showcase/mission-01/worker-report.json
 !/navigation-plugins/isolated-autonomous-control-denial.json
+!/autocalibration-20261125/*.json
+!/autocalibration-20261125/*.png
+!/autocalibration-20261125/target-frame.npz
+!/autocalibration-20261125/run-04/recordings.zip
+!/autocalibration-20261125/run-04/recordings-audit.json
+!/autocalibration-20261125/run-04/board-operator.json
+!/autocalibration-20261125/run-04/gazebo-truth.json
+!/autocalibration-20261125/run-04/first-recorded-frame.png
+!/soft-sync-20261125/moving.json
+!/soft-sync-20261125/static.json
+!/soft-sync-20261125/moving-planes.json.gz
+!/soft-sync-20261125/static-planes.json.gz
+!/soft-sync-20261125/moving-task.png
+!/soft-sync-20261125/static-task.png

@@ -1,0 +1,24 @@
+# Test equipment only. The estimator receives ROS observations via the observer.
+x-clock-fixture: &fixture
+  image: ${EDGE_CAL_SIM_IMAGE:-edge-rover-local:sdd058-campus-lidar-r1}
+  pull_policy: never
+  init: true
+  environment:
+    ROS_DOMAIN_ID: "198"
+    GZ_PARTITION: edge_autocalibration_198
+    RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    ROS_HOME: /tmp/ros
+  volumes:
+    - ./tests/system/calibration_clock_fixture.py:/fixture/clock.py:ro
+services:
+  cal-sim:
+    command: ["bash","-ec","python3 /fixture/board.py generate /tmp/board.sdf --sensor-rate 15 --real-time-factor 0.5 && exec gz sim -s -r --headless-rendering /tmp/board.sdf"]
+  cal-clock-relay:
+    <<: *fixture
+    command: ["python3", "/fixture/clock.py", "relay"]
+  cal-board-holder:
+    <<: *fixture
+    command: ["python3", "/fixture/clock.py", "${EDGE_CAL_BOARD_MOTION:-moving}"]
+  calibration-clock-observer:
+    environment:
+      EDGE_CLOCK_TOPICS_JSON: '{"camera":"/clock_bench/calibration/rgbd/image","info":"/clock_bench/calibration/rgbd/camera_info","lidar_left":"/clock_bench/calibration/lidar_left/points","lidar_right":"/clock_bench/calibration/lidar_right/points"}'

@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "source": "Gazebo rendered RGB replay",
+  "raw_npz_sha256": "5b80c638e75d9de31778a8d65bbd36aacfd0e500443cd81e437a2449ece8d752",
+  "runtime_http_endpoint": "http://calibration-algorithms:8142/detect",
+  "results": {
+    "checkerboard": {
+      "target": "checkerboard",
+      "detector": {
+        "id": "vision.metric-checkerboard",
+        "version": "1.0.0",
+        "manifest_sha256": "792b9deb4aa7a5fa3f178f0e8f5fe42965964cf5aa34a62b75a179377b655c44",
+        "sources": {
+          "calibration.board_recognizer": "ee1e3630438e724f12b03bf5261a725116c7f6b54a345acbe187f0a4faf62099",
+          "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841"
+        }
+      },
+      "detections": [
+        {
+          "label": "checkerboard",
+          "bbox_xyxy": [
+            279,
+            193,
+            405,
+            269
+          ],
+          "features": {
+            "checkerboard_plane": {
+              "normal": [
+                0.04497328675094801,
+                0.029543930144395457,
+                0.9985512303684975
+              ],
+              "offset_m": 1.5131659713341508,
+              "center_m": [
+                0.06856767622985734,
+                -0.03143777432483688,
+                1.5132033360172776
+              ],
+              "reprojection_rms_px": 0.2984798470825752,
+              "corners_px": [
+                [
+                  403.49224853515625,
+                  267.5352478027344
+                ],
+                [
+                  378.573486328125,
+                  267.5264587402344
+                ],
+                [
+                  353.4795227050781,
+                  267.5342712402344
+                ],
+                [
+                  328.5563659667969,
+                  267.5208435058594
+                ],
+                [
+                  304.50006103515625,
+                  267.5378723144531
+                ],
+                [
+                  279.603759765625,
+                  267.5359191894531
+                ],
+                [
+                  403.48193359375,
+                  242.5244598388672
+                ],
+                [
+                  378.578857421875,
+                  242.52540588378906
+                ],
+                [
+                  353.49365234375,
+                  242.52529907226562
+                ],
+                [
+                  328.5489807128906,
+                  242.5279998779297
+                ],
+                [
+                  304.4903259277344,
+                  242.5533447265625
+                ],
+                [
+                  279.6259765625,
+                  242.56272888183594
+                ],
+                [
+                  403.48388671875,
+                  217.5346221923828
+                ],
+                [
+                  378.5749816894531,
+                  217.5420684814453
+                ],
+                [
+                  353.47808837890625,
+                  217.53660583496094
+                ],
+                [
+                  328.5486145019531,
+                  217.53076171875
+                ],
+                [
+                  304.4869689941406,
+                  218.04049682617188
+                ],
+                [
+                  279.6065979003906,
+                  218.5366973876953
+                ],
+                [
+                  403.4967346191406,
+                  193.41160583496094
+                ],
+                [
+                  378.54974365234375,
+                  193.4832763671875
+                ],
+                [
+                  353.4915466308594,
+                  193.45960998535156
+                ],
+                [
+                  328.5402526855469,
+                  193.4627227783203
+                ],
+                [
+                  304.5050048828125,
+                  193.47093200683594
+                ],
+                [
+                  279.6083679199219,
+                  193.50946044921875
+                ]
+              ],
+              "corner_count": 24
+            }
+          }
+        }
+      ],
+      "condition": "target_visible",
+      "archive_sha256": "fc122ec6a0d793f0552d91a5d7cf15821ea048c99e70fac681c82bb2e5b0e450",
+      "stamp_ns": 17200000000,
+      "frame": "rgbd_optical"
+    },
+    "campus_sign": {
+      "target": "campus_sign",
+      "detector": {
+        "id": "vision.campus-sign",
+        "version": "1.0.0",
+        "manifest_sha256": "3b15cca872a56d307317e91681d490ae44c7c6ef3241f9c6aa534ccf97d7d908",
+        "sources": {
+          "perception.target_providers": "8b13612b3385d7156d92bb61af79119d1b7e675546afa9dc237dcad79aab14e6",
+          "exploration.survey_signs": "d91084b40089f168b2615b54e0aec71bb897c800bfbf75c121073d2757879097"
+        }
+      },
+      "detections": [
+        {
+          "label": "campus_sign",
+          "bbox_xyxy": [
+            119,
+            141,
+            158,
+            172
+          ]
+        }
+      ],
+      "condition": "target_visible",
+      "archive_sha256": "fc122ec6a0d793f0552d91a5d7cf15821ea048c99e70fac681c82bb2e5b0e450",
+      "stamp_ns": 17200000000,
+      "frame": "rgbd_optical"
+    }
+  },
+  "isolated_hot_unload": {
+    "restarted": false,
+    "withdrawn": "checkerboard",
+    "http_status": 422,
+    "response": {
+      "error": "ambiguous_or_unavailable_detector:checkerboard"
+    },
+    "unaffected": "campus_sign",
+    "restored": true
+  }
+}

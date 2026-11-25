@@ -119,6 +119,8 @@ function render(){
   el('metric-action').textContent=s?(s.active_operation||'无活动动作'):'—';
   el('history-bar').hidden=!replay;el('open-task').disabled=!taskWritesEnabled();
   el('open-task').hidden=live?.task_proxy_mode==='observe';
+  el('calibration-panel').hidden=!!replay || !live?.calibration_status_available;
+  if (!el('calibration-panel').hidden) refreshCalibration();
   const retry=el('task-status').querySelector('button');
   if(retry)retry.hidden=!taskWritesEnabled();
   if(replay){
@@ -283,6 +285,7 @@ function renderTask(task){
   const list=node('ol','task-steps');
   for(const step of steps){
     const row=node('li','',typeof step==='string'?step:[step.capability||step.tool,step.status||step.state,step.detail].filter(Boolean).join(' · '));
+    if(step?.feedback?.rationale)row.append(node('p','task-detail',step.feedback.rationale));
     if(step?.tool==='status' && step.evidence?.source && Number.isFinite(step.evidence.x) && Number.isFinite(step.evidence.y)){
       const e=step.evidence;
       row.append(node('p','task-detail',
@@ -313,6 +316,56 @@ async function capabilities(){
 }
 el('open-task').onclick=()=>{if(!taskWritesEnabled() || el('task-modal').open)return;el('task-modal').showModal();el('task-text').focus();capabilities();};
 el('close-task').onclick=()=>el('task-modal').close();
+el('calibration-draft').onclick=()=>{
+  if(!taskWritesEnabled())return;
+  el('task-text').value='请帮我标定当前传感器';
+  el('open-task').click();
+};
+el('clock-draft').onclick=()=>{
+  if(!taskWritesEnabled())return;
+  el('task-text').value='请帮我标定当前雷达和相机的软件时间偏移';
+  el('open-task').click();
+};
+
+let calibrationNextRead=0, calibrationReading=false;
+async function refreshCalibration(){
+  if(calibrationReading || Date.now()<calibrationNextRead)return;
+  calibrationReading=true;
+  const labels={NEEDS_CALIBRATION:'传感器尚待标定', CALIBRATING:'正在标定',
+    VERIFIED:'已验证标定结果', RECOVERY_REQUIRED:'标定需要复核'};
+  let title, message, canStart=false;
+  try{
+    const status=await api('/api/calibration-status');
+    title=labels[status.state];
+    message=status.message;
+    if(status.samples>0)message+=' 已保存 '+status.samples+' 组板姿。';
+    const clockText=el('calibration-clock'), clockButton=el('clock-draft');
+    try{
+      const clock=await api('/api/calibration-clock');
+      const rows=Object.entries(clock.sources||{}).map(([id,s])=>
+        id+' '+(s.offset_ns/1e6).toFixed(1)+' ms（估计不确定度 '+(s.uncertainty_ns/1e6).toFixed(1)+' ms）');
+      clockText.textContent=clock.state==='VERIFIED'&&rows.length
+        ?'时间标定已验证，仅适用于本次采样窗口。'+rows.join(' · ')
+        :'时间标定待验证。'+(clock.message||clock.reason||'');
+      clockButton.hidden=status.state!=='VERIFIED'||!taskWritesEnabled();
+    }catch(_){
+      clockText.textContent='当前无法读取时间标定状态。';
+      clockButton.hidden=true;
+    }
+    canStart=status.state==='NEEDS_CALIBRATION' && !status.active_operation;
+  }catch(error){
+    title='标定状态未知';
+    message=error.message;
+    el('clock-draft').hidden=true;
+    el('calibration-clock').textContent='';
+  }finally{
+    calibrationReading=false;
+    calibrationNextRead=Date.now()+1500;
+  }
+  if(el('calibration-title').textContent!==title)el('calibration-title').textContent=title;
+  if(el('calibration-message').textContent!==message)el('calibration-message').textContent=message;
+  el('calibration-draft').hidden=!canStart || !taskWritesEnabled();
+}
 el('task-example').onclick=()=>{el('task-text').value='依次巡检 (0.8,0) 和 (0.8,0.7)，然后报告状态';el('task-text').focus();};
 el('task-form').onsubmit=async e=>{
   e.preventDefault();if(submitBusy||!taskWritesEnabled())return;const text=el('task-text').value.trim();if(!text)return;

@@ -18,7 +18,7 @@ from edge_interfaces.srv import GetMission, SubmitMission
 from derived_tools import check_id, evaluate
 import runtime_plugins
 import soft_client
-from planning import (OutcomeUnknown, Refused, Unavailable, binding, is_series,
+from planning import (OutcomeUnknown, Refused, Unavailable, binding, is_series, feedback_plan,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
 from kernel import host, read_authority, task_facts, verification
@@ -32,7 +32,7 @@ from edge_contracts.errors import OperationCanceled
 class Robot(Node):
     def __init__(self):
         super().__init__("edge_language_agent")
-        if "EDGE_AUTONOMOUS_READ_POLICY" not in os.environ:
+        if not os.getenv("EDGE_FEEDBACK_POLICY") and "EDGE_AUTONOMOUS_READ_POLICY" not in os.environ:
             self.submit = self.create_client(SubmitMission,"/edge/submit_mission")
             self.query = self.create_client(GetMission,"/edge/get_mission")
         self.sample = None
@@ -135,6 +135,13 @@ class Robot(Node):
 
 
 def task_plan(journal, task, trace):
+    feedback = os.getenv("EDGE_FEEDBACK_POLICY")
+    if feedback:
+        if read_authority.load() is not None or (task.get("trigger") or {}).get("read_only_tool"):
+            raise Refused("反馈规划工位与只读续办策略不兼容")
+        return feedback_plan(task, registry(), feedback, trace)
+    if any("feedback" in step for step in task["steps"]):
+        raise Refused("原反馈规划策略已撤销")
     return run_task_plan(journal, task, trace, registry=registry, planner=plan,
                          read_only_planner=plan_read_only, freeze=host.freeze)
 

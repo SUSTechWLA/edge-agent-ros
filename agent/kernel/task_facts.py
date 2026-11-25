@@ -335,7 +335,12 @@ def read_task(db, key, *, trigger_columns=("task_id", "context", "trace_id"), ha
     trigger = item.pop("context")
     item["trigger"] = json.loads(trigger) if trigger is not None else None
     item["trace_id"] = item["trace_id"] or key
-    item["can_retry"] = item.pop("latest_event") == "retry_exhausted" and item["state"] in ("BLOCKED","RECOVERY_REQUIRED")
+    latest_event = item.pop("latest_event")
+    paused_feedback = (latest_event == "blocked" and item["state"] == "BLOCKED" and item["steps"]
+                       and item["cursor"] == len(item["steps"])
+                       and all(s.get("feedback") and s["status"]=="SUCCEEDED" for s in item["steps"]))
+    item["can_retry"] = bool(paused_feedback or (latest_event == "retry_exhausted" and
+                                                item["state"] in ("BLOCKED","RECOVERY_REQUIRED")))
     return item
 
 

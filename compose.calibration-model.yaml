@@ -1,0 +1,16 @@
+services:
+  calibration-model:
+    image: ${EDGE_CAL_MODEL_IMAGE:-ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592}
+    pull_policy: never
+    gpus: all
+    environment:
+      OLLAMA_MODELS: /model-cache/models
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NOPRUNE: "true"
+      OLLAMA_NO_CLOUD: "true"
+    volumes:
+      - board-model-cache:/model-cache:ro
+volumes:
+  board-model-cache:
+    external: true
+    name: ${EDGE_CAL_MODEL_VOLUME:-p0-author-replay-model}
