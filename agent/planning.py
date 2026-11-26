@@ -40,6 +40,23 @@ OUTCOME_TERMS = {
 }
 STATUS_TERMS = re.compile(r"状态|位姿|姿态|位置|坐标|朝向|方向|朝哪|停在哪|在哪里|在哪儿|速度|车速|航向|里程计|是否.{0,3}(?:移动|停|行驶)|status|position|pose|speed|heading|odometry|where", re.I)
 MOVE_TERMS = re.compile(r"巡检|巡查|巡视|前往|去|行驶|驶到|移动到|导航到|开到|挪到|到达|走到|inspect|visit|drive|navigate|move to|go to", re.I)
+KEEP_ALIVE = re.compile(r"-1|0|[1-9][0-9]{0,3}[smh]")
+HYBRID_THINKING_MODEL = re.compile(r"^(?:[a-z0-9_.-]+/)?qwen3(?:[:.-]|$)", re.I)
+
+
+def ollama_hybrid_thinking_model(model):
+    if not isinstance(model, str):
+        return False
+    lower = model.strip().lower()
+    return bool(HYBRID_THINKING_MODEL.match(lower)) and not any(
+        marker in lower for marker in ("instruct", "coder", "thinking")
+    )
+
+
+def valid_keep_alive(value):
+    return (type(value) is int and -1 <= value <= 86400) or (
+        isinstance(value, str) and bool(KEEP_ALIVE.fullmatch(value))
+    )
 
 
 def requested_outcomes(text, caps):
@@ -102,7 +119,7 @@ def http_json(url, data, timeout=6):
         raise failure(Refused,"invalid adapter JSON","transport.invalid_json","provider") from exc
 
 
-def response_schema(caps, points, step_limit):
+def response_schema(caps, points, step_limit, *, protocol=None):
     variants = []
     for cap in caps.values():
         props = {}
@@ -115,8 +132,9 @@ def response_schema(caps, points, step_limit):
         variants.append({"type":"object","properties":{"tool":{"type":"string","enum":[cap["id"]]},
                          "args":{"type":"object","properties":props,"required":list(props),"additionalProperties":False}},
                          "required":["tool","args"],"additionalProperties":False})
+    reason = {"type":"string","maxLength":160} if protocol == "ollama" else {"type":"string"}
     return {"type":"object","properties":{"steps":{"type":"array","maxItems":step_limit,"items":{"oneOf":variants}},
-            "reason":{"type":"string"}},"required":["steps","reason"],"additionalProperties":False}
+            "reason":reason},"required":["steps","reason"],"additionalProperties":False}
 
 
 def normalized(text):
@@ -286,7 +304,7 @@ def planner_profile():
         if len(raw)>16384:
             raise ValueError()
         profile=json.loads(raw)
-        if not isinstance(profile,dict) or set(profile)-{"schema_version","version","protocol","url","model","options","timeout_s"}:
+        if not isinstance(profile,dict) or set(profile)-{"schema_version","version","protocol","url","model","options","timeout_s","think","keep_alive"}:
             raise ValueError()
         if "timeout_s" in profile and (type(profile["timeout_s"]) is not int or not 5 <= profile["timeout_s"] <= 240):
             raise ValueError()
@@ -298,6 +316,10 @@ def planner_profile():
             raise ValueError()
         if protocol=="ollama":
             if not isinstance(profile.get("model"),str) or not 1<=len(profile["model"])<=128:
+                raise ValueError()
+            if "think" in profile and type(profile["think"]) is not bool:
+                raise ValueError()
+            if "keep_alive" in profile and not valid_keep_alive(profile["keep_alive"]):
                 raise ValueError()
             options=profile.get("options",{})
             if not isinstance(options,dict) or set(options)-{"temperature","num_ctx","num_thread","num_predict"}:
@@ -317,14 +339,53 @@ def planner_profile():
                 if type(limit) is not int or not 1 <= limit <= 1024:
                     raise ValueError()
                 profile["options"]["num_predict"] = limit
-        elif protocol!="http-planner" or "model" in profile or "options" in profile:
+            if "think" not in profile and ollama_hybrid_thinking_model(profile["model"]):
+                profile["think"] = False
+        elif protocol!="http-planner" or any(k in profile for k in ("model","options","think","keep_alive")):
             raise ValueError()
         return profile
     except FileNotFoundError:
         plugin=os.getenv("EDGE_PLANNER_URL")
-        return {"version":"env","protocol":"http-planner" if plugin else "ollama",
-                "url":plugin or os.getenv("EDGE_OLLAMA_URL"),"model":os.getenv("EDGE_OLLAMA_MODEL","qwen2.5:1.5b"),
-                "options":{"temperature":0,"num_ctx":4096}}
+        if plugin:
+            return {"version":"env","protocol":"http-planner","url":plugin}
+        try:
+            model=os.getenv("EDGE_OLLAMA_MODEL","qwen2.5:1.5b")
+            raw_ctx=os.getenv("EDGE_OLLAMA_NUM_CTX","").strip()
+            ctx=int(raw_ctx) if raw_ctx else 4096
+            if not 128<=ctx<=65536:
+                raise ValueError()
+            opts={"temperature":0,"num_ctx":ctx}
+            raw_threads=os.getenv("EDGE_OLLAMA_NUM_THREAD","").strip()
+            if raw_threads:
+                threads=int(raw_threads)
+                if not 1<=threads<=64:
+                    raise ValueError()
+                opts["num_thread"]=threads
+            raw_predict=os.getenv("EDGE_OLLAMA_NUM_PREDICT","").strip()
+            if raw_predict:
+                limit=int(raw_predict)
+                if not 1<=limit<=1024:
+                    raise ValueError()
+                opts["num_predict"]=limit
+            env_profile={"version":"env","protocol":"ollama","url":os.getenv("EDGE_OLLAMA_URL"),
+                         "model":model,"options":opts}
+            raw_keep=os.getenv("EDGE_OLLAMA_KEEP_ALIVE","").strip()
+            if raw_keep:
+                keep=int(raw_keep) if re.fullmatch(r"-?[0-9]+",raw_keep) else raw_keep
+                if not valid_keep_alive(keep):
+                    raise ValueError()
+                env_profile["keep_alive"]=keep
+            raw_think=os.getenv("EDGE_OLLAMA_THINK","").strip().lower()
+            if raw_think:
+                if raw_think not in ("0","1","false","true"):
+                    raise ValueError()
+                env_profile["think"]=raw_think in ("1","true")
+            elif ollama_hybrid_thinking_model(model):
+                env_profile["think"]=False
+            return env_profile
+        except ValueError as env_exc:
+            raise failure(Refused,"规划服务配置无效，请核对环境变量或 planner-profile.json",
+                          "planner.profile_invalid","registry") from env_exc
     except (ValueError,TypeError,KeyError,OSError,AttributeError) as exc:
         raise failure(Refused,"规划服务配置无效，请核对 planner-profile.json",
                       "planner.profile_invalid","registry") from exc
@@ -357,6 +418,12 @@ def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile
         body = {"model":profile["model"], "stream":False, "format":schema, "options":profile["options"],
                 "messages":[{"role":"system", "content":prompt["text"]},
                             {"role":"user", "content":json.dumps(context, ensure_ascii=False)}]}
+        if "think" in profile:
+            body["think"] = profile["think"]
+        elif ollama_hybrid_thinking_model(profile["model"]):
+            body["think"] = False
+        if "keep_alive" in profile:
+            body["keep_alive"] = profile["keep_alive"]
         reply = exchange(trace, "model", module, body, lambda:request(url.rstrip("/") + "/api/chat", body, timeout),
                          meta={"provider":provider, "protocol":"ollama.chat", "profile":revision,
                                "prompt":{k:prompt[k] for k in ("id","version","sha256")}})
@@ -605,6 +672,8 @@ def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_r
             for path in sorted((Path(policy_file).parent/source["directory"]).glob("*.json")):
                 installed.extend(json.loads(path.read_bytes())[source["field"]])
             values_by_tool[tool][arg] = sorted(name for name in set(installed) if installed.count(name)==1)
+    active_profile = planner_profile() if model_profile is None else model_profile
+    reason_schema = {"type":"string","maxLength":160} if active_profile.get("protocol") == "ollama" else {"type":"string"}
     branches = []
     decline_available = unmet or not (progress_tools & tools.keys())
     for name in [*sorted(tools), *(["decline"] if decline_available else [])]:
@@ -612,7 +681,7 @@ def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_r
         for arg,values in values_by_tool.get(name,{}).items():
             arg_schema["properties"][arg]["enum"]=values
         branches.append({"type":"object","properties":{"goal":{"type":"string","enum":list(goals)},
-                         "tool":{"type":"string","enum":[name]},"args":arg_schema,"reason":{"type":"string"}},
+                         "tool":{"type":"string","enum":[name]},"args":arg_schema,"reason":reason_schema},
                          "required":["goal","tool","args","reason"],"additionalProperties":False})
     schema={"oneOf":branches}
     instructions = ("Choose one available tool that makes progress on the user's task based on the latest facts. "
@@ -637,7 +706,7 @@ def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_r
                         "若现有观测已足够、工具无法增加相关证据，或本轮没有工具，请选择 decline，"
                         "用中文说明实测发现与缺失的能力。采集观察不授予动作权限，保留原任务的完成条件。")
     diagnostic = {}
-    provider, answer = model_proposal(context,schema,"planner.station_feedback",diagnostic,trace,model_profile,
+    provider, answer = model_proposal(context,schema,"planner.station_feedback",diagnostic,trace,active_profile,
                                       model_request,prompt_text=instructions)
     if unmet and (not isinstance(answer, dict) or not isinstance(answer.get("tool"), str)
                   or answer["tool"] not in tools):
@@ -948,12 +1017,13 @@ def build_plan(text, caps, diagnostic, trace=None, *, model_profile=None, model_
         step_limit = 16
         if list(eligible)==["inspect"]:
             step_limit = min(16,len(points))
-        schema = response_schema(eligible,points,step_limit)
+        active_profile = planner_profile() if model_profile is None else model_profile
+        schema = response_schema(eligible,points,step_limit,protocol=active_profile.get("protocol"))
         context = {"request":text,"capabilities":catalog(eligible),"requested_points":points}
         diagnostic.update(eligible_tools=list(eligible))
         try:
             provider, answer = model_proposal(context, schema, "planner.system", diagnostic, trace,
-                                              model_profile, model_request)
+                                              active_profile, model_request)
             diagnostic.update(stage="plan_validation",proposal=json.dumps(answer,ensure_ascii=False)[:4096])
             steps=answer["steps"]
             if not steps:

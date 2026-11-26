@@ -37,6 +37,11 @@ services:
     environment:
       EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json
       EDGE_OLLAMA_URL: ${EDGE_CAL_OLLAMA_URL:?set an Ollama endpoint reachable from the private station}
+      EDGE_OLLAMA_MODEL: ${EDGE_CAL_OLLAMA_MODEL:-qwen3:4b-instruct}
+      EDGE_OLLAMA_KEEP_ALIVE: ${EDGE_CAL_OLLAMA_KEEP_ALIVE:-30m}
+      EDGE_OLLAMA_NUM_CTX: ${EDGE_CAL_OLLAMA_NUM_CTX:-4096}
+      EDGE_OLLAMA_NUM_PREDICT: ${EDGE_CAL_OLLAMA_NUM_PREDICT:-320}
+      EDGE_OLLAMA_THINK: ${EDGE_CAL_OLLAMA_THINK:-}
     volumes:
       - ${EDGE_CAL_HW_PROFILE}:/etc/edge/installed-sensors.json:ro
     extra_hosts:

@@ -35,7 +35,11 @@ services:
       EDGE_PLUGIN_DIR: /opt/edge/calibration/station/plugins
       EDGE_EXTRA_PLUGIN_DIR: /opt/edge/calibration/station/tools
       EDGE_OLLAMA_URL: http://calibration-model:11434
-      EDGE_OLLAMA_MODEL: qwen3:4b-instruct
+      EDGE_OLLAMA_MODEL: ${EDGE_CAL_OLLAMA_MODEL:-qwen3:4b-instruct}
+      EDGE_OLLAMA_KEEP_ALIVE: ${EDGE_CAL_OLLAMA_KEEP_ALIVE:-30m}
+      EDGE_OLLAMA_NUM_CTX: ${EDGE_CAL_OLLAMA_NUM_CTX:-4096}
+      EDGE_OLLAMA_NUM_PREDICT: ${EDGE_CAL_OLLAMA_NUM_PREDICT:-320}
+      EDGE_OLLAMA_THINK: ${EDGE_CAL_OLLAMA_THINK:-}
       EDGE_CONTRACT_DIR: /opt/edge/calibration/station/model
       EDGE_FEEDBACK_POLICY: /opt/edge/calibration/station/feedback.json
       EDGE_TRACE_CONTENT: redacted

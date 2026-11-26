@@ -21,6 +21,7 @@ from author_tool import writer_lock
 from structured import current_schema, matches
 
 MODEL_NAME = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9./:_-]{0,127}")
+KEEP_ALIVE = re.compile(r"-1|0|[1-9][0-9]{0,3}[smh]")
 MAX_BODY = 131072
 TIMEOUT = 75
 
@@ -98,10 +99,16 @@ def validate(path, body):
     if not isinstance(body,dict):
         raise Fault("request_invalid")
     allowed = {"messages"} if path=="/api/chat" else {"prompt","system"}
-    if set(body)-{"model","stream","format","options"}-allowed or body.get("stream",False) is not False:
+    if set(body)-{"model","stream","format","options","think","keep_alive"}-allowed or body.get("stream",False) is not False:
         raise Fault("request_unsupported")
     if not isinstance(body.get("model"),str) or not MODEL_NAME.fullmatch(body["model"]):
         raise Fault("model_invalid")
+    if "think" in body and type(body["think"]) is not bool:
+        raise Fault("options_invalid")
+    if "keep_alive" in body:
+        keep = body["keep_alive"]
+        if not ((type(keep) is int and -1 <= keep <= 86400) or (isinstance(keep,str) and KEEP_ALIVE.fullmatch(keep))):
+            raise Fault("options_invalid")
     fmt = body.get("format")
     if fmt is not None and fmt!="json" and not isinstance(fmt,dict):
         raise Fault("format_invalid")
@@ -117,7 +124,8 @@ def validate(path, body):
 
 def cloud_payload(body, model, messages):
     fmt, opts = body.get("format"), body.get("options",{})
-    payload = {"model":model,"messages":messages,"stream":False,"thinking":{"type":"disabled"},
+    thinking = "enabled" if body.get("think") is True else "disabled"
+    payload = {"model":model,"messages":messages,"stream":False,"thinking":{"type":thinking},
                "temperature":opts.get("temperature",0),"max_tokens":opts.get("num_predict",2048)}
     if fmt is not None:
         if isinstance(fmt,dict) and (fmt.get("type","object")!="object" or not current_schema(fmt)):

@@ -104,9 +104,13 @@ def draft(args):
         context = {"request":description, "input_type":"integer series"}
     if source_task:
         context["reason_code"] = source_task["reason_code"]
-    body = {"model":args.model, "stream":False, "format":schema, "options":{"temperature":0},
+    body = {"model":args.model, "stream":False, "format":schema, "options":{"temperature":0, "num_ctx":4096},
             "messages":[{"role":"system","content":prompt},
                         {"role":"user","content":json.dumps(context,ensure_ascii=False)}]}
+    lower_model = args.model.strip().lower()
+    if re.match(r"^(?:[a-z0-9_.-]+/)?qwen3(?:[:.-]|$)", lower_model) and not any(
+            marker in lower_model for marker in ("instruct", "coder", "thinking")):
+        body["think"] = False
     request = Request(args.ollama_url.rstrip("/")+"/api/chat", data=json_bytes(body),
                       headers={"Content-Type":"application/json"})
     with urlopen(request, timeout=90) as response:
