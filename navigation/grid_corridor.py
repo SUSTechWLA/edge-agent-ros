@@ -2,6 +2,7 @@
 import math
 
 from edge_contracts.occupancy import Grid, clearance_mask
+from edge_contracts.semantic_costmap import monotonic_cell_admitted
 
 
 def covered(points, grid, admitted):
@@ -26,7 +27,7 @@ def segment_admitted(start, end, grid, admitted):
     return True
 
 
-def route_admission(published_grid, live_grid, bounds, radius, deferred):
+def route_admission(published_grid, live_grid, bounds, radius, deferred, *, semantic=None):
     published, current = Grid(published_grid), Grid(live_grid)
     def geometry(g):
         return g.frame, g.width, g.height, g.resolution, g.ox, g.oy, g.yaw
@@ -37,7 +38,18 @@ def route_admission(published_grid, live_grid, bounds, radius, deferred):
     x0, y0, x1, y1 = bounds
 
     def safe(i):
-        if i < 0 or not clear[i] or not live[i]:
+        geom_ok = i >= 0 and clear[i] and live[i]
+        if semantic is not None:
+            if not monotonic_cell_admitted(
+                geom_ok,
+                risk=semantic["risk"][i] if 0 <= i < len(semantic["risk"]) else 1.0,
+                traversable=semantic["traversable"][i] if 0 <= i < len(semantic["traversable"]) else 0.0,
+                stale=semantic["stale"],
+                risk_block=semantic["risk_block"],
+                min_traversable=semantic["min_traversable"],
+            ):
+                return False
+        elif not geom_ok:
             return False
         x, y = current.center(i)
         return (x0+radius <= x <= x1-radius and y0+radius <= y <= y1-radius

@@ -25,7 +25,7 @@ RULES = [
     (("tests/test_capability_catalog.py", "tests/test_status_plugin.py"), ("agent-contracts",)),
     (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
-    (("navigation/grid_corridor.py",), ("planner","motion-world","ui","campus-world","rover-commissioning")),
+    (("navigation/grid_corridor.py", "tests/test_semantic_costmap.py"), ("planner","motion-world","ui","campus-world","rover-commissioning")),
     (("calibration/intrinsic_*.py", "tests/system/gazebo_joint_calibration.py", "tests/system/intrinsic_board_operator.py",
       "tests/system/fixed_rover_browser.cjs", "tests/system/fixed_rover_timelapse.cjs"),
      ("planner","board","observations","ui","motion-world")),

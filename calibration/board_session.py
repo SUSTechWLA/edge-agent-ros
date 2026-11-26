@@ -38,7 +38,7 @@ TOOLS = {"status":"sensor_calibration_status","observe":"observe_target",
          "camera-fit":"fit_camera_calibration","camera-verify":"verify_camera_intrinsics"}
 CAMERA_TOOLS = {"camera-coverage","camera-record","camera-adjust","camera-fit","camera-verify"}
 PASSIVE_TOOLS = ("inspect", "status", "plan-views")
-TOOL_VERSIONS = {"plan-views": ("1", "2", "3", "4", "5"), "camera-record":("1","2"),
+TOOL_VERSIONS = {"plan-views": ("1", "2", "3", "4", "5", "6"), "camera-record":("1","2"),
                  "camera-fit":("1","2")}
 
 
