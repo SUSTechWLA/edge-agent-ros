@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "planar": {
+    "global": 1688,
+    "local": 263,
+    "totalY": 33342
+  },
+  "elevated": {
+    "global": 2575,
+    "local": 528,
+    "totalY": 71369
+  },
+  "ground": {
+    "global": 2659,
+    "local": 323,
+    "totalY": 55722
+  },
+  "wrong_revision_or_frame": "0 points",
+  "static_trail_hidden": true,
+  "errors": []
+}

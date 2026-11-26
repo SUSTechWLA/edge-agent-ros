@@ -1,5 +1,7 @@
 # 工厂标定插件
 
+相机和双雷达的举板标定另有独立仿真工位，支持自然语言下发、原始观测自动录制和独立留出验证。[自主标定工位及实车接入条件](../docs/testing/guided-calibration.md)
+
 每台无人车在工厂固定台架上单独验收。工位为该车登记 MID-360、RealSense 和 IMU 的序列号及安装测量，采集一段静止窗口，再发布该装配的标定版本。现场换传感器、改变安装角度或变更 RealSense 视频模式后应重新核对。当前版本输出记录及参数，TF 发布器、IMU 驱动和 SLAM 消费者分别负责应用这些参数。
 
 ## 入口
@@ -34,6 +36,27 @@ python -m calibration.factory status --state factory-state --robot-id rover-01 -
 `factory-state/module-events.sqlite` 包含源归档、历次版本、工厂回执以及现有 ModuleJournal 格式的事件。按 `operation_id` 读 `factory_attempt` 回执；按其中的 `profile_sha256/capture_sha256` 读 `factory_input` 取回实际验收输入。这些是每帧质量统计和 IMU 测量，图像与点云原包可在工位独立保留。SQLite 在一个事务内提交事件和发布状态。其他插件消费只读回执；写库仅由工厂入口负责。历史记录在工厂状态卷中持续保留，定期备份与介质容量由部署者管理。[规格、验收与回退](../docs/specs/SDD-038-rover-factory-calibration.md)
 
 ## 开发者复验
+
+### 手持棋盘的相对外参
+
+工作台的 `observe_target` 通过同一 `perception.target_detection` 接口查询目标。例如 `checkerboard` 和 `campus_sign` 均返回图像中的标签、像素框、采集时间、坐标帧、输入摘要和检测器版本。棋盘观测还含角点与相机下的板面测量。标定的点云测量读取这份结果和同一原始观测，以归档摘要和时戳核对配对关系。普通标牌查询只做图像识别。
+
+在部署管理的 [recognizers 目录](station/recognizers) 为新目标安装清单，登记 detector ID、版本、目标标签及镜像内已安装的实现。下一请求会重新发现当前清单，缺少检测器或同一标签重复绑定会拒绝该请求。要接入本站已有的 YOLO 对象模型，可使用 `perception.target_providers:yolo` 适配器，为模型支持的标签登记对应的 `targets`，在 `settings` 填入只读权重路径 `weights` 与 `sha256:` 内容摘要 `digest`，使用含已有推理依赖的计算镜像。当前仿真实际验收了棋盘与按颜色识别的校园标志牌。[同一帧两种目标的 HTTP 验收](../artifacts/verification/autocalibration-20261125/target-detection.json)
+
+`calibration.board_solver` 接收同一时刻的 RGB 图、当前模式的相机内参和每台雷达各自坐标系内的 XYZ 点。板规格包含内角行列数、格边长以及四周白边宽度，单位为米。每一姿态必须在相机图中检出完整棋盘，并在每台雷达中检出唯一尺寸匹配的平面；相机需要提供与图像一致的内参和畸变模型。标准仿真使用无畸变针孔成像。
+
+请把板固定片刻再换角度，在水平、垂直两个方向分别倾斜。程序先用多组板法向求旋转，再用平面偏移求平移，输出从各雷达到相机光学帧的变换。重复姿态和法向跨度不足的样本会被拒绝。留出另一批姿态检验候选参数；报告给出法向角误差与板面距离误差，验收上限为 2° 与 25 mm。板距离传感器过近、多个相似板同时入镜、板点数太少或远处背景与板面连成一片时，应改善采集条件再试。
+
+自由手持的棋盘可用来求传感器间相对外参。底盘坐标系需要已测量的安装参考，IMU 外参需要受控激励或其他可观测约束。仿真工位的朝向、覆盖范围和点密度应在实车复测。[自然语言标定协议](../docs/specs/SDD-059-guided-sensor-calibration.md)
+
+在项目根目录构建包含 OpenCV 的计算镜像，可在隔离容器内运行检测、求解和拒绝路径测试。
+
+```powershell
+docker build -f docker/Dockerfile.board-calibration -t edge-agent-ros:board-calibration-1 docker
+docker run --rm --network none -v "${PWD}:/workspace:ro" -w /workspace -e PYTHONDONTWRITEBYTECODE=1 edge-agent-ros:board-calibration-1 python3 -m unittest discover -s tests -p test_board_solver.py
+```
+
+### 工厂复核
 
 在仓库根目录运行 `python -B tests/test_factory_calibration.py -v` 检查数据契约、失败和事务语义。含当前源码与测试的开发镜像还可运行下面的命令。Docker 隔离网络使 DDS 发现只发生在本次工位内，测试在临时目录建立独立数据库。镜像标签换成自己的开发构建。
 

@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "campus.local_preview",
+  "version": "1.0.0",
+  "endpoint": "http://campus-local-preview:8129/evaluate",
+  "provides": ["planning.local_preview"],
+  "requires": []
+}

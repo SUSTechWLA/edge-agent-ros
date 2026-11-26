@@ -40,15 +40,15 @@ class Pose:
 
 class Grid:
     """Fixed local odom grid; one free/occupied vote per cell per scan."""
-    def __init__(self, size, resolution):
+    def __init__(self, size, resolution, origin=None):
         self.size = size
         self.res = resolution
-        self.origin = -size * resolution / 2
+        self.ox, self.oy = origin or (-size * resolution / 2,) * 2
         self.score = [0] * (size * size)
         self.data = [-1] * (size * size)
 
     def cell(self, x, y):
-        return math.floor((x-self.origin)/self.res), math.floor((y-self.origin)/self.res)
+        return math.floor((x-self.ox)/self.res), math.floor((y-self.oy)/self.res)
 
     def ray(self, x, y, ex, ey):
         dx, dy = abs(ex-x), -abs(ey-y)
@@ -105,6 +105,10 @@ class Perception(Node):
         self.clear_infinite = param("clear_positive_infinity", True)
         self.size = param("grid_cells", 120)
         self.res = param("resolution_m", 0.10)
+        self.origin = (param("grid_origin_x", -self.size*self.res/2),
+                       param("grid_origin_y", -self.size*self.res/2))
+        if not all(math.isfinite(v) for v in self.origin):
+            raise ValueError("grid origin must be finite")
         if not 8 <= self.size <= 512 or not math.isfinite(self.res) or self.res <= 0:
             raise ValueError("grid_cells must be in [8,512] and resolution_m positive")
         if not all(math.isfinite(v) for v in self.mount):
@@ -119,6 +123,10 @@ class Perception(Node):
         self.create_subscription(Odometry, param("odom_topic", "/odom"), self.on_odom, qos_profile_sensor_data)
         self.create_subscription(LaserScan, param("scan_topic", "/scan"), self.on_scan, qos_profile_sensor_data)
         self.create_subscription(Clock, param("clock_topic", "/clock"), self.on_clock, qos_profile_sensor_data)
+        reset_service = param("map_reset_service", "")
+        if reset_service:
+            from std_srvs.srv import Trigger
+            self.create_service(Trigger, reset_service, self.begin_mapping)
         self.create_timer(0.1, self.process_scans)
         self.create_timer(1, self.publish_summary)
 
@@ -131,7 +139,7 @@ class Perception(Node):
         self.last_scan_stamp = None
         self.mapped_stamp = None
         self.published_map_stamp = None
-        self.grid = Grid(self.size, self.res)
+        self.grid = Grid(self.size, self.res, self.origin)
         self.mode, self.reason = "waiting", reason
         self.matched, self.dropped = 0, 0
         self.scan_reason = "waiting for scan"
@@ -142,6 +150,19 @@ class Perception(Node):
             self.reset("simulation clock rewound; map and sensor history cleared")
             self.publish_grid(msg.clock)
         self.last_clock = now
+
+    def begin_mapping(self, _request, reply):
+        if self.mapped_stamp is None:
+            reply.message = "waiting for a sensor-timed map epoch"
+            return reply
+        prior_stamp = self.mapped_stamp
+        self.grid = Grid(self.size, self.res, self.origin)
+        self.pending.clear()
+        self.mapped_stamp = self.published_map_stamp = None
+        self.publish_grid(prior_stamp)
+        reply.success = True
+        reply.message = str(prior_stamp.sec * 10**9 + prior_stamp.nanosec)
+        return reply
 
     def future_stamp(self, t):
         # Allow normal DDS delivery skew between /clock and sensor writers.
@@ -276,7 +297,7 @@ class Perception(Node):
         m.header.stamp = stamp
         m.info.width = m.info.height = self.size
         m.info.resolution = self.res
-        m.info.origin.position.x = m.info.origin.position.y = self.grid.origin
+        m.info.origin.position.x, m.info.origin.position.y = self.grid.ox, self.grid.oy
         m.info.origin.orientation.w = 1.0
         m.data = self.grid.data
         self.map_pub.publish(m)

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "id": "perception-objects",
+  "plugins": [
+    {
+      "id": "perception.object_location",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "perception.see_object",
+      "version": "1.0.0",
+      "config": {}
+    }
+  ],
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}

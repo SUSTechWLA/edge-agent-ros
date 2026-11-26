@@ -1,0 +1,291 @@
+{
+  "url": "http://127.0.0.1:8910/exploration-mission.html?task_id=campus-phase1-08-indoor",
+  "expected": {
+    "texture.png": "aae32391cb049c5bf2d80cabc7b0757be1fee97c5a59edd5539cf68e5fc51d97",
+    "scene.glb": "7f20803a5db29a100222d4d3e64c9243fc7425ff82821f44aa478670a67163c4"
+  },
+  "assets": {
+    "texture.png": {
+      "url": "http://127.0.0.1:8910/texture/11cb15dbbb832bbe0c148a54c2de3383bff6396ea77ff1cf4510b3de2165c770/texture.png",
+      "browserStatus": 200,
+      "bytes": 4415108,
+      "sha256": "aae32391cb049c5bf2d80cabc7b0757be1fee97c5a59edd5539cf68e5fc51d97"
+    },
+    "scene.glb": {
+      "url": "http://127.0.0.1:8910/texture/11cb15dbbb832bbe0c148a54c2de3383bff6396ea77ff1cf4510b3de2165c770/scene.glb",
+      "browserStatus": 200,
+      "bytes": 20694696,
+      "sha256": "7f20803a5db29a100222d4d3e64c9243fc7425ff82821f44aa478670a67163c4"
+    }
+  },
+  "errors": [],
+  "consoleErrors": [],
+  "httpErrors": [],
+  "requestsWithSideEffects": [],
+  "campus": {
+    "width": 919,
+    "height": 408,
+    "view": {
+      "view": "global",
+      "cameraX": "-137.5",
+      "cameraY": "424",
+      "cameraYaw": "1.5707963267948966",
+      "cameraTilt": "1.5707963267948966",
+      "cameraZoom": "1",
+      "atlasKey": "11cb15dbbb832bbe0c148a54c2de3383bff6396ea77ff1cf4510b3de2165c770",
+      "atlasBounds": "[-420,-171,145,1019]",
+      "overlayRegistered": "true",
+      "siteOrientation": "north-right"
+    },
+    "pixelColors": 12558,
+    "atlas": [
+      [
+        838.6150512695312,
+        24
+      ],
+      [
+        838.6150512695312,
+        383.99998819828033
+      ],
+      [
+        80.38493677973747,
+        24.000000000000057
+      ],
+      [
+        80.38493677973747,
+        383.9999881982804
+      ]
+    ],
+    "gpuDraws": 0,
+    "labels": [
+      "机器人 · 室内 · 教学楼一层",
+      "运动场与看台",
+      "林带与砾石小径",
+      "Mekelweg · 体育园入口",
+      "Mekelweg 街面 · EWI 塔楼",
+      "100 m",
+      "北 →"
+    ],
+    "vehicle": {
+      "expected": [
+        189.34304862676095,
+        291.64508693043285
+      ],
+      "painted": [
+        [
+          189.34306386385134,
+          291.6450957045228
+        ],
+        [
+          189.34306386385134,
+          291.6450957045228
+        ]
+      ],
+      "drift": 0.000017582763672898944
+    },
+    "landmarks": {
+      "ewi": [
+        630.2610618256972,
+        131.6814123991317
+      ],
+      "stadium": [
+        228.20795069707538,
+        142.51327045111537
+      ],
+      "door": [
+        189.34069272743056,
+        291.6106106960669
+      ]
+    }
+  },
+  "attribution": "© 3DBAG by tudelft3d and 3DGI · Luchtfoto © Beeldmateriaal / PDOK",
+  "missionFocus": {
+    "width": 919,
+    "height": 408,
+    "view": {
+      "view": "global",
+      "cameraX": "1",
+      "cameraY": "0",
+      "cameraYaw": "1.5707963267948966",
+      "cameraTilt": "1.5707963267948966",
+      "cameraZoom": "94.16666666666667",
+      "atlasKey": "11cb15dbbb832bbe0c148a54c2de3383bff6396ea77ff1cf4510b3de2165c770",
+      "atlasBounds": "[-420,-171,145,1019]",
+      "overlayRegistered": "true",
+      "siteOrientation": "north-right"
+    },
+    "pixelColors": 460,
+    "atlas": [
+      [
+        61599.5,
+        -25056
+      ],
+      [
+        61599.5,
+        8844.001693725586
+      ],
+      [
+        -9800.502498626709,
+        -25055.999999999996
+      ],
+      [
+        -9800.502498626709,
+        8844.001693725586
+      ]
+    ],
+    "gpuDraws": 0,
+    "labels": [
+      "教学楼门外北侧等候点",
+      "教学楼门厅",
+      "目标停靠位",
+      "1 m",
+      "北 →"
+    ],
+    "vehicle": {
+      "expected": [
+        459.7197076067532,
+        147.24777139074598
+      ],
+      "painted": [
+        [
+          459.72184717933817,
+          147.24651217589496
+        ],
+        [
+          459.72184717933817,
+          147.24651217589496
+        ]
+      ],
+      "drift": 0.002482618151730261
+    },
+    "routePixelLength": 202.6340974770971,
+    "routeMaxErrorPixels": 0.0024866433453586485,
+    "trajectoryPoints": 86
+  },
+  "mesh": {
+    "width": 919,
+    "height": 408,
+    "view": {
+      "robots": "",
+      "robotPixels": "{}",
+      "surface": "mesh",
+      "triangles": "219973"
+    },
+    "pixelColors": 9100,
+    "atlas": [
+      [
+        61599.5,
+        -25056
+      ],
+      [
+        61599.5,
+        8844.001693725586
+      ],
+      [
+        -9800.502498626709,
+        -25055.999999999996
+      ],
+      [
+        -9800.502498626709,
+        8844.001693725586
+      ]
+    ],
+    "gpuDraws": 189,
+    "labels": [
+      "教学楼门外北侧等候点",
+      "教学楼门厅",
+      "目标停靠位",
+      "1 m",
+      "北 →"
+    ],
+    "gestureChanged": true
+  },
+  "local": {
+    "depth": 338,
+    "laser": 62,
+    "yawBefore": "-0.5",
+    "yawAfter": "-0.19899999999999995"
+  },
+  "returned": {
+    "expected": [
+      189.34304862676095,
+      291.64508693043285
+    ],
+    "painted": [
+      [
+        189.34306386385134,
+        291.6450957045228
+      ],
+      [
+        189.34306386385134,
+        291.6450957045228
+      ]
+    ],
+    "drift": 0.000017582763672898944
+  },
+  "mobile": {
+    "width": 352,
+    "height": 338,
+    "view": {
+      "view": "global",
+      "cameraX": "-137.5",
+      "cameraY": "424",
+      "cameraYaw": "1.5707963267948966",
+      "cameraTilt": "1.5707963267948966",
+      "cameraZoom": "1",
+      "atlasKey": "11cb15dbbb832bbe0c148a54c2de3383bff6396ea77ff1cf4510b3de2165c770",
+      "atlasBounds": "[-420,-171,145,1019]",
+      "overlayRegistered": "true",
+      "siteOrientation": "north-right"
+    },
+    "pixelColors": 2228,
+    "atlas": [
+      [
+        328,
+        96.8319320678711
+      ],
+      [
+        328,
+        241.1680616736412
+      ],
+      [
+        24.00001147389412,
+        96.83193206787112
+      ],
+      [
+        24.00001147389412,
+        241.16806167364123
+      ]
+    ],
+    "gpuDraws": 861,
+    "labels": [
+      "机器人 · 室内 · 教学楼一层",
+      "运动场与看台",
+      "200 m",
+      "北 →"
+    ],
+    "vehicle": {
+      "expected": [
+        67.68498799795321,
+        204.1398687955287
+      ],
+      "painted": [
+        [
+          67.6849781728644,
+          204.13987310506263
+        ],
+        [
+          67.6849781728644,
+          204.13987310506263
+        ]
+      ],
+      "drift": 0.000010728674323556647
+    }
+  },
+  "unregisteredEdition": {
+    "atlasVisible": true,
+    "vehicleOrRouteStrokes": 0,
+    "focusHidden": true
+  },
+  "passed": true
+}

@@ -2,36 +2,23 @@
 from collections import deque
 import math
 
-from edge_contracts.occupancy import Grid, finite
+from edge_contracts.occupancy import Grid, clearance_mask, finite
 
 
 def _masks(grid, bounds, radius):
-    """Integral image of nonfree cells allows constant-cost footprint checks per cell."""
+    """Also exclude cells whose footprint crosses the exploration region."""
     w, h = grid.width, grid.height
-    stride = w+1
-    prefix = [0]*(stride*(h+1))
     inside = bytearray(w*h)
-    safe = bytearray(w*h)
+    safe, pad = clearance_mask(grid, radius)
     unknown = bytearray(w*h)
     x0, y0, x1, y1 = bounds
-    pad = math.ceil(radius/grid.resolution)
     for y in range(h):
-        row_sum = 0
         for x in range(w):
             i = y*w+x
-            row_sum += (grid.cells[i] != 0)
-            prefix[(y+1)*stride+x+1] = prefix[y*stride+x+1] + row_sum
             wx, wy = grid.center(i)
             inside[i] = x0 <= wx <= x1 and y0 <= wy <= y1
             unknown[i] = inside[i] and grid.cells[i] < 0
-            safe[i] = (pad <= x < w-pad and pad <= y < h-pad and
-                       x0+radius <= wx <= x1-radius and y0+radius <= wy <= y1-radius)
-    for i, allowed in enumerate(safe):
-        if allowed:
-            y, x = divmod(i, w)
-            a, b = (y-pad)*stride, (y+pad+1)*stride
-            left, right = x-pad, x+pad+1
-            safe[i] = prefix[b+right]-prefix[a+right]-prefix[b+left]+prefix[a+left] == 0
+            safe[i] = safe[i] and x0+radius <= wx <= x1-radius and y0+radius <= wy <= y1-radius
     return inside, unknown, safe, pad
 
 

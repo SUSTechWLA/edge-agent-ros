@@ -1,0 +1,43 @@
+x-test-env: &test-env
+  EDGE_TARGET_DETECTORS: /opt/edge/calibration/station/recognizers
+  EDGE_CALIBRATION_PROFILE: /opt/fixture/profile.json
+  ROS_DOMAIN_ID: "171"
+  OPENBLAS_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+services:
+  agent:
+    environment:
+      ROS_DOMAIN_ID: "171"
+  console:
+    environment:
+      EDGE_ROBOT_ID: synthetic-four-hole-dds
+      ROS_DOMAIN_ID: "171"
+  calibration-session:
+    environment: *test-env
+    volumes:
+      - ./artifacts/verification/four-hole-dds-20261125/profile.json:/opt/fixture/profile.json:ro
+  calibration-observer:
+    image: edge-agent-ros:readonly-cal-station
+    environment: *test-env
+    volumes:
+      - ./artifacts/verification/four-hole-dds-20261125/profile.json:/opt/fixture/profile.json:ro
+  calibration-algorithms:
+    environment: *test-env
+    volumes:
+      - ./artifacts/verification/four-hole-dds-20261125/profile.json:/opt/fixture/profile.json:ro
+  board-fixture:
+    image: edge-agent-ros:readonly-cal-station
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./tests/system/four_hole_dds_fixture.py:/opt/fixture/publish.py:ro
+      - ./tests/system/four_hole_scene.py:/opt/fixture/four_hole_scene.py:ro
+    environment:
+      <<: *test-env
+      ROS_LOG_DIR: /tmp/ros
+      ROS_HOME: /tmp/ros
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: ["python3","-u","/opt/fixture/publish.py"]

@@ -1,0 +1,358 @@
+{
+  "task_text": "前往教学楼门外北侧等候点",
+  "clearance_m": 0.55,
+  "goal_xy_m": [
+    3.3,
+    0.85
+  ],
+  "cases": {
+    "crossing": {
+      "task": "campus-dynamic-crossing-05",
+      "status": "SUCCEEDED",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "two_different_independent_pedestrians_crossed": true,
+        "at_least_one_threatened_stop": true,
+        "all_overlapping_moving_pedestrian_samples_stopped": true,
+        "continued_under_same_task_after_last_crossing": true,
+        "agent_rechecked_before_issuing_the_next_native_segment": true,
+        "independent_arrival_and_stop_witness": true
+      },
+      "map_ref": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+        "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+      },
+      "world": {
+        "base_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+        "fixture_sha256": "c118e8aee2ae7b196c93655111497eb5a367d1a952a24cf673cae8f0c75de3c9",
+        "layout_id": "campus_large",
+        "layout_revision": "3.4b916e7ae0b95c41",
+        "layout_sha256": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+        "world_name": "edge_lab"
+      },
+      "gateway": {
+        "id": "fda3b19b3b25a7d1cee1cf26019a364c407fb42e33f2cadf9cd621848e7ca301",
+        "image_id": "sha256:03d8ae30ef6457b472150dbe2faa04a64638027e398e13ef28bb1d17d4d073d6",
+        "label": "edge-rover-local:sdd058-campus-pursuit",
+        "started_at": "2026-11-24T06:35:32.905492473Z",
+        "restart_count": 0,
+        "gateway_command": [
+          "ros2",
+          "run",
+          "edge_gateway",
+          "edge_gateway_node",
+          "--ros-args",
+          "-p",
+          "require_scan:=true",
+          "-p",
+          "local_planner:=footprint_follow",
+          "-p",
+          "vehicle_profile:=/fixture-footprint.json",
+          "-p",
+          "scan_source_id:=sdd058.sim.lidar",
+          "-p",
+          "scan_frame_id:=laser_link",
+          "-p",
+          "scan_calibration:=sdd058.sim.fixture",
+          "-p",
+          "scan_origin_x_m:=0.08",
+          "-p",
+          "scan_range_resolution_m:=0.02",
+          "-p",
+          "dynamic_observer:=scan_clusters",
+          "-p",
+          "dynamic_policy:=yield_crossing",
+          "-p",
+          "trajectory_tracker:=regulated_pursuit"
+        ],
+        "running": true
+      },
+      "native_operations": [
+        "campus-dynamic-crossing-05/leg/1/waypoint/1",
+        "campus-dynamic-crossing-05/leg/2/waypoint/1",
+        "campus-dynamic-crossing-05/leg/3/waypoint/1",
+        "campus-dynamic-crossing-05/leg/4/waypoint/1",
+        "campus-dynamic-crossing-05/leg/5/waypoint/1",
+        "campus-dynamic-crossing-05/leg/6/waypoint/1",
+        "campus-dynamic-crossing-05/leg/7/waypoint/1",
+        "campus-dynamic-crossing-05/leg/8/waypoint/1"
+      ],
+      "trajectory": {
+        "source": "Gazebo world odometry XY",
+        "samples": 480,
+        "discontinuities_over_350ms": 0,
+        "distance_m": 3.6221,
+        "spacing_m": 0.06,
+        "moving_above_mps": 0.04,
+        "start": {
+          "xy": [
+            1.29156281137024e-08,
+            7.1961958258103e-19
+          ],
+          "yaw": -3.431677484350987e-19,
+          "linear_mps": 0.0,
+          "angular_radps": 0.0,
+          "stamp_ns": 26758000000,
+          "frame": "world"
+        },
+        "stop": {
+          "xy": [
+            3.261411353406488,
+            0.8257181948993988
+          ],
+          "yaw": 0.6603336479653202,
+          "linear_mps": 0.0,
+          "angular_radps": 0.0,
+          "stamp_ns": 75616000000,
+          "frame": "world"
+        },
+        "low_speed_body_rotation_deg": 0.7,
+        "closest_actor": {
+          "gap_m": 0.41706861612673185,
+          "actor": "pedestrian_1",
+          "rover_speed_mps": 0.0,
+          "stamp_ns": 29206000000,
+          "command": [
+            0.0,
+            0.0
+          ]
+        },
+        "closest_actor_while_moving": {
+          "gap_m": 0.8183198649142956,
+          "actor": "pedestrian_1",
+          "rover_speed_mps": 0.12079993468997668,
+          "stamp_ns": 27166000000,
+          "command": [
+            0.13279999988244334,
+            -0.0435408921023617
+          ]
+        },
+        "largest_continuous_turn": {
+          "turn_deg": 24.558,
+          "span_m": 0.36,
+          "largest_increment_deg": 5.028,
+          "distributed": true
+        },
+        "distributed_moving_turn": true,
+        "turns_over_5deg": [
+          {
+            "turn_deg": 5.842,
+            "span_m": 0.42,
+            "largest_increment_deg": 0.998,
+            "distributed": false
+          },
+          {
+            "turn_deg": 9.541,
+            "span_m": 0.18,
+            "largest_increment_deg": 4.94,
+            "distributed": false
+          },
+          {
+            "turn_deg": 24.558,
+            "span_m": 0.36,
+            "largest_increment_deg": 5.028,
+            "distributed": true
+          },
+          {
+            "turn_deg": 8.939,
+            "span_m": 0.54,
+            "largest_increment_deg": 1.139,
+            "distributed": false
+          }
+        ]
+      },
+      "regulated_pursuit_plans": 189,
+      "actors": {
+        "pedestrian_1": {
+          "travel_m": 3.32000000000072,
+          "start_y_m": -1.35,
+          "finish_y_m": 1.97000000000072,
+          "max_position_speed_mps": 0.6200000000000649,
+          "raw_twist_peak": {
+            "mps": 86.61857640124188,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.41706861612673185,
+          "fixture_gate_completed": true
+        },
+        "pedestrian_2": {
+          "travel_m": 3.5900000000001997,
+          "start_y_m": 1.62,
+          "finish_y_m": -1.9700000000001996,
+          "max_position_speed_mps": 0.5800000000000249,
+          "raw_twist_peak": {
+            "mps": 112.66688582051883,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.8620686161267319,
+          "fixture_gate_completed": true
+        }
+      },
+      "contacts": 0,
+      "concurrent_pedestrians_stopped": 31,
+      "concurrent_pedestrians_samples": 31,
+      "stop": {},
+      "goal_error_m": 0.04559264968021205,
+      "raw_sha256": "7f6780b1f9a1fb7ce19d8e2cc5491240ddc9e427824613f08352c2be7b903260"
+    },
+    "blocked": {
+      "task": "campus-dynamic-blocked-05",
+      "status": "BLOCKED",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "persistent_obstacle_entered_and_held": true,
+        "continuous_independent_parked_stop": true,
+        "terminal_still_blocked_without_arrival": true,
+        "active_hold_resolved_as_blocked": true
+      },
+      "map_ref": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+        "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+      },
+      "world": {
+        "base_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+        "fixture_sha256": "77533ad5178edf08e7e407982bd2b8f485a141249538e9c582fac72e85eff064",
+        "layout_id": "campus_large",
+        "layout_revision": "3.4b916e7ae0b95c41",
+        "layout_sha256": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+        "world_name": "edge_lab"
+      },
+      "gateway": {
+        "id": "64a21f9b65cb0acba905af48d3c463336110df8c0534f2cdebf48b1ff7ee26f5",
+        "image_id": "sha256:03d8ae30ef6457b472150dbe2faa04a64638027e398e13ef28bb1d17d4d073d6",
+        "label": "edge-rover-local:sdd058-campus-pursuit-03d8ae30",
+        "started_at": "2026-11-24T06:37:49.9852994Z",
+        "restart_count": 0,
+        "gateway_command": [
+          "ros2",
+          "run",
+          "edge_gateway",
+          "edge_gateway_node",
+          "--ros-args",
+          "-p",
+          "require_scan:=true",
+          "-p",
+          "local_planner:=footprint_follow",
+          "-p",
+          "vehicle_profile:=/fixture-footprint.json",
+          "-p",
+          "scan_source_id:=sdd058.sim.lidar",
+          "-p",
+          "scan_frame_id:=laser_link",
+          "-p",
+          "scan_calibration:=sdd058.sim.fixture",
+          "-p",
+          "scan_origin_x_m:=0.08",
+          "-p",
+          "scan_range_resolution_m:=0.02",
+          "-p",
+          "dynamic_observer:=scan_clusters",
+          "-p",
+          "dynamic_policy:=yield_crossing",
+          "-p",
+          "trajectory_tracker:=regulated_pursuit"
+        ],
+        "running": true
+      },
+      "native_operations": [
+        "campus-dynamic-blocked-05/leg/1/waypoint/1"
+      ],
+      "trajectory": {
+        "source": "Gazebo world odometry XY",
+        "samples": 278,
+        "discontinuities_over_350ms": 0,
+        "distance_m": 0.0,
+        "spacing_m": 0.06,
+        "moving_above_mps": 0.04,
+        "start": {
+          "xy": [
+            1.29156281137024e-08,
+            7.1961958258103e-19
+          ],
+          "yaw": -3.431677484350987e-19,
+          "linear_mps": 0.0,
+          "angular_radps": 0.0,
+          "stamp_ns": 23086000000,
+          "frame": "world"
+        },
+        "stop": {
+          "xy": [
+            1.29156281137024e-08,
+            7.1961958258103e-19
+          ],
+          "yaw": -3.431677484350987e-19,
+          "linear_mps": 0.0,
+          "angular_radps": 0.0,
+          "stamp_ns": 51340000000,
+          "frame": "world"
+        },
+        "low_speed_body_rotation_deg": 0.0,
+        "closest_actor": {
+          "gap_m": 0.7049999870843718,
+          "actor": "lane_barrier",
+          "rover_speed_mps": 0.0,
+          "stamp_ns": 24412000000,
+          "command": [
+            0.0,
+            0.0
+          ]
+        },
+        "closest_actor_while_moving": null,
+        "largest_continuous_turn": null,
+        "distributed_moving_turn": false,
+        "turns_over_5deg": []
+      },
+      "regulated_pursuit_plans": 0,
+      "actors": {
+        "lane_barrier": {
+          "travel_m": 1.6000000000005001,
+          "start_y_m": -1.48,
+          "finish_y_m": 0.12000000000050015,
+          "max_position_speed_mps": 0.5500000000000504,
+          "raw_twist_peak": {
+            "mps": 99.85792376307253,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.7049999870843718,
+          "fixture_gate_completed": true
+        }
+      },
+      "contacts": 0,
+      "concurrent_pedestrians_stopped": null,
+      "concurrent_pedestrians_samples": null,
+      "stop": {
+        "samples": 239,
+        "wall_seconds": 37.737920878,
+        "gazebo_seconds": 24.276,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "max_output_linear_mps": 0.0,
+        "max_output_angular_radps": 0.0,
+        "max_displacement_m": 0.0
+      },
+      "goal_error_m": 3.40771182977036,
+      "raw_sha256": "f550d94379b95ed30c5c79a6faef2e8592d83fadfe990dd99f132a4f0cca2151"
+    }
+  }
+}

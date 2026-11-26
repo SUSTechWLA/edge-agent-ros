@@ -1,0 +1,310 @@
+{
+  "task_id": "731213ce-b70c-48ab-a6dd-678fdb8f49a9",
+  "terminal": [
+    "SUCCEEDED",
+    27
+  ],
+  "clock": "host_monotonic_ns; sensor stamps in Gazebo time",
+  "profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f",
+  "counts": {
+    "imu_radps": 26667,
+    "world": 13360,
+    "wheel": 7630,
+    "selected": 5932,
+    "safe": 5932,
+    "guard": 5932,
+    "rgb_target": 1335,
+    "ui_receipt": 1,
+    "task": 54,
+    "command": 1318,
+    "tracking_motion_samples": 1447,
+    "tracking_visible_motion_samples": 1447
+  },
+  "limits": {
+    "forward_mps": 0.1,
+    "yaw_radps": 0.12,
+    "reverse_mps": 0.07
+  },
+  "peaks": {
+    "command": [
+      0.1,
+      0.12
+    ],
+    "selected": [
+      0.1,
+      0.12
+    ],
+    "safe": [
+      0.1,
+      0.12
+    ],
+    "wheel": [
+      0.10000000008122067,
+      0.11999999676683051
+    ]
+  },
+  "command_limit_violations": [],
+  "independent_world_frame": "fixed_calibration/world",
+  "pose_format": [
+    "x_m",
+    "y_m",
+    "yaw_rad"
+  ],
+  "initial_and_stop": {
+    "initial": [
+      1.9349562365512476e-20,
+      3.797428235475538e-17,
+      -1.0178034054103867e-19
+    ],
+    "stop": [
+      -0.27750943695005104,
+      0.2744141091393354,
+      -0.07103293937945228
+    ]
+  },
+  "stationary_verified": true,
+  "path_length_m": 2.8071214700838394,
+  "physical_operations": [
+    {
+      "operation": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/4",
+      "state": "SUCCEEDED",
+      "proof": {
+        "first_ns": 4208241463642,
+        "last_ns": 4209741586424,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.5165365373444698,
+          -0.15505326986870985,
+          -0.23732157546057162
+        ],
+        "start_pose": [
+          1.9349562365512476e-20,
+          3.797428235475538e-17,
+          -1.0178034054103867e-19
+        ],
+        "goal_ref": "view.e77f50373c05db017176",
+        "operation_id": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/4",
+        "boot_id": "4282c74c-8bd9-4ac9-8ee2-0de11034eb37",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.543137991819247,
+          -0.13638592978220151,
+          -0.2516658404407839
+        ],
+        "position_error_m": 0.03249779940363666,
+        "heading_error_rad": 0.014344264980212268,
+        "measured_translation_m": 0.539306509240148,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/8",
+      "state": "SUCCEEDED",
+      "proof": {
+        "first_ns": 4260040076604,
+        "last_ns": 4261559846159,
+        "sample_count": 77,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -1.3326196099598315,
+          0.033405666385216214,
+          0.15215986378575297
+        ],
+        "start_pose": [
+          -0.5165365373444698,
+          -0.15505326986870985,
+          -0.23732157546057162
+        ],
+        "goal_ref": "view.ee1a7a1bed590f3ec298",
+        "operation_id": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/8",
+        "boot_id": "4282c74c-8bd9-4ac9-8ee2-0de11034eb37",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -1.3591058307078594,
+          0.017216825856341177,
+          0.16652776781992087
+        ],
+        "position_error_m": 0.03104188214626505,
+        "heading_error_rad": 0.014367904034167905,
+        "measured_translation_m": 0.8375609542375355,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/12",
+      "state": "SUCCEEDED",
+      "proof": {
+        "first_ns": 4301945714838,
+        "last_ns": 4303447075132,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.5230877614264188,
+          0.22441160408213212,
+          0.24031831492051667
+        ],
+        "start_pose": [
+          -1.3326196099598315,
+          0.033405666385216214,
+          0.15215986378575297
+        ],
+        "goal_ref": "view.44444a12ee5bf9fc4a85",
+        "operation_id": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/12",
+        "boot_id": "4282c74c-8bd9-4ac9-8ee2-0de11034eb37",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.49697973510594595,
+          0.23664444111627597,
+          0.2257720176138476
+        ],
+        "position_error_m": 0.028831776571249003,
+        "heading_error_rad": 0.014546297306669065,
+        "measured_translation_m": 0.8317602310915102,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/16",
+      "state": "SUCCEEDED",
+      "proof": {
+        "first_ns": 4336932102936,
+        "last_ns": 4338432131482,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.27609321923103736,
+          0.26841557726906495,
+          0.19384889135869998
+        ],
+        "start_pose": [
+          -0.5230877614264188,
+          0.22441160408213212,
+          0.24031831492051667
+        ],
+        "goal_ref": "view.d5f8ea2f8c4ce1b12085",
+        "operation_id": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/16",
+        "boot_id": "4282c74c-8bd9-4ac9-8ee2-0de11034eb37",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.24782827665403617,
+          0.2757167309491666,
+          0.20899996080909214
+        ],
+        "position_error_m": 0.029192701552642163,
+        "heading_error_rad": 0.015151069450392157,
+        "measured_translation_m": 0.2508837450504563,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/19",
+      "state": "SUCCEEDED",
+      "proof": {
+        "first_ns": 4364176821177,
+        "last_ns": 4365677103122,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.12491842978076713,
+          0.2941304364618059,
+          0.09113628614318431
+        ],
+        "start_pose": [
+          -0.27609321923103736,
+          0.26841557726906495,
+          0.19384889135869998
+        ],
+        "goal_ref": "view.7d3106aa337658067cbd",
+        "operation_id": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/19",
+        "boot_id": "4282c74c-8bd9-4ac9-8ee2-0de11034eb37",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.09857002312997912,
+          0.2981731787528071,
+          0.07749459693718211
+        ],
+        "position_error_m": 0.026656749581798964,
+        "heading_error_rad": 0.0136416892060022,
+        "measured_translation_m": 0.15334624530335275,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/23",
+      "state": "SUCCEEDED",
+      "proof": {
+        "first_ns": 4399997563970,
+        "last_ns": 4401497572062,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.27750943695005104,
+          0.2744141091393354,
+          -0.07103293937945228
+        ],
+        "start_pose": [
+          -0.12491842978076713,
+          0.2941304364618059,
+          0.09113628614318431
+        ],
+        "goal_ref": "view.04e06d61620f85eaa344",
+        "operation_id": "731213ce-b70c-48ab-a6dd-678fdb8f49a9/step/23",
+        "boot_id": "4282c74c-8bd9-4ac9-8ee2-0de11034eb37",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.3048260332580358,
+          0.28836379003031143,
+          -0.08401768169960686
+        ],
+        "position_error_m": 0.030672300709491444,
+        "heading_error_rad": 0.012984742320154577,
+        "measured_translation_m": 0.15385951069733472,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    }
+  ],
+  "imu_columns": [
+    "sensor_x",
+    "sensor_y",
+    "sensor_z",
+    "body_z"
+  ],
+  "imu_unit": "rad/s",
+  "tracking": {
+    "rgb_target": 1335,
+    "tracking_motion_samples": 1447,
+    "tracking_visible_motion_samples": 1447,
+    "minimum_motion_margin_fraction": 0.09105283240637585
+  }
+}

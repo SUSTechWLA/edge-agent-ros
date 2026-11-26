@@ -54,6 +54,31 @@ Windows 也可直接传入带引号的绝对路径，例如 `"D:\robot-data\sim-
 
 当前任务内核和运动网关仍将每个平面目标限制为 `|x| ≤ 4 m、|y| ≤ 4 m`。一条任务允许 1 至 8 个航点。远处的车道和田径场是可渲染的场地；把这些地点开放为可执行目的地还需验证定位、沿路避障、航点时限和地理围栏。默认工作台以离线规则处理已支持的任务表达，模型的云端凭据与个人规划配置留在原项目。
 
+### 校园任务观测台
+
+在有地图的校园 Console 打开 `/campus-mission.html`，或从环境地图选择「校园任务」。普通任务视图显示自然语言原文、步骤状态、场景地点与候选路线、当前车体状态和局部观测。开发者视图显示实际任务、工具绑定、操作和观测帧的引用。二维图、三维图和 Gazebo 静态取景分别使用各自的查看器；缺失或过期的机器人观测在任务页按来源标明。
+
+用「在任务台提交」打开现有任务输入，从门厅发「前往教学楼门外」，再发「回到教学楼门厅」。路线展示使用地点注册与任务回执，实际终点可以与 Gazebo 真值对照。预填文字由操作员确认后提交。真实 TU Delft 的咖啡设施需要在独立训练区登记模型、标识和可达停靠位后才能用于具名取餐任务。[任务观测规格](../../docs/specs/SDD-031-campus-workbench-replay.md)
+
+任务台里的地图适配了嵌入窗口，保留取景、缩放与三维俯视。「展开」可放大当前任务地图。独立校园地图提供图层开关、机器人选择和坐标拾取。完成任意一条具名地点任务后，可对独立校园运行浏览器验收，检查桌面与窄屏、可见画布、故障恢复和草稿确认。
+
+绿色是 Agent 已公布的全局航点路线，任务视图隐藏校园测试步道。长路线沿当前航段最多显示 80 米、120 个点。可选的本地预览服务用当前航点、新鲜的 `odom` 位姿和局部栅格生成橙色候选。候选最长 1.25 米，仅供观测台显示。到达、切换操作、观测过期或插件不可用时撤下候选，已取得的全局路线仍可查看。局部视图可切换成三维点云，显示本地 XYZ 回波及有同帧证据的路线。当前轮式规划建议来自二维栅格。
+
+在校园 Compose 项目中用由当前源码构建的 `EDGE_IMAGE` 启用只读候选。用插件管理器按 CAS 收据管理注册。若已安装其他提供者，通过站点配置选择相应版本。
+
+```sh
+docker compose -p edge-agent-campus -f compose.yaml -f compose.campus.yaml up -d --no-deps campus-local-preview
+docker compose -p edge-agent-campus -f compose.yaml -f compose.campus.yaml run --rm -T --no-deps \
+  -v "$PWD/scene/campus_large/campus.local_preview.json:/release/campus.local_preview.json:ro" \
+  plugin-admin publish --kind runtime --root /plugins --expect absent /release/campus.local_preview.json
+```
+
+```sh
+node tests/system/campus_mission_browser.cjs --url http://127.0.0.1:8766 \
+  --browser /path/to/chrome --puppeteer /path/to/puppeteer-core \
+  --map-port 8773 --overview-port 8780 --out .ci-results/campus-mission/browser
+```
+
 ## 3　照片怎样取得，何时会更新
 
 要看随机器一起运动的相机，在运行中的校园执行 `python scene/campus_large/run.py sensors --image <当前校园镜像>`。工作台的实时感知面板会出现两个入口。彩色相机页用右上角来源切换到轮式车、Crazyflie 或 G1，画面下方可核对话题、光学坐标系、标定和时间。Go1 此版搭载 3D 激光雷达，点云话题是 `/model/go1/lidar/points`。RGB-D 页显示轮式车的一对同步图，点击彩色图或深度图可读同一像素的距离和 RGB，超量程时显示“无有效回波”。端口冲突可用 `--camera-port`、`--rgbd-port` 自定义，工作台会同步更新。此命令只启动观测订阅和视图注册。[三台机载相机](http://127.0.0.1:8782/) · [车载 RGB-D](http://127.0.0.1:8783/)

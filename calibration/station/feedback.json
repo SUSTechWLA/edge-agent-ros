@@ -1,0 +1,112 @@
+{
+  "max_steps": 42,
+  "unavailable_motion_observation_budget": 2,
+  "unavailable_motion_observation_tools": ["sensor_calibration_status", "inspect_calibration_view", "plan_capture_views"],
+  "commissioned_motion_tools": ["move_to_pose"],
+  "scene_evidence_tools": ["inspect_calibration_view", "plan_capture_views"],
+  "receipt_conditions": {
+    "adjust_camera_calibration_board": {"field":"camera_operator_needed","require_true":true,"invalidate_on_motion":true,"confirmed_progress":true,"sources":["plan_capture_views","adjust_camera_calibration_board","record_camera_calibration_pose"]},
+    "record_camera_calibration_pose": {"field":"camera_view_recordable","invalidate_on_motion":true,"confirmed_after_motion":true,"confirmed_progress":true,"sources":["plan_capture_views","adjust_camera_calibration_board","record_camera_calibration_pose"]},
+    "fit_camera_calibration": {"field":"camera_fit_ready","require_true":true,"confirmed_progress":true,"skip_when_true":"camera_candidate_ready","sources":["inspect_camera_coverage","record_camera_calibration_pose","adjust_camera_calibration_board","fit_camera_calibration","verify_camera_intrinsics"]},
+    "verify_camera_intrinsics": {"field":"camera_candidate_ready","require_true":true,"confirmed_progress":true,"sources":["inspect_camera_coverage","record_camera_calibration_pose","adjust_camera_calibration_board","fit_camera_calibration","verify_camera_intrinsics"]},
+    "record_board_sample": {"field":"board_view_recordable","invalidate_on_motion":true,"confirmed_after_motion":true,"confirmed_progress":true,"sources":["inspect_calibration_view","record_board_sample"]},
+    "fit_sensor_extrinsics": {"field":"enough_distinct_poses_for_fit","confirmed_progress":true,"skip_when_true":"candidate_ready","sources":["sensor_calibration_status","observe_target","record_board_sample","fit_sensor_extrinsics","verify_sensor_extrinsics"]},
+    "verify_sensor_extrinsics": {"field":"candidate_ready","confirmed_progress":true,"sources":["sensor_calibration_status","observe_target","record_board_sample","fit_sensor_extrinsics","verify_sensor_extrinsics"]}
+  },
+  "view_evidence_tools": ["plan_capture_views"],
+  "view_collection_guidance": true,
+  "argument_receipts": {"move_to_pose": {"goal_ref": {"tool":"plan_capture_views","rows":"view_options","field":"ref","requires":"base_xy_yaw"}}},
+  "unchanged_observation_guards": {
+    "record_board_sample": {"unchanged":["new_sample_recorded","repeated_pose","partial_markers"],"recheck":"inspect_calibration_view","changed":["distinct_pose"]},
+    "observe_target": {"skip_when_available":"record_board_sample","sources":["observe_target","inspect_calibration_view","record_board_sample"],"unchanged":["target_visible","distinct_pose","new_sample_recorded","repeated_pose","partial_markers"],"recheck":"inspect_calibration_view","changed":["board_not_visible"]},
+    "inspect_calibration_view": {"sources":["inspect_calibration_view","record_board_sample"],"unchanged":["distinct_pose","new_sample_recorded","repeated_pose"]}
+  },
+  "argument_values": {"plan_rover_pose": {"frame":["base_at_start"]}},
+  "read_only_request_pattern": "只(?:想|需|要)?(?:识别|检测|观察|看|查询|读取)|(?:不要|别|勿|禁止|无需)(?:再|重新|进行|做)?(?:标定(?!板)|校准)|(?:如何|怎么|为什么要)(?:进行)?(?:标定|校准)|是否(?:已经|已|完成了?)?(?:标定|校准)|(?:标定|校准)(?:完毕|完成|好)?了?[吗么没]|^(?:(?:请问|请|帮我|我想)?(?:查看|查询|读取|报告|告诉我|了解)[^，。,；;]{0,48}|(?:当前|现在)?)(?:标定|校准)(?:状态|结果|版本)[？?。\\s]*$|\\b(?:only\\s+(?:observe|detect|recognize|inspect)|do\\s+not\\s+(?:re)?calibrate|(?:already\\s+calibrated|calibration\\s+status)\\s*\\??$)",
+  "goals": {
+    "sensor_calibration": {
+      "supersedes": ["object_observation", "calibration_status", "view_planning"],
+      "required_outcome_pattern": "^(?!.*(?:同步|时差|时间偏|时间戳|时钟|clock|synchron|time offset)).*(?:(?:标定|校准)(?!板)|calibrate(?:\\s|$))",
+      "description": "Estimate and independently validate sensor extrinsics when the user requests calibration.",
+      "tool": "verify_sensor_extrinsics",
+      "field": "verified",
+      "equals": true,
+      "operator_pause_field": "paused_for_operator",
+      "write_intent": [
+        "标定",
+        "校准",
+        "calibrat"
+      ],
+      "tools": [
+        "sensor_calibration_status",
+        "inspect_calibration_view",
+        "plan_capture_views",
+        "move_to_pose",
+        "observe_target",
+        "record_board_sample",
+        "fit_sensor_extrinsics",
+        "verify_sensor_extrinsics"
+      ]
+    },
+    "view_planning": {
+      "required_outcome_pattern":"(?:规划|推荐|选择).*(?:拍摄位|拍照位|取景点|观测视点)|plan.*capture views",
+      "description":"Return measured, source-bound candidate capture viewpoints for a fixed target.",
+      "tool":"plan_capture_views","field":"outcome","equals":"candidate_views",
+      "tools":["inspect_calibration_view","plan_capture_views"]
+    },
+    "pose_planning": {
+      "required_outcome_pattern":"(?:规划|试算).*(?:车头朝向|目标位姿|平面位姿)|plan.*rover pose",
+      "description":"Plan geometry to a relative ground pose specified in metres and radians.",
+      "tool":"plan_rover_pose","field":"kind","equals":"relative_pose_geometry","tools":["plan_rover_pose"]
+    },
+    "camera_model_read": {
+      "required_outcome_pattern":"(?:查看|查询|读取|核对).*(?:相机内参|相机模型|CameraInfo)|read.*camera model",
+      "description":"Read the camera model supplied for the current stream.",
+      "tool":"read_camera_stream_model","field":"outcome","equals":"camera_stream_model_read",
+      "tools":["read_camera_stream_model"]
+    },
+    "camera_intrinsic_estimation": {
+      "max_steps": 60,
+      "supersedes":["sensor_calibration","object_observation","calibration_status"],
+      "required_outcome_pattern":"(?:重估|求解|标定|计算|估计)[^。；]{0,30}(?:内参|内外参)|(?:内参|内外参)[^。；]{0,15}(?:重估|标定|估计)",
+      "description":"Estimate intrinsics and the requested LiDAR extrinsics. On a mobile station a full RGB view may be recorded even when LiDAR holes are missing in that view. When camera_view_recordable is false, plan another viewpoint. When the planner offers references, select one. When camera_operator_needed is true, request the missing tilt. Keep collecting until camera_fit_ready, then fit and verify on independent views.",
+      "tool":"verify_camera_intrinsics","field":"intrinsics_verified","equals":true,
+      "operator_pause_field":"paused_for_operator",
+      "write_intent":["标定","校准","重估","calibrat"],
+      "tools":["sensor_calibration_status","inspect_calibration_view","plan_capture_views","move_to_pose","inspect_camera_coverage","record_camera_calibration_pose","adjust_camera_calibration_board","fit_camera_calibration","verify_camera_intrinsics"]
+    },
+    "clock_calibration": {
+      "supersedes": ["object_observation", "calibration_status"],
+      "required_outcome_pattern": "同步|时差|时间偏|时钟|clock|synchron|time offset",
+      "description": "Measure bounded LiDAR-to-camera acquisition time offsets from observations of a manually moving board and verify on held-out motion.",
+      "tool": "verify_clock_offsets",
+      "field": "verified",
+      "equals": true,
+      "write_intent": ["标定", "校准", "同步", "calibrat", "synchron"],
+      "tools": ["record_clock_motion", "verify_clock_offsets"]
+    },
+    "object_observation": {
+      "required_outcome_pattern": "识别|检测|观察|看.*(?:板|标牌)|(?:recognize|detect|observe)\\s",
+      "description": "Locate or recognize a visual object in the current camera scene.",
+      "tool": "observe_target",
+      "field": "detected",
+      "equals": true,
+      "tools": [
+        "observe_target"
+      ]
+    },
+    "calibration_status": {
+      "required_outcome_pattern": "(?:标定|校准)(?:状态|结果|版本|完毕|完成|好)?了?[吗么没]|是否.*(?:标定|校准)|(?:标定|校准)(?:状态|结果|版本)|calibration\\s+status|already\\s+calibrated",
+      "description": "Read the installed sensor group's existing spatial calibration status, sample count and validated revision.",
+      "tool": "sensor_calibration_status",
+      "field": "outcome",
+      "equals": "inventory",
+      "tools": ["sensor_calibration_status"]
+    }
+  },
+  "argument_catalogs": {
+    "observe_target": {
+      "target": {"directory":"recognizers", "field":"targets"}
+    }
+  }
+}

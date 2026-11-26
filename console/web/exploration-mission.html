@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>自主探索观测台 · Edge Agent ROS</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./exploration-mission.css">
+  <script defer src="./exploration-local.js"></script>
+  <script defer src="./exploration-campus.js"></script>
+  <script defer src="./exploration-mission.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap top-inner">
+  <a class="wordmark" href="/"><span aria-hidden="true">◇</span> Edge Agent <b>ROS</b></a>
+  <div class="context"><span id="connection" class="connection" data-tone="neutral">连接中</span><span id="clock">—</span></div>
+</div></header>
+<main class="wrap">
+  <div class="mast">
+    <div><p class="environment" id="simulation-area">Gazebo · Rover</p><h1>自主探索观测台</h1></div>
+    <div class="task-selection">
+      <label for="task-select">任务记录</label>
+      <select id="task-select" aria-label="任务记录" hidden></select>
+      <p class="mast-help" id="mission-id"></p>
+    </div>
+  </div>
+  <section class="panel command">
+    <form id="task-form">
+      <input id="task-key" type="hidden" name="task_id">
+      <label for="task-text">自然语言任务</label>
+      <div class="form-row"><input id="task-text" maxlength="512" autocomplete="off" placeholder="输入探索或导航任务" required><button id="submit-task" disabled>下发任务 <span aria-hidden="true">↗</span></button></div>
+      <div class="form-hint"><button id="explore-example" type="button" class="text-button" hidden></button><button id="navigate-example" type="button" class="text-button" hidden></button><span id="request-status" role="status"></span></div>
+    </form>
+    <div class="command-status">
+      <span id="mission-status" class="badge" data-tone="neutral">等待下发</span>
+      <strong id="mission-text">等待任务</strong>
+      <span id="mission-phase" class="subdued">连接仿真现场</span>
+    </div>
+  </section>
+  <div class="workspace">
+    <section class="panel map-panel">
+      <div class="section-head"><div><h2>实时探索地图</h2><p id="map-source">等待观测帧</p></div><span id="coverage" class="map-metric">—</span></div>
+      <div class="map-controls"><button id="view-global" type="button" aria-pressed="false">全局地图</button><button id="view-campus-3d" type="button" aria-pressed="false" hidden>校园三维</button><button id="view-local" type="button" aria-pressed="true">局部三维</button><button id="view-task" type="button" hidden>聚焦任务</button><button id="view-rotate" type="button" aria-pressed="false" title="开启后，单指或鼠标左键拖动可旋转视角">旋转模式</button><button id="view-reset" type="button">复位视角</button></div>
+      <div class="map-viewport">
+        <canvas id="map" tabindex="0" role="img" aria-label="交互地图、现场观测与执行路线。拖动或方向键平移，滚轮、双指或加减键缩放。局部视图用右键拖动、Shift 加拖动或旋转模式转动，Home 复位。"></canvas>
+        <canvas id="campus-model" hidden tabindex="0" role="img" aria-label="完整校园三维场景，拖动旋转，右键拖动平移，滚轮缩放"></canvas>
+        <div id="local-hud" hidden><strong id="local-phase"></strong><span id="local-evidence"></span></div>
+        <span id="local-hint" hidden></span>
+        <p id="map-empty">等待探索任务开始</p>
+      </div>
+      <div id="campus-caption" hidden><span id="campus-extent"></span><span id="campus-credits"></span></div>
+      <div class="speed-strip" id="speed-strip" hidden><span>里程计速度<br><b id="speed-window"></b></span><canvas id="speed-trace" role="img" aria-label="当前任务最近实测线速度随仿真时间的变化"></canvas></div>
+      <div class="legend" aria-label="地图图例">
+        <span data-key="unknown">未知</span><span data-key="free">自由区</span><span data-key="occupied">占据</span><span data-key="path" id="route-legend">规划参考线</span><span data-key="initial" id="initial-legend" hidden>出发时规划</span><span data-key="leg" id="leg-legend" hidden>当前准入路段</span><span data-key="trail">实际轨迹</span><span data-key="pose">机器人</span><span data-key="poi">语义地点</span><span id="goal-legend" data-key="goal" hidden>目标停靠位</span><span data-key="anomaly">待复核</span><span data-key="structure">底图结构</span><span data-key="depth">RGB-D 测点 · 按高度着色</span><span data-key="laser">二维激光截面</span>
+      </div>
+      <div class="facts-strip"><div><span>当前位置</span><strong id="pose">—</strong><span id="pose-zone" hidden></span></div><div><span>线速度</span><strong id="speed">—</strong></div><div><span id="frontier-label">下一观察点</span><strong id="frontier">—</strong></div><div><span>语义地点</span><strong id="landmarks">—</strong></div></div>
+      <div id="tracking-facts" class="facts-strip" hidden><div><span>局部跟踪</span><strong id="tracking-mode"></strong></div><div><span>指令线速度</span><strong id="tracking-v"></strong></div><div><span>指令角速度</span><strong id="tracking-w"></strong></div><div><span>里程计角速度</span><strong id="measured-w"></strong></div></div>
+    </section>
+    <aside class="side">
+      <section id="destination-panel" class="panel" hidden aria-labelledby="destination-title">
+        <div class="section-head"><h2 id="destination-title">导航目的地</h2><span id="destination-state" class="badge"></span></div>
+        <div class="destination-content"><strong id="destination-name"></strong><p id="destination-detail"></p><ul id="destination-choices" hidden></ul></div>
+      </section>
+      <button id="route-inset" class="panel" hidden type="button" aria-label="聚焦全校地图中的本次导航路线">
+        <span class="inset-title"><strong>任务路线放大图</strong><span id="inset-distance"></span></span>
+        <canvas id="route-inset-map" aria-hidden="true"></canvas>
+      </button>
+      <section id="dynamic-recovery" class="panel recovery" aria-labelledby="dynamic-recovery-title" hidden>
+        <div class="section-head"><h2 id="dynamic-recovery-title">通道复查</h2><span id="dynamic-state" class="badge" role="status"></span></div>
+        <div class="recovery-content">
+          <p id="dynamic-detail"></p>
+          <dl id="dynamic-facts" class="recovery-facts"></dl>
+        </div>
+      </section>
+      <section id="intervention" class="panel attention" hidden>
+        <div class="section-head"><h2>需要现场判断</h2><span class="badge" data-tone="warning">异常复核</span></div>
+        <p id="anomaly-detail"></p><p id="anomaly-position" class="subdued"></p>
+        <div id="intervention-actions" class="intervention-actions"></div><p id="decision-status" role="status"></p>
+      </section>
+      <section class="panel activity">
+        <div class="section-head"><div><h2>Agent 执行过程</h2><p id="trace-info">等待任务事件</p></div><button type="button" class="text-button" id="show-details" aria-expanded="false" aria-controls="details">开发者证据</button></div>
+        <ol id="events" class="events"></ol>
+        <div id="details" hidden><pre id="event-details"></pre></div>
+      </section>
+    </aside>
+  </div>
+</main>
+</body>
+</html>

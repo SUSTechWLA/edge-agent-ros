@@ -1,0 +1,148 @@
+{
+  "spec": "SDD-051",
+  "date": "2026-11-20",
+  "board": "Jetson Orin NX",
+  "physical_control": false,
+  "raw_capture": {
+    "task_id": "jetson-live-sensors-20261120-01",
+    "batches": 49,
+    "artifact_files": 172,
+    "bytes": 13521661,
+    "channels": [
+      "wheel.odometry",
+      "d435.color.info",
+      "d435.color.image",
+      "d435.aligned.depth",
+      "mid360.front",
+      "mid360.rear"
+    ],
+    "export_sha256": "e8326231f1a98d6fd62452e78efbf90fb32be1675331704bb4f65bf9814ef6ce"
+  },
+  "static_fusion": {
+    "task": "jetson-static-fusion-20261120-01",
+    "frame": "base_foot",
+    "sources": [
+      "mid360.front",
+      "mid360.rear"
+    ],
+    "extrinsic_basis": "site-installed nominal URDF",
+    "extrinsic_sha256": "sha256:43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8",
+    "occupied_cells": 103,
+    "overlap_cells": 18,
+    "occupied_voxels": 196,
+    "overlap_voxels": 11,
+    "witness_samples": 10,
+    "witness_duration_ms": 458.639583,
+    "max_linear_mps": 0.00035814146394841373,
+    "max_rotation_rad": 8.768749324660792e-05,
+    "export_sha256": "b30deda4085cadb1afbd121d3482a415108ce623019c34ca38ba8692fefc867f"
+  },
+  "projection_evolution": {
+    "scope": "A preauthorized, declarative projection of an installed software service. The algorithm and its template were supplied by developers.",
+    "initial_task": "jetson-vision-autoevolve-20261120-01",
+    "initial_state": "BLOCKED",
+    "attempted_operations_before_install": 0,
+    "continuation_task": "recover-c628ed0f9dc8abd832f5252af0e1bc64",
+    "trace": "jetson-vision-autoevolve-20261120-01",
+    "candidate_plugin_content_digest": "sha256:970ffd1e1d7bf207c30352959474a71a34558cf9a15878dfe579b29e5862d9c3",
+    "deployment_binding": "sha256:42e049502df84a10216f23447c395a63b5f6f28e8aab323b9ccb865ada1b2dfb",
+    "backend_digest": "sha256:244b568ae16d69fea8ddcdc46eb153b5247c16c5dcad131c74b517f7e3b63575",
+    "profile_digest": "sha256:e46643b605ad5b7c6e1881eb613773a6945f2053161542de3a8ca407201d3971",
+    "phases": [
+      "gap_observed",
+      "candidate_generated",
+      "candidate_verified",
+      "site_policy_matched",
+      "release_applied",
+      "continuation_submitted",
+      "continuation_terminal"
+    ],
+    "release_event": "8766297d38ee4cdab60976f6e8c57d6f",
+    "qualification_checks": [
+      "live_observation",
+      "release_sha256",
+      "source_sha256",
+      "target_and_frame",
+      "mask_and_bbox",
+      "measured_depth_pixel",
+      "independent_backprojection",
+      "unsupported_target_rejected"
+    ],
+    "state": "SUCCEEDED",
+    "dispatch_count": 1,
+    "reentry": "Identical physical-board supervisor re-entry preserved SHA-256 of events, qualification and terminal child; one dispatch.",
+    "end_to_end_wall_s": 4.65926,
+    "realtime_video": {
+      "duration_s": 13.4,
+      "frame_count": 134,
+      "source_rgb_frames": 54,
+      "playback_rate": 1,
+      "video_sha256": "9526b66f130868360cb0810dd9b5ffd55f67b137a3500cc58ef3ba888f68e13d"
+    },
+    "target_description": "在二维和三维标注图像右边的大片浅灰色平面",
+    "method": "light_gray_component_depth_plane.v1",
+    "bbox_xyxy_exclusive": [
+      248,
+      0,
+      640,
+      480
+    ],
+    "selected_pixel": [
+      450,
+      242
+    ],
+    "camera_optical_xyz_m": [
+      0.060739459512096576,
+      -0.0026647828531664195,
+      0.296
+    ],
+    "rgb_depth_skew_ms": 33.357911,
+    "valid_depth_fraction": 0.9981630510846746,
+    "export_sha256": "4d6f1d3499056e277bd2067711cb6a3a1d9a71b6603accd62b156eb59ad81ef4",
+    "video_sha256": "da6a29b18eaa5397e675371149724414544b260106284366d60f4af3afb2a216"
+  },
+  "coverage_notes": [
+    "Camera optical target and base-frame LiDAR hits have independently bound coordinate frames.",
+    "No surveyed camera-to-body transform, RTK fix, navigation execution or open-vocabulary object recognition was verified."
+  ],
+  "indoor_object_distance": {
+    "task_id": "jetson-find-plant-20261120-01",
+    "request": "请帮我找到盆栽，量一下它离相机有多远。",
+    "operation_id": "jetson-find-plant-20261120-01/step/1",
+    "state": "SUCCEEDED",
+    "http_status": 202,
+    "request_body_sha256": "2677a1d8ed2626370680fa9f51f3e8811dad0620ec3a68f008e63433d875f8f0",
+    "tool": "see_object",
+    "soft_binding": "sha256:e9bd3b563b2d938c585a502e6b176dc6637a0d203c8ed56193a3e1941c640376",
+    "model_ref": "sha256:9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+    "detector_label": "potted plant",
+    "detector_score": 0.8003557920455933,
+    "detector_bbox_xyxy": [
+      21,
+      0,
+      304,
+      404
+    ],
+    "point_pixel": [
+      154,
+      42
+    ],
+    "point_camera_optical_m": [
+      -0.4067545224752615,
+      -0.4880202904637307,
+      1.439
+    ],
+    "axial_depth_m": 1.439,
+    "range_m": 1.5730016037685346,
+    "rgb_depth_skew_ms": 0.0,
+    "direct_source_elapsed_ms": 2192.093455,
+    "recorder_counts": {
+      "agent_request": 1,
+      "agent_state": 3,
+      "agent_trace": 9
+    },
+    "export_sha256": "0e96eb3615afe5977499fd3b68f39bb1468690844ebc4cee1c31f743ea3a1c95",
+    "guided_replay_s": 21.0,
+    "video_sha256": "843ab6c848ecd8df16ad89e24d27f17aac5748faa16d346814356ee62233ddf2"
+  }
+}

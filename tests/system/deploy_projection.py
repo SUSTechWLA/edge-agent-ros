@@ -12,7 +12,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"scripts"))
-from release_robot import entries, legacy_format, projection
+from release_robot import entries, legacy_format, projection, projection_format
 
 
 def git(*args):
@@ -26,14 +26,16 @@ def verify(ref, directory, platform, ros_base):
     source = git("show",revision+":ROBOT_SOURCE")
     actual = entries(revision)
     actual.pop("ROBOT_SOURCE")
+    fmt = projection_format(revision, source)
     legacy = legacy_format(revision, source)
-    if actual != projection(source, legacy=legacy):
+    if actual != projection(source, fmt=fmt):
         raise ValueError("deployment differs from the original source projection")
     required = {"scripts/robot.sh", "compose.hardware.yaml", "compose.hardware-observe.yaml"}
     if not legacy:
         required.update({"scripts/check_board_plugins.py", "compose.physical-camera.yaml",
                          "profiles/bench-camera.json", "capabilities/camera/pack.json"})
-        if any(Path(p).suffix.lower() in {".md", ".mdx", ".markdown", ".rst", ".adoc", ".pdf", ".docx"}
+        allowed_docs = {"README.md"} if fmt == "v3" else set()
+        if any(p not in allowed_docs and Path(p).suffix.lower() in {".md", ".mdx", ".markdown", ".rst", ".adoc", ".pdf", ".docx"}
                for p in actual):
             raise ValueError("documentation found in runtime-only deployment")
     if required-actual.keys() or any(p.startswith(("tests/","docs/","sim/","artifacts/")) for p in actual):
@@ -69,15 +71,22 @@ def verify(ref, directory, platform, ros_base):
             if info["Config"]["Labels"].get("org.opencontainers.image.revision") != source:
                 raise ValueError("hardware image has a different source revision")
             isolated = temp/"observe.json"
-            isolated.write_text(json.dumps({"services":{name:{"network_mode":"none",
-                "environment":{"ROS_LOCALHOST_ONLY":"1"}} for name in ("console","perception")}}),encoding="utf-8")
+            # Old immutable deployments still have their original two-service observe topology.
+            observe_services = ["console","perception"]
+            confines = {name:{"network_mode":"none","environment":{"ROS_LOCALHOST_ONLY":"1"}}
+                        for name in observe_services}
+            if "agent/facts_server.py" in actual:
+                observe_services.append("task-facts")
+                confines["task-facts"] = {"network_mode":"none"}
+                confines["console"]["network_mode"] = "service:task-facts"
+            isolated.write_text(json.dumps({"services":confines}),encoding="utf-8")
             observe = [*compose,"-f","compose.hardware-observe.yaml","-f",str(isolated)]
             run("compose",[*observe,"config","--quiet"],folder)
             started=time.monotonic()
             try:
-                run("observe-start",[*observe,"up","-d","--no-deps","--no-build","perception","console"],folder)
+                run("observe-start",[*observe,"up","-d","--no-deps","--no-build",*observe_services],folder)
                 running = sorted(run("observe-services",[*observe,"ps","--status","running","--services"],folder).splitlines())
-                if running != ["console","perception"]:
+                if running != observe_services:
                     raise ValueError(f"unexpected services in observe: {running}")
                 server_arch=run("daemon-arch",["docker","info","--format","{{.Architecture}}"],folder).lower()
                 if server_arch in ("x86_64","amd64") and info["Architecture"]=="arm64":
@@ -90,7 +99,7 @@ def verify(ref, directory, platform, ros_base):
                 result["observe_failure_elapsed_s"]=round(time.monotonic()-started,3)
                 run("observe-failure-services",[*observe,"ps","--all","--format","json"],folder,check=False)
                 run("observe-failure-logs",[*observe,"logs","--no-color","--timestamps","--tail","120",
-                                            "console","perception"],folder,check=False)
+                                            *observe_services],folder,check=False)
                 raise
             finally:
                 run("observe-stop",[*observe,"down","-v","--remove-orphans","--timeout","3"],folder)

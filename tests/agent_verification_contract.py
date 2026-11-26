@@ -7,11 +7,13 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import Mock, patch
+from http.server import ThreadingHTTPServer
+from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "agent"))
 import planning
 import runtime_plugins
-from service import Journal, Robot, worker
+from service import Handler, Journal, Robot, worker
 
 
 class VerificationContracts(unittest.TestCase):
@@ -41,6 +43,51 @@ class VerificationContracts(unittest.TestCase):
     def tick(self, *, planning=False, verifying=False):
         with patch("service.rclpy.ok", side_effect=[True,False]):
             worker(self.j, self.robot, planning, verifying)
+
+    def test_mixed_read_and_movement_http_request_stops_before_freeze_and_dispatch(self):
+        # Isolated, loopback-only Agent. The deliberately faulty model supplies
+        # a plausible read plan and claims the *entire* mixed request is ready.
+        server = ThreadingHTTPServer(("127.0.0.1",0), Handler)
+        server.journal = self.j
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(thread.join)
+        self.addCleanup(server.shutdown)
+        name, digest = "look", "sha256:" + "c" * 64
+        policy = self.root / "authorized.json"
+        policy.write_text(json.dumps({"schema_version":1,"bindings":{name:digest}}))
+        catalog = {**planning.BASE, name:{"id":name,"description":"读取当前图像","effect":"read",
+                   "version":"1","parameters":{},"_soft":{"name":name,"binding":digest}}}
+        proposal = {"disposition":"ready","reason":"fixture proposes a partial read","steps":[{"tool":name,"args":{}}]}
+        message = "先读取传感器，然后向前移动一米"
+        call = Request(f"http://127.0.0.1:{server.server_port}/agent/tasks",
+                       data=json.dumps({"id":"isolated-mixed-read","text":message}).encode(),
+                       headers={"Content-Type":"application/json"})
+        with patch.dict(os.environ, {"EDGE_AUTONOMOUS_READ_POLICY":str(policy),"EDGE_PLANNER_URL":"http://fixture"}), \
+                patch("service.registry", return_value=catalog), patch("planning.http_json", return_value=proposal), \
+                patch("service.host.freeze") as freeze:
+            with urlopen(call, timeout=3) as response:
+                self.assertEqual(response.status, 202)
+            self.tick(planning=True)
+            row = self.j.get("isolated-mixed-read")
+            self.assertEqual(row["state"], "BLOCKED")
+            events = self.j.event_page(row["id"])[0]
+            kinds = [item["kind"] for item in events]
+            self.assertIn("model.response", kinds)
+            self.assertNotIn("dispatch", kinds)
+            self.assertEqual(json.loads(events[-1]["payload"])["diagnostic"]["code"],"planner.control_requires_approval")
+            self.assertIsNone(self.j.due(False))
+            freeze.assert_not_called()
+            self.robot.run.assert_not_called()
+        dest = os.environ.get("EDGE_TEST_READ_AUTHORITY_EVIDENCE")
+        if dest:
+            Path(dest).write_text(json.dumps({"test":"isolated_agent_http_mixed_control",
+                "model":"deliberately incorrect local test double", "request":message, "proposed":proposal,
+                "state":row["state"], "reason_code":json.loads(events[-1]["payload"])["diagnostic"]["code"],
+                "events":[{"seq":item["seq"], "kind":item["kind"], "event_id":item["event_id"]} for item in events],
+                "frozen_plans":freeze.call_count, "dispatch_events":kinds.count("dispatch"),
+                "executor_calls":self.robot.run.call_count}, ensure_ascii=False, indent=2) + "\n", encoding="utf8")
 
     def test_old_protected_step_already_in_flight_requires_reconciliation(self):
         for status in ("PENDING","RUNNING"):

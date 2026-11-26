@@ -1,0 +1,11 @@
+# Valid odom-frame waypoint envelope for the campus forecourt simulation.
+# Perception, footprint, braking, heartbeat and stop verification use their usual settings.
+/**:
+  ros__parameters:
+    site_bounds_xyxy_m: [-4.0, -16.0, 15.0, 4.0]
+/edge_core:
+  ros__parameters:
+    motion_deadline_s: 255
+/edge_gateway:
+  ros__parameters:
+    motion_deadline_s: 240

@@ -1,0 +1,9 @@
+{
+  "id": "inspect_camera_coverage",
+  "version": "1",
+  "effect": "read",
+  "description": "Inspect RGB coverage and missing bottom areas, tilt axes, and independent sample counts.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/camera-coverage"
+}

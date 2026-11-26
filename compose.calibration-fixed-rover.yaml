@@ -1,0 +1,79 @@
+# Local spatial calibration from the repository root (Compose >=2.24.4, cached Gazebo/Ollama images):
+# docker compose -p edge-fixed-cal -f compose.calibration-board.yaml -f compose.calibration-console.yaml -f compose.calibration-model.yaml -f compose.calibration-fixed-rover.yaml -f compose.calibration-view-motion.yaml up -d
+# The Console is http://127.0.0.1:8916/. Stop the same project with "down"; named task and evidence volumes persist.
+# By default the target starts outside the common field of view. After the Agent asks,
+# run in fixed-sim: python3 /fixture/fixed_rover_world.py place-front /tmp/fixed-calibration/world.sdf --profile /fixture/profile.json
+x-sim-env: &sim-env
+  ROS_DOMAIN_ID: "197"
+  GZ_PARTITION: edge_fixed_rover_197
+  RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+  EDGE_CALIBRATION_PROFILE: /opt/edge/calibration/station/gazebo-fixed-rover.json
+  LP_NUM_THREADS: "2"
+  OPENBLAS_NUM_THREADS: "1"
+  ROS_HOME: /tmp/ros
+x-sim: &sim
+  image: edge-rover-local:sdd058-campus-lidar-r1
+  pull_policy: never
+  init: true
+  environment: *sim-env
+services:
+  fixed-sim:
+    <<: *sim
+    environment:
+      <<: *sim-env
+      EDGE_FIXED_CAL_BOARD_MODE: ${EDGE_FIXED_CAL_BOARD_MODE:-operator}
+    volumes:
+      - ./tests/system/fixed_rover_world.py:/fixture/fixed_rover_world.py:ro
+      - ./artifacts/visualizations/lingao-sensor-layout/model/lingao_mid360.urdf.xacro:/fixture/lingao.urdf.xacro:ro
+      - ./calibration/station/gazebo-fixed-rover.json:/fixture/profile.json:ro
+    command: ["bash","-ec","python3 /fixture/fixed_rover_world.py generate /tmp/fixed-calibration/world.sdf --urdf /fixture/lingao.urdf.xacro --profile /fixture/profile.json --initial-board \"$${EDGE_FIXED_CAL_BOARD_MODE}\" && exec gz sim -s -r --headless-rendering /tmp/fixed-calibration/world.sdf"]
+  fixed-bridge:
+    <<: *sim
+    command:
+      - ros2
+      - run
+      - ros_gz_bridge
+      - parameter_bridge
+      - /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
+      - /fixed/rgbd/image@sensor_msgs/msg/Image[gz.msgs.Image
+      - /fixed/rgbd/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo
+      - /fixed/rgbd/depth_image@sensor_msgs/msg/Image[gz.msgs.Image
+      - /fixed/front/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked
+      - /fixed/perimeter_scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan
+      - /fixed/front/imu@sensor_msgs/msg/Imu[gz.msgs.IMU
+      - /fixed/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry
+      - /fixed/truth/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry
+      - /fixed/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V
+      - --ros-args
+      - -r
+      - /fixed/tf:=/tf
+  fixed-odom-alias:
+    <<: *sim
+    volumes:
+      - ./tests/system/fixed_rover_frames.py:/fixture/fixed_rover_frames.py:ro
+      - ./calibration:/opt/edge/calibration:ro
+    command: ["python3","/fixture/fixed_rover_frames.py"]
+  calibration-observer:
+    image: ${EDGE_CALIBRATION_COMPUTE_IMAGE:-edge-agent-ros:board-calibration-1}
+    environment: *sim-env
+  calibration-session:
+    environment: *sim-env
+  calibration-algorithms:
+    environment: *sim-env
+  calibration-clock-observer:
+    profiles: ["time-calibration"]
+    environment: *sim-env
+  agent:
+    environment:
+      <<: *sim-env
+      EDGE_FEEDBACK_GOAL_MOTION_GRANTS: /opt/edge/calibration/station/autonomous-board-motion.json
+  console:
+    image: ${EDGE_CALIBRATION_IMAGE:-edge-rover-local:sdd058-dynamic-recovery}
+    environment:
+      <<: *sim-env
+      EDGE_ROBOT_ID: gazebo-lingao
+      EDGE_ENVIRONMENT: simulation
+      EDGE_SCAN_FRAME: fixture_clearance
+    ports: !override ["127.0.0.1:${EDGE_FIXED_CAL_CONSOLE_PORT:-8916}:8080"]
+    command: ["python3","/opt/edge/console/server/main.py","--ros-args",
+              "-r","/odom:=/lingao/odom","-r","/scan:=/fixed/perimeter_scan","-r","/ground_truth:=/fixed/truth/odom"]

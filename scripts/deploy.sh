@@ -47,7 +47,7 @@ case "$action" in
     fi
     # Old hardware images do not implement the observe-only proxy.
     compose run --rm --no-deps -T --entrypoint python3 console /opt/edge/client/hardware_preflight.py --check-config
-    set -- perception console
+    set -- perception task-facts console
     ;;
   preflight)
     if [ "$mode" != hardware ]; then echo 'Preflight requires hardware mode.' >&2; exit 2; fi

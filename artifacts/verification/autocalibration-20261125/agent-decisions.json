@@ -1,0 +1,501 @@
+{
+  "schema_version": 1,
+  "environment": "isolated Gazebo simulation",
+  "source": "Agent persistent task and event ledger; calibration station status",
+  "calibration": {
+    "task_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05",
+    "user_text": "请帮我标定当前传感器",
+    "agent_state": "SUCCEEDED",
+    "model": "ollama/qwen3:4b-instruct",
+    "accepted_submissions": 1,
+    "model_requests": 25,
+    "model_responses": 25,
+    "dispatches": 25,
+    "verified_steps": 25,
+    "error_events": [],
+    "operator_retries": 0,
+    "automatic_retries": 0,
+    "rounds": [
+      {
+        "round": 1,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/1",
+        "decision_utc": "2026-11-25T10:33:43.701214+08:00",
+        "model_event_id": "54bcafc410214d9a9b16123bf84099e4",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "board_not_visible",
+        "accepted_poses": 0,
+        "candidate_ready": false
+      },
+      {
+        "round": 2,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/2",
+        "decision_utc": "2026-11-25T10:33:57.291209+08:00",
+        "model_event_id": "e1ea06935b314e40996c2a336f22dda8",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 0,
+        "candidate_ready": false
+      },
+      {
+        "round": 3,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/3",
+        "decision_utc": "2026-11-25T10:34:07.95453+08:00",
+        "model_event_id": "3ea46c1d1d0b4cc89d3e7ec93d42fcb7",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 1,
+        "candidate_ready": false
+      },
+      {
+        "round": 4,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/4",
+        "decision_utc": "2026-11-25T10:34:11.261241+08:00",
+        "model_event_id": "bc7b5dcdcaef42c88f6c42713a2bccb1",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 1,
+        "candidate_ready": false
+      },
+      {
+        "round": 5,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/5",
+        "decision_utc": "2026-11-25T10:34:14.374964+08:00",
+        "model_event_id": "885f0d0540c2483a8bbd944b7a10b429",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "repeated_pose",
+        "accepted_poses": 1,
+        "candidate_ready": false
+      },
+      {
+        "round": 6,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/6",
+        "decision_utc": "2026-11-25T10:34:17.255876+08:00",
+        "model_event_id": "1eb97841715844ebbe11c690789646bb",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 1,
+        "candidate_ready": false
+      },
+      {
+        "round": 7,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/7",
+        "decision_utc": "2026-11-25T10:34:19.963291+08:00",
+        "model_event_id": "f7ede72364dc4450833878dd4004d432",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 2,
+        "candidate_ready": false
+      },
+      {
+        "round": 8,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/8",
+        "decision_utc": "2026-11-25T10:34:22.902068+08:00",
+        "model_event_id": "d12c6bec4270459e9110456c528b2ff6",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 2,
+        "candidate_ready": false
+      },
+      {
+        "round": 9,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/9",
+        "decision_utc": "2026-11-25T10:34:25.70946+08:00",
+        "model_event_id": "fe8957c2eb6c4f389f0344bc4641ffd0",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 3,
+        "candidate_ready": false
+      },
+      {
+        "round": 10,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/10",
+        "decision_utc": "2026-11-25T10:34:30.391869+08:00",
+        "model_event_id": "85307849615c4652b1f67293e5666f55",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 3,
+        "candidate_ready": false
+      },
+      {
+        "round": 11,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/11",
+        "decision_utc": "2026-11-25T10:34:32.835002+08:00",
+        "model_event_id": "e767859c930249548712d8e35cefffab",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 4,
+        "candidate_ready": false
+      },
+      {
+        "round": 12,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/12",
+        "decision_utc": "2026-11-25T10:34:35.676159+08:00",
+        "model_event_id": "a11fcba4988241ac9dff2c6ab28dd984",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 4,
+        "candidate_ready": false
+      },
+      {
+        "round": 13,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/13",
+        "decision_utc": "2026-11-25T10:34:38.071977+08:00",
+        "model_event_id": "e9bce88e154c4a72a7f247e64f5c9508",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 5,
+        "candidate_ready": false
+      },
+      {
+        "round": 14,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/14",
+        "decision_utc": "2026-11-25T10:34:40.88273+08:00",
+        "model_event_id": "d802fef3631444c586a3347c0895a279",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 5,
+        "candidate_ready": false
+      },
+      {
+        "round": 15,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/15",
+        "decision_utc": "2026-11-25T10:34:43.223612+08:00",
+        "model_event_id": "bcf4d37b7c4246c0b86b228dda17b0d8",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 6,
+        "candidate_ready": false
+      },
+      {
+        "round": 16,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/16",
+        "decision_utc": "2026-11-25T10:34:45.893761+08:00",
+        "model_event_id": "d4159a1e503e436ab920691c4079ad41",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 6,
+        "candidate_ready": false
+      },
+      {
+        "round": 17,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/17",
+        "decision_utc": "2026-11-25T10:34:48.795696+08:00",
+        "model_event_id": "cdfd55b816bd4e5e9030fa86e2cc9852",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 7,
+        "candidate_ready": false
+      },
+      {
+        "round": 18,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/18",
+        "decision_utc": "2026-11-25T10:34:52.07363+08:00",
+        "model_event_id": "49fbe41b412b416492e70a2bcd91454b",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 7,
+        "candidate_ready": false
+      },
+      {
+        "round": 19,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/19",
+        "decision_utc": "2026-11-25T10:34:54.773668+08:00",
+        "model_event_id": "efe3be6076a8455bbd767ba5906d238e",
+        "tool": "record_board_sample",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 8,
+        "candidate_ready": false
+      },
+      {
+        "round": 20,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/20",
+        "decision_utc": "2026-11-25T10:34:57.654532+08:00",
+        "model_event_id": "974048a4be084c1285cbe44050ef30f6",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 8,
+        "candidate_ready": false
+      },
+      {
+        "round": 21,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/21",
+        "decision_utc": "2026-11-25T10:35:00.424081+08:00",
+        "model_event_id": "9c93ffa3b9c8402bbefb8a84d543ad03",
+        "tool": "verify_sensor_extrinsics",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "no_fitted_candidate",
+        "accepted_poses": 8,
+        "candidate_ready": false
+      },
+      {
+        "round": 22,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/22",
+        "decision_utc": "2026-11-25T10:35:03.198242+08:00",
+        "model_event_id": "6e2d6042c8b84df088e32bd3a027987a",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 8,
+        "candidate_ready": false
+      },
+      {
+        "round": 23,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/23",
+        "decision_utc": "2026-11-25T10:35:05.79346+08:00",
+        "model_event_id": "18f06ed10373404f8796ed8b2b347b4c",
+        "tool": "fit_sensor_extrinsics",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "candidate_fitted",
+        "accepted_poses": 8,
+        "candidate_ready": true
+      },
+      {
+        "round": 24,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/24",
+        "decision_utc": "2026-11-25T10:35:07.943315+08:00",
+        "model_event_id": "118d0a53ba6a42428389da5631ba972c",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "checkerboard"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible",
+        "accepted_poses": 8,
+        "candidate_ready": true
+      },
+      {
+        "round": 25,
+        "operation_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05/step/25",
+        "decision_utc": "2026-11-25T10:35:10.01459+08:00",
+        "model_event_id": "fabe93021f9d438bb5c5b2d1151b306e",
+        "tool": "verify_sensor_extrinsics",
+        "arguments": {},
+        "state": "SUCCEEDED",
+        "outcome": "validation_passed",
+        "accepted_poses": 8,
+        "candidate_ready": true
+      }
+    ],
+    "model_call_contract": {
+      "provider": "ollama/qwen3:4b-instruct",
+      "protocol": "ollama.chat",
+      "prompt": {
+        "id": "planner.station_feedback",
+        "version": "numeric.rpn.v1",
+        "sha256": "37f3410be7ee83b4b9ff197bc56c91520e2d839f4a36136667899eef4cc0139c"
+      }
+    },
+    "revision": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7"
+  },
+  "recognition": {
+    "task_id": "33e9bedc-df53-4043-8f6a-c1787b00c2a8",
+    "user_text": "请识别当前画面中的校园标志牌。",
+    "agent_state": "SUCCEEDED",
+    "model": "ollama/qwen3:4b-instruct",
+    "accepted_submissions": 1,
+    "model_requests": 1,
+    "model_responses": 1,
+    "dispatches": 1,
+    "verified_steps": 1,
+    "error_events": [],
+    "operator_retries": 0,
+    "automatic_retries": 0,
+    "rounds": [
+      {
+        "round": 1,
+        "operation_id": "33e9bedc-df53-4043-8f6a-c1787b00c2a8/step/1",
+        "decision_utc": "2026-11-25T10:37:53.910884+08:00",
+        "model_event_id": "55cda3c156404446be2fb4b97ab15bdc",
+        "tool": "observe_target",
+        "arguments": {
+          "target": "campus_sign"
+        },
+        "state": "SUCCEEDED",
+        "outcome": "target_visible"
+      }
+    ],
+    "model_call_contract": {
+      "provider": "ollama/qwen3:4b-instruct",
+      "protocol": "ollama.chat",
+      "prompt": {
+        "id": "planner.station_feedback",
+        "version": "station-feedback.1",
+        "sha256": "37f3410be7ee83b4b9ff197bc56c91520e2d839f4a36136667899eef4cc0139c"
+      }
+    },
+    "visual_receipt": {
+      "outcome": "target_visible",
+      "target": "campus_sign",
+      "detected": true,
+      "frame": "rgbd_optical",
+      "stamp_ns": 1173600000000,
+      "detections": [
+        {
+          "label": "campus_sign",
+          "bbox_xyxy": [
+            119,
+            141,
+            158,
+            172
+          ]
+        }
+      ],
+      "detector": {
+        "id": "vision.campus-sign",
+        "version": "1.0.0",
+        "manifest_sha256": "3b15cca872a56d307317e91681d490ae44c7c6ef3241f9c6aa534ccf97d7d908",
+        "sources": {
+          "perception.target_providers": "8b13612b3385d7156d92bb61af79119d1b7e675546afa9dc237dcad79aab14e6",
+          "exploration.survey_signs": "d91084b40089f168b2615b54e0aec71bb897c800bfbf75c121073d2757879097"
+        }
+      },
+      "archive_sha256": "cdd3b8ee1c2b18283b017c5e3586f7e3bbd70f74c8a670d8bddd12e25ace15eb"
+    }
+  },
+  "calibration_after_recognition": {
+    "state": "VERIFIED",
+    "samples": 8,
+    "revision": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7",
+    "task_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05"
+  },
+  "diagnostic_trials": [
+    {
+      "task_id": "f0ffde4d-39e1-4939-935a-a5c80b29a2e1",
+      "user_text": "请帮我标定当前传感器",
+      "agent_state": "BLOCKED",
+      "model": "ollama/qwen3:4b-instruct",
+      "accepted_submissions": 1,
+      "model_requests": 3,
+      "model_responses": 3,
+      "dispatches": 2,
+      "verified_steps": 2,
+      "error_events": [
+        {
+          "utc": "2026-11-25T10:13:22.655081+08:00",
+          "kind": "blocked",
+          "detail": "模型无法从当前站点能力中选择下一步"
+        }
+      ],
+      "operator_retries": 0,
+      "automatic_retries": 0
+    },
+    {
+      "task_id": "3bcd2a50-c430-47ff-8300-808798d9d2ac",
+      "user_text": "请帮我标定当前传感器",
+      "agent_state": "BLOCKED",
+      "model": "ollama/qwen3:4b-instruct",
+      "accepted_submissions": 1,
+      "model_requests": 1,
+      "model_responses": 1,
+      "dispatches": 1,
+      "verified_steps": 0,
+      "error_events": [
+        {
+          "utc": "2026-11-25T10:21:19.193359+08:00",
+          "kind": "blocked",
+          "detail": "perception.target_detection has 0 installed providers"
+        }
+      ],
+      "operator_retries": 0,
+      "automatic_retries": 0
+    },
+    {
+      "task_id": "a4b7e3c3-61b6-4d06-8fdf-c07d1f0789d3",
+      "user_text": "请帮我标定当前传感器",
+      "agent_state": "SUCCEEDED",
+      "model": "ollama/qwen3:4b-instruct",
+      "accepted_submissions": 1,
+      "model_requests": 28,
+      "model_responses": 27,
+      "dispatches": 27,
+      "verified_steps": 27,
+      "error_events": [
+        {
+          "utc": "2026-11-25T10:24:49.709607+08:00",
+          "kind": "model.error",
+          "detail": "adapter HTTP 400: transport.http_400"
+        },
+        {
+          "utc": "2026-11-25T10:24:49.71694+08:00",
+          "kind": "blocked",
+          "detail": "adapter HTTP 400: transport.http_400"
+        },
+        {
+          "utc": "2026-11-25T10:26:54.680734+08:00",
+          "kind": "retry_requested",
+          "detail": "操作员已请求用原任务继续核对"
+        }
+      ],
+      "operator_retries": 1,
+      "automatic_retries": 0
+    }
+  ],
+  "historical_metadata_note": "The calibration run recorded the correct planner.station_feedback prompt ID and SHA with an inherited numeric.rpn.v1 version label. The later recognition run records the corrected station-feedback.1 label."
+}

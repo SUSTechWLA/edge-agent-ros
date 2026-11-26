@@ -6,6 +6,17 @@
 .modes button[aria-pressed="true"] {background:#24473f; color:#f3faee; box-shadow:0 1px 4px #314b4426}
 .modes button:hover:not([aria-pressed="true"]) {background:#dbe8dd}
 .view {align-self:start}
+.map-embed > header,.map-embed .title,.map-embed aside,.map-embed #landmarks,.map-embed .map-places label,.map-embed #gestures {display:none}
+.map-embed main {padding:0;height:100dvh}
+.map-embed .layout {display:block;height:100%}
+.map-embed .view {height:100%;border:0;border-radius:0}
+.map-embed .plot {flex:1;min-height:0;height:auto}
+.map-embed .view-head,.map-embed .foot {padding:5px 9px}
+.map-embed .map-places {padding:5px 9px;gap:6px}
+.map-embed .map-places select {max-width:100%;min-width:0}
+.map-embed .foot {justify-content:flex-end}
+.mission-route-key{position:absolute;top:8px;left:8px;max-width:calc(100% - 16px);z-index:2;display:flex;align-items:center;flex-wrap:wrap;gap:4px 9px;padding:4px 8px;border:1px solid #54786a;border-radius:6px;background:#17392de6;color:#e4f3e8;font-size:12px}
+.mission-route-key[hidden]{display:none}.mission-route-key span:before{content:"";display:inline-block;width:12px;height:3px;margin-right:4px;vertical-align:middle;background:#9af1b5}.mission-route-key span:nth-child(2):before{background:#ffb35c}.mission-route-key button{font-size:12px;padding:2px 6px}.map-embed .grid-key{top:auto;bottom:5px}
 .view-head {font-weight:600}
 .plot {min-height:350px; height:clamp(420px,68vh,800px)}
 .grid-key {position:absolute; display:flex; gap:10px; right:12px; bottom:12px; background:#172e34e8; border:1px solid #486164; border-radius:5px; padding:6px 8px; color:#dfebe4; font-size:11px; pointer-events:none}

@@ -1,0 +1,47 @@
+{
+  "source": "Gazebo loaded SDF mounting poses, independently evaluated after solve",
+  "world_sha256": "98f8049ce410bca3b0a8ef920e493003cf02f3947c264e9826c836fa36b82fb2",
+  "thresholds": {
+    "translation_m": 0.035,
+    "rotation_deg": 1.5
+  },
+  "errors": {
+    "lidar_left": {
+      "translation_error_m": 0.003922938849453767,
+      "rotation_error_deg": 0.35266067743275703,
+      "within_limits": true
+    },
+    "lidar_right": {
+      "translation_error_m": 0.010329060478341395,
+      "rotation_error_deg": 0.4576667936088209,
+      "within_limits": true
+    }
+  },
+  "passed": true,
+  "task_id": "d7fd5e0c-291a-4744-bd2a-452c15176e05",
+  "revision": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7",
+  "world_after": [
+    "Model: [7]",
+    "  - Name: stationary_rig",
+    "  - Pose [ XYZ (m) ] [ RPY (rad) ]:",
+    "    [0.000000 0.000000 0.000000]",
+    "    [0.000000 -0.000000 0.000000]"
+  ],
+  "world_before": [
+    "Model: [7]",
+    "  - Name: stationary_rig",
+    "  - Pose [ XYZ (m) ] [ RPY (rad) ]:",
+    "    [0.000000 0.000000 0.000000]",
+    "    [0.000000 -0.000000 0.000000]"
+  ],
+  "cmd_vel_start": [
+    "Type: geometry_msgs/msg/Twist",
+    "Publisher count: 0",
+    "Subscription count: 1"
+  ],
+  "cmd_vel_end": [
+    "Type: geometry_msgs/msg/Twist",
+    "Publisher count: 0",
+    "Subscription count: 1"
+  ]
+}

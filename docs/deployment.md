@@ -6,7 +6,7 @@
 |---|---|---|
 | Windows x86-64 开发机 | `.\scripts\start.ps1` | Docker Desktop 的 Linux 容器，浏览器打开 localhost:8765 |
 | macOS Intel / Apple Silicon、Linux 开发机或服务器 | `sh scripts/deploy.sh sim up` | 按 Docker Engine 本机架构构建 Gazebo 环境；无桌面服务器同样可通过浏览器访问 |
-| RK3588、Jetson Orin 等 ARM64 Linux 边缘机及 x86-64 Linux 工控机 | `hardware build` 后运行 `sh scripts/deploy.sh hardware observe` | 首次只启动工作台和感知，以 host 网络接入现有 ROS。传感器驱动和机体执行器单独部署 |
+| RK3588、Jetson Orin 等 ARM64 Linux 边缘机及 x86-64 Linux 工控机 | `hardware build` 后运行 `sh scripts/deploy.sh hardware observe` | 首次启动工作台、感知和只读任务事实服务。感知以 host 网络接入现有 ROS，驱动和机体执行器单独部署 |
 
 ## 仿真或工作站
 

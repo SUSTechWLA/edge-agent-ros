@@ -71,14 +71,37 @@ def deployment_owner(state):
 
 
 class Controller:
+    socket_roles = ("agent", "camera", "verifier")
+    verification_error = "camera.verification_failed"
+
     def __init__(self, ledger, deployment):
         self.ledger = ledger
         self.site = deployment
         self.pin = deployment["pin"]
         self.resource = self.pin["resource_id"]
         self.heartbeat = {}
+        self.started = time.monotonic()
         require(ledger.device(self.resource)["deployment"] == deployment, "tool.binding_unavailable",
                 "deploy the approved site offline before starting the controller")
+
+    def replace_silent(self, role, instance):
+        """A restarted process may take an idle slot once the attached one missed a full health window.
+
+        A live earlier process keeps polling and so keeps its slot; the ledger refuses while work is unresolved."""
+        present = self.ledger.device(self.resource)[role+"_instance"]
+        silent = time.monotonic() - self.heartbeat.get(role, self.started)
+        if present and instance != present and silent >= self.site["health_ttl_ms"]/1000:
+            self.ledger.replace_instance(self.resource, role, present, instance)
+            self.heartbeat.pop(role, None)
+
+    def capability(self):
+        return {"effect":"read","description":"采集一帧相机图像并独立核验","parameters":{}}
+
+    def scope(self):
+        return self.pin["sensor"]
+
+    def pending_stop(self, row):
+        return False
 
     def catalog(self):
         device = self.ledger.device(self.resource)
@@ -87,8 +110,7 @@ class Controller:
         healthy = matches and all(time.monotonic() - self.heartbeat.get(role, -float("inf")) <
                                   self.site["health_ttl_ms"]/1000 for role in ("camera","verifier"))
         available = healthy and device["phase"] == "ACTIVE"
-        cap = {"id":pin["name"],"version":pin["version"],"effect":"read","description":"采集一帧相机图像并独立核验",
-               "parameters":{},"_physical":pin}
+        cap = {"id":pin["name"],"version":pin["version"],**self.capability(),"_physical":pin}
         row = {"id":pin["plugin_id"],"kind":"tool","class":"physical","version":pin["version"],
                "content_digest":pin["content_digest"],"lifecycle":device["phase"],"health":"ready" if healthy else "unavailable",
                "availability":"available" if available else "unavailable","draining":device["phase"] != "ACTIVE"}
@@ -103,12 +125,27 @@ class Controller:
         if role == "agent":
             if action == "catalog":
                 return self.catalog()
+            if action == "operation_status":
+                pin = data["pin"]
+                row = ledger.status(pin["reservation_id"])
+                require(row["pin"] == pin and pin["resource_id"] == self.resource and
+                        self.pin == {k:v for k,v in pin.items() if k != "reservation_id"},
+                        "tool.binding_unavailable", "original operation and deployment required")
+                return {k:v for k,v in row.items() if k != "lease"} | {
+                    "pending_stop":row["state"] == "RECOVERY_REQUIRED" and self.pending_stop(row),
+                    "failure_code":self.verification_error}
+            if action == "reconcile_denial":
+                return ledger.reconcile_denial(data["task"],data["provider"],data["steps"],self.site)
+            if action == "freeze_step":
+                return ledger.freeze_step(data["task"], data["index"], data["provider"], data["step"],
+                                          self.catalog()["tools"])
             if action == "freeze_plan":
                 # Always return an already admitted immutable plan, even while draining.
                 prior = ledger.db.execute("SELECT plan FROM physical_plans WHERE task=?", (data["task"],)).fetchone()
                 if prior:
                     return json.loads(prior[0])
-                require(self.catalog()["tools"],"plugin.dependency_unavailable","camera or independent verifier unavailable")
+                ledger.check_not_denied(data["task"])
+                require(self.catalog()["tools"],"plugin.dependency_unavailable","provider or independent verifier unavailable")
                 return ledger.freeze_plan(data["task"],data["provider"],data["steps"])
             if action == "call":
                 pin, wire = data["pin"],data["wire"]
@@ -118,16 +155,19 @@ class Controller:
                     return {"operation_id":op,"state":"SUCCEEDED",
                             "evidence":{**row["candidate"],"verifier_id":pin["verifier_id"],"verification":row["proof"]}}
                 if row["state"] == "RECOVERY_REQUIRED":
-                    raise PhysicalError("tool.outcome_unknown", row["reason"] + ": reconcile original camera operation")
+                    if self.pending_stop(row):
+                        return {"operation_id":op,"state":"RUNNING"}
+                    raise PhysicalError("tool.outcome_unknown", row["reason"] + ": reconcile original physical operation")
                 if row["state"] in ("FAILED","CANCELED"):
-                    return {"operation_id":op,"state":row["state"],"error":{"code":"camera.verification_failed"}}
+                    return {"operation_id":op,"state":row["state"],"error":{"code":self.verification_error}}
                 return {"operation_id":op,"state":"RUNNING"}
             if action == "settle":
                 return ledger.settle(data["pin"])
         if role in ("camera","verifier") and action == "next":
-            expected = self.pin["sensor"]
+            expected = self.scope()
             require(all(k in data and type(data[k]) is type(v) and data[k]==v for k,v in expected.items()),
-                    "plugin.permission_denied","process sensor source, ROS topic or domain differs from deployment")
+                    "plugin.permission_denied","process scope differs from deployment")
+            self.replace_silent(role, data.get("instance_id"))
             result = ledger.poll(resource, role, data["instance_id"])
             self.heartbeat[role] = time.monotonic()
             return result
@@ -193,7 +233,7 @@ async def serve(controller, directory, state, site):
     servers = []
     with deployment_owner(state):
         try:
-            for role in ("agent","camera","verifier"):
+            for role in controller.socket_roles:
                 root = directory / role
                 root.mkdir(exist_ok=True,parents=True)
                 target = root / "physical.sock"

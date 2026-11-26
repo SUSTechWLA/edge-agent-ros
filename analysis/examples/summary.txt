@@ -1,0 +1,5 @@
+任务 wp4-legacy-survey 的所有者状态为 SUCCEEDED，记录了 1 个步骤，本页有 2 条事件，另有分页。
+Console 导出含 2 条事件（info 1、warn 1）。
+其中 2 条明确标记该任务 ID，0 条未标记任务 ID。
+Evidence 查询 SUCCEEDED，加载 2 条归档事件，返回 1 行。
+录制 offline-example 的状态为 FINISHED，捕获 1 份样本，未收到样本的来源为rgb。

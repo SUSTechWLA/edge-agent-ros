@@ -1,0 +1,599 @@
+{
+  "task_id": "fixed-cal-a50373b8ec464da8",
+  "terminal": "SUCCEEDED",
+  "detail": "已取得步骤证据",
+  "model": "ollama/qwen3:4b-instruct",
+  "actual_pose_changed": true,
+  "independent_final_stop": true,
+  "start_pose": {
+    "world": "fixed_calibration",
+    "model": "lingao",
+    "source": "/world/fixed_calibration/pose/info",
+    "position_m": [
+      1.9349562365512476e-20,
+      3.797428235475538e-17,
+      -9.049070884281641e-10
+    ],
+    "rotation_xyzw": [
+      3.696132971856072e-11,
+      -7.203308756017837e-20,
+      -5.0890170267856895e-20,
+      1.0
+    ],
+    "stamp_ns": 13555000000,
+    "received_unix_ns": 1795684878333620000,
+    "board": {
+      "id": 10,
+      "position_m": [
+        0.0,
+        4.0,
+        0.5
+      ],
+      "rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "stop_pose": {
+    "world": "fixed_calibration",
+    "model": "lingao",
+    "source": "/world/fixed_calibration/pose/info",
+    "position_m": [
+      -0.26053765465918693,
+      0.22602491306572373,
+      -9.000595546251256e-08
+    ],
+    "rotation_xyzw": [
+      -2.426517676682332e-11,
+      3.9680055856364965e-10,
+      0.058133862530552846,
+      0.998308796929727
+    ],
+    "stamp_ns": 178190000000,
+    "received_unix_ns": 1795685043116674100,
+    "board": {
+      "id": 10,
+      "position_m": [
+        3.1,
+        0.0,
+        0.5
+      ],
+      "rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "world_epoch_changed": false,
+  "stop_world_window_s": 1.055,
+  "source_model": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "capture": {
+    "captures": [
+      {
+        "manifest": "c96f6156604319232715d97e9954b264ac106a4ab66f16e4a827cc32beef9de7",
+        "operation": "fixed-cal-a50373b8ec464da8/step/2",
+        "observation_id": "48400000000",
+        "frame_count": 4,
+        "video_sha256": "27dc67c05f7a5d0bdd85d47f5d1ec710e06c62957d168af5898dc7b8a6f5dcd8"
+      },
+      {
+        "manifest": "34345b54c866d9ade3b637d3f872cb27b03d14551a76b574918eb21fc23e5395",
+        "operation": "fixed-cal-a50373b8ec464da8/step/5",
+        "observation_id": "81200000000",
+        "frame_count": 4,
+        "video_sha256": "42b3b29a8d0275d25cbf16cafb8d7b648f76467461c59e86a83355cd2e3d76f3"
+      },
+      {
+        "manifest": "7d54893c1d34fba6a12382897c59e2910ee35663f2de1f247e5ec9c1d1a06963",
+        "operation": "fixed-cal-a50373b8ec464da8/step/8",
+        "observation_id": "114800000000",
+        "frame_count": 4,
+        "video_sha256": "795b989112bff104976147843fbd04c44d3192cf2b12ec45708e680824b46e84"
+      },
+      {
+        "manifest": "8e4e0b9647d9421f4fced0c4c2da34f7001e52dea2f5dfc8d7fc6c0d2b5ce176",
+        "operation": "fixed-cal-a50373b8ec464da8/step/11",
+        "observation_id": "143800000000",
+        "frame_count": 4,
+        "video_sha256": "0f971a3a3283fc16a822fb3ce4b708d1c330764f982a4da4da0e5e13b54051dd"
+      },
+      {
+        "manifest": "a8ef45a26f4b9b55ef652e40e655ce75409a67879280595fc07073321d8c36aa",
+        "operation": "fixed-cal-a50373b8ec464da8/step/14",
+        "observation_id": "166400000000",
+        "frame_count": 4,
+        "video_sha256": "4e492f21c9165929a8f593c41ada43a998a77a4f179bd913f8ff41b4fa29561e"
+      }
+    ],
+    "files": {
+      "0105302c64f89be1d9455fcdad69228cb4caad83959829bd59143246b2938508.npz": 771227,
+      "037529709182494c7e9357c2b325fc853c36447573c52208e2c38b33b6d80474.npz": 767299,
+      "0c3b1fb550d1790d425331385ae927ba65c27473ea8630d7e86aa1dd399f21fa.npz": 765268,
+      "0f971a3a3283fc16a822fb3ce4b708d1c330764f982a4da4da0e5e13b54051dd.avi": 56744,
+      "22f48ec26dcea89268a966929f79bba2a9b5102a6a127eedd5f679d659293104.npz": 771231,
+      "256e36ec3a45ae708cfb0633a397a2872e0306d56464bc6b7d4d66f47032a067.npz": 765250,
+      "27dc67c05f7a5d0bdd85d47f5d1ec710e06c62957d168af5898dc7b8a6f5dcd8.avi": 59352,
+      "2eaf7012c0354023e0cae715ea98b6bd234fce4abbe8f58e397eeb5d314d9ff8.npz": 767299,
+      "34345b54c866d9ade3b637d3f872cb27b03d14551a76b574918eb21fc23e5395.json": 8584,
+      "3d48c33cd95c39eabbb95919fee08300855cc38e1ec4cfb99ee5537f8eb075b5.npz": 750584,
+      "42b3b29a8d0275d25cbf16cafb8d7b648f76467461c59e86a83355cd2e3d76f3.avi": 56376,
+      "4e492f21c9165929a8f593c41ada43a998a77a4f179bd913f8ff41b4fa29561e.avi": 57136,
+      "597494a1af5f1ca02b114d177777e8b14d3add5d57c93672e1d4d322495107ca.npz": 766387,
+      "6169edeaeaa20f3388b2ff380b6b23532cfb3bb8c1d98f44ae81a65d6ec91472.npz": 750584,
+      "63c96192f5b9d8ac7d4d161e2af8b85817203d75050bddc85f6a529e01f641b4.npz": 766388,
+      "7086fe049aa0fa8ece95edf02f3c0283e91e2e1e188dd1abaa16fa5e27bb3757.npz": 766389,
+      "70ccbeef1d054cb0c35a07e32db7a932e68eb542297b09df96d0c2ae931be528.npz": 765254,
+      "795b989112bff104976147843fbd04c44d3192cf2b12ec45708e680824b46e84.avi": 50408,
+      "7ac6a4876b44f23624e496004e980b3388899394d0f4517f54634184d4a35dc6.npz": 750588,
+      "7d54893c1d34fba6a12382897c59e2910ee35663f2de1f247e5ec9c1d1a06963.json": 8562,
+      "7ff5cc9e8a14afc144450b6990405b0a67ebf589563d46426c6116ee4b057e00.npz": 771229,
+      "82fc528baa73f212012b8ddb3707efc902005fb1a0b11d9e8e369cfd1589c407.npz": 765252,
+      "8e4e0b9647d9421f4fced0c4c2da34f7001e52dea2f5dfc8d7fc6c0d2b5ce176.json": 8557,
+      "9527508e2b1d05b6baa3c11764591b4be3a56a6b7b2a7e128640daa8bc32e4dc.npz": 766391,
+      "a8ef45a26f4b9b55ef652e40e655ce75409a67879280595fc07073321d8c36aa.json": 8565,
+      "af3ed9ddeee24fc47496800f1fd5d2825dbea29af0be3c01b747e1abc46f9f89.npz": 767293,
+      "c57ae172c3c96ddfaccaf38dab4bc31c7db60c570d8528373e37bab6bc433eba.npz": 767300,
+      "c96f6156604319232715d97e9954b264ac106a4ab66f16e4a827cc32beef9de7.json": 8610,
+      "d5823ea70bb28dcdeb5d4f08748b811abb695f59eab3b63868fc4e4d439263c7.npz": 771226,
+      "ef0d23c9dde59aacb494df428c3676c57ee791028f1ef0ce2f124896a727dc70.npz": 750580
+    },
+    "revision": "8e5a1fa9563120f965ec5eb0f315251ab13d1c9d8a2df9f7bd9cac733a304b0a",
+    "training_ids": [
+      "114800000000",
+      "48400000000",
+      "81200000000"
+    ],
+    "holdout_ids": [
+      "143800000000",
+      "166400000000"
+    ],
+    "transforms": {
+      "front": {
+        "child_frame": "front_mid360",
+        "fit": {
+          "count": 3,
+          "max_angle_deg": 0.8502989002566743,
+          "max_hole_error_m": 0.005405384890018985,
+          "max_plane_distance_m": 0.0014183537967671356,
+          "rms_hole_error_m": 0.003295391904413833,
+          "rms_plane_distance_m": 0.0011394128655585864
+        },
+        "initializer": "plane_anchors",
+        "parent_frame": "camera_color_optical_frame",
+        "rotation_xyzw": [
+          0.299298394725646,
+          -0.30015905393300113,
+          0.6398480673463068,
+          0.6410300023945001
+        ],
+        "translation_m": [
+          -0.0015992783139866656,
+          0.20282039579525946,
+          0.04228939127352893
+        ],
+        "validation": {
+          "count": 2,
+          "max_angle_deg": 1.0835670022069317,
+          "max_hole_error_m": 0.009582288669607945,
+          "max_plane_distance_m": 0.005755619859949768,
+          "rms_hole_error_m": 0.006923048637991836,
+          "rms_plane_distance_m": 0.004542136061119808
+        }
+      }
+    }
+  },
+  "mount_errors": {
+    "front": {
+      "translation_m": 0.004226076577101534,
+      "rotation_deg": 0.17956002117319708,
+      "within_limits": true
+    }
+  },
+  "physical_steps": [
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/4",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 24712696617334,
+        "last_ns": 24714197099128,
+        "sample_count": 76,
+        "sensor_stamp_ns": 77035000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.5182744015921208,
+          -0.1557293121195388,
+          -0.2370906711719663
+        ],
+        "start_pose": [
+          1.9349562365512476e-20,
+          3.797428235475538e-17,
+          -1.0178034054103867e-19
+        ],
+        "goal_ref": "view.99b05747a2caa2bcf5cb",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/4",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.543137991819247,
+          -0.13638592978220151,
+          -0.2516658404407839
+        ],
+        "position_error_m": 0.03150181834800747,
+        "heading_error_rad": 0.014575169268817578,
+        "measured_translation_m": 0.5411653850708632,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/7",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 24746513409920,
+        "last_ns": 24748013536856,
+        "sample_count": 76,
+        "sensor_stamp_ns": 110840000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -1.2176120378121134,
+          -0.00031604000072338513,
+          0.1581680791103459
+        ],
+        "start_pose": [
+          -0.5182744015921208,
+          -0.1557293121195388,
+          -0.2370906711719663
+        ],
+        "goal_ref": "view.af9a3bbce01e06b6314c",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/7",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -1.243344791870261,
+          -0.007834318485860511,
+          0.172435470247775
+        ],
+        "position_error_m": 0.026808564728406963,
+        "heading_error_rad": 0.014267391137429114,
+        "measured_translation_m": 0.7163982234654436,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/10",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 24774728463857,
+        "last_ns": 24776228868491,
+        "sample_count": 76,
+        "sensor_stamp_ns": 139055000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.41023341673364916,
+          0.19683268062375833,
+          0.24547531358423444
+        ],
+        "start_pose": [
+          -1.2176120378121134,
+          -0.00031604000072338513,
+          0.1581680791103459
+        ],
+        "goal_ref": "view.75d409503fb2f7f3c5e7",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/10",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.383525062592346,
+          0.2092046457769317,
+          0.2312182287610808
+        ],
+        "position_error_m": 0.029434702354340245,
+        "heading_error_rad": 0.014257084823153632,
+        "measured_translation_m": 0.8311003885322351,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/13",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 24797273502359,
+        "last_ns": 24798793532881,
+        "sample_count": 77,
+        "sensor_stamp_ns": 161620000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.26053765465918693,
+          0.22602491306572373,
+          0.11633331354382694
+        ],
+        "start_pose": [
+          -0.41023341673364916,
+          0.19683268062375833,
+          0.24547531358423444
+        ],
+        "goal_ref": "view.128061f85a8e11d47acf",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/13",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.23349036891295916,
+          0.23091926225133252,
+          0.10244911649525917
+        ],
+        "position_error_m": 0.027486547986037932,
+        "heading_error_rad": 0.013884197048567762,
+        "measured_translation_m": 0.1525155979498482,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    }
+  ],
+  "physical_owner": [
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/4",
+      "pin": {
+        "binding": "sha256:11433bef64afa05519b3f9ef5f963d9a6e9518bb4bf78922190d856b10b2380b",
+        "class": "physical",
+        "content_digest": "sha256:61f724c025bb1204ee6175e11ffc5cd664cd5e2a19a7e601981258dc2042247d",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "fixed-cal-a50373b8ec464da8/step/4",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.4.5"
+      },
+      "args": {
+        "goal_ref": "view.99b05747a2caa2bcf5cb"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 24712696617334,
+        "last_ns": 24714197099128,
+        "sample_count": 76,
+        "sensor_stamp_ns": 77035000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.5182744015921208,
+          -0.1557293121195388,
+          -0.2370906711719663
+        ],
+        "start_pose": [
+          1.9349562365512476e-20,
+          3.797428235475538e-17,
+          -1.0178034054103867e-19
+        ],
+        "goal_ref": "view.99b05747a2caa2bcf5cb",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/4",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.543137991819247,
+          -0.13638592978220151,
+          -0.2516658404407839
+        ],
+        "position_error_m": 0.03150181834800747,
+        "heading_error_rad": 0.014575169268817578,
+        "measured_translation_m": 0.5411653850708632,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    },
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/7",
+      "pin": {
+        "binding": "sha256:11433bef64afa05519b3f9ef5f963d9a6e9518bb4bf78922190d856b10b2380b",
+        "class": "physical",
+        "content_digest": "sha256:61f724c025bb1204ee6175e11ffc5cd664cd5e2a19a7e601981258dc2042247d",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "fixed-cal-a50373b8ec464da8/step/7",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.4.5"
+      },
+      "args": {
+        "goal_ref": "view.af9a3bbce01e06b6314c"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 24746513409920,
+        "last_ns": 24748013536856,
+        "sample_count": 76,
+        "sensor_stamp_ns": 110840000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -1.2176120378121134,
+          -0.00031604000072338513,
+          0.1581680791103459
+        ],
+        "start_pose": [
+          -0.5182744015921208,
+          -0.1557293121195388,
+          -0.2370906711719663
+        ],
+        "goal_ref": "view.af9a3bbce01e06b6314c",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/7",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -1.243344791870261,
+          -0.007834318485860511,
+          0.172435470247775
+        ],
+        "position_error_m": 0.026808564728406963,
+        "heading_error_rad": 0.014267391137429114,
+        "measured_translation_m": 0.7163982234654436,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    },
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/10",
+      "pin": {
+        "binding": "sha256:11433bef64afa05519b3f9ef5f963d9a6e9518bb4bf78922190d856b10b2380b",
+        "class": "physical",
+        "content_digest": "sha256:61f724c025bb1204ee6175e11ffc5cd664cd5e2a19a7e601981258dc2042247d",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "fixed-cal-a50373b8ec464da8/step/10",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.4.5"
+      },
+      "args": {
+        "goal_ref": "view.75d409503fb2f7f3c5e7"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 24774728463857,
+        "last_ns": 24776228868491,
+        "sample_count": 76,
+        "sensor_stamp_ns": 139055000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.41023341673364916,
+          0.19683268062375833,
+          0.24547531358423444
+        ],
+        "start_pose": [
+          -1.2176120378121134,
+          -0.00031604000072338513,
+          0.1581680791103459
+        ],
+        "goal_ref": "view.75d409503fb2f7f3c5e7",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/10",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.383525062592346,
+          0.2092046457769317,
+          0.2312182287610808
+        ],
+        "position_error_m": 0.029434702354340245,
+        "heading_error_rad": 0.014257084823153632,
+        "measured_translation_m": 0.8311003885322351,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    },
+    {
+      "operation_id": "fixed-cal-a50373b8ec464da8/step/13",
+      "pin": {
+        "binding": "sha256:11433bef64afa05519b3f9ef5f963d9a6e9518bb4bf78922190d856b10b2380b",
+        "class": "physical",
+        "content_digest": "sha256:61f724c025bb1204ee6175e11ffc5cd664cd5e2a19a7e601981258dc2042247d",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "fixed-cal-a50373b8ec464da8/step/13",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.4.5"
+      },
+      "args": {
+        "goal_ref": "view.128061f85a8e11d47acf"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 24797273502359,
+        "last_ns": 24798793532881,
+        "sample_count": 77,
+        "sensor_stamp_ns": 161620000000,
+        "sensor_clock_id": "gazebo_sim",
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.26053765465918693,
+          0.22602491306572373,
+          0.11633331354382694
+        ],
+        "start_pose": [
+          -0.41023341673364916,
+          0.19683268062375833,
+          0.24547531358423444
+        ],
+        "goal_ref": "view.128061f85a8e11d47acf",
+        "operation_id": "fixed-cal-a50373b8ec464da8/step/13",
+        "boot_id": "b8aaf2e1-b3c8-410b-b1b7-4fa3c2864358",
+        "epoch": 8,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.23349036891295916,
+          0.23091926225133252,
+          0.10244911649525917
+        ],
+        "position_error_m": 0.027486547986037932,
+        "heading_error_rad": 0.013884197048567762,
+        "measured_translation_m": 0.1525155979498482,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    }
+  ],
+  "passed": true,
+  "board_placement_witnessed": true
+}

@@ -1,0 +1,10 @@
+# Standalone project for an additional native-frame, receive-only LiDAR stream.
+# Set EDGE_CAL_LIVOX_IP, ID and FRAME for this sensor in its deployment environment.
+services:
+  passive-source:
+    extends:
+      file: compose.calibration-passive-livox.yaml
+      service: calibration-passive-livox
+    restart: unless-stopped
+    environment:
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST

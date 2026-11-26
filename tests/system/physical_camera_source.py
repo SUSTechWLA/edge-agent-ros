@@ -43,17 +43,20 @@ def main():
             msg.data = bytes((seq+i) % 256 for i in range(128))
             digest = "sha256:" + hashlib.sha256(frame_bytes(msg)).hexdigest()
             stamp = msg.header.stamp.sec * 10**9 + msg.header.stamp.nanosec
-            readers = [bytes(endpoint.endpoint_gid).hex() for endpoint in node.get_subscriptions_info_by_topic(topic)
-                       if endpoint.node_name == "edge_physical_camera"]
+            endpoints = node.get_subscriptions_info_by_topic(topic)
             with db:
-                db.execute("INSERT OR IGNORE INTO frames VALUES(?,?,?,?,?,?,?)",
-                           (digest,source,msg.header.frame_id,stamp,msg.width,msg.height,hashlib.sha256(bytes(msg.data)).hexdigest()))
-                db.execute("DELETE FROM frames WHERE rowid <= (SELECT max(rowid)-1200 FROM frames)")
                 db.execute("INSERT OR REPLACE INTO heartbeat VALUES(1,?,?)",(source,time.monotonic_ns()))
-                for gid in readers:
-                    db.execute("""INSERT INTO readers VALUES(?,?,?,1) ON CONFLICT(gid)
-                        DO UPDATE SET last_stamp=excluded.last_stamp,offered_frames=offered_frames+1""",(gid,stamp,stamp))
-            pub.publish(msg)
+                # A one-shot subscriber can receive a frame and disappear between graph samples.
+                # Offer a sample only after observing the camera; record every reader on this topic.
+                if any(endpoint.node_name == "edge_physical_camera" for endpoint in endpoints):
+                    db.execute("INSERT OR IGNORE INTO frames VALUES(?,?,?,?,?,?,?)",
+                               (digest,source,msg.header.frame_id,stamp,msg.width,msg.height,hashlib.sha256(bytes(msg.data)).hexdigest()))
+                    db.execute("DELETE FROM frames WHERE rowid <= (SELECT max(rowid)-1200 FROM frames)")
+                    for endpoint in endpoints:
+                        gid = bytes(endpoint.endpoint_gid).hex()
+                        db.execute("""INSERT INTO readers VALUES(?,?,?,1) ON CONFLICT(gid)
+                            DO UPDATE SET last_stamp=excluded.last_stamp,offered_frames=offered_frames+1""",(gid,stamp,stamp))
+                    pub.publish(msg)
             rclpy.spin_once(node,timeout_sec=.10)
     finally:
         db.close()

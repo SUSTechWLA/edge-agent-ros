@@ -1,0 +1,49 @@
+{
+  "robot_id": "synthetic-four-hole-dds",
+  "environment": "simulation",
+  "clock_domain": "dds_synthetic_one_clock",
+  "camera": {
+    "id": "camera",
+    "serial": "gz-rgbd",
+    "frame": "rgbd_optical",
+    "topic": "/calibration/rgbd/image",
+    "info_topic": "/calibration/rgbd/camera_info"
+  },
+  "lidars": [
+    {
+      "id": "lidar_left",
+      "serial": "gz-lidar-left",
+      "frame": "lidar_left",
+      "topic": "/calibration/lidar_left/points"
+    },
+    {
+      "id": "lidar_right",
+      "serial": "gz-lidar-right",
+      "frame": "lidar_right",
+      "topic": "/calibration/lidar_right/points"
+    }
+  ],
+  "max_skew_ns": 25000000,
+  "solver": {
+    "camera_frame": "rgbd_optical",
+    "lidar_frames": {
+      "lidar_left": "lidar_left",
+      "lidar_right": "lidar_right"
+    },
+    "four_hole_board": {
+      "confirmed": true,
+      "board_id": "synthetic-metric-four-hole",
+      "marker_size_m": 0.2,
+      "marker_spacing_m": [
+        1.1,
+        0.7
+      ],
+      "hole_spacing_m": [
+        0.5,
+        0.4
+      ],
+      "hole_diameter_m": 0.24
+    }
+  },
+  "calibration_method": "four_hole_board"
+}

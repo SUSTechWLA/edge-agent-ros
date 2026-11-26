@@ -96,6 +96,7 @@ services:
         COPY client client
         COPY console console
         COPY perception perception
+        COPY navigation navigation
         COPY calibration calibration
         COPY exploration exploration
         ENV PYTHONPATH=/opt/edge
@@ -138,6 +139,20 @@ services:
       - ${EDGE_PLUGINS_DIR:-./plugins}:/etc/edge/plugins:ro
       - ${EDGE_CONTRACTS_DIR:-./contracts}:/etc/edge/contracts:ro
     command: ["python3", "/opt/edge/agent/service.py", "--ros-args", "-r", "/odom:=${EDGE_ODOM_TOPIC:-/odom}"]
+  task-facts:
+    image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
+    pull_policy: never
+    network_mode: host
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    entrypoint: ["python3", "-B", "/opt/edge/agent/facts_server.py"]
+    environment:
+      EDGE_FACTS_BIND: 127.0.0.1
+      EDGE_FACTS_PORT: ${EDGE_FACTS_PORT:-8091}
+    volumes:
+      - task-state:/var/lib/edge-tasks:ro
   console:
     <<: *runtime
     restart: unless-stopped
@@ -146,6 +161,11 @@ services:
       EDGE_HTTP_BIND: 127.0.0.1
       EDGE_HTTP_PORT: ${EDGE_CONSOLE_PORT:-8765}
       EDGE_AGENT_URL: http://127.0.0.1:8090
+      EDGE_JOURNAL_SOURCES: >-
+        {"plugin.author":"/var/lib/edge-author-events/module-events.sqlite",
+         "plugin.publisher":"/etc/edge/plugins/derived/.history/module-events.sqlite",
+         "plugin.manager":"/etc/edge/plugins/runtime/.history/module-events.sqlite",
+         "plugin.supervisor":"/var/lib/edge-supervisor/module-events.sqlite"}
       EDGE_ENVIRONMENT: hardware
       EDGE_TELEMETRY_RETENTION_DAYS: ${EDGE_TELEMETRY_RETENTION_DAYS:-7}
       EDGE_TELEMETRY_MAX_SAMPLES: ${EDGE_TELEMETRY_MAX_SAMPLES:-10080}
@@ -160,7 +180,6 @@ services:
       EDGE_SCAN_MOUNT: '{"x":${EDGE_LIDAR_X:-0.0},"y":${EDGE_LIDAR_Y:-0.0},"z":${EDGE_LIDAR_Z:-0.0},"yaw":${EDGE_LIDAR_YAW:-0.0}}'
     volumes:
       - state:/var/lib/edge-agent:ro
-      - task-state:/var/lib/edge-tasks:ro
       - author-events:/var/lib/edge-author-events:ro
       - supervisor-state:/var/lib/edge-supervisor:ro
       - module-sources:/var/lib/edge-module-sources:ro

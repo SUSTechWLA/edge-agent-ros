@@ -210,3 +210,15 @@ git diff --check
 ```
 
 系统测试原始结果保存在 `.ci-results/system/runs/<运行ID>/summary.json` 及同目录日志；将必要的可分发摘要留在 `docs/testing/`、`docs/evidence/`，并由 SDD 引用。不要提交凭据、真实现场数据库、完整私有模型提示或无关大型日志。完整交付物应让下一位开发者从需求定位代码，从失败事件定位具体版本，再用原样本复现和验证修复。[贡献流程](../CONTRIBUTING.md)
+
+### 在本机验证只读提供者
+
+从仓库根目录运行以下命令。它在空闲的回环端口启动 `track_distance`，按样例中的独立期望值检查回执，并在强制结束和重新启动该测试进程后，以原操作号查验结果。
+
+```sh
+python3 -m edge_contracts.conformance --manifest examples/track-distance/tool.json \
+  --url http://127.0.0.1:18125/invoke --cases examples/track-distance/cases.json \
+  --process python3 -B examples/track-distance/provider.py --port 18125
+```
+
+对已运行的只读提供者，省略 `--process` 可检查健康响应、同一操作的重投、错误版本、非法参数，以及调用方收到超时后的恢复。报告中的 `status=partial` 和 `checks.lifecycle.status=not_run` 表示尚未验证进程重启；托管进程通过全部检查后为 `status=passed`。协议只接受 `effect=read`，录制的启动和结束通过独立的录制验收运行。离线分析的输入与示例见[公开导出的分析工具](../analysis/README.md)。

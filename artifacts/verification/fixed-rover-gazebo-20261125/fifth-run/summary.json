@@ -1,0 +1,583 @@
+{
+  "task_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+  "terminal": "SUCCEEDED",
+  "detail": "已取得步骤证据",
+  "model": "ollama/qwen3:4b-instruct",
+  "actual_pose_changed": true,
+  "independent_final_stop": true,
+  "start_pose": {
+    "world": "fixed_calibration",
+    "model": "lingao",
+    "source": "/world/fixed_calibration/pose/info",
+    "position_m": [
+      1.9349562365512476e-20,
+      3.797428235475538e-17,
+      -9.049070884281641e-10
+    ],
+    "rotation_xyzw": [
+      3.696132971856072e-11,
+      -7.203308756017837e-20,
+      -5.0890170267856895e-20,
+      1.0
+    ],
+    "stamp_ns": 340460000000,
+    "received_unix_ns": 1795601330386543900,
+    "board": {
+      "id": 10,
+      "position_m": [
+        0.0,
+        4.0,
+        0.5
+      ],
+      "rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "stop_pose": {
+    "world": "fixed_calibration",
+    "model": "lingao",
+    "source": "/world/fixed_calibration/pose/info",
+    "position_m": [
+      -1.2000436882423158,
+      0.6508630812745109,
+      -9.00059697257316e-08
+    ],
+    "rotation_xyzw": [
+      -8.891376988277919e-18,
+      -7.627951250356842e-18,
+      -0.06997045631049013,
+      0.997549064078405
+    ],
+    "stamp_ns": 873990000000,
+    "received_unix_ns": 1795601865169710800,
+    "board": {
+      "id": 10,
+      "position_m": [
+        3.1,
+        0.0,
+        0.5
+      ],
+      "rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "world_epoch_changed": false,
+  "stop_world_window_s": 1.33,
+  "source_model": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "capture": {
+    "captures": [
+      {
+        "manifest": "afbdd40cb442fff7896576ec2e9398723f76f11753902b812a9eb08f5ccb969c",
+        "operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/3",
+        "observation_id": "467600000000",
+        "frame_count": 4,
+        "video_sha256": "430c0d72746394b9524e391569f3ddd5c5b2dddfc1f27688afb00edefb647707"
+      },
+      {
+        "manifest": "3cbf9c3148cfc33b2bbaded39f4b77d2dc6a387801e5fd5fb1a4ccac28154898",
+        "operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/7",
+        "observation_id": "572000000000",
+        "frame_count": 4,
+        "video_sha256": "e92f3851d5812ba6842f5feb34fc57bf66001bc7a5a9c5bc50dd9f498539e938"
+      },
+      {
+        "manifest": "7e48beecca21bc9465900ef4eafe264109d7cff59bfc537a6ddb88ade9d3b33e",
+        "operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/11",
+        "observation_id": "672000000000",
+        "frame_count": 4,
+        "video_sha256": "e097a4e2c70ba0a234c4b6dbcff9f1120de1263ea209b5fbcb762ca9c57c0233"
+      },
+      {
+        "manifest": "e7295006e00e2ea2017884ffca6862b5be69cb940fc33d6eee0bbdb0c86f75e3",
+        "operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/16",
+        "observation_id": "771200000000",
+        "frame_count": 4,
+        "video_sha256": "fc53be38ec1d324cd9e8b2bac4354512d6d2a95006daf0b820ea57ed37fdb134"
+      },
+      {
+        "manifest": "497097aaf3f1d2f7fbf150947b49071cea4fb98171e853e0c7c47d640446561e",
+        "operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/21",
+        "observation_id": "861200000000",
+        "frame_count": 4,
+        "video_sha256": "f2680210dd1fba50f239be8ae37e8404185b279db792f92cd99a63ad88d28fa7"
+      }
+    ],
+    "files": {
+      "1420a4cd26e5dafc3a95fd538da5ec8a86e0e682a7b7931a601305adf88353c3.npz": 764308,
+      "365c670caecbbd8256d18f7c63b01d3d442662aa9790156c952b0ca49c6a1ee0.npz": 746432,
+      "3860f0b3b4d4dfb73fedc1e10424cba11ab13a53d2c3d02e1dc66b979280426b.npz": 766087,
+      "3cbf9c3148cfc33b2bbaded39f4b77d2dc6a387801e5fd5fb1a4ccac28154898.json": 8584,
+      "3e4a6c368e2348f9ebae53cb5f80cc9f6947489d88ef3fa50dfcb6d8c4e739a7.npz": 753848,
+      "430c0d72746394b9524e391569f3ddd5c5b2dddfc1f27688afb00edefb647707.avi": 59352,
+      "482a5f6a847ec87dcf61f0b5b37d2a15205a6c4b206fbe202a444d74386eda1b.npz": 759097,
+      "497097aaf3f1d2f7fbf150947b49071cea4fb98171e853e0c7c47d640446561e.json": 8535,
+      "4bf79b97d51e885b30b33e84ff4d75a6764b63a11ec549dcac9fdbc8ffa771b6.npz": 759097,
+      "50e5583d77f527aef5121839406071972a1092ef8a7c577f8e943b751910c331.npz": 764309,
+      "5d4a80bb2bf41ab467dfc249d17db6187dabc0168320204cfffab0d772ffe129.npz": 746437,
+      "7e48beecca21bc9465900ef4eafe264109d7cff59bfc537a6ddb88ade9d3b33e.json": 8559,
+      "81c71e3c05283b0afd1f2b621423c6e9a16df4e492d420ae13a7743e07d0e2a9.npz": 766088,
+      "9c6d7e4fddc110386009465b3aa8cbe375dc8a1c148758a0552a24d70ec932f1.npz": 764306,
+      "9dc647817690522ad4fe3736e5df0c851837fe7404b66015a25c80637beb8106.npz": 746431,
+      "a10944e1bd15d3a88163231305d8a60698fce274f4a6027a7188b43476a6952f.npz": 753848,
+      "afbdd40cb442fff7896576ec2e9398723f76f11753902b812a9eb08f5ccb969c.json": 8582,
+      "b4520f6e82e07ffc28991c0c0dd579048f98fa6ffe56a1045c15a09e3be48e39.npz": 746434,
+      "ba4015485b1132549b14188937c54e82ba576c4371697680de29a73191445005.npz": 766085,
+      "bdf41a20996ad9470e11e8c9021d70f041181cb134333ba12143bac58c99e20a.npz": 764308,
+      "d76fb699427ff581223382528f18072d6705fed9150828a6e325dc5e1d14a609.npz": 753845,
+      "dc5ab0d6b23a8edcd581463ad768e95f307c8cd82dd5dd4a7b8fe624d1703227.npz": 753844,
+      "dfcb8934d6690e3c22f3bcd56a8e3a50acc037dfebaf5c7268e4229746fe7a2c.npz": 759095,
+      "e097a4e2c70ba0a234c4b6dbcff9f1120de1263ea209b5fbcb762ca9c57c0233.avi": 53752,
+      "e7295006e00e2ea2017884ffca6862b5be69cb940fc33d6eee0bbdb0c86f75e3.json": 8573,
+      "e92f3851d5812ba6842f5feb34fc57bf66001bc7a5a9c5bc50dd9f498539e938.avi": 56728,
+      "efd34241038b50ea736eb9a8eb9bdec6a2d85452050ffd42a58bc376a4427263.npz": 759094,
+      "f2680210dd1fba50f239be8ae37e8404185b279db792f92cd99a63ad88d28fa7.avi": 49056,
+      "fc53be38ec1d324cd9e8b2bac4354512d6d2a95006daf0b820ea57ed37fdb134.avi": 52712,
+      "fd42fecef9a29e34cbe0973fd08807f0d5250aba5e7ee552556696982da52848.npz": 766086
+    },
+    "revision": "496d9ed58425045cfa1e888a33382f401d361334a63268b0e518e13cc9c5d433",
+    "training_ids": [
+      "467600000000",
+      "572000000000",
+      "672000000000"
+    ],
+    "holdout_ids": [
+      "771200000000",
+      "861200000000"
+    ],
+    "transforms": {
+      "front": {
+        "child_frame": "front_mid360",
+        "fit": {
+          "count": 3,
+          "max_angle_deg": 1.4674214202109999,
+          "max_hole_error_m": 0.009186268219459545,
+          "max_plane_distance_m": 0.006705347396767536,
+          "rms_hole_error_m": 0.00697064589661863,
+          "rms_plane_distance_m": 0.005342881280455148
+        },
+        "initializer": "plane_anchors",
+        "parent_frame": "camera_color_optical_frame",
+        "rotation_xyzw": [
+          0.3009115785185969,
+          -0.29741561842823716,
+          0.640307229459904,
+          0.6410950192676412
+        ],
+        "translation_m": [
+          -0.02061196342075388,
+          0.19782168126580885,
+          0.04723423850067476
+        ],
+        "validation": {
+          "count": 2,
+          "max_angle_deg": 1.0723160103244977,
+          "max_hole_error_m": 0.009691747108603387,
+          "max_plane_distance_m": 0.004257379713052067,
+          "rms_hole_error_m": 0.005907016973750534,
+          "rms_plane_distance_m": 0.003277027530208077
+        }
+      }
+    }
+  },
+  "mount_errors": {
+    "front": {
+      "translation_m": 0.020846820626755573,
+      "rotation_deg": 0.29235708997404597,
+      "within_limits": true
+    }
+  },
+  "physical_steps": [
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 29460969197736,
+        "last_ns": 29462469491712,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.2647855675685627,
+          0.020925768860952532,
+          -0.15271814457240843
+        ],
+        "start_pose": [
+          1.9349562365512476e-20,
+          3.797428235475538e-17,
+          -1.0178034054103867e-19
+        ],
+        "goal_ref": "view.f8f21376fd3f209859e5",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.2908862959264639,
+          0.026757607954317964,
+          -0.13926500000000003
+        ],
+        "position_error_m": 0.02674431468600111,
+        "heading_error_rad": 0.013453144572408399,
+        "measured_translation_m": 0.26561115299442506,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 29562010604929,
+        "last_ns": 29563510734195,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.5587561314695203,
+          -0.07958415003900321,
+          0.1437630101071075
+        ],
+        "start_pose": [
+          -0.2647855675685627,
+          0.020925768860952532,
+          -0.15271814457240843
+        ],
+        "goal_ref": "view.d434b521ac86281772f1",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.5848606057173988,
+          -0.08824001215437371,
+          0.15810518876092497
+        ],
+        "position_error_m": 0.027502136730051724,
+        "heading_error_rad": 0.014342178653817483,
+        "measured_translation_m": 0.310678187579242,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 29661272759205,
+        "last_ns": 29662792392109,
+        "sample_count": 77,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.8819823835691291,
+          0.126282474542653,
+          -0.1538525626834293
+        ],
+        "start_pose": [
+          -0.5587561314695203,
+          -0.07958415003900321,
+          0.1437630101071075
+        ],
+        "goal_ref": "view.1106caa933c465980a3b",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.90623309478761,
+          0.13840661616253297,
+          -0.16706032322622585
+        ],
+        "position_error_m": 0.027112576502816274,
+        "heading_error_rad": 0.013207760542796543,
+        "measured_translation_m": 0.38321831527603745,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    },
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19",
+      "verified": true,
+      "provider": "navigation.pose_executor",
+      "verifier": "navigation.pose_witness",
+      "proof": {
+        "first_ns": 29751696719360,
+        "last_ns": 29753196765787,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -1.2000436882423158,
+          0.6508630812745109,
+          -0.1400553535603536
+        ],
+        "start_pose": [
+          -0.8819823835691291,
+          0.126282474542653,
+          -0.1538525626834293
+        ],
+        "goal_ref": "view.4acd2db2a84322422ef5",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -1.2153876524773046,
+          0.6736687781980973,
+          -0.1538525626834293
+        ],
+        "position_error_m": 0.027487034227342506,
+        "heading_error_rad": 0.013797209123075721,
+        "measured_translation_m": 0.6134719280371139,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      }
+    }
+  ],
+  "physical_owner": [
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5",
+      "pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1"
+      },
+      "args": {
+        "goal_ref": "view.f8f21376fd3f209859e5"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 29460969197736,
+        "last_ns": 29462469491712,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.2647855675685627,
+          0.020925768860952532,
+          -0.15271814457240843
+        ],
+        "start_pose": [
+          1.9349562365512476e-20,
+          3.797428235475538e-17,
+          -1.0178034054103867e-19
+        ],
+        "goal_ref": "view.f8f21376fd3f209859e5",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.2908862959264639,
+          0.026757607954317964,
+          -0.13926500000000003
+        ],
+        "position_error_m": 0.02674431468600111,
+        "heading_error_rad": 0.013453144572408399,
+        "measured_translation_m": 0.26561115299442506,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    },
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9",
+      "pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1"
+      },
+      "args": {
+        "goal_ref": "view.d434b521ac86281772f1"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 29562010604929,
+        "last_ns": 29563510734195,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.5587561314695203,
+          -0.07958415003900321,
+          0.1437630101071075
+        ],
+        "start_pose": [
+          -0.2647855675685627,
+          0.020925768860952532,
+          -0.15271814457240843
+        ],
+        "goal_ref": "view.d434b521ac86281772f1",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.5848606057173988,
+          -0.08824001215437371,
+          0.15810518876092497
+        ],
+        "position_error_m": 0.027502136730051724,
+        "heading_error_rad": 0.014342178653817483,
+        "measured_translation_m": 0.310678187579242,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    },
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14",
+      "pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1"
+      },
+      "args": {
+        "goal_ref": "view.1106caa933c465980a3b"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 29661272759205,
+        "last_ns": 29662792392109,
+        "sample_count": 77,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -0.8819823835691291,
+          0.126282474542653,
+          -0.1538525626834293
+        ],
+        "start_pose": [
+          -0.5587561314695203,
+          -0.07958415003900321,
+          0.1437630101071075
+        ],
+        "goal_ref": "view.1106caa933c465980a3b",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -0.90623309478761,
+          0.13840661616253297,
+          -0.16706032322622585
+        ],
+        "position_error_m": 0.027112576502816274,
+        "heading_error_rad": 0.013207760542796543,
+        "measured_translation_m": 0.38321831527603745,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    },
+    {
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19",
+      "pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1"
+      },
+      "args": {
+        "goal_ref": "view.4acd2db2a84322422ef5"
+      },
+      "state": "SUCCEEDED",
+      "reason": null,
+      "proof": {
+        "first_ns": 29751696719360,
+        "last_ns": 29753196765787,
+        "sample_count": 76,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "stop_pose": [
+          -1.2000436882423158,
+          0.6508630812745109,
+          -0.1400553535603536
+        ],
+        "start_pose": [
+          -0.8819823835691291,
+          0.126282474542653,
+          -0.1538525626834293
+        ],
+        "goal_ref": "view.4acd2db2a84322422ef5",
+        "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19",
+        "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+        "epoch": 1,
+        "frame_id": "world",
+        "axes": "x_forward_y_left_yaw_ccw",
+        "clock_id": "host_monotonic",
+        "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+        "target_pose": [
+          -1.2153876524773046,
+          0.6736687781980973,
+          -0.1538525626834293
+        ],
+        "position_error_m": 0.027487034227342506,
+        "heading_error_rad": 0.013797209123075721,
+        "measured_translation_m": 0.6134719280371139,
+        "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+      },
+      "settled": true
+    }
+  ],
+  "passed": true,
+  "board_placement_witnessed": true
+}

@@ -1,0 +1,34 @@
+services:
+  console:
+    image: ${EDGE_CALIBRATION_IMAGE:-edge-rover-local:sdd058-dynamic-recovery}
+    init: true
+    environment:
+      EDGE_ROBOT_ID: gazebo-board-rig
+      EDGE_ENVIRONMENT: simulation
+      EDGE_AGENT_URL: http://agent:8090
+      EDGE_PLUGIN_DIR: /opt/edge/calibration-console-plugins
+      EDGE_CALIBRATION_URL: http://calibration-session:8141
+      ROS_DOMAIN_ID: "198"
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      EDGE_TELEMETRY_MAX_MB: "${EDGE_TELEMETRY_MAX_MB:-128}"
+    ports: ["${EDGE_CALIBRATION_CONSOLE_BIND:-127.0.0.1}:${EDGE_CALIBRATION_CONSOLE_PORT:-8911}:8080"]
+    volumes:
+      - ./console:/opt/edge/console:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./calibration/station/console-plugins:/opt/edge/calibration-console-plugins:ro
+      - calibration-history:/var/lib/edge-console
+    command: ["python3", "/opt/edge/console/server/main.py"]
+  session:
+    image: ${EDGE_CALIBRATION_IMAGE:-edge-rover-local:sdd058-dynamic-recovery}
+    init: true
+    environment:
+      EDGE_SESSION_SOURCE: http://console:8080
+    volumes:
+      - ./sessions_plugin:/opt/edge/sessions_plugin:ro
+      - ./agent:/opt/edge/agent:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - calibration-session-journal:/var/lib/edge-session
+    command: ["python3", "/opt/edge/sessions_plugin/provider.py"]
+volumes:
+  calibration-history:
+  calibration-session-journal:

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "lingao.chassis.attended",
+  "source": "docs/evidence/lingao-chassis-commissioning-20261125.md",
+  "axes": "x_forward_y_left_yaw_ccw",
+  "command": {"topic":"/cmd_vel","type":"geometry_msgs/msg/Twist","linear_component":"linear.x","angular_component":"angular.z","linear_unit":"m/s","angular_unit":"rad/s"},
+  "selected": {"topic":"/mode_mux/selected_cmd_vel","type":"geometry_msgs/msg/Twist"},
+  "safe": {"topic":"/cmd_vel_safe","type":"geometry_msgs/msg/Twist"},
+  "odometry": {"topic":"/lingao/odom","type":"nav_msgs/msg/Odometry","parent_frame":"odom","child_frame":"base_foot"},
+  "stop": {"topic":"/stop_cmd_vel","type":"std_msgs/msg/String","latch_value":"stop"},
+  "command_limits": {"forward_mps":0.10,"yaw_radps":0.12},
+  "stationary_seconds": 1.5,
+  "measured_operations": ["forward","in_place_left_turn","software_stop"]
+}

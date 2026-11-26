@@ -45,6 +45,24 @@ class CampusDeployment(unittest.TestCase):
             self.assertTrue(mounted["read_only"])
             self.assertEqual(mounted["source"],"campus-world")
 
+    def test_console_reads_the_original_hub_ledger_while_admission_is_closed(self):
+        self.assertNotIn("campus-task-facts", self.normal["services"])
+        self.assertIn("campus-task-facts", SERVICES)  # Otherwise reload stops it as an extra.
+        services = self.campus["services"]
+        reader = services["campus-task-facts"]
+        self.assertIn("campus-task-facts", services["console"]["depends_on"])
+        self.assertEqual(services["console"]["environment"]["EDGE_FACTS_URL"], "http://campus-task-facts:8091")
+        self.assertEqual(reader["entrypoint"], ["python3","-B","/opt/edge/agent/facts_server.py"])
+        self.assertTrue(reader["read_only"])
+        self.assertFalse(reader.get("ports"))
+        mount, = reader["volumes"]
+        hub = next(v for v in services["agent"]["volumes"] if v["target"] == "/var/lib/edge-tasks")
+        self.assertEqual((mount["type"], mount["source"], mount["target"]),
+                         (hub["type"], hub["source"], hub["target"]))
+        self.assertTrue(mount["read_only"])
+        self.assertFalse(hub.get("read_only", False))
+        self.assertNotIn("/var/lib/edge-tasks", [v["target"] for v in services["console"]["volumes"]])
+
     def test_fake_developer_model_registries_and_ports_do_not_cross_projects(self):
         active = self.campus["services"]
         self.assertNotIn("plugin-author",active)

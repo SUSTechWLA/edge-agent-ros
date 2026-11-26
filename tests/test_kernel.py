@@ -110,6 +110,35 @@ else:
             self.assertEqual((durable["status"], durable["operation_id"], durable["verification"]), ("RUNNING", op, {}))
             self.assertEqual([row["kind"] for row in journal.event_page("receipt")[0]], ["accepted", "dispatch"])
 
+    def test_incremental_planned_event_omits_prior_step_evidence_bloat(self):
+        with tempfile.TemporaryDirectory() as temp, open_ledger(Path(temp)) as journal:
+            task = journal.create("cal-inc", "标定")
+            step1 = {"tool": "plan_capture_views", "version": "5", "args": {}, "status": "PENDING"}
+            task["steps"] = [step1]
+            journal.save(task, "RUNNING", "已验证计划", kind="planned")
+            first_ev = json.loads(journal.event_page("cal-inc")[0][-1]["payload"])
+            self.assertEqual(len(first_ev["steps"]), 1)
+            self.assertEqual(first_ev["steps"][0]["tool"], "plan_capture_views")
+            # Simulate step 1 completing with a large evidence blob, then incremental step 2 planned.
+            task["steps"][0].update(status="SUCCEEDED", operation_id="cal-inc/step/1",
+                                    evidence={"view_options": [{"ref": f"v{i}", "data": "x"*200} for i in range(10)]},
+                                    verification={"required": False}, physical_cap={"id": "x"})
+            task["cursor"] = 1
+            step2 = {"tool": "move_to_pose", "version": "1.4.4", "args": {"goal_ref": "view.01"}, "status": "PENDING",
+                     "physical_cap": {"id": "move_to_pose"}}
+            task["steps"].append(step2)
+            journal.save(task, "RUNNING", "已验证计划", kind="planned")
+            second_ev = json.loads(journal.event_page("cal-inc")[0][-1]["payload"])
+            self.assertEqual(len(second_ev["steps"]), 2)
+            self.assertNotIn("evidence", second_ev["steps"][0])
+            self.assertNotIn("verification", second_ev["steps"][0])
+            self.assertNotIn("physical_cap", second_ev["steps"][0])
+            self.assertEqual(second_ev["steps"][0]["status"], "SUCCEEDED")
+            self.assertEqual(second_ev["steps"][1]["tool"], "move_to_pose")
+            self.assertIn("physical_cap", second_ev["steps"][1])
+            # Authoritative task record keeps full evidence intact.
+            self.assertIn("view_options", journal.get("cal-inc")["steps"][0]["evidence"])
+
 
 if __name__ == "__main__":
     unittest.main()

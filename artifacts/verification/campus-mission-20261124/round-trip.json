@@ -1,0 +1,141 @@
+{
+  "passed": true,
+  "project": "edge-campus-teaching-1124",
+  "topic": "/ground_truth",
+  "console": "http://127.0.0.1:8876",
+  "views": {
+    "campus_2d": "http://127.0.0.1:8873/?view=2d",
+    "campus_3d": "http://127.0.0.1:8873/?view=3d&place=teaching",
+    "overview": "http://127.0.0.1:8880/",
+    "recording": "/#review"
+  },
+  "tasks": [
+    {
+      "id": "teaching-1124-outbound-01",
+      "text": "前往教学楼门外",
+      "tool": "navigate_place",
+      "scene_ref": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+      "mission_id": "teaching-1124-outbound-01/step/1",
+      "trace_id": "teaching-1124-outbound-01",
+      "provider": "local",
+      "goal_world_xy": [
+        3.3,
+        0.0
+      ],
+      "waypoint_count": 3,
+      "paths": {
+        "odom": {
+          "samples": 136,
+          "initial": [
+            102238000000,
+            -0.0,
+            -0.0,
+            0.0
+          ],
+          "gate": [
+            108766000000,
+            1.6301,
+            -0.0,
+            0.0854
+          ],
+          "stop": [
+            116008000000,
+            3.2482,
+            0.0,
+            0.0
+          ],
+          "goal_error_m": 0.051799999999999624,
+          "path_length_m": 3.2482
+        },
+        "truth": {
+          "samples": 136,
+          "initial": [
+            102238000000,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gate": [
+            108766000000,
+            1.6232,
+            0.0,
+            0.0854
+          ],
+          "stop": [
+            116008000000,
+            3.2346,
+            0.0,
+            0.0
+          ],
+          "goal_error_m": 0.0653999999999999,
+          "path_length_m": 3.2346
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "teaching-1124-home-01",
+      "text": "回到教学楼门厅",
+      "tool": "navigate_place",
+      "scene_ref": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+      "mission_id": "teaching-1124-home-01/step/1",
+      "trace_id": "teaching-1124-home-01",
+      "provider": "local",
+      "goal_world_xy": [
+        0.0,
+        0.0
+      ],
+      "waypoint_count": 3,
+      "paths": {
+        "odom": {
+          "samples": 161,
+          "initial": [
+            116212000000,
+            3.2482,
+            0.0,
+            0.0
+          ],
+          "gate": [
+            125902000000,
+            1.6706,
+            0.0002,
+            0.32
+          ],
+          "stop": [
+            132532000000,
+            0.0535,
+            0.0001,
+            0.0
+          ],
+          "goal_error_m": 0.053500093457862295,
+          "path_length_m": 3.1976464029736817
+        },
+        "truth": {
+          "samples": 161,
+          "initial": [
+            116212000000,
+            3.2346,
+            0.0,
+            0.0
+          ],
+          "gate": [
+            125800000000,
+            1.7032,
+            -0.0161,
+            0.32
+          ],
+          "stop": [
+            132532000000,
+            0.0535,
+            -0.0288,
+            0.0
+          ],
+          "goal_error_m": 0.060759279126730924,
+          "path_length_m": 3.1844903568799117
+        }
+      },
+      "passed": true
+    }
+  ],
+  "final": "teaching_lobby"
+}

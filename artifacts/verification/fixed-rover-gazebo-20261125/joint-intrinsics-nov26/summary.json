@@ -1,0 +1,57 @@
+{
+  "task_id": "a76f63af-ec45-48cb-aa12-094244760887",
+  "terminal": "SUCCEEDED",
+  "provider": "ollama/qwen3:4b-instruct",
+  "steps": 22,
+  "rover_start": [
+    1.9349562365512476e-20,
+    3.797428235475538e-17,
+    -9.049070884281641e-10
+  ],
+  "rover_stop": [
+    1.9349562365512476e-20,
+    3.797428235475538e-17,
+    -9.049070884281641e-10
+  ],
+  "operator_poses": 10,
+  "passed": true,
+  "revision": "aa306a0d91463ec1c3d9b065469034f7ccef3ffd43364f08e4d6748359cd84c5",
+  "training": 7,
+  "holdout": 3,
+  "rgb": {
+    "camera_fit_ready": true,
+    "covered_cells": [
+      "bottom_center",
+      "bottom_left",
+      "bottom_right",
+      "middle_center",
+      "middle_left",
+      "middle_right",
+      "top_center",
+      "top_left",
+      "top_right"
+    ],
+    "holdout_count": 3,
+    "missing_cells": [],
+    "next_pose": "holdout",
+    "paired_fit": 6,
+    "paired_holdout": 3,
+    "pitch_deg": [
+      -17.5,
+      30.2
+    ],
+    "roll_deg": [
+      -11.1,
+      10.6
+    ],
+    "train_count": 7
+  },
+  "extrinsic_mount_error": {
+    "translation_m": 0.034512595290894184,
+    "rotation_deg": 0.2544197521976788,
+    "within_limits": true
+  },
+  "intrinsic_rms_px": 0.9810378926733734,
+  "intrinsic_max_px": 2.4545148770479934,
+  "move_commands": []
+}

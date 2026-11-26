@@ -70,6 +70,24 @@ SDD-006 将候选落账后的恢复工作交给独立的验收线程。工具线
 
 `EDGE_TRACE_CONTENT=metadata` 可对新交互只保存摘要、大小和版本标识。任务工作库仍需保存原始目标和执行中的步骤，以支持重投去重和恢复。已存在的数据不随配置变化而被改写。分发归档和开发验证时应使用适当的访问范围。
 
+## 在只读站点启用模型自主规划
+
+将 `compose.autonomous-read.yaml` 叠加到站点已有的 Compose 配置。部署方指定 `EDGE_READ_AGENT_IMAGE`、`EDGE_NAV_ACTOR`、`EDGE_READ_POLICY_DIR` 和 `EDGE_READ_PLANNER_DIR`。策略目录包含 `approved.json`，可通过原子替换文件撤销绑定。规划配置目录包含 `planner-profile.json`。Ollama 模式下使用站点可达的服务地址、已安装模型名，以及适合当前设备的线程数。
+
+```json
+{"schema_version":1,"version":"site-v1","protocol":"ollama","url":"http://edge-read-llm:11434","model":"qwen3:4b-instruct","options":{"temperature":0,"num_ctx":4096,"num_thread":3}}
+```
+
+通过 `GET /agent/capabilities` 复核现场只读 DSH Tool 的来源、能力说明、Service 依赖和部署身份，从其 `records[].binding` 生成策略文件 `{"schema_version":1,"bindings":{"工具名":"sha256:核准的64位摘要"}}`。站点可热加入新工具。部署者核准新绑定后，下一次规划才会发现它。目录中的 actor 标识和绑定均由部署方提供。规划器根据原始请求和本次目录生成调用，可在冻结前收到一次参数校验反馈。派发前再次检查绑定、主体和权限。读取或校验策略失败时任务留下阻塞原因。
+
+通过 `POST /agent/tasks` 提交普通自然语言任务。可用 `GET /agent/tasks?id=任务ID` 查看 `planner.context`、`model.request`、`model.response`、`planner.selected`、`planner.frozen` 和各步骤回执。现场录像保留原始输入和输出时使用 `EDGE_TRACE_CONTENT=redacted`。该部署只生成获准的只读步骤，移动和执行器操作需要另行走物理运行时授权。模型可能选错统计量、拒绝可完成的任务或给出错误计划，任务验收需同时核对用户目标、调用参数和原始观测。
+
+## 在感知任务中编写并复用数值工具
+
+在只读站点上还可以选择启用受限工具作者。先用 `scripts/prepare_perception_site.py --operator-policy profiles/region-operator-contracts.json` 在已装区域测量的站点安装 `perception-operators` 包。其余参数与 `--queries` 相同。在已启用自主只读规划的站点上叠加 `compose.perception-operators.yaml`，将独立审批的 `analyze_regions` 绑定写入只读策略，并将数值规格部署为该目录下的 `numeric.json`。设置 `EDGE_READ_OPERATOR_STORE`、`EDGE_OPERATOR_GID`、`EDGE_OPERATOR_RUNTIME_IMAGE` 与 `EDGE_OPERATOR_RUNTIME_DIGEST`。只有 Agent 以可写方式挂载专用制品目录，求值器以只读方式访问它。
+
+模型选择采样参数与所需数学规格。如果制品目录为空，作者模型生成有限数值指令，独立验收器用部署方提供的保留样本做验证。制品按内容摘要登记，原任务继续读取同一帧的区域值并执行，第二次任务按规格找回已验收的实现。每次原始传感器帧、运算输入、输出和制品版本都保留在步骤证据中。验收样本只传给验证器。原始读任务继续使用普通工具，缺少验收规格的目标可返回能力不足。站点的只读运行器负责一个输入向量和一个标量输出，授权的数学语义见 [独立算子规格](../profiles/region-operator-contracts.json)。
+
 ## 为新技能提供不依赖模型的固定句式
 
 主清单目录优先；设定 `EDGE_EXTRA_PLUGIN_DIR` 时还读取第二目录，未配置时只读取主目录。对于只有一个字符串参数的可信能力，清单可写 `"parameters":{"place":"string"},"utterances":["去{place}巡检","前往{place}"]`。固定前后缀按字面完整匹配，捕获非空地点。多义匹配会拒绝派发。地点是否合法、可达和已经完成由对应场景提供者验收。

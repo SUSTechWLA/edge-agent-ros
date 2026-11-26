@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "perception-markup",
+  "plugins": [
+    {
+      "id": "perception.mark_target",
+      "version": "1.0.0",
+      "config": {}
+    }
+  ],
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}

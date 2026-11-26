@@ -2,12 +2,13 @@
 (() => {
   "use strict";
   const el = id => document.getElementById(id);
+  if(new URLSearchParams(location.search).get('embed')==='1')document.body.classList.add('map-embed');
   const workbench=el("workbench");
   if(workbench.dataset.port){
-    const url=new URL("/",location.href);
-    url.port=workbench.dataset.port;
     for(const link of workbench.querySelectorAll("a")){
-      url.hash=link.dataset.view;
+      const url=new URL(link.dataset.page||"/",location.href);
+      url.port=workbench.dataset.port;
+      if(link.dataset.view)url.hash=link.dataset.view;
       link.href=url.href;
     }
     workbench.hidden=false;
@@ -24,6 +25,17 @@
   const mutedSources = new Set();
   let placesKey = null;
   const query = new URLSearchParams(location.search);
+  const taskId=query.get("task") || "";
+  const embed=query.get("embed")==="1";
+  const taskView=!!taskId || embed;
+  const localView=query.get("local")==="1" && query.get("view")==="3d";
+  if(localView){
+    el("layer-texture").checked=el("layer-grid").checked=false;
+    el("mission-global").hidden=true;
+  }
+  const parentOrigin=new URL(location.href);
+  if(workbench.dataset.port)parentOrigin.port=workbench.dataset.port;
+  let taskMessage=null, focusedMission=false, focusedLocal=false, lastTaskMessage=0;
   let initialPlace = query.get("place") || (query.get("view")!=="2d"?"campus":null);
   const texture = window.createMapTexture(() => {updateTextureControls(); draw();});
   const layers = Object.fromEntries(["cloud","scene","roof","pose","grid","route"].map(key => [key, el("layer-"+key)]));
@@ -41,6 +53,19 @@
       options.texture = el("layer-texture").checked ? texture.current : null;
       options.appearancePack=texture.current;
       options.route = options.route ? currentRoute() : null;
+      options.taskRoutes=visibleTaskRoutes();
+      const key=el("mission-route-key");
+      key.hidden=!taskView;
+      if(taskView){
+        const routes=options.taskRoutes;
+        const global=routes.find(r=>r.kind==="global"),local=routes.find(r=>r.kind==="local");
+        el("mission-global").textContent=global?"全局规划 · "+global.points.length+" 点":"全局规划待提供";
+        el("mission-local").textContent=local?"局部规划 · "+local.points.length+" 点":"局部规划待提供";
+        el("mission-fit").hidden=!routes.length;
+        key.dataset.global=String(global?.points.length||0);
+        key.dataset.local=String(local?.points.length||0);
+        key.dataset.task=taskId;
+      }
       const view = modes[active].renderer.render(data, options);
       if(options.texture && active==="spatial"){
         const message={ready:"已显示 · 三维网格",loading:"正在加载三维网格，暂显正射高度图",
@@ -104,9 +129,52 @@
   for (const input of Object.values(layers)) input.onchange = () => {clearPicks(); draw();};
 
   function currentRoute() {
+    if(taskView)return null;
     const route=data?.texture?.route;
     return data?.texture?.status==="ready" && route?.frame===data.frame &&
       route?.scene_revision && route.scene_revision===data.scene?.revision ? route : null;
+  }
+  // Every candidate has its own acquisition frame and scene identity; equal frame names alone are insufficient.
+  function visibleTaskRoutes(){
+    if(!taskId || !taskMessage || !connected || !data?.scene?.id || !data.scene.revision || !data.frame)return [];
+    if(["waiting","error"].includes(data.scene.status)||data.scene.error)return [];
+    return ["global","local"].flatMap(kind=>{
+      if(kind==="local" && performance.now()-lastTaskMessage>3600)return [];
+      const r=taskMessage[kind];
+      if(!r || r.scene_id!==data.scene.id || r.scene_revision!==data.scene.revision || r.frame!==data.frame ||
+         !Array.isArray(r.points) || r.points.length<2 || r.points.length>4096)return [];
+      const dims=r.points[0]?.length;
+      if(![2,3].includes(dims) || !r.points.every(p=>Array.isArray(p)&&p.length===dims&&
+          p.every(n=>Number.isFinite(n)&&Math.abs(n)<=1e7)))return [];
+      return [{kind,points:r.points}];
+    });
+  }
+  function focusTaskRoute(){
+    const points=visibleTaskRoutes().flatMap(r=>r.points);
+    if(!points.length)return;
+    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),zs=points.map(p=>p[2]||0);
+    const xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);
+    const zmin=Math.min(...zs),zmax=Math.max(...zs),pad=.22*Math.max(3,xmax-xmin,ymax-ymin,zmax-zmin);
+    const bounds=[xmin-pad,ymin-pad,xmax+pad,ymax+pad];
+    const x=(xmin+xmax)/2,y=(ymin+ymax)/2,z=(zmin+zmax)/2,span=Math.max(4,bounds[2]-bounds[0],bounds[3]-bounds[1],zmax-zmin);
+    activeRobot=null;pendingRobot=null;initialPlace=null;
+    modes[active].renderer.focusBounds(bounds,{eye:[x,y-span*.56,z+span*.87],target:[x,y,z],referenceAspect:1.5});
+    draw();
+  }
+  function focusFirstRoute(){
+    if(!focusedMission && visibleTaskRoutes().length){focusedMission=true;focusTaskRoute();}
+  }
+  el("mission-fit").onclick=focusTaskRoute;
+  if(taskId && taskId.length<=256 && window.parent!==window && workbench.dataset.port){
+    window.addEventListener("message",event=>{
+      if(event.source!==window.parent || event.origin!==parentOrigin.origin)return;
+      const m=event.data;
+      if(!m || m.type!=="edge.campus.task-routes" || m.version!==1 || m.task_id!==taskId)return;
+      taskMessage={global:m.global,local:m.local};
+      lastTaskMessage=performance.now();
+      focusFirstRoute();draw();
+    });
+    window.parent.postMessage({type:"edge.campus.map-ready",version:1,task_id:taskId},parentOrigin.origin);
   }
   el("route-fit").onclick=()=>{
     const route=currentRoute();
@@ -170,7 +238,7 @@
         const place = ready.areas.find(a => a.id === initialPlace);
         initialPlace = null;
         // Allow both the backing canvas and the new texture to acquire their dimensions.
-        if (place && !pendingRobot && !activeRobot) { draw(); requestAnimationFrame(() => {if(!activeRobot)focusPlace(place);}); }
+        if (place && !pendingRobot && !activeRobot) { draw(); requestAnimationFrame(() => {if(!activeRobot&&!focusedMission)focusPlace(place);}); }
       }
     }
   }
@@ -263,6 +331,12 @@
       (!data.cloud.points.length && extras.length ? extras[0][0] : "");
   }
   function update() {
+    if(localView && !focusedLocal && data.pose?.status==="online" && data.pose.xyz?.every(Number.isFinite)){
+      const [x,y,z]=data.pose.xyz;
+      focusedLocal=true;initialPlace=null;
+      modes.spatial.renderer.focusBounds([x-3,y-3,x+3,y+3],{eye:[x,y-3.6,z+5.6],target:[x,y,z],referenceAspect:1.5});
+    }
+    focusFirstRoute();
     texture.update(data.texture);
     updateTextureControls();
     updateSources(Object.entries(data.cloud_sources || {}));

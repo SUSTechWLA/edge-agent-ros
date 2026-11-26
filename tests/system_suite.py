@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -14,6 +15,8 @@ from test_selection import STAGES, changed_paths, selection
 
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
+SPATIAL_TESTS = ("test_spatial_image_capture.py", "test_stationary_odom.py", "test_stationary_fusion.py",
+                 "test_visual_grounding.py", "test_perception_server.py", "test_object_grounding.py", "test_frame_query.py")
 
 
 def utc():
@@ -24,9 +27,19 @@ def output(cmd, env):
     return subprocess.check_output(cmd, cwd=ROOT, env=env, encoding="utf-8", errors="replace").strip()
 
 
+def parse_run_id(value):
+    if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}", value):
+        raise argparse.ArgumentTypeError("expected YYYYMMDDTHHMMSSZ-xxxxxxxx (lowercase hex)")
+    try:
+        datetime.strptime(value[:16], "%Y%m%dT%H%M%SZ")
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("invalid UTC timestamp in run ID") from exc
+    return value
+
+
 def run(args, selected, reasons):
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
-    directory = (args.out_root / run_id).resolve()
+    run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
+    directory = args.out_root.resolve() / run_id
     directory.mkdir(parents=True)
     report_file = directory / "summary.json"
     env = dict(os.environ)
@@ -97,7 +110,8 @@ def run(args, selected, reasons):
         if "repository" in selected:
             stage("repository",[[PY,"scripts/check_sdd.py"],test("repository_contract.py","-v"),
                                 test("document_contract.py","-v"),test("test_package_boundaries.py","-v"),
-                                test("test_kernel.py","-v"),
+                                test("test_kernel.py","-v"),test("test_offline_analysis.py","-v"),
+                                test("test_conformance.py","-v"),
                                 test("test_selection.py","-v"),test("test_robot_release.py","-v"),
                                 test("test_mission_recording.py","-v"),
                                 test("test_task_recorder.py","-v"),test("test_recorder_cli.py","-v"),
@@ -118,7 +132,25 @@ def run(args, selected, reasons):
                                  "-f","compose.camera-hardware.yaml","-f","compose.rgbd.yaml","-f","compose.rgbd-hardware.yaml",
                                  "-f","compose.model-provider.yaml","-f","compose.model-provider-hardware.yaml","config","--quiet"]])
         if "planner" in selected:
-            stage("planner",[test("planning_contract.py","-v"),test("test_derived_tools.py","-v"),
+            stage("planner",[test("planning_contract.py","-v"),test("test_autonomous_read.py","-v"),test("test_read_operators.py","-v"),
+                             test("test_field_plugin_watch.py","-v"),test("test_field_plugin_publish.py","-v"),
+                             test("test_authored_screen.py","-v"),
+                             test("test_numeric_program.py","-v"),test("test_region_operator_service.py","-v"),
+                             test("test_derived_tools.py","-v"),
+                             test("test_reference_utterances.py","-v"),test("test_spatial_facts.py","-v"),
+                             test("test_spatial_gateway.py","-v"),
+                             *[test(name,"-v") for name in SPATIAL_TESTS],
+                             test("test_livox_capture.py","-v"),test("test_perception_site.py","-v"),
+                             test("test_object_site.py","-v"),test("test_direct_target_demo.py","-v"),
+                             test("test_spatial_capture_archive.py","-v"),test("test_verify_perception_candidate.py","-v"),
+                             [PY,"-m","unittest","discover","-s","tests","-p","test_*review.py","-v"],
+                             [PY,"-m","unittest","discover","-s","tests","-p","test_review055*.py","-v"],
+                             test("test_navigation_planner.py","-v"),test("test_local_preview.py","-v"),test("test_navigation_physical.py","-v"),
+                             test("test_feedback_planner.py","-v"), test("test_feedback_admission.py","-v"),
+                             test("test_semantic_scene.py","-v"), test("test_planar_pose.py","-v"),
+                             [PY,"-m","unittest","discover","-s","tests","-p","test_time_pairing.py","-v"],
+                             test("test_survey_providers.py","-v"),test("test_survey_session.py","-v"),test("test_survey_recovery.py","-v"),
+                             test("test_navigation_pack.py","-v"),
                              test("test_planner_model_selection.py","-v"),
                              [PY,str(ROOT/"model_provider/test_provider.py"),"-v"],
                              test("test_map3d.py","-v"),test("test_rgbd.py","-v"),
@@ -143,14 +175,38 @@ def run(args, selected, reasons):
             if board_built:
                 # The deployable board image ships plugins without development fixtures.
                 # Bind tests only; imports and subprocesses must use the image's runtime.
-                board_test = ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
+                board_container = ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
                               "-e","PYTHONDONTWRITEBYTECODE=1","-e","ROS_LOG_DIR=/tmp/ros",
                               "-e","ROS_DOMAIN_ID=184","-e","ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST",
                               "-e",f"FACTORY_TEST_IMAGE={board_image}",
                               "--mount",f"type=bind,source={ROOT/'tests'},target=/opt/edge/tests,readonly",
-                              "--mount",f"type=bind,source={directory},target=/evidence",board_image,"python3","-B"]
+                              "--mount",f"type=bind,source={ROOT/'examples'/'stationary-perception'/'jetson-rover.json'},target=/opt/edge/examples/stationary-perception/jetson-rover.json,readonly",
+                              "--mount",f"type=bind,source={directory},target=/evidence"]
+                board_python = [board_image,"python3","-B"]
+                board_test = [*board_container,*board_python]
                 stage("board",[test("test_board_preflight.py","-v"),test("test_site_pack.py","-v"),
                                test("test_board_plugins.py","-v"),
+                               [*board_test,"/opt/edge/tests/test_navigation_planner.py","-v"],
+                               [*board_test,"/opt/edge/tests/test_navigation_physical.py","-v"],
+                               [*board_test,"/opt/edge/tests/test_spatial_facts.py","-v"],
+                               [*board_test,"/opt/edge/tests/test_spatial_gateway.py","-v"],
+                               *[[*board_test,"/opt/edge/tests/" + name,"-v"] for name in SPATIAL_TESTS],
+                               [*board_test,"/opt/edge/tests/test_object_site.py",
+                                "ObjectRelease.test_end_to_end_two_peers_and_pinned_evidence",
+                                "ObjectRelease.test_protocol_size_and_partial_frame_rejected","-v"],
+                               [*board_container,"--cap-drop","ALL","--cap-add","NET_RAW","-e","EDGE_LIVOX_ISOLATED_LOOPBACK=1",
+                                *board_python,"/opt/edge/tests/test_livox_capture.py","-v"],
+                               [*board_test,"/opt/edge/tests/test_soft_projection_evolution.py","-v"],
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'scripts'/'evolve_read_projection.py'},target=/opt/edge/scripts/evolve_read_projection.py,readonly",
+                                *board_python,"/opt/edge/tests/test_evolve_read_projection.py","-v"],
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'scripts'/'verify_perception_candidate.py'},target=/opt/edge/scripts/verify_perception_candidate.py,readonly",
+                                *board_python,"/opt/edge/tests/test_verify_perception_candidate.py","-v"],
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'task_recorder'/'spatial_capture.py'},target=/opt/edge/task_recorder/spatial_capture.py,readonly",
+                                *board_python,"/opt/edge/tests/test_spatial_capture_archive.py","-v"],
+                               [*board_test,"/opt/edge/tests/system/navigation_contract.py",
+                                "--out","/evidence/navigation-contract.json"],
+                               [*board_container,"--mount",f"type=bind,source={ROOT/'task_recorder'},target=/opt/edge/task_recorder,readonly",
+                                *board_python,"/opt/edge/tests/test_plugin_conformance.py","--out","/evidence/plugin-conformance.json"],
                                test("system/board_pack_acceptance.py","--image",board_image,"--root",ROOT,
                                     "--out",directory/"board-pack.json"),
                                [*board_test,"/opt/edge/tests/test_factory_targets.py","-v"],
@@ -198,13 +254,16 @@ def run(args, selected, reasons):
                                         test("system/camera_acceptance.py","--image",image,"--out",directory/"camera.json"),
                                         test("system/sensor_plugin_isolation.py","--image",image,"--out",directory/"camera-lidar.json"),
                                         test("system/rgbd_acceptance.py","--image",image,"--out",directory/"rgbd.json")],
-                    "agent-contracts":[in_image("python3","/opt/edge/tests/agent_trace_contract.py","-v"),
+                    "agent-contracts":[in_image("python3","/opt/edge/tests/test_status_plugin.py","-v"),
+                                       in_image("python3","/opt/edge/tests/test_capability_catalog.py","--http","-v"),
+                                       in_image("python3","/opt/edge/tests/agent_trace_contract.py","-v"),
                                        in_image("python3","/opt/edge/tests/agent_verification_contract.py","-v"),
                                        ["docker","run","--rm","--network","none","--read-only","--tmpfs","/tmp",
                                         "--cap-drop","ALL","--user","65534:65534","--mount",
                                         f"type=bind,source={ROOT/'examples/result-verifiers'},target=/sample,readonly",
                                         "--entrypoint","python3",image,"-B","/sample/test_verifiers.py","-v"]],
                     "observations":[in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/console/server"),
+                                    in_image("python3","-B","/opt/edge/tests/test_console_facts.py","-v"),
                                     in_image("python3","-B","/opt/edge/tests/test_map3d_ros.py","-v"),
                                     in_image("python3","-B","/opt/edge/tests/test_lidar_inputs_ros.py","-v"),
                                     in_image("python3","-m","unittest","discover","-v","-s","/opt/edge/evidence"),
@@ -261,6 +320,7 @@ def run(args, selected, reasons):
                                               test("test_campus_facilities.py","-v"),
                                               test("test_campus_real_site.py","-v"),
                                               test("test_campus_route_overlay.py","-v"),
+                                              test("test_campus_trajectory_truth.py","-v"),
                                               test("test_campus_robot_assets.py","-v"),
                                               test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
                                               test("test_campus_capture.py","-v")]
@@ -390,6 +450,7 @@ if __name__=="__main__":
     parser.add_argument("--changed-since",help="compare with the merge base including uncommitted files; default runs full suite")
     parser.add_argument("--plan",action="store_true",help="print selected stages and reasons without running")
     parser.add_argument("--out-root",type=Path,default=ROOT/".ci-results/system/runs")
+    parser.add_argument("--run-id",type=parse_run_id,help="use this UTC run ID for a new report directory")
     parser.add_argument("--base-image",help="preinstalled ROS/Gazebo SDK image")
     parser.add_argument("--campus-assets",type=Path,help="installed Gazebo Fuel campus cache for the offline world test")
     parser.add_argument("--ollama-cache-volume",help="existing Ollama home volume; mounts the model cache read-only in the isolated project")

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark"><title>感知实现对照 · Edge Agent ROS</title>
+  <link rel="stylesheet" href="review-compare.css">
+  <script src="review-compare-media.js" defer></script>
+  <script src="review-compare.js" defer></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="./index.html"><span class="mark" aria-hidden="true">◈</span>Edge Agent <b>ROS</b></a>
+  <span class="breadcrumb">感知工作台</span><span class="status"><i id="signal"></i><span id="status" role="status">读取站点记录</span></span>
+</header>
+<main>
+  <div class="heading"><h1>感知实现对照</h1><nav aria-label="查看方式"><button id="tab-decision" aria-pressed="true">执行记录</button><button id="tab-compare" aria-pressed="false">结果对照</button></nav></div>
+  <section class="request" aria-label="自然语言任务">
+    <div class="request-head"><h2>自然语言任务</h2><code id="request-id"></code><button type="button" id="open-compose" hidden>提交新任务</button></div>
+    <p id="request-text">等待任务提交</p>
+    <form id="composer" hidden><label for="task-text">任务内容</label><textarea id="task-text" rows="2" maxlength="2048" required placeholder="输入本次需要完成的感知复核任务"></textarea><div><span role="status" id="submit-status"></span><button type="button" id="cancel-compose">关闭</button><button type="submit" class="primary" id="submit-task">下发只读任务</button></div></form>
+  </section>
+  <div id="error" role="alert" hidden></div>
+  <div class="stage" id="decision">
+    <section class="panel camera">
+      <div class="cap"><h2>共用 RGB-D 观测</h2><span id="resolution"></span></div>
+      <div class="images">
+        <figure><div class="frame"><img id="rgb" alt="归档的真实彩色图像" hidden><div id="overlay"></div><span id="rgb-missing" class="empty-img">等待彩色帧</span></div><figcaption>彩色图像</figcaption></figure>
+        <figure><div class="frame"><canvas id="depth" aria-label="从原始十六位深度帧计算的阈值图" hidden></canvas><span id="depth-missing" class="empty-img">等待深度帧</span></div><figcaption id="depth-caption">对齐深度</figcaption></figure>
+      </div>
+      <div class="cam-meta"><span id="frame-check"></span><code id="depth-hash"></code></div>
+    </section>
+    <section class="panel current"><div class="cap"><h2>Agent 与运行时</h2><time id="event-time"></time></div>
+      <div class="event"><span id="event-kind" class="eyebrow"></span><h3 id="event-title">等待运行记录</h3><p id="event-detail"></p><div class="metrics" id="metrics"></div></div>
+      <div class="receipt"><span id="pin-label"></span><code id="pin"></code></div>
+    </section>
+    <section class="panel wide"><div class="cap"><h2 id="lower-title">已记录的步骤</h2><span id="lower-note"></span></div><div id="steps" class="steps"></div></section>
+  </div>
+  <section id="comparison" class="panel" hidden><div class="cap"><h2>实现与测量回执</h2><span id="completeness"></span></div><div id="compare-rows"></div><p class="agreement" id="agreement"></p></section>
+  <section class="transport"><button id="previous" aria-label="上一个事件">‹</button><button id="play">播放</button><button id="next" aria-label="下一个事件">›</button><input type="range" id="cursor" min="0" max="0" value="0" aria-label="查看事件"><output id="position">0 / 0</output><button id="follow" aria-pressed="true">跟随最新</button></section>
+</main>
+</body>
+</html>

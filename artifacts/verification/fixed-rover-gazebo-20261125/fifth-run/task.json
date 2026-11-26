@@ -1,0 +1,3245 @@
+{
+  "id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+  "text": "请帮我标定当前传感器",
+  "state": "SUCCEEDED",
+  "detail": "已取得步骤证据",
+  "provider": "ollama/qwen3:4b-instruct",
+  "steps": [
+    {
+      "tool": "inspect_calibration_view",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "81a83debfbe12577c4892ef4b63f9d0c6ebf013d4dabe61adec5b65c23ba0297",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前未提供传感器校准视图，需先确认校准目标的放置位置。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "placement_required": true,
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/1",
+      "started_at": 1795601409.132923,
+      "evidence": {
+        "outcome": "distinct_pose",
+        "camera_pose_observed": true,
+        "lidar_targets_seen": "front",
+        "missing_lidar_targets": "",
+        "lidar_measurements": {
+          "front": {
+            "condition": "board_observed",
+            "point_count": 70710,
+            "stamp_ns": 459800000000,
+            "plane_rms_m": 0.00048002592797332283,
+            "hole_count": 4
+          }
+        },
+        "target": "four_hole_board",
+        "scope": "single_paired_frame",
+        "paired_frame": true,
+        "expected_lidars": "front",
+        "lidar_frames": {
+          "front": "front_mid360"
+        },
+        "streams": {
+          "camera": {
+            "received": true,
+            "frame": "camera_color_optical_frame",
+            "age_s": 0.03,
+            "fresh": true,
+            "detail": null
+          },
+          "info": {
+            "received": true,
+            "frame": "camera_color_optical_frame",
+            "age_s": 0.03,
+            "fresh": true,
+            "detail": null
+          },
+          "front": {
+            "received": true,
+            "frame": "front_mid360",
+            "age_s": 0.028,
+            "fresh": true,
+            "detail": null
+          }
+        },
+        "method": "four_hole_board",
+        "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+        "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+        "front_placement_confirmed": true,
+        "archive_sha256": "072d444d70d59bc3a8f45e074ffbe80a4469a3cdc2b0cd2d0efe839c2a2f9b07",
+        "camera_stamp_ns": "459800000000",
+        "camera_frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "camera_detections": 1,
+        "camera_marker_count": 4,
+        "camera_marker_ids": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "target_center_m": [
+          -0.003159012350081806,
+          -0.10259189079663254,
+          2.925303098638611
+        ],
+        "target_normal": [
+          -4.753741549302738e-05,
+          -0.005307149149046146,
+          0.9999859158548704
+        ],
+        "camera_reprojection_rms_px": 0.36008748715376,
+        "scene_slice": {
+          "version": 1,
+          "scope": "sensor_snapshot",
+          "frame": "camera_color_optical_frame",
+          "source_ref": "072d444d70d59bc3a8f45e074ffbe80a4469a3cdc2b0cd2d0efe839c2a2f9b07",
+          "stamp_ns": "459800000000",
+          "map_ref": null,
+          "nodes": [
+            {
+              "id": "target",
+              "label": "four_hole_board",
+              "kind": "object",
+              "state": "observed",
+              "position_m": [
+                -0.00316,
+                -0.10259,
+                2.9253
+              ],
+              "plane_normal": [
+                -5e-05,
+                -0.00531,
+                0.99999
+              ]
+            },
+            {
+              "id": "camera",
+              "label": "camera_color_optical_frame",
+              "kind": "sensor",
+              "state": "observed"
+            },
+            {
+              "id": "lidar.front",
+              "label": "front_mid360",
+              "kind": "sensor",
+              "state": "observed"
+            }
+          ],
+          "edges": [
+            [
+              "target",
+              "observed_by",
+              "camera"
+            ],
+            [
+              "target",
+              "observed_by",
+              "lidar.front"
+            ]
+          ],
+          "omitted": 0,
+          "detector": {
+            "id": "vision.aruco-four-hole-board",
+            "version": "1.0.0",
+            "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e"
+          }
+        },
+        "placement_condition": "confirmed",
+        "placement_frame": "base_link",
+        "measured_board_center_base_m": [
+          3.095303098638611,
+          0.003159012350081806,
+          0.5025918907966326
+        ],
+        "estimated_board_bottom_z_base_m": 0.002598932304291035,
+        "normal_error_deg": 0.30409087325220624,
+        "placement_observations": [
+          {
+            "archive_sha256": "7b51a9fe8c530387b585bd8d8ecc832000f202b77728c3f83c356d8c8dbd0503",
+            "camera_stamp_ns": "458800000000",
+            "lidar_stamp_ns": "458800000000"
+          },
+          {
+            "archive_sha256": "072d444d70d59bc3a8f45e074ffbe80a4469a3cdc2b0cd2d0efe839c2a2f9b07",
+            "camera_stamp_ns": "459800000000",
+            "lidar_stamp_ns": "459800000000"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "observe_target",
+      "args": {
+        "target": "four_hole_board"
+      },
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "74c78ed5a9def8cdba3a6f8cab05962d5173aa507b74472d5adda03eeee96be3",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前已观测到四孔板目标，且前向激光雷达可见，满足标定所需基础条件，可立即进行样本采集。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/2",
+      "started_at": 1795601453.309242,
+      "evidence": {
+        "outcome": "target_visible",
+        "accepted_poses": 0,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "四个角码已识别。请保持板面静止，等待雷达采样。",
+        "detected": true,
+        "target": "four_hole_board",
+        "frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "stamp_ns": 462400000000,
+        "archive_sha256": "a795f7fbf1ffe04b817ae36c94f390bae4353d562a950ad83394bbd0bd553ce8"
+      }
+    },
+    {
+      "tool": "record_board_sample",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "1ea9a90ddbd5442fbf0c527939c0e947f47859ef8502111b4be4870c816e735a",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前观测已确认目标可见且雷达前向视野覆盖，但尚未获取足够独立姿态下的样本以拟合传感器外参。需通过记录多个独立视角的配对数据来满足‘enough_distinct_poses_for_fit’条件，从而推进校准流程。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/3",
+      "started_at": 1795601456.5825253,
+      "evidence": {
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 1,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "本任务已归档 1 / 5 个独立姿态。",
+        "archive_sha256": "afbdd40cb442fff7896576ec2e9398723f76f11753902b812a9eb08f5ccb969c"
+      }
+    },
+    {
+      "tool": "plan_capture_views",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "3a5f79f7af72ce4aad9810e91c216a380bb92de0b700eb68d5f81f314288ed43",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前仅采集到1个独立姿态，未满足5个独立姿态的拟合要求，且未触发雷达采样，无法验证传感器外参。需获取更多独立观测以满足拟合条件。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/4",
+      "started_at": 1795601463.1032622,
+      "evidence": {
+        "outcome": "candidate_views",
+        "source": {
+          "task_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/4",
+          "archive_sha256": "75d278e88400d5f51b540c5f097ce217765d07250c5626e7078bee101bf914f7",
+          "stamp_ns": "472200000000",
+          "camera_frame": "camera_color_optical_frame",
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "planner_version": "1",
+          "planner_sha256": "93bd05ebc216187b29fb238e19d736d043afd2850ba5689a0e3cebc7ff4e200c"
+        },
+        "observation": {
+          "archive_sha256": "75d278e88400d5f51b540c5f097ce217765d07250c5626e7078bee101bf914f7",
+          "camera_detections": 1,
+          "camera_frame": "camera_color_optical_frame",
+          "camera_marker_count": 4,
+          "camera_marker_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "camera_pose_observed": true,
+          "camera_reprojection_rms_px": 0.36008748715376,
+          "camera_stamp_ns": "472200000000",
+          "detector": {
+            "id": "vision.aruco-four-hole-board",
+            "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+            "sources": {
+              "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+              "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+              "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+              "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+            },
+            "version": "1.0.0"
+          },
+          "expected_lidars": "front",
+          "front_placement_confirmed": false,
+          "lidar_frames": {
+            "front": "front_mid360"
+          },
+          "lidar_measurements": {
+            "front": {
+              "condition": "board_observed",
+              "hole_count": 4,
+              "plane_rms_m": 0.00048002592797332283,
+              "point_count": 70710,
+              "stamp_ns": 472200000000
+            }
+          },
+          "lidar_targets_seen": "front",
+          "method": "four_hole_board",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "missing_lidar_targets": "",
+          "outcome": "repeated_pose",
+          "paired_frame": true,
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "scene_slice": {
+            "detector": {
+              "id": "vision.aruco-four-hole-board",
+              "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+              "version": "1.0.0"
+            },
+            "edges": [
+              [
+                "target",
+                "observed_by",
+                "camera"
+              ],
+              [
+                "target",
+                "observed_by",
+                "lidar.front"
+              ]
+            ],
+            "frame": "camera_color_optical_frame",
+            "map_ref": null,
+            "nodes": [
+              {
+                "id": "target",
+                "kind": "object",
+                "label": "four_hole_board",
+                "plane_normal": [
+                  -5e-05,
+                  -0.00531,
+                  0.99999
+                ],
+                "position_m": [
+                  -0.00316,
+                  -0.10259,
+                  2.9253
+                ],
+                "state": "observed"
+              },
+              {
+                "id": "camera",
+                "kind": "sensor",
+                "label": "camera_color_optical_frame",
+                "state": "observed"
+              },
+              {
+                "id": "lidar.front",
+                "kind": "sensor",
+                "label": "front_mid360",
+                "state": "observed"
+              }
+            ],
+            "omitted": 0,
+            "scope": "sensor_snapshot",
+            "source_ref": "75d278e88400d5f51b540c5f097ce217765d07250c5626e7078bee101bf914f7",
+            "stamp_ns": "472200000000",
+            "version": 1
+          },
+          "scope": "single_paired_frame",
+          "streams": {
+            "camera": {
+              "age_s": 0.062,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            },
+            "front": {
+              "age_s": 0.05,
+              "detail": null,
+              "frame": "front_mid360",
+              "fresh": true,
+              "received": true
+            },
+            "info": {
+              "age_s": 0.062,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            }
+          },
+          "target": "four_hole_board",
+          "target_center_m": [
+            -0.003159012350081806,
+            -0.10259189079663254,
+            2.925303098638611
+          ],
+          "target_normal": [
+            -4.753741549302738e-05,
+            -0.005307149149046146,
+            0.9999859158548704
+          ]
+        },
+        "scope": "geometric_view_proposals",
+        "candidate_count": 4,
+        "candidate_refs": "view.f8f21376fd3f209859e5, view.cce94d5c254b0bd9a013, view.b99ed27fa7b2df0e4d70, view.7d9745168bb10aa9870d",
+        "goal_frame": "base_link",
+        "candidates": [
+          {
+            "candidate_ref": "view.f8f21376fd3f209859e5",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                -0.0031590123500818065,
+                0.0,
+                -0.2925321861295608
+              ],
+              "rotation_xyzw": [
+                -0.0,
+                0.06957624263008233,
+                -0.0,
+                0.9975766368863496
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                -0.13886039033798908,
+                -0.005307149149046146,
+                0.9902977462173137
+              ],
+              "center_m": [
+                -0.4466846682722709,
+                -0.10259189079663254,
+                3.186681146118882
+              ],
+              "offset_m": 3.218334434774958,
+              "geometry_score": 0.17741,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": -64.8,
+              "min_marker_module_px": 3.49,
+              "min_feature_margin_px": 157.1
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.2908862959264639,
+              "y_m": 0.026757607954317926,
+              "yaw_rad": -0.13926500000000003,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.cce94d5c254b0bd9a013",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                0.5461834324010818,
+                0.0,
+                -0.24529413189917468
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.15478681761180277,
+                0.0,
+                0.9879478939162787
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.30579305387778294,
+                -0.005307149149046146,
+                0.9520832118927469
+              ],
+              "center_m": [
+                0.44668466827227093,
+                -0.10259189079663254,
+                3.1866811461188824
+              ],
+              "offset_m": 3.171123160172228,
+              "geometry_score": 0.15071,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 3.25,
+              "min_feature_margin_px": 154.1
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.23714808587100225,
+              "y_m": -0.5981766779593802,
+              "yaw_rad": 0.3108233333333334,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.b99ed27fa7b2df0e4d70",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                -1.5871447958154257,
+                0.0,
+                0.12432952545396861
+              ],
+              "rotation_xyzw": [
+                -0.0,
+                0.32117503697798133,
+                -0.0,
+                0.9470198496452924
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                -0.6083474329376183,
+                -0.005307149149046146,
+                0.793653094875916
+              ],
+              "center_m": [
+                -0.44668466827227093,
+                -0.10259189079663254,
+                3.1866811461188824
+              ],
+              "offset_m": 2.8014032957419497,
+              "geometry_score": 0.11691,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": -64.8,
+              "min_marker_module_px": 2.61,
+              "min_feature_margin_px": 148.4
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": 0.1594016829424232,
+              "y_m": 1.6905589017931868,
+              "yaw_rad": -0.65394,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.7d9745168bb10aa9870d",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                1.5808267711152622,
+                0.0,
+                0.12432952545396861
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.32117503697798133,
+                0.0,
+                0.9470198496452924
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.608271972691606,
+                -0.005307149149046146,
+                0.7937109306326655
+              ],
+              "center_m": [
+                0.44668466827227093,
+                -0.10259189079663254,
+                3.1866811461188824
+              ],
+              "offset_m": 2.801553892922598,
+              "geometry_score": 0.11597,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 2.61,
+              "min_feature_margin_px": 148.4
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": 0.1594016829424232,
+              "y_m": -1.6842408770930233,
+              "yaw_rad": 0.65394,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          }
+        ],
+        "view_options": [
+          {
+            "ref": "view.f8f21376fd3f209859e5",
+            "optical_x_m": -0.003,
+            "optical_z_m": -0.293,
+            "target_range_m": 3.219,
+            "obliquity_deg": 1.5,
+            "margin_px": 157.1,
+            "displacement_m": 0.293,
+            "min_marker_module_px": 3.49,
+            "geometry_score": 0.17741,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": -64.8,
+            "anchor_ratio": 0.17741,
+            "base_xy_yaw": [
+              -0.2909,
+              0.0268,
+              -0.1393
+            ]
+          },
+          {
+            "ref": "view.cce94d5c254b0bd9a013",
+            "optical_x_m": 0.546,
+            "optical_z_m": -0.245,
+            "target_range_m": 3.219,
+            "obliquity_deg": 9.9,
+            "margin_px": 154.1,
+            "displacement_m": 0.599,
+            "min_marker_module_px": 3.25,
+            "geometry_score": 0.15071,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.15071,
+            "base_xy_yaw": [
+              -0.2371,
+              -0.5982,
+              0.3108
+            ]
+          },
+          {
+            "ref": "view.b99ed27fa7b2df0e4d70",
+            "optical_x_m": -1.587,
+            "optical_z_m": 0.124,
+            "target_range_m": 3.219,
+            "obliquity_deg": 29.5,
+            "margin_px": 148.4,
+            "displacement_m": 1.592,
+            "min_marker_module_px": 2.61,
+            "geometry_score": 0.11691,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": -64.8,
+            "anchor_ratio": 0.11691,
+            "base_xy_yaw": [
+              0.1594,
+              1.6906,
+              -0.6539
+            ]
+          },
+          {
+            "ref": "view.7d9745168bb10aa9870d",
+            "optical_x_m": 1.581,
+            "optical_z_m": 0.124,
+            "target_range_m": 3.219,
+            "obliquity_deg": 29.5,
+            "margin_px": 148.4,
+            "displacement_m": 1.586,
+            "min_marker_module_px": 2.61,
+            "geometry_score": 0.11597,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.11597,
+            "base_xy_yaw": [
+              0.1594,
+              -1.6842,
+              0.6539
+            ]
+          }
+        ],
+        "base_goal_available": true,
+        "reachability_checked": false,
+        "lidar_visibility_predicted": false,
+        "view_summary": "4 个不同视角，按当前相机的靶标特征投影筛选。含当前底盘帧的候选终点与朝向。各候选仍需检查通行条件并实测雷达可见性。",
+        "rejected": {
+          "back_facing": 0,
+          "cropped_or_small": 0,
+          "duplicate": 0,
+          "low_marker_resolution": 6,
+          "outside_sensor_envelope": 63
+        },
+        "nominal_lidar_envelope_ref": "lingao-mid360-archived-mount-v1",
+        "extent_source": "observed_target_features",
+        "size_px": [
+          640,
+          480
+        ],
+        "assumptions": "fixed_target; planar_base"
+      }
+    },
+    {
+      "args": {
+        "goal_ref": "view.f8f21376fd3f209859e5"
+      },
+      "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+      "feedback": {
+        "goal": {
+          "equals": true,
+          "field": "verified",
+          "operator_pause_field": "paused_for_operator",
+          "tool": "verify_sensor_extrinsics"
+        },
+        "motion_policy_sha256": "9a23b5e023c783f13097857a0f1c31448de6c78e8f465da3a3d2ca2f9697a7a0",
+        "rationale": "当前已有1/5个独立姿态，需获取更多独立观测以满足拟合条件。选择一个候选视角（view.f8f21376fd3f209859e5）进行移动并采集新样本，以推进传感器外参标定。",
+        "required_motion_tools": [
+          "move_to_pose"
+        ],
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219"
+      },
+      "physical_cap": {
+        "description": "Drive the rover to one stamped, approved pose and final heading. Select goal_ref from the latest capture view options of this task. Stop and independently verify arrival.",
+        "effect": "actuation",
+        "id": "move_to_pose",
+        "parameters": {
+          "goal_ref": "string"
+        },
+        "version": "1.1.1"
+      },
+      "physical_pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5"
+      },
+      "status": "SUCCEEDED",
+      "tool": "move_to_pose",
+      "verification": {
+        "required": []
+      },
+      "version": "1.1.1",
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5",
+      "started_at": 1795601467.8101225,
+      "evidence": {
+        "goal_ref": "view.f8f21376fd3f209859e5",
+        "outcome": "arrived",
+        "observe_after_ns": 29460896091401,
+        "source_operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/4",
+        "verifier_id": "navigation.pose_witness",
+        "verification": {
+          "first_ns": 29460969197736,
+          "last_ns": 29462469491712,
+          "sample_count": 76,
+          "max_linear_mps": 0.0,
+          "max_angular_radps": 0.0,
+          "stop_pose": [
+            -0.2647855675685627,
+            0.020925768860952532,
+            -0.15271814457240843
+          ],
+          "start_pose": [
+            1.9349562365512476e-20,
+            3.797428235475538e-17,
+            -1.0178034054103867e-19
+          ],
+          "goal_ref": "view.f8f21376fd3f209859e5",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/5",
+          "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+          "epoch": 1,
+          "frame_id": "world",
+          "axes": "x_forward_y_left_yaw_ccw",
+          "clock_id": "host_monotonic",
+          "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+          "target_pose": [
+            -0.2908862959264639,
+            0.026757607954317964,
+            -0.13926500000000003
+          ],
+          "position_error_m": 0.02674431468600111,
+          "heading_error_rad": 0.013453144572408399,
+          "measured_translation_m": 0.26561115299442506,
+          "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+        }
+      }
+    },
+    {
+      "tool": "observe_target",
+      "args": {
+        "target": "four_hole_board"
+      },
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "74c78ed5a9def8cdba3a6f8cab05962d5173aa507b74472d5adda03eeee96be3",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前传感器的外参校准需要至少5个独立姿态的观测样本，且雷达可见性已确认。虽然已通过observe_target和record_board_sample获取部分数据，但尚未满足‘enough_distinct_poses_for_fit’条件（仅1/5姿态），且未执行实际雷达可见性验证。因此，必须先移动到下一个候选视角并记录新样本，以推进校准进程。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/6",
+      "started_at": 1795601557.0175662,
+      "evidence": {
+        "outcome": "target_visible",
+        "accepted_poses": 1,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "四个角码已识别。请保持板面静止，等待雷达采样。",
+        "detected": true,
+        "target": "four_hole_board",
+        "frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "stamp_ns": 566000000000,
+        "archive_sha256": "a5e16f6e2a161aa003c408c35cf36f6f86ec53d087666c21a608afc1c6f9b1c6"
+      }
+    },
+    {
+      "tool": "record_board_sample",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "1ea9a90ddbd5442fbf0c527939c0e947f47859ef8502111b4be4870c816e735a",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前目标可见，已获取1个独立姿态，但尚未满足足够的独立姿态以进行拟合（required_poses=5，enough_distinct_poses_for_fit=false），且未完成雷达可见性验证。需继续采集更多独立视角样本以满足拟合条件，方可调用verify_sensor_extrinsics工具进行标定。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/7",
+      "started_at": 1795601561.530938,
+      "evidence": {
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 2,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "本任务已归档 2 / 5 个独立姿态。",
+        "archive_sha256": "3cbf9c3148cfc33b2bbaded39f4b77d2dc6a387801e5fd5fb1a4ccac28154898"
+      }
+    },
+    {
+      "tool": "plan_capture_views",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "3a5f79f7af72ce4aad9810e91c216a380bb92de0b700eb68d5f81f314288ed43",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前仅采集到2/5个独立姿态，且未满足足够的视角多样性以进行传感器外参拟合。需继续获取更多独立观测姿态，以满足‘enough_distinct_poses_for_fit’条件，从而推进外参标定流程。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/8",
+      "started_at": 1795601568.6604385,
+      "evidence": {
+        "outcome": "candidate_views",
+        "source": {
+          "task_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/8",
+          "archive_sha256": "b8287fae5fd3e5325841d03a4c4095adb254769e6e2fae4b7ab115928fa07a60",
+          "stamp_ns": "577400000000",
+          "camera_frame": "camera_color_optical_frame",
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "planner_version": "1",
+          "planner_sha256": "93bd05ebc216187b29fb238e19d736d043afd2850ba5689a0e3cebc7ff4e200c"
+        },
+        "observation": {
+          "archive_sha256": "b8287fae5fd3e5325841d03a4c4095adb254769e6e2fae4b7ab115928fa07a60",
+          "camera_detections": 1,
+          "camera_frame": "camera_color_optical_frame",
+          "camera_marker_count": 4,
+          "camera_marker_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "camera_pose_observed": true,
+          "camera_reprojection_rms_px": 0.3771473576649573,
+          "camera_stamp_ns": "577400000000",
+          "detector": {
+            "id": "vision.aruco-four-hole-board",
+            "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+            "sources": {
+              "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+              "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+              "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+              "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+            },
+            "version": "1.0.0"
+          },
+          "expected_lidars": "front",
+          "front_placement_confirmed": false,
+          "lidar_frames": {
+            "front": "front_mid360"
+          },
+          "lidar_measurements": {
+            "front": {
+              "condition": "board_observed",
+              "hole_count": 4,
+              "plane_rms_m": 0.0005104865023924768,
+              "point_count": 70580,
+              "stamp_ns": 577400000000
+            }
+          },
+          "lidar_targets_seen": "front",
+          "method": "four_hole_board",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "missing_lidar_targets": "",
+          "outcome": "repeated_pose",
+          "paired_frame": true,
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "scene_slice": {
+            "detector": {
+              "id": "vision.aruco-four-hole-board",
+              "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+              "version": "1.0.0"
+            },
+            "edges": [
+              [
+                "target",
+                "observed_by",
+                "camera"
+              ],
+              [
+                "target",
+                "observed_by",
+                "lidar.front"
+              ]
+            ],
+            "frame": "camera_color_optical_frame",
+            "map_ref": null,
+            "nodes": [
+              {
+                "id": "target",
+                "kind": "object",
+                "label": "four_hole_board",
+                "plane_normal": [
+                  -0.14625,
+                  0.00106,
+                  0.98925
+                ],
+                "position_m": [
+                  -0.49789,
+                  -0.10411,
+                  3.16941
+                ],
+                "state": "observed"
+              },
+              {
+                "id": "camera",
+                "kind": "sensor",
+                "label": "camera_color_optical_frame",
+                "state": "observed"
+              },
+              {
+                "id": "lidar.front",
+                "kind": "sensor",
+                "label": "front_mid360",
+                "state": "observed"
+              }
+            ],
+            "omitted": 0,
+            "scope": "sensor_snapshot",
+            "source_ref": "b8287fae5fd3e5325841d03a4c4095adb254769e6e2fae4b7ab115928fa07a60",
+            "stamp_ns": "577400000000",
+            "version": 1
+          },
+          "scope": "single_paired_frame",
+          "streams": {
+            "camera": {
+              "age_s": 0.044,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            },
+            "front": {
+              "age_s": 0.042,
+              "detail": null,
+              "frame": "front_mid360",
+              "fresh": true,
+              "received": true
+            },
+            "info": {
+              "age_s": 0.044,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            }
+          },
+          "target": "four_hole_board",
+          "target_center_m": [
+            -0.4978882563960355,
+            -0.10410526978362424,
+            3.1694081055101724
+          ],
+          "target_normal": [
+            -0.14624639251748486,
+            0.0010641334277422655,
+            0.9892476233459799
+          ]
+        },
+        "scope": "geometric_view_proposals",
+        "candidate_count": 4,
+        "candidate_refs": "view.d434b521ac86281772f1, view.781e4696c68938a6f094, view.fcd472c2fb21ff7e9db1, view.2bec89aca5e81d1f2091",
+        "goal_frame": "base_link",
+        "candidates": [
+          {
+            "candidate_ref": "view.d434b521ac86281772f1",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                0.10459345933080688,
+                0.0,
+                -0.3078889385921784
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.15478681761180277,
+                0.0,
+                0.9879478939162787
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.16331551597364619,
+                0.0010641334277422655,
+                0.9865733170232761
+              ],
+              "center_m": [
+                0.4898935953355227,
+                -0.10410526978362424,
+                3.494936797133439
+              ],
+              "offset_m": 3.5279078321314663,
+              "geometry_score": 0.25259,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 3.17,
+              "min_feature_margin_px": 164.4
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.299742892564006,
+              "y_m": -0.15658670488910534,
+              "yaw_rad": 0.3108233333333334,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.781e4696c68938a6f094",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                1.239320440342131,
+                0.0,
+                0.09748934117323307
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.32117503697798133,
+                0.0,
+                0.9470198496452924
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.4857026373027566,
+                0.0010641334277422655,
+                0.8741234556612669
+              ],
+              "center_m": [
+                0.48989359533552235,
+                -0.10410526978362424,
+                3.4949367971334393
+              ],
+              "offset_m": 3.2928380597826137,
+              "geometry_score": 0.21439,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 2.69,
+              "min_feature_margin_px": 159.4
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": 0.13256149866168768,
+              "y_m": -1.342734546319892,
+              "yaw_rad": 0.65394,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.fcd472c2fb21ff7e9db1",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                0.9322378233645653,
+                0.0,
+                -0.8337729477307804
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.17071801261907688,
+                0.0,
+                0.9853199278241525
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.19508456955018227,
+                0.0010641334277422655,
+                0.9807858473405232
+              ],
+              "center_m": [
+                0.0,
+                -0.10410526978362424,
+                4.250966848734388
+              ],
+              "offset_m": 4.16917734085485,
+              "geometry_score": 0.14536,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": 0.0,
+              "min_marker_module_px": 2.54,
+              "min_feature_margin_px": 177.9
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.8238637701876939,
+              "y_m": -0.9894298557210832,
+              "yaw_rad": 0.34311666666666674,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.2bec89aca5e81d1f2091",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                -0.49788825639603557,
+                0.0,
+                -1.0815587432242153
+              ],
+              "rotation_xyzw": [
+                -0.0,
+                0.06957624263008233,
+                -0.0,
+                0.9975766368863496
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                -0.28215315199460655,
+                0.0010641334277422655,
+                0.959368785420683
+              ],
+              "center_m": [
+                -0.590099103472334,
+                -0.10410526978362424,
+                4.2098102329107325
+              ],
+              "offset_m": 4.205148070135462,
+              "geometry_score": 0.0755,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "fit",
+              "image_offset_px": -64.8,
+              "min_marker_module_px": 2.55,
+              "min_feature_margin_px": 176.4
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -1.0799128530211186,
+              "y_m": 0.5214868520002717,
+              "yaw_rad": -0.13926500000000003,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          }
+        ],
+        "view_options": [
+          {
+            "ref": "view.d434b521ac86281772f1",
+            "optical_x_m": 0.105,
+            "optical_z_m": -0.308,
+            "target_range_m": 3.531,
+            "obliquity_deg": 2.3,
+            "margin_px": 164.4,
+            "displacement_m": 0.325,
+            "min_marker_module_px": 3.17,
+            "geometry_score": 0.25259,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.25259,
+            "base_xy_yaw": [
+              -0.2997,
+              -0.1566,
+              0.3108
+            ]
+          },
+          {
+            "ref": "view.781e4696c68938a6f094",
+            "optical_x_m": 1.239,
+            "optical_z_m": 0.097,
+            "target_range_m": 3.531,
+            "obliquity_deg": 21.1,
+            "margin_px": 159.4,
+            "displacement_m": 1.243,
+            "min_marker_module_px": 2.69,
+            "geometry_score": 0.21439,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.21439,
+            "base_xy_yaw": [
+              0.1326,
+              -1.3427,
+              0.6539
+            ]
+          },
+          {
+            "ref": "view.fcd472c2fb21ff7e9db1",
+            "optical_x_m": 0.932,
+            "optical_z_m": -0.834,
+            "target_range_m": 4.252,
+            "obliquity_deg": 11.3,
+            "margin_px": 177.9,
+            "displacement_m": 1.251,
+            "min_marker_module_px": 2.54,
+            "geometry_score": 0.14536,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": 0.0,
+            "anchor_ratio": 0.14536,
+            "base_xy_yaw": [
+              -0.8239,
+              -0.9894,
+              0.3431
+            ]
+          },
+          {
+            "ref": "view.2bec89aca5e81d1f2091",
+            "optical_x_m": -0.498,
+            "optical_z_m": -1.082,
+            "target_range_m": 4.252,
+            "obliquity_deg": 8.5,
+            "margin_px": 176.4,
+            "displacement_m": 1.191,
+            "min_marker_module_px": 2.55,
+            "geometry_score": 0.0755,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "fit",
+            "image_offset_px": -64.8,
+            "anchor_ratio": 0.0755,
+            "base_xy_yaw": [
+              -1.0799,
+              0.5215,
+              -0.1393
+            ]
+          }
+        ],
+        "base_goal_available": true,
+        "reachability_checked": false,
+        "lidar_visibility_predicted": false,
+        "view_summary": "4 个不同视角，按当前相机的靶标特征投影筛选。含当前底盘帧的候选终点与朝向。各候选仍需检查通行条件并实测雷达可见性。",
+        "rejected": {
+          "back_facing": 0,
+          "cropped_or_small": 0,
+          "duplicate": 0,
+          "low_marker_resolution": 13,
+          "outside_sensor_envelope": 66
+        },
+        "nominal_lidar_envelope_ref": "lingao-mid360-archived-mount-v1",
+        "extent_source": "observed_target_features",
+        "size_px": [
+          640,
+          480
+        ],
+        "assumptions": "fixed_target; planar_base"
+      }
+    },
+    {
+      "args": {
+        "goal_ref": "view.d434b521ac86281772f1"
+      },
+      "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+      "feedback": {
+        "goal": {
+          "equals": true,
+          "field": "verified",
+          "operator_pause_field": "paused_for_operator",
+          "tool": "verify_sensor_extrinsics"
+        },
+        "motion_policy_sha256": "9a23b5e023c783f13097857a0f1c31448de6c78e8f465da3a3d2ca2f9697a7a0",
+        "rationale": "当前仅采集到2/5个独立姿态，且未满足独立姿态拟合条件（enough_distinct_poses_for_fit=false），需获取更多独立视角以满足校准要求。选择新候选视角 view.d434b521ac86281772f1，其目标距离更远、视角更优，有助于提升校准精度。",
+        "required_motion_tools": [
+          "move_to_pose"
+        ],
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219"
+      },
+      "physical_cap": {
+        "description": "Drive the rover to one stamped, approved pose and final heading. Select goal_ref from the latest capture view options of this task. Stop and independently verify arrival.",
+        "effect": "actuation",
+        "id": "move_to_pose",
+        "parameters": {
+          "goal_ref": "string"
+        },
+        "version": "1.1.1"
+      },
+      "physical_pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9"
+      },
+      "status": "SUCCEEDED",
+      "tool": "move_to_pose",
+      "verification": {
+        "required": []
+      },
+      "version": "1.1.1",
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9",
+      "started_at": 1795601573.7119172,
+      "evidence": {
+        "goal_ref": "view.d434b521ac86281772f1",
+        "outcome": "arrived",
+        "observe_after_ns": 29561972295495,
+        "source_operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/8",
+        "verifier_id": "navigation.pose_witness",
+        "verification": {
+          "first_ns": 29562010604929,
+          "last_ns": 29563510734195,
+          "sample_count": 76,
+          "max_linear_mps": 0.0,
+          "max_angular_radps": 0.0,
+          "stop_pose": [
+            -0.5587561314695203,
+            -0.07958415003900321,
+            0.1437630101071075
+          ],
+          "start_pose": [
+            -0.2647855675685627,
+            0.020925768860952532,
+            -0.15271814457240843
+          ],
+          "goal_ref": "view.d434b521ac86281772f1",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/9",
+          "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+          "epoch": 1,
+          "frame_id": "world",
+          "axes": "x_forward_y_left_yaw_ccw",
+          "clock_id": "host_monotonic",
+          "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+          "target_pose": [
+            -0.5848606057173988,
+            -0.08824001215437371,
+            0.15810518876092497
+          ],
+          "position_error_m": 0.027502136730051724,
+          "heading_error_rad": 0.014342178653817483,
+          "measured_translation_m": 0.310678187579242,
+          "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+        }
+      }
+    },
+    {
+      "tool": "observe_target",
+      "args": {
+        "target": "four_hole_board"
+      },
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "74c78ed5a9def8cdba3a6f8cab05962d5173aa507b74472d5adda03eeee96be3",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前目标可见，已识别四个角码，但尚未满足独立姿态采样要求（仅2/5个独立姿态），且雷达可见性未实测。需继续采集更多独立视角样本以满足拟合条件。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/10",
+      "started_at": 1795601657.3634512,
+      "evidence": {
+        "outcome": "target_visible",
+        "accepted_poses": 2,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "四个角码已识别。请保持板面静止，等待雷达采样。",
+        "detected": true,
+        "target": "four_hole_board",
+        "frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "stamp_ns": 666000000000,
+        "archive_sha256": "c29977902c97c81825b611376f326812a914c7fc2b5e7bca4fb7c404729cb5ec"
+      }
+    },
+    {
+      "tool": "record_board_sample",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "1ea9a90ddbd5442fbf0c527939c0e947f47859ef8502111b4be4870c816e735a",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前已有2个独立姿态，但未满足足够的不同视角以进行拟合（enough_distinct_poses_for_fit: false），且未完成雷达可见性验证。需继续采集更多独立视角样本以满足拟合条件。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/11",
+      "started_at": 1795601661.6135108,
+      "evidence": {
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 3,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "本任务已归档 3 / 5 个独立姿态。",
+        "archive_sha256": "7e48beecca21bc9465900ef4eafe264109d7cff59bfc537a6ddb88ade9d3b33e"
+      }
+    },
+    {
+      "tool": "inspect_calibration_view",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "81a83debfbe12577c4892ef4b63f9d0c6ebf013d4dabe61adec5b65c23ba0297",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前仅采集到3个独立姿态，仍需5个以满足拟合要求；且未完成雷达可见性验证与目标独立观测，无法验证传感器外参。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/12",
+      "started_at": 1795601669.0028176,
+      "evidence": {
+        "outcome": "repeated_pose",
+        "camera_pose_observed": true,
+        "lidar_targets_seen": "front",
+        "missing_lidar_targets": "",
+        "lidar_measurements": {
+          "front": {
+            "condition": "board_observed",
+            "point_count": 70010,
+            "stamp_ns": 677200000000,
+            "plane_rms_m": 0.00046520484182126665,
+            "hole_count": 4
+          }
+        },
+        "target": "four_hole_board",
+        "scope": "single_paired_frame",
+        "paired_frame": true,
+        "expected_lidars": "front",
+        "lidar_frames": {
+          "front": "front_mid360"
+        },
+        "streams": {
+          "camera": {
+            "received": true,
+            "frame": "camera_color_optical_frame",
+            "age_s": 0.07,
+            "fresh": true,
+            "detail": null
+          },
+          "info": {
+            "received": true,
+            "frame": "camera_color_optical_frame",
+            "age_s": 0.07,
+            "fresh": true,
+            "detail": null
+          },
+          "front": {
+            "received": true,
+            "frame": "front_mid360",
+            "age_s": 0.066,
+            "fresh": true,
+            "detail": null
+          }
+        },
+        "method": "four_hole_board",
+        "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+        "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+        "front_placement_confirmed": false,
+        "archive_sha256": "e5304fbbdfb470356b1b690a49defb7bd217fe7f3cc02386bfe0d75c1f169e10",
+        "camera_stamp_ns": "677200000000",
+        "camera_frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "camera_detections": 1,
+        "camera_marker_count": 4,
+        "camera_marker_ids": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "target_center_m": [
+          0.4420064350969113,
+          -0.10341769494468801,
+          3.4627082107431577
+        ],
+        "target_normal": [
+          0.12272616292914332,
+          -0.00018273806741471628,
+          0.9924405551666499
+        ],
+        "camera_reprojection_rms_px": 0.4369288659666076,
+        "scene_slice": {
+          "version": 1,
+          "scope": "sensor_snapshot",
+          "frame": "camera_color_optical_frame",
+          "source_ref": "e5304fbbdfb470356b1b690a49defb7bd217fe7f3cc02386bfe0d75c1f169e10",
+          "stamp_ns": "677200000000",
+          "map_ref": null,
+          "nodes": [
+            {
+              "id": "target",
+              "label": "four_hole_board",
+              "kind": "object",
+              "state": "observed",
+              "position_m": [
+                0.44201,
+                -0.10342,
+                3.46271
+              ],
+              "plane_normal": [
+                0.12273,
+                -0.00018,
+                0.99244
+              ]
+            },
+            {
+              "id": "camera",
+              "label": "camera_color_optical_frame",
+              "kind": "sensor",
+              "state": "observed"
+            },
+            {
+              "id": "lidar.front",
+              "label": "front_mid360",
+              "kind": "sensor",
+              "state": "observed"
+            }
+          ],
+          "edges": [
+            [
+              "target",
+              "observed_by",
+              "camera"
+            ],
+            [
+              "target",
+              "observed_by",
+              "lidar.front"
+            ]
+          ],
+          "omitted": 0,
+          "detector": {
+            "id": "vision.aruco-four-hole-board",
+            "version": "1.0.0",
+            "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e"
+          }
+        }
+      }
+    },
+    {
+      "tool": "plan_capture_views",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "3a5f79f7af72ce4aad9810e91c216a380bb92de0b700eb68d5f81f314288ed43",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前传感器外参校准未完成，缺少足够独立姿态样本（仅3/5），且未完成目标观测与雷达可见性验证。需先获取新姿态并确保目标可见，再进行样本记录与外参拟合。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/13",
+      "started_at": 1795601673.2807713,
+      "evidence": {
+        "outcome": "candidate_views",
+        "source": {
+          "task_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/13",
+          "archive_sha256": "c0c7f6900385e311633e75beb33ed1173d7c0faa70d7a343d599f70ed47deb88",
+          "stamp_ns": "681600000000",
+          "camera_frame": "camera_color_optical_frame",
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "planner_version": "1",
+          "planner_sha256": "93bd05ebc216187b29fb238e19d736d043afd2850ba5689a0e3cebc7ff4e200c"
+        },
+        "observation": {
+          "archive_sha256": "c0c7f6900385e311633e75beb33ed1173d7c0faa70d7a343d599f70ed47deb88",
+          "camera_detections": 1,
+          "camera_frame": "camera_color_optical_frame",
+          "camera_marker_count": 4,
+          "camera_marker_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "camera_pose_observed": true,
+          "camera_reprojection_rms_px": 0.4369288659666076,
+          "camera_stamp_ns": "681600000000",
+          "detector": {
+            "id": "vision.aruco-four-hole-board",
+            "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+            "sources": {
+              "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+              "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+              "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+              "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+            },
+            "version": "1.0.0"
+          },
+          "expected_lidars": "front",
+          "front_placement_confirmed": false,
+          "lidar_frames": {
+            "front": "front_mid360"
+          },
+          "lidar_measurements": {
+            "front": {
+              "condition": "board_observed",
+              "hole_count": 4,
+              "plane_rms_m": 0.00046520484182126665,
+              "point_count": 70010,
+              "stamp_ns": 681600000000
+            }
+          },
+          "lidar_targets_seen": "front",
+          "method": "four_hole_board",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "missing_lidar_targets": "",
+          "outcome": "repeated_pose",
+          "paired_frame": true,
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "scene_slice": {
+            "detector": {
+              "id": "vision.aruco-four-hole-board",
+              "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+              "version": "1.0.0"
+            },
+            "edges": [
+              [
+                "target",
+                "observed_by",
+                "camera"
+              ],
+              [
+                "target",
+                "observed_by",
+                "lidar.front"
+              ]
+            ],
+            "frame": "camera_color_optical_frame",
+            "map_ref": null,
+            "nodes": [
+              {
+                "id": "target",
+                "kind": "object",
+                "label": "four_hole_board",
+                "plane_normal": [
+                  0.12273,
+                  -0.00018,
+                  0.99244
+                ],
+                "position_m": [
+                  0.44201,
+                  -0.10342,
+                  3.46271
+                ],
+                "state": "observed"
+              },
+              {
+                "id": "camera",
+                "kind": "sensor",
+                "label": "camera_color_optical_frame",
+                "state": "observed"
+              },
+              {
+                "id": "lidar.front",
+                "kind": "sensor",
+                "label": "front_mid360",
+                "state": "observed"
+              }
+            ],
+            "omitted": 0,
+            "scope": "sensor_snapshot",
+            "source_ref": "c0c7f6900385e311633e75beb33ed1173d7c0faa70d7a343d599f70ed47deb88",
+            "stamp_ns": "681600000000",
+            "version": 1
+          },
+          "scope": "single_paired_frame",
+          "streams": {
+            "camera": {
+              "age_s": 0.046,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            },
+            "front": {
+              "age_s": 0.045,
+              "detail": null,
+              "frame": "front_mid360",
+              "fresh": true,
+              "received": true
+            },
+            "info": {
+              "age_s": 0.046,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            }
+          },
+          "target": "four_hole_board",
+          "target_center_m": [
+            0.4420064350969113,
+            -0.10341769494468801,
+            3.4627082107431577
+          ],
+          "target_normal": [
+            0.12272616292914332,
+            -0.00018273806741471628,
+            0.9924405551666499
+          ]
+        },
+        "scope": "geometric_view_proposals",
+        "candidate_count": 4,
+        "candidate_refs": "view.1106caa933c465980a3b, view.4016b8902c007181cf32, view.8023de95c697636bfbf9, view.0c952e8bd4e9be886279",
+        "goal_frame": "base_link",
+        "candidates": [
+          {
+            "candidate_ref": "view.1106caa933c465980a3b",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                -0.21353114024388029,
+                0.0,
+                -0.3208072280291839
+              ],
+              "rotation_xyzw": [
+                -0.0,
+                0.15478681761180274,
+                -0.0,
+                0.9879478939162787
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                -0.18668523977012408,
+                -0.00018273806741471628,
+                0.9824197615371802
+              ],
+              "center_m": [
+                -0.5330346984452453,
+                -0.10341769494468801,
+                3.8027085870949584
+              ],
+              "offset_m": 3.8353846721639737,
+              "geometry_score": 0.0,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": -64.8,
+              "min_marker_module_px": 2.91,
+              "min_feature_margin_px": 170.5
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.31266118200101145,
+              "y_m": 0.26552438580217874,
+              "yaw_rad": -0.31082333333333334,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.4016b8902c007181cf32",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                1.0975440104377032,
+                0.0,
+                -0.3208072280291839
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.15478681761180277,
+                0.0,
+                0.9879478939162787
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.4203760012509779,
+                -0.00018273806741471628,
+                0.9073499788830309
+              ],
+              "center_m": [
+                0.5330346984452452,
+                -0.10341769494468801,
+                3.8027085870949584
+              ],
+              "offset_m": 3.6744814496090745,
+              "geometry_score": 0.0,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 2.61,
+              "min_feature_margin_px": 167.5
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.31266118200101145,
+              "y_m": -1.1495372559960018,
+              "yaw_rad": 0.3108233333333334,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.8023de95c697636bfbf9",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                -1.061554667098007,
+                0.0,
+                0.8039501859692056
+              ],
+              "rotation_xyzw": [
+                -0.0,
+                0.32117503697798133,
+                -0.0,
+                0.9470198496452924
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                -0.5063128021463663,
+                -0.00018273806741471628,
+                0.8623498785234989
+              ],
+              "center_m": [
+                -0.4240048737632631,
+                -0.10341769494468801,
+                3.024881830643717
+              ],
+              "offset_m": 2.8232044733120527,
+              "geometry_score": 0.0,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": -64.8,
+              "min_marker_module_px": 2.99,
+              "min_feature_margin_px": 145.1
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": 0.8390223434576602,
+              "y_m": 1.164968773075768,
+              "yaw_rad": -0.65394,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.0c952e8bd4e9be886279",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                1.4695972657663796,
+                0.0,
+                0.5862959824529365
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.23885915925100856,
+                0.0,
+                0.9710542219886084
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.5691058363564917,
+                -0.00018273806741471628,
+                0.8222642602179526
+              ],
+              "center_m": [
+                0.42400487376326357,
+                -0.10341769494468801,
+                3.0248818306437166
+              ],
+              "offset_m": 2.728574767372963,
+              "geometry_score": 0.0,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 2.83,
+              "min_feature_margin_px": 143.6
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": 0.60569423975869,
+              "y_m": -1.5484586320838356,
+              "yaw_rad": 0.48238166666666676,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          }
+        ],
+        "view_options": [
+          {
+            "ref": "view.1106caa933c465980a3b",
+            "optical_x_m": -0.214,
+            "optical_z_m": -0.321,
+            "target_range_m": 3.841,
+            "obliquity_deg": 3.2,
+            "margin_px": 170.5,
+            "displacement_m": 0.385,
+            "min_marker_module_px": 2.91,
+            "geometry_score": 0.0,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": -64.8,
+            "anchor_ratio": 0.0,
+            "base_xy_yaw": [
+              -0.3127,
+              0.2655,
+              -0.3108
+            ]
+          },
+          {
+            "ref": "view.4016b8902c007181cf32",
+            "optical_x_m": 1.098,
+            "optical_z_m": -0.321,
+            "target_range_m": 3.841,
+            "obliquity_deg": 16.9,
+            "margin_px": 167.5,
+            "displacement_m": 1.143,
+            "min_marker_module_px": 2.61,
+            "geometry_score": 0.0,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.0,
+            "base_xy_yaw": [
+              -0.3127,
+              -1.1495,
+              0.3108
+            ]
+          },
+          {
+            "ref": "view.8023de95c697636bfbf9",
+            "optical_x_m": -1.062,
+            "optical_z_m": 0.804,
+            "target_range_m": 3.056,
+            "obliquity_deg": 22.5,
+            "margin_px": 145.1,
+            "displacement_m": 1.332,
+            "min_marker_module_px": 2.99,
+            "geometry_score": 0.0,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": -64.8,
+            "anchor_ratio": 0.0,
+            "base_xy_yaw": [
+              0.839,
+              1.165,
+              -0.6539
+            ]
+          },
+          {
+            "ref": "view.0c952e8bd4e9be886279",
+            "optical_x_m": 1.47,
+            "optical_z_m": 0.586,
+            "target_range_m": 3.056,
+            "obliquity_deg": 26.8,
+            "margin_px": 143.6,
+            "displacement_m": 1.582,
+            "min_marker_module_px": 2.83,
+            "geometry_score": 0.0,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.0,
+            "base_xy_yaw": [
+              0.6057,
+              -1.5485,
+              0.4824
+            ]
+          }
+        ],
+        "base_goal_available": true,
+        "reachability_checked": false,
+        "lidar_visibility_predicted": false,
+        "view_summary": "4 个不同视角，按当前相机的靶标特征投影筛选。含当前底盘帧的候选终点与朝向。各候选仍需检查通行条件并实测雷达可见性。",
+        "rejected": {
+          "back_facing": 0,
+          "cropped_or_small": 0,
+          "duplicate": 1,
+          "low_marker_resolution": 7,
+          "outside_sensor_envelope": 66
+        },
+        "nominal_lidar_envelope_ref": "lingao-mid360-archived-mount-v1",
+        "extent_source": "observed_target_features",
+        "size_px": [
+          640,
+          480
+        ],
+        "assumptions": "fixed_target; planar_base"
+      }
+    },
+    {
+      "args": {
+        "goal_ref": "view.1106caa933c465980a3b"
+      },
+      "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+      "feedback": {
+        "goal": {
+          "equals": true,
+          "field": "verified",
+          "operator_pause_field": "paused_for_operator",
+          "tool": "verify_sensor_extrinsics"
+        },
+        "motion_policy_sha256": "9a23b5e023c783f13097857a0f1c31448de6c78e8f465da3a3d2ca2f9697a7a0",
+        "rationale": "当前仅采集了3/5个独立姿态，且未满足足够多的独立观测以进行拟合。需通过移动至新视角并记录新样本，以满足‘enough_distinct_poses_for_fit’条件，从而推进校准流程。",
+        "required_motion_tools": [
+          "move_to_pose"
+        ],
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219"
+      },
+      "physical_cap": {
+        "description": "Drive the rover to one stamped, approved pose and final heading. Select goal_ref from the latest capture view options of this task. Stop and independently verify arrival.",
+        "effect": "actuation",
+        "id": "move_to_pose",
+        "parameters": {
+          "goal_ref": "string"
+        },
+        "version": "1.1.1"
+      },
+      "physical_pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14"
+      },
+      "status": "SUCCEEDED",
+      "tool": "move_to_pose",
+      "verification": {
+        "required": []
+      },
+      "version": "1.1.1",
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14",
+      "started_at": 1795601678.3438966,
+      "evidence": {
+        "goal_ref": "view.1106caa933c465980a3b",
+        "outcome": "arrived",
+        "observe_after_ns": 29661223029632,
+        "source_operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/13",
+        "verifier_id": "navigation.pose_witness",
+        "verification": {
+          "first_ns": 29661272759205,
+          "last_ns": 29662792392109,
+          "sample_count": 77,
+          "max_linear_mps": 0.0,
+          "max_angular_radps": 0.0,
+          "stop_pose": [
+            -0.8819823835691291,
+            0.126282474542653,
+            -0.1538525626834293
+          ],
+          "start_pose": [
+            -0.5587561314695203,
+            -0.07958415003900321,
+            0.1437630101071075
+          ],
+          "goal_ref": "view.1106caa933c465980a3b",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/14",
+          "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+          "epoch": 1,
+          "frame_id": "world",
+          "axes": "x_forward_y_left_yaw_ccw",
+          "clock_id": "host_monotonic",
+          "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+          "target_pose": [
+            -0.90623309478761,
+            0.13840661616253297,
+            -0.16706032322622585
+          ],
+          "position_error_m": 0.027112576502816274,
+          "heading_error_rad": 0.013207760542796543,
+          "measured_translation_m": 0.38321831527603745,
+          "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+        }
+      }
+    },
+    {
+      "tool": "observe_target",
+      "args": {
+        "target": "four_hole_board"
+      },
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "74c78ed5a9def8cdba3a6f8cab05962d5173aa507b74472d5adda03eeee96be3",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前传感器校准需要至少5个独立姿态的样本，目前仅采集到3个，且未满足独立姿态要求。根据计划，已生成4个候选视角，需移动至其中一个视角并记录新样本，以满足校准所需证据。下一步应执行移动至候选视角并记录样本，以推进校准进程。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/15",
+      "started_at": 1795601757.2968693,
+      "evidence": {
+        "outcome": "target_visible",
+        "accepted_poses": 3,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "四个角码已识别。请保持板面静止，等待雷达采样。",
+        "detected": true,
+        "target": "four_hole_board",
+        "frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "stamp_ns": 765600000000,
+        "archive_sha256": "0f141889621e271a743095d577fe7252e46ed4e9117e5c4abc12b5e2421130b2"
+      }
+    },
+    {
+      "tool": "record_board_sample",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "1ea9a90ddbd5442fbf0c527939c0e947f47859ef8502111b4be4870c816e735a",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前已有3个独立姿态，但未达到5个所需姿态，且未验证传感器外参。需继续采集新视角以满足独立样本要求，才能进行外参标定。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/16",
+      "started_at": 1795601761.029704,
+      "evidence": {
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 4,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "本任务已归档 4 / 5 个独立姿态。",
+        "archive_sha256": "e7295006e00e2ea2017884ffca6862b5be69cb940fc33d6eee0bbdb0c86f75e3"
+      }
+    },
+    {
+      "tool": "inspect_calibration_view",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "81a83debfbe12577c4892ef4b63f9d0c6ebf013d4dabe61adec5b65c23ba0297",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前仅采集到4个独立姿态，未满足5个独立姿态的最小要求，且未触发校准验证流程。根据工具链，必须先获取足够多的独立观测样本，才能进入校准验证阶段。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/17",
+      "started_at": 1795601768.296701,
+      "evidence": {
+        "outcome": "repeated_pose",
+        "camera_pose_observed": true,
+        "lidar_targets_seen": "front",
+        "missing_lidar_targets": "",
+        "lidar_measurements": {
+          "front": {
+            "condition": "board_observed",
+            "point_count": 69543,
+            "stamp_ns": 776400000000,
+            "plane_rms_m": 0.0004704896181912685,
+            "hole_count": 4
+          }
+        },
+        "target": "four_hole_board",
+        "scope": "single_paired_frame",
+        "paired_frame": true,
+        "expected_lidars": "front",
+        "lidar_frames": {
+          "front": "front_mid360"
+        },
+        "streams": {
+          "camera": {
+            "received": true,
+            "frame": "camera_color_optical_frame",
+            "age_s": 0.064,
+            "fresh": true,
+            "detail": null
+          },
+          "info": {
+            "received": true,
+            "frame": "camera_color_optical_frame",
+            "age_s": 0.063,
+            "fresh": true,
+            "detail": null
+          },
+          "front": {
+            "received": true,
+            "frame": "front_mid360",
+            "age_s": 0.062,
+            "fresh": true,
+            "detail": null
+          }
+        },
+        "method": "four_hole_board",
+        "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+        "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+        "front_placement_confirmed": false,
+        "archive_sha256": "2a58a7b503a0835143680d6af24ea2984b44e22b9d2685d48f5fb406020e9ddd",
+        "camera_stamp_ns": "776400000000",
+        "camera_frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "camera_detections": 1,
+        "camera_marker_count": 4,
+        "camera_marker_ids": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "target_center_m": [
+          -0.48982745917531345,
+          -0.10326997710756887,
+          3.786455602053579
+        ],
+        "target_normal": [
+          -0.1411207215320414,
+          0.003128545029529611,
+          0.9899874515165706
+        ],
+        "camera_reprojection_rms_px": 0.579020818085687,
+        "scene_slice": {
+          "version": 1,
+          "scope": "sensor_snapshot",
+          "frame": "camera_color_optical_frame",
+          "source_ref": "2a58a7b503a0835143680d6af24ea2984b44e22b9d2685d48f5fb406020e9ddd",
+          "stamp_ns": "776400000000",
+          "map_ref": null,
+          "nodes": [
+            {
+              "id": "target",
+              "label": "four_hole_board",
+              "kind": "object",
+              "state": "observed",
+              "position_m": [
+                -0.48983,
+                -0.10327,
+                3.78646
+              ],
+              "plane_normal": [
+                -0.14112,
+                0.00313,
+                0.98999
+              ]
+            },
+            {
+              "id": "camera",
+              "label": "camera_color_optical_frame",
+              "kind": "sensor",
+              "state": "observed"
+            },
+            {
+              "id": "lidar.front",
+              "label": "front_mid360",
+              "kind": "sensor",
+              "state": "observed"
+            }
+          ],
+          "edges": [
+            [
+              "target",
+              "observed_by",
+              "camera"
+            ],
+            [
+              "target",
+              "observed_by",
+              "lidar.front"
+            ]
+          ],
+          "omitted": 0,
+          "detector": {
+            "id": "vision.aruco-four-hole-board",
+            "version": "1.0.0",
+            "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e"
+          }
+        }
+      }
+    },
+    {
+      "tool": "plan_capture_views",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "3a5f79f7af72ce4aad9810e91c216a380bb92de0b700eb68d5f81f314288ed43",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前仅采集到4个独立姿态，未满足5个独立姿态的最小要求，且未触发传感器外参拟合与验证。根据工具链，必须先获取足够多的独立观测姿态，才能进行外参标定。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/18",
+      "started_at": 1795601772.684726,
+      "evidence": {
+        "outcome": "candidate_views",
+        "source": {
+          "task_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/18",
+          "archive_sha256": "3274bfac49ca6db04a2d045acbdf95da05658ec90691e5fa2b11788e9964b513",
+          "stamp_ns": "780800000000",
+          "camera_frame": "camera_color_optical_frame",
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "planner_version": "1",
+          "planner_sha256": "93bd05ebc216187b29fb238e19d736d043afd2850ba5689a0e3cebc7ff4e200c"
+        },
+        "observation": {
+          "archive_sha256": "3274bfac49ca6db04a2d045acbdf95da05658ec90691e5fa2b11788e9964b513",
+          "camera_detections": 1,
+          "camera_frame": "camera_color_optical_frame",
+          "camera_marker_count": 4,
+          "camera_marker_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "camera_pose_observed": true,
+          "camera_reprojection_rms_px": 0.579020818085687,
+          "camera_stamp_ns": "780800000000",
+          "detector": {
+            "id": "vision.aruco-four-hole-board",
+            "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+            "sources": {
+              "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+              "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+              "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+              "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+            },
+            "version": "1.0.0"
+          },
+          "expected_lidars": "front",
+          "front_placement_confirmed": false,
+          "lidar_frames": {
+            "front": "front_mid360"
+          },
+          "lidar_measurements": {
+            "front": {
+              "condition": "board_observed",
+              "hole_count": 4,
+              "plane_rms_m": 0.0004704896181912685,
+              "point_count": 69543,
+              "stamp_ns": 780800000000
+            }
+          },
+          "lidar_targets_seen": "front",
+          "method": "four_hole_board",
+          "method_sha256": "482bb6cf8ce2141407d5072550effbd76fbc4a8f4b39390aa7ad8fc81c6cd873",
+          "missing_lidar_targets": "",
+          "outcome": "repeated_pose",
+          "paired_frame": true,
+          "profile_sha256": "310734a6401a9b8fc1a844a14b1d1c84a8f45ad89780d6a5d066612338d04423",
+          "scene_slice": {
+            "detector": {
+              "id": "vision.aruco-four-hole-board",
+              "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+              "version": "1.0.0"
+            },
+            "edges": [
+              [
+                "target",
+                "observed_by",
+                "camera"
+              ],
+              [
+                "target",
+                "observed_by",
+                "lidar.front"
+              ]
+            ],
+            "frame": "camera_color_optical_frame",
+            "map_ref": null,
+            "nodes": [
+              {
+                "id": "target",
+                "kind": "object",
+                "label": "four_hole_board",
+                "plane_normal": [
+                  -0.14112,
+                  0.00313,
+                  0.98999
+                ],
+                "position_m": [
+                  -0.48983,
+                  -0.10327,
+                  3.78646
+                ],
+                "state": "observed"
+              },
+              {
+                "id": "camera",
+                "kind": "sensor",
+                "label": "camera_color_optical_frame",
+                "state": "observed"
+              },
+              {
+                "id": "lidar.front",
+                "kind": "sensor",
+                "label": "front_mid360",
+                "state": "observed"
+              }
+            ],
+            "omitted": 0,
+            "scope": "sensor_snapshot",
+            "source_ref": "3274bfac49ca6db04a2d045acbdf95da05658ec90691e5fa2b11788e9964b513",
+            "stamp_ns": "780800000000",
+            "version": 1
+          },
+          "scope": "single_paired_frame",
+          "streams": {
+            "camera": {
+              "age_s": 0.04,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            },
+            "front": {
+              "age_s": 0.038,
+              "detail": null,
+              "frame": "front_mid360",
+              "fresh": true,
+              "received": true
+            },
+            "info": {
+              "age_s": 0.039,
+              "detail": null,
+              "frame": "camera_color_optical_frame",
+              "fresh": true,
+              "received": true
+            }
+          },
+          "target": "four_hole_board",
+          "target_center_m": [
+            -0.48982745917531345,
+            -0.10326997710756887,
+            3.786455602053579
+          ],
+          "target_normal": [
+            -0.1411207215320414,
+            0.003128545029529611,
+            0.9899874515165706
+          ]
+        },
+        "scope": "geometric_view_proposals",
+        "candidate_count": 4,
+        "candidate_refs": "view.4acd2db2a84322422ef5, view.e5cff11a2508571da13b, view.e2e8f1bcb9eb1437a80e, view.c39e4f523deb89730167",
+        "goal_frame": "base_link",
+        "candidates": [
+          {
+            "candidate_ref": "view.4acd2db2a84322422ef5",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                -0.48982745917531345,
+                0.0,
+                -0.41335202794126913
+              ],
+              "rotation_xyzw": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                -0.1411207215320414,
+                0.003128545029529611,
+                0.9899874515165706
+              ],
+              "center_m": [
+                0.0,
+                -0.10326997710756887,
+                4.199807629994848
+              ],
+              "offset_m": 4.157433767704869,
+              "geometry_score": 0.13689,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": 0.0,
+              "min_marker_module_px": 2.63,
+              "min_feature_margin_px": 177.7
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.41335202794126913,
+              "y_m": 0.48982745917531345,
+              "yaw_rad": 0.0,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.e5cff11a2508571da13b",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                1.1546663236070804,
+                0.0,
+                0.8784852939092643
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.32117503697798133,
+                0.0,
+                0.9470198496452924
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.4902208984576314,
+                0.003128545029529611,
+                0.8715926129341568
+              ],
+              "center_m": [
+                0.4637479499537671,
+                -0.10326997710756887,
+                3.3084118476351407
+              ],
+              "offset_m": 3.1106031788532746,
+              "geometry_score": 0.05584,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 2.81,
+              "min_feature_margin_px": 154.5
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": 0.9135574513977189,
+              "y_m": -1.2580804295848416,
+              "yaw_rad": 0.65394,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.e2e8f1bcb9eb1437a80e",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                0.2271553527998423,
+                0.0,
+                -0.3516985488082694
+              ],
+              "rotation_xyzw": [
+                0.0,
+                -0.15478681761180277,
+                0.0,
+                0.9879478939162787
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                0.168421846464806,
+                0.003128545029529611,
+                0.985710045520174
+              ],
+              "center_m": [
+                0.582997422799022,
+                -0.10326997710756887,
+                4.15914632274132
+              ],
+              "offset_m": 4.197578728772866,
+              "geometry_score": 0.05564,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": 64.8,
+              "min_marker_module_px": 2.68,
+              "min_feature_margin_px": 176.9
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": -0.34355250278009697,
+              "y_m": -0.27914859835814076,
+              "yaw_rad": 0.3108233333333334,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          },
+          {
+            "candidate_ref": "view.c39e4f523deb89730167",
+            "camera_pose": {
+              "reference_frame": "camera_color_optical_frame",
+              "position_m": [
+                -1.6137370427720468,
+                0.0,
+                0.6404297975570071
+              ],
+              "rotation_xyzw": [
+                -0.0,
+                0.23885915925100853,
+                -0.0,
+                0.9710542219886084
+              ]
+            },
+            "predicted_camera": {
+              "normal": [
+                -0.5842634685689876,
+                0.003128545029529611,
+                0.8115580148712315
+              ],
+              "center_m": [
+                -0.4637479499537672,
+                -0.10326997710756887,
+                3.3084118476351403
+              ],
+              "offset_m": 2.955596052451403,
+              "geometry_score": 0.05391,
+              "geometry_metric": "anchor_ratio",
+              "sample_role": "holdout",
+              "image_offset_px": -64.8,
+              "min_marker_module_px": 2.59,
+              "min_feature_margin_px": 152.7
+            },
+            "base_goal": {
+              "reference_frame": "base_link",
+              "x_m": 0.6598280548627606,
+              "y_m": 1.6925984090895028,
+              "yaw_rad": -0.48238166666666665,
+              "mount_reference": "gazebo-fixed-rover/nominal-rgb-mount-v1"
+            }
+          }
+        ],
+        "view_options": [
+          {
+            "ref": "view.4acd2db2a84322422ef5",
+            "optical_x_m": -0.49,
+            "optical_z_m": -0.413,
+            "target_range_m": 4.201,
+            "obliquity_deg": 8.3,
+            "margin_px": 177.7,
+            "displacement_m": 0.641,
+            "min_marker_module_px": 2.63,
+            "geometry_score": 0.13689,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": 0.0,
+            "anchor_ratio": 0.13689,
+            "base_xy_yaw": [
+              -0.4134,
+              0.4898,
+              0.0
+            ]
+          },
+          {
+            "ref": "view.e5cff11a2508571da13b",
+            "optical_x_m": 1.155,
+            "optical_z_m": 0.878,
+            "target_range_m": 3.342,
+            "obliquity_deg": 21.5,
+            "margin_px": 154.5,
+            "displacement_m": 1.451,
+            "min_marker_module_px": 2.81,
+            "geometry_score": 0.05584,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.05584,
+            "base_xy_yaw": [
+              0.9136,
+              -1.2581,
+              0.6539
+            ]
+          },
+          {
+            "ref": "view.e2e8f1bcb9eb1437a80e",
+            "optical_x_m": 0.227,
+            "optical_z_m": -0.352,
+            "target_range_m": 4.201,
+            "obliquity_deg": 2.3,
+            "margin_px": 176.9,
+            "displacement_m": 0.419,
+            "min_marker_module_px": 2.68,
+            "geometry_score": 0.05564,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": 64.8,
+            "anchor_ratio": 0.05564,
+            "base_xy_yaw": [
+              -0.3436,
+              -0.2791,
+              0.3108
+            ]
+          },
+          {
+            "ref": "view.c39e4f523deb89730167",
+            "optical_x_m": -1.614,
+            "optical_z_m": 0.64,
+            "target_range_m": 3.342,
+            "obliquity_deg": 27.8,
+            "margin_px": 152.7,
+            "displacement_m": 1.736,
+            "min_marker_module_px": 2.59,
+            "geometry_score": 0.05391,
+            "geometry_metric": "anchor_ratio",
+            "sample_role": "holdout",
+            "image_offset_px": -64.8,
+            "anchor_ratio": 0.05391,
+            "base_xy_yaw": [
+              0.6598,
+              1.6926,
+              -0.4824
+            ]
+          }
+        ],
+        "base_goal_available": true,
+        "reachability_checked": false,
+        "lidar_visibility_predicted": false,
+        "view_summary": "4 个不同视角，按当前相机的靶标特征投影筛选。含当前底盘帧的候选终点与朝向。各候选仍需检查通行条件并实测雷达可见性。",
+        "rejected": {
+          "back_facing": 0,
+          "cropped_or_small": 0,
+          "duplicate": 2,
+          "low_marker_resolution": 14,
+          "outside_sensor_envelope": 63
+        },
+        "nominal_lidar_envelope_ref": "lingao-mid360-archived-mount-v1",
+        "extent_source": "observed_target_features",
+        "size_px": [
+          640,
+          480
+        ],
+        "assumptions": "fixed_target; planar_base"
+      }
+    },
+    {
+      "args": {
+        "goal_ref": "view.4acd2db2a84322422ef5"
+      },
+      "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+      "feedback": {
+        "goal": {
+          "equals": true,
+          "field": "verified",
+          "operator_pause_field": "paused_for_operator",
+          "tool": "verify_sensor_extrinsics"
+        },
+        "motion_policy_sha256": "9a23b5e023c783f13097857a0f1c31448de6c78e8f465da3a3d2ca2f9697a7a0",
+        "rationale": "当前仅采集到4个独立姿态，未满足5个独立姿态以进行传感器外参拟合。需移动至新视角并采集新观测，以满足‘enough_distinct_poses_for_fit’条件，从而推进校准流程。",
+        "required_motion_tools": [
+          "move_to_pose"
+        ],
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219"
+      },
+      "physical_cap": {
+        "description": "Drive the rover to one stamped, approved pose and final heading. Select goal_ref from the latest capture view options of this task. Stop and independently verify arrival.",
+        "effect": "actuation",
+        "id": "move_to_pose",
+        "parameters": {
+          "goal_ref": "string"
+        },
+        "version": "1.1.1"
+      },
+      "physical_pin": {
+        "binding": "sha256:1d18af781bc697ee6c4a5fd4e9d1924dca4625be7cbad0c27bd9a1635ae702f8",
+        "class": "physical",
+        "content_digest": "sha256:efb0584e79f6e8c71b61d723157891b178d9ce410a228360903a58a4b6ed01d8",
+        "name": "move_to_pose",
+        "plugin_id": "navigation.pose_motion",
+        "provider_id": "navigation.pose_executor",
+        "resource_id": "rover.base",
+        "verifier_id": "navigation.pose_witness",
+        "version": "1.1.1",
+        "reservation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19"
+      },
+      "status": "SUCCEEDED",
+      "tool": "move_to_pose",
+      "verification": {
+        "required": []
+      },
+      "version": "1.1.1",
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19",
+      "started_at": 1795601777.3579059,
+      "evidence": {
+        "goal_ref": "view.4acd2db2a84322422ef5",
+        "outcome": "arrived",
+        "observe_after_ns": 29751651521472,
+        "source_operation": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/18",
+        "verifier_id": "navigation.pose_witness",
+        "verification": {
+          "first_ns": 29751696719360,
+          "last_ns": 29753196765787,
+          "sample_count": 76,
+          "max_linear_mps": 0.0,
+          "max_angular_radps": 0.0,
+          "stop_pose": [
+            -1.2000436882423158,
+            0.6508630812745109,
+            -0.1400553535603536
+          ],
+          "start_pose": [
+            -0.8819823835691291,
+            0.126282474542653,
+            -0.1538525626834293
+          ],
+          "goal_ref": "view.4acd2db2a84322422ef5",
+          "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/19",
+          "boot_id": "c7bd4800-5df1-4147-aa57-659c64c5a590",
+          "epoch": 1,
+          "frame_id": "world",
+          "axes": "x_forward_y_left_yaw_ccw",
+          "clock_id": "host_monotonic",
+          "evidence_ref": "/world/fixed_calibration/dynamic_pose/info",
+          "target_pose": [
+            -1.2153876524773046,
+            0.6736687781980973,
+            -0.1538525626834293
+          ],
+          "position_error_m": 0.027487034227342506,
+          "heading_error_rad": 0.013797209123075721,
+          "measured_translation_m": 0.6134719280371139,
+          "chassis_profile_sha256": "bcf2ab15f61f1fe48728561ad2fc45af8be10c57fcaf8f288ca89b9e4381230f"
+        }
+      }
+    },
+    {
+      "tool": "observe_target",
+      "args": {
+        "target": "four_hole_board"
+      },
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "74c78ed5a9def8cdba3a6f8cab05962d5173aa507b74472d5adda03eeee96be3",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前传感器校准需要至少5个独立姿态的样本，目前仅采集到4个，且未满足独立姿态要求。需通过移动到新视角并记录样本，以满足校准条件。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/20",
+      "started_at": 1795601847.0630307,
+      "evidence": {
+        "outcome": "target_visible",
+        "accepted_poses": 4,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": false,
+        "candidate_ready": false,
+        "message": "四个角码已识别。请保持板面静止，等待雷达采样。",
+        "detected": true,
+        "target": "four_hole_board",
+        "frame": "camera_color_optical_frame",
+        "detector": {
+          "id": "vision.aruco-four-hole-board",
+          "version": "1.0.0",
+          "manifest_sha256": "3e046ec664d13b8cc256a7222c4e15926b5e6837b7cffe5f28c5cfc006001e4e",
+          "sources": {
+            "calibration.circle_target": "850aca5178b64ffba827c62bc511978039768b4e5edb15f3a0c8c559ef2d4ddf",
+            "calibration.board_metrics": "6644303d5aea496bcf5159a3107fb88d8e487f3cacf8697bf4ee64c0983ca530",
+            "calibration.board_solver": "e8819d2d0da9eae0fe74804c2bb07d93365c8c6a8cf2a957c894750abb804841",
+            "calibration.targets": "d9baaab3af8ba816274bf5490133117939be1c4f8c2b6c7f4c3cb44bcf88765d"
+          }
+        },
+        "stamp_ns": 855200000000,
+        "archive_sha256": "151a0be41bb48c16a96192c9f0614b2d4784f141dd02d524e64f9f17e0209c09"
+      }
+    },
+    {
+      "tool": "record_board_sample",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "1ea9a90ddbd5442fbf0c527939c0e947f47859ef8502111b4be4870c816e735a",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "当前已有4个独立姿态，但未满足足够多样性的姿态以进行拟合（required: 5, enough_distinct_poses_for_fit: false），且未完成雷达可见性验证。需继续采集新姿态并确保雷达观测，才能推进传感器外参标定。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/21",
+      "started_at": 1795601851.162582,
+      "evidence": {
+        "outcome": "new_sample_recorded",
+        "accepted_poses": 5,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": true,
+        "candidate_ready": false,
+        "message": "本任务已归档 5 / 5 个独立姿态。",
+        "archive_sha256": "497097aaf3f1d2f7fbf150947b49071cea4fb98171e853e0c7c47d640446561e"
+      }
+    },
+    {
+      "tool": "fit_sensor_extrinsics",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "a070f98b93c6aa01a189c17f13d0896fb715392960c3fca64c09dec591785a42",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "已获取5个独立姿态，满足fit_sensor_extrinsics的样本要求，当前目标板可见且稳定，可进行传感器外参标定。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/22",
+      "started_at": 1795601858.7192442,
+      "evidence": {
+        "outcome": "candidate_fitted",
+        "accepted_poses": 5,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": true,
+        "candidate_ready": true,
+        "message": "外参候选已生成，等待独立姿态验收。"
+      }
+    },
+    {
+      "tool": "verify_sensor_extrinsics",
+      "args": {},
+      "status": "SUCCEEDED",
+      "version": "1",
+      "binding": "84edb9b85592766f39bdc1b94dab53bc3145d92cbf98adb30dba99d4c47e2d2b",
+      "verification": {
+        "required": []
+      },
+      "feedback": {
+        "rationale": "已获取5个独立姿态，满足fit_sensor_extrinsics的样本要求，外参候选已生成，下一步需独立姿态验收。",
+        "goal": {
+          "tool": "verify_sensor_extrinsics",
+          "field": "verified",
+          "equals": true,
+          "operator_pause_field": "paused_for_operator"
+        },
+        "station_grant": "7e879f13ff9987afef17b56d494da44d689aa0105858f669f087008283c2f219",
+        "required_motion_tools": [
+          "move_to_pose"
+        ]
+      },
+      "operation_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2/step/23",
+      "started_at": 1795601862.2799802,
+      "evidence": {
+        "outcome": "validation_passed",
+        "accepted_poses": 5,
+        "required_poses": 5,
+        "enough_distinct_poses_for_fit": true,
+        "candidate_ready": true,
+        "message": "已用独立板姿验收并保存前雷达（front）到相机的外参版本。",
+        "verified": true,
+        "revision": "496d9ed58425045cfa1e888a33382f401d361334a63268b0e518e13cc9c5d433",
+        "transforms": {
+          "front": {
+            "child_frame": "front_mid360",
+            "fit": {
+              "count": 3,
+              "max_angle_deg": 1.4674214202109999,
+              "max_hole_error_m": 0.009186268219459545,
+              "max_plane_distance_m": 0.006705347396767536,
+              "rms_hole_error_m": 0.00697064589661863,
+              "rms_plane_distance_m": 0.005342881280455148
+            },
+            "initializer": "plane_anchors",
+            "parent_frame": "camera_color_optical_frame",
+            "rotation_xyzw": [
+              0.3009115785185969,
+              -0.29741561842823716,
+              0.640307229459904,
+              0.6410950192676412
+            ],
+            "translation_m": [
+              -0.02061196342075388,
+              0.19782168126580885,
+              0.04723423850067476
+            ],
+            "validation": {
+              "count": 2,
+              "max_angle_deg": 1.0723160103244977,
+              "max_plane_distance_m": 0.004257379713052067,
+              "rms_plane_distance_m": 0.003277027530208077,
+              "max_hole_error_m": 0.009691747108603387,
+              "rms_hole_error_m": 0.005907016973750534
+            }
+          }
+        },
+        "unobserved": [
+          "imu_extrinsics",
+          "base_link_extrinsics"
+        ]
+      }
+    }
+  ],
+  "cursor": 23,
+  "retries": 0,
+  "due": 1795601863.0355968,
+  "created": "2026-11-25T10:09:56.246536+00:00",
+  "updated": "2026-11-25T10:17:43.034554+00:00",
+  "trace_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+  "trigger": {
+    "kind": "user",
+    "source": "user",
+    "id": "0888b7c3-573c-4f53-8e9e-239ab61836b2"
+  },
+  "can_reconcile_motion": false,
+  "can_retry": false,
+  "events_has_more": false
+}

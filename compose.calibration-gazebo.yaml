@@ -1,0 +1,29 @@
+# An isolated, stationary rig. Only the simulated operator has Gazebo pose access.
+x-cal-bench: &bench
+  image: ${EDGE_CAL_SIM_IMAGE:-edge-rover-local:sdd058-campus-lidar-r1}
+  pull_policy: never
+  init: true
+  environment:
+    ROS_DOMAIN_ID: "198"
+    RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    GZ_PARTITION: edge_autocalibration_198
+    LP_NUM_THREADS: "2"
+    ROS_HOME: /tmp/ros
+
+services:
+  cal-sim:
+    <<: *bench
+    volumes:
+      - ./tests/system/calibration_board_fixture.py:/fixture/board.py:ro
+    command: ["bash","-ec","python3 /fixture/board.py generate /tmp/board.sdf && exec gz sim -s -r --headless-rendering /tmp/board.sdf"]
+  cal-bridge:
+    <<: *bench
+    command:
+      - ros2
+      - run
+      - ros_gz_bridge
+      - parameter_bridge
+      - /calibration/rgbd/image@sensor_msgs/msg/Image[gz.msgs.Image
+      - /calibration/rgbd/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo
+      - /calibration/lidar_left/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked
+      - /calibration/lidar_right/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked

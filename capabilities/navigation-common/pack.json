@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "id": "navigation-common",
+  "plugins": [
+    {
+      "id": "navigation.planner",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "localization.weighted",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "navigation.maps",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "navigation.read_spatial_observations",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "navigation.nav_locate",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "navigation.nav_resolve",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "navigation.nav_plan",
+      "version": "1.0.0",
+      "config": {}
+    }
+  ],
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}

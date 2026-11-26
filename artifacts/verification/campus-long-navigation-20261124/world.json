@@ -1,0 +1,58 @@
+{
+  "task_id": "campus-terrace-film-20261124-01",
+  "passed": true,
+  "checks": {
+    "agent_session_arrived": true,
+    "registered_goal": true,
+    "world_error_within_12cm": true,
+    "world_stopped": true,
+    "contact_topics_present": true,
+    "floor_contact_observed": true,
+    "no_nonfloor_contacts": true
+  },
+  "source": "Gazebo /ground_truth and collision sensors",
+  "initial_pose": {
+    "xy": [
+      0.05319765215791225,
+      0.0017010718296905545
+    ],
+    "yaw": -3.0254886793397953,
+    "linear_mps": 0.0,
+    "angular_radps": 0.0,
+    "stamp_ns": 2093652000000,
+    "frame": "world"
+  },
+  "final_pose": {
+    "xy": [
+      12.001684757701865,
+      -12.940405600023965
+    ],
+    "yaw": -0.5289616219175901,
+    "linear_mps": 0.0,
+    "angular_radps": 0.0,
+    "stamp_ns": 2188308000000,
+    "frame": "world"
+  },
+  "goal": [
+    12.0,
+    -13.0
+  ],
+  "goal_error_m": 0.05961820960929342,
+  "distance_m": 21.78586093768564,
+  "peak_speed_mps": 0.28000105017043103,
+  "duration_sim_s": 94.656,
+  "contact_count": 0,
+  "contact_topics_with_messages": [
+    "/sdd058/fixture/contacts/left_wheel",
+    "/sdd058/fixture/contacts/rear_caster",
+    "/sdd058/fixture/contacts/right_wheel"
+  ],
+  "sample_count": 929,
+  "map_ref": {
+    "id": "campus-forecourt-walk",
+    "frame": "odom",
+    "digest": "0184bd0cfa77a99f415c81fb8a9db36534c4cab5f8bb01a2afa665085fe0d800",
+    "revision": "0184bd0cfa77a99f415c81fb8a9db36534c4cab5f8bb01a2afa665085fe0d800"
+  },
+  "contacts": []
+}

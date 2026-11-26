@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "samples": [
+    {
+      "activeSameTask": true,
+      "shown": [
+        [
+          50,
+          0
+        ],
+        [
+          100,
+          0
+        ],
+        [
+          130,
+          0
+        ]
+      ],
+      "totalRouteMeters": 160
+    },
+    {
+      "activeSameTask": false,
+      "shown": [
+        [
+          0,
+          0
+        ],
+        [
+          50,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ],
+      "totalRouteMeters": 160
+    }
+  ]
+}

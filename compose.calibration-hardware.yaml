@@ -1,0 +1,49 @@
+# Linux host DDS is visible only to the two subscribing observers.
+x-hw-observer: &hw-observer
+  network_mode: host
+  image: ${EDGE_CAL_HW_OBSERVER_IMAGE:-edge-agent-ros:hardware-calibration-observer}
+  environment: &hw-observer-env
+    EDGE_CALIBRATION_READONLY_HARDWARE: "1"
+    EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json
+    EDGE_CALIBRATION_HTTP_BIND: ${EDGE_CAL_HOST_GATEWAY:?set the docker0 gateway address}
+    ROS_DOMAIN_ID: ${EDGE_CAL_ROS_DOMAIN:?set the domain of the sensor drivers}
+    RMW_IMPLEMENTATION: ${EDGE_CAL_RMW:-rmw_cyclonedds_cpp}
+    ROS_LOG_DIR: /tmp/ros
+    ROS_HOME: /tmp/ros
+  volumes:
+    - ${EDGE_CAL_HW_PROFILE:?set an absolute profile path}:/etc/edge/installed-sensors.json:ro
+services:
+  calibration-observer:
+    <<: *hw-observer
+  calibration-clock-observer:
+    <<: *hw-observer
+    profiles: ["time-calibration"]
+  calibration-session:
+    environment:
+      EDGE_CALIBRATION_READONLY_HARDWARE: "1"
+      EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json
+    volumes:
+      - ${EDGE_CAL_HW_PROFILE}:/etc/edge/installed-sensors.json:ro
+    extra_hosts:
+      calibration-observer: ${EDGE_CAL_HOST_GATEWAY}
+      calibration-clock-observer: ${EDGE_CAL_HOST_GATEWAY}
+  calibration-algorithms:
+    environment:
+      EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json
+      EDGE_TARGET_DETECTORS: /opt/edge/calibration/station/recognizers
+    volumes:
+      - ${EDGE_CAL_HW_PROFILE}:/etc/edge/installed-sensors.json:ro
+  agent:
+    environment:
+      EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json
+      EDGE_OLLAMA_URL: ${EDGE_CAL_OLLAMA_URL:?set an Ollama endpoint reachable from the private station}
+    volumes:
+      - ${EDGE_CAL_HW_PROFILE}:/etc/edge/installed-sensors.json:ro
+    extra_hosts:
+      host.docker.internal: ${EDGE_CAL_HOST_GATEWAY}
+  console:
+    environment:
+      EDGE_ROBOT_ID: ${EDGE_CAL_ROBOT_ID:?set the robot_id from the profile}
+      EDGE_ENVIRONMENT: hardware
+      ROS_DOMAIN_ID: ${EDGE_CAL_ROS_DOMAIN}
+      RMW_IMPLEMENTATION: ${EDGE_CAL_RMW:-rmw_cyclonedds_cpp}

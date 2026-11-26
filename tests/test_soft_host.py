@@ -1,11 +1,13 @@
 """SDD-045. Exercise the actual soft-host commands, registry, site artifacts and journals."""
 from argparse import Namespace
+import asyncio
 from copy import deepcopy
 import json
 from pathlib import Path
 import sqlite3
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -13,6 +15,13 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "agent"), str(ROOT / "scripts")]
 from module_journal import ModuleJournal
+import plugin_tracks
+from kernel.ledger import Journal
+from kernel.worker import task_plan, worker
+from edge_contracts.soft_transport import SoftError
+from physical_controller import Controller, load_deployment
+from physical_ledger import PhysicalError, PhysicalLedger
+from prepare_physical_camera import prepare_site as prepare_camera
 from plugin_descriptor import compute_content_digest
 from prepare_soft_pilots import DEFAULT_SERIES, prepare_site, sha
 from soft_host import Host, socket_owner
@@ -30,6 +39,7 @@ class HostContracts(unittest.IsolatedAsyncioTestCase):
         self.site = self.base / "site"
         self.trust = self.site / "trust"
         manifest = json.dumps({"schemaVersion":2,"layers":[],"config":{"digest":"sha256:" + "0"*64}}).encode()
+        self.manifest = manifest
         prepare_site(self.site, manifest, "a"*40, DEFAULT_SERIES)
         self.image = sha(manifest)
         self.registry = V2Registry(self.base / "plugins")
@@ -90,6 +100,104 @@ class HostContracts(unittest.IsolatedAsyncioTestCase):
         kinds = [json.loads(raw)["kind"] for raw, in self.journal.db.execute("SELECT event FROM module_bus_events")]
         self.assertEqual(kinds.count("plugin.operation.intent"), 1)
         self.assertEqual(kinds.count("plugin.operation.succeeded"), 1)
+
+    async def test_compensation_refuses_issued_work_even_after_restart(self):
+        self.admin("publish", self.series)
+        await self.host.reconcile()
+        pin, wire = await self.freeze()
+        self.assertEqual((await self.host.invoke(pin,wire))["state"], "SUCCEEDED")
+        self.host = self.restart()
+        await self.host.reconcile()
+        await self.reject("plugin.handoff_unconfirmed", self.host.command({"action":"settle_unissued","pin":pin}))
+        self.assertTrue(self.registry.reservations_for(pin["reservation_id"]))
+
+    async def test_mixed_admission_restarts_and_lost_replies(self):
+        self.admin("publish", self.series)
+        await self.host.reconcile()
+        camera_site = self.base/"camera"
+        prepare_camera(camera_site, self.manifest, "a"*40)
+        deployment = load_deployment(camera_site,self.image)
+        physical = PhysicalLedger(self.base/"physical", "boot-one")
+        self.addCleanup(physical.close)
+        physical.install(deployment)
+        controller = Controller(physical,deployment)
+        for role in ("camera","verifier"):
+            controller.command(role, {"action":"next", "instance_id":role, **deployment["pin"]["sensor"]})
+
+        def proposal(args):
+            tool = next(c for c in self.host.catalog()["tools"] if c["id"] == self.series)
+            pin = deployment["pin"]
+            return ["local", [{"tool":tool["id"], "version":tool["version"], "args":{"series":"[5,7]"},
+                               "binding":tool["_soft"]["binding"],"soft_pin":tool["_soft"]},
+                              {"tool":pin["name"],"version":pin["version"],"args":args,
+                               "binding":pin["binding"],"physical_pin":pin}]]
+
+        loop = asyncio.get_running_loop()
+        def soft(action, **kw):
+            return asyncio.run_coroutine_threadsafe(self.host.command({"action":action,**deepcopy(kw)}),loop).result(5)
+        lost = {"reconcile_denial","freeze_plan"}
+        def physical_rpc(action, **kw):
+            try:
+                reply = controller.command("agent", {"action":action,**deepcopy(kw)})
+            except PhysicalError as error:
+                remote = SoftError(error.code,str(error))
+                remote.origin = "physical.controller"
+                raise remote from error
+            if action in lost:
+                lost.remove(action)
+                remote = SoftError("plugin.transport","simulated response loss after commit")
+                remote.origin = "physical.controller"
+                raise remote
+            return reply
+        def open_agent():
+            journal = Journal(self.base/"task-owner")
+            self.addCleanup(journal.owner.close)
+            self.addCleanup(journal.db.close)
+            return journal
+        journal = open_agent()
+        task = journal.create("mixed-denial","fixture")
+        bad = journal.soft_intent(task["id"], proposal({"unexpected":True}))
+        with patch.object(plugin_tracks.soft_client,"enabled",return_value=True), \
+             patch.object(plugin_tracks.soft_client,"request",side_effect=soft), \
+             patch.object(plugin_tracks,"physical_request",side_effect=physical_rpc):
+            with self.assertRaises(SoftError):
+                await asyncio.to_thread(plugin_tracks.freeze, task["id"], bad)
+            self.assertTrue(self.registry.reservations_for("mixed-denial/step/1"))
+            self.assertEqual(physical.db.execute("SELECT COUNT(*) FROM physical_denials").fetchone()[0],1)
+            journal.db.close()
+            journal.owner.close()
+            journal = open_agent()
+            self.host = self.restart()
+            await self.host.reconcile()
+            ticks = iter((True,False))
+            def plan(j,t,trace):
+                return task_plan(j,t,trace,registry=None,planner=None,read_only_planner=None,freeze=plugin_tracks.freeze)
+            await asyncio.to_thread(worker,journal,None,True,keep_running=lambda:next(ticks),
+                                    plan_task=plan,registry=None,services=Namespace(PluginUnavailable=LookupError,PolicyError=KeyError))
+            self.assertEqual(journal.get(task["id"])["state"],"BLOCKED")
+            self.assertEqual(journal.db.execute("SELECT COUNT(*) FROM soft_settlements WHERE unissued=1").fetchone()[0],1)
+            self.assertIsNone(journal.db.execute("SELECT 1 FROM events WHERE kind='dispatch'").fetchone())
+            self.assertIsNone(physical.db.execute("SELECT 1 FROM physical_ops").fetchone())
+            self.assertIsNone(self.journal.db.execute("SELECT 1 FROM soft_operations").fetchone())
+            journal.db.close()
+            journal.owner.close()
+            journal = open_agent()
+            await asyncio.to_thread(journal.settle_soft_batch,threading.Event())
+            self.assertFalse(self.registry.reservations_for("mixed-denial/step/1"))
+            self.assertIsNone(journal.db.execute("SELECT 1 FROM soft_settlements").fetchone())
+
+            good = proposal({})
+            with self.assertRaises(SoftError) as missing:
+                await asyncio.to_thread(plugin_tracks.freeze,"another",good)
+            self.assertEqual(missing.exception.code,"plugin.transport")
+            self.assertTrue(self.registry.reservations_for("another/step/1"))
+            restored = await asyncio.to_thread(plugin_tracks.freeze,"another",good)
+            self.assertEqual(restored[1][1]["physical_pin"]["reservation_id"],"another/step/2")
+            self.assertEqual(physical.status("another/step/2")["state"],"RESERVED")
+            soft_pin = restored[1][0]["soft_pin"]
+            receipt = await self.host.invoke(soft_pin, {"operation_id":"another/step/1","version":restored[1][0]["version"],
+                                                         "arguments":{"series":"[5,7]"}})
+            self.assertEqual(receipt["evidence"]["value"],6)
 
     async def test_wire_scope_arguments_and_full_settlement_pin_must_match_plan(self):
         self.admin("publish", self.series)

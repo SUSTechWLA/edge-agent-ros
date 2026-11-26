@@ -1,0 +1,335 @@
+[
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 0,
+    "elapsed_s": 41.84
+  },
+  {
+    "kind": "board_pose",
+    "pose": 1,
+    "elapsed_s": 62.52
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 0,
+    "elapsed_s": 63.74
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 0,
+    "elapsed_s": 66.17
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 1,
+    "elapsed_s": 66.34
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 1,
+    "elapsed_s": 69.37
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 1,
+    "elapsed_s": 69.56
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 1,
+    "elapsed_s": 72.53
+  },
+  {
+    "kind": "read_station",
+    "phase": "MORE_VIEWS",
+    "samples": 1,
+    "elapsed_s": 72.86
+  },
+  {
+    "kind": "board_pose",
+    "pose": 2,
+    "elapsed_s": 73.55
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 1,
+    "elapsed_s": 75.34
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 1,
+    "elapsed_s": 75.55
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 1,
+    "elapsed_s": 78.06
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 2,
+    "elapsed_s": 78.43
+  },
+  {
+    "kind": "board_pose",
+    "pose": 3,
+    "elapsed_s": 79.12
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 2,
+    "elapsed_s": 81.13
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 2,
+    "elapsed_s": 81.29
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 2,
+    "elapsed_s": 83.98
+  },
+  {
+    "kind": "read_station",
+    "phase": "ADJUST_BOARD",
+    "samples": 2,
+    "elapsed_s": 84.15
+  },
+  {
+    "kind": "holder_adjustment",
+    "samples": 2,
+    "from_pose": 3,
+    "to_pose": 9,
+    "reason": "相机已看见标定板，lidar_left、lidar_right 未测得唯一有效板面。请改变板的倾角，拉开与邻近物体的距离。"
+  },
+  {
+    "kind": "board_pose",
+    "pose": 9,
+    "elapsed_s": 84.82
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 3,
+    "elapsed_s": 86.42
+  },
+  {
+    "kind": "board_pose",
+    "pose": 4,
+    "elapsed_s": 87.25
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 3,
+    "elapsed_s": 88.64
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 3,
+    "elapsed_s": 88.81
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 3,
+    "elapsed_s": 91.02
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 4,
+    "elapsed_s": 91.41
+  },
+  {
+    "kind": "board_pose",
+    "pose": 5,
+    "elapsed_s": 92.18
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 4,
+    "elapsed_s": 93.96
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 4,
+    "elapsed_s": 94.15
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 4,
+    "elapsed_s": 96.36
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 5,
+    "elapsed_s": 96.57
+  },
+  {
+    "kind": "board_pose",
+    "pose": 6,
+    "elapsed_s": 97.38
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 5,
+    "elapsed_s": 99.08
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 5,
+    "elapsed_s": 99.25
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 5,
+    "elapsed_s": 101.63
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 6,
+    "elapsed_s": 101.84
+  },
+  {
+    "kind": "board_pose",
+    "pose": 7,
+    "elapsed_s": 102.76
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 6,
+    "elapsed_s": 104.08
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 6,
+    "elapsed_s": 104.26
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 6,
+    "elapsed_s": 107.13
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 7,
+    "elapsed_s": 107.32
+  },
+  {
+    "kind": "board_pose",
+    "pose": 8,
+    "elapsed_s": 108.25
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 7,
+    "elapsed_s": 110.38
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 7,
+    "elapsed_s": 110.78
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 7,
+    "elapsed_s": 112.84
+  },
+  {
+    "kind": "read_station",
+    "phase": "RECORDED",
+    "samples": 8,
+    "elapsed_s": 113.22
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 8,
+    "elapsed_s": 115.82
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 8,
+    "elapsed_s": 116.02
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 8,
+    "elapsed_s": 121.53
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 8,
+    "elapsed_s": 121.7
+  },
+  {
+    "kind": "read_station",
+    "phase": "SOLVING",
+    "samples": 8,
+    "elapsed_s": 123.95
+  },
+  {
+    "kind": "read_station",
+    "phase": "CANDIDATE",
+    "samples": 8,
+    "elapsed_s": 124.16
+  },
+  {
+    "kind": "read_station",
+    "phase": "WAITING_FOR_BOARD",
+    "samples": 8,
+    "elapsed_s": 126.04
+  },
+  {
+    "kind": "read_station",
+    "phase": "BOARD_VISIBLE",
+    "samples": 8,
+    "elapsed_s": 126.44
+  },
+  {
+    "kind": "read_station",
+    "phase": "VERIFIED",
+    "samples": 8,
+    "elapsed_s": 128.27
+  },
+  {
+    "kind": "board_pose",
+    "pose": 0,
+    "elapsed_s": 129.07
+  }
+]

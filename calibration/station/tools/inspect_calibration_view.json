@@ -1,0 +1,9 @@
+{
+  "id": "inspect_calibration_view",
+  "version": "1",
+  "description": "Inspect one synchronized camera and LiDAR observation of the installed calibration target. Returns camera and per-LiDAR visibility or a specific missing prerequisite. Single-frame evidence only. Does not record a pose or change calibration.",
+  "effect": "read",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/inspect"
+}

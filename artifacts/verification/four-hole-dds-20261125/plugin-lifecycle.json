@@ -1,0 +1,22 @@
+{
+  "service": "edge-hole-cal-calibration-algorithms-1",
+  "retained": "checkerboard recognizer and method",
+  "before": {
+    "code": 200,
+    "detector": "vision.aruco-four-hole-board",
+    "condition": "board_visible"
+  },
+  "without_detector": {
+    "code": 422,
+    "reason": "ambiguous_or_unavailable_detector:four_hole_board"
+  },
+  "without_method": {
+    "code": 422,
+    "reason": "calibration_method_unavailable:four_hole_board"
+  },
+  "after": {
+    "code": 200,
+    "detector": "vision.aruco-four-hole-board",
+    "condition": "board_visible"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "profile_id": "office.fixture.gazebo.diff_drive",
+  "kinematics": "differential_drive",
+  "reference_frame": "base_link",
+  "reference_point": "drive_center",
+  "front_m": 0.155,
+  "rear_m": 0.275,
+  "left_m": 0.28,
+  "right_m": 0.28,
+  "track_m": 0.36,
+  "wheelbase_m": 0.23,
+  "wheel_radius_m": 0.10,
+  "source": {
+    "model": "sim/world.sdf",
+    "sha256": "30610155fc65314742f163692adfaa50af30c559f3e44612c8c2986492740b3f",
+    "coverage": "Outward horizontal swept envelope of the simulated chassis, wheels and caster."
+  }
+}

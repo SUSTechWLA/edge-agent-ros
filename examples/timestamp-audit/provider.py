@@ -60,6 +60,12 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def do_GET(self):
+        if self.path == "/health":
+            self.reply(200, {"ok":True, "version":VERSION})
+        else:
+            self.reply(404, {"error":{"code":"timestamp.not_found", "message":"unknown endpoint"}})
+
     def do_POST(self):
         if self.path != "/invoke":
             self.reply(404, {"error": {"code": "timestamp.not_found", "message": "unknown endpoint"}})

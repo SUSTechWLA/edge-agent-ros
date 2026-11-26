@@ -1,0 +1,24 @@
+# Native ROS subscriptions on the Jetson. The private station runs separately.
+ARG ROS_DISTRO=humble
+FROM ros:${ROS_DISTRO}-ros-base AS observer
+ARG ROS_DISTRO
+ARG ROS_MIRROR
+RUN if [ -n "$ROS_MIRROR" ]; then \
+      for f in /etc/apt/sources.list.d/*ros*.sources /etc/apt/sources.list.d/*ros*.list; do \
+        [ ! -f "$f" ] || sed -i -e "s|https\?://packages.ros.org/ros2/ubuntu|$ROS_MIRROR|g" -e 's/^Types: deb deb-src$/Types: deb/' "$f"; \
+      done; fi && apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 update && apt-get install -y --no-install-recommends \
+    python3-numpy python3-opencv ros-${ROS_DISTRO}-sensor-msgs-py \
+    ros-${ROS_DISTRO}-rmw-cyclonedds-cpp && rm -rf /var/lib/apt/lists/*
+ENV PYTHONPATH=/opt/edge
+WORKDIR /opt/edge
+
+FROM observer AS station
+ARG ROS_DISTRO
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake python3-colcon-common-extensions ros-${ROS_DISTRO}-rosidl-default-generators \
+    ros-${ROS_DISTRO}-nav-msgs && rm -rf /var/lib/apt/lists/*
+COPY src/edge_interfaces src/edge_interfaces
+RUN bash -ec '. /opt/ros/$ROS_DISTRO/setup.bash && colcon build --merge-install --packages-select edge_interfaces --cmake-args -DBUILD_TESTING=OFF'
+COPY docker/calibration-entrypoint.sh /usr/local/bin/calibration-entrypoint
+RUN sed -i 's/\r$//' /usr/local/bin/calibration-entrypoint && chmod +x /usr/local/bin/calibration-entrypoint
+ENTRYPOINT ["/usr/local/bin/calibration-entrypoint"]

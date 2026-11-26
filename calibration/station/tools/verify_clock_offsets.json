@@ -1,0 +1,9 @@
+{
+  "id": "verify_clock_offsets",
+  "version": "1",
+  "effect": "idempotent",
+  "description": "Requires a recorded motion window. Fit and independently validate software time offsets on held-out motion; publish an evidence-window-limited calibration receipt on success.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/fit_clock"
+}

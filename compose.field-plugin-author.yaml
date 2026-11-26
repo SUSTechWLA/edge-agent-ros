@@ -1,0 +1,71 @@
+# Read-only application data plane. The deployment-owned publisher alone admits new soft/read bindings.
+services:
+  agent:
+    environment:
+      EDGE_READ_PLUGIN_FAMILIES: /field-scope/families.json
+    volumes:
+      - ${EDGE_FIELD_FAMILIES:?approved plugin family file}:/field-scope/families.json:ro
+  field-author:
+    container_name: ${EDGE_FIELD_AUTHOR_CONTAINER:-edge-field-author}
+    image: ${EDGE_FIELD_AUTHOR_IMAGE:?pinned author release}
+    pull_policy: never
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN]
+    group_add: ["${EDGE_FIELD_SITE_GID:?group that owns the installed site}"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    pids_limit: 30
+    mem_limit: 256m
+    networks: [agent-api]
+    environment:
+      EDGE_FIELD_ADAPTER_COMMIT: ${EDGE_FIELD_ADAPTER_COMMIT:?source commit for the audited adapter}
+    entrypoint: [python3, -B, -m, client.field_plugin_watch]
+    command: [--agent-url, "http://agent:8090", --ollama-url, "${EDGE_OLLAMA_URL:?local Ollama endpoint}", --model, "${EDGE_FIELD_MODEL:?approved model}", --site, /site, --registry, /registry, --policy, /policy/approved.json, --state, /state, --family-profile, /field-scope/families.json]
+    volumes:
+      - ${EDGE_FIELD_FAMILIES}:/field-scope/families.json:ro
+      - ${EDGE_NAV_SITE:?installed DSH site}:/site
+      - registry:/registry
+      - ${EDGE_READ_POLICY_DIR:?deployment read policy directory}:/policy
+      - ${EDGE_FIELD_AUTHOR_STATE:?private state directory}:/state
+  field-review-feed:
+    container_name: ${EDGE_FIELD_REVIEW_CONTAINER:-edge-field-review-feed}
+    image: ${EDGE_FIELD_FEED_IMAGE:?pinned review feed release}
+    pull_policy: never
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    group_add: ["${EDGE_FIELD_SITE_GID}"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    pids_limit: 20
+    mem_limit: 96m
+    networks: [agent-api]
+    entrypoint: [python3, -B, -m, client.field_review_feed]
+    command: [--agent, "http://agent:8090", --rgb, /rgb/artifacts, --depth, /depth/artifacts,
+              --out, /out, --selection, /selection/session.json, --author-state, /author]
+    volumes:
+      - image-facts:/rgb:ro
+      - depth-facts:/depth:ro
+      - type: bind
+        source: ${EDGE_FIELD_REVIEW_MODULE:-./client/field_review_feed.py}
+        target: /opt/edge/client/field_review_feed.py
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${EDGE_FIELD_AUTHOR_STATE}
+        target: /author
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${EDGE_FIELD_SELECTION_DIR:?directory containing session.json}
+        target: /selection
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${EDGE_FIELD_REVIEW_DIR:?records directory below the authenticated Console web root}
+        target: /out
+        bind: {create_host_path: false}

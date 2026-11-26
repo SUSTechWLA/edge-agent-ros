@@ -10,12 +10,18 @@
 
 ## 现在可以做什么
 
+在静止 Gazebo 工位输入「请帮我标定当前传感器」。Agent 识别操作者出示的棋盘，采集不同板姿，估计并独立核验双雷达到相机的外参。普通标牌识别复用同一感知工具。[启动工位与实车标定方法](docs/testing/guided-calibration.md) · [独立仿真验收](artifacts/verification/autocalibration-20261125/run-04/gazebo-truth.json)
+
+在校园 Gazebo 任务台输入「前往校园前广场南侧露台」，轮式车可以从教学楼门厅出发，穿过门廊，沿广场步道到达露台。全校地图标出任务位置，放大图显示全程规划和实走轨迹。本次出发规划 22.24 米，Gazebo 实测行驶 21.79 米，到点误差 5.96 厘米。[观看完整导航演示](artifacts/verification/campus-long-navigation-20261124/campus-terrace-navigation.mp4) · [打开本次任务](http://127.0.0.1:8910/exploration-mission.html?task_id=campus-terrace-film-20261124-01) · [启动与真值验证](docs/testing/campus-smooth-navigation.md)
+
+导航试算可按机体、地图和算法组合。Agent 能独立读取空间观测、查询融合定位、解析地点及生成路线。Jetson 只读站点使用实时里程计，四种机体的路线和地面执行交接另有隔离夹具。[导航插件边界](navigation/README.md) · [板端接入与复测](docs/testing/navigation-plugins.md)
+
 **看一次有人能读懂的运行录像。** 在校园门厅给无人车一句没有坐标的中文任务，点击“内核确认已停车”，同时观察地图帧龄、现场画面、激光回波、IMU 角速度和下发线速度；再看它在哪一刻取得新观测并重新选点。视频由已封存的十路数据离线生成。纯软件任务也能用同一插件。[分章回放](artifacts/verification/recording-showcase/mission-01/index.html) · [独立观测与原始归档](artifacts/verification/recording-showcase/mission-01/README.md) · [录制自己的任务](task_recorder/README.md)
 
 
-在同一个 `edge-agent-ros` 目录开发。`main` 保存完整源码、文档、仿真、测试和验收记录；`deploy/robot` 从指定开发提交生成，仅交付板端运行文件。板端用 `cat ROBOT_SOURCE` 查询对应的开发提交，用 `sh scripts/robot.sh observe` 启动。操作手册保存在开发分支。[板端操作手册](deploy/robot/README.md) · [无人车出厂与首次进场](docs/rover-commissioning.md)
+在同一个 `edge-agent-ros` 目录开发。`main` 保存完整源码、文档、仿真、测试和验收记录；`deploy/robot` 从指定开发提交自动投影生成，仅交付纯净的边缘端运行代码、必要配置、顶层 `README.md` 与 `ROBOT_SOURCE` 来源指针。边缘端可用 `cat ROBOT_SOURCE` 查询对应的开发提交，用 `sh scripts/robot.sh observe` 启动常规观测，或用 `python3 scripts/calibration_station.py` 启动传感器自动标定工位。[板端操作手册](deploy/robot/README.md) · [无人车出厂与首次进场](docs/rover-commissioning.md)
 
-大型校园实验采用代尔夫特理工大学的测绘建筑和正射影像。教学训练楼、机器人广场、八道运动场、草地和林带通过一条约 777 米的步道接入真实校园街网。在[校园全景](http://127.0.0.1:8780/)打开路线叠加，在[三维地图](http://127.0.0.1:8773/?view=3d&place=campus)切换到具体机器人，可近看机体、传感器和动作。轮式车、无人机、四足和双足的仿真动力学与已验收能力各不相同。[校园安装与运行](scene/campus_large/README.md) · [四种机体的查看与复测](docs/testing/campus-robot-view.md) · [长程试验场规格](docs/specs/SDD-029-unified-campus.md)
+大型校园实验采用代尔夫特理工大学的测绘建筑和正射影像。教学训练楼、机器人广场、八道运动场、草地和林带通过一条约 777 米的步道接入校园街网。打开日用任务台可看完整的 565 × 1,190 米校园，点「校园三维」浏览原模型，点「聚焦任务」查看教学楼门口的规划路线与实测轨迹。十个常驻容器共用一个校园世界。轮式车、无人机、四足和双足另有按需启动的专项仿真。[校园任务台](http://127.0.0.1:8910/exploration-mission.html) · [日用容器职责](docs/testing/campus-smooth-navigation.md#日用校园站) · [四种机体的查看与复测](docs/testing/campus-robot-view.md)
 
 可选的三维点云地图、多相机预览、RGB-D 像素测距和模型适配器可以按需安装。同一规划入口已经分别通过本地 Qwen 和真实 DeepSeek 调用 ROS 状态工具。用工作台观察各插件的状态、输入和装卸边界，可以从[感知与模型插件快速上手](docs/perception-model-quickstart.md)开始。
 

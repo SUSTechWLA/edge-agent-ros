@@ -1,0 +1,7 @@
+{"samples": 0, "operator_received": "no_synchronized_observation"}
+{"samples": 0, "operator_received": "partial_markers"}
+{"samples": 0, "operator_received": "hold_still"}
+{"samples": 0, "operator_received": "board_missing_in_lidar"}
+{"samples": 1, "operator_received": "new_sample_recorded"}
+{"samples": 1, "operator_received": "target_visible"}
+{"samples": 1, "operator_received": "repeated_pose"}

@@ -91,4 +91,80 @@ docker run --pull=never --rm --network none --mount "type=bind,source=$PWD,targe
 
 在较短的同 SHA worktree `D:/project/kb2t` 内重跑 repository、console-missions、places、UI（含两个 Session 子阶段）与本地模型。实际报告 `.ci-results/kernel-runner/wp2-session-repeat/20261119T082651Z-9ccd42fb/summary.json` 有 14 条通过、零失败或跳过。两次同版本实测合起来覆盖全部 21 个选中阶段。Session 恢复了原 binding，12 条既有机器人任务的状态一致。验收使用 Linux/amd64 容器、真实本地模型和合成 ROS/Gazebo 输入，未运行 ARM64 或实机试验。
 
-**本轮交付边界。** 按任务约定收在全绿的 WP2。WP3 的统一能力字段及 status 提供者尚未实现，旧 status 和 inspect 仍走现有入口。WP4 的 Observer/History 仍读取任务及插件账本，analysis 离线 CLI 和 recorder 的独立契约验收待实现。WP5 的 `edge_contracts.conformance` CLI 和最终覆盖选择器待完成；板端投影已覆盖目前交付的包。WP0–WP2 没有需要切换的运行时行为开关，按工作包逆序 revert 或部署基线镜像即可回退。
+**首轮交付边界（WP0–WP2）。** 按任务约定收在全绿的 WP2。WP3 的统一能力字段及 status 提供者尚未实现，旧 status 和 inspect 仍走现有入口。WP4 的 Observer/History 仍读取任务及插件账本，analysis 离线 CLI 和 recorder 的独立契约验收待实现。WP5 的 `edge_contracts.conformance` CLI 和最终覆盖选择器待完成；板端投影已覆盖目前交付的包。WP0–WP2 没有需要切换的运行时行为开关，按工作包逆序 revert 或部署基线镜像即可回退。
+
+### WP3 统一目录与状态查询
+
+在同一目录快照中为公开能力投影增加 records 与冲突诊断。原 capabilities 字段继续供旧客户端读取。status 沿用内置实现，Agent 持有唯一的里程计订阅，独立 soft host 的 ctx.require 只能读取该宿主中已冻结的依赖。跨进程迁移需先建立只读事实接口，并约定软宿主离线时如何处理旧任务。inspect 委托 Core 执行运动，继续保留原授权与对账入口。
+
+在 Linux/amd64 的隔离 ROS 域，以合成里程计、真实 HTTP 和 SQLite 验证 status 的旧句式、证据字节、缺样、过期数据和无 binding 任务恢复。只读工具 track_distance 使用 v1 清单、独立提供者和 8 组输入验证，沿用原注册与调用接口。
+
+AC-3 验收使用 `python3 tests/test_capability_catalog.py --http -v`（真实 HTTP、两个 Unix socket 与 4 项投影测试）、`python3 tests/test_status_plugin.py -v`（4 项）、`python3 tests/agent_trace_contract.py -v`（12 项）和 `python3 tests/agent_verification_contract.py -v`（11 项）。Windows 快速门逐条结果见 `.ci-results/k2/wp3/gate.json`，样例工具的 8 个用例及重复投递回执见 `.ci-results/sdd-049/wp3/track-1795082409853305700.json`。旧清单没有声明的契约字段取 null，未探测的健康状态取 unknown。
+
+### WP4 Console 通过 Agent 查询事实
+
+任务与相关步骤由 Agent 在同一只读 SQLite 快照中查询。Console 使用 `EDGE_AGENT_URL` 访问以下 GET。既有任务详情、复盘和 Session 客户端继续使用原有 URL。
+
+| Agent 路径 | 读者与续读方式 |
+|---|---|
+| `/agent/task-context` | 按 task_id 或 trace_id 取得任务、旧步骤、关联任务及覆盖窗口。 |
+| `/agent/task-index` | 复盘和 Session 列表共用分类计数，before 绑定原账本、状态筛选和行号。 |
+| `/agent/task-events` | Observer 以持久化的源身份和原始 seq 续读。源更换后按新身份在 Console 归档中查找对应检查点。 |
+| `/agent/registry-events` | 读取 runtime.registry 原有事件及心跳，保留生产者身份、序号和原始字节。 |
+
+Console 拥有自己的 `history.db`，先收录 Agent 派发事件，再关联同批 core 事件。部署通过 `EDGE_JOURNAL_SOURCES` 指定可公开的模块日志，聚合卷按模块目录发现来源。`console/server/legacy_ledger.py` 中的 `LegacyLedgerReader` 是 core 的过渡性只读适配器，待 core 提供事实接口后迁移。
+
+AC-4 在线实测使用 `python3 -B tests/test_console_facts.py -v`，3 项均通过。旧任务的游标 7 可接续获得序号 13 与 21，查询前后任务、触发与事件表相同。使用 `python3 -m unittest discover -v -s /opt/edge/console/server` 通过 44 项，同一离线 ROS 镜像中的 Evidence 15 项和 Session 9 项通过。Windows 快速门及 Compose 配置见 `.ci-results/k2/wp4/gate.json`。在独立双容器中，Console 无任务卷，Edge 浏览器实际打开会话、复盘和旧任务详情，并收到 SUCCEEDED 和原 status 步骤，证据见 `.ci-results/k2/wp4/811128efb5/acceptance.json`。
+
+板端离线兼容性单独验收。在隔离容器内设置 `EDGE_CONSOLE_OBSERVE_ONLY=1`、`EDGE_AGENT_URL=http://127.0.0.1:1`，用 `.ci-results/k2/wp4/offline_observe_probe.py` 查询同一份旧任务。旧版复盘索引返回 HTTP 200，候选返回 503；任务上下文的 task_available 从 true 变为 false。两个版本的事件归档查询均为 HTTP 200。逐项回执在 `.ci-results/k2/wp4/observe-legacy.json` 与 `.ci-results/k2/wp4/observe-candidate.json`。板端 observe 启动脚本明确禁止随之启动控制 Agent，仅启动 perception 与 console。
+
+为保留上述旧任务，板端观察模式增加独立 `task-facts` 进程。服务复用 Agent 的只读投影，读取原任务卷；Console 通过 `EDGE_FACTS_URL` 访问。常规任务模式沿用 Agent 的 HTTP 入口。已存在的 `EDGE_CONSOLE_OBSERVE_ONLY` 默认为 0，观察配置将它设为 1；任务提交与重试仍受原代理约束。台架切换任务模式前，在事实服务处检查原账本中的未结束任务。
+
+修复后，原 `sh scripts/deploy.sh hardware observe` 在隔离网络启动上述三个容器，旧任务列表和详情恢复为 HTTP 200。见 `.ci-results/k2/wp4/edge-wp4-observe-98fde60b9d/summary.json`。在正常关闭和最新事务仍在 WAL 的两种库上，Edge 均实际打开离线会话、步骤证据与先前归档。WAL 中的第 34 条事件可读，库、WAL、SHM 的文件集合、大小、哈希和修改时间逐项一致。Console 的任务提交返回 403，事实服务相应写请求返回 405。两次完整报告在 `.ci-results/k2/wp4/observe-e4cda4b9/{clean,wal}/acceptance.json`。最终 Console 套件 45 项、`tests/test_console_facts.py` 5 项、Agent trace 12 项、verification 11 项通过；范围均为 Linux/amd64 软件夹具。
+
+### WP5 独立契约验收与离线分析
+
+只读 Tool 的探针使用清单、公开 HTTP 和独立期望值核对回执。显式托管的测试进程可执行崩溃和重启验证。对原生 status 和 recorder，还需按实际公开读接口验证其事实；录制的启停与导出属于 recorder 自己的生命周期。默认部署与录制 profile 应对相同输入产生相同的任务终态、操作号及派发次数。
+
+工作站上的 `analysis/` 读取导出的副本。板端发布包含 `agent/kernel/`、`agent/facts_server.py` 和 `edge_contracts/`；离线分析及其样例只在开发分支分发。选择器将公共契约改动送入全量阶段，分析改动运行仓库级离线测试，板端回归在实际镜像中检查三类提供者。
+
+AC-5/6 在 Linux/amd64 隔离 ROS 域用 `python3 -B tests/test_plugin_conformance.py --out /evidence/plugin-conformance.json` 实测。录制器启用和停机时，输入均为一个缺里程计任务和两个收到合成里程计的任务。两组均得到一个 `RECOVERY_REQUIRED`、两个 `SUCCEEDED`，每个原操作的 SQLite 派发数均为 1。夹具在每组开始发送数据前先验缺样，提交两个正例前从本轮 Agent 确认已收到各自的时间戳。独立录制得到一个状态样本、七个 trace 样本；Evidence 重投和提供者重启后原操作只有一份持久化终态回执。
+
+三个提供者的健康、坏版本、坏参数、超时恢复和托管进程崩溃/重启共 15 项通过。`status`、`task.record` 的读契约验证公开的任务和录制资源，Evidence 使用部署清单中的 `evidence_schema` v1 Tool。逐次 HTTP 回应、固定操作号、SQLite 计数和两组任务终态见 `.ci-results/k2/wp5/plugin-conformance.json`。`python -B tests/test_conformance.py -v` 的 6 项与 `python -B tests/test_offline_analysis.py -v` 的 5 项通过，后者另在仅挂分析包与样例的 Linux 环境复现。原 `tests/system/verify_sample_provider.py` 的 8 个用例各验证两份回执，轨迹样例的托管进程验收见 `.ci-results/k2/wp5/track-managed.json`。选择器 16 项、部署投影 4 项及其余快速门见 `.ci-results/k2/wp5/gate.json`。
+
+### WP6 全量运行和离线恢复
+
+早先的全量 `20261119T062918Z-af92005f` 在 core 阶段只留下运行中状态。任务回执已写出，core 容器以 SIGTERM（143）退出，同项目容器随后停止。现存记录不足以识别发起停止的一方。本轮在干净提交 `23eeb5d6cdc897599d6f3d01e9aeeada47abe661` 使用本地 ROS/Gazebo 镜像、校园资产和只读的 Qwen 1.5B 缓存，执行完整套件的 21 个阶段组。第一次完整报告为 `.ci-results/r/20261119T124415Z-c76c811b/summary.json`，镜像 `sha256:06a5eed7faa66c4f05a740c4ed16d4e5121cf01f5da62475386cb477db307e30`。36 个阶段行中 34 通过、2 失败、0 跳过。core 的受理、取消、重启、独立停稳观测及持久化对账通过。失败项如下。
+
+| 场景 | 现场证据和修复 |
+|---|---|
+| `observations` 的本地模块积压 | 生产者写入 1,088 条。Agent 不可达时两个 HTTP 请求串行阻塞了本地归档，每 32 条的间隔中位数为 8.234 秒；210 秒时 Console 只有 864 条。现在独立线程分别采集本地日志和 Agent 提供的事实。原探针以 20.234 秒公开所有条目，两个消费者各自重放 34 页，导出摘要与生产者一致。回执在 `.ci-results/k2/wp6/backlog/complete.json`。 |
+| `campus-world` 的暂停受理后复核 | 校园热重载主动停止 Agent，第二次查询活动任务时返回 503。校园 Compose 复用独立事实进程，只读挂载与校园 Agent 同一任务卷，并在重载检查期间保持它在线。工作台继续向原 Agent 提交任务，复核继续检查活动任务、core 账本、里程计及子机账本。定向实测中停 Agent 后旧任务仍可读，活动任务、事实服务中断或账本损坏都会阻止重载。见 `.ci-results/k2/wp6/campus/focused.json`。 |
+| 迟到的 Agent 派发 | 真实 SQLite/HTTP 的新旧 Console 对照显示，当 core 记录先于派发归档时，原任务的追踪、触发和父事件信息在重启后仍丢失。修复在归档事务中按两个账本身份和完整操作号关联。原归档序号、采集快照和 core 自有因果链保留；缺少来源证据的旧档沿用原筛选可见性。账本更换或首次离线、无法确认关联时保留当时的观测。实测见 `.ci-results/k2/wp6/causality/fixed-comparison.json` 和 `.ci-results/k2/wp6/causality/migration-comparison.json`。 |
+
+校园重载恢复后，站点探针在打印三个站点及位置恢复的完整数据后偶发 SIGABRT（134）。隔离分区中，原实现在 40 次运行里复现三次。Gazebo 的接收线程在 `unsubscribe` 返回后仍持有 Python 回调；夹具现在等到回调实际释放再退出。60 次定向试验分别覆盖正常退出、原采样断言失败、第二个订阅创建失败各 20 次，错误退出码和断言内容均保留。另有 64 次高频和请求超时组合正常退出。见 `.ci-results/k2/wp6/gz-teardown/summary.json`。修复只涉及仿真测试进程的生命周期。完整校园验收 `.ci-results/k2/wp6/campus/corrected.json` 使用 `--verify-reload --verify-texture --verify-onboard` 返回 0。新任务核验三个位置，旧证据保留；16 路合成 onboard 来源、3 个站点的 9 帧雷达及独立小世界时钟均通过。Console 回归 50 项、独立事实服务回归 5 项通过，结果在 `.ci-results/k2/wp6/console-final.log` 和 `.ci-results/k2/wp6/task-facts-final.log`。
+
+提交 `f13ed32` 的全量运行号为 `20261119T132402Z-b663475d`，原始回执路径为 `.ci-results/r/20261119T132402Z-b663475d/summary.json`。测试读取当前 Git SHA、检查工作树并记录镜像 ID 及其 revision 标签。核对时以此回执的 `revision`、`dirty`、`image_id`、`image_revision`、`status` 以及 `stages[].status` 计数为准。每次运行使用新目录，已存在的运行号会被拒绝。
+
+在本机，`pwsh -NoProfile -File .ci-results/k2/runner/run.ps1 -RunId <新运行号>` 以上述离线资源执行 `tests/system_suite.py --out-root .ci-results/r --campus-assets artifacts/sim-assets --ollama-cache-volume edge-agent-ros_models`，全量包含模型和校园场景。运行器在 Docker 命令执行前保留临时项目的命名卷，仿真和板端镜像各在无网络的构建阶段使用已核实的本地 SDK。快速门逐条命令、返回码及日志保存在 `.ci-results/k2/wp6/gate.json`。上述回执均为 Linux/amd64 容器及软件夹具的结果。
+
+### WP6 合成相机订阅者见证
+
+在干净提交 `f13ed32f0a186e1ff8fba0d5ee29feba8cd11de7` 的全量中，36 个阶段行有 35 项通过、1 项失败、0 项跳过，镜像为 `sha256:46fa7273da3cecddb12ebc1d1301bc89bb53386c32a18ad465b6744f9311a137`。模拟相机收到的帧与发布端时间戳、哈希一致，一次性订阅者在两次 DDS 图查询之间收帧并退出，独立见证因此缺失订阅者 GID。原夹具四次同镜像试验中两次复现。测试发布器现在持续更新健康心跳，发现相机订阅后记录该帧和当前全部订阅者并投递。三个托管试验和单独一次复验均通过。接入第二个读者时，原唯一性断言成功拒绝。回执在 `.ci-results/k2/wp6/physical-camera-audit/candidate-summary.json`、`independent.json` 及 `patched-negative.json`。
+
+干净提交 `736fb20fb4bb7f357d4862f62a1a3754ef323cca` 的全量运行号为 `20261120T004434Z-f657f9fa`，报告为 `.ci-results/r/20261120T004434Z-f657f9fa/summary.json`，镜像为 `sha256:71f4d3d3dc13baa1ea88e6d7527eadf00769afef8b1415fe9c3de723c043ac1d`。21 个阶段组产生 35 个阶段行，35 通过、0 失败、0 跳过。三次成功采集各匹配一个独立订阅者 GID，崩溃时在途的操作保留为未知。积压的 1,088 条记录在 22.703 秒后全部可见，core 和校园重载验收通过。命名卷、模型缓存和校园资产沿用上次配置。
+
+### WP7 首次上板前的导航契约
+
+默认系统套件的 `board` 阶段在断网的板端软件镜像里运行 `tests/system/navigation_contract.py`，通过实际 ROS 2 服务受理任务，观察 Action 反馈的目标 UUID、操作心跳与取消。夹具使用合成的 `/odom` 样本；生产 `edge_core` 使用独立的临时 SQLite 账本。板端镜像在域 184 的定向报告为 `.ci-results/k2/wp7/navigation/board-184-r2.json`，域 193 的独立镜像复测为 `.ci-results/k2/wp7/navigation/sim-193-r2.json`。两次使用相同的 core 二进制，均未启动 Gazebo。
+
+| 合成输入 | 生产 core 的实测终态 |
+|---|---|
+| Action 报告到达，随后收到独立的新位置 `(0.37, 0.10)` | `SUCCEEDED`，只登记一个核验点 |
+| Action 报告到达，随后只收到与上帧同时间戳的位置 | `FAILED`，报 `core.verification_timeout`，无核验点 |
+| 运动中取消，心跳撤回；停稳窗口中再次出现运动，随后连续静止 | `CANCELED`。运动打断原窗口；域 184 最终以连续 5 帧、约 480 ms 的静止数据确认停稳 |
+| 取消后只收到重复时间戳，适配器返回 `UNKNOWN` | `RECOVERY_REQUIRED`。重启前后新任务均被 `core.base_occupied` 拒绝 |
+
+重启 core 后，以原任务和操作号重查及重投，四项的状态、步骤回执和已验位置与原账本一致，每个操作只派发一次。现场的驱动与标定、定位和 TF、底盘导航适配器、独立急停与失联停车、台架制动距离均需另行验收。未在真机或原生 ARM64 上验证。[首测预检与第一条只读任务](../testing/hardware-first-run.md)
+
+包含本工作包的全量运行号为 `20261120T013422Z-747a6dd9`。原始报告位于 `.ci-results/r/20261120T013422Z-747a6dd9/summary.json`，同目录 `navigation-contract.json` 包含四项操作的 ROS 与 SQLite 回执。提交与镜像的完整 revision、镜像 ID 及阶段计数由报告生成，另汇于 `.ci-results/k2/wp7/verification.md`。

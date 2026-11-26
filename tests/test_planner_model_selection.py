@@ -1,5 +1,6 @@
 """Verify online model selection using the same reader as the production Agent."""
 import os
+import json
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
@@ -9,11 +10,38 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "model_provider"))
 sys.path.insert(0, str(ROOT / "agent"))
-from planning import planner_profile
+from planning import Refused, planner_profile
 from select_planner import change
 
 
 class ModelSelectionTest(unittest.TestCase):
+    def test_ollama_thread_budget_is_optional_and_bounded(self):
+        with TemporaryDirectory() as temp, patch.dict(os.environ, {"EDGE_CONTRACT_DIR":temp}):
+            path = Path(temp) / "planner-profile.json"
+            profile = {"schema_version":1,"version":"v1","protocol":"ollama","url":"http://local","model":"qwen"}
+            path.write_text(json.dumps(profile))
+            self.assertNotIn("num_thread", planner_profile()["options"])
+            for value in (1,3,64,0,65,True,2.5,"3"):
+                path.write_text(json.dumps(dict(profile, options={"num_thread":value})))
+                if type(value) is int and 1 <= value <= 64:
+                    self.assertEqual(planner_profile()["options"]["num_thread"], value)
+                else:
+                    with self.assertRaises(Refused):
+                        planner_profile()
+
+    def test_planner_and_author_share_bounded_duration_and_token_limit(self):
+        with TemporaryDirectory() as temp, patch.dict(os.environ, {"EDGE_CONTRACT_DIR":temp}):
+            path = Path(temp) / "planner-profile.json"
+            profile = {"schema_version":1,"version":"v1","protocol":"ollama","url":"http://local","model":"qwen"}
+            path.write_text(json.dumps(dict(profile, timeout_s=210, options={"num_predict":240})))
+            self.assertEqual(planner_profile()["timeout_s"], 210)
+            self.assertEqual(planner_profile()["options"]["num_predict"], 240)
+            for field, bad in (("timeout_s", True),("timeout_s",241),("timeout_s",4),("num_predict",0),("num_predict",1025)):
+                options = {field:bad} if field == "timeout_s" else {"options":{field:bad}}
+                path.write_text(json.dumps(dict(profile, **options)))
+                with self.assertRaises(Refused):
+                    planner_profile()
+
     def test_hot_select_replay_and_restore_with_optimistic_concurrency(self):
         with TemporaryDirectory() as temp, patch.dict(os.environ, {"EDGE_CONTRACT_DIR": temp,
                 "EDGE_PLANNER_URL": "", "EDGE_OLLAMA_URL": "http://original:11434"}):

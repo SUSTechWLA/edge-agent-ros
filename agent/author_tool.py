@@ -172,9 +172,8 @@ def writer_lock(directory):
     with (directory/".publish.lock").open("a+b") as handle:
         if os.name=="nt":
             import msvcrt
-            if handle.tell()==0:
-                handle.write(b"0")
-                handle.flush()
+            # Windows byte-range locks can extend past EOF. Writing a sentinel
+            # first races a concurrent publisher that already holds this byte.
             handle.seek(0)
             msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
         else:

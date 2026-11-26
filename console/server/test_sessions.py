@@ -109,6 +109,20 @@ class SessionTest(unittest.TestCase):
         self.failure("session.service_missing")
         self.assertEqual(self.calls,[])
 
+    def test_observe_only_uses_the_same_session_binding_and_reports_withdrawal(self):
+        path = self.install()
+        live = self.fetch("/api/session", task_id="route")
+        with patch.dict("os.environ", {"EDGE_CONSOLE_OBSERVE_ONLY":"1"}):
+            observed = self.fetch("/api/session", task_id="route")
+            self.assertEqual(observed["service"], live["service"])
+            self.assertEqual(self.calls[-1][1]["binding"], live["service"]["binding"])
+            path.unlink()
+            with self.assertRaises(HTTPError) as error:
+                self.fetch("/api/session", task_id="route")
+            detail = json.load(error.exception)
+            self.assertEqual((error.exception.code, detail["code"], detail["observe_only"]),
+                             (503, "session.service_missing", True))
+
     def test_mid_request_change_or_withdraw_is_not_mislabeled(self):
         self.install()
         for action in (lambda:self.install(version="2"),lambda:self.install(draining=True),
@@ -213,6 +227,10 @@ class SessionTest(unittest.TestCase):
             writer.commit()
         result=self.fetch("/api/task-context",task_id="route")
         raw=json.dumps(result)
+        with patch.dict("os.environ", {"EDGE_CONSOLE_OBSERVE_ONLY":"1"}):
+            listed = self.fetch("/api/sessions")["tasks"][0]
+            self.assertEqual(listed["id"], "route")
+            self.assertEqual(listed["text"], result["task"]["text"])
         for secret in ("private-value","secret-token","do-not-show"):
             self.assertNotIn(secret,raw)
         self.assertEqual(result["task"]["steps"][0]["evidence"]["api_key"],"[REDACTED]")

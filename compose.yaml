@@ -344,6 +344,11 @@ services:
     restart: unless-stopped
     environment:
       <<: *environment
+      EDGE_JOURNAL_SOURCES: >-
+        {"plugin.author":"/var/lib/edge-author-events/module-events.sqlite",
+         "plugin.publisher":"/etc/edge/plugins/derived/.history/module-events.sqlite",
+         "plugin.manager":"/etc/edge/plugins/runtime/.history/module-events.sqlite",
+         "plugin.supervisor":"/var/lib/edge-supervisor/module-events.sqlite"}
       EDGE_TELEMETRY_RETENTION_DAYS: ${EDGE_TELEMETRY_RETENTION_DAYS:-7}
       EDGE_TELEMETRY_MAX_SAMPLES: ${EDGE_TELEMETRY_MAX_SAMPLES:-10080}
     command: ["python3", "/opt/edge/console/server/main.py"]
@@ -352,7 +357,6 @@ services:
       - console-history:/var/lib/edge-console
       - ${EDGE_OBSERVATIONS_DIR:-./observations}:/etc/edge/observations:ro
       - ${EDGE_CONSOLE_VIEWS_DIR:-./console/web/view-plugins}:/opt/edge/console/web/view-plugins:ro
-      - task-state:/var/lib/edge-tasks:ro
       - author-events:/var/lib/edge-author-events:ro
       - supervisor-state:/var/lib/edge-supervisor:ro
       - module-sources:/var/lib/edge-module-sources:ro

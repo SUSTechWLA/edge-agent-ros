@@ -1,0 +1,114 @@
+{
+  "device": "NVIDIA Jetson Orin NX Engineering Reference Developer Kit Super",
+  "model": "qwen3:4b-instruct",
+  "inference": "Jetson CPU",
+  "model_manifest_sha256": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "operator_language": "numeric.rpn.v1",
+  "tasks": [
+    {
+      "id": "jetson-depth-thirds-04",
+      "state": "SUCCEEDED",
+      "elapsed_s": 39.869,
+      "tool": "measure_grid",
+      "args": {
+        "channel": "depth",
+        "column_count": 3,
+        "row_count": 1,
+        "statistic": "median"
+      },
+      "unit": "m",
+      "regional_values": [
+        1.467,
+        1.131,
+        0.936
+      ],
+      "task_sha256": "6432de7f87e9dc7c226228b83218c1c4246d428c4aac4eac62c5cc158ad832e6",
+      "recording_archive_sha256": "804b018a71c6bb076235e8528f0a6f549eaeb9ada4b72de00d763a827cb20fc2"
+    },
+    {
+      "id": "jetson-develop-range-02",
+      "state": "SUCCEEDED",
+      "elapsed_s": 38.387,
+      "tool": "analyze_regions",
+      "args": {
+        "channel": "depth",
+        "column_count": 3,
+        "row_count": 1,
+        "statistic": "median",
+        "operator_digest": "sha256:c4aeaedad73ada7805dcbf875b3bc32230dadd3a7d09878b902a0c0f43629695"
+      },
+      "unit": "m",
+      "regional_values": [
+        1.051,
+        0.972,
+        0.757
+      ],
+      "task_sha256": "0e2f25d865f64de6b35b3c541382056cb09eb361149206e388a22d1365fa3ac5",
+      "recording_archive_sha256": "b8efca3459cc475fb4149a11717b66f7e318f6d349cce16bb793ba2c14ba559e",
+      "result": 0.29399999999999993,
+      "operator_digest": "sha256:c4aeaedad73ada7805dcbf875b3bc32230dadd3a7d09878b902a0c0f43629695",
+      "program": {
+        "tokens": [
+          "max",
+          "min",
+          "sub"
+        ]
+      },
+      "validation": {
+        "language": "numeric.rpn.v1",
+        "program_sha256": "c4aeaedad73ada7805dcbf875b3bc32230dadd3a7d09878b902a0c0f43629695",
+        "case_count": 5,
+        "cases_sha256": "8ce4c3ac86afba0a61fbf21547511e71929ec033eaaa09738683f092104a3f11"
+      },
+      "accepted_author_calls": 1,
+      "lifecycle": [
+        "planner.decomposed",
+        "operator.gap",
+        "operator.verified",
+        "operator.installed",
+        "planner.resumed"
+      ]
+    },
+    {
+      "id": "jetson-reuse-brightness-01",
+      "state": "SUCCEEDED",
+      "elapsed_s": 163.654,
+      "tool": "analyze_regions",
+      "args": {
+        "channel": "brightness",
+        "column_count": 1,
+        "row_count": 2,
+        "statistic": "mean",
+        "operator_digest": "sha256:c4aeaedad73ada7805dcbf875b3bc32230dadd3a7d09878b902a0c0f43629695"
+      },
+      "unit": "0..255",
+      "regional_values": [
+        143.52818442708332,
+        95.11144093098959
+      ],
+      "task_sha256": "4542008b8fbc18d005e558bc8194efd7d45248a7ee2921105829a402b5dd019b",
+      "recording_archive_sha256": "7802e5b2b58baf5efb93dba1ee1a65ed709da9693b4ece6f6152c75f8e987b87",
+      "result": 48.41674349609373,
+      "operator_digest": "sha256:c4aeaedad73ada7805dcbf875b3bc32230dadd3a7d09878b902a0c0f43629695",
+      "program": {
+        "tokens": [
+          "max",
+          "min",
+          "sub"
+        ]
+      },
+      "validation": {
+        "language": "numeric.rpn.v1",
+        "program_sha256": "c4aeaedad73ada7805dcbf875b3bc32230dadd3a7d09878b902a0c0f43629695",
+        "case_count": 5,
+        "cases_sha256": "8ce4c3ac86afba0a61fbf21547511e71929ec033eaaa09738683f092104a3f11"
+      },
+      "accepted_author_calls": 0,
+      "lifecycle": [
+        "planner.decomposed",
+        "operator.reused",
+        "planner.resumed"
+      ]
+    }
+  ]
+}

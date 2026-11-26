@@ -1,0 +1,180 @@
+{
+  "source": "实际 Gazebo 前端录屏，实际跨任务地图摘要同步核对",
+  "recording": "office-exploration.mp4",
+  "video": {
+    "seconds": 132.533333,
+    "bytes": 2403422,
+    "codec_name": "h264",
+    "width": 1440,
+    "height": 900,
+    "r_frame_rate": "15/1",
+    "nb_frames": "1988",
+    "side_data_list": [
+      {}
+    ],
+    "sha256": "8bd19a2a1c9a6ba6969533ca8b0c80a6a2233217afeb30857cf01e39fe723ba3"
+  },
+  "map_ref": {
+    "id": "sdd058-autonomy-02",
+    "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+    "frame": "odom",
+    "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+  },
+  "chapters": [
+    {
+      "title": "从前端下发自然语言探索任务",
+      "start_s": 0,
+      "proof": "sdd058-autonomy-02"
+    },
+    {
+      "title": "空图与首帧建图",
+      "start_s": 3.32,
+      "proof": "0 / 1813 栅格"
+    },
+    {
+      "title": "Agent 自主换角度补扫",
+      "start_s": 12.266,
+      "proof": "两个不同观察点，机体回执均核验到点"
+    },
+    {
+      "title": "等待人工复核",
+      "start_s": 23.745,
+      "proof": "暂未取得一致的门牌观测"
+    },
+    {
+      "title": "原任务继续",
+      "start_s": 26.42,
+      "proof": "原 operation_id sdd058-autonomy-02/step/1"
+    },
+    {
+      "title": "自动确认 Swarm 门牌",
+      "start_s": 58.847,
+      "proof": "通过多视角及可达入口核验"
+    },
+    {
+      "title": "发布部分地图",
+      "start_s": 79.594,
+      "proof": "1570 / 1813 格，243 格保持未知"
+    },
+    {
+      "title": "首次使用发布地图规划",
+      "start_s": 84.763,
+      "proof": "sdd058-nav-02 受阻并停稳"
+    },
+    {
+      "title": "动态跟踪阻滞与停车",
+      "start_s": 102.667,
+      "proof": "sdd058-nav-03 的局部跟踪保持让行，仿真替身此段已停在侧边。原操作超时并核验停稳。"
+    },
+    {
+      "title": "独立核验通道恢复",
+      "start_s": 107.267,
+      "proof": "仿真替身离开、网关维护恢复及原地图保留"
+    },
+    {
+      "title": "在同一地图重新下发导航",
+      "start_s": 114.149,
+      "proof": "sdd058-nav-04 由实际前端表单提交"
+    },
+    {
+      "title": "到达 Swarm 入口并停稳",
+      "start_s": 130.701,
+      "proof": "SUCCEEDED，最终位置 (1.114, 0.613) m，线速度 0.0 m/s"
+    }
+  ],
+  "edited_segments": {
+    "native_exploration_viewport_reframed_after_s": 21.27,
+    "transition_card_seconds": 4,
+    "final_retry_start_s": 111.267,
+    "title_card_explains": "独立核对通道清空、维护重启仿真网关，在原地图再次提交导航。",
+    "dynamic_tracking_hold_excerpt_in_source_s": [
+      7.3,
+      11.899999999999999
+    ]
+  },
+  "raw_recordings": [
+    {
+      "task_id": "sdd058-autonomy-02",
+      "state": "SUCCEEDED",
+      "map_status": "PARTIAL",
+      "followup": "sdd058-nav-02 BLOCKED",
+      "file": ".ci-results/sdd058-office/live-browser-02/office-exploration.mp4",
+      "report": ".ci-results/sdd058-office/live-browser-02/browser-report.json"
+    },
+    {
+      "task_id": "sdd058-nav-03",
+      "state": "BLOCKED",
+      "code": "navigation.dynamic_yield",
+      "file": ".ci-results/sdd058-office/live-browser-nav03/office-exploration.mp4",
+      "report": ".ci-results/sdd058-office/live-browser-nav03/browser-report.json",
+      "note": "动态跟踪仍保持让行，仿真替身此时停在侧边。原操作超时后停稳。"
+    },
+    {
+      "task_id": "sdd058-nav-04",
+      "state": "SUCCEEDED",
+      "file": ".ci-results/sdd058-office/live-browser-nav04/office-exploration.mp4",
+      "report": ".ci-results/sdd058-office/live-browser-nav04/browser-report.json"
+    }
+  ],
+  "final_pose": {
+    "x": 1.1140196666268463,
+    "y": 0.6125481562023196,
+    "yaw": 0.6126430173988575,
+    "frame": "odom",
+    "speed": 0,
+    "yaw_rate": 0
+  },
+  "stop_target": [
+    1.1500001065433025,
+    0.6500000990927219
+  ],
+  "navigation_steps": 2,
+  "doorway_error_m": 0.051934960121749175,
+  "recovery_rover_motion_commands": 0,
+  "cover": "map-published.png",
+  "decode_verification": {
+    "frames": "1988",
+    "ffmpegDecode": "passed",
+    "embeddedChapters": 12,
+    "chromiumPlayback": {
+      "status": "passed",
+      "samples": [
+        {
+          "seekSeconds": 4.25,
+          "width": 1440,
+          "height": 900,
+          "readyState": 4,
+          "decoded": true
+        },
+        {
+          "seekSeconds": 24.1,
+          "width": 1440,
+          "height": 900,
+          "readyState": 4,
+          "decoded": true
+        },
+        {
+          "seekSeconds": 102.85,
+          "width": 1440,
+          "height": 900,
+          "readyState": 4,
+          "decoded": true
+        },
+        {
+          "seekSeconds": 108.1,
+          "width": 1440,
+          "height": 900,
+          "readyState": 4,
+          "decoded": true
+        },
+        {
+          "seekSeconds": 131.05,
+          "width": 1440,
+          "height": 900,
+          "readyState": 4,
+          "decoded": true
+        }
+      ]
+    }
+  }
+}

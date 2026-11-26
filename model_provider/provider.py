@@ -106,10 +106,10 @@ def validate(path, body):
     if fmt is not None and fmt!="json" and not isinstance(fmt,dict):
         raise Fault("format_invalid")
     opts = body.get("options",{})
-    if not isinstance(opts,dict) or set(opts)-{"temperature","num_ctx","num_predict"}:
+    if not isinstance(opts,dict) or set(opts)-{"temperature","num_ctx","num_predict","num_thread"}:
         raise Fault("options_invalid")
     for name,low,high,types in (("temperature",0,2,(int,float)),("num_ctx",128,65536,(int,)),
-                                ("num_predict",1,8192,(int,))):
+                                ("num_predict",1,8192,(int,)),("num_thread",1,64,(int,))):
         if name in opts and (type(opts[name]) not in types or not low<=opts[name]<=high):
             raise Fault("options_invalid")
     return messages_for(path, body)

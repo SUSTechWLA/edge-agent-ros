@@ -1,0 +1,51 @@
+{
+  "task": {
+    "task_id": "wp4-legacy-survey",
+    "state": "SUCCEEDED",
+    "steps": 1,
+    "events_in_page": 2,
+    "events_has_more": true,
+    "input_sha256": "33d89a69b5b663c2b960d5a5d62e1593d78ae1910307b2836c9820d4758ee7f6"
+  },
+  "console": {
+    "events": 2,
+    "first_seq": 1,
+    "last_seq": 2,
+    "without_task_id": 0,
+    "explicit_owner_matches": 2,
+    "by_kind": {
+      "camera.unavailable": 1,
+      "status.read": 1
+    },
+    "by_level": {
+      "info": 1,
+      "warn": 1
+    },
+    "input_sha256": "08d16203e384e226efff634fb536506c04e8c63e226ea23265044ea590f0e56a"
+  },
+  "evidence": {
+    "operation_id": "offline-example/query-1",
+    "query_state": "SUCCEEDED",
+    "task_id": "wp4-legacy-survey",
+    "archive_id": "2870ae6e868eb790b64837ecbcff1af3",
+    "loaded_events": 2,
+    "returned_rows": 1,
+    "has_more": false,
+    "truncated": false,
+    "retention_gap_possible": false,
+    "input_sha256": "178e47c588205ef2297ba8a9eff140a2957b79ca58147f7bd0056848a525e043"
+  },
+  "recording": {
+    "task_id": "wp4-legacy-survey",
+    "recording_id": "offline-example",
+    "status": "FINISHED",
+    "reported_task_status": "STOPPED",
+    "samples_by_source": {
+      "phase": 1
+    },
+    "missing_sources": [
+      "rgb"
+    ],
+    "input_sha256": "a21e87edbd31fb16b141c0c3132fcfe1f9aecfec2d2f2bcc0988a8de0a49fcf0"
+  }
+}

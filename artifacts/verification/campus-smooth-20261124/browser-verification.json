@@ -1,0 +1,164 @@
+{
+  "crossing": {
+    "file": "dynamic-crossing.mp4",
+    "sha256": "04287257bd80d3f7e0315cbbfcdf0b9f14330170ed02a4d654631b49fedb45a0",
+    "browserFrames": 393,
+    "chapters": [
+      {
+        "title": "连接 Gazebo 观测台",
+        "startMs": 0
+      },
+      {
+        "title": "核对原地图并下发导航",
+        "startMs": 1054
+      },
+      {
+        "title": "原导航任务执行",
+        "startMs": 6159
+      },
+      {
+        "title": "动态阻挡与停车等待",
+        "startMs": 7342
+      },
+      {
+        "title": "Agent 复查通道",
+        "startMs": 7929
+      },
+      {
+        "title": "继续原导航任务",
+        "startMs": 17575
+      },
+      {
+        "title": "到达并停稳",
+        "startMs": 66771
+      }
+    ],
+    "submitted": {
+      "endpoint": "/agent/tasks",
+      "status": 202,
+      "when": "2026-11-24T06:36:13.134Z",
+      "arguments": {
+        "text": "前往教学楼门外北侧等候点",
+        "id": "campus-dynamic-crossing-05"
+      }
+    },
+    "taskId": "campus-dynamic-crossing-05",
+    "map": {
+      "id": "campus-teaching-survey",
+      "frame": "odom",
+      "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+      "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+    },
+    "finalState": "SUCCEEDED",
+    "entrypoint": "http://127.0.0.1:8907/exploration-mission.html",
+    "eventKinds": [
+      "dynamic_hold",
+      "dynamic_recheck",
+      "dynamic_resumed"
+    ],
+    "gatewayBoot": "f04e9048-2af3bb99-78769337-a6c79d26",
+    "trackingReceipts": 54,
+    "trackingModes": [
+      "regulated_pursuit"
+    ],
+    "measuredPathPoints": 73,
+    "initial": {
+      "x": -1.2477089611690977e-9,
+      "y": -5.9437321846089996e-30,
+      "yaw": 1.2514972846657571e-17,
+      "frame": "odom",
+      "speed": -3.067289108923196e-20,
+      "yaw_rate": -5.63804007792222e-20
+    },
+    "final": {
+      "x": 3.2595666360317592,
+      "y": 0.8184537191357009,
+      "yaw": 0.6537129402708128,
+      "frame": "odom",
+      "speed": 0,
+      "yaw_rate": 0
+    },
+    "decoded": true,
+    "pageErrors": []
+  },
+  "blocked": {
+    "file": "dynamic-blocked.mp4",
+    "sha256": "196f27c7add9673ec6daa0405b26645581d769c06ab20d0123aad6833572b130",
+    "browserFrames": 275,
+    "chapters": [
+      {
+        "title": "连接 Gazebo 观测台",
+        "startMs": 0
+      },
+      {
+        "title": "核对原地图并下发导航",
+        "startMs": 1022
+      },
+      {
+        "title": "原导航任务执行",
+        "startMs": 5932
+      },
+      {
+        "title": "动态阻挡与停车等待",
+        "startMs": 7129
+      },
+      {
+        "title": "Agent 复查通道",
+        "startMs": 7181
+      },
+      {
+        "title": "通道持续堵塞",
+        "startMs": 46192
+      },
+      {
+        "title": "超时保持停车",
+        "startMs": 46288
+      }
+    ],
+    "submitted": {
+      "endpoint": "/agent/tasks",
+      "status": 202,
+      "when": "2026-11-24T06:38:33.068Z",
+      "arguments": {
+        "text": "前往教学楼门外北侧等候点",
+        "id": "campus-dynamic-blocked-05"
+      }
+    },
+    "taskId": "campus-dynamic-blocked-05",
+    "map": {
+      "id": "campus-teaching-survey",
+      "frame": "odom",
+      "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+      "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+    },
+    "finalState": "BLOCKED",
+    "entrypoint": "http://127.0.0.1:8908/exploration-mission.html",
+    "eventKinds": [
+      "dynamic_hold",
+      "dynamic_recheck",
+      "dynamic_blocked"
+    ],
+    "gatewayBoot": "e9910baf-6094220-2b833573-cd39c593",
+    "trackingReceipts": 0,
+    "trackingModes": [],
+    "measuredPathPoints": 1,
+    "initial": {
+      "x": -1.2477089626107854e-9,
+      "y": -5.943747105665028e-30,
+      "yaw": 1.0053630741986457e-17,
+      "frame": "odom",
+      "speed": 7.412313770299396e-19,
+      "yaw_rate": -2.1637953405523422e-18
+    },
+    "final": {
+      "x": -1.2477089523130498e-9,
+      "y": -5.943575911412394e-30,
+      "yaw": 2.4041420737529848e-17,
+      "frame": "odom",
+      "speed": 6.966049829827038e-19,
+      "yaw_rate": 2.051436640680556e-18
+    },
+    "decoded": true,
+    "pageErrors": []
+  }
+}

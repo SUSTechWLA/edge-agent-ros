@@ -1,0 +1,9 @@
+{
+  "id": "record_board_sample",
+  "version": "1",
+  "effect": "idempotent",
+  "description": "Record paired RGB and sensor data at the current stationary relative pose. A duplicate contributes zero new samples. A fixed target needs a changed sensor viewpoint for another independent sample. Returns accepted count and fit readiness.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/record"
+}

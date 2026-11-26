@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light"><title>校园任务观测台 · Edge Agent ROS</title>
+  <link rel="stylesheet" href="./campus-mission.css"><script defer src="./campus-mission.js"></script>
+</head>
+<body>
+<header><div class="top"><a class="brand" href="/"><span aria-hidden="true">◇</span> Edge Agent <b>ROS</b></a><span class="division">校园实验场</span><span id="connection" class="chip" role="status">连接中</span></div></header>
+<main>
+  <div class="mast"><div><h1>校园任务观测台</h1><p id="freshness">正在读取现场状态</p></div>
+    <div class="switch" role="group" aria-label="信息密度"><button id="operator" aria-pressed="true">任务视图</button><button id="developer" aria-pressed="false">开发者视图</button></div>
+  </div>
+  <section class="mission panel">
+    <div><div class="eyeline"><h2>自然语言任务</h2><span id="task-status" class="chip">等待选择</span></div><h3 id="task-text">正在读取任务</h3><p id="task-progress" aria-live="polite">正在取得执行记录</p></div>
+    <div class="task-controls"><label for="task-choice">切换任务</label><select id="task-choice"><option>正在读取</option></select>
+      <div class="actions"><button type="button" id="copy-example" title="复制「前往教学楼门外」">复制任务示例</button><a class="button primary" id="submit-link" href="/?task_draft=%E5%89%8D%E5%BE%80%E6%95%99%E5%AD%A6%E6%A5%BC%E9%97%A8%E5%A4%96#monitor">在任务台提交 ↗</a></div><small id="copy-note" role="status"></small></div>
+  </section>
+  <div class="workspace">
+    <section class="panel"><div class="card-head"><div><h2>地点与任务路线</h2><p id="route-note">等待场景与任务证据</p></div><span class="unit" id="route-frame">米</span></div>
+      <div class="map dark"><canvas id="route-map" role="img" aria-label="语义地点、任务路线、实时机器人位置与观测终点"></canvas><span class="empty" id="route-empty">等待地点数据</span></div>
+      <div class="legend"><span class="places">登记地点</span><span class="route">全局路线</span><span class="local-route">局部建议</span><span class="measured">任务观测终点</span><span class="current">实时机器人</span><strong id="motion-summary">等待机器人观测</strong></div>
+    </section>
+    <section class="panel process"><div class="card-head"><div><h2>任务执行过程</h2><p id="step-count">等待任务记录</p></div><a href="/#sessions">会话 ↗</a></div>
+      <ol id="steps" class="timeline"></ol><details class="event-fold"><summary>查看本次任务事件</summary><ol id="events" class="events"></ol></details>
+    </section>
+  </div>
+  <section class="section"><div class="section-title"><div><h2>当前传感器与局部地图</h2><p>时间与坐标来自各自的 ROS 观测。</p></div></div>
+    <div class="local-grid"><article class="panel"><div class="card-head"><h3>激光扫描</h3><span id="scan-status" class="chip">等待</span></div><div class="sensor dark"><canvas id="scan-map" role="img" aria-label="激光雷达自身坐标系下的原始扫描"></canvas><span id="scan-empty" class="empty"></span></div><p class="foot" id="scan-info"></p></article>
+      <article class="panel"><div class="card-head"><h3>局部规划</h3><span id="grid-status" class="chip">等待</span></div>
+        <div class="local-tabs"><div role="group" aria-label="局部地图维度"><button id="local-2d" type="button" aria-pressed="true">二维栅格</button><button id="local-3d" type="button" aria-pressed="false">三维点云</button></div><a id="local3-link" target="_blank" rel="noopener" aria-label="展开局部三维点云" hidden>展开 ↗</a></div>
+        <div class="sensor dark" id="grid-wrap"><canvas id="grid-map" role="img" aria-label="局部占用栅格及当前局部规划建议"></canvas><span id="grid-empty" class="empty"></span></div>
+        <div id="local3-host" class="frame-host local-frame" hidden></div>
+        <p class="foot" id="local3-hint" hidden>拖动旋转 · Shift 或右键拖动平移 · 滚轮或双指缩放</p>
+        <p class="foot" id="grid-info"></p><p class="foot local-summary" id="local-plan-info" aria-live="polite">等待活动航点</p>
+      </article>
+      <article class="panel robot"><div class="card-head"><h3>机器人状态</h3><span id="robot-name" class="unit">—</span></div><dl id="robot-facts"></dl><p id="position-info" class="foot"></p></article>
+    </div>
+  </section>
+  <section class="section"><div class="section-title"><div><h2>校园场景地图</h2><p>二维正射图查看场地范围，三维视图可旋转、缩放并检查图层。</p></div><div class="links" id="view-links"></div></div>
+    <div class="campus-grid"><article class="panel campus"><div class="card-head"><h3>二维校园地图</h3><a id="map2-link" target="_blank" rel="noopener">展开 ↗</a></div><div id="map2-host" class="frame-host">等待查看器</div></article>
+    <article class="panel campus"><div class="card-head"><h3>三维校园地图</h3><a id="map3-link" target="_blank" rel="noopener">展开 ↗</a></div><div id="map3-host" class="frame-host">等待查看器</div></article></div>
+  </section>
+  <section id="debug" class="section panel" hidden><div class="card-head"><div><h2>开发者证据</h2><p>选中任务的绑定、发布来源和采样状态。</p></div></div><div id="diagnostics"></div></section>
+</main>
+</body></html>

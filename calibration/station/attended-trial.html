@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="referrer" content="no-referrer">
+<title>底盘微动验证 · Jetson</title>
+<style>
+:root{font-family:system-ui,'Microsoft YaHei',sans-serif;color:#1d3431;background:#edf0e9;line-height:1.5}*{box-sizing:border-box}body{margin:0}main{max-width:740px;margin:clamp(16px,5vh,64px) auto;padding:0 16px 32px}article{background:#fbfbf6;border:1px solid #cbd4cb;border-radius:18px;overflow:hidden}header,section,footer{padding:22px clamp(18px,4vw,34px)}header{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #d8ded3}header strong{letter-spacing:.03em}#link{font-size:13px;display:flex;align-items:center;gap:7px}#link::before{content:'';width:8px;height:8px;border-radius:100%;background:#8b9287}#link[data-live=true]::before{background:#227253}h1{font-size:clamp(32px,7vw,56px);letter-spacing:-.05em;line-height:1.12;margin:0 0 8px}h1 span{font-size:.57em;letter-spacing:0}p{margin:0;color:#51635d}.metrics{display:grid;grid-template-columns:1fr 1fr 1.18fr;margin:0;border-block:1px solid #d8ded3}.metrics div{padding:15px 10px}.metrics div:first-child{padding-left:0}.metrics div+div{border-left:1px solid #d8ded3}dt{font-size:13px;color:#51635d}dd{margin:4px 0 0;font-size:clamp(16px,4vw,24px);font-variant-numeric:tabular-nums;font-weight:640}dd small{font-size:13px;font-weight:400;color:#51635d}section+section{padding-top:0}h2{font-size:21px;margin:0 0 4px}#reason{font-size:14px;overflow-wrap:anywhere;min-height:1.5em}button{width:100%;min-height:68px;font:inherit;font-size:20px;font-weight:680;border-radius:10px;border:1px solid #195447;background:#174e42;color:white;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer}button:disabled{background:#e2e6dc;color:#5e6b63;border-color:#cbd3c6;cursor:default}button[data-held=true]{background:#995329;border-color:#7a4021}button:focus-visible{outline:3px solid #516c98;outline-offset:3px}footer{background:#f0f2e9;padding-top:17px;padding-bottom:17px;font-size:14px}.hint{font-size:14px;margin:9px 0 0}#phase[data-tone=warning]{color:#983c24}section.action{padding-bottom:24px}@media(max-width:400px){.metrics div{padding:12px 6px}header{flex-wrap:wrap}}
+</style>
+<main><article>
+  <header><strong>JETSON · 底盘微动验证</strong><span id="link">正在连接车端</span></header>
+  <section><h1>前进 5 <span>cm</span></h1><p>本次限速 0.10 m/s，名义时长 0.5 秒。实际行程以底盘 MCU 回读为准。</p></section>
+  <section><dl class="metrics" aria-label="底盘 MCU 实测反馈">
+    <div><dt>实测位移</dt><dd><span id="distance">—</span> <small>mm</small></dd></div>
+    <div><dt>实测峰值速度</dt><dd><span id="speed">—</span> <small>m/s</small></dd></div>
+    <div><dt>MCU 停稳反馈</dt><dd id="stopped">等待读数</dd></div>
+  </dl></section>
+  <section aria-live="polite"><h2 id="phase">等待车端预检</h2><p id="reason"></p></section>
+  <section class="action"><button id="hold" type="button" disabled>按住使能</button><p class="hint" id="hint">松手或离开本页面会请求停车。</p></section>
+  <footer>请站在车旁，确认可触及急停；操作期间持续观察车头与两侧。</footer>
+</article></main>
+<script>
+'use strict';
+(() => {
+  const el = id => document.getElementById(id);
+  const button = el('hold');
+  const profileId = 'forward-50mm-100mmps';
+  const storageKey = 'attended-trial-attempt-' + profileId;
+  const pulseMs = 50, pulseTimeoutMs = 120, stateTimeoutMs = 450;
+  const phases = {
+    idle:'等待车端预检', ready:'车端预检通过', running:'车端正在执行', stopping:'车端正在停车',
+    verified:'等待车端确认停稳', failed:'本次验证未通过', recovery_required:'需要现场复核'
+  };
+  const terminal = new Set(['verified','failed','recovery_required']);
+  let live = null, readAt = -Infinity, attempt = null, usedId = '', storageOK = false;
+  let note = '', pulseTimer, armAt = -Infinity;
+  try { usedId = sessionStorage.getItem(storageKey) || ''; storageOK = true; } catch { /* fail closed */ }
+
+  function canBegin() {
+    return !usedId && storageOK && typeof crypto.randomUUID === 'function' && document.hasFocus() &&
+      document.visibilityState === 'visible' && live?.ready === true && live.phase === 'ready' &&
+      performance.now() - readAt <= stateTimeoutMs;
+  }
+  function put(id, text) { const node = el(id); if (node.textContent !== text) node.textContent = text; }
+  function render() {
+    const fresh = !!live && performance.now()-readAt <= stateTimeoutMs;
+    const status = fresh ? live : null;
+    el('link').dataset.live = String(fresh);
+    put('link', fresh ? '车端已连接' : '等待车端连接');
+    put('distance', Number.isFinite(status?.displacement_m) ? (status.displacement_m * 1000).toFixed(1) : '—');
+    put('speed', Number.isFinite(status?.peak_speed_m_s) ? status.peak_speed_m_s.toFixed(3) : '—');
+    put('stopped', status?.stopped === true ? '已停稳' : status?.stopped === false ? '尚未确认' : '等待读数');
+    const passed = status?.phase === 'verified' && status.stopped === true && status.operation_id &&
+      (!usedId || status.operation_id === usedId);
+    put('phase', passed ? '微动与停稳已验证' : phases[status?.phase] || '等待车端预检');
+    el('phase').dataset.tone = ['failed','recovery_required'].includes(status?.phase) ? 'warning' : '';
+    put('reason', status?.reason || '');
+    button.disabled = !attempt && !canBegin();
+    button.dataset.held = String(!!attempt);
+    put('hold', attempt ? '正在按住 · 松手即请求停车' : usedId ? '本次操作已结束' : '按住使能');
+    put('hint', !storageOK ? '本页无法保存单次操作状态，使能已锁定。' : note || '松手或离开本页面会请求停车。');
+  }
+
+  async function post(path, holder, limitMs, keepalive = false) {
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), limitMs);
+    const body = JSON.stringify({operation_id:holder.id, seq:++holder.seq});
+    try {
+      const result = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
+        body, signal:abort.signal, keepalive, cache:'no-store', credentials:'same-origin', redirect:'error'});
+      if (result.status !== 200) throw Error(String(result.status));
+      const ack = await result.json();
+      if (!validState(ack) || ack.operation_id !== holder.id) throw Error('operation not acknowledged');
+      return ack;
+    } finally { clearTimeout(timer); }
+  }
+
+  function end(message, notify = true) {
+    const holder = attempt;
+    if (!holder) return;
+    attempt = null;
+    clearInterval(pulseTimer);
+    if (notify) {
+      // A release can overtake a pending begin/hold; sequence numbers also fence that race on the server.
+      void post('/release', holder, 500, true).catch(() => {
+        note = '停车请求未获车端回执，请现场确认。'; render();
+      });
+    }
+    if (button.hasPointerCapture(holder.pointer)) button.releasePointerCapture(holder.pointer);
+    note = message;
+    render();
+  }
+
+  function pulse(holder) {
+    if (attempt !== holder) return;
+    const now = performance.now();
+    if (now-holder.lastSent > pulseTimeoutMs || !document.hasFocus() ||
+        document.visibilityState !== 'visible' || now-readAt > stateTimeoutMs) {
+      end('使能中断，已请求停车。'); return;
+    }
+    if (holder.pending) return;
+    holder.pending = true; holder.lastSent = now;
+    void post('/hold', holder, pulseTimeoutMs).then(ack => {
+      holder.pending = false;
+      if (attempt === holder && ack.phase !== 'running') {
+        const alreadyStopping = ack.phase === 'stopping' || terminal.has(ack.phase);
+        end(alreadyStopping ? '使能已结束，等待车端停稳反馈。' : '车端执行状态发生变化，已请求停车。',!alreadyStopping);
+      }
+    })
+      .catch(() => { if (attempt === holder) end('车端未确认使能，已请求停车。'); });
+  }
+
+  button.addEventListener('pointerdown', event => {
+    if (!event.isTrusted || !event.isPrimary || event.button !== 0 || !canBegin() || attempt) return;
+    event.preventDefault();
+    const id = crypto.randomUUID();
+    try {
+      button.setPointerCapture(event.pointerId);
+      sessionStorage.setItem(storageKey,id);
+    } catch { storageOK = false; render(); return; }
+    usedId = id; armAt = performance.now();
+    const holder = {id, pointer:event.pointerId, seq:-1, pending:false, acceptedAt:Infinity, lastSent:armAt};
+    attempt = holder; note = '请保持按压，车端将独立核对本次操作。'; render();
+    void post('/begin', holder, pulseTimeoutMs).then(ack => {
+      if (attempt !== holder) return;
+      if (ack.phase !== 'running') { end('车端未进入执行状态，已请求停车。'); return; }
+      holder.acceptedAt = performance.now();
+      pulse(holder);
+      if (attempt === holder) pulseTimer = setInterval(() => pulse(holder), pulseMs);
+    }).catch(() => { if (attempt === holder) end('车端未确认开始，已请求停车。'); });
+  });
+  function pointerEnded(event) {
+    if (attempt && event.pointerId === attempt.pointer) end('使能已松开，已请求停车。');
+  }
+  for (const kind of ['pointerup','pointercancel','lostpointercapture']) {
+    window.addEventListener(kind,pointerEnded,true);
+  }
+  window.addEventListener('pointerdown',event => {
+    if (attempt && event.pointerId !== attempt.pointer) end('检测到第二个触点，已请求停车。');
+  },true);
+  window.addEventListener('pointermove',event => {
+    if (!attempt || event.pointerId !== attempt.pointer) return;
+    const b = button.getBoundingClientRect();
+    if (!(event.buttons & 1) || event.clientX < b.left || event.clientX > b.right ||
+        event.clientY < b.top || event.clientY > b.bottom) end('按压已离开使能区，已请求停车。');
+  },true);
+  button.addEventListener('contextmenu',e => e.preventDefault());
+  window.addEventListener('keydown',e => { if (e.key === 'Escape') end('操作已取消，已请求停车。'); });
+  for (const kind of ['blur','offline','pagehide']) window.addEventListener(kind,() => {
+    if (kind === 'offline') live = null;
+    end('页面失去使能条件，已请求停车。'); render();
+  });
+  document.addEventListener('visibilitychange',() => {
+    if (document.visibilityState !== 'visible') end('页面已离开，已请求停车。');
+    render();
+  });
+  document.addEventListener('freeze',() => end('页面已冻结，已请求停车。'));
+  window.addEventListener('focus',render);
+
+  function validState(s) {
+    return s && s.profile_id === profileId && Object.hasOwn(phases,s.phase) && typeof s.ready === 'boolean' &&
+      [true,false,null].includes(s.stopped) && (s.reason === null || typeof s.reason === 'string') &&
+      (s.operation_id === null || typeof s.operation_id === 'string');
+  }
+  async function poll() {
+    const requested = performance.now(), abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(),stateTimeoutMs);
+    try {
+      const response = await fetch('/state',{cache:'no-store',credentials:'same-origin',signal:abort.signal,redirect:'error'});
+      if (!response.ok) throw Error('state unavailable');
+      const state = await response.json();
+      if (state?.profile_id !== profileId) {
+        live = null;
+        note = '车端配置与本次 5 cm 检查不匹配，使能已锁定。';
+        end(note); return;
+      }
+      if (!validState(state)) throw Error('bad state');
+      if (requested >= armAt) {
+        if (!usedId) note = '';
+        live = state; readAt = requested;
+        if (attempt && state.operation_id && state.operation_id !== attempt.id) {
+          end('车端任务发生变化，已请求停车。');
+        } else if (attempt && state.operation_id === attempt.id && (terminal.has(state.phase) || state.phase === 'stopping')) {
+          end('使能已结束，请以车端停稳反馈为准。',false);
+        } else if (attempt && requested >= attempt.acceptedAt && (state.phase !== 'running' || state.operation_id !== attempt.id)) {
+          end('车端未保留本次使能，已请求停车。');
+        }
+      }
+    } catch { live = null; end('车端状态读取中断，已请求停车。'); }
+    finally { clearTimeout(timer); render(); setTimeout(poll,120); }
+  }
+  render(); void poll();
+})();
+</script>
+</html>

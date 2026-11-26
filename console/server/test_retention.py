@@ -90,6 +90,33 @@ class RetentionTest(unittest.TestCase):
         finally:
             db.close()
 
+    def test_snapshot_deduplication_orphan_gc_and_megabyte_cap(self):
+        big_snapshot = {"session_id":"archive", "missions":[], "pad":"x"*40000}
+        with patch.dict(os.environ, {"EDGE_TELEMETRY_RETENTION_DAYS":"0",
+                                     "EDGE_TELEMETRY_MAX_SAMPLES":"0",
+                                     "EDGE_TELEMETRY_MAX_MB":"1"}):
+            db = History(self.path)
+            try:
+                seqs = [db.record(big_snapshot, kind="agent.tool.request", source="mission_agent/tasks",
+                                  detail="call") for _ in range(40)]
+                stats = db.retention()
+                self.assertEqual(stats["unique_snapshots"], 1)
+                self.assertEqual(db.replay(seqs[-1])["pad"], "x"*40000)
+                exported = [json.loads(line) for line in db.export({}, include_snapshot=True)]
+                self.assertEqual(len(exported), 40)
+                self.assertEqual(exported[0]["snapshot"]["pad"], "x"*40000)
+                # Ordinary samples with unique large snapshots are pruned once DB exceeds 1 MB.
+                for i in range(120):
+                    db.record({"session_id":"archive", "missions":[], "blob":f"{i}:" + os.urandom(6000).hex()},
+                              kind="telemetry.sample", source="edge_console", detail="sample")
+                after = db.retention()
+                self.assertLess(after["samples"], 120)
+                self.assertLessEqual(after["database_bytes"] - after["reusable_bytes"], 1048576)
+                # Orphan snapshots from pruned ordinary samples were garbage-collected.
+                self.assertEqual(after["unique_snapshots"], 1 + after["samples"])
+            finally:
+                db.close()
+
 
 if __name__ == "__main__":
     unittest.main()

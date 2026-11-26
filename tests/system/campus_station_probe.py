@@ -1,5 +1,6 @@
 """Place only an isolated test rover and align its original lidar with measured world poses."""
 from collections import deque
+from contextlib import contextmanager
 import hashlib
 import json
 import math
@@ -8,6 +9,7 @@ from pathlib import Path
 import re
 import threading
 import time
+import weakref
 import xml.etree.ElementTree as ET
 
 from gz.msgs10.boolean_pb2 import Boolean
@@ -39,6 +41,29 @@ def mount_in_world(base, local):
     return [base.position.x + x + q.w * tx + q.y * tz - q.z * ty,
             base.position.y + y + q.w * ty + q.z * tx - q.x * tz,
             base.position.z + z + q.w * tz + q.x * ty - q.y * tx]
+
+
+@contextmanager
+def subscription(node, message_type, topic, receive):
+    released = threading.Event()
+
+    # gz-transport can hold its dispatch snapshot on a native reception thread
+    # after unsubscribe returns. Let it release the Python callable before exit.
+    def deliver(message):
+        receive(message)
+
+    weakref.finalize(deliver, released.set).atexit = False
+    if not node.subscribe(message_type, topic, deliver):
+        raise RuntimeError("could not subscribe to " + topic)
+    del deliver  # The transport now owns the only remaining strong reference.
+    try:
+        yield
+    finally:
+        removed = node.unsubscribe(topic)
+        if not released.wait(5):
+            raise RuntimeError("Gazebo still retains subscription callback: " + topic)
+        if not removed:
+            raise RuntimeError("could not unsubscribe from " + topic)
 
 
 def measure():
@@ -127,33 +152,28 @@ def measure():
         return list(samples.values())[-3:] if len(samples) >= 3 else None
 
     world_topic = "/world/edge_lab/dynamic_pose/info"
-    if not node.subscribe(Pose_V, world_topic, on_pose) or not node.subscribe(LaserScan, topic, on_scan):
-        raise RuntimeError("could not subscribe to Gazebo ground truth and laser")
-    original = until(lambda: poses[-1][1] if poses else None, "initial world pose")
-    output = []
-    try:
-        for s in stations:
-            x, y = s["xy"]
-            target = Pose(name="edge_rover")
-            target.position.x, target.position.y, target.position.z = x, y, .103
-            target.orientation.z, target.orientation.w = math.sin(s["yaw"] / 2), math.cos(s["yaw"] / 2)
-            placed = place(target)
-            samples = until(lambda: sample_frames(placed, target), s["id"] + " laser")
-            counts = [f["returns"] for f in samples]
-            if s["environment"] == "open" and max(counts) > 5:
-                raise AssertionError(f"open field contains unexpected lidar obstacles: {counts}")
-            if s["environment"] in {"cluttered", "street"} and min(counts) < 3:
-                raise AssertionError(f"{s['environment']} lacks repeatable near-field returns: {counts}")
-            output.append({"id": s["id"], "environment": s["environment"], "xy_m": [x, y], "placement": placed,
-                           "rays_per_scan": expected_rays, "range_max_m": samples[-1]["range_max_m"],
-                           "stamps_ns": [f["stamp_ns"] for f in samples], "returns": counts,
-                           "nearest_m": [f["nearest_m"] for f in samples], "frames": samples})
-    finally:
+    with subscription(node, Pose_V, world_topic, on_pose), subscription(node, LaserScan, topic, on_scan):
+        original = until(lambda: poses[-1][1] if poses else None, "initial world pose")
+        output = []
         try:
-            restored = place(original)
+            for s in stations:
+                x, y = s["xy"]
+                target = Pose(name="edge_rover")
+                target.position.x, target.position.y, target.position.z = x, y, .103
+                target.orientation.z, target.orientation.w = math.sin(s["yaw"] / 2), math.cos(s["yaw"] / 2)
+                placed = place(target)
+                samples = until(lambda: sample_frames(placed, target), s["id"] + " laser")
+                counts = [f["returns"] for f in samples]
+                if s["environment"] == "open" and max(counts) > 5:
+                    raise AssertionError(f"open field contains unexpected lidar obstacles: {counts}")
+                if s["environment"] in {"cluttered", "street"} and min(counts) < 3:
+                    raise AssertionError(f"{s['environment']} lacks repeatable near-field returns: {counts}")
+                output.append({"id": s["id"], "environment": s["environment"], "xy_m": [x, y], "placement": placed,
+                               "rays_per_scan": expected_rays, "range_max_m": samples[-1]["range_max_m"],
+                               "stamps_ns": [f["stamp_ns"] for f in samples], "returns": counts,
+                               "nearest_m": [f["nearest_m"] for f in samples], "frames": samples})
         finally:
-            node.unsubscribe(topic)
-            node.unsubscribe(world_topic)
+            restored = place(original)
     return {"method": "original rover laser, three distinct scans bracketed by fresh simulator world poses per station",
             "partition": partition, "world_sha256": hashlib.sha256(sdf).hexdigest(), "revision": revision,
             "sensor_frame": frame, "mount_xyz_m": mount_xyz, "original_xy_m": xyz(original)[:2],

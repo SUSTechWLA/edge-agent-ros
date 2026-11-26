@@ -1,0 +1,9 @@
+{
+  "id": "plan_rover_pose",
+  "version": "1",
+  "effect": "read",
+  "description": "Compute differential-drive geometry for an explicitly requested relative goal. Use frame=base_at_start, x_m forward, y_m left, and yaw_rad counterclockwise from the starting heading. Returns in-place turns and forward distances only. This tool has no pose sensor, occupancy data, or execution authority.",
+  "parameters": {"frame": "string", "x_m": "number", "y_m": "number", "yaw_rad": "number"},
+  "accepts_trace": true,
+  "endpoint": "http://rover-pose-planner:8151/plan"
+}

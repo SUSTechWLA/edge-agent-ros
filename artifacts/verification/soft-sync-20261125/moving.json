@@ -1,0 +1,175 @@
+{
+  "task_id": "761a8964-63ba-4fb1-a726-31c2fb92ac10",
+  "text": "请为当前两台 MID360 与 D435 自主标定软件时间偏移。",
+  "state": "SUCCEEDED",
+  "model": "ollama/qwen3:4b-instruct",
+  "steps": [
+    {
+      "tool": "record_clock_motion",
+      "operation_id": "761a8964-63ba-4fb1-a726-31c2fb92ac10/step/1",
+      "status": "SUCCEEDED"
+    },
+    {
+      "tool": "verify_clock_offsets",
+      "operation_id": "761a8964-63ba-4fb1-a726-31c2fb92ac10/step/2",
+      "status": "SUCCEEDED"
+    }
+  ],
+  "task_retries": 0,
+  "capture_sha256": "5a8b8b8c9d67092d3e73aba633151da31ad7d7119ba9c6398d9abc45fc38a8e7",
+  "spatial": {
+    "before": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7",
+    "after": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7"
+  },
+  "clock_state": "VERIFIED",
+  "motion_publishers": 0,
+  "sample_counts": {
+    "camera": 182,
+    "lidar_left": 182,
+    "lidar_right": 181
+  },
+  "injected_stamp_shifts_ns": {
+    "camera": 47000000,
+    "info": 47000000,
+    "lidar_left": 164000000,
+    "lidar_right": -32000000
+  },
+  "live_relay_witness": {
+    "info": {
+      "count": 402,
+      "first_original_ns": 43830000000,
+      "original_ns": 70300000000,
+      "injected_ns": 70347000000,
+      "frame": "rgbd_optical"
+    },
+    "camera": {
+      "count": 402,
+      "first_original_ns": 43830000000,
+      "original_ns": 70300000000,
+      "injected_ns": 70347000000,
+      "frame": "rgbd_optical"
+    },
+    "lidar_left": {
+      "count": 401,
+      "first_original_ns": 43830000000,
+      "original_ns": 70230000000,
+      "injected_ns": 70394000000,
+      "frame": "lidar_left"
+    },
+    "lidar_right": {
+      "count": 401,
+      "first_original_ns": 43830000000,
+      "original_ns": 70230000000,
+      "injected_ns": 70198000000,
+      "frame": "lidar_right"
+    }
+  },
+  "clock_revision": "ca69ac2ba21009229159948d213e4caa81a28685f2e54d4bcdd57b1afc0c9efa",
+  "epoch": "5c81661aaeab4fc5b2d9a15709910447",
+  "sources": {
+    "lidar_left": {
+      "expected_offset_ns": -117000000,
+      "absolute_error_ns": 1000000,
+      "offset_ns": -118000000,
+      "uncertainty_ns": 18000000,
+      "valid_raw_ns": [
+        57083000000,
+        68987000000
+      ],
+      "fit_count": 83,
+      "holdout_count": 81,
+      "holdout_offset_ns": -118000000,
+      "fit_rmse_m": 0.004473786567825219,
+      "holdout_rmse_m": 0.004843423873189115,
+      "median_period_ms": 70.0,
+      "scheduled_pair": {
+        "robot_id": "gazebo-board-rig",
+        "environment": "simulation",
+        "profile_sha256": "56ef9adbf5f4ee30c41015ba878262f16ec4e13fb8113a19809cdac0118cde2f",
+        "spatial_revision": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7",
+        "clock_epoch": "5c81661aaeab4fc5b2d9a15709910447",
+        "revision": "ca69ac2ba21009229159948d213e4caa81a28685f2e54d4bcdd57b1afc0c9efa",
+        "source": "lidar_left",
+        "lidar_stamp_ns": 63064000000,
+        "camera_stamp_ns": 62947000000,
+        "budget_ns": 25000000,
+        "lidar_radius_ns": 0,
+        "camera_radius_ns": 0
+      },
+      "observed_pair": {
+        "accepted": true,
+        "reason": "within_budget",
+        "source": "lidar_left",
+        "corrected_lidar_ns": 62946000000,
+        "temporal_error_bound_ns": 19000000,
+        "budget_ns": 25000000,
+        "revision": "ca69ac2ba21009229159948d213e4caa81a28685f2e54d4bcdd57b1afc0c9efa"
+      },
+      "outside_window": {
+        "accepted": false,
+        "reason": "outside_observed_clock_interval"
+      },
+      "excessive_skew": {
+        "accepted": false,
+        "reason": "time_error_exceeds_budget",
+        "source": "lidar_left",
+        "corrected_lidar_ns": 62946000000,
+        "temporal_error_bound_ns": 69000000,
+        "budget_ns": 25000000,
+        "revision": "ca69ac2ba21009229159948d213e4caa81a28685f2e54d4bcdd57b1afc0c9efa"
+      }
+    },
+    "lidar_right": {
+      "expected_offset_ns": 79000000,
+      "absolute_error_ns": 2000000,
+      "offset_ns": 77000000,
+      "uncertainty_ns": 18000000,
+      "valid_raw_ns": [
+        56888000000,
+        68748000000
+      ],
+      "fit_count": 82,
+      "holdout_count": 84,
+      "holdout_offset_ns": 78000000,
+      "fit_rmse_m": 0.0055364319796207895,
+      "holdout_rmse_m": 0.005469728731253436,
+      "median_period_ms": 70.0,
+      "scheduled_pair": {
+        "robot_id": "gazebo-board-rig",
+        "environment": "simulation",
+        "profile_sha256": "56ef9adbf5f4ee30c41015ba878262f16ec4e13fb8113a19809cdac0118cde2f",
+        "spatial_revision": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7",
+        "clock_epoch": "5c81661aaeab4fc5b2d9a15709910447",
+        "revision": "ca69ac2ba21009229159948d213e4caa81a28685f2e54d4bcdd57b1afc0c9efa",
+        "source": "lidar_right",
+        "lidar_stamp_ns": 62808000000,
+        "camera_stamp_ns": 62887000000,
+        "budget_ns": 25000000,
+        "lidar_radius_ns": 0,
+        "camera_radius_ns": 0
+      },
+      "observed_pair": {
+        "accepted": true,
+        "reason": "within_budget",
+        "source": "lidar_right",
+        "corrected_lidar_ns": 62885000000,
+        "temporal_error_bound_ns": 20000000,
+        "budget_ns": 25000000,
+        "revision": "ca69ac2ba21009229159948d213e4caa81a28685f2e54d4bcdd57b1afc0c9efa"
+      },
+      "outside_window": {
+        "accepted": false,
+        "reason": "outside_observed_clock_interval"
+      },
+      "excessive_skew": {
+        "accepted": false,
+        "reason": "time_error_exceeds_budget",
+        "source": "lidar_right",
+        "corrected_lidar_ns": 62885000000,
+        "temporal_error_bound_ns": 70000000,
+        "budget_ns": 25000000,
+        "revision": "ca69ac2ba21009229159948d213e4caa81a28685f2e54d4bcdd57b1afc0c9efa"
+      }
+    }
+  }
+}

@@ -1,0 +1,1087 @@
+{
+  "source": "http://127.0.0.1:8910",
+  "run": "campus-phase1-08-",
+  "map": {
+    "id": "campus-teaching-survey",
+    "frame": "odom",
+    "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+    "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+  },
+  "tasks": [
+    {
+      "id": "campus-phase1-08-outdoor",
+      "text": "前往门外北侧等候点",
+      "status": "SUCCEEDED",
+      "reason": "到达地图中的地点入口并停稳",
+      "agent": "SUCCEEDED",
+      "goal": [
+        3.3,
+        0.85
+      ],
+      "semantic": {
+        "query": "门外北侧等候点",
+        "map_ref": {
+          "id": "campus-teaching-survey",
+          "frame": "odom",
+          "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+          "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+        },
+        "candidates": [
+          {
+            "entity_id": "teaching-exit-north-wait",
+            "name": "教学楼门外北侧等候点",
+            "state": "confirmed",
+            "environment": "outdoor",
+            "zone": "entry",
+            "zone_label": "教学楼门外",
+            "source_kind": "simulation_site_annotation"
+          }
+        ],
+        "entity_id": "teaching-exit-north-wait",
+        "name": "教学楼门外北侧等候点",
+        "environment": "outdoor",
+        "zone": "entry",
+        "zone_label": "教学楼门外",
+        "source_kind": "simulation_site_annotation",
+        "state": "resolved",
+        "entrance_pose": [
+          3.3,
+          0.85,
+          0
+        ]
+      },
+      "events": [
+        {
+          "kind": "task_admitted",
+          "data": {
+            "operation_id": "campus-phase1-08-outdoor/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "destination_resolved",
+          "data": {
+            "goal": [
+              3.3,
+              0.85
+            ],
+            "marker_id": "teaching-exit-north-wait",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+              "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+            },
+            "destination": {
+              "query": "门外北侧等候点",
+              "map_ref": {
+                "id": "campus-teaching-survey",
+                "frame": "odom",
+                "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+                "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+              },
+              "candidates": [
+                {
+                  "entity_id": "teaching-exit-north-wait",
+                  "name": "教学楼门外北侧等候点",
+                  "state": "confirmed",
+                  "environment": "outdoor",
+                  "zone": "entry",
+                  "zone_label": "教学楼门外",
+                  "source_kind": "simulation_site_annotation"
+                }
+              ],
+              "entity_id": "teaching-exit-north-wait",
+              "name": "教学楼门外北侧等候点",
+              "environment": "outdoor",
+              "zone": "entry",
+              "zone_label": "教学楼门外",
+              "source_kind": "simulation_site_annotation",
+              "state": "resolved",
+              "entrance_pose": [
+                3.3,
+                0.85,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "kind": "route_planned",
+          "data": {
+            "goal": [
+              3.3,
+              0.85
+            ],
+            "operation_id": "campus-phase1-08-outdoor/leg/1",
+            "view_yaw_rad": null,
+            "reason": "continuous_map_route",
+            "covered": 3872,
+            "binding": "eb584685ec6cdd5cc309b5cec7ef2aed246fd08d5f439312d156d8be0691b5a2"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "data": {
+            "operation_id": "campus-phase1-08-outdoor/leg/1",
+            "xy": [
+              3.281161174368496,
+              0.8008709215098958
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "finished",
+          "data": {
+            "status": "SUCCEEDED",
+            "observed_xy": [
+              3.2810363269080183,
+              0.8003227990757288
+            ],
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+              "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+            },
+            "goal": [
+              3.3,
+              0.85
+            ],
+            "initial_pose": {
+              "x": -1.247708968730656e-9,
+              "y": -5.9437812136795005e-30,
+              "yaw": 6.578389396671214e-19,
+              "frame": "odom",
+              "speed": 2.151858664768417e-19,
+              "yaw_rate": -3.567503607125399e-19
+            },
+            "final_pose": {
+              "x": 3.2810363269080183,
+              "y": 0.8003227990757288,
+              "yaw": 1.1855914932075118,
+              "frame": "odom",
+              "speed": 0,
+              "yaw_rate": 0
+            },
+            "bindings": {
+              "map.load": {
+                "plugin_id": "sdd058.map-load",
+                "version": "1.0.0",
+                "binding": "752d193ce2c5c51a7a163cc63d2687b3120fa902f758bfaf704722f26b0cdb06"
+              },
+              "map.semantic_resolve": {
+                "plugin_id": "sdd058.place-resolve",
+                "version": "1.0.0",
+                "binding": "052954595ad060bb48e7611035c352cddff75f6379aa364485c5f188c50fec32"
+              },
+              "planning.survey_route": {
+                "plugin_id": "sdd058.route",
+                "version": "1.6.0",
+                "binding": "eb584685ec6cdd5cc309b5cec7ef2aed246fd08d5f439312d156d8be0691b5a2"
+              }
+            },
+            "destination": {
+              "query": "门外北侧等候点",
+              "map_ref": {
+                "id": "campus-teaching-survey",
+                "frame": "odom",
+                "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+                "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+              },
+              "candidates": [
+                {
+                  "entity_id": "teaching-exit-north-wait",
+                  "name": "教学楼门外北侧等候点",
+                  "state": "confirmed",
+                  "environment": "outdoor",
+                  "zone": "entry",
+                  "zone_label": "教学楼门外",
+                  "source_kind": "simulation_site_annotation"
+                }
+              ],
+              "entity_id": "teaching-exit-north-wait",
+              "name": "教学楼门外北侧等候点",
+              "environment": "outdoor",
+              "zone": "entry",
+              "zone_label": "教学楼门外",
+              "source_kind": "simulation_site_annotation",
+              "state": "resolved",
+              "entrance_pose": [
+                3.3,
+                0.85,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "map": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+        "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+      },
+      "world": {
+        "source": "/ground_truth Gazebo world odometry, contact sensors and /edge/events",
+        "passed": true,
+        "checks": {
+          "world_samples": true,
+          "stopped": true,
+          "zero_contacts": true,
+          "person_clearance": true,
+          "verified_motion": true,
+          "traversed_aperture": true,
+          "reached": true
+        },
+        "id": "campus-phase1-08-outdoor",
+        "initial": {
+          "stamp_ns": 3400000000,
+          "x": 1.29156281137024e-8,
+          "y": 7.1961958258103e-19,
+          "frame": "world",
+          "yaw": -3.431677484350987e-19,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 0.9883825111645466,
+            "pedestrian_2": 1.4651365045213454
+          }
+        },
+        "final": {
+          "stamp_ns": 22066000000,
+          "x": 3.281936107869085,
+          "y": 0.8038905292811221,
+          "frame": "world",
+          "yaw": 1.187419303030507,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 2.6735671544440556,
+            "pedestrian_2": 1.712533880814568
+          }
+        },
+        "target_world_xy": [
+          3.3,
+          0.85
+        ],
+        "goal_error_m": 0.04952158609023313,
+        "path_length_m": 3.611245136037845,
+        "peak_speed_mps": 0.28000033847322947,
+        "max_displacement_m": 3.3790247822303225,
+        "velocity_commands": 774,
+        "contacts": [],
+        "actions": [
+          "campus-phase1-08-outdoor/leg/1/waypoint/1"
+        ],
+        "samples": 184,
+        "min_person_clearance_m": 0.9012221570730294,
+        "doorway": {
+          "door_x_m": 1.6,
+          "aperture_y_m": [
+            -1.0999999999999996,
+            1.0999999999999996
+          ],
+          "crossing_y_m": [
+            0.051109957195572875
+          ],
+          "min_body_to_jamb_m": {
+            "north": 0.7674199474366377,
+            "south": 0.8689467324288551
+          },
+          "passed": true
+        }
+      },
+      "visibleDestination": "导航目的地\n已确认\n教学楼门外北侧等候点\n\n室外 · 教学楼门外 · 仿真场地标注 · 停靠位 (3.30, 0.85) m"
+    },
+    {
+      "id": "campus-phase1-08-ambiguous",
+      "text": "前往等候点",
+      "status": "BLOCKED",
+      "reason": "该名称对应多个地点，请指定室内、室外或完整名称：教学楼门外北侧等候点、教学楼门厅",
+      "agent": "BLOCKED",
+      "semantic": {
+        "query": "等候点",
+        "map_ref": {
+          "id": "campus-teaching-survey",
+          "frame": "odom",
+          "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+          "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+        },
+        "candidates": [
+          {
+            "entity_id": "teaching-exit-north-wait",
+            "name": "教学楼门外北侧等候点",
+            "state": "confirmed",
+            "environment": "outdoor",
+            "zone": "entry",
+            "zone_label": "教学楼门外",
+            "source_kind": "simulation_site_annotation"
+          },
+          {
+            "entity_id": "teaching-lobby",
+            "name": "教学楼门厅",
+            "state": "confirmed",
+            "environment": "indoor",
+            "zone": "lobby",
+            "zone_label": "教学楼一层",
+            "source_kind": "simulation_layout_node"
+          }
+        ],
+        "state": "ambiguous"
+      },
+      "events": [
+        {
+          "kind": "task_admitted",
+          "data": {
+            "operation_id": "campus-phase1-08-ambiguous/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "finished",
+          "data": {
+            "status": "BLOCKED",
+            "destination": {
+              "query": "等候点",
+              "map_ref": {
+                "id": "campus-teaching-survey",
+                "frame": "odom",
+                "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+                "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+              },
+              "candidates": [
+                {
+                  "entity_id": "teaching-exit-north-wait",
+                  "name": "教学楼门外北侧等候点",
+                  "state": "confirmed",
+                  "environment": "outdoor",
+                  "zone": "entry",
+                  "zone_label": "教学楼门外",
+                  "source_kind": "simulation_site_annotation"
+                },
+                {
+                  "entity_id": "teaching-lobby",
+                  "name": "教学楼门厅",
+                  "state": "confirmed",
+                  "environment": "indoor",
+                  "zone": "lobby",
+                  "zone_label": "教学楼一层",
+                  "source_kind": "simulation_layout_node"
+                }
+              ],
+              "state": "ambiguous"
+            },
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+              "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+            }
+          }
+        }
+      ],
+      "map": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+        "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+      },
+      "world": {
+        "source": "/ground_truth Gazebo world odometry, contact sensors and /edge/events",
+        "passed": true,
+        "checks": {
+          "world_samples": true,
+          "stopped": true,
+          "zero_contacts": true,
+          "person_clearance": true,
+          "no_action": true,
+          "stationary": true,
+          "no_nonzero_command": true
+        },
+        "id": "campus-phase1-08-ambiguous",
+        "initial": {
+          "stamp_ns": 22304000000,
+          "x": 3.281936107869085,
+          "y": 0.8038905292811221,
+          "frame": "world",
+          "yaw": 1.187419303030507,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 2.6735671544440556,
+            "pedestrian_2": 1.712533880814568
+          }
+        },
+        "final": {
+          "stamp_ns": 25262000000,
+          "x": 3.281936107869085,
+          "y": 0.8038905292811221,
+          "frame": "world",
+          "yaw": 1.187419303030507,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 2.6735671544440556,
+            "pedestrian_2": 1.712533880814568
+          }
+        },
+        "target_world_xy": null,
+        "goal_error_m": null,
+        "path_length_m": 0,
+        "peak_speed_mps": 0,
+        "max_displacement_m": 0,
+        "velocity_commands": 139,
+        "contacts": [],
+        "actions": [],
+        "samples": 30,
+        "min_person_clearance_m": 1.712533880814568,
+        "doorway": null
+      },
+      "visibleDestination": "导航目的地\n需要区分地点\n等候点\n\n请在指令中补充区域或使用完整地点名。\n\n教学楼门外北侧等候点 · 室外 · 教学楼门外\n教学楼门厅 · 室内 · 教学楼一层"
+    },
+    {
+      "id": "campus-phase1-08-unknown",
+      "text": "前往不存在的气象站",
+      "status": "BLOCKED",
+      "reason": "地图中没有与该名称匹配的地点",
+      "agent": "BLOCKED",
+      "semantic": {
+        "query": "不存在的气象站",
+        "map_ref": {
+          "id": "campus-teaching-survey",
+          "frame": "odom",
+          "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+          "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+        },
+        "candidates": [],
+        "state": "unknown"
+      },
+      "events": [
+        {
+          "kind": "task_admitted",
+          "data": {
+            "operation_id": "campus-phase1-08-unknown/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "finished",
+          "data": {
+            "status": "BLOCKED",
+            "destination": {
+              "query": "不存在的气象站",
+              "map_ref": {
+                "id": "campus-teaching-survey",
+                "frame": "odom",
+                "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+                "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+              },
+              "candidates": [],
+              "state": "unknown"
+            },
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+              "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+            }
+          }
+        }
+      ],
+      "map": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+        "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+      },
+      "world": {
+        "source": "/ground_truth Gazebo world odometry, contact sensors and /edge/events",
+        "passed": true,
+        "checks": {
+          "world_samples": true,
+          "stopped": true,
+          "zero_contacts": true,
+          "person_clearance": true,
+          "no_action": true,
+          "stationary": true,
+          "no_nonzero_command": true
+        },
+        "id": "campus-phase1-08-unknown",
+        "initial": {
+          "stamp_ns": 25466000000,
+          "x": 3.281936107869085,
+          "y": 0.8038905292811221,
+          "frame": "world",
+          "yaw": 1.187419303030507,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 2.6735671544440556,
+            "pedestrian_2": 1.712533880814568
+          }
+        },
+        "final": {
+          "stamp_ns": 29546000000,
+          "x": 3.281936107869085,
+          "y": 0.8038905292811221,
+          "frame": "world",
+          "yaw": 1.187419303030507,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 2.6735671544440556,
+            "pedestrian_2": 1.712533880814568
+          }
+        },
+        "target_world_xy": null,
+        "goal_error_m": null,
+        "path_length_m": 0,
+        "peak_speed_mps": 0,
+        "max_displacement_m": 0,
+        "velocity_commands": 124,
+        "contacts": [],
+        "actions": [],
+        "samples": 41,
+        "min_person_clearance_m": 1.712533880814568,
+        "doorway": null
+      },
+      "visibleDestination": "导航目的地\n未找到地点\n不存在的气象站\n\n此地图尚未登记该地点。"
+    },
+    {
+      "id": "campus-phase1-08-indoor",
+      "text": "前往一楼门厅",
+      "status": "SUCCEEDED",
+      "reason": "到达地图中的地点入口并停稳",
+      "agent": "SUCCEEDED",
+      "goal": [
+        0,
+        0
+      ],
+      "semantic": {
+        "query": "一楼门厅",
+        "map_ref": {
+          "id": "campus-teaching-survey",
+          "frame": "odom",
+          "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+          "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+        },
+        "candidates": [
+          {
+            "entity_id": "teaching-lobby",
+            "name": "教学楼门厅",
+            "state": "confirmed",
+            "environment": "indoor",
+            "zone": "lobby",
+            "zone_label": "教学楼一层",
+            "source_kind": "simulation_layout_node"
+          }
+        ],
+        "entity_id": "teaching-lobby",
+        "name": "教学楼门厅",
+        "environment": "indoor",
+        "zone": "lobby",
+        "zone_label": "教学楼一层",
+        "source_kind": "simulation_layout_node",
+        "state": "resolved",
+        "entrance_pose": [
+          0,
+          0,
+          0
+        ]
+      },
+      "events": [
+        {
+          "kind": "task_admitted",
+          "data": {
+            "operation_id": "campus-phase1-08-indoor/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "destination_resolved",
+          "data": {
+            "goal": [
+              0,
+              0
+            ],
+            "marker_id": "teaching-lobby",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+              "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+            },
+            "destination": {
+              "query": "一楼门厅",
+              "map_ref": {
+                "id": "campus-teaching-survey",
+                "frame": "odom",
+                "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+                "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+              },
+              "candidates": [
+                {
+                  "entity_id": "teaching-lobby",
+                  "name": "教学楼门厅",
+                  "state": "confirmed",
+                  "environment": "indoor",
+                  "zone": "lobby",
+                  "zone_label": "教学楼一层",
+                  "source_kind": "simulation_layout_node"
+                }
+              ],
+              "entity_id": "teaching-lobby",
+              "name": "教学楼门厅",
+              "environment": "indoor",
+              "zone": "lobby",
+              "zone_label": "教学楼一层",
+              "source_kind": "simulation_layout_node",
+              "state": "resolved",
+              "entrance_pose": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "kind": "route_planned",
+          "data": {
+            "goal": [
+              0,
+              0
+            ],
+            "operation_id": "campus-phase1-08-indoor/leg/1",
+            "view_yaw_rad": null,
+            "reason": "continuous_map_route",
+            "covered": 3872,
+            "binding": "eb584685ec6cdd5cc309b5cec7ef2aed246fd08d5f439312d156d8be0691b5a2"
+          }
+        },
+        {
+          "kind": "obstacle",
+          "data": {
+            "operation_id": "campus-phase1-08-indoor/leg/1",
+            "code": "navigation.local_avoid",
+            "source": "gateway-2b3a6ee-b4fed4a9-a712f39f-cde9e27e-410",
+            "clearance_m": 1.3706234693527222
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "data": {
+            "operation_id": "campus-phase1-08-indoor/leg/1",
+            "xy": [
+              0.05107809715602792,
+              0.006070821657020983
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "finished",
+          "data": {
+            "status": "SUCCEEDED",
+            "observed_xy": [
+              0.05410853626491626,
+              0.0036974529889691535
+            ],
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+              "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+            },
+            "goal": [
+              0,
+              0
+            ],
+            "initial_pose": {
+              "x": 3.2810363269080183,
+              "y": 0.8003227990757288,
+              "yaw": 1.184262624089357,
+              "frame": "odom",
+              "speed": 0,
+              "yaw_rate": 0
+            },
+            "final_pose": {
+              "x": 0.05410853626491626,
+              "y": 0.0036974529889691535,
+              "yaw": -3.0277517276647066,
+              "frame": "odom",
+              "speed": 0,
+              "yaw_rate": 0
+            },
+            "bindings": {
+              "map.load": {
+                "plugin_id": "sdd058.map-load",
+                "version": "1.0.0",
+                "binding": "752d193ce2c5c51a7a163cc63d2687b3120fa902f758bfaf704722f26b0cdb06"
+              },
+              "map.semantic_resolve": {
+                "plugin_id": "sdd058.place-resolve",
+                "version": "1.0.0",
+                "binding": "052954595ad060bb48e7611035c352cddff75f6379aa364485c5f188c50fec32"
+              },
+              "planning.survey_route": {
+                "plugin_id": "sdd058.route",
+                "version": "1.6.0",
+                "binding": "eb584685ec6cdd5cc309b5cec7ef2aed246fd08d5f439312d156d8be0691b5a2"
+              }
+            },
+            "destination": {
+              "query": "一楼门厅",
+              "map_ref": {
+                "id": "campus-teaching-survey",
+                "frame": "odom",
+                "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+                "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+              },
+              "candidates": [
+                {
+                  "entity_id": "teaching-lobby",
+                  "name": "教学楼门厅",
+                  "state": "confirmed",
+                  "environment": "indoor",
+                  "zone": "lobby",
+                  "zone_label": "教学楼一层",
+                  "source_kind": "simulation_layout_node"
+                }
+              ],
+              "entity_id": "teaching-lobby",
+              "name": "教学楼门厅",
+              "environment": "indoor",
+              "zone": "lobby",
+              "zone_label": "教学楼一层",
+              "source_kind": "simulation_layout_node",
+              "state": "resolved",
+              "entrance_pose": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "map": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df",
+        "revision": "23d8fa62c68636013e09b75ba8831bd554cda454134c7b032b3c5896a65586df"
+      },
+      "world": {
+        "source": "/ground_truth Gazebo world odometry, contact sensors and /edge/events",
+        "passed": true,
+        "checks": {
+          "world_samples": true,
+          "stopped": true,
+          "zero_contacts": true,
+          "person_clearance": true,
+          "verified_motion": true,
+          "traversed_aperture": true,
+          "reached": true
+        },
+        "id": "campus-phase1-08-indoor",
+        "initial": {
+          "stamp_ns": 29954000000,
+          "x": 3.281936107869085,
+          "y": 0.8038905292811221,
+          "frame": "world",
+          "yaw": 1.187419303030507,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 2.6735671544440556,
+            "pedestrian_2": 1.712533880814568
+          }
+        },
+        "final": {
+          "stamp_ns": 52190000000,
+          "x": 0.05319765215791225,
+          "y": 0.0017010718296905545,
+          "frame": "world",
+          "yaw": -3.0254886793397953,
+          "v": 0,
+          "w": 0,
+          "person_gaps_m": {
+            "pedestrian_1": 0.9479763538194673,
+            "pedestrian_2": 1.358231953856328
+          }
+        },
+        "target_world_xy": [
+          0,
+          0
+        ],
+        "goal_error_m": 0.0532248423246513,
+        "path_length_m": 3.533138130224739,
+        "peak_speed_mps": 0.2799998397277879,
+        "max_displacement_m": 3.326899448590894,
+        "velocity_commands": 810,
+        "contacts": [],
+        "actions": [
+          "campus-phase1-08-indoor/leg/1/waypoint/1"
+        ],
+        "samples": 219,
+        "min_person_clearance_m": 0.9141005081892941,
+        "doorway": {
+          "door_x_m": 1.6,
+          "aperture_y_m": [
+            -1.0999999999999996,
+            1.0999999999999996
+          ],
+          "crossing_y_m": [
+            0.008556381748616646
+          ],
+          "min_body_to_jamb_m": {
+            "north": 0.8015465416839868,
+            "south": 0.8202619122732735
+          },
+          "passed": true
+        }
+      },
+      "visibleDestination": "导航目的地\n已确认\n教学楼门厅\n\n室内 · 教学楼一层 · 校园布局登记 · 停靠位 (0.00, 0.00) m"
+    }
+  ],
+  "visibleZones": [
+    {
+      "id": "campus-phase1-08-outdoor",
+      "zone": "室内 · 教学楼一层",
+      "pose": "(0.00, 0.00) m",
+      "time": "2026-11-24T09:58:09.247Z"
+    },
+    {
+      "id": "campus-phase1-08-outdoor",
+      "zone": "室内外过渡区 · 教学楼门廊",
+      "pose": "(1.67, 0.05) m",
+      "time": "2026-11-24T09:58:27.358Z"
+    },
+    {
+      "id": "campus-phase1-08-outdoor",
+      "zone": "室外 · 教学楼门外",
+      "pose": "(2.51, 0.09) m",
+      "time": "2026-11-24T09:58:32.154Z"
+    },
+    {
+      "id": "campus-phase1-08-ambiguous",
+      "zone": "室外 · 教学楼门外",
+      "pose": "(3.28, 0.80) m",
+      "time": "2026-11-24T09:58:47.441Z"
+    },
+    {
+      "id": "campus-phase1-08-unknown",
+      "zone": "室外 · 教学楼门外",
+      "pose": "(3.28, 0.80) m",
+      "time": "2026-11-24T09:58:54.966Z"
+    },
+    {
+      "id": "campus-phase1-08-indoor",
+      "zone": "室外 · 教学楼门外",
+      "pose": "(3.28, 0.80) m",
+      "time": "2026-11-24T09:59:00.973Z"
+    },
+    {
+      "id": "campus-phase1-08-indoor",
+      "zone": "室内外过渡区 · 教学楼门廊",
+      "pose": "(2.48, 0.08) m",
+      "time": "2026-11-24T09:59:16.014Z"
+    },
+    {
+      "id": "campus-phase1-08-indoor",
+      "zone": "室内 · 教学楼一层",
+      "pose": "(1.53, 0.01) m",
+      "time": "2026-11-24T09:59:25.579Z"
+    }
+  ],
+  "browserErrors": [],
+  "interactions": [
+    {
+      "name": "input.empty",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 1.9482786,
+      "utc": "2026-11-24T09:58:05.699Z"
+    },
+    {
+      "name": "input.complete",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 3.3276052,
+      "utc": "2026-11-24T09:58:07.078Z",
+      "text": "前往门外北侧等候点"
+    },
+    {
+      "name": "task.accepted",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 4.0103063,
+      "utc": "2026-11-24T09:58:07.761Z",
+      "text": "前往门外北侧等候点"
+    },
+    {
+      "name": "map.global",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 11.169910800000002,
+      "utc": "2026-11-24T09:58:14.921Z"
+    },
+    {
+      "name": "map.local",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 13.0238082,
+      "utc": "2026-11-24T09:58:16.775Z"
+    },
+    {
+      "name": "map.orbitZoom",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 13.3328296,
+      "utc": "2026-11-24T09:58:17.084Z",
+      "yaw": -0.1080000000000001,
+      "zoom": 1.1853048513203654
+    },
+    {
+      "name": "map.pan",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 13.4094739,
+      "utc": "2026-11-24T09:58:17.160Z"
+    },
+    {
+      "name": "map.reset",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 14.094092100000001,
+      "utc": "2026-11-24T09:58:17.845Z"
+    },
+    {
+      "name": "task.terminal",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 39.15457249999999,
+      "utc": "2026-11-24T09:58:42.905Z",
+      "agent": "SUCCEEDED",
+      "session": "SUCCEEDED"
+    },
+    {
+      "name": "terminal.screenshot",
+      "id": "campus-phase1-08-outdoor",
+      "seconds": 39.262515,
+      "utc": "2026-11-24T09:58:43.013Z",
+      "file": "outdoor.png"
+    },
+    {
+      "name": "input.empty",
+      "id": "campus-phase1-08-ambiguous",
+      "seconds": 41.1898979,
+      "utc": "2026-11-24T09:58:44.941Z"
+    },
+    {
+      "name": "input.complete",
+      "id": "campus-phase1-08-ambiguous",
+      "seconds": 42.211558999999994,
+      "utc": "2026-11-24T09:58:45.962Z",
+      "text": "前往等候点"
+    },
+    {
+      "name": "task.accepted",
+      "id": "campus-phase1-08-ambiguous",
+      "seconds": 42.9078476,
+      "utc": "2026-11-24T09:58:46.659Z",
+      "text": "前往等候点"
+    },
+    {
+      "name": "task.terminal",
+      "id": "campus-phase1-08-ambiguous",
+      "seconds": 46.4769661,
+      "utc": "2026-11-24T09:58:50.228Z",
+      "agent": "BLOCKED",
+      "session": "BLOCKED"
+    },
+    {
+      "name": "terminal.screenshot",
+      "id": "campus-phase1-08-ambiguous",
+      "seconds": 46.5751112,
+      "utc": "2026-11-24T09:58:50.326Z",
+      "file": "ambiguous.png"
+    },
+    {
+      "name": "input.empty",
+      "id": "campus-phase1-08-unknown",
+      "seconds": 48.4870936,
+      "utc": "2026-11-24T09:58:52.238Z"
+    },
+    {
+      "name": "input.complete",
+      "id": "campus-phase1-08-unknown",
+      "seconds": 49.858656599999996,
+      "utc": "2026-11-24T09:58:53.609Z",
+      "text": "前往不存在的气象站"
+    },
+    {
+      "name": "task.accepted",
+      "id": "campus-phase1-08-unknown",
+      "seconds": 50.502027299999995,
+      "utc": "2026-11-24T09:58:54.253Z",
+      "text": "前往不存在的气象站"
+    },
+    {
+      "name": "task.terminal",
+      "id": "campus-phase1-08-unknown",
+      "seconds": 53.0088532,
+      "utc": "2026-11-24T09:58:56.760Z",
+      "agent": "BLOCKED",
+      "session": "BLOCKED"
+    },
+    {
+      "name": "terminal.screenshot",
+      "id": "campus-phase1-08-unknown",
+      "seconds": 53.07193049999999,
+      "utc": "2026-11-24T09:58:56.823Z",
+      "file": "unknown.png"
+    },
+    {
+      "name": "input.empty",
+      "id": "campus-phase1-08-indoor",
+      "seconds": 54.3425556,
+      "utc": "2026-11-24T09:58:58.093Z"
+    },
+    {
+      "name": "input.complete",
+      "id": "campus-phase1-08-indoor",
+      "seconds": 55.45827299999999,
+      "utc": "2026-11-24T09:58:59.209Z",
+      "text": "前往一楼门厅"
+    },
+    {
+      "name": "task.accepted",
+      "id": "campus-phase1-08-indoor",
+      "seconds": 56.0961735,
+      "utc": "2026-11-24T09:58:59.847Z",
+      "text": "前往一楼门厅"
+    },
+    {
+      "name": "map.global",
+      "id": "campus-phase1-08-indoor",
+      "seconds": 65.2942636,
+      "utc": "2026-11-24T09:59:09.045Z"
+    },
+    {
+      "name": "map.local",
+      "id": "campus-phase1-08-indoor",
+      "seconds": 67.1252215,
+      "utc": "2026-11-24T09:59:10.876Z"
+    },
+    {
+      "name": "task.terminal",
+      "id": "campus-phase1-08-indoor",
+      "seconds": 93.92300300000001,
+      "utc": "2026-11-24T09:59:37.674Z",
+      "agent": "SUCCEEDED",
+      "session": "SUCCEEDED"
+    },
+    {
+      "name": "terminal.screenshot",
+      "id": "campus-phase1-08-indoor",
+      "seconds": 93.98609520000001,
+      "utc": "2026-11-24T09:59:37.737Z",
+      "file": "indoor.png"
+    }
+  ],
+  "passed": true
+}

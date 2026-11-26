@@ -108,6 +108,31 @@ print(folder)
 
 ## 插件怎样接入系统
 
+`compose.task-recorder.yaml` 将服务放在 `recording` profile。可在仓库根目录比较默认配置和启用录制后的服务清单。
+
+```sh
+docker compose -f compose.yaml -f compose.task-recorder.yaml config --services
+docker compose -f compose.yaml -f compose.task-recorder.yaml --profile recording config --services
+```
+
+契约验收在网络隔离的 Linux ROS 容器内运行，需要空闲的回环端口 8090、可写的临时目录和已加载的项目 ROS 环境。在板端镜像内，按仓库结构将 `tests/` 和 `task_recorder/` 只读挂入 `/opt/edge/`，运行以下命令。
+
+```sh
+python3 -B /opt/edge/tests/test_plugin_conformance.py --out /tmp/plugin-conformance.json
+```
+
+夹具通过原生接口建立录制、采集任务状态与事件并结束录制。随后通用 conformance CLI 对 `task.record` 只读调用 `GET /health` 和 `GET /recordings/{id}`，使用同一录制验证重试、超时及服务进程重启。报告同时保存 evidence Tool 的持久回执、原生 status 的已执行任务回执，以及录制开启和关闭时三项任务的终态、operation ID 和派发次数。里程计样本由隔离 ROS 域中发布的 `/odom` 提供。
+
+两轮任务分别启动生产 Agent 入口和新的里程计发布者。测试观察线程从该 Agent 的 ROS executor 读取 `Robot.odometry()`，等到它返回本轮发布的时间戳再提交成功场景。报告的 `native_odometry_readiness` 保存这两次真实接收的样本。重启检查直接使用原生产启动命令。
+
+已有测试归档时也可以单独验证服务。下面的用例要求测试服务保存已结束的 `status-observation`，它属于已成功的任务 `wp5-status`。对外部已运行的进程，CLI 在报告中将进程重启项记为未执行。
+
+```sh
+fixtures=tests/fixtures/plugin-conformance
+python3 -m edge_contracts.conformance --manifest "$fixtures/recorder.manifest.json" \
+  --url http://127.0.0.1:8188 --cases "$fixtures/recorder.cases.json"
+```
+
 | 组件 | 输入 | 输出与用途 |
 |---|---|---|
 | 录制服务 | 显式开始命令、已声明来源、绑定任务的事件与附件 | 保存 SQLite 事务记录。按 `GET /recordings?task_id=…` 找回录制，按游标读取事件 |

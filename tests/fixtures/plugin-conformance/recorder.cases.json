@@ -1,0 +1,10 @@
+{
+  "health": {"path": "/health", "expected": {"service": "task-recorder", "active_count": 0}},
+  "version_check": {"path": "/health", "field": ["version"]},
+  "cases": [
+    {"path": "/recordings/status-observation", "expected": {
+      "recording_id": "status-observation", "task_id": "wp5-status", "status": "FINISHED", "task_status": "SUCCEEDED"
+    }},
+    {"path": "/recordings/missing", "http_status": 404, "expected": {"error": "recording not found"}}
+  ]
+}

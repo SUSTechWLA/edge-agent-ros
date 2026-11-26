@@ -15,6 +15,8 @@ from urllib.request import urlopen
 
 from history import History
 from main import Handler
+from task_data import AgentFacts
+from test_facts_fixture import agent_facts_server
 
 
 class RunReviewTest(unittest.TestCase):
@@ -25,7 +27,8 @@ class RunReviewTest(unittest.TestCase):
         self.tasks = self.root/"tasks.db"
         self.history = History(self.root/"history.db")
         self.addCleanup(self.history.close)
-        handler = partial(Handler,observer=SimpleNamespace(tasks=self.tasks,history=self.history))
+        agent_url = self.enterContext(agent_facts_server(self.tasks))
+        handler = partial(Handler,observer=SimpleNamespace(facts=AgentFacts(agent_url),history=self.history))
         server = ThreadingHTTPServer(("127.0.0.1",0),handler)
         service = threading.Thread(target=server.serve_forever,daemon=True)
         service.start()

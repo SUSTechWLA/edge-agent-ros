@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>现场感知与任务 · Edge Agent ROS</title>
+<link rel="stylesheet" href="field-review.css"><script src="field-review.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="./index.html" aria-label="返回机器人观测台"><svg viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="12" fill="#d6fb80"/><path d="m10 26 12-17 12 17-12 8z" fill="#19352c"/><path d="m16 25 6-9 6 9-6 4z" fill="#d6fb80"/></svg>Edge Agent <b>ROS</b></a>
+  <span class="topsep"></span><span class="location">现场感知与任务</span>
+  <div class="connection"><i id="feed-dot"></i><span id="feed-status" role="status">正在读取记录</span></div>
+</header>
+<main>
+  <div class="title-row"><div class="heading"><span class="meta-label">现场观测台</span><h1 id="page-title">Agent 决策</h1></div>
+    <div class="switch" role="group" aria-label="工作视图"><button id="tab-agent" aria-pressed="true">Agent 决策</button><button id="tab-sensor" aria-pressed="false">感知与规划</button></div>
+  </div>
+  <div id="notification" role="status" hidden></div>
+  <section id="empty-state" class="empty"><h2>等待任务记录</h2><p id="empty-message">数据就绪后会显示用户请求、源事件和传感器回执。</p><button id="retry">重新读取</button></section>
+  <div id="workspace" hidden>
+    <section class="request"><div class="request-meta"><span id="task-number" class="tag"></span><span id="source-mode"></span></div><h2 id="mission"></h2><code id="task-id"></code></section>
+    <div id="agent-screen" class="split">
+      <section class="panel event-panel"><div class="panel-head"><h2>当前事件</h2><span id="event-position" class="muted"></span></div>
+        <div class="event-body"><span id="event-class" class="stage"></span><h3 id="event-title"></h3><p id="event-detail"></p><pre id="event-code" hidden></pre></div>
+        <dl class="event-id"><div><dt>事件标识</dt><dd id="event-key"></dd></div><div><dt>来源时间</dt><dd id="event-time"></dd></div></dl>
+      </section>
+      <section class="panel journal"><div class="panel-head"><h2>任务时间线</h2><span id="journal-count" class="muted"></span></div><div id="journal" aria-label="任务事件"></div></section>
+    </div>
+    <div id="sensor-screen" hidden>
+      <div class="sensor-split">
+        <section class="panel camera-panel"><div class="panel-head"><h2>相机观测</h2><span id="camera-source" class="muted"></span></div>
+          <div id="viewport"><div id="camera-frame"><img id="camera" alt="本次任务的 RGB 原始帧" hidden><div id="region-overlay"></div></div><div id="depth-frame" hidden><canvas id="depth-map" aria-label="真实对齐深度的逐像素阈值图"></canvas><span>橙色 · 阈值内　蓝色 · 阈值外　黑色 · 无效</span></div><p id="camera-note"></p></div>
+          <div class="camera-foot"><span id="image-check"></span><span id="frame-size"></span></div>
+        </section>
+        <section class="panel plan-panel"><div class="panel-head"><h2>人工复核建议</h2><span class="tag subtle">只读</span></div>
+          <div class="plan-content"><div class="threshold"><span>本次阈值</span><strong id="threshold">—</strong></div><div class="mini-label">复核顺序</div><div id="order-list"></div>
+          <div class="unknown"><span>未知分区</span><strong id="unknown"></strong></div><p class="scope" id="scope"></p></div>
+        </section>
+      </div>
+      <section class="panel strip"><div class="strip-title"><h2>分区测量</h2><span id="measure-title"></span></div><div id="measurements"></div></section>
+    </div>
+    <section class="transport" aria-label="回放控制"><div class="transport-buttons"><button id="back" aria-label="上一条记录">‹</button><button id="play" aria-label="自动回放">播放</button><button id="next" aria-label="下一条记录">›</button></div>
+      <input id="scrub" type="range" min="0" max="0" value="0" aria-label="选择事件"><output id="scrub-index"></output>
+      <button id="follow" aria-pressed="false">跟随最新</button>
+    </section>
+  </div>
+</main></body></html>

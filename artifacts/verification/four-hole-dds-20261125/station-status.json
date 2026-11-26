@@ -1,0 +1,89 @@
+{
+  "state": "VERIFIED",
+  "message": "已验证相机与已登记雷达之间的基础外参。",
+  "active_operation": null,
+  "phase": "VERIFIED",
+  "revision": "66e50173b4c8dffcfe47153537d638400e3c6e0ee5252cfe551eaf0296e63d03",
+  "scope": "camera_from_each_lidar",
+  "unobserved": [
+    "imu_extrinsics",
+    "base_link_extrinsics"
+  ],
+  "samples": 5,
+  "task_id": "2f99db16-6cd7-43bb-90d9-361821ad4b20",
+  "method": {
+    "id": "four_hole_board",
+    "label": "四孔 ArUco 板 · Edge 多姿态外参",
+    "target": "four_hole_board",
+    "min_fit": 3,
+    "min_holdout": 2,
+    "clock_supported": false
+  },
+  "methods": [
+    {
+      "id": "checkerboard",
+      "label": "棋盘格多平面外参",
+      "target": "checkerboard",
+      "min_fit": 6,
+      "min_holdout": 2,
+      "clock_supported": true
+    },
+    {
+      "id": "four_hole_board",
+      "label": "四孔 ArUco 板 · Edge 多姿态外参",
+      "target": "four_hole_board",
+      "min_fit": 3,
+      "min_holdout": 2,
+      "clock_supported": false
+    }
+  ],
+  "board_geometry": {
+    "profile_sha256": "5bd419f55ea930c8476d1cf5a310d23f4cea3ad719a3dfd626e682e6f8b63fa4",
+    "confirmed": true,
+    "required_fields": [
+      "marker_size_m",
+      "marker_spacing_m",
+      "hole_spacing_m",
+      "hole_diameter_m"
+    ],
+    "board_id": "synthetic-metric-four-hole",
+    "metrics": {
+      "marker_size_m": 0.2,
+      "marker_spacing_m": [
+        1.1,
+        0.7
+      ],
+      "hole_spacing_m": [
+        0.5,
+        0.4
+      ],
+      "hole_diameter_m": 0.24
+    }
+  },
+  "capture_feedback": {
+    "condition": "target_visible",
+    "outcome": "target_visible",
+    "guidance": "四个角码已识别。请保持板面静止，等待雷达采样。",
+    "camera": {
+      "marker_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "marker_count": 4,
+      "condition": "board_visible"
+    },
+    "lidars": {},
+    "streams": {},
+    "preview_stamp_ns": 1795579853055070291,
+    "clip": {
+      "active": false,
+      "frames": 0,
+      "duration_s": 0,
+      "required_frames": 4,
+      "required_duration_s": 1.0
+    },
+    "video_available": true
+  }
+}

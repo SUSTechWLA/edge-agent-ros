@@ -1,0 +1,59 @@
+{
+  "type": "fixture.crossing_exit_after_safety_stop",
+  "actuator_topic": "/model/office_crossing_surrogate/joint/guide/cmd_vel",
+  "command_mps": 0.21,
+  "start": {
+    "rover": {
+      "xy": [
+        0.0075471877608270024,
+        0.4206146618534396
+      ],
+      "yaw": 1.5564518637848463,
+      "linear_mps": 0.0,
+      "angular_radps": 0.0,
+      "stamp_ns": 310182000000,
+      "frame": "world"
+    },
+    "actor": {
+      "xy": [
+        0.84,
+        1.3922999999991612
+      ],
+      "yaw": 0.0,
+      "linear_mps": 0.0,
+      "angular_radps": 0.0,
+      "stamp_ns": 310180000000,
+      "frame": "world"
+    },
+    "clearance_m": 0.699696138028279,
+    "host_time_ns": 1795492861720372000
+  },
+  "finish": {
+    "rover": {
+      "xy": [
+        0.0075471877608270024,
+        0.4206146618534396
+      ],
+      "yaw": 1.5564518637848463,
+      "linear_mps": 0.0,
+      "angular_radps": 0.0,
+      "stamp_ns": 313378000000,
+      "frame": "world"
+    },
+    "actor": {
+      "xy": [
+        0.84,
+        1.9622399999997193
+      ],
+      "yaw": 0.0,
+      "linear_mps": 0.0,
+      "angular_radps": 0.0,
+      "stamp_ns": 313380000000,
+      "frame": "world"
+    },
+    "clearance_m": 1.2267239555101823,
+    "host_time_ns": 1795492865011932771
+  },
+  "minimum_clearance_m": 0.699696138028279,
+  "robot_motion_commands_sent": 0
+}

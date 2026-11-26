@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "navigation-live",
+  "packs": [
+    "spatial-published",
+    "navigation-common"
+  ],
+  "settings": {},
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}

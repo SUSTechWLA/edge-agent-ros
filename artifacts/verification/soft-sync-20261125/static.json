@@ -1,0 +1,68 @@
+{
+  "task_id": "91e1cc7d-8cd7-4d23-a047-68b0c5f9e40d",
+  "text": "请为当前两台 MID360 与 D435 自主标定软件时间偏移。",
+  "state": "BLOCKED",
+  "model": "ollama/qwen3:4b-instruct",
+  "steps": [
+    {
+      "tool": "record_clock_motion",
+      "operation_id": "91e1cc7d-8cd7-4d23-a047-68b0c5f9e40d/step/1",
+      "status": "SUCCEEDED"
+    },
+    {
+      "tool": "verify_clock_offsets",
+      "operation_id": "91e1cc7d-8cd7-4d23-a047-68b0c5f9e40d/step/2",
+      "status": "RUNNING"
+    }
+  ],
+  "task_retries": 0,
+  "capture_sha256": "04b2d370ead5b8aa6ce843d6015f3b2d301d3e0c3814aa860aa1d9bcdb08a407",
+  "spatial": {
+    "before": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7",
+    "after": "6106ad8f1639c6d0a9e9aaa8d246bd4474e882a893611ad39fdd96b4cd6e8bb7"
+  },
+  "clock_state": "NEEDS_CALIBRATION",
+  "motion_publishers": 0,
+  "sample_counts": {
+    "camera": 182,
+    "lidar_left": 182,
+    "lidar_right": 181
+  },
+  "injected_stamp_shifts_ns": {
+    "camera": 47000000,
+    "info": 47000000,
+    "lidar_left": 164000000,
+    "lidar_right": -32000000
+  },
+  "live_relay_witness": {
+    "info": {
+      "count": 1409,
+      "first_original_ns": 43830000000,
+      "original_ns": 136760000000,
+      "injected_ns": 136807000000,
+      "frame": "rgbd_optical"
+    },
+    "camera": {
+      "count": 1409,
+      "first_original_ns": 43830000000,
+      "original_ns": 136760000000,
+      "injected_ns": 136807000000,
+      "frame": "rgbd_optical"
+    },
+    "lidar_left": {
+      "count": 1408,
+      "first_original_ns": 43830000000,
+      "original_ns": 136690000000,
+      "injected_ns": 136854000000,
+      "frame": "lidar_left"
+    },
+    "lidar_right": {
+      "count": 1408,
+      "first_original_ns": 43830000000,
+      "original_ns": 136690000000,
+      "injected_ns": 136658000000,
+      "frame": "lidar_right"
+    }
+  },
+  "reason": "标定提供者请求失败: {\"error\": \"lidar_left: insufficient motion excitation; move board towards and away\"}"
+}

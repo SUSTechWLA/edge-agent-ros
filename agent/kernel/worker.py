@@ -1,11 +1,13 @@
 """Run the persistent planning, dispatch and verification queues."""
 from functools import partial
+import os
 import time
 
 from agent.tracing import diagnosis, exchange
 from edge_contracts.descriptor import binding
 from edge_contracts.errors import OperationCanceled, OutcomeUnknown, Refused, Unavailable, failure
 from edge_contracts.soft_transport import SoftError
+from . import read_authority
 from .authorization import retry_exhausted, step_timed_out
 from .catalog import is_series
 from .verification import finish_step, prepare_verification, save_candidate, verify_candidate
@@ -15,21 +17,35 @@ def task_plan(journal, task, trace, *, registry, planner, read_only_planner, fre
     # Persist the exact proposal before crossing the socket. A lost reply can
     # then replay this request without a second LLM call or an alternate route.
     candidate = journal.soft_intent(task["id"])
+    authority = read_authority.load()
+    if authority is not None:
+        read_authority.check_read_request(task["text"])
+    pin = (task.get("trigger") or {}).get("read_only_tool")
     if candidate is None:
+        if (hasattr(journal, "operator_intent") and journal.operator_intent(task["id"])
+                and (authority is None or "EDGE_READ_OPERATOR_POLICY" not in os.environ)):
+            raise failure(Refused, "原任务的数值算子策略已撤销", "operator.binding_denied", "deployment")
         try:
             caps = registry()
         except Unavailable:
             # Reserved local status remains usable during a soft-host outage.
             # Restrict this fallback to a direct, read-only kernel request.
-            if task["text"].strip().lower() != "status" or (task.get("trigger") or {}).get("read_only_tool"):
+            if authority is not None or task["text"].strip().lower() != "status" or (task.get("trigger") or {}).get("read_only_tool"):
                 raise
             legacy = registry(legacy_only=True)
             if legacy["status"].get("endpoint"):
                 raise
             caps = {"status":legacy["status"]}
-        pin = (task.get("trigger") or {}).get("read_only_tool")
-        if pin:
+        if authority is not None and pin:
+            cap = caps.get(pin["id"])
+            if (not cap or not read_authority.admitted(authority, pin["id"], cap, cap.get("_soft"))
+                    or pin.get("binding") != binding(cap)):
+                raise failure(Refused, "续办任务没有获批的只读软件绑定", "planner.read_binding_denied", "deployment")
+            provider, steps = planner(task["text"], {pin["id"]:cap}, trace)
+        elif pin:
             provider, steps = read_only_planner(task["text"],caps,pin)
+        elif authority is not None and "EDGE_READ_OPERATOR_POLICY" in os.environ:
+            provider, steps = planner(task["text"], caps, trace, operator_task=(journal, task["id"]))
         else:
             provider, steps = planner(task["text"],caps,trace)
         managed = False
@@ -40,10 +56,33 @@ def task_plan(journal, task, trace, *, registry, planner, read_only_planner, fre
                     step[track + "_pin"] = cap["_" + track]
                     step[track + "_cap"] = {k:v for k,v in cap.items() if k not in ("_"+track,"_legacy_contract")}
                     managed = True
+        read_authority.require_steps(authority, steps)
         if not managed:
             return provider, steps
         candidate = journal.soft_intent(task["id"], [provider, steps])
-    return freeze(task["id"],candidate)
+    read_authority.require_steps(read_authority.load(), candidate[1])
+    if authority is not None and pin and any(
+            s["tool"] != pin["id"] or s["binding"] != pin.get("binding") for s in candidate[1]):
+        raise failure(Refused, "续办任务超出原授权的工具范围", "planner.read_binding_denied", "deployment")
+    result = freeze(task["id"],candidate)
+    try:
+        read_authority.require_steps(read_authority.load(), result[1])
+    except Refused as error:
+        error.unissued_pins = [s["soft_pin"] for s in result[1] if "soft_pin" in s]
+        raise
+    if authority is not None:
+        expected = [(s["tool"], s["args"], s["binding"], s["version"]) for s in candidate[1]]
+        frozen = [(s["tool"], s["args"], s["binding"], s["version"]) for s in result[1]]
+        if result[0] != candidate[0] or frozen != expected or any(
+                s["soft_pin"].get("reservation_id") != f"{task['id']}/step/{i}"
+                for i,s in enumerate(result[1], 1)):
+            raise failure(OutcomeUnknown, "冻结结果与原任务的模型提案不一致，需要对账",
+                          "planner.frozen_proposal_mismatch", "soft-runtime")
+        if trace:
+            trace("planner.frozen", {"layer":"planner", "module":"soft-runtime", "provider":result[0],
+                  "steps":[{"tool":s["tool"], "binding":s["binding"], "operation_id":s["soft_pin"]["reservation_id"]}
+                           for s in result[1]]})
+    return result
 
 
 def worker(journal, robot, planning, verifying=False, *, keep_running, plan_task, registry, services):
@@ -62,6 +101,7 @@ def worker(journal, robot, planning, verifying=False, *, keep_running, plan_task
                 journal.save(t,"RUNNING","已验证计划",kind="planned")
                 continue
             step=t["steps"][t["cursor"]]
+            read_authority.authorize_dispatch(t["steps"][t["cursor"]:], t["text"])
             if verifying:
                 result = verify_candidate(journal, t, step, op, trace, services)
                 finish_step(journal, t, step, op, result)
@@ -119,7 +159,8 @@ def worker(journal, robot, planning, verifying=False, *, keep_running, plan_task
             diagnostic=event_diagnosis(exc,planning,"tool.rejected")
             if planning and diagnostic.get("provider"):
                 t["provider"]=diagnostic["provider"]
-            journal.save(t,"BLOCKED",str(exc),kind="blocked",op=None if planning else op,diagnostic=diagnostic)
+            cleanup = {"unissued_pins":exc.unissued_pins} if planning and hasattr(exc,"unissued_pins") else {}
+            journal.save(t,"BLOCKED",str(exc),kind="blocked",op=None if planning else op,diagnostic=diagnostic,**cleanup)
         except OutcomeUnknown as exc:
             journal.save(t,"RECOVERY_REQUIRED",str(exc),kind="error",op=op,diagnostic=event_diagnosis(exc,planning,"tool.receipt_invalid"))
         except OperationCanceled as exc:

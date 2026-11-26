@@ -134,7 +134,7 @@
       const polygon=clippedFace(vertices,near).map(v=>this.project(v));
       for (let i=2; i<polygon.length; i++) this.triangle(polygon[0],polygon[i-1],polygon[i],color,id,null,opacity);
     }
-    line(a,b,near,color,radius=0) {
+    line(a,b,near,color,radius=0,overlay=false) {
       if(a[2]<near && b[2]<near) return;
       if(a[2]<near || b[2]<near) {
         const t=(near-a[2])/(b[2]-a[2]);
@@ -158,7 +158,7 @@
         for(let row=Math.max(0,y-radius);row<=Math.min(this.h-1,y+radius);row++){
           for(let col=Math.max(0,x-radius);col<=Math.min(this.w-1,x+radius);col++){
             const p=row*this.w+col;
-            if(z>=this.depth[p]*.99999)this.pixels[p]=color;
+            if(overlay || z>=this.depth[p]*.99999)this.pixels[p]=color;
           }
         }
       }
@@ -205,6 +205,7 @@
     for(const {bounds:[x,y,u,v]} of zones){bound([x,y,groundZ]);bound([u,v,groundZ]);}
     const pose=options.pose && usableLayer(snapshot?.pose) && xyz(snapshot.pose.xyz) ? snapshot.pose : null;
     if(pose)bound(pose.xyz);
+    for(const route of options.taskRoutes||[])for(const [x,y,z=0] of route.points)bound([x,y,z]);
     const empty=!Number.isFinite(min[0]);
     return {min:empty?[-2,-2,0]:min,max:empty?[2,2,0]:max,clouds,boxes,zones,grid,groundZ,pose,empty,zMin,zMax};
   }
@@ -452,6 +453,17 @@
         const p=geometry.pose.xyz;
         const live=options.connected && geometry.pose.status==="online";
         surface.marker(camera(p),near,6,live?colors.pose:colors.stalePose,record("机器人位姿",p,!live));
+      }
+      // This annotation shows the candidate path through the scene, including interior waypoints.
+      // It does not change surface picking, measured depth, or the trajectory coordinates.
+      for(const {kind,points} of options.taskRoutes||[]){
+        const projected=points.map(([x,y,z=0])=>camera([x,y,z]));
+        const color=kind==="global"?rgb(154,241,181):kind==="trail"?rgb(105,212,227):rgb(255,179,92);
+        const width=kind==="global"?3:1;
+        for(let i=1;i<projected.length;i++){
+          surface.line(projected[i-1],projected[i],near,rgb(21,58,53),width+1,true);
+          surface.line(projected[i-1],projected[i],near,color,width,true);
+        }
       }
       surface.ctx.putImageData(surface.image,0,0);
       if(tex && options.scene && tex.areas?.length)drawAreaNames(tex,near);
