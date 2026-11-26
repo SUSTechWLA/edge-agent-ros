@@ -1,9 +1,14 @@
 import math
 from pathlib import Path
+import sys
 import tempfile
 import time
 from types import SimpleNamespace
 import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from exploration.corridor_review import predicted_conflict, review_corridor
 from exploration.survey_freshness import observation_issue

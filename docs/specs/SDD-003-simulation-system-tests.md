@@ -25,6 +25,8 @@ AC-1 至 AC-4 的本地验收使用 `c113b9b`，18 个阶段全部通过。实�
 
 ## 变更记录
 
+2026-11-26 修复远端 GitHub Actions CI 失败并按运行环境分层：为 `tests/system_suite.py` 增加 `--stages` 阶段过滤、默认注入仓库根 `PYTHONPATH`、为 Linux `cap_drop: [ALL]` 容器挂载的临时目录开放 `0o777` 写权限，并仅在前置阶段实际通过时运行 `plugin-frozen-missions`；补齐 `test_planar_pose.py`、`test_semantic_scene.py`、`test_survey_recovery.py`、`test_survey_providers.py` 的独立运行路径注入（无 `numpy` 宿主跳过地标投影子项，CI 安装 `python3-numpy` 实跑全项）及 `Dockerfile.base` 的 `Acquire::By-Hash` 重试配置；修复 `scripts/prepare_perception_site.py` 的 `legacy_grid=None` 默认跟随 `queries` 阶段以对齐 `perception-queries` 清单。`.github/workflows/ci.yml` 在云端无 GPU Runner 上默认执行完整的确定性 `repository` + `planner` 套件（73 组单测与契约）、前端地图测试及 `deploy/robot` 纯净部署投影 Compose 校验，将重型 3D Gazebo 多容器仿真改为 `workflow_dispatch`（`full_gazebo=true`）及本地工作站执行。
+
 2026-11-17 以 `d74e71d` 为测试基线，登记验收条件。先在独立环境复现异常，再用相同输入验证候选版本。
 
 2026-11-17 在 `ebb6bbb` 实现运动、场景绑定、Agent 和观测层回归。全套首次在实际模型阶段暴露了只读模型目录导致 Ollama 无法重建索引的问题。测试入口改为复制模型数据到一次性可写卷，并在提交任务前校验服务和权重。增加部署清单加载和选测依赖检查。维护者可按[模块边界与选测手册](../testing/single-edge.md)追踪每个故障的责任模块。

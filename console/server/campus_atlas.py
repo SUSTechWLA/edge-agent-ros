@@ -7,7 +7,7 @@ from pathlib import Path
 def load(root):
     if not root:
         return None
-    from perception.map3d.texture import TexturePack
+    from edge_contracts.texture_pack import TexturePack
     root = Path(root)
     pack = TexturePack(root / "texture")
     if pack.info.get("status") != "ready":
