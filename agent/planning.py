@@ -632,6 +632,7 @@ def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_r
             if isinstance(options, list):
                 fields = ("ref","path","board_view","board_lateral_m","clearance_margin_m","new_rgb_cells",
                           "fills_missing_side","end_heading_deg","end_xyz_m","path_margin_px",
+                          "corridor_risk","semantic_cost",
                           "camera_pitch_deg","camera_roll_deg","helps_camera_coverage","lidar_view",
                           "intrinsic_information_gain") if has_spatial_views else (
                           "ref","target_range_m","obliquity_deg","margin_px","displacement_m","min_marker_module_px",

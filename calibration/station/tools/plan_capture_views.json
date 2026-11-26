@@ -1,6 +1,6 @@
 {
   "id": "plan_capture_views",
-  "version": "5",
+  "version": "6",
   "description": "Use whenever the current view is already recorded or cannot add a sample. Compare safe capture routes from current pose, target and clearance. Predict RGB and orientation coverage and report gaps that available routes cannot fill. A missing LiDAR board observation can be resolved from a different viewpoint.",
   "effect": "read",
   "parameters": {},

@@ -5,7 +5,7 @@ import re
 
 DIGEST = re.compile(r"[0-9a-f]{64}")
 KINDS = {"object", "sensor", "place", "region", "viewpoint"}
-RELATIONS = {"observed_by", "approach_to", "inside", "adjacent"}
+RELATIONS = {"observed_by", "approach_to", "inside", "adjacent", "attached_to", "guards"}
 
 
 def _label(value, size=96):
@@ -80,18 +80,55 @@ def compact_scene(value):
     return scene
 
 
-def target_scene(*, target, frame, stamp_ns, archive, plane, detector, lidar_roles, seen):
+def attach_sign_entities(sign_node, candidates, *, max_distance_m=1.5, relation="guards", max_links=4):
+    """Bind a 3D-anchored sign or marker to nearby surfaces/regions without 2D VLM guessing."""
+    if relation not in ("attached_to", "guards"):
+        raise ValueError("invalid_sign_relation")
+    if type(max_distance_m) not in (int, float) or not math.isfinite(max_distance_m) or not 0 < max_distance_m <= 20:
+        raise ValueError("invalid_attachment_radius")
+    if not isinstance(sign_node, dict) or not _label(sign_node.get("id")) or not _vector(sign_node.get("position_m"), (2, 3)):
+        raise ValueError("invalid_sign_anchor")
+    anchor = sign_node["position_m"]
+    ranked = []
+    for item in candidates:
+        if not isinstance(item, dict) or not _label(item.get("id")) or item["id"] == sign_node["id"]:
+            continue
+        pos = item.get("position_m")
+        if not _vector(pos, (2, 3)):
+            continue
+        dims = min(len(anchor), len(pos))
+        dist = math.dist(anchor[:dims], pos[:dims])
+        if dist <= max_distance_m:
+            ranked.append((dist, item))
+    ranked.sort(key=lambda pair: (pair[0], pair[1]["id"]))
+    nodes, edges = [], []
+    for _, item in ranked[:max_links]:
+        nodes.append(item)
+        edges.append([sign_node["id"], relation, item["id"]])
+    return nodes, edges
+
+
+def target_scene(*, target, frame, stamp_ns, archive, plane, detector, lidar_roles, seen, guards_region=None):
     """One identified target in its observed optical frame; this snapshot has no map transform."""
     obj = dict(id="target", label=target, kind="object", state="observed",
                position_m=plane["center_m"], plane_normal=plane["normal"])
     nodes = [obj, dict(id="camera", label=frame, kind="sensor", state="observed")]
     edges = [["target", "observed_by", "camera"]]
-    for role in sorted(lidar_roles)[:10]:
+    lidar_limit = 9 if guards_region is not None else 10
+    for role in sorted(lidar_roles)[:lidar_limit]:
         ident = "lidar." + role
         nodes.append(dict(id=ident, label=lidar_roles[role], kind="sensor",
                           state="observed" if role in seen else "not_detected"))
         if role in seen:
             edges.append(["target", "observed_by", ident])
+    if guards_region is not None:
+        reg_id = guards_region.get("id", "capture_zone")
+        reg_node = dict(id=reg_id, label=guards_region.get("label", "active_capture_corridor"),
+                        kind="region", state="observed")
+        if "position_m" in guards_region:
+            reg_node["position_m"] = guards_region["position_m"]
+        nodes.append(reg_node)
+        edges.append(["target", "guards", reg_id])
     return compact_scene(dict(version=1, scope="sensor_snapshot", frame=frame, source_ref=archive,
                               stamp_ns=str(stamp_ns), nodes=nodes, edges=edges, detector=detector,
-                              omitted=max(0, len(lidar_roles)-10)))
+                              omitted=max(0, len(lidar_roles)-lidar_limit)))

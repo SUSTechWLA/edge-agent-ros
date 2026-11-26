@@ -3,6 +3,7 @@ import math
 
 from edge_contracts.navigation import NavigationError
 from edge_contracts.occupancy import finite
+from edge_contracts.semantic_costmap import conditional_preference_cost, validate_semantic_layers
 from exploration.survey_strategy import validate_avoid_regions, xy
 from navigation.grid_corridor import route_admission, segment_admitted
 from navigation.planner import _shortest_path
@@ -94,8 +95,11 @@ def route(request):
         reference = plan_route({**request, "live_grid":reference_layer})
         if reference["state"] not in ("WAYPOINT","COMPLETE"):
             return reference
+        sem = (validate_semantic_layers(request["semantic_layers"], len(live["cells"]), now_ns=request.get("stamp_ns"))
+               if "semantic_layers" in request and request["semantic_layers"] is not None else None)
         grid, safe = route_admission(request["published_grid"], live, request["bounds"],
-                                     request["footprint_radius"], validate_avoid_regions(request.get("avoid", [])))
+                                     request["footprint_radius"], validate_avoid_regions(request.get("avoid", [])),
+                                     semantic=sem)
         if reference["state"] == "COMPLETE":
             if safe(grid.index(request["pose"])) and safe(grid.index(request["goal"])):
                 return reference
@@ -127,32 +131,62 @@ def plan_route(request):
             or not isinstance(rejected,list) or
             len(rejected)>12 or not all(isinstance(x,dict) and xy(x.get("start")) and xy(x.get("goal")) for x in rejected)):
         raise ValueError("exploration.route_input_invalid")
-    current, safe = route_admission(request["published_grid"], request["live_grid"], bounds, radius, deferred)
+    sem = None
+    if "semantic_layers" in request and request["semantic_layers"] is not None:
+        sem = validate_semantic_layers(request["semantic_layers"], len(request["live_grid"]["cells"]),
+                                       now_ns=request.get("stamp_ns"))
+    current, safe = route_admission(request["published_grid"], request["live_grid"], bounds, radius, deferred,
+                                    semantic=sem)
+
+    def _with_semantic_meta(payload):
+        if sem is None:
+            return payload
+        return {
+            **payload,
+            "semantic_prior_stale": sem["stale"],
+            "semantic_source_ref": sem["source_ref"],
+        }
 
     first, last = current.index(start), current.index(goal)
     if not safe(first) or not safe(last):
-        return {"state": "PARTIAL", "reason": "endpoint_without_clearance"}
+        return _with_semantic_meta({"state": "PARTIAL", "reason": "endpoint_without_clearance"})
     if math.dist(start, goal) <= .085:
-        return {"state": "COMPLETE", "path": [start], "reason": "at_target"}
+        return _with_semantic_meta({"state": "COMPLETE", "path": [start], "reason": "at_target"})
     gaps = None
     preferred = radius + margin + 2*current.resolution
     cost = None
-    if margin:
-        gaps = clearance_distances(current, request["published_grid"], preferred)
+    if margin or (sem is not None and not sem["stale"]):
+        if margin:
+            gaps = clearance_distances(current, request["published_grid"], preferred)
+        robot_pref = sem["preferred"][first] if sem is not None and not sem["stale"] else 0.0
         def cost(a,b,length):
-            gap = min(gaps[a],gaps[b])
-            return length * (1 + 16 * (max(0,preferred-gap)/preferred)**2)
+            factor = 1.0
+            if gaps is not None:
+                gap = min(gaps[a],gaps[b])
+                factor += 16 * (max(0,preferred-gap)/preferred)**2
+            if sem is not None and not sem["stale"]:
+                cell_risk = 0.5 * (sem["risk"][a] + sem["risk"][b])
+                cell_pref = 0.5 * (sem["preferred"][a] + sem["preferred"][b])
+                sem_mult = conditional_preference_cost(
+                    risk=cell_risk,
+                    preferred=cell_pref,
+                    robot_preferred=robot_pref,
+                    risk_weight=sem["risk_weight"],
+                    pref_weight=sem["pref_weight"],
+                )
+                factor *= sem_mult
+            return length * factor
     def adjacent(i):
         return adjacent_cells(current,i,safe,gaps if mode=="continuous_path" else None,preferred)
     try:
         cells = _shortest_path(first,last,adjacent,current.center,math.dist,edge_cost=cost)
     except NavigationError as error:
-        return {"state": "PARTIAL", "reason": error.code}
+        return _with_semantic_meta({"state": "PARTIAL", "reason": error.code})
     full = [start, *cells, goal]
     if mode == "continuous_path":
         points = through_points(full, current, safe, horizon, rejected, gaps, preferred, departure)
         if len(points) < 2:
-            return {"state": "PARTIAL", "reason": "no_safe_continuous_path"}
+            return _with_semantic_meta({"state": "PARTIAL", "reason": "no_safe_continuous_path"})
         result = {"state":"WAYPOINT", "reason":"continuous_map_route", "goal":points[1],
                   "through_points": points, "path": points, "frame": current.frame}
         if departure and len(points)>2:
@@ -169,7 +203,7 @@ def plan_route(request):
                         and segment_admitted(start,p,current,safe) and segment_admitted(p,points[2],current,safe)):
                     candidates.append(p)
             result["departure_options"] = candidates
-        return result
+        return _with_semantic_meta(result)
     for end in reversed(full[1:]):
         distance = math.dist(start, end)
         if any(math.dist(start,x["start"]) <= .20 and math.dist(end,x["goal"]) <= .19 for x in rejected):
@@ -178,8 +212,8 @@ def plan_route(request):
             safe(current.index([a+(b-a)*offset for a,b in zip(start,end)]))
             for offset in (i / max(1, math.ceil(distance/.02)) for i in range(math.ceil(distance/.02)+1))
         ):
-            return {"state": "WAYPOINT", "reason": "map_route_after_local_rejection" if rejected else "published_map_route",
+            return _with_semantic_meta({"state": "WAYPOINT", "reason": "map_route_after_local_rejection" if rejected else "published_map_route",
                     "goal": end, "path": full,
                     "route_curve": rounded_route(full, current, safe, retain=(end,)),
-                    "frame": current.frame}
-    return {"state": "PARTIAL", "reason": "no_safe_local_segment", "path": full}
+                    "frame": current.frame})
+    return _with_semantic_meta({"state": "PARTIAL", "reason": "no_safe_local_segment", "path": full})
