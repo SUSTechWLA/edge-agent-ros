@@ -102,6 +102,42 @@ class CalibrationStationCliTest(unittest.TestCase):
         self.assertIn('profiles: ["time-calibration"]', raw)
         self.assertIn("EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json", raw)
 
+    def test_ollama_model_override_warning_and_live_tag_verification(self):
+        from io import BytesIO
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            prof_path = Path(tmp) / "installed-sensors.json"
+            prof_path.write_text(json.dumps(valid_hw_profile()), encoding="utf-8")
+            hw_env = {
+                "EDGE_CAL_HOST_GATEWAY": "172.17.0.1",
+                "EDGE_CAL_ROS_DOMAIN": "61",
+                "EDGE_CAL_OLLAMA_URL": "http://172.17.0.1:11434",
+                "EDGE_CAL_ROBOT_ID": "jetson-lingao-01",
+            }
+            plan_think = station.build_plan("hardware", profile_path=prof_path,
+                                            ollama_model="qwen3:8b-thinking", env=hw_env)
+            rep_think = station.preflight(plan_think, env=hw_env)
+            self.assertTrue(rep_think["ok"])
+            self.assertEqual(rep_think["derived_env"]["EDGE_CAL_OLLAMA_MODEL"], "qwen3:8b-thinking")
+            self.assertTrue(any("thinking checkpoint" in w for w in rep_think["warnings"]))
+
+            plan_8b = station.build_plan("hardware", profile_path=prof_path,
+                                         ollama_model="qwen3:8b", env=hw_env)
+            tags_missing = json.dumps({"models": [{"name": "qwen2.5:1.5b"}]}).encode()
+            ok_proc = station.subprocess.CompletedProcess([], 0, stdout="Publisher count: 1\n", stderr="")
+            with patch.object(station, "urlopen", return_value=BytesIO(tags_missing)), \
+                 patch.object(station.subprocess, "run", return_value=ok_proc):
+                rep_missing = station.preflight(plan_8b, env=hw_env, check_live=True)
+            self.assertFalse(rep_missing["ok"])
+            self.assertTrue(any("qwen3:8b" in msg and "not found" in msg for msg in rep_missing["issues"]))
+
+            tags_ready = json.dumps({"models": [{"name": "qwen3:8b"}]}).encode()
+            with patch.object(station, "urlopen", return_value=BytesIO(tags_ready)), \
+                 patch.object(station.subprocess, "run", return_value=ok_proc):
+                rep_ready = station.preflight(plan_8b, env=hw_env, check_live=True)
+            self.assertTrue(rep_ready["ok"], rep_ready)
+
 
 if __name__ == "__main__":
     unittest.main()

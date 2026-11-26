@@ -59,7 +59,8 @@ MODES = {
 
 
 def build_plan(mode: str, *, project: str | None = None, profile_path: Path | None = None,
-               passive_livox: bool = False, with_clock: bool = False, env: dict | None = None) -> dict:
+               passive_livox: bool = False, with_clock: bool = False,
+               ollama_model: str | None = None, env: dict | None = None) -> dict:
     if mode not in MODES:
         raise ValueError(f"unsupported mode: {mode}")
     if passive_livox and mode != "hardware":
@@ -77,6 +78,7 @@ def build_plan(mode: str, *, project: str | None = None, profile_path: Path | No
             resolved_profile = Path(raw) if raw else None
         else:
             resolved_profile = ROOT / spec["default_profile"]
+    selected_model = (ollama_model or environ.get("EDGE_CAL_OLLAMA_MODEL", "")).strip() or "qwen3:4b-instruct"
     bind = environ.get("EDGE_CALIBRATION_CONSOLE_BIND", "127.0.0.1")
     port = int(environ.get(spec["port_env"], str(spec["default_port"])))
     proj = project or spec["project"]
@@ -91,6 +93,8 @@ def build_plan(mode: str, *, project: str | None = None, profile_path: Path | No
         "compose_files": compose_files,
         "compose_profiles": compose_profiles,
         "profile_path": str(resolved_profile) if resolved_profile else None,
+        "ollama_model": selected_model,
+        "ollama_model_override": ollama_model.strip() if ollama_model and ollama_model.strip() else None,
         "console_url": f"http://{bind}:{port}/",
         "motion_authority": spec["motion_authority"],
         "compose_base_argv": cmd,
@@ -100,7 +104,16 @@ def build_plan(mode: str, *, project: str | None = None, profile_path: Path | No
 def preflight(plan: dict, *, env: dict | None = None, check_live: bool = False) -> dict:
     environ = dict(os.environ if env is None else env)
     issues: list[str] = []
+    warnings: list[str] = []
     derived_env: dict[str, str] = {}
+    if plan.get("ollama_model_override"):
+        derived_env["EDGE_CAL_OLLAMA_MODEL"] = plan["ollama_model_override"]
+    target_model = plan.get("ollama_model") or "qwen3:4b-instruct"
+    if "thinking" in target_model.lower():
+        warnings.append(
+            f"model {target_model!r} is a pure thinking checkpoint and may add 10-40s CoT latency per step; "
+            "prefer 'qwen3:4b-instruct' or hybrid 'qwen3:8b' (auto think=false)"
+        )
     for cf in plan["compose_files"]:
         if not (ROOT / cf).is_file():
             issues.append(f"missing compose file: {cf}")
@@ -144,8 +157,16 @@ def preflight(plan: dict, *, env: dict | None = None, check_live: bool = False) 
             try:
                 with urlopen(ollama, timeout=4) as resp:
                     tags = json.loads(resp.read(65536))
-                if not tags.get("models"):
+                models = [m.get("name", "") for m in (tags.get("models") or []) if isinstance(m, dict)]
+                if not models:
                     issues.append(f"Ollama at {ollama} reported zero installed models")
+                else:
+                    normalized_available = {m for name in models for m in (name, name.removesuffix(":latest"))}
+                    if target_model not in normalized_available:
+                        issues.append(
+                            f"configured model {target_model!r} not found in Ollama at {ollama} "
+                            f"(installed: {', '.join(sorted(filter(None, models)))})"
+                        )
             except Exception as exc:
                 issues.append(f"Ollama unreachable at {ollama}: {exc}")
             topics = [profile["camera"]["topic"], profile["camera"]["info_topic"],
@@ -161,9 +182,11 @@ def preflight(plan: dict, *, env: dict | None = None, check_live: bool = False) 
         "ok": not issues,
         "mode": plan["mode"],
         "project": plan["project"],
+        "ollama_model": target_model,
         "console_url": plan["console_url"],
         "motion_authority": plan["motion_authority"],
         "derived_env": derived_env,
+        "warnings": warnings,
         "issues": issues,
     }
 
@@ -174,13 +197,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", choices=tuple(MODES), default="sim-mobile")
     parser.add_argument("--project", help="override Docker Compose project name")
     parser.add_argument("--profile", type=Path, help="sensor profile JSON (required on hardware unless EDGE_CAL_HW_PROFILE is set)")
+    parser.add_argument("--ollama-model", help="override calibration planner model tag, e.g. qwen3:4b-instruct or qwen3:8b")
     parser.add_argument("--passive-livox", action="store_true", help="include passive Livox UDP receiver on hardware")
     parser.add_argument("--with-clock", action="store_true", help="enable temporal offset calibration observer")
     parser.add_argument("--check-live", action="store_true", help="probe live Ollama and ROS 2 publishers on hardware")
     args = parser.parse_args(argv)
 
     plan = build_plan(args.mode, project=args.project, profile_path=args.profile,
-                      passive_livox=args.passive_livox, with_clock=args.with_clock)
+                      passive_livox=args.passive_livox, with_clock=args.with_clock,
+                      ollama_model=args.ollama_model)
     if args.action == "plan":
         print(json.dumps(plan, indent=2, ensure_ascii=False))
         return 0

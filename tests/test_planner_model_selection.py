@@ -10,7 +10,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "model_provider"))
 sys.path.insert(0, str(ROOT / "agent"))
-from planning import Refused, planner_profile
+from planning import Refused, feedback_plan, ollama_hybrid_thinking_model, plan, planner_profile
 from select_planner import change
 
 
@@ -70,6 +70,73 @@ class ModelSelectionTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "adapter URL"):
                 change(directory, model="qwen2.5:1.5b", url="https://user:password@example.com")
             self.assertEqual((directory / "planner-profile.json").read_bytes(), active)
+
+    def test_qwen3_hybrid_disables_thinking_by_default_and_honors_keep_alive(self):
+        for tag in ("qwen3", "qwen3:8b", "qwen3:4b", "qwen3:8b-q4_K_M", "library/qwen3:8b"):
+            self.assertTrue(ollama_hybrid_thinking_model(tag), tag)
+        for non_hybrid in ("qwen3:4b-instruct", "qwen3:4b-instruct-2507", "qwen3:8b-thinking",
+                           "qwen3-coder:30b", "qwen2.5:1.5b", "deepseek-flash"):
+            self.assertFalse(ollama_hybrid_thinking_model(non_hybrid), non_hybrid)
+
+        with TemporaryDirectory() as temp:
+            directory = Path(temp)
+            with patch.dict(os.environ, {
+                "EDGE_CONTRACT_DIR": temp,
+                "EDGE_PLANNER_URL": "",
+                "EDGE_OLLAMA_URL": "http://127.0.0.1:11434",
+                "EDGE_OLLAMA_MODEL": "qwen3:8b",
+                "EDGE_OLLAMA_KEEP_ALIVE": "30m",
+                "EDGE_OLLAMA_NUM_CTX": "4096",
+                "EDGE_OLLAMA_NUM_PREDICT": "256",
+            }):
+                env_prof = planner_profile()
+                self.assertIs(env_prof["think"], False)
+                self.assertEqual(env_prof["keep_alive"], "30m")
+                self.assertEqual(env_prof["options"]["num_predict"], 256)
+
+                captured = []
+                def fake_ollama(url, body, timeout):
+                    captured.append((url, body, timeout))
+                    return {"message": {"content": json.dumps({
+                        "goal": "sensor_calibration",
+                        "tool": "sensor_calibration_status",
+                        "args": {},
+                        "reason": "先核实标定状态",
+                    })}}
+
+                station_root = ROOT / "calibration/station"
+                caps = {t["id"]: t for p in (station_root / "tools").glob("*.json")
+                        if (t := json.loads(p.read_bytes()))}
+                task = {"id": "cal-qwen3-8b", "text": "请帮我标定当前传感器", "steps": []}
+                provider, steps = feedback_plan(task, caps, station_root / "feedback.json", None,
+                                                model_request=fake_ollama)
+                self.assertEqual(provider, "ollama/qwen3:8b")
+                self.assertEqual(steps[0]["tool"], "sensor_calibration_status")
+                _, body, _ = captured[0]
+                self.assertIs(body["think"], False)
+                self.assertEqual(body["keep_alive"], "30m")
+                self.assertEqual(body["options"]["num_predict"], 256)
+                self.assertEqual(body["format"]["oneOf"][0]["properties"]["reason"]["maxLength"], 160)
+
+            change(directory, model="qwen3:8b", url="http://127.0.0.1:11434",
+                   think=False, keep_alive="45m", num_ctx=4096, num_predict=320, num_thread=6)
+            with patch.dict(os.environ, {"EDGE_CONTRACT_DIR": temp}):
+                loaded = planner_profile()
+                self.assertIs(loaded["think"], False)
+                self.assertEqual(loaded["keep_alive"], "45m")
+                self.assertEqual(loaded["options"]["num_predict"], 320)
+                self.assertEqual(loaded["options"]["num_thread"], 6)
+
+            for bad_env in (
+                {"EDGE_OLLAMA_KEEP_ALIVE": "forever"},
+                {"EDGE_OLLAMA_THINK": "maybe"},
+                {"EDGE_OLLAMA_NUM_CTX": "64"},
+                {"EDGE_OLLAMA_NUM_PREDICT": "9999"},
+            ):
+                (directory / "planner-profile.json").unlink(missing_ok=True)
+                with patch.dict(os.environ, {"EDGE_CONTRACT_DIR": temp, "EDGE_PLANNER_URL": "", **bad_env}):
+                    with self.assertRaises(Refused):
+                        planner_profile()
 
 
 if __name__ == "__main__":

@@ -230,6 +230,26 @@ class ModelAdapters(unittest.TestCase):
         info=again.invoke("/api/chat",self.body,lambda *args:{"done":True,"message":{"content":'{"ok":true}'}})
         self.assertEqual(info["adapter"]["event_id"],self.events()[-1]["event_id"])
 
+    def test_think_and_keep_alive_forwarded_locally_and_sanitized_for_cloud(self):
+        forwarded=[]
+        local_req=dict(self.body,think=False,keep_alive="30m")
+        self.adapter.invoke("/api/chat",local_req,lambda prov,path,payload:(
+            forwarded.append((prov,path,payload)) or {"done":True,"message":{"content":'{"ok":true}'}}))
+        self.assertEqual(forwarded[0][2]["think"],False)
+        self.assertEqual(forwarded[0][2]["keep_alive"],"30m")
+
+        cloud_sent=[]
+        cloud_req=dict(self.cloud,think=True,keep_alive="30m")
+        self.adapter.invoke("/api/chat",cloud_req,lambda prov,path,payload:(
+            cloud_sent.append(payload) or {"choices":[{"message":{"content":'{"ok":true}'},"finish_reason":"stop"}]}))
+        self.assertEqual(cloud_sent[0]["thinking"],{"type":"enabled"})
+        self.assertNotIn("keep_alive",cloud_sent[0])
+
+        for bad in (dict(self.body,think="no"),dict(self.body,keep_alive="forever"),dict(self.body,keep_alive=-2)):
+            with self.assertRaises(p.Fault) as err:
+                self.adapter.invoke("/api/chat",bad,lambda *a:self.fail("invalid think/keep_alive reached upstream"))
+            self.assertEqual(err.exception.reason,"options_invalid")
+
 
 if __name__=="__main__":
     unittest.main()
