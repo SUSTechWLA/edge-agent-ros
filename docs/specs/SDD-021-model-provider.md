@@ -8,7 +8,7 @@
 
 新插件提供 GET /health、/api/tags 与 POST /api/chat、/api/generate。按部署者只读路由目录中 routes.json 的模型别名选择本地 Ollama 或固定的 DeepSeek HTTPS 端点。每次调用固定接口快照，热更新只影响后续请求。已有 planner-profile.json 和各作者的 URL/model 参数即接入点。已部署本地模型可单独使用。云凭据只以文件进入授权插件。相同请求最多向一个上游发送一次，模型输出只作建议，参数与业务结果仍由调用方独立校验。
 
-DeepSeek 的 JSON object 模式附带来自调用方的 schema 提示。服务将长度限制、终止原因、用量映射回 Ollama 契约。HTTP 异常、格式错误、认证失败、限流、不可达等有独立错误码。各请求在 ModuleJournal 中记录开始与结果以及路由摘要、请求摘要和上游模型。公开事实只包含受限元数据。原生消费者当前不传 trace 头时，可使用请求规范摘要和时间窗口比对。移除插件不会授予动作权限。
+DeepSeek 的 JSON object 模式附带来自调用方的 schema 提示。服务将长度限制、终止原因、用量映射回 Ollama 契约，并支持顶层 `think`（布尔值）与本地驻留参数 `keep_alive`（整数秒或时长字符串，仅转发至本地 Ollama，不向云端透传）。HTTP 异常、格式错误、认证失败、限流、不可达等有独立错误码。各请求在 ModuleJournal 中记录开始与结果以及路由摘要、请求摘要和上游模型。公开事实只包含受限元数据。原生消费者当前不传 trace 头时，可使用请求规范摘要和时间窗口比对。移除插件不会授予动作权限。
 
 ## 验收与证据
 
@@ -25,6 +25,8 @@ DeepSeek 的 JSON object 模式附带来自调用方的 schema 提示。服务�
 使用独立 Compose overlay 安装，默认绑定本机回环。启用云路由还需单独挂载 secret。现有规划器可原子替换既有契约目录的 planner-profile.json 来换来源，无需重启 Agent。现有作者如果此前直连 Ollama，首次换 URL 需重建相应作者，后续改变已配置别名可更新路由目录。停用前先切回原有调用配置并排空在途模型请求。
 
 ## 变更记录
+
+2026-11-26 边缘端 Ollama / Qwen3 推理加速与低延迟优化：（1）`agent/planning.py` 新增混合推理模型识别（对 `qwen3`、`qwen3:8b`、`qwen3:4b` 等非 `-instruct` / `-thinking` 混合标签自动默认 `think: false`，避免结构化工具选择前空转生成数百至上千个 `<think>` token），支持在 `planner-profile.json` 及环境变量（`EDGE_OLLAMA_THINK`、`EDGE_OLLAMA_KEEP_ALIVE`、`EDGE_OLLAMA_NUM_CTX`、`EDGE_OLLAMA_NUM_PREDICT`、`EDGE_OLLAMA_NUM_THREAD`）中受控配置 `think` 与 `keep_alive`（非法值按 `planner.profile_invalid` 失败关闭），并为 Ollama 模式下的 `feedback_plan` / `response_schema` 增加 `reason.maxLength=160` 输出收敛约束；（2）`agent/author_tool.py` 对齐 `num_ctx: 4096` 与混合 Qwen3 的 `think: false`，消除跨入口调用触发的 Ollama runner 重载；（3）`model_provider/provider.py`、`model_provider/select_planner.py` 与 `model_provider/config/routes.json` 支持校验并透传 `think` / `keep_alive`、热切换推理预算参数，并预置 `qwen3:4b-instruct` 与 `qwen3:8b` 本地路由；（4）`compose.yaml`、`compose.hardware.yaml`、`compose.calibration-model.yaml` 默认启用 `OLLAMA_FLASH_ATTENTION=1`、`OLLAMA_KV_CACHE_TYPE=q8_0`、`OLLAMA_NUM_PARALLEL=1` 与 `OLLAMA_KEEP_ALIVE=30m` 以降低边缘统一内存占用并消除 5 分钟空闲冷卸载。
 
 2026-11-18 实现前登记 AC-1 至 AC-4。范围为独立 Model Adapter、部署、测试与运维，不修改 Agent、ROS 运动内核、模型消费者和公共总线协议。
 

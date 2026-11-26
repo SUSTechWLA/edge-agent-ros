@@ -2,6 +2,8 @@
   "schema_version": 1,
   "routes": {
     "qwen2.5:1.5b": {"provider": "ollama", "model": "qwen2.5:1.5b"},
+    "qwen3:4b-instruct": {"provider": "ollama", "model": "qwen3:4b-instruct"},
+    "qwen3:8b": {"provider": "ollama", "model": "qwen3:8b"},
     "deepseek-flash": {"provider": "deepseek", "model": "deepseek-flash"}
   }
 }
