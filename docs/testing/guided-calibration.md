@@ -4,6 +4,8 @@
 
 ## 在本地仿真复测
 
+使用四个 ArUco 码和四个通孔的标定板时，可按[四孔板与 Jetson 实车采集指南](four-hole-calibration.md)设置标定方法、查看取景及点云覆盖、录制多个稳定板姿并检验外参。
+
 装配已验证后，可以通过新的自然语言任务估计采集时间差。[双 MID-360 与 D435 的时间标定及 Jetson 入口](sensor-time-calibration.md)
 
 ### 工具如何复用

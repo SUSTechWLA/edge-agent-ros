@@ -45,7 +45,7 @@ class Release(unittest.TestCase):
         (self.repo/"agent/local-token").unlink()
         self.assertEqual(self.git("show",a+":ROBOT_SOURCE"),source)
         self.assertEqual(self.git("rev-list","--count",a),"1")
-        self.assertEqual(set(release_robot.entries(a)),{"ROBOT_SOURCE","compose.hardware.yaml",
+        self.assertEqual(set(release_robot.entries(a)),{"ROBOT_SOURCE","README.md","compose.hardware.yaml",
                          "scripts/robot.sh","calibration/factory.py","exploration/frontier.py"})
         self.assertEqual(release_robot.publish(source),a)
         self.write("docs/research.md","new experiments")
@@ -78,11 +78,14 @@ class Release(unittest.TestCase):
         old = self.git("rev-parse","HEAD")
         self.git("switch", "source")
         self.assertTrue(release_robot.legacy_format(old, source))
+        v2_entries = release_robot.projection(source, fmt="v2")
+        self.assertNotIn("README.md", v2_entries)
         new = release_robot.publish(source)
         self.assertEqual(self.git("rev-parse",new+"^"),old)
         self.assertFalse(release_robot.legacy_format(new, source))
-        self.assertNotIn("README.md", release_robot.entries(new))
-        self.assertEqual(self.git("show",old+":README.md"),"test")
+        self.assertEqual(release_robot.projection_format(new, source), "v3")
+        self.assertIn("README.md", release_robot.entries(new))
+        self.assertEqual(self.git("show",new+":README.md"),"test")
         self.write("deploy/robot/README.md", "later guide")
         with tempfile.TemporaryDirectory() as folder, patch.object(package_robot,"ROOT",self.repo):
             extracted = Path(folder)
@@ -109,8 +112,11 @@ class Release(unittest.TestCase):
                  "capabilities/soft-pilots/pack.json","capabilities/camera/pack.json","profiles/bench.json",
                  "profiles/bench-camera.json","profiles/observe.json","agent/site_pack.py"}
         shipped.update({"deploy/robot/map-inputs/.gitkeep","src/edge_core/CMakeLists.txt","console/web/index.html"})
-        shipped.update({"agent/kernel/task_facts.py","agent/facts_server.py","edge_contracts/conformance.py"})
+        shipped.update({"agent/kernel/task_facts.py","agent/facts_server.py","edge_contracts/conformance.py",
+                        "scripts/calibration_station.py","compose.calibration-hardware.yaml",
+                        "compose.calibration-board.yaml","compose.calibration-console.yaml"})
         local={"compose.physical-camera-test.yaml","tests/system/physical_camera_source.py","profiles/.env",
+               "compose.calibration-gazebo.yaml","compose.calibration-fixed-rover.yaml","compose.yaml",
                "deploy/robot/manual.pdf","deploy/robot/docs/start.html","deploy/robot/TIPS.txt",
                "agent/docs/guide.html","console/readme.html",
                "profiles/site-local.json","capabilities/soft-pilots/keys.json"}

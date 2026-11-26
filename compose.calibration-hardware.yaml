@@ -17,6 +17,7 @@ services:
     <<: *hw-observer
   calibration-clock-observer:
     <<: *hw-observer
+    profiles: ["time-calibration"]
   calibration-session:
     environment:
       EDGE_CALIBRATION_READONLY_HARDWARE: "1"
@@ -34,10 +35,15 @@ services:
       - ${EDGE_CAL_HW_PROFILE}:/etc/edge/installed-sensors.json:ro
   agent:
     environment:
+      EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json
       EDGE_OLLAMA_URL: ${EDGE_CAL_OLLAMA_URL:?set an Ollama endpoint reachable from the private station}
+    volumes:
+      - ${EDGE_CAL_HW_PROFILE}:/etc/edge/installed-sensors.json:ro
     extra_hosts:
       host.docker.internal: ${EDGE_CAL_HOST_GATEWAY}
   console:
     environment:
       EDGE_ROBOT_ID: ${EDGE_CAL_ROBOT_ID:?set the robot_id from the profile}
       EDGE_ENVIRONMENT: hardware
+      ROS_DOMAIN_ID: ${EDGE_CAL_ROS_DOMAIN}
+      RMW_IMPLEMENTATION: ${EDGE_CAL_RMW:-rmw_cyclonedds_cpp}

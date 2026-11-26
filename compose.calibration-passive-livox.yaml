@@ -1,0 +1,31 @@
+# Optional when MID-360 packets arrive but the robot has no native-frame ROS cloud.
+# Each source gets a dedicated sensor-only topic; start only the required station services.
+services:
+  calibration-observer:
+    environment:
+      FASTRTPS_DEFAULT_PROFILES_FILE: /opt/edge/calibration/station/fastdds-udp-only.xml
+      FASTDDS_DEFAULT_PROFILES_FILE: /opt/edge/calibration/station/fastdds-udp-only.xml
+  calibration-passive-livox:
+    image: ${EDGE_CAL_HW_OBSERVER_IMAGE:?set the observer image}
+    init: true
+    network_mode: host
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [NET_RAW]
+    tmpfs: [/tmp]
+    working_dir: /opt/edge
+    environment:
+      PYTHONPATH: /opt/edge
+      PYTHONDONTWRITEBYTECODE: "1"
+      ROS_DOMAIN_ID: ${EDGE_CAL_ROS_DOMAIN:?set the domain of the sensor drivers}
+      RMW_IMPLEMENTATION: ${EDGE_CAL_RMW:-rmw_cyclonedds_cpp}
+      FASTRTPS_DEFAULT_PROFILES_FILE: /opt/edge/calibration/station/fastdds-udp-only.xml
+      FASTDDS_DEFAULT_PROFILES_FILE: /opt/edge/calibration/station/fastdds-udp-only.xml
+      ROS_LOG_DIR: /tmp/ros
+      ROS_HOME: /tmp/ros
+    volumes:
+      - ./calibration:/opt/edge/calibration:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./perception:/opt/edge/perception:ro
+    command: ["python3", "-m", "calibration.passive_livox", "--interface", "${EDGE_CAL_LIVOX_IFACE:?set the receiving interface}", "--destination", "${EDGE_CAL_LIVOX_DEST:?set the receiving IP}", "--source", "${EDGE_CAL_LIVOX_IP:?set the LiDAR source IP}", "${EDGE_CAL_LIVOX_ID:?set the LiDAR source role}", "${EDGE_CAL_LIVOX_FRAME:?set the LiDAR native frame}"]

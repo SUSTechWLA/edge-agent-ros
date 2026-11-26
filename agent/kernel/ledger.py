@@ -244,6 +244,8 @@ class Journal:
             if pending:
                 step = task["steps"][task["cursor"]]
                 op = step.get("operation_id")
+                if task.get("can_reconcile_motion"):
+                    step["reconcile_only"] = True
                 if op:
                     step["resumed_at"] = time.time()
             self.save(task,"RUNNING" if pending else "PLANNING","操作员已请求用原任务继续核对",
@@ -293,7 +295,9 @@ class Journal:
                     if "proposal" in diagnostic:
                         payload["diagnostic"]["proposal_artifact"]=artifact(diagnostic["proposal"])
                 if kind=="planned":
-                    payload["steps"]=[project_step(s) for s in t["steps"]]
+                    # Prior completed steps already have full evidence in their own verified events
+                    # and in tasks.steps; keep incremental planned events bounded O(N) instead of O(N^2).
+                    payload["steps"]=[project_step(s, include_evidence=i>=t["cursor"]) for i,s in enumerate(t["steps"])]
                 elif op and 0 <= index < len(t["steps"]):
                     payload["step"]=project_step(t["steps"][index])
                 trace={}
@@ -385,8 +389,11 @@ class Journal:
             return detail_events(self.db, key, after, limit)
 
 
-def project_step(step):
+def project_step(step, *, include_evidence=True):
     result=dict(step)
+    if not include_evidence:
+        for key in ("evidence","verification","physical_cap","soft_cap"):
+            result.pop(key, None)
     for key in ("args","evidence"):
         if key in result:
             captured=artifact(result[key])

@@ -18,7 +18,7 @@ export EDGE_FIELD_RELEASE_ENV="$field/release.env"
 
 ```sh
 cat >"$EDGE_FIELD_RELEASE_ENV" <<EOF
-EDGE_NAV_LOCK=7d7f9dfd66914511e314142ba1724a3d5629aa0a93e874f46cf398cae44036ae
+EDGE_NAV_LOCK=87246526714ce206c2a7b926648eb1f74a95669f5c09f16995a9f629a441d03d
 EDGE_READ_AGENT_IMAGE=$(cat "$field/image-v2.txt")
 EDGE_READ_PLANNER_DIR=$autonomy/planner-profile
 EDGE_FIELD_AUTHOR_IMAGE=$(cat "$field/author-image.txt")
@@ -44,13 +44,15 @@ sh scripts/field-perception-compose.sh config --quiet
 sh scripts/field-perception-compose.sh config --services
 ```
 
-示例中的 `EDGE_NAV_LOCK` 是 11 月 23 日增量发布回执 `published-plugin.json` 中的 `lock_digest`，已与该站点当前 `pack.lock.json` 的规范化摘要交叉核对。旧 `site.env` 保留了此前的锁。以后有新发布时，从当次受信回执取新值并与实际安装核对；复原时将整套站点、策略、注册表和账本作为同一版本恢复。只启动常驻容器或独立发布者无需重新执行 `activate`。
+示例中的 `EDGE_NAV_LOCK` 来自 11 月 23 日卸载固定网格插件后的主站激活回执。设备的 `~/edge-integration/retire-grid-main-20261123/` 保存了该回执、旧锁和新锁，以及保留的 17 项注册表指针核对结果。当前 `site.env` 已引用新锁。后续发布应使用当次激活回执并核对实际安装。恢复时将站点、策略、注册表和账本作为同一版本恢复。启动常驻容器或独立发布者无需重新执行 `activate`。
 
 本次现场的三个文件按上面顺序分别是 `78e0e232931d03351779ee7b4d79b383d01f0e3c108cb2968c1c4cf5e77a8493`、`93e9073111842f3054854691618d2c9b92b8c9ad8a5ede183162abd5c6e14600` 和 `3ecf55f7d3d93d1b854305f10cbd967e1489bf26199c68154278b56c6521d9c5`。现场基础模型服务 `edge-read-llm` 和 Agent 同属 `edge-nav-spatial_agent-api`，规划器从 `planner-profile/planner-profile.json` 读取实际模型参数。发布者专用镜像内已固化 watcher、发布器以及受信适配器。
 
 ## 启动和验收
 
 已运行的 Jetson 通过 Docker 的 `unless-stopped` 恢复常驻服务。新接管一个已有读者、Agent 和 Ollama 的站点时，先创建并确认所列目录权限，把仓库中的 `profiles/field-read-families.json` 作为站点审核文件安装，确认 Agent 加载本次可选 family 配置。作者与数据服务逐个使用固定容器名，以确保一个站点只有一个活跃作者。若部署前已有同名独立容器，沿用原服务或安排受控的停机交接。
+
+当前默认的 `families` 为空，现场作者会拒绝旧的 `depth_column_review` 创作请求。主站使用的旧 Agent 镜像要求该配置至少有一个 family，故它的活动 Compose 定义省略了 `EDGE_READ_PLUGIN_FAMILIES`。保留的日常只读任务仍按 `approved.json` 规划。后续新增 family 时，站点需提供对应的创作适配器、审核范围和验证用例。
 
 ```sh
 # 仅在接管已准备好且这两个容器名可用的站点时执行

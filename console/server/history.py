@@ -1,4 +1,5 @@
 """Durable, read-only-to-clients console event log. Source cursors survive restarts."""
+import hashlib
 import json
 import os
 import sqlite3
@@ -49,6 +50,7 @@ class History:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.days = retention_setting("EDGE_TELEMETRY_RETENTION_DAYS", 7)
         self.max_samples = retention_setting("EDGE_TELEMETRY_MAX_SAMPLES", 10080)
+        self.max_mb = retention_setting("EDGE_TELEMETRY_MAX_MB", 0)
         self.lock = threading.RLock()
         self.db = sqlite3.connect(self.path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
@@ -69,6 +71,9 @@ class History:
               cause_seq INTEGER, source_id TEXT, source_seq INTEGER, snapshot BLOB NOT NULL,
               UNIQUE(source_id,source_seq)
             );
+            CREATE TABLE IF NOT EXISTS event_snapshots (
+              sha256 TEXT PRIMARY KEY, snapshot BLOB NOT NULL
+            );
             CREATE INDEX IF NOT EXISTS events_mission ON events(mission_id,seq);
             CREATE INDEX IF NOT EXISTS events_kind ON events(kind,seq);
             CREATE INDEX IF NOT EXISTS events_session ON events(session_id,seq);
@@ -78,11 +83,12 @@ class History:
         # unavailable provenance NULL instead of backfilling a guessed trigger.
         with self.db:
             existing = {r[1] for r in self.db.execute("PRAGMA table_info(events)")}
-            for name in (*TRACE_FIELDS,"ingress_hash","peer_source"):
+            for name in (*TRACE_FIELDS,"ingress_hash","peer_source","snapshot_sha256"):
                 if name not in existing:
                     self.db.execute(f"ALTER TABLE events ADD COLUMN {name} TEXT")
             for name in ("event_id","trace_id","parent_event_id","task_id","module","code","trigger_kind","trigger_id","call_id","operation_id"):
                 self.db.execute(f"CREATE INDEX IF NOT EXISTS trace_{name} ON events({name},seq) WHERE {name} IS NOT NULL")
+            self.db.execute("CREATE INDEX IF NOT EXISTS events_snapshot_sha ON events(snapshot_sha256) WHERE snapshot_sha256 IS NOT NULL")
             self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS wire_event_id ON events(event_id) WHERE ingress_hash IS NOT NULL")
             self.db.execute("""CREATE INDEX IF NOT EXISTS core_mission_scope ON events(source_id,mission_id,seq)
                 WHERE source='edge_core/ledger' AND peer_source IS NOT NULL""")
@@ -113,17 +119,36 @@ class History:
                 ORDER BY seq DESC LIMIT 1 OFFSET ?""", (self.max_samples,)).fetchone()
             if cutoff:
                 remove("seq<=?",cutoff[0])
+        if self.max_mb:
+            budget = self.max_mb * 1048576
+            page_size = self.db.execute("PRAGMA page_size").fetchone()[0]
+            while True:
+                used = (self.db.execute("PRAGMA page_count").fetchone()[0]
+                        - self.db.execute("PRAGMA freelist_count").fetchone()[0]) * page_size
+                if used <= budget:
+                    break
+                batch = self.db.execute(f"""SELECT max(seq) FROM (
+                    SELECT seq FROM events WHERE {eligible} ORDER BY seq ASC LIMIT 256)""").fetchone()
+                if not batch or batch[0] is None:
+                    break
+                remove("seq<=?", batch[0])
+                self.db.execute("""DELETE FROM event_snapshots WHERE NOT EXISTS
+                    (SELECT 1 FROM events WHERE snapshot_sha256=event_snapshots.sha256)""")
+        self.db.execute("""DELETE FROM event_snapshots WHERE NOT EXISTS
+            (SELECT 1 FROM events WHERE snapshot_sha256=event_snapshots.sha256)""")
 
     def retention(self):
         with self.lock:
             samples = self.db.execute(f"SELECT count(*) FROM events WHERE {ORDINARY_SAMPLE}").fetchone()[0]
             total = self.db.execute("SELECT count(*) FROM events").fetchone()[0]
+            unique_snapshots = self.db.execute("SELECT count(*) FROM event_snapshots").fetchone()[0]
             page_size = self.db.execute("PRAGMA page_size").fetchone()[0]
             allocated = self.db.execute("PRAGMA page_count").fetchone()[0] * page_size
             reusable = self.db.execute("PRAGMA freelist_count").fetchone()[0] * page_size
             return {"archive_id":self.archive_id,"pruned_through_seq":self.pruned_through,
-                    "retention_days":self.days, "max_samples":self.max_samples, "samples":samples,
-                    "events":total, "earliest_cursor":self.earliest, "latest_cursor":self.cursor,
+                    "retention_days":self.days, "max_samples":self.max_samples, "max_megabytes":self.max_mb,
+                    "samples":samples, "events":total, "unique_snapshots":unique_snapshots,
+                    "earliest_cursor":self.earliest, "latest_cursor":self.cursor,
                     "database_bytes":allocated, "reusable_bytes":reusable}
 
     def source_cursor(self, source_id):
@@ -205,13 +230,16 @@ class History:
                         trace.get("layer"),trace.get("code") or kind,trace.get("call_id"),
                         trigger.get("kind"),trigger.get("id"),trigger.get("source"))
             at = time.time()
+            packed = pack(snapshot)
+            snap_sha = hashlib.sha256(packed).hexdigest()
+            self.db.execute("INSERT OR IGNORE INTO event_snapshots(sha256,snapshot) VALUES(?,?)", (snap_sha, packed))
             insert = self.db.execute("""
                 INSERT INTO events(utc,observed_at,kind,level,source,session_id,mission_id,operation_id,
-                  detail,data,cause_seq,source_id,source_seq,snapshot,ingress_hash,peer_source,
+                  detail,data,cause_seq,source_id,source_seq,snapshot,snapshot_sha256,ingress_hash,peer_source,
                   event_id,trace_id,parent_event_id,task_id,module,layer,code,call_id,trigger_kind,trigger_id,trigger_source)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (event_utc or utc(at), at, kind, level, source, snapshot["session_id"], mission_id,
-                  operation_id, detail, encode(data or {}), cause, source_id, source_seq, pack(snapshot),ingress_hash,peer_source,*metadata))
+                  operation_id, detail, encode(data or {}), cause, source_id, source_seq, b"", snap_sha, ingress_hash, peer_source, *metadata))
             self.cursor = insert.lastrowid
             if peer_source and source == "mission_agent/tasks" and kind == "agent.dispatch" and operation_id:
                 self._link_dispatch(source_id, peer_source, operation_id)
@@ -233,12 +261,17 @@ class History:
         return doc
 
     def replay(self, seq):
+        cols = ",".join("events." + c for c in EVENT_COLUMNS.split(","))
         with self.lock:
-            row = self.db.execute(f"SELECT {EVENT_COLUMNS}, snapshot FROM events WHERE seq=?", (seq,)).fetchone()
+            row = self.db.execute(f"""SELECT {cols}, coalesce(snap.snapshot, events.snapshot) AS resolved_snapshot
+                FROM events LEFT JOIN event_snapshots AS snap ON snap.sha256=events.snapshot_sha256
+                WHERE events.seq=?""", (seq,)).fetchone()
         if row is None:
             return None
-        event = self.public(row)
-        result = json.loads(zlib.decompress(event.pop("snapshot")))
+        doc = dict(row)
+        blob = doc.pop("resolved_snapshot")
+        event = self.public(doc)
+        result = json.loads(zlib.decompress(blob))
         result.setdefault("extra_sources", {})
         result.update(mode="replay", cursor=seq,event=event)
         return result
@@ -311,14 +344,22 @@ class History:
         # A separate WAL reader pins one consistent view across streamed rows,
         # even if the writer prunes a periodic sample while the client downloads.
         selection, values = self.selection(None,None,filters)
-        columns = EVENT_COLUMNS + (",snapshot" if include_snapshot else "")
+        if include_snapshot:
+            cols = ",".join("events." + c for c in EVENT_COLUMNS.split(","))
+            query = (f"SELECT {cols}, coalesce(snap.snapshot, events.snapshot) AS resolved_snapshot "
+                     f"FROM events LEFT JOIN event_snapshots AS snap ON snap.sha256=events.snapshot_sha256"
+                     + selection + " ORDER BY events.seq")
+        else:
+            query = f"SELECT {EVENT_COLUMNS} FROM events" + selection + " ORDER BY seq"
         with closing(sqlite3.connect(self.path.resolve().as_uri()+"?mode=ro", uri=True)) as reader:
             reader.row_factory = sqlite3.Row
-            for item in reader.execute(f"SELECT {columns} FROM events"+selection+" ORDER BY seq",values):
-                row = self.public(item)
+            for item in reader.execute(query,values):
+                doc = dict(item)
+                blob = doc.pop("resolved_snapshot", None)
+                row = self.public(doc)
                 row["schema_version"] = 1
                 if include_snapshot:
-                    snapshot = json.loads(zlib.decompress(row.pop("snapshot")))
+                    snapshot = json.loads(zlib.decompress(blob))
                     snapshot.setdefault("extra_sources", {})
                     snapshot.update(mode="replay",cursor=row["seq"],event=dict(row))
                     row["snapshot"] = snapshot
@@ -344,7 +385,9 @@ class History:
             if dispatch["peer_source"] is None:
                 # Pre-migration dispatches can prove the core identity via their stored snapshot
                 # or an existing creation which explicitly named this dispatch.
-                snapshot = self.db.execute("SELECT snapshot FROM events WHERE seq=?", (dispatch["seq"],)).fetchone()[0]
+                snapshot = self.db.execute("""SELECT coalesce(snap.snapshot, events.snapshot) FROM events
+                    LEFT JOIN event_snapshots AS snap ON snap.sha256=events.snapshot_sha256
+                    WHERE events.seq=?""", (dispatch["seq"],)).fetchone()[0]
                 if json.loads(zlib.decompress(snapshot)).get("ledger_id") != core_source:
                     witness = self.db.execute("""SELECT 1 FROM events WHERE source='edge_core/ledger'
                         AND source_id=? AND mission_id=? AND kind='mission.created' AND task_id=?

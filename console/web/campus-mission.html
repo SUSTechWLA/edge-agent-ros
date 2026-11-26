@@ -28,9 +28,10 @@
   <section class="section"><div class="section-title"><div><h2>当前传感器与局部地图</h2><p>时间与坐标来自各自的 ROS 观测。</p></div></div>
     <div class="local-grid"><article class="panel"><div class="card-head"><h3>激光扫描</h3><span id="scan-status" class="chip">等待</span></div><div class="sensor dark"><canvas id="scan-map" role="img" aria-label="激光雷达自身坐标系下的原始扫描"></canvas><span id="scan-empty" class="empty"></span></div><p class="foot" id="scan-info"></p></article>
       <article class="panel"><div class="card-head"><h3>局部规划</h3><span id="grid-status" class="chip">等待</span></div>
-        <div class="local-tabs" role="group" aria-label="局部地图维度"><button id="local-2d" type="button" aria-pressed="true">二维栅格</button><button id="local-3d" type="button" aria-pressed="false">三维点云</button></div>
+        <div class="local-tabs"><div role="group" aria-label="局部地图维度"><button id="local-2d" type="button" aria-pressed="true">二维栅格</button><button id="local-3d" type="button" aria-pressed="false">三维点云</button></div><a id="local3-link" target="_blank" rel="noopener" aria-label="展开局部三维点云" hidden>展开 ↗</a></div>
         <div class="sensor dark" id="grid-wrap"><canvas id="grid-map" role="img" aria-label="局部占用栅格及当前局部规划建议"></canvas><span id="grid-empty" class="empty"></span></div>
         <div id="local3-host" class="frame-host local-frame" hidden></div>
+        <p class="foot" id="local3-hint" hidden>拖动旋转 · Shift 或右键拖动平移 · 滚轮或双指缩放</p>
         <p class="foot" id="grid-info"></p><p class="foot local-summary" id="local-plan-info" aria-live="polite">等待活动航点</p>
       </article>
       <article class="panel robot"><div class="card-head"><h3>机器人状态</h3><span id="robot-name" class="unit">—</span></div><dl id="robot-facts"></dl><p id="position-info" class="foot"></p></article>

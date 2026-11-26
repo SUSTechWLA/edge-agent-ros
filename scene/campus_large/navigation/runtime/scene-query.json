@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "campus.semantic-scene",
+  "version": "1.0.0",
+  "endpoint": "http://survey-maps:8138/scene",
+  "provides": ["semantic.scene_query"],
+  "requires": []
+}

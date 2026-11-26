@@ -49,7 +49,7 @@ def resolve_destination(catalog, actor_ref, destination_ref):
             "position_m": position(selected[0]["position_m"], profile["dimensions"])}
 
 
-def _shortest_path(start, goal, adjacent, point, heuristic):
+def _shortest_path(start, goal, adjacent, point, heuristic, edge_cost=None):
     serial = count()
     queue = [(0.0, 0.0, next(serial), start)]
     costs, previous = {start: 0.0}, {}
@@ -66,7 +66,8 @@ def _shortest_path(start, goal, adjacent, point, heuristic):
                     raise NavigationError("navigation.route_too_long")
             return [point(node) for node in reversed(path)]
         for child in adjacent(node):
-            updated = cost + math.dist(point(node), point(child))
+            distance = math.dist(point(node), point(child))
+            updated = cost + (edge_cost(node, child, distance) if edge_cost else distance)
             if updated < costs.get(child, math.inf):
                 previous[child], costs[child] = node, updated
                 priority = updated + heuristic(point(child), point(goal))

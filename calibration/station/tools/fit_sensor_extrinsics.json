@@ -2,7 +2,7 @@
   "id": "fit_sensor_extrinsics",
   "version": "1",
   "effect": "idempotent",
-  "description": "Fit a candidate camera-from-lidar transform for each registered lidar from the recorded training set. Requires at least six diverse training and two independent holdout poses. Does not publish.",
+  "description": "Fit a candidate camera-from-lidar transform for each registered lidar after enough_distinct_poses_for_fit is true. The installed calibration method sets its sample requirements.",
   "parameters": {},
   "accepts_trace": true,
   "endpoint": "http://calibration-session:8141/fit"

@@ -19,6 +19,15 @@ x-cal-service: &cal-service
     - ./calibration:/opt/edge/calibration:ro
     - ./edge_contracts:/opt/edge/edge_contracts:ro
 services:
+  rover-pose-planner:
+    <<: *cal-service
+    restart: unless-stopped
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /opt/edge
+    volumes:
+      - ./navigation:/opt/edge/navigation:ro
+    command: ["python3", "-B", "-m", "navigation.pose_provider"]
   agent:
     <<: *cal-service
     environment:

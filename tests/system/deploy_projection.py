@@ -12,7 +12,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"scripts"))
-from release_robot import entries, legacy_format, projection
+from release_robot import entries, legacy_format, projection, projection_format
 
 
 def git(*args):
@@ -26,14 +26,16 @@ def verify(ref, directory, platform, ros_base):
     source = git("show",revision+":ROBOT_SOURCE")
     actual = entries(revision)
     actual.pop("ROBOT_SOURCE")
+    fmt = projection_format(revision, source)
     legacy = legacy_format(revision, source)
-    if actual != projection(source, legacy=legacy):
+    if actual != projection(source, fmt=fmt):
         raise ValueError("deployment differs from the original source projection")
     required = {"scripts/robot.sh", "compose.hardware.yaml", "compose.hardware-observe.yaml"}
     if not legacy:
         required.update({"scripts/check_board_plugins.py", "compose.physical-camera.yaml",
                          "profiles/bench-camera.json", "capabilities/camera/pack.json"})
-        if any(Path(p).suffix.lower() in {".md", ".mdx", ".markdown", ".rst", ".adoc", ".pdf", ".docx"}
+        allowed_docs = {"README.md"} if fmt == "v3" else set()
+        if any(p not in allowed_docs and Path(p).suffix.lower() in {".md", ".mdx", ".markdown", ".rst", ".adoc", ".pdf", ".docx"}
                for p in actual):
             raise ValueError("documentation found in runtime-only deployment")
     if required-actual.keys() or any(p.startswith(("tests/","docs/","sim/","artifacts/")) for p in actual):

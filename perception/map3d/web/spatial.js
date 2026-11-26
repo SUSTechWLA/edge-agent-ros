@@ -458,7 +458,7 @@
       // It does not change surface picking, measured depth, or the trajectory coordinates.
       for(const {kind,points} of options.taskRoutes||[]){
         const projected=points.map(([x,y,z=0])=>camera([x,y,z]));
-        const color=kind==="global"?rgb(154,241,181):rgb(255,179,92);
+        const color=kind==="global"?rgb(154,241,181):kind==="trail"?rgb(105,212,227):rgb(255,179,92);
         const width=kind==="global"?3:1;
         for(let i=1;i<projected.length;i++){
           surface.line(projected[i-1],projected[i],near,rgb(21,58,53),width+1,true);

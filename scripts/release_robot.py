@@ -34,11 +34,25 @@ FILES.update({"scripts/prepare_navigation.py", "scripts/navigation_odometry_benc
              "capabilities/perception-objects/pack.json", "compose.frame-query.yaml", "compose.autonomous-read.yaml",
              "capabilities/perception-queries/pack.json", "capabilities/perception-operators/pack.json",
              "profiles/region-operator-contracts.json", "compose.perception-operators.yaml"})
+FILES.update({"compose.calibration-board.yaml", "compose.calibration-console.yaml", "compose.calibration-hardware.yaml",
+              "compose.calibration-passive-livox.yaml", "compose.calibration-extra-source.yaml",
+              "compose.calibration-model.yaml", "compose.field-plugin-author.yaml",
+              "compose.perception-autostart.yaml", "compose.review-comparison.yaml",
+              "docker/Dockerfile.board-calibration", "docker/Dockerfile.calibration-observer",
+              "docker/Dockerfile.calibration-station-overlay", "docker/calibration-entrypoint.sh",
+              "profiles/field-read-families.json", "scripts/calibration_station.py",
+              "scripts/edge-agent-console-online.service", "scripts/ensure-console-gateway.sh",
+              "scripts/field-perception-compose.sh", "scripts/prepare_review_site.py",
+              "scripts/verify_review_comparison.py", "scripts/lingao_chassis_preflight.py",
+              "scripts/lingao_control/CMakeLists.txt", "scripts/lingao_control/brake.py",
+              "scripts/lingao_control/chassis.py", "scripts/lingao_control/control_profile.py",
+              "scripts/lingao_control/field_raw_gid.cpp", "scripts/lingao_control/lingao-chassis-control.json"})
 RUNTIME_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".cpp", ".hpp", ".h", ".c", ".action",
                     ".srv", ".msg", ".xml", ".js", ".css", ".html", ".svg", ".png", ".wasm"}
-BOARD_SCAFFOLD = {".gitattributes", ".gitignore", "map-inputs/.gitkeep", "observations/.gitkeep",
+BOARD_SCAFFOLD = {"README.md", ".gitattributes", ".gitignore", "map-inputs/.gitkeep", "observations/.gitkeep",
                   "plugins/derived/.gitkeep"}
-FORMAT_TRAILER = "Robot-Format: runtime-only-v2"
+FORMAT_V2 = "Robot-Format: runtime-only-v2"
+FORMAT_TRAILER = "Robot-Format: runtime-only-v3"
 
 
 def git(*args, data=None, env=None):
@@ -56,7 +70,9 @@ def entries(rev):
     return result
 
 
-def projection(source, *, legacy=False):
+def projection(source, *, legacy=False, fmt=None):
+    mode_fmt = "v1" if legacy else (fmt or "v3")
+    scaffold = BOARD_SCAFFOLD if mode_fmt == "v3" else (BOARD_SCAFFOLD - {"README.md"})
     selected = {}
     for name, entry in entries(source).items():
         path = PurePosixPath(name)
@@ -64,15 +80,15 @@ def projection(source, *, legacy=False):
             name = name.removeprefix("deploy/robot/")
             if any(p.startswith(".env") for p in path.parts):
                 raise ValueError("unexpected runtime entry: " + name)
-            if not legacy and name not in BOARD_SCAFFOLD:
+            if mode_fmt != "v1" and name not in scaffold:
                 continue
         elif name not in FILES:
             if not name.startswith(DIRS) or path.suffix in {".md", ".pyc"} or path.name.startswith("test_"):
                 continue
             if "tests" in path.parts or name == "exploration/ros_sim.py":
                 continue
-            if not legacy and (any(p.lower() in {"docs", "doc", "manuals"} for p in path.parts)
-                               or path.stem.lower() == "readme"):
+            if mode_fmt != "v1" and (any(p.lower() in {"docs", "doc", "manuals"} for p in path.parts)
+                                     or path.stem.lower() == "readme"):
                 continue
             if any(p.startswith(".env") for p in path.parts):
                 raise ValueError("unexpected runtime entry: " + name)
@@ -83,22 +99,28 @@ def projection(source, *, legacy=False):
             raise ValueError("unexpected runtime entry: " + name)
         selected[name] = entry
     required = {"scripts/robot.sh","compose.hardware.yaml","calibration/factory.py","exploration/frontier.py"}
-    if legacy:
+    if mode_fmt in ("v1", "v3"):
         required.add("README.md")
     if required - selected.keys():
         raise ValueError("incomplete source: " + str(sorted(required - selected.keys())))
     return selected
 
 
-def legacy_format(deployment, source):
+def projection_format(deployment, source):
     tree = git("rev-parse", deployment+"^{tree}").decode().strip()
     message = git("show", "-s", "--format=%B", deployment).decode().strip()
     original = f"build(robot): deploy runtime from {source}\n\nRobot-Tree: {tree}"
     if message == original:
-        return True
+        return "v1"
+    if message == original + "\n" + FORMAT_V2:
+        return "v2"
     if message == original + "\n" + FORMAT_TRAILER:
-        return False
+        return "v3"
     raise ValueError("deployment branch contains independent edits; reconcile in the source branch")
+
+
+def legacy_format(deployment, source):
+    return projection_format(deployment, source) == "v1"
 
 
 def publish(revision):
@@ -114,8 +136,8 @@ def publish(revision):
         if not pointer:
             raise ValueError("existing deployment ref has no recorded source")
         prior = git("cat-file","blob",pointer[1]).decode().strip()
-        legacy = legacy_format(old, prior)
-        if not legacy and source == prior and selected == previous:
+        fmt = projection_format(old, prior)
+        if fmt == "v3" and source == prior and selected == previous:
             return old
         if subprocess.run(["git","merge-base","--is-ancestor",prior,source],cwd=ROOT).returncode:
             raise ValueError("release source diverged from the previous release")

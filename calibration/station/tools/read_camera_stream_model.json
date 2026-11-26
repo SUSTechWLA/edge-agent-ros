@@ -1,0 +1,9 @@
+{
+  "id": "read_camera_stream_model",
+  "version": "1",
+  "description": "Read the commissioned RGB stream's paired CameraInfo. Reports image dimensions, timestamps, published K/P/D and the matrix used for these pixels. This is a metadata observation; independent intrinsic estimation requires separate target observations and held-out validation.",
+  "effect": "read",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/camera-stream-model"
+}

@@ -109,6 +109,20 @@ def receive(rx, destination, sources):
     return None
 
 
+def checked_header(payload):
+    """Validate a MID-360 Cartesian millimetre packet before decoding its points."""
+    if len(payload) < LIVOX_HEADER.size:
+        return None, "invalid_size"
+    version, length, _, count, sequence, frame, kind, clock, crc, stamp = LIVOX_HEADER.unpack_from(payload)
+    if version or kind != 1 or not 0 < count <= 96 or clock not in (0, 1, 2):
+        return None, "unsupported_packet"
+    if length != len(payload) or length != LIVOX_HEADER.size + count * CARTESIAN_MM.size:
+        return None, "invalid_size"
+    if crc and zlib.crc32(payload[28:]) != crc:
+        return None, "invalid_crc"
+    return (clock, crc, stamp, sequence, frame), None
+
+
 class PreviewWindow:
     def __init__(self, source_id, frame_id):
         self.source_id, self.frame_id = source_id, frame_id
@@ -119,15 +133,10 @@ class PreviewWindow:
         self.points = []
 
     def add(self, payload, received):
-        if len(payload) < LIVOX_HEADER.size:
-            return "invalid_size"
-        version, length, _, count, _, _, kind, clock, crc, stamp = LIVOX_HEADER.unpack_from(payload)
-        if version or kind != 1 or not 0 < count <= 96 or clock not in (0, 1, 2):
-            return "unsupported_packet"
-        if length != len(payload) or length != LIVOX_HEADER.size + count * CARTESIAN_MM.size:
-            return "invalid_size"
-        if crc and zlib.crc32(payload[28:]) != crc:
-            return "invalid_crc"
+        header, error = checked_header(payload)
+        if error:
+            return error
+        clock, crc, stamp, _, _ = header
         if self.first is None:
             self.first, self.first_device, self.clock_type = received, stamp, clock
         elif self.clock_type != clock or stamp < self.last_device or received < self.last:

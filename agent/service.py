@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import Odometry
@@ -21,7 +22,7 @@ import soft_client
 from planning import (OutcomeUnknown, Refused, Unavailable, binding, is_series, feedback_plan,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
-from kernel import host, read_authority, task_facts, verification
+from kernel import feedback_admission, host, read_authority, task_facts, verification
 from kernel.catalog import capability_view, plugin_view
 from kernel.ledger import Journal, project_step, trigger_input, utc
 from kernel.verification import finish_step
@@ -74,6 +75,11 @@ class Robot(Node):
 
     def run(self,step,op,cap,trace=None,context=None):
         read_authority.authorize_dispatch([step])
+        policy = os.getenv("EDGE_FEEDBACK_POLICY")
+        if "feedback" in step and "physical_pin" in step:
+            return feedback_admission.poll_or_issue(step, op, cap, policy, registry, owner_status=host.call_for,
+                        issue=lambda:host.invoke(step, op, cap, trace, context, http_json))
+        feedback_admission.authorize_dispatch(step, op, cap, policy, registry)
         if step["tool"] == "status" and not cap.get("endpoint"):
             return self.odometry()
         if "derived" in cap and not cap.get("endpoint") and "soft_pin" not in step:
@@ -139,7 +145,10 @@ def task_plan(journal, task, trace):
     if feedback:
         if read_authority.load() is not None or (task.get("trigger") or {}).get("read_only_tool"):
             raise Refused("反馈规划工位与只读续办策略不兼容")
-        return feedback_plan(task, registry(), feedback, trace)
+        return feedback_admission.plan_round(journal, task, trace, feedback, registry=registry,
+                                             planner=feedback_plan, physical_request=host.plugin_tracks.physical_request)
+    if isinstance(journal.soft_intent(task["id"]), dict):
+        raise feedback_admission.hold("原反馈工位已撤下，待核对本轮物理预约")
     if any("feedback" in step for step in task["steps"]):
         raise Refused("原反馈规划策略已撤销")
     return run_task_plan(journal, task, trace, registry=registry, planner=plan,
@@ -176,8 +185,15 @@ class Handler(BaseHTTPRequestHandler):
         if path.path in task_facts.ROUTES:
             return self.send(*task_facts.read_request(path.path, path.query, self.server.task_db, self.server.registry_db))
         if path.path=="/agent/capabilities":
+            query = parse_qs(path.query, keep_blank_values=True)
+            options = {}
+            if "goal_tool" in query or "text" in query:
+                if (set(query) != {"goal_tool","text"} or any(len(row)!=1 for row in query.values())
+                    or not runtime_plugins.NAME.fullmatch(query["goal_tool"][0]) or not 1 <= len(query["text"][0]) <= 512):
+                    return self.send(400, {"code":"catalog.invalid_goal_draft"})
+                options = {k:v[0] for k,v in query.items()}
             try:
-                capabilities = capability_view(runtime_plugins.snapshot)
+                capabilities = capability_view(runtime_plugins.snapshot, **options)
             except Unavailable as exc:
                 return self.send(503, {"code":exc.code,"origin":exc.origin,"detail":str(exc)})
             return self.send(200,capabilities)
@@ -247,12 +263,19 @@ class Handler(BaseHTTPRequestHandler):
             self.send(404,{"detail":"未找到记录"})
 
 
+def _spin_robot(node):
+    try:
+        rclpy.spin(node)
+    except (ExternalShutdownException, KeyboardInterrupt):
+        pass
+
+
 if __name__=="__main__":
     task_dir=Path(os.getenv("EDGE_TASK_DIR","/var/lib/edge-tasks"))
     journal=Journal(task_dir)
     rclpy.init()
     robot=Robot()
-    threading.Thread(target=rclpy.spin,args=(robot,),daemon=True).start()
+    threading.Thread(target=_spin_robot,args=(robot,),daemon=True).start()
     for planning in (True,False):
         threading.Thread(target=worker,args=(journal,robot,planning),daemon=True).start()
     threading.Thread(target=worker,args=(journal,robot,False,True),daemon=True).start()
@@ -271,3 +294,4 @@ if __name__=="__main__":
     finally:
         stop.set()
         monitor.join(timeout=2)
+        rclpy.try_shutdown()

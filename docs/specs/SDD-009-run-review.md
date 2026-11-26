@@ -28,6 +28,7 @@
 
 ## 变更记录
 
+- 2026-11-26 在 `console/server/history.py` 为事件归档引入内容寻址快照表 `event_snapshots(sha256, snapshot)`、`events.snapshot_sha256` 索引、孤儿快照回收及 `EDGE_TELEMETRY_MAX_MB`（标定控制台默认 128 MB）字节上限裁剪；读取侧兼容旧行内 `events.snapshot` 与新去重快照表，消除高频事件携带相同状态快照导致的 SQLite 膨胀。同时在 `compose.calibration-view-motion.yaml` 为 Console 只读挂载 `EDGE_PHYSICAL_AUDIT` 并将 `/cmd_vel` 对齐至 `/cmd_vel_safe`，使物理租约、执行、见证与结算因果链完整进入运行复盘且消除虚假陈旧告警。容器单测 `console/server` 56/56（含新增 `test_retention.py` 快照去重、孤儿回收与容量上限用例）全部通过，Gazebo 实测超出 128 MB 阈值时自动裁剪普通周期采样（`pruned_through_seq=27691`）并完整保留全部任务与模块因果事件。
 - 2026-11-17 记录问题、数据归属、只读契约及验收用例。实现前基线为本地 `d28e7ee`。
 - 2026-11-17 在 `console/server/task_review.py` 实现只读任务目录，在 `history.py` 的查询端实现两种归档视图；原始采集和留存策略沿用。前端入口为 `console/web/review.js` 与 `#review?task=<id>`。设备实测速度、操作来源是否新鲜、任务当前终态和步骤最后记录分别显示。
 - 2026-11-17 对账本和历史查询加在途请求保护，避免慢读数持续被后台刷新取代。桌面概览和手机任务详情的独立仿真实拍收录在[使用手册](../console.md#从运行复盘读懂一台机器人的工作)。

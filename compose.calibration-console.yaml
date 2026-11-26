@@ -10,7 +10,8 @@ services:
       EDGE_CALIBRATION_URL: http://calibration-session:8141
       ROS_DOMAIN_ID: "198"
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-    ports: ["127.0.0.1:${EDGE_CALIBRATION_CONSOLE_PORT:-8911}:8080"]
+      EDGE_TELEMETRY_MAX_MB: "${EDGE_TELEMETRY_MAX_MB:-128}"
+    ports: ["${EDGE_CALIBRATION_CONSOLE_BIND:-127.0.0.1}:${EDGE_CALIBRATION_CONSOLE_PORT:-8911}:8080"]
     volumes:
       - ./console:/opt/edge/console:ro
       - ./edge_contracts:/opt/edge/edge_contracts:ro

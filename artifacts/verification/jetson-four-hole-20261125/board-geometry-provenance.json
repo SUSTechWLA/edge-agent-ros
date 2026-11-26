@@ -1,0 +1,40 @@
+{
+  "board_id": "four-hole-1400x1000-lingao-20261125",
+  "board_id_origin": "Local asset identifier assigned for this registration, not a manufacturer serial number",
+  "robot_id": "lingao-orin-nx",
+  "method": "four_hole_board",
+  "units": "mm",
+  "scope": "Nominal physical board geometry for spatial calibration of the front MID-360 and D435 color camera",
+  "operator_reported": {
+    "board_outline": [1400, 1000],
+    "black_marker_side": 200,
+    "approximate_hole_diameter": 240,
+    "independently_measured_approximate_horizontal_marker_center_distance": 1100
+  },
+  "adopted_profile": {
+    "black_marker_side": {"value": 200, "basis": "User-reported dimension, checked against the board imagery"},
+    "horizontal_marker_center_distance": {"value": 1100, "basis": "User's approximate physical measurement of this board"},
+    "vertical_marker_center_distance": {"value": 700, "basis": "Nominal value supported by the photographed board and scale-anchored D435 observation"},
+    "horizontal_hole_center_distance": {"value": 500, "basis": "Nominal value supported by board imagery and independent front MID-360 lower-hole center separation of 494.29 mm"},
+    "vertical_hole_center_distance": {"value": 400, "basis": "Nominal value supported by the photographed board and scale-anchored D435 observation"},
+    "hole_diameter": {"value": 240, "basis": "User's approximate value, checked against both sets of imagery"}
+  },
+  "rgbd_cross_check": {
+    "input": "rgbd-board-metrology.json",
+    "input_sha256": "3c76571e0e0c61d54aecdf00faa42419c3ed2bb9ca7f086b6d7ce9dca3c806de",
+    "frames": 4,
+    "normalization": "Each field median multiplied by 1100 divided by the measured 1205.75055 mm horizontal marker separation. This validates relative geometry only.",
+    "scaled_marker_side": 199.04,
+    "scaled_vertical_marker_center_distance": 700.88,
+    "scaled_horizontal_hole_center_distance": 498.10,
+    "scaled_vertical_hole_center_distance": 399.92,
+    "scaled_hole_diameter": 239.72,
+    "absolute_scale_disagreement_percent": 9.61
+  },
+  "lidar_cross_check": {
+    "input": "front-lidar-coverage.json",
+    "input_sha256": "ab372f8105c67d0091bfe00da389451f0799f7dbf71903eaa03f8be59926e30d",
+    "fully_observed_holes": 2
+  },
+  "traceability_limits": "The vertical marker spacing and both hole spacings were image-derived and rounded to nominal dimensions. The user did not report individual ruler measurements for those three fields. No manufacturer drawing, certified dimensions, depth scale correction or verified extrinsic is implied."
+}

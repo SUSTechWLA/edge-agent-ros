@@ -339,7 +339,26 @@ def read_task(db, key, *, trigger_columns=("task_id", "context", "trace_id"), ha
     paused_feedback = (latest_event == "blocked" and item["state"] == "BLOCKED" and item["steps"]
                        and item["cursor"] == len(item["steps"])
                        and all(s.get("feedback") and s["status"]=="SUCCEEDED" for s in item["steps"]))
-    item["can_retry"] = bool(paused_feedback or (latest_event == "retry_exhausted" and
+    if paused_feedback and any(col[1] == "payload" for col in db.execute("PRAGMA table_info(events)")):
+        # Old snapshots can lack event payloads. Preserve their operator-pause behavior.
+        code = db.execute("""SELECT CASE WHEN json_valid(payload) THEN json_extract(payload,'$.diagnostic.code') END
+                             FROM events WHERE task_id=? AND kind='blocked' ORDER BY seq DESC LIMIT 1""",
+                          (key,)).fetchone()[0]
+        if code in ("planner.required_capability_unavailable", "planner.observation_policy_invalid"):
+            paused_feedback = False
+    item["can_reconcile_motion"] = False
+    cursor = item["cursor"]
+    if latest_event == "error" and item["state"] == "RECOVERY_REQUIRED" and 0 <= cursor < len(item["steps"]):
+        step = item["steps"][cursor]
+        op = f"{key}/step/{cursor+1}"
+        pin = step.get("physical_pin") or {}
+        if (step.get("operation_id") == pin.get("reservation_id") == op and step.get("status") == "RUNNING"
+                and step.get("feedback", {}).get("motion_policy_sha256")
+                and "payload" in {col[1] for col in db.execute("PRAGMA table_info(events)")}):
+            code = db.execute("""SELECT CASE WHEN json_valid(payload) THEN json_extract(payload,'$.diagnostic.code') END
+                                 FROM events WHERE task_id=? AND kind='error' ORDER BY seq DESC LIMIT 1""",(key,)).fetchone()[0]
+            item["can_reconcile_motion"] = code == "planner.feedback_admission_unconfirmed"
+    item["can_retry"] = bool(paused_feedback or item["can_reconcile_motion"] or (latest_event == "retry_exhausted" and
                                                 item["state"] in ("BLOCKED","RECOVERY_REQUIRED")))
     return item
 

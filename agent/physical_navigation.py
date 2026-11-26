@@ -44,7 +44,7 @@ def fixture_deployment(profile):
                Path(__file__).with_name("physical_ledger.py"), Path(route_contract.__file__)]
     content = digest({p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sources})
     binding = digest([content, profile])
-    pin = {"class":"physical", "plugin_id":"navigation.fixture", "name":"nav_execute", "version":"1.0.0",
+    pin = {"class":"physical", "plugin_id":"navigation.fixture", "name":"nav_execute", "version":"1.1.0",
            "resource_id":resource, "provider_id":"navigation.fixture.executor",
            "verifier_id":"navigation.fixture.observer", "content_digest":content, "binding":binding}
     return {"pin":pin, "context":deepcopy(context), "routes":routes, "lease_ms":30000,
@@ -192,13 +192,13 @@ class NavigationController(Controller):
                 require(original([data["provider"], data["steps"]]) == original(previous), "tool.binding_unavailable",
                         "task already bound to another plan")
                 return previous
-        if role == "agent" and action in ("operation_status", "cancel"):
+        if role == "agent" and action == "cancel":
             pin = data["pin"]
             self.ledger.expire()
             row = self.ledger.status(pin["reservation_id"])
             require(row["pin"] == pin and pin["resource_id"] == self.resource,
                     "tool.binding_unavailable", "original operation binding required")
-            return row if action == "operation_status" else self.ledger.cancel(pin)
+            return self.ledger.cancel(pin)
         # The deployed camera schema named the provider slot 'camera'. Only the
         # executor socket is mapped to that persisted slot in this fixture.
         result = super().command("camera" if role == "executor" else role, data)

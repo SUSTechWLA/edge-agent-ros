@@ -1,0 +1,1143 @@
+{
+  "schema_version": 1,
+  "passed": true,
+  "trial": "02",
+  "map": {
+    "id": "sdd058-autonomy-02",
+    "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+  },
+  "required_clearance_m": 0.55,
+  "cases": {
+    "crossing": {
+      "schema_version": 1,
+      "passed": true,
+      "case": "crossing",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "two_different_independent_pedestrians_crossed": true,
+        "at_least_one_threatened_stop": true,
+        "all_overlapping_moving_pedestrian_samples_stopped": true,
+        "continued_under_same_task_after_last_crossing": true,
+        "agent_rechecked_before_issuing_the_next_native_segment": true,
+        "independent_arrival_and_stop_witness": true,
+        "unchanged_gateway_container_and_start_time": true
+      },
+      "task_id": "sdd058-dynamic-crossing-02",
+      "operation_id": "sdd058-dynamic-crossing-02/step/1",
+      "map_ref": {
+        "id": "sdd058-autonomy-02",
+        "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+        "frame": "odom",
+        "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+      },
+      "status": "SUCCEEDED",
+      "phase": "ARRIVED",
+      "source": "Gazebo world odometry, contact sensors and ROS motion commands",
+      "gateway_boot_ids": [
+        "gateway-f33fee75-b50ce2fa-78d17da2-abdfb332"
+      ],
+      "native_operations": [
+        "sdd058-dynamic-crossing-02/leg/1/waypoint/1",
+        "sdd058-dynamic-crossing-02/leg/2/waypoint/1",
+        "sdd058-dynamic-crossing-02/leg/3/waypoint/1",
+        "sdd058-dynamic-crossing-02/leg/4/waypoint/1"
+      ],
+      "verified_gateway_stops": 4,
+      "gateway_dynamic_yield_events": 1,
+      "gateway_dynamic_clear_events": 0,
+      "physical_contacts": 0,
+      "fixture_guards": 0,
+      "actors": {
+        "pedestrian_1": {
+          "travel_m": 3.32000000000072,
+          "start_y_m": -1.35,
+          "finish_y_m": 1.97000000000072,
+          "max_position_speed_mps": 0.6200000000000649,
+          "raw_twist_peak": {
+            "mps": 0.6200000000000649,
+            "stamp_ns": 100400000000,
+            "is_first_sample": false
+          },
+          "min_rover_clearance_m": 0.5481593448687434,
+          "fixture_gate_completed": true
+        },
+        "pedestrian_2": {
+          "travel_m": 3.5900000000001997,
+          "start_y_m": 1.62,
+          "finish_y_m": -1.9700000000001996,
+          "max_position_speed_mps": 0.5800000000000249,
+          "raw_twist_peak": {
+            "mps": 0.5800000000000249,
+            "stamp_ns": 98460000000,
+            "is_first_sample": false
+          },
+          "min_rover_clearance_m": 1.0231593448687435,
+          "fixture_gate_completed": true
+        }
+      },
+      "threatened_samples": 47,
+      "threatened_and_stopped_samples": 39,
+      "overlap_occupied_by_moving_pedestrians_samples": 20,
+      "overlap_stationary_samples": 20,
+      "world_samples": 1137,
+      "final_pose": {
+        "xy": [
+          1.1086614170883518,
+          0.5988860377083279
+        ],
+        "yaw": 0.9527626290204274,
+        "linear_mps": 0.0,
+        "angular_radps": 0.0,
+        "stamp_ns": 116824000000,
+        "frame": "world"
+      },
+      "goal_error_m": 0.06573837933095443,
+      "persistent_stop_window": {},
+      "session_events": [
+        {
+          "kind": "task_admitted",
+          "seq": 1,
+          "stamp": 1795496469.5776174,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "destination_resolved",
+          "seq": 2,
+          "stamp": 1795496469.8051727,
+          "data": {
+            "goal": [
+              1.1500001065433025,
+              0.6500000990927219
+            ],
+            "marker_id": "poi-71125caab3188a42",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            }
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 3,
+          "stamp": 1795496469.913856,
+          "data": {
+            "goal": [
+              0.4500000961124897,
+              0.15000009164214134
+            ],
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 1570,
+            "binding": "7e5150714ed67717882e8c6f6bdf512ce448147941f8af33c57b6ff8be43d7f7"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 4,
+          "stamp": 1795496471.246522,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.6753043596332277
+          }
+        },
+        {
+          "kind": "obstacle",
+          "seq": 5,
+          "stamp": 1795496471.278207,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "code": "navigation.dynamic_yield",
+            "source": "gateway-f33fee75-b50ce2fa-78d17da2-abdfb332-27",
+            "clearance_m": null
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 6,
+          "stamp": 1795496471.358054,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.6753043596332277,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 98000000000,
+            "source": "gateway-f33fee75-b50ce2fa-78d17da2-abdfb332-28"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 7,
+          "stamp": 1795496471.852499,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.ttc_insufficient",
+            "stop_evidence": {
+              "accepted_samples": 10,
+              "quiet_samples": 10,
+              "sample_gaps": 0,
+              "wall_elapsed_ms": 350,
+              "quiet_acquisition_ms": 306,
+              "quiet_arrival_ms": 310,
+              "last_odom_age_ms": 21,
+              "last_linear_mps": 0.0,
+              "last_angular_rad_s": 0.0
+            }
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 8,
+          "stamp": 1795496472.2354145,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.1978739542213185,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 99000000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 9,
+          "stamp": 1795496474.956911,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.8519079739832559,
+            "clear_samples": 1,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 101626000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 10,
+          "stamp": 1795496475.8722773,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.8519079739832559,
+            "clear_samples": 8,
+            "required_samples": 5,
+            "clear_span_ms": 874,
+            "last_stamp_ns": 102500000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 11,
+          "stamp": 1795496475.9771621,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "review_segment_changed"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 12,
+          "stamp": 1795496476.752766,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 1.224884479502671,
+            "clear_samples": 7,
+            "required_samples": 5,
+            "clear_span_ms": 750,
+            "last_stamp_ns": 103376000000
+          }
+        },
+        {
+          "kind": "dynamic_resumed",
+          "seq": 13,
+          "stamp": 1795496476.857293,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 1.224884479502671,
+            "clear_samples": 7,
+            "required_samples": 5,
+            "clear_span_ms": 750,
+            "last_stamp_ns": 103376000000
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 14,
+          "stamp": 1795496476.8836842,
+          "data": {
+            "goal": [
+              0.3500000946223736,
+              0.15000009164214134
+            ],
+            "operation_id": "sdd058-dynamic-crossing-02/leg/2",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 1570,
+            "binding": "7e5150714ed67717882e8c6f6bdf512ce448147941f8af33c57b6ff8be43d7f7"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 15,
+          "stamp": 1795496479.6954775,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/2",
+            "xy": [
+              0.3203683901384498,
+              0.10481695538545112
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 16,
+          "stamp": 1795496480.3745437,
+          "data": {
+            "goal": [
+              0.8500001020729542,
+              0.3500000946223736
+            ],
+            "operation_id": "sdd058-dynamic-crossing-02/leg/3",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 1570,
+            "binding": "7e5150714ed67717882e8c6f6bdf512ce448147941f8af33c57b6ff8be43d7f7"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 17,
+          "stamp": 1795496483.9201446,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/3",
+            "xy": [
+              0.7985904201694851,
+              0.35382483265402914
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 18,
+          "stamp": 1795496484.2885323,
+          "data": {
+            "goal": [
+              1.1500001065433025,
+              0.6500000990927219
+            ],
+            "operation_id": "sdd058-dynamic-crossing-02/leg/4",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 1570,
+            "binding": "7e5150714ed67717882e8c6f6bdf512ce448147941f8af33c57b6ff8be43d7f7"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 19,
+          "stamp": 1795496487.5379713,
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/4",
+            "xy": [
+              1.1320791808357424,
+              0.6004037549794332
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "finished",
+          "seq": 20,
+          "stamp": 1795496488.5270853,
+          "data": {
+            "status": "SUCCEEDED",
+            "observed_xy": [
+              1.1316709307131403,
+              0.6011831854336936
+            ],
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "goal": [
+              1.1500001065433025,
+              0.6500000990927219
+            ],
+            "initial_pose": {
+              "x": -1.2477089375053348e-09,
+              "y": -5.942891951755545e-30,
+              "yaw": 5.837493648850706e-17,
+              "frame": "odom",
+              "speed": 1.054810377369964e-19,
+              "yaw_rate": -3.5755456408585575e-19
+            },
+            "final_pose": {
+              "x": 1.1316709307131403,
+              "y": 0.6011831854336936,
+              "yaw": 0.9529347228805514,
+              "frame": "odom",
+              "speed": 0.0,
+              "yaw_rate": 0.0
+            },
+            "bindings": {
+              "map.load": {
+                "plugin_id": "sdd058.map-load",
+                "version": "1.0.0",
+                "binding": "752d193ce2c5c51a7a163cc63d2687b3120fa902f758bfaf704722f26b0cdb06"
+              },
+              "planning.survey_route": {
+                "plugin_id": "sdd058.route",
+                "version": "1.0.0",
+                "binding": "7e5150714ed67717882e8c6f6bdf512ce448147941f8af33c57b6ff8be43d7f7"
+              },
+              "planning.corridor_review": {
+                "plugin_id": "sdd058.corridor",
+                "version": "1.0.0",
+                "binding": "357efea50e6cad5a761c6c9d92ccad06997d325eac9aa9af7b3ced7ca504b6d2"
+              }
+            }
+          }
+        }
+      ],
+      "gateway_runtime": {
+        "before": {
+          "case": "crossing",
+          "id": "49b9b6bcfbe11881a4765eed13da2f04f457afe86fee6856d475cfe99024fefd",
+          "image_id": "sha256:e634ec62a88fc12b3ebdfbf1d58dc4e164e762d1ae761f28fa7d3bb6719e9549",
+          "label": "edge-office-058-dynamic-cross",
+          "started_at": "2026-11-24T04:59:24.387703078Z",
+          "restart_count": 0,
+          "running": true,
+          "gateway_command": [
+            "ros2",
+            "run",
+            "edge_gateway",
+            "edge_gateway_node",
+            "--ros-args",
+            "-p",
+            "require_scan:=true",
+            "-p",
+            "local_planner:=footprint_follow",
+            "-p",
+            "vehicle_profile:=/fixture-footprint.json",
+            "-p",
+            "scan_source_id:=sdd058.sim.lidar",
+            "-p",
+            "scan_frame_id:=laser_link",
+            "-p",
+            "scan_calibration:=sdd058.sim.fixture",
+            "-p",
+            "scan_origin_x_m:=0.08",
+            "-p",
+            "scan_range_resolution_m:=0.02",
+            "-p",
+            "dynamic_observer:=scan_clusters",
+            "-p",
+            "dynamic_policy:=yield_crossing"
+          ]
+        },
+        "after": {
+          "case": "crossing",
+          "id": "49b9b6bcfbe11881a4765eed13da2f04f457afe86fee6856d475cfe99024fefd",
+          "image_id": "sha256:e634ec62a88fc12b3ebdfbf1d58dc4e164e762d1ae761f28fa7d3bb6719e9549",
+          "label": "edge-office-058-dynamic-cross",
+          "started_at": "2026-11-24T04:59:24.387703078Z",
+          "restart_count": 0,
+          "running": true,
+          "gateway_command": [
+            "ros2",
+            "run",
+            "edge_gateway",
+            "edge_gateway_node",
+            "--ros-args",
+            "-p",
+            "require_scan:=true",
+            "-p",
+            "local_planner:=footprint_follow",
+            "-p",
+            "vehicle_profile:=/fixture-footprint.json",
+            "-p",
+            "scan_source_id:=sdd058.sim.lidar",
+            "-p",
+            "scan_frame_id:=laser_link",
+            "-p",
+            "scan_calibration:=sdd058.sim.fixture",
+            "-p",
+            "scan_origin_x_m:=0.08",
+            "-p",
+            "scan_range_resolution_m:=0.02",
+            "-p",
+            "dynamic_observer:=scan_clusters",
+            "-p",
+            "dynamic_policy:=yield_crossing"
+          ]
+        }
+      },
+      "timeline_sha256": "87d4676732ec80173bb31d1417861f06c12a62187ad78c7fd3c99972cf6b273f"
+    },
+    "blocked": {
+      "schema_version": 1,
+      "passed": true,
+      "case": "blocked",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "persistent_obstacle_entered_and_held": true,
+        "continuous_independent_parked_stop": true,
+        "terminal_still_blocked_without_arrival": true,
+        "unchanged_gateway_container_and_start_time": true
+      },
+      "task_id": "sdd058-dynamic-blocked-02",
+      "operation_id": "sdd058-dynamic-blocked-02/step/1",
+      "map_ref": {
+        "id": "sdd058-autonomy-02",
+        "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+        "frame": "odom",
+        "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+      },
+      "status": "BLOCKED",
+      "phase": "BLOCKED",
+      "source": "Gazebo world odometry, contact sensors and ROS motion commands",
+      "gateway_boot_ids": [
+        "gateway-145491b7-2791b23e-a19a8a33-f155092"
+      ],
+      "native_operations": [
+        "sdd058-dynamic-blocked-02/leg/1/waypoint/1"
+      ],
+      "verified_gateway_stops": 1,
+      "gateway_dynamic_yield_events": 0,
+      "gateway_dynamic_clear_events": 0,
+      "physical_contacts": 0,
+      "fixture_guards": 0,
+      "actors": {
+        "lane_barrier": {
+          "travel_m": 1.9300000000005,
+          "start_y_m": -1.48,
+          "finish_y_m": 0.4500000000005,
+          "max_position_speed_mps": 0.5500000000000504,
+          "raw_twist_peak": {
+            "mps": 99.85792376307253,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.5363901649074388,
+          "fixture_gate_completed": true
+        }
+      },
+      "threatened_samples": 386,
+      "threatened_and_stopped_samples": 386,
+      "overlap_occupied_by_moving_pedestrians_samples": null,
+      "overlap_stationary_samples": null,
+      "world_samples": 1323,
+      "final_pose": {
+        "xy": [
+          0.12399253291265902,
+          0.014637804630429428
+        ],
+        "yaw": 0.1679204079449144,
+        "linear_mps": 0.0,
+        "angular_radps": 0.0,
+        "stamp_ns": 134878000000,
+        "frame": "world"
+      },
+      "goal_error_m": 1.2068043695528408,
+      "persistent_stop_window": {
+        "samples": 353,
+        "wall_seconds": 37.628354505,
+        "gazebo_seconds": 35.904,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "max_output_linear_mps": 0.0,
+        "max_output_angular_radps": 0.0,
+        "max_displacement_m": 0.0
+      },
+      "session_events": [
+        {
+          "kind": "task_admitted",
+          "seq": 1,
+          "stamp": 1795496469.6676123,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "destination_resolved",
+          "seq": 2,
+          "stamp": 1795496469.9938369,
+          "data": {
+            "goal": [
+              1.1500001065433025,
+              0.6500000990927219
+            ],
+            "marker_id": "poi-71125caab3188a42",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            }
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 3,
+          "stamp": 1795496470.0983193,
+          "data": {
+            "goal": [
+              0.4500000961124897,
+              0.15000009164214134
+            ],
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 1570,
+            "binding": "7e5150714ed67717882e8c6f6bdf512ce448147941f8af33c57b6ff8be43d7f7"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 4,
+          "stamp": 1795496471.7608447,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.no_safe_path",
+            "stop_evidence": {
+              "accepted_samples": 10,
+              "quiet_samples": 10,
+              "sample_gaps": 0,
+              "wall_elapsed_ms": 357,
+              "quiet_acquisition_ms": 306,
+              "quiet_arrival_ms": 312,
+              "last_odom_age_ms": 25,
+              "last_linear_mps": 0.0,
+              "last_angular_rad_s": 0.0
+            }
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 5,
+          "stamp": 1795496472.1306634,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16918857504738283,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 95876000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 6,
+          "stamp": 1795496475.768405,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16203019386156273,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 99376000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 7,
+          "stamp": 1795496479.4035454,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202672831937157,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 102750000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 8,
+          "stamp": 1795496483.0282109,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.1620266081771265,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 106250000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 9,
+          "stamp": 1795496486.6493595,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660455645435,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 109750000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 10,
+          "stamp": 1795496490.2712386,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444783207,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 113126000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 11,
+          "stamp": 1795496493.8721418,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.1620266044440645,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 116626000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 12,
+          "stamp": 1795496497.4919324,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.162026604443951,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 120126000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 13,
+          "stamp": 1795496501.1024537,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444394762,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 123500000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 14,
+          "stamp": 1795496504.7235863,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444394737,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 127126000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 15,
+          "stamp": 1795496508.3376048,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444394737,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 130500000000
+          }
+        },
+        {
+          "kind": "dynamic_blocked",
+          "seq": 16,
+          "stamp": 1795496510.0544236,
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "blocked",
+            "required_clearance_m": 0.55,
+            "reason": "corridor_clearance_unverified"
+          }
+        },
+        {
+          "kind": "finished",
+          "seq": 17,
+          "stamp": 1795496510.079665,
+          "data": {
+            "status": "BLOCKED",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "final_pose": {
+              "x": 0.1277658127264808,
+              "y": 0.014389901442542678,
+              "yaw": 0.1602860327491096,
+              "frame": "odom",
+              "speed": 0.0,
+              "yaw_rate": 0.0
+            },
+            "operation_id": "sdd058-dynamic-blocked-02/step/1"
+          }
+        }
+      ],
+      "gateway_runtime": {
+        "before": {
+          "case": "blocked",
+          "id": "c5e39a6cb6ce78bc3ee680ed7b735dfc66d387af591d9d213feb831c63f0de24",
+          "image_id": "sha256:e634ec62a88fc12b3ebdfbf1d58dc4e164e762d1ae761f28fa7d3bb6719e9549",
+          "label": "edge-office-058-dynamic-block",
+          "started_at": "2026-11-24T04:59:27.006266746Z",
+          "restart_count": 0,
+          "running": true,
+          "gateway_command": [
+            "ros2",
+            "run",
+            "edge_gateway",
+            "edge_gateway_node",
+            "--ros-args",
+            "-p",
+            "require_scan:=true",
+            "-p",
+            "local_planner:=footprint_follow",
+            "-p",
+            "vehicle_profile:=/fixture-footprint.json",
+            "-p",
+            "scan_source_id:=sdd058.sim.lidar",
+            "-p",
+            "scan_frame_id:=laser_link",
+            "-p",
+            "scan_calibration:=sdd058.sim.fixture",
+            "-p",
+            "scan_origin_x_m:=0.08",
+            "-p",
+            "scan_range_resolution_m:=0.02",
+            "-p",
+            "dynamic_observer:=scan_clusters",
+            "-p",
+            "dynamic_policy:=yield_crossing"
+          ]
+        },
+        "after": {
+          "case": "blocked",
+          "id": "c5e39a6cb6ce78bc3ee680ed7b735dfc66d387af591d9d213feb831c63f0de24",
+          "image_id": "sha256:e634ec62a88fc12b3ebdfbf1d58dc4e164e762d1ae761f28fa7d3bb6719e9549",
+          "label": "edge-office-058-dynamic-block",
+          "started_at": "2026-11-24T04:59:27.006266746Z",
+          "restart_count": 0,
+          "running": true,
+          "gateway_command": [
+            "ros2",
+            "run",
+            "edge_gateway",
+            "edge_gateway_node",
+            "--ros-args",
+            "-p",
+            "require_scan:=true",
+            "-p",
+            "local_planner:=footprint_follow",
+            "-p",
+            "vehicle_profile:=/fixture-footprint.json",
+            "-p",
+            "scan_source_id:=sdd058.sim.lidar",
+            "-p",
+            "scan_frame_id:=laser_link",
+            "-p",
+            "scan_calibration:=sdd058.sim.fixture",
+            "-p",
+            "scan_origin_x_m:=0.08",
+            "-p",
+            "scan_range_resolution_m:=0.02",
+            "-p",
+            "dynamic_observer:=scan_clusters",
+            "-p",
+            "dynamic_policy:=yield_crossing"
+          ]
+        }
+      },
+      "timeline_sha256": "78a9a0f4f8b269eb81ed4e60745c8007bb5f5f601e25cf9c71bb63b64043af3f"
+    }
+  },
+  "startup_odometry_derivatives": [
+    {
+      "case": "blocked",
+      "actor": "lane_barrier",
+      "reported_twist_peak": {
+        "mps": 99.85792376307253,
+        "stamp_ns": 20000000,
+        "is_first_sample": true
+      },
+      "position_speed_mps": 0.5500000000000504,
+      "interpretation": "Gazebo world odometry startup derivative on the first sample, with no corresponding position change. Preserved in the raw capture."
+    }
+  ]
+}

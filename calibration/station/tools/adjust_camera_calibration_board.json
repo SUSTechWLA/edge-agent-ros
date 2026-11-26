@@ -1,0 +1,9 @@
+{
+  "id": "adjust_camera_calibration_board",
+  "version": "1",
+  "effect": "idempotent",
+  "description": "With an independently stopped robot, request the missing board tilt and capture the stabilized observation. Requires recent reachability evidence that no safe view adds the requested coverage or tilt.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/camera-adjust"
+}

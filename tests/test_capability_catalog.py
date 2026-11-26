@@ -59,6 +59,26 @@ class CatalogContract(unittest.TestCase):
             read.assert_called_once_with()
         return response
 
+    def test_draft_motion_matches_grant_policy_and_active_distinct_witness(self):
+        policy = self.root / 'feedback.json'
+        put(self.root, 'feedback', {'commissioned_motion_tools':['drive'], 'goals':{
+            'goal':{'tool':'verify', 'tools':['verify','drive']}}})
+        pin = dict(name='drive', version='1', plugin_id='chassis', resource_id='base', provider_id='driver',
+                   verifier_id='witness', binding='sha256:'+'b'*64, content_digest='sha256:'+'c'*64, **{'class':'physical'})
+        cap = dict(id='drive', version='1', effect='actuation', _physical=pin)
+        with patch.dict(os.environ, EDGE_FEEDBACK_POLICY=str(policy)), patch.object(
+                catalog.authorization,'station_motion_grant',return_value={'tools':['drive']},create=True) as grant:
+            lookup = lambda: catalog.goal_motion_options('verify','calibrate',{'drive':cap})['tools']
+            self.assertEqual(lookup(), ['drive'])
+            grant.return_value=None
+            self.assertEqual(lookup(), [])
+            grant.return_value={'tools':['drive']}
+            pin['verifier_id']='driver'
+            self.assertEqual(lookup(), [])
+            pin['verifier_id']='witness'
+            put(self.root, 'feedback', {'commissioned_motion_tools':[], 'goals':{}})
+            self.assertEqual(lookup(), [])
+
     def test_five_sources_and_legacy_fields(self):
         result = self.view()
         legacy = catalog.registry(legacy_only=True)
@@ -176,6 +196,10 @@ def real_http_contract():
             raise AssertionError((ids, [o.calls for o in owners]))
         if {r["id"] for r in data["capabilities"]} != ids - {"session.read"} or data["conflicts"]:
             raise AssertionError(data)
+        with build_opener(ProxyHandler({})).open(
+                f"http://127.0.0.1:{http.server_port}/agent/capabilities?goal_tool=verify&text=calibrate", timeout=5) as response:
+            if json.load(response)["goal_motion"] != {"goal_tool":"verify","tools":[]}:
+                raise AssertionError("uncommissioned draft advertised motion")
         print("Agent HTTP capability catalog and both socket snapshots passed")
 
 

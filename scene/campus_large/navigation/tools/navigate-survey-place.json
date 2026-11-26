@@ -1,0 +1,20 @@
+{
+  "id": "navigate_survey_place",
+  "version": "2",
+  "effect": "idempotent",
+  "accepts_trace": true,
+  "description": "在已发布探索地图中解析已核验地点入口，沿当前可通行路线到达。",
+  "parameters": {
+    "place": "string"
+  },
+  "outcomes": {
+    "arrival": "observed_xy"
+  },
+  "utterances": [
+    "前往{place}",
+    "去{place}",
+    "到{place}",
+    "返回{place}"
+  ],
+  "endpoint": "http://survey-session:8139/navigate"
+}

@@ -1,0 +1,772 @@
+{
+  "schemaVersion": 1,
+  "source": "Actual Chromium workbench and its live Gazebo API receipts",
+  "cases": {
+    "crossing": {
+      "taskId": "sdd058-dynamic-crossing-02",
+      "operationId": "sdd058-dynamic-crossing-02/step/1",
+      "mapRef": {
+        "id": "sdd058-autonomy-02",
+        "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+        "frame": "odom",
+        "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+      },
+      "gatewayBootId": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+      "state": "SUCCEEDED",
+      "pose": {
+        "x": 1.1316709307131403,
+        "y": 0.6011831854336936,
+        "yaw": 0.9529347228805514,
+        "frame": "odom",
+        "speed": 0,
+        "yaw_rate": 0
+      },
+      "browserRequests": [
+        {
+          "endpoint": "/agent/tasks",
+          "status": 202,
+          "when": "2026-11-24T05:01:09.331Z",
+          "arguments": {
+            "text": "前往Swarm会议室",
+            "id": "sdd058-dynamic-crossing-02"
+          }
+        }
+      ],
+      "recoveryEvents": [
+        {
+          "seq": 4,
+          "stamp": 1795496471.246522,
+          "kind": "dynamic_hold",
+          "detail": "局部运行时请求停车等待，Agent 复查原路段",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.6753043596332277
+          }
+        },
+        {
+          "seq": 6,
+          "stamp": 1795496471.358054,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 核对当前动态跟踪与通道复查证据",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.6753043596332277,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 98000000000,
+            "source": "gateway-f33fee75-b50ce2fa-78d17da2-abdfb332-28"
+          }
+        },
+        {
+          "seq": 7,
+          "stamp": 1795496471.852499,
+          "kind": "dynamic_hold",
+          "detail": "原路段已停止，Agent 复查通道后再续跑",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.ttc_insufficient",
+            "stop_evidence": {
+              "accepted_samples": 10,
+              "quiet_samples": 10,
+              "sample_gaps": 0,
+              "wall_elapsed_ms": 350,
+              "quiet_acquisition_ms": 306,
+              "quiet_arrival_ms": 310,
+              "last_odom_age_ms": 21,
+              "last_linear_mps": 0,
+              "last_angular_rad_s": 0
+            }
+          }
+        },
+        {
+          "seq": 8,
+          "stamp": 1795496472.2354145,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.1978739542213185,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 99000000000
+          }
+        },
+        {
+          "seq": 9,
+          "stamp": 1795496474.956911,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.8519079739832559,
+            "clear_samples": 1,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 101626000000
+          }
+        },
+        {
+          "seq": 10,
+          "stamp": 1795496475.8722773,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.8519079739832559,
+            "clear_samples": 8,
+            "required_samples": 5,
+            "clear_span_ms": 874,
+            "last_stamp_ns": 102500000000
+          }
+        },
+        {
+          "seq": 11,
+          "stamp": 1795496475.9771621,
+          "kind": "dynamic_recheck",
+          "detail": "路线更新，重新核对新的通行区段",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "review_segment_changed"
+          }
+        },
+        {
+          "seq": 12,
+          "stamp": 1795496476.752766,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 1.224884479502671,
+            "clear_samples": 7,
+            "required_samples": 5,
+            "clear_span_ms": 750,
+            "last_stamp_ns": 103376000000
+          }
+        },
+        {
+          "seq": 13,
+          "stamp": 1795496476.857293,
+          "kind": "dynamic_resumed",
+          "detail": "新鲜观测确认通道可通行，沿原任务和地图续跑",
+          "data": {
+            "operation_id": "sdd058-dynamic-crossing-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-crossing-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "f33fee75-b50ce2fa-78d17da2-abdfb332",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 1.224884479502671,
+            "clear_samples": 7,
+            "required_samples": 5,
+            "clear_span_ms": 750,
+            "last_stamp_ns": 103376000000
+          }
+        }
+      ],
+      "video": {
+        "file": "dynamic-crossing.mp4",
+        "bytes": 470273,
+        "sha256": "5df02bfe9c2634a877237f0da2afb6a090fc903c749fb834302c3b33331e6e9b",
+        "resolution": [
+          1440,
+          900
+        ],
+        "codec": "h264",
+        "frames": 395,
+        "seconds": 26.333333
+      },
+      "chapters": [
+        {
+          "title": "连接 Gazebo 观测台",
+          "startSeconds": 0,
+          "endSeconds": 1.045
+        },
+        {
+          "title": "核对原地图并下发导航",
+          "startSeconds": 1.045,
+          "endSeconds": 5.644
+        },
+        {
+          "title": "原导航任务执行",
+          "startSeconds": 5.644,
+          "endSeconds": 7.229
+        },
+        {
+          "title": "动态阻挡与停车等待",
+          "startSeconds": 7.229,
+          "endSeconds": 7.303
+        },
+        {
+          "title": "Agent 复查通道",
+          "startSeconds": 7.303,
+          "endSeconds": 12.622
+        },
+        {
+          "title": "继续原导航任务",
+          "startSeconds": 12.622,
+          "endSeconds": 24.584
+        },
+        {
+          "title": "到达并停稳",
+          "startSeconds": 24.584,
+          "endSeconds": 26.2
+        }
+      ],
+      "mediaValidation": {
+        "ffmpegDecode": "passed",
+        "chromiumPlayback": {
+          "status": "passed",
+          "samples": [
+            {
+              "seekSeconds": 7.409,
+              "decoded": true,
+              "width": 1440,
+              "height": 900
+            },
+            {
+              "seekSeconds": 7.483,
+              "decoded": true,
+              "width": 1440,
+              "height": 900
+            },
+            {
+              "seekSeconds": 24.764,
+              "decoded": true,
+              "width": 1440,
+              "height": 900
+            }
+          ]
+        }
+      },
+      "recordedUtc": "2026-11-24T05:01:04.421Z"
+    },
+    "blocked": {
+      "taskId": "sdd058-dynamic-blocked-02",
+      "operationId": "sdd058-dynamic-blocked-02/step/1",
+      "mapRef": {
+        "id": "sdd058-autonomy-02",
+        "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+        "frame": "odom",
+        "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+      },
+      "gatewayBootId": "145491b7-2791b23e-a19a8a33-f155092",
+      "state": "BLOCKED",
+      "pose": {
+        "x": 0.1277658127264808,
+        "y": 0.014389901442542678,
+        "yaw": 0.1602860327491096,
+        "frame": "odom",
+        "speed": 0,
+        "yaw_rate": 0
+      },
+      "browserRequests": [
+        {
+          "endpoint": "/agent/tasks",
+          "status": 202,
+          "when": "2026-11-24T05:01:09.386Z",
+          "arguments": {
+            "text": "前往Swarm会议室",
+            "id": "sdd058-dynamic-blocked-02"
+          }
+        }
+      ],
+      "recoveryEvents": [
+        {
+          "seq": 4,
+          "stamp": 1795496471.7608447,
+          "kind": "dynamic_hold",
+          "detail": "原路段已停止，Agent 复查通道后再续跑",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.no_safe_path",
+            "stop_evidence": {
+              "accepted_samples": 10,
+              "quiet_samples": 10,
+              "sample_gaps": 0,
+              "wall_elapsed_ms": 357,
+              "quiet_acquisition_ms": 306,
+              "quiet_arrival_ms": 312,
+              "last_odom_age_ms": 25,
+              "last_linear_mps": 0,
+              "last_angular_rad_s": 0
+            }
+          }
+        },
+        {
+          "seq": 5,
+          "stamp": 1795496472.1306634,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16918857504738283,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 95876000000
+          }
+        },
+        {
+          "seq": 6,
+          "stamp": 1795496475.768405,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16203019386156273,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 99376000000
+          }
+        },
+        {
+          "seq": 7,
+          "stamp": 1795496479.4035454,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202672831937157,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 102750000000
+          }
+        },
+        {
+          "seq": 8,
+          "stamp": 1795496483.0282109,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.1620266081771265,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 106250000000
+          }
+        },
+        {
+          "seq": 9,
+          "stamp": 1795496486.6493595,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660455645435,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 109750000000
+          }
+        },
+        {
+          "seq": 10,
+          "stamp": 1795496490.2712386,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444783207,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 113126000000
+          }
+        },
+        {
+          "seq": 11,
+          "stamp": 1795496493.8721418,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.1620266044440645,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 116626000000
+          }
+        },
+        {
+          "seq": 12,
+          "stamp": 1795496497.4919324,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.162026604443951,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 120126000000
+          }
+        },
+        {
+          "seq": 13,
+          "stamp": 1795496501.1024537,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444394762,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 123500000000
+          }
+        },
+        {
+          "seq": 14,
+          "stamp": 1795496504.7235863,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444394737,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 127126000000
+          }
+        },
+        {
+          "seq": 15,
+          "stamp": 1795496508.3376048,
+          "kind": "dynamic_recheck",
+          "detail": "Agent 正对照新鲜激光、车体包络和动态轨迹",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.16202660444394737,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 130500000000
+          }
+        },
+        {
+          "seq": 16,
+          "stamp": 1795496510.0544236,
+          "kind": "dynamic_blocked",
+          "detail": "复查期结束，通道仍未取得可通行证据",
+          "data": {
+            "operation_id": "sdd058-dynamic-blocked-02/leg/1",
+            "task_operation_id": "sdd058-dynamic-blocked-02/step/1",
+            "map_ref": {
+              "id": "sdd058-autonomy-02",
+              "revision": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9",
+              "frame": "odom",
+              "digest": "40365da45044cfdc2c57946c71829affd3e00b5b0e97fc8654fcbb79c73a25f9"
+            },
+            "gateway_boot_id": "145491b7-2791b23e-a19a8a33-f155092",
+            "result": "blocked",
+            "required_clearance_m": 0.55,
+            "reason": "corridor_clearance_unverified"
+          }
+        }
+      ],
+      "video": {
+        "file": "dynamic-blocked.mp4",
+        "bytes": 477489,
+        "sha256": "06a402e157e8012cb63206e19ab384c8023cca679d7598bd981749db42a71bc6",
+        "resolution": [
+          1440,
+          900
+        ],
+        "codec": "h264",
+        "frames": 715,
+        "seconds": 47.666667
+      },
+      "chapters": [
+        {
+          "title": "连接 Gazebo 观测台",
+          "startSeconds": 0,
+          "endSeconds": 1.066
+        },
+        {
+          "title": "核对原地图并下发导航",
+          "startSeconds": 1.066,
+          "endSeconds": 5.838
+        },
+        {
+          "title": "原导航任务执行",
+          "startSeconds": 5.838,
+          "endSeconds": 7.962
+        },
+        {
+          "title": "动态阻挡与停车等待",
+          "startSeconds": 7.962,
+          "endSeconds": 8.025
+        },
+        {
+          "title": "Agent 复查通道",
+          "startSeconds": 8.025,
+          "endSeconds": 45.764
+        },
+        {
+          "title": "通道持续堵塞",
+          "startSeconds": 45.764,
+          "endSeconds": 45.84
+        },
+        {
+          "title": "超时保持停车",
+          "startSeconds": 45.84,
+          "endSeconds": 47.462
+        }
+      ],
+      "mediaValidation": {
+        "ffmpegDecode": "passed",
+        "chromiumPlayback": {
+          "status": "passed",
+          "samples": [
+            {
+              "seekSeconds": 8.142,
+              "decoded": true,
+              "width": 1440,
+              "height": 900
+            },
+            {
+              "seekSeconds": 8.205,
+              "decoded": true,
+              "width": 1440,
+              "height": 900
+            },
+            {
+              "seekSeconds": 46.02,
+              "decoded": true,
+              "width": 1440,
+              "height": 900
+            }
+          ]
+        }
+      },
+      "recordedUtc": "2026-11-24T05:01:04.452Z"
+    }
+  }
+}

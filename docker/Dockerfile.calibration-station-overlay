@@ -1,0 +1,8 @@
+# Reuse a commissioned ARM64 Edge image that already contains ROS and edge_interfaces.
+# Build context: this Dockerfile plus the digest-verified aarch64 headless OpenCV wheel.
+ARG EDGE_BASE
+FROM ${EDGE_BASE}
+COPY cv-arm64.whl /tmp/cv-arm64.whl
+RUN echo "77eb20ee077ac0955704d391c00639df6063cb67cb62606c07b97d8b635feff6  /tmp/cv-arm64.whl" | sha256sum -c - && \
+    python3 -c 'import sysconfig,zipfile; zipfile.ZipFile("/tmp/cv-arm64.whl").extractall(sysconfig.get_path("purelib"))' && \
+    rm /tmp/cv-arm64.whl && python3 -c 'import cv2; assert cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250).markerSize == 6'

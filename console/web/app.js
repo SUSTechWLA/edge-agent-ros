@@ -108,7 +108,7 @@ function renderRaw(state){
 }
 function render(){
   const s=displayed(),src=s?.sources||{},pose=src.pose?.data,odom=src.odom?.data,grid=src.map?.data,diag=src.perception?.data;
-  el('env').textContent=s?.environment==='simulation'?'Gazebo 仿真':s?.environment==='robot'?'实机':'ROS 2';
+  el('env').textContent=s?.environment==='simulation'?'仿真':['hardware','robot'].includes(s?.environment)?'实机':'ROS 2';
   el('robot').textContent=s?.robot_id||'Edge';
   el('clock').textContent=s?.now?clock(s.now):'—';el('clock-label').textContent=replay?'历史快照时间':'状态更新时间';
   el('conn').textContent=replay?'历史回放':liveOk?'服务已连接':live?'服务连接中断':'等待服务';
@@ -120,7 +120,8 @@ function render(){
   el('history-bar').hidden=!replay;el('open-task').disabled=!taskWritesEnabled();
   el('open-task').hidden=live?.task_proxy_mode==='observe';
   el('calibration-panel').hidden=!!replay || !live?.calibration_status_available;
-  if (!el('calibration-panel').hidden) refreshCalibration();
+  if (!el('calibration-panel').hidden && liveOk) refreshCalibration();
+  else CalibrationGuide.offline();
   const retry=el('task-status').querySelector('button');
   if(retry)retry.hidden=!taskWritesEnabled();
   if(replay){
@@ -265,9 +266,10 @@ async function poll(){
   if(requestBusy)return;requestBusy=true;
   try{
     const s=await api('/api/state');live=s;liveOk=true;setNotice('');render();
+    // Task ledger commits can follow the final archived event. Poll the session projection on its own cadence.
+    if(section()==='sessions')SessionView.refresh();
     if(s.cursor!==lastCursor){
       if(section()==='review' && lastCursor!=null)RunReview.refresh();
-      if(section()==='sessions' && lastCursor!=null)SessionView.refresh();
       if(section()==='events' && pageBefore==null && !el('event-modal').open)loadPage();
       lastCursor=s.cursor;
     }
@@ -316,9 +318,10 @@ async function capabilities(){
 }
 el('open-task').onclick=()=>{if(!taskWritesEnabled() || el('task-modal').open)return;el('task-modal').showModal();el('task-text').focus();capabilities();};
 el('close-task').onclick=()=>el('task-modal').close();
+const calibrationDraft='请帮我标定当前传感器';
 el('calibration-draft').onclick=()=>{
   if(!taskWritesEnabled())return;
-  el('task-text').value='请帮我标定当前传感器';
+  el('task-text').value=calibrationDraft;
   el('open-task').click();
 };
 el('clock-draft').onclick=()=>{
@@ -328,19 +331,38 @@ el('clock-draft').onclick=()=>{
 };
 
 let calibrationNextRead=0, calibrationReading=false;
-async function refreshCalibration(){
-  if(calibrationReading || Date.now()<calibrationNextRead)return;
+async function refreshCalibration(force=false){
+  if(calibrationReading || (!force && Date.now()<calibrationNextRead))return;
   calibrationReading=true;
   const labels={NEEDS_CALIBRATION:'传感器尚待标定', CALIBRATING:'正在标定',
-    VERIFIED:'已验证标定结果', RECOVERY_REQUIRED:'标定需要复核'};
+    VERIFIED:'已验证标定结果', RECOVERY_REQUIRED:'标定需要复核', PAUSED_FOR_OPERATOR:'标定正在等待现场配合'};
   let title, message, canStart=false;
   try{
     const status=await api('/api/calibration-status');
-    title=labels[status.state];
-    message=status.message;
-    if(status.samples>0)message+=' 已保存 '+status.samples+' 组板姿。';
+    if (replay || !liveOk || !live?.calibration_status_available) return;
+    const selected = SessionView.selectedTaskId() || status.task_id;
+    let motion = null, resultRows=[];
+    if (selected && status.method) {
+      try {
+        const facts=await api('/api/task-context?'+new URLSearchParams({task_id:selected,limit:'0'}),
+                              {signal:AbortSignal.timeout(1600)});
+        if (facts.task?.id===selected && selected===(SessionView.selectedTaskId() || status.task_id)) {
+          SessionView.observeTask(facts.task);
+          motion=calibrationMotion(facts.task,status,live?.sources?.odom);
+          resultRows=calibrationResultRows(facts.task,status);
+        }
+      } catch { /* Station observations remain accessible independently of the task ledger. */ }
+    }
+    if (replay || !liveOk || !live?.calibration_status_available) return;
+    title=motion ? (motion.active ? 'Agent 自主标定' : '自主标定任务结果') : labels[status.state];
+    CalibrationGuide.render(status, taskWritesEnabled(), live, motion, resultRows);
+    message=motion ? motion.id : status.message;
+    if((!motion || motion.same) && status.samples>0)message+=' 已保存 '+status.samples+' 组板姿。';
     const clockText=el('calibration-clock'), clockButton=el('clock-draft');
-    try{
+    if(status.method?.clock_supported === false){
+      clockText.textContent='本方法标定相机与各雷达的空间外参。时间偏移和 IMU 外参需要单独标定。';
+      clockButton.hidden=true;
+    }else try{
       const clock=await api('/api/calibration-clock');
       const rows=Object.entries(clock.sources||{}).map(([id,s])=>
         id+' '+(s.offset_ns/1e6).toFixed(1)+' ms（估计不确定度 '+(s.uncertainty_ns/1e6).toFixed(1)+' ms）');
@@ -352,8 +374,18 @@ async function refreshCalibration(){
       clockText.textContent='当前无法读取时间标定状态。';
       clockButton.hidden=true;
     }
-    canStart=status.state==='NEEDS_CALIBRATION' && !status.active_operation;
+    canStart=['NEEDS_CALIBRATION','VERIFIED'].includes(status.state) && !status.active_operation && !motion?.active;
+    if (canStart && taskWritesEnabled()) {
+      let enabled=false;
+      try {
+        const query=new URLSearchParams({goal_tool:'verify_sensor_extrinsics',text:calibrationDraft});
+        const catalog=await api('/agent/capabilities?'+query,{signal:AbortSignal.timeout(1600)});
+        enabled=catalog.goal_motion?.goal_tool==='verify_sensor_extrinsics' && catalog.goal_motion.tools?.length>0;
+      } catch { /* The neutral calibration draft is available even when the directory is offline. */ }
+      el('calibration-draft').textContent=enabled ? '填写自主换位标定任务' : '填写标定任务';
+    }
   }catch(error){
+    CalibrationGuide.offline();
     title='标定状态未知';
     message=error.message;
     el('clock-draft').hidden=true;

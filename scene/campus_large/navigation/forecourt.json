@@ -1,0 +1,11 @@
+{
+  "navigation_map_id": "campus-forecourt-walk",
+  "area": {"aliases": ["校园前广场", "校园教学区", "教学楼"], "bounds": [-4.0, -16.0, 15.0, 4.0]},
+  "grid": {"cells": 210, "resolution_m": 0.1, "origin": [-4.0, -16.0]},
+  "walk": {"route_id": "campus_walk", "nodes": ["teaching_exit", "plaza", "terrace"]},
+  "zone": {"id": "forecourt", "label": "校园前广场步行道", "kind": "outdoor", "bounds": [2.0, -16.0, 15.0, 4.0]},
+  "annotations": [
+    {"entity_id": "campus-forecourt-terrace", "name": "校园前广场南侧露台", "aliases": ["前广场南侧露台", "广场南侧露台"], "walk_node": "terrace"},
+    {"entity_id": "campus-forecourt-plaza", "name": "校园前广场", "aliases": ["前广场步道交汇点"], "walk_node": "plaza"}
+  ]
+}

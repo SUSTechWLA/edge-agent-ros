@@ -1,0 +1,1111 @@
+{
+  "task": "前往教学楼门外北侧等候点",
+  "required_clearance_m": 0.55,
+  "checks": {
+    "same_map": true,
+    "same_controller_image": true,
+    "same_base_campus": true
+  },
+  "cases": {
+    "doorway": {
+      "schema_version": 1,
+      "passed": true,
+      "case": "doorway",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "stationary_people_present_and_clear": true,
+        "no_spurious_yield_or_review": true,
+        "one_continuous_action_from_hall_to_goal": true,
+        "no_intermediate_stops": true,
+        "independent_arrival_and_stop_witness": true,
+        "same_running_gateway_from_submission_through_terminal": true,
+        "correct_campus_and_semantic_task": true,
+        "stationary_if_actor_enters_clearance_margin": true,
+        "measured_distributed_turn": true,
+        "matched_continuous_core_gateway": true,
+        "door_frame_meets_existing_margin": true
+      },
+      "task_id": "campus-dynamic-doorway-08",
+      "operation_id": "campus-dynamic-doorway-08/step/1",
+      "map_ref": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+        "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+      },
+      "status": "SUCCEEDED",
+      "phase": "ARRIVED",
+      "source": "Gazebo world odometry, contact sensors and ROS motion commands",
+      "gateway_boot_ids": [
+        "gateway-7462ff4a-15143891-2eff385a-8c457938"
+      ],
+      "native_operations": [
+        "campus-dynamic-doorway-08/leg/1/waypoint/1"
+      ],
+      "verified_gateway_stops": 1,
+      "gateway_dynamic_yield_events": 0,
+      "gateway_dynamic_clear_events": 0,
+      "physical_contacts": 0,
+      "fixture_guards": 0,
+      "actors": {
+        "pedestrian_1": {
+          "travel_m": 0,
+          "start_y_m": -1.35,
+          "finish_y_m": -1.35,
+          "max_position_speed_mps": 0,
+          "raw_twist_peak": {
+            "mps": 86.61857640124188,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.8395473231282796,
+          "fixture_gate_completed": false
+        },
+        "pedestrian_2": {
+          "travel_m": 0,
+          "start_y_m": 1.62,
+          "finish_y_m": 1.62,
+          "max_position_speed_mps": 0,
+          "raw_twist_peak": {
+            "mps": 112.66688582051883,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 1.2004388717290084,
+          "fixture_gate_completed": false
+        }
+      },
+      "threatened_samples": 0,
+      "threatened_and_stopped_samples": 0,
+      "overlap_occupied_by_moving_pedestrians_samples": null,
+      "overlap_stationary_samples": null,
+      "world_samples": 257,
+      "final_pose": {
+        "xy": [
+          3.2736797430551783,
+          0.8073569050060058
+        ],
+        "yaw": 1.0036200398475448,
+        "linear_mps": 0,
+        "angular_radps": 0,
+        "stamp_ns": 26180000000,
+        "frame": "world"
+      },
+      "goal_error_m": 0.050111769838115286,
+      "persistent_stop_window": {},
+      "uninterrupted_travel": {
+        "samples": 135,
+        "minimum_speed_mps": 0.05492571975642396,
+        "maximum_speed_mps": 0.2799998397530153,
+        "gazebo_seconds": 13.668,
+        "interior_stop_samples": 0
+      },
+      "minimum_door_frame_clearance_m": 0.7547350348757457,
+      "encounters_within_055m": {
+        "samples": 0,
+        "highest_measured_speed_mps": null,
+        "highest_measured_turn_rate_radps": null
+      },
+      "timeline_sha256": "ae4d3fe1c7783941e52685e4a262b3e73abee0b88e3c0b5c4aa1ed46f79af203",
+      "gateway": {
+        "id": "bdb15b0d9832868bada1f55f7da117b458a8e327957174f252d244cc6bbf8825",
+        "image_id": "sha256:1151679f6081c204575696e7cba60cff9f72153805c7d57a2edab6a49bd5b8d5",
+        "label": "edge-rover-local:sdd058-campus-continuous-r3",
+        "started_at": "2026-11-24T07:24:38.9209704Z",
+        "restart_count": 0,
+        "gateway_command": [
+          "ros2",
+          "run",
+          "edge_gateway",
+          "edge_gateway_node",
+          "--ros-args",
+          "-p",
+          "require_scan:=true",
+          "-p",
+          "local_planner:=footprint_follow",
+          "-p",
+          "vehicle_profile:=/fixture-footprint.json",
+          "-p",
+          "scan_source_id:=sdd058.sim.lidar",
+          "-p",
+          "scan_frame_id:=laser_link",
+          "-p",
+          "scan_calibration:=sdd058.sim.fixture",
+          "-p",
+          "scan_origin_x_m:=0.08",
+          "-p",
+          "scan_range_resolution_m:=0.02",
+          "-p",
+          "dynamic_observer:=scan_clusters",
+          "-p",
+          "dynamic_policy:=yield_crossing",
+          "-p",
+          "trajectory_tracker:=regulated_pursuit"
+        ],
+        "running": true,
+        "core_id": "593e439640621b51f6622b1a2e95240461e3517d714200bd913019e976c01d76",
+        "core_image": "sha256:1151679f6081c204575696e7cba60cff9f72153805c7d57a2edab6a49bd5b8d5",
+        "core_started": "2026-11-24T07:24:41.050734125Z",
+        "core_restarts": 0
+      },
+      "campus": {
+        "base_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+        "fixture_sha256": "c118e8aee2ae7b196c93655111497eb5a367d1a952a24cf673cae8f0c75de3c9",
+        "layout_id": "campus_large",
+        "layout_revision": "3.4b916e7ae0b95c41",
+        "layout_sha256": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+        "portal": [
+          {
+            "id": "portal_south_sill",
+            "kind": "wall",
+            "label": "教学楼外墙",
+            "xy": [
+              1.6,
+              -5.05
+            ],
+            "size": [
+              0.38,
+              7.9,
+              1
+            ],
+            "base_z": 0
+          },
+          {
+            "id": "portal_north_sill",
+            "kind": "wall",
+            "label": "教学楼外墙",
+            "xy": [
+              1.6,
+              5.05
+            ],
+            "size": [
+              0.38,
+              7.9,
+              1
+            ],
+            "base_z": 0
+          }
+        ],
+        "world_name": "edge_lab"
+      },
+      "trajectory": {
+        "source": "Gazebo world odometry XY",
+        "samples": 176,
+        "discontinuities_over_350ms": 0,
+        "distance_m": 3.5818,
+        "spacing_m": 0.06,
+        "moving_above_mps": 0.04,
+        "start": {
+          "xy": [
+            1.29156281137024e-8,
+            7.1961958258103e-19
+          ],
+          "yaw": -3.431677484350987e-19,
+          "linear_mps": 0,
+          "angular_radps": 0,
+          "stamp_ns": 8296000000,
+          "frame": "world"
+        },
+        "stop": {
+          "xy": [
+            3.2736797430551783,
+            0.8073569050060058
+          ],
+          "yaw": 1.0036200398475448,
+          "linear_mps": 0,
+          "angular_radps": 0,
+          "stamp_ns": 26180000000,
+          "frame": "world"
+        },
+        "low_speed_body_rotation_deg": 0.02,
+        "closest_actor": {
+          "gap_m": 0.8395473231282796,
+          "actor": "pedestrian_1",
+          "rover_speed_mps": 0.27999982938208856,
+          "stamp_ns": 13430000000,
+          "command": [
+            0.28,
+            0.012615245541545752
+          ]
+        },
+        "closest_actor_while_moving": {
+          "gap_m": 0.8395473231282796,
+          "actor": "pedestrian_1",
+          "rover_speed_mps": 0.27999982938208856,
+          "stamp_ns": 13430000000,
+          "command": [
+            0.28,
+            0.012615245541545752
+          ]
+        },
+        "largest_continuous_turn": {
+          "turn_deg": 56.063,
+          "span_m": 1.98,
+          "largest_increment_deg": 2.497,
+          "distributed": true
+        },
+        "distributed_moving_turn": true,
+        "turns_over_5deg": [
+          {
+            "turn_deg": 56.063,
+            "span_m": 1.98,
+            "largest_increment_deg": 2.497,
+            "distributed": true
+          }
+        ]
+      },
+      "ui": {
+        "frontend": "http://127.0.0.1:8909/exploration-mission.html?task_id=campus-dynamic-doorway-08",
+        "video": "dynamic-doorway.mp4",
+        "sha256": "9b666124640e91998c98619ad5cfde54879b8e62aead3a6ec57a60f419791759",
+        "decoded": true,
+        "errors": [],
+        "chapters": [
+          {
+            "title": "连接 Gazebo 观测台",
+            "startMs": 0
+          },
+          {
+            "title": "核对原地图并下发导航",
+            "startMs": 1056
+          },
+          {
+            "title": "原导航任务执行",
+            "startMs": 5772
+          },
+          {
+            "title": "拖动局部三维地图，查看实时感知",
+            "startMs": 6275
+          },
+          {
+            "title": "到达并停稳",
+            "startMs": 26459
+          }
+        ],
+        "frames": 162,
+        "orbit": {
+          "kind": "map.orbit_zoom",
+          "before": {
+            "depthPoints": 391,
+            "scanPoints": 64,
+            "sceneFeatures": 5,
+            "yaw": -0.5,
+            "zoom": 1,
+            "speedTraceVisible": true
+          },
+          "after": {
+            "depthPoints": 362,
+            "scanPoints": 76,
+            "sceneFeatures": 5,
+            "yaw": -0.85,
+            "zoom": 1.155,
+            "speedTraceVisible": true
+          },
+          "time": "2026-11-24T07:24:55.339Z"
+        },
+        "taskRequest": {
+          "endpoint": "/agent/tasks",
+          "status": 202,
+          "when": "2026-11-24T07:24:54.260Z",
+          "arguments": {
+            "text": "前往教学楼门外北侧等候点",
+            "id": "campus-dynamic-doorway-08"
+          }
+        },
+        "reopened": {
+          "view": "local",
+          "sceneFeatures": 5,
+          "lidarPoints": 46,
+          "depthPoints": 443,
+          "task": "campus-dynamic-doorway-08",
+          "status": "SUCCEEDED",
+          "mapRevision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+        }
+      },
+      "recovery": {
+        "completed": [],
+        "pending": {},
+        "issues": []
+      },
+      "truth_timeline": "doorway-truth.jsonl.gz",
+      "sensor_timeline": "doorway-scan-odom.jsonl.gz",
+      "sensor_sha256": "4fd67d138a412c46918408205821ad7096e871ec2d60538d69e49ec848814c0a"
+    },
+    "crossing": {
+      "schema_version": 1,
+      "passed": true,
+      "case": "crossing",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "two_different_independent_pedestrians_crossed": true,
+        "at_least_one_threatened_stop": true,
+        "all_overlapping_moving_pedestrian_samples_stopped": true,
+        "continued_under_same_task_after_last_crossing": true,
+        "agent_rechecked_before_continuing": true,
+        "independent_arrival_and_stop_witness": true,
+        "same_running_gateway_from_submission_through_terminal": true,
+        "correct_campus_and_semantic_task": true,
+        "stationary_if_actor_enters_clearance_margin": true,
+        "measured_distributed_turn": true,
+        "matched_continuous_core_gateway": true,
+        "door_frame_meets_existing_margin": true
+      },
+      "task_id": "campus-dynamic-crossing-08",
+      "operation_id": "campus-dynamic-crossing-08/step/1",
+      "map_ref": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+        "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+      },
+      "status": "SUCCEEDED",
+      "phase": "ARRIVED",
+      "source": "Gazebo world odometry, contact sensors and ROS motion commands",
+      "gateway_boot_ids": [
+        "gateway-c2404918-8651b27a-bd8fcbc4-21a97318"
+      ],
+      "native_operations": [
+        "campus-dynamic-crossing-08/leg/1/waypoint/1",
+        "campus-dynamic-crossing-08/leg/2/waypoint/1"
+      ],
+      "verified_gateway_stops": 2,
+      "gateway_dynamic_yield_events": 3,
+      "gateway_dynamic_clear_events": 3,
+      "physical_contacts": 0,
+      "fixture_guards": 0,
+      "actors": {
+        "pedestrian_1": {
+          "travel_m": 3.32000000000072,
+          "start_y_m": -1.35,
+          "finish_y_m": 1.97000000000072,
+          "max_position_speed_mps": 0.6200000000000649,
+          "raw_twist_peak": {
+            "mps": 86.61857640124188,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.4183655673261465,
+          "fixture_gate_completed": true
+        },
+        "pedestrian_2": {
+          "travel_m": 3.5900000000001997,
+          "start_y_m": 1.62,
+          "finish_y_m": -1.9700000000001996,
+          "max_position_speed_mps": 0.5800000000000249,
+          "raw_twist_peak": {
+            "mps": 112.66688582051883,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.8633655673261466,
+          "fixture_gate_completed": true
+        }
+      },
+      "threatened_samples": 35,
+      "threatened_and_stopped_samples": 35,
+      "overlap_occupied_by_moving_pedestrians_samples": 31,
+      "overlap_stationary_samples": 31,
+      "world_samples": 392,
+      "final_pose": {
+        "xy": [
+          3.267441974638887,
+          0.8082846741416122
+        ],
+        "yaw": 0.8427873858177195,
+        "linear_mps": 0,
+        "angular_radps": 0,
+        "stamp_ns": 39916000000,
+        "frame": "world"
+      },
+      "goal_error_m": 0.05291685390200677,
+      "persistent_stop_window": {},
+      "minimum_door_frame_clearance_m": 0.7470580157757747,
+      "encounters_within_055m": {
+        "samples": 26,
+        "highest_measured_speed_mps": 0.00003739550139584391,
+        "highest_measured_turn_rate_radps": 7.064730534472053e-14
+      },
+      "timeline_sha256": "599b50c8951a8bea68812e3e5004f1f39de89274dde38a07cc943f29ccbf20fc",
+      "gateway": {
+        "id": "c67de1241ce3754e065cbb14413f9191a5e9727630ae103d16d1131edbaf2f1c",
+        "image_id": "sha256:1151679f6081c204575696e7cba60cff9f72153805c7d57a2edab6a49bd5b8d5",
+        "label": "edge-rover-local:sdd058-campus-continuous-r3",
+        "started_at": "2026-11-24T07:25:29.423525371Z",
+        "restart_count": 0,
+        "gateway_command": [
+          "ros2",
+          "run",
+          "edge_gateway",
+          "edge_gateway_node",
+          "--ros-args",
+          "-p",
+          "require_scan:=true",
+          "-p",
+          "local_planner:=footprint_follow",
+          "-p",
+          "vehicle_profile:=/fixture-footprint.json",
+          "-p",
+          "scan_source_id:=sdd058.sim.lidar",
+          "-p",
+          "scan_frame_id:=laser_link",
+          "-p",
+          "scan_calibration:=sdd058.sim.fixture",
+          "-p",
+          "scan_origin_x_m:=0.08",
+          "-p",
+          "scan_range_resolution_m:=0.02",
+          "-p",
+          "dynamic_observer:=scan_clusters",
+          "-p",
+          "dynamic_policy:=yield_crossing",
+          "-p",
+          "trajectory_tracker:=regulated_pursuit"
+        ],
+        "running": true,
+        "core_id": "ec3f9be183bc42b674ca2acbde9b9d375d1ae6852bedc48e39992bf546d81335",
+        "core_image": "sha256:1151679f6081c204575696e7cba60cff9f72153805c7d57a2edab6a49bd5b8d5",
+        "core_started": "2026-11-24T07:25:30.224111461Z",
+        "core_restarts": 0
+      },
+      "campus": {
+        "base_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+        "fixture_sha256": "c118e8aee2ae7b196c93655111497eb5a367d1a952a24cf673cae8f0c75de3c9",
+        "layout_id": "campus_large",
+        "layout_revision": "3.4b916e7ae0b95c41",
+        "layout_sha256": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+        "portal": [
+          {
+            "id": "portal_south_sill",
+            "kind": "wall",
+            "label": "教学楼外墙",
+            "xy": [
+              1.6,
+              -5.05
+            ],
+            "size": [
+              0.38,
+              7.9,
+              1
+            ],
+            "base_z": 0
+          },
+          {
+            "id": "portal_north_sill",
+            "kind": "wall",
+            "label": "教学楼外墙",
+            "xy": [
+              1.6,
+              5.05
+            ],
+            "size": [
+              0.38,
+              7.9,
+              1
+            ],
+            "base_z": 0
+          }
+        ],
+        "world_name": "edge_lab"
+      },
+      "trajectory": {
+        "source": "Gazebo world odometry XY",
+        "samples": 305,
+        "discontinuities_over_350ms": 0,
+        "distance_m": 3.5756,
+        "spacing_m": 0.06,
+        "moving_above_mps": 0.04,
+        "start": {
+          "xy": [
+            1.29156281137024e-8,
+            7.1961958258103e-19
+          ],
+          "yaw": -3.431677484350987e-19,
+          "linear_mps": 0,
+          "angular_radps": 0,
+          "stamp_ns": 8908000000,
+          "frame": "world"
+        },
+        "stop": {
+          "xy": [
+            3.267441974638887,
+            0.8082846741416122
+          ],
+          "yaw": 0.8427873858177195,
+          "linear_mps": 0,
+          "angular_radps": 0,
+          "stamp_ns": 39916000000,
+          "frame": "world"
+        },
+        "low_speed_body_rotation_deg": 0.05,
+        "closest_actor": {
+          "gap_m": 0.4183655673261465,
+          "actor": "pedestrian_1",
+          "rover_speed_mps": 0,
+          "stamp_ns": 11356000000,
+          "command": [
+            0,
+            0
+          ]
+        },
+        "closest_actor_while_moving": {
+          "gap_m": 0.8193886798419869,
+          "actor": "pedestrian_1",
+          "rover_speed_mps": 0.13399992655240728,
+          "stamp_ns": 9316000000,
+          "command": [
+            0,
+            0
+          ]
+        },
+        "largest_continuous_turn": {
+          "turn_deg": 48.063,
+          "span_m": 1.86,
+          "largest_increment_deg": 2.948,
+          "distributed": true
+        },
+        "distributed_moving_turn": true,
+        "turns_over_5deg": [
+          {
+            "turn_deg": 48.063,
+            "span_m": 1.86,
+            "largest_increment_deg": 2.948,
+            "distributed": true
+          }
+        ]
+      },
+      "ui": {
+        "frontend": "http://127.0.0.1:8907/exploration-mission.html?task_id=campus-dynamic-crossing-08",
+        "video": "dynamic-crossing.mp4",
+        "sha256": "f576a87bdb2d095a0005aa92f1da6d830ee6dac2dccc53b06cbc9ffdbeaefa0b",
+        "decoded": true,
+        "errors": [],
+        "chapters": [
+          {
+            "title": "连接 Gazebo 观测台",
+            "startMs": 0
+          },
+          {
+            "title": "核对原地图并下发导航",
+            "startMs": 1042
+          },
+          {
+            "title": "原导航任务执行",
+            "startMs": 5938
+          },
+          {
+            "title": "拖动局部三维地图，查看实时感知",
+            "startMs": 6368
+          },
+          {
+            "title": "动态阻挡与停车等待",
+            "startMs": 7799
+          },
+          {
+            "title": "Agent 复查通道",
+            "startMs": 8038
+          },
+          {
+            "title": "继续原导航任务",
+            "startMs": 16226
+          },
+          {
+            "title": "到达并停稳",
+            "startMs": 41734
+          }
+        ],
+        "frames": 250,
+        "orbit": {
+          "kind": "map.orbit_zoom",
+          "before": {
+            "depthPoints": 391,
+            "scanPoints": 63,
+            "sceneFeatures": 5,
+            "yaw": -0.5,
+            "zoom": 1,
+            "speedTraceVisible": true
+          },
+          "after": {
+            "depthPoints": 362,
+            "scanPoints": 75,
+            "sceneFeatures": 5,
+            "yaw": -0.85,
+            "zoom": 1.155,
+            "speedTraceVisible": true
+          },
+          "time": "2026-11-24T07:25:49.177Z"
+        },
+        "taskRequest": {
+          "endpoint": "/agent/tasks",
+          "status": 202,
+          "when": "2026-11-24T07:25:47.894Z",
+          "arguments": {
+            "text": "前往教学楼门外北侧等候点",
+            "id": "campus-dynamic-crossing-08"
+          }
+        },
+        "reopened": {
+          "view": "local",
+          "sceneFeatures": 5,
+          "lidarPoints": 46,
+          "depthPoints": 443,
+          "task": "campus-dynamic-crossing-08",
+          "status": "SUCCEEDED",
+          "mapRevision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+        }
+      },
+      "recovery": {
+        "completed": [
+          {
+            "operation": "campus-dynamic-crossing-08/leg/1",
+            "hold": 4,
+            "clear": 12,
+            "resume": 13
+          },
+          {
+            "operation": "campus-dynamic-crossing-08/leg/2",
+            "hold": 15,
+            "clear": 19,
+            "resume": 20
+          },
+          {
+            "operation": "campus-dynamic-crossing-08/leg/2",
+            "hold": 22,
+            "clear": 26,
+            "resume": 27
+          },
+          {
+            "operation": "campus-dynamic-crossing-08/leg/2",
+            "hold": 28,
+            "clear": 31,
+            "resume": 32
+          }
+        ],
+        "pending": {},
+        "issues": []
+      },
+      "truth_timeline": "crossing-truth.jsonl.gz",
+      "sensor_timeline": "crossing-scan-odom.jsonl.gz",
+      "sensor_sha256": "78b69a9ea682ba61b07169621a4d929c578f83fc11a91edf0f583f8a212ee238"
+    },
+    "blocked": {
+      "schema_version": 1,
+      "passed": true,
+      "case": "blocked",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "persistent_obstacle_entered_and_held": true,
+        "continuous_independent_parked_stop": true,
+        "terminal_still_blocked_without_arrival": true,
+        "active_hold_resolved_as_blocked": true,
+        "same_running_gateway_from_submission_through_terminal": true,
+        "correct_campus_and_semantic_task": true,
+        "stationary_if_actor_enters_clearance_margin": true,
+        "matched_continuous_core_gateway": true,
+        "door_frame_meets_existing_margin": true
+      },
+      "task_id": "campus-dynamic-blocked-08",
+      "operation_id": "campus-dynamic-blocked-08/step/1",
+      "map_ref": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+        "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+      },
+      "status": "BLOCKED",
+      "phase": "BLOCKED",
+      "source": "Gazebo world odometry, contact sensors and ROS motion commands",
+      "gateway_boot_ids": [
+        "gateway-705f7e4b-8ba0a42d-191f7491-45b9e201"
+      ],
+      "native_operations": [
+        "campus-dynamic-blocked-08/leg/1/waypoint/1"
+      ],
+      "verified_gateway_stops": 1,
+      "gateway_dynamic_yield_events": 1,
+      "gateway_dynamic_clear_events": 0,
+      "physical_contacts": 0,
+      "fixture_guards": 0,
+      "actors": {
+        "lane_barrier": {
+          "travel_m": 1.6000000000005001,
+          "start_y_m": -1.48,
+          "finish_y_m": 0.12000000000050015,
+          "max_position_speed_mps": 0.5500000000000504,
+          "raw_twist_peak": {
+            "mps": 99.85792376307253,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.7049999870843718,
+          "fixture_gate_completed": true
+        }
+      },
+      "threatened_samples": 273,
+      "threatened_and_stopped_samples": 273,
+      "overlap_occupied_by_moving_pedestrians_samples": null,
+      "overlap_stationary_samples": null,
+      "world_samples": 370,
+      "final_pose": {
+        "xy": [
+          1.29156281137024e-8,
+          7.1961958258103e-19
+        ],
+        "yaw": -3.431677484350987e-19,
+        "linear_mps": 0,
+        "angular_radps": 0,
+        "stamp_ns": 37672000000,
+        "frame": "world"
+      },
+      "goal_error_m": 3.40771182977036,
+      "persistent_stop_window": {
+        "samples": 243,
+        "wall_seconds": 36.562723153,
+        "gazebo_seconds": 24.684,
+        "max_linear_mps": 0,
+        "max_angular_radps": 0,
+        "max_output_linear_mps": 0,
+        "max_output_angular_radps": 0,
+        "max_displacement_m": 0
+      },
+      "minimum_door_frame_clearance_m": 1.4991414101350722,
+      "encounters_within_055m": {
+        "samples": 0,
+        "highest_measured_speed_mps": null,
+        "highest_measured_turn_rate_radps": null
+      },
+      "timeline_sha256": "83286e4ff99af9d30c53821f359c8cc34fbfb966bdbfe35b1aafe01632b93ddb",
+      "gateway": {
+        "id": "647f81406506a6396ec477ff59568f0ce6020e089552bbd05ea3803c022a15b8",
+        "image_id": "sha256:1151679f6081c204575696e7cba60cff9f72153805c7d57a2edab6a49bd5b8d5",
+        "label": "edge-rover-local:sdd058-campus-continuous-r3",
+        "started_at": "2026-11-24T07:26:43.472756937Z",
+        "restart_count": 0,
+        "gateway_command": [
+          "ros2",
+          "run",
+          "edge_gateway",
+          "edge_gateway_node",
+          "--ros-args",
+          "-p",
+          "require_scan:=true",
+          "-p",
+          "local_planner:=footprint_follow",
+          "-p",
+          "vehicle_profile:=/fixture-footprint.json",
+          "-p",
+          "scan_source_id:=sdd058.sim.lidar",
+          "-p",
+          "scan_frame_id:=laser_link",
+          "-p",
+          "scan_calibration:=sdd058.sim.fixture",
+          "-p",
+          "scan_origin_x_m:=0.08",
+          "-p",
+          "scan_range_resolution_m:=0.02",
+          "-p",
+          "dynamic_observer:=scan_clusters",
+          "-p",
+          "dynamic_policy:=yield_crossing",
+          "-p",
+          "trajectory_tracker:=regulated_pursuit"
+        ],
+        "running": true,
+        "core_id": "000c58cf7d9a527bb6a51594797ee076481ced366c0fff9408b5486c02e147b0",
+        "core_image": "sha256:1151679f6081c204575696e7cba60cff9f72153805c7d57a2edab6a49bd5b8d5",
+        "core_started": "2026-11-24T07:26:43.241470825Z",
+        "core_restarts": 0
+      },
+      "campus": {
+        "base_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+        "fixture_sha256": "77533ad5178edf08e7e407982bd2b8f485a141249538e9c582fac72e85eff064",
+        "layout_id": "campus_large",
+        "layout_revision": "3.4b916e7ae0b95c41",
+        "layout_sha256": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+        "portal": [
+          {
+            "id": "portal_south_sill",
+            "kind": "wall",
+            "label": "教学楼外墙",
+            "xy": [
+              1.6,
+              -5.05
+            ],
+            "size": [
+              0.38,
+              7.9,
+              1
+            ],
+            "base_z": 0
+          },
+          {
+            "id": "portal_north_sill",
+            "kind": "wall",
+            "label": "教学楼外墙",
+            "xy": [
+              1.6,
+              5.05
+            ],
+            "size": [
+              0.38,
+              7.9,
+              1
+            ],
+            "base_z": 0
+          }
+        ],
+        "world_name": "edge_lab"
+      },
+      "trajectory": {
+        "source": "Gazebo world odometry XY",
+        "samples": 281,
+        "discontinuities_over_350ms": 0,
+        "distance_m": 0,
+        "spacing_m": 0.06,
+        "moving_above_mps": 0.04,
+        "start": {
+          "xy": [
+            1.29156281137024e-8,
+            7.1961958258103e-19
+          ],
+          "yaw": -3.431677484350987e-19,
+          "linear_mps": 0,
+          "angular_radps": 0,
+          "stamp_ns": 9112000000,
+          "frame": "world"
+        },
+        "stop": {
+          "xy": [
+            1.29156281137024e-8,
+            7.1961958258103e-19
+          ],
+          "yaw": -3.431677484350987e-19,
+          "linear_mps": 0,
+          "angular_radps": 0,
+          "stamp_ns": 37672000000,
+          "frame": "world"
+        },
+        "low_speed_body_rotation_deg": 0,
+        "closest_actor": {
+          "gap_m": 0.7049999870843718,
+          "actor": "lane_barrier",
+          "rover_speed_mps": 0,
+          "stamp_ns": 10438000000,
+          "command": [
+            0,
+            0
+          ]
+        },
+        "closest_actor_while_moving": null,
+        "largest_continuous_turn": null,
+        "distributed_moving_turn": false,
+        "turns_over_5deg": []
+      },
+      "ui": {
+        "frontend": "http://127.0.0.1:8908/exploration-mission.html?task_id=campus-dynamic-blocked-08",
+        "video": "dynamic-blocked.mp4",
+        "sha256": "43d1e1044057a0875a29723b9e94c92d6df549f8a3f5caf8bc6a92d18ed2440c",
+        "decoded": true,
+        "errors": [],
+        "chapters": [
+          {
+            "title": "连接 Gazebo 观测台",
+            "startMs": 0
+          },
+          {
+            "title": "核对原地图并下发导航",
+            "startMs": 1071
+          },
+          {
+            "title": "原导航任务执行",
+            "startMs": 6238
+          },
+          {
+            "title": "拖动局部三维地图，查看实时感知",
+            "startMs": 6868
+          },
+          {
+            "title": "动态阻挡与停车等待",
+            "startMs": 7988
+          },
+          {
+            "title": "Agent 复查通道",
+            "startMs": 8111
+          },
+          {
+            "title": "通道持续堵塞",
+            "startMs": 46547
+          },
+          {
+            "title": "超时保持停车",
+            "startMs": 46698
+          }
+        ],
+        "frames": 276,
+        "orbit": {
+          "kind": "map.orbit_zoom",
+          "before": {
+            "depthPoints": 391,
+            "scanPoints": 64,
+            "sceneFeatures": 5,
+            "yaw": -0.5,
+            "zoom": 1,
+            "speedTraceVisible": true
+          },
+          "after": {
+            "depthPoints": 362,
+            "scanPoints": 76,
+            "sceneFeatures": 5,
+            "yaw": -0.85,
+            "zoom": 1.155,
+            "speedTraceVisible": true
+          },
+          "time": "2026-11-24T07:26:59.267Z"
+        },
+        "taskRequest": {
+          "endpoint": "/agent/tasks",
+          "status": 202,
+          "when": "2026-11-24T07:26:57.564Z",
+          "arguments": {
+            "text": "前往教学楼门外北侧等候点",
+            "id": "campus-dynamic-blocked-08"
+          }
+        },
+        "reopened": {
+          "view": "local",
+          "sceneFeatures": 5,
+          "lidarPoints": 93,
+          "depthPoints": 768,
+          "task": "campus-dynamic-blocked-08",
+          "status": "BLOCKED",
+          "mapRevision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+        }
+      },
+      "recovery": {
+        "completed": [],
+        "pending": {
+          "campus-dynamic-blocked-08/leg/1": {
+            "hold": 4,
+            "clear": null,
+            "blocked": 34
+          }
+        },
+        "issues": []
+      },
+      "truth_timeline": "blocked-truth.jsonl.gz",
+      "sensor_timeline": "blocked-scan-odom.jsonl.gz",
+      "sensor_sha256": "caf55625e31fc9937fbc206faa2d229455d19f01cef2ac16626494195f029388"
+    }
+  },
+  "video": {
+    "file": "campus-navigation.mp4",
+    "sha256": "f94cbc33bc033b2f2dd5ca346b511db8fc4305b4e2b582d359115f6ea445815b",
+    "duration_s": 120.53,
+    "chapters": [
+      {
+        "start_ms": 0,
+        "title": "门边站人 · 连接 Gazebo 观测台"
+      },
+      {
+        "start_ms": 1056,
+        "title": "门边站人 · 核对原地图并下发导航"
+      },
+      {
+        "start_ms": 5772,
+        "title": "门边站人 · 原导航任务执行"
+      },
+      {
+        "start_ms": 6275,
+        "title": "门边站人 · 拖动局部三维地图，查看实时感知"
+      },
+      {
+        "start_ms": 26459,
+        "title": "门边站人 · 到达并停稳"
+      },
+      {
+        "start_ms": 28330,
+        "title": "连续横穿 · 连接 Gazebo 观测台"
+      },
+      {
+        "start_ms": 29372,
+        "title": "连续横穿 · 核对原地图并下发导航"
+      },
+      {
+        "start_ms": 34268,
+        "title": "连续横穿 · 原导航任务执行"
+      },
+      {
+        "start_ms": 34698,
+        "title": "连续横穿 · 拖动局部三维地图，查看实时感知"
+      },
+      {
+        "start_ms": 36129,
+        "title": "连续横穿 · 动态阻挡与停车等待"
+      },
+      {
+        "start_ms": 36368,
+        "title": "连续横穿 · Agent 复查通道"
+      },
+      {
+        "start_ms": 44556,
+        "title": "连续横穿 · 继续原导航任务"
+      },
+      {
+        "start_ms": 70064,
+        "title": "连续横穿 · 到达并停稳"
+      },
+      {
+        "start_ms": 72000,
+        "title": "持续堵塞 · 连接 Gazebo 观测台"
+      },
+      {
+        "start_ms": 73071,
+        "title": "持续堵塞 · 核对原地图并下发导航"
+      },
+      {
+        "start_ms": 78238,
+        "title": "持续堵塞 · 原导航任务执行"
+      },
+      {
+        "start_ms": 78868,
+        "title": "持续堵塞 · 拖动局部三维地图，查看实时感知"
+      },
+      {
+        "start_ms": 79988,
+        "title": "持续堵塞 · 动态阻挡与停车等待"
+      },
+      {
+        "start_ms": 80111,
+        "title": "持续堵塞 · Agent 复查通道"
+      },
+      {
+        "start_ms": 118547,
+        "title": "持续堵塞 · 通道持续堵塞"
+      },
+      {
+        "start_ms": 118698,
+        "title": "持续堵塞 · 超时保持停车"
+      }
+    ],
+    "decoded": true
+  }
+}

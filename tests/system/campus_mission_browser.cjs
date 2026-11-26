@@ -140,6 +140,53 @@ async function nativeFrame(page,host,task){
   return frame;
 }
 
+async function inspectLocalCamera(page, taskId, out) {
+  await page.click('#local-3d');
+  const frame = await nativeFrame(page, 'local3', taskId);
+  const canvas = await frame.waitForSelector('#viewport', {visible: true});
+  await frame.waitForFunction(() => Number(document.querySelector('#point-count').textContent.replaceAll(',', '')) > 0, {timeout});
+  await page.waitForSelector('#local3-hint', {visible: true});
+  assert.equal(new URL(await page.$eval('#local3-link', a => a.href)).searchParams.get('local'), '1');
+  await canvas.scrollIntoView();
+  const {x, y, width, height} = await canvas.boundingBox();
+  const cx = x + width / 2, cy = y + height / 2;
+  async function pixels() {
+    await frame.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    return thumbnail(frame, '#viewport');
+  }
+  async function drag(button, dx, dy) {
+    await page.mouse.move(cx, cy);
+    await page.mouse.down({button});
+    await page.mouse.move(cx + dx, cy + dy, {steps: 6});
+    await page.mouse.up({button});
+  }
+  const start = await pixels();
+  await drag('left', 48, 16);
+  const rotated = await pixels();
+  assert.notEqual(rotated, start, 'Left drag must orbit the point cloud');
+  await drag('right', 32, -17);
+  const panned = await pixels();
+  assert.notEqual(panned, rotated, 'Right drag must pan the point cloud');
+  await page.mouse.wheel({deltaY: -150});
+  const zoomed = await pixels();
+  assert.notEqual(zoomed, panned, 'Wheel must zoom the point cloud');
+  await page.waitForResponse(r => new URL(r.url()).pathname === '/api/map' && r.request().frame() === frame);
+  assert.equal(await pixels(), zoomed, 'Polling the same observation must preserve the camera');
+  await page.click('#local-2d');
+  await page.waitForSelector('#local3-hint', {hidden: true});
+  await page.click('#local-3d');
+  assert.equal(await pixels(), zoomed, 'Switching back to 3D must preserve the camera');
+  await page.$eval('#local3-host', e => e.scrollIntoView({block: 'center'}));
+  await shot(page, out, 'local-3d-camera');
+  await frame.click('#orbit-reset');
+  assert.notEqual(await pixels(), zoomed, 'The fit button must restore an overview');
+  await page.click('#local3-link');
+  await page.waitForFunction(() => document.fullscreenElement?.id === 'local3-host', {timeout});
+  await page.evaluate(() => document.exitFullscreen());
+  await page.click('#local-2d');
+  return {orbit: true, pan: true, zoom: true, fit: true, fullscreen: true, retainedOnPollAndTabSwitch: true};
+}
+
 async function observeMotion(site, id, out) {
   const pageUrl = new URL('/campus-mission.html', site);
   pageUrl.searchParams.set('task_id', id);
@@ -291,6 +338,7 @@ async function main() {
     views: links, screens: {}, errors: [], deniedRequests: []};
   const allowed = new Set([site.origin, map.origin, overview.origin]);
   let fault = null;
+  let localSnapshot = null;
   async function newPage() {
     const page = await browser.newPage();
     page.setDefaultTimeout(timeout);
@@ -301,6 +349,11 @@ async function main() {
       if (!['data:', 'blob:', 'about:'].includes(url.protocol) && (!allowed.has(url.origin) || request.method() !== 'GET')) {
         report.deniedRequests.push(request.method() + ' ' + url);
         return request.abort();
+      }
+      if (localSnapshot && url.origin === map.origin && url.pathname === '/api/map' &&
+          new URL(request.frame().url()).searchParams.get('local') === '1') {
+        // Replay one measured frame so changed pixels isolate camera motion from LiDAR noise.
+        return request.respond({status: 200, contentType: 'application/json', body: localSnapshot});
       }
       if (url.origin === site.origin && url.pathname === '/api/state') {
         if (fault === 'offline') return request.abort('internetdisconnected');
@@ -343,6 +396,9 @@ async function main() {
       report.screens[width] = {route: evidence, views, taskStatus: await text(page, '#task-status'),
         progress: await text(page, '#task-progress'), sensors: [await text(page, '#scan-status'), await text(page, '#grid-status')]};
       if (width === 1440) {
+        localSnapshot = JSON.stringify(await read(new URL('/api/map', map)));
+        report.localCamera = await inspectLocalCamera(page, task.row.id, out);
+        localSnapshot = null;
         const alternate = task.index.tasks.find(t => t.id !== task.row.id && t.text !== task.row.text && t.state === 'SUCCEEDED');
         if (alternate) {
           await page.select('#task-choice', alternate.id);

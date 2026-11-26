@@ -17,7 +17,8 @@ const SessionView = (() => {
     return Number.isFinite(d.valueOf())?formatter.format(d):String(value);
   };
   const link = id => '#sessions?'+new URLSearchParams({task:id});
-  let active=false, selectedId=null, projection=null, filter='all', cursors=[null], next=null;
+  let active=false, selectedId=null, projection=null, deferredSession=null, filter='all', cursors=[null], next=null;
+  let preferCurrent=false, currentCalibration=null;
   let listRequest=0, readerRequest=0, listBusy=false, readerBusy=false, lastRefresh=0;
   function notice(id,text='') { get(id).textContent=text;get(id).hidden=!text; }
   function liveStatus(s,connected) {
@@ -48,7 +49,7 @@ const SessionView = (() => {
     return a;
   }
   function clearReader(title='正在整理任务会话…') {
-    projection=null;readerRequest++;
+    projection=deferredSession=null;readerRequest++;
     readerBusy=false;get('session-reader').setAttribute('aria-busy','false');
     get('session-refresh').disabled=!selectedId;
     get('session-state').className='badge';get('session-state').textContent='读取中';
@@ -67,10 +68,18 @@ const SessionView = (() => {
       if(ticket!==listRequest)return;
       next=r.next_before;notice('session-list-notice');
       document.querySelectorAll('[data-session-state]').forEach(b=>b.querySelector('strong').textContent=r.counts[b.dataset.sessionState]);
-      get('session-list').replaceChildren(...r.tasks.map(taskEntry));
-      if(!r.tasks.length)get('session-list').append(node('p','empty-state','此分类暂无任务。'));
+      const list=get('session-list');
+      const focused=background && list.contains(document.activeElement) ? document.activeElement.closest('[data-task-id]') : null;
+      const entries=r.tasks.map(taskEntry);
+      list.replaceChildren(...entries);
+      if(!r.tasks.length)list.append(node('p','empty-state','此分类暂无任务。'));
+      if(focused){
+        const nextFocus=entries.find(a=>a.dataset.taskId===focused.dataset.taskId) || entries[0] ||
+          document.querySelector('[data-session-state][aria-pressed="true"]');
+        nextFocus?.focus({preventScroll:true});
+      }
       if(chooseFirst){
-        selectedId=r.tasks[0]?.id||null;
+        selectedId=(preferCurrent && filter==='all' && cursors.length===1 && currentCalibration) || r.tasks[0]?.id || null;
         history.replaceState(null,'',selectedId?link(selectedId):'#sessions');
         if(selectedId)loadSession();else{
           clearReader('此分类暂无任务');get('session-state').textContent='暂无任务';
@@ -130,17 +139,25 @@ const SessionView = (() => {
     else if(message.source==='task_journal')card.append(node('small','session-source','依据任务账本'));
     return card;
   }
+  function renderHeading(r) {
+    const t=r.task;
+    get('session-goal').textContent=t.text||'未记录任务原文';
+    get('session-state').className='badge '+tone(t.state);get('session-state').textContent=stateLabel(t.state);
+    get('session-headline').textContent=r.headline||'';
+    get('session-dates').textContent='创建于 '+date(t.created)+' · 最后更新 '+date(t.updated);
+  }
+  function interacting() {
+    return get('event-modal').open || !!get('session-reader').querySelector('details[open]') ||
+      get('session-reader').contains(document.activeElement);
+  }
   function renderSession(r) {
-    projection=r;const t=r.task, coverage=r.coverage||{};
+    projection=r;deferredSession=null;const t=r.task, coverage=r.coverage||{};
+    renderHeading(r);
     const service=r.service;
     get('session-provider').hidden=!service?.plugin_id;
     get('session-provider').textContent=service?.plugin_id
       ? 'Session 插件 '+service.plugin_id+' · v'+service.plugin_version : '';
     get('session-fallback').hidden=true;
-    get('session-goal').textContent=t.text||'未记录任务原文';
-    get('session-state').className='badge '+tone(t.state);get('session-state').textContent=stateLabel(t.state);
-    get('session-headline').textContent=r.headline||'';
-    get('session-dates').textContent='创建于 '+date(t.created)+' · 最后更新 '+date(t.updated);
     get('session-messages').replaceChildren(...(r.messages||[]).map(messageCard));
     if(!r.messages?.length)get('session-messages').append(node('p','empty-state','当前尚无可整理的会话过程。'));
     get('session-diagnosis').replaceChildren();
@@ -185,11 +202,16 @@ const SessionView = (() => {
     if(!selectedId)return;
     if(!background)clearReader();
     const ticket=++readerRequest,id=selectedId;
-    readerBusy=true;get('session-reader').setAttribute('aria-busy','true');get('session-refresh').disabled=true;
+    readerBusy=true;get('session-reader').setAttribute('aria-busy','true');
+    if(!background)get('session-refresh').disabled=true;
     try{
       const r=await api('/api/session?'+new URLSearchParams({task_id:id}));
       if(ticket!==readerRequest || id!==selectedId)return;
-      renderSession(r);
+      if(background && interacting()){
+        // Keep open evidence and keyboard focus while updating the authoritative task state.
+        deferredSession=r;
+        renderHeading(r);
+      }else renderSession(r);
     }catch(e){
       if(ticket!==readerRequest)return;
       const pluginUnavailable=e.status===503 && typeof e.code==='string' && e.code.startsWith('session.');
@@ -233,29 +255,45 @@ const SessionView = (() => {
     const wasActive=active;active=visible;
     if(!visible){listRequest++;readerRequest++;listBusy=readerBusy=false;return;}
     const requested=new URLSearchParams(location.hash.split('?')[1]).get('task');
+    preferCurrent=!requested;
     const changed=requested!==selectedId;
     selectedId=requested;
     if(!wasActive || !requested)loadList({chooseFirst:!requested});
     if(requested && (!wasActive || changed))loadSession();
     markSelected();
   }
-  function refresh() {
-    if(!active || Date.now()-lastRefresh<4000)return;
+  function preferCalibration(id) {
+    currentCalibration = id || null;
+    if(!currentCalibration || !active || !preferCurrent || filter!=='all' || cursors.length!==1 || selectedId===id)return;
+    selectedId=id;
+    history.replaceState(null,'',link(id));
+    markSelected();
+    loadSession();
+  }
+  function refresh(force=false) {
+    if(!active || (!force && Date.now()-lastRefresh<4000))return;
     lastRefresh=Date.now();
-    if(!listBusy && cursors.length===1 && !get('session-list').contains(document.activeElement))loadList({background:true});
-    if(!readerBusy && ongoing(projection?.task?.state) && !get('event-modal').open &&
-      !get('session-reader').querySelector('details[open]') && !get('session-reader').contains(document.activeElement))loadSession(true);
+    if(!listBusy && cursors.length===1)loadList({background:true});
+    if(deferredSession && !interacting())renderSession(deferredSession);
+    const displayed=deferredSession||projection;
+    if(!readerBusy && (ongoing(displayed?.task?.state) || displayed?.coverage?.task_available===false))loadSession(true);
+  }
+  function observeTask(task) {
+    if(active && task.id===selectedId && !ongoing(task.state) && ongoing((deferredSession||projection)?.task?.state))refresh(true);
   }
   document.querySelectorAll('[data-session-state]').forEach(button=>button.onclick=()=>{
+    preferCurrent=false;
     filter=button.dataset.sessionState;cursors=[null];next=null;selectedId=null;
     clearReader('正在读取此分类的任务…');
     document.querySelectorAll('[data-session-state]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
     loadList({chooseFirst:true});
   });
   get('session-prev').onclick=()=>{
+    preferCurrent=false;
     if(cursors.length>1){cursors.pop();next=null;selectedId=null;clearReader('正在读取上一页任务…');loadList({chooseFirst:true});}
   };
   get('session-next').onclick=()=>{
+    preferCurrent=false;
     if(next!=null){cursors.push(next);next=null;selectedId=null;clearReader('正在读取下一页任务…');loadList({chooseFirst:true});}
   };
   get('session-refresh').onclick=()=>loadSession();
@@ -263,5 +301,5 @@ const SessionView = (() => {
     get('session-list').scrollIntoView({block:'start',behavior:'smooth'});
     get('session-list').querySelector('a')?.focus({preventScroll:true});
   };
-  return {route,refresh,liveStatus};
+  return {route,refresh,liveStatus,preferCalibration,observeTask,selectedTaskId:()=>active ? selectedId : null};
 })();

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "board.camera-sample",
+  "version": "1.2.0",
+  "endpoint": "http://calibration-algorithms:8142/camera-sample",
+  "provides": [
+    "calibration.camera_sample"
+  ],
+  "requires": []
+}

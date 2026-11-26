@@ -1,0 +1,70 @@
+# Daily deployment on the existing phase-one site. The station launcher selects the ten services.
+services:
+  core:
+    image: ${EDGE_CAMPUS_SITE_IMAGE:-edge-rover-local:sdd058-campus-site-r1}
+    volumes:
+      - ./scene/campus_large/navigation/forecourt-site.yaml:/campus-site.yaml:ro
+    command: ["ros2","run","edge_core","edge_core_node","--ros-args","--params-file","/campus-site.yaml"]
+
+  gateway:
+    image: ${EDGE_CAMPUS_SITE_IMAGE:-edge-rover-local:sdd058-campus-site-r1}
+    volumes:
+      - ./scene/campus_large/navigation/forecourt-site.yaml:/campus-site.yaml:ro
+    command: ["ros2","run","edge_gateway","edge_gateway_node","--ros-args","--params-file","/campus-site.yaml",
+              "-p","require_scan:=true","-p","local_planner:=footprint_follow","-p","vehicle_profile:=/fixture-footprint.json",
+              "-p","scan_source_id:=sdd058.sim.lidar","-p","scan_frame_id:=laser_link","-p","scan_calibration:=sdd058.sim.fixture",
+              "-p","scan_origin_x_m:=0.08","-p","scan_range_resolution_m:=0.02","-p","dynamic_observer:=scan_clusters",
+              "-p","dynamic_policy:=yield_crossing","-p","trajectory_tracker:=regulated_pursuit"]
+
+  survey-maps:
+    environment:
+      EDGE_CAMPUS_SITE_EXTENSION: /forecourt.json
+    volumes:
+      - ./scene/campus_large/navigation/forecourt.json:/forecourt.json:ro
+  survey-session:
+    environment:
+      EDGE_CAMPUS_SITE_EXTENSION: /forecourt.json
+    volumes:
+      - ./scene/campus_large/navigation/forecourt.json:/forecourt.json:ro
+  campus-seed:
+    environment:
+      EDGE_CAMPUS_SITE_EXTENSION: /forecourt.json
+    volumes:
+      - ./scene/campus_large/navigation/forecourt.json:/forecourt.json:ro
+  perception:
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    stop_signal: SIGINT
+    stop_grace_period: 15s
+    environment:
+      EDGE_CAMPUS_SITE_EXTENSION: /forecourt.json
+      ROS_HOME: /tmp/ros
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./scene/campus_large/navigation/forecourt.json:/forecourt.json:ro
+      - ./scene/campus_large/navigation/observations.launch.py:/opt/edge/observations.launch.py:ro
+      - ./scene/campus_large/navigation/truth-bridge.yaml:/fixture-truth.yaml:ro
+      - ./scene/campus_large/teaching-depth-bridge.yaml:/fixture-rgbd.yaml:ro
+    command: ["ros2", "launch", "/opt/edge/observations.launch.py"]
+
+  survey-readonly:
+    extends: {file: compose.campus-dynamic.yaml, service: survey-route}
+    restart: unless-stopped
+    command: ["python3", "-m", "exploration.survey_providers", "--bind", "0.0.0.0",
+              "--port", "8138", "--role", "readonly"]
+    networks:
+      default:
+        aliases: [survey-frontier, survey-semantics, survey-route, survey-corridor]
+
+  # Keep split deployment available through the base campus launcher.
+  witness: {profiles: [campus-split]}
+  campus-camera-bridge: {profiles: [campus-split]}
+  survey-frontier: {profiles: [campus-split]}
+  survey-semantics: {profiles: [campus-split]}
+  survey-route: {profiles: [campus-split]}
+  survey-corridor: {profiles: [campus-split]}
+  session: {profiles: [campus-optional]}
+  evidence: {profiles: [campus-optional]}
+  scene: {profiles: [campus-optional]}

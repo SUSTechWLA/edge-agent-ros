@@ -1,0 +1,19 @@
+{
+  "id": "survey_area",
+  "version": "1",
+  "effect": "idempotent",
+  "accepts_trace": true,
+  "description": "在允许区域自主探索，用新观测构建地图并自动标注地点。根据观测处理补扫和异常。",
+  "parameters": {
+    "area": "string"
+  },
+  "outcomes": {
+    "map": "map_ref"
+  },
+  "utterances": [
+    "探索{area}并建图",
+    "为{area}自主建图",
+    "探索{area}并建立地图"
+  ],
+  "endpoint": "http://survey-session:8139/survey"
+}

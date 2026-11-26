@@ -1,0 +1,113 @@
+{
+  "scope": "synthetic RGB and metric point cloud replay; planar rigid-body pose transforms",
+  "world_board_center_m": [
+    2.79,
+    0.08,
+    0.53
+  ],
+  "world_from_board_rotation": [
+    [
+      0.06034382904608379,
+      0.03936295706634489,
+      0.9974012131068671
+    ],
+    [
+      -0.9980009331591285,
+      0.021180778663826054,
+      0.0595442023097352
+    ],
+    [
+      -0.01878189845478028,
+      -0.9990004665795642,
+      0.04056239717086778
+    ]
+  ],
+  "pose_columns": [
+    "x_forward_m",
+    "y_left_m",
+    "yaw_rad"
+  ],
+  "robot_poses": {
+    "pose-1": [
+      0.06,
+      0.02,
+      0.0
+    ],
+    "pose-2": [
+      0.17,
+      0.24,
+      0.12
+    ],
+    "pose-3": [
+      0.3,
+      -0.24,
+      -0.12
+    ],
+    "pose-4": [
+      0.28,
+      0.13,
+      0.14
+    ],
+    "pose-5": [
+      0.05,
+      -0.22,
+      -0.15
+    ]
+  },
+  "fit_ids": [
+    "pose-1",
+    "pose-2",
+    "pose-3"
+  ],
+  "holdout_ids": [
+    "pose-4",
+    "pose-5"
+  ],
+  "independent_truth": {
+    "camera_from_lidar_rotation": [
+      [
+        0.9788792047078854,
+        0.10373653256004063,
+        0.17616536096201582
+      ],
+      [
+        -0.09477015720018066,
+        0.9937733504445417,
+        -0.05859304779991528
+      ],
+      [
+        -0.18114668060638248,
+        0.04066029708019536,
+        0.9826151944411604
+      ]
+    ],
+    "lidar_in_camera_m": [
+      -0.12,
+      0.05,
+      0.02
+    ]
+  },
+  "status": "VERIFIED",
+  "validation": {
+    "count": 2,
+    "max_angle_deg": 0.22003364768249808,
+    "max_plane_distance_m": 0.0013665266548663624,
+    "rms_plane_distance_m": 0.0010658353345916274,
+    "max_hole_error_m": 0.003642564541767667,
+    "rms_hole_error_m": 0.00259458859866682
+  },
+  "truth_error": {
+    "translation_m": 0.0026843175683201113,
+    "rotation_deg": 0.14114466937720266
+  },
+  "negative_control": {
+    "lateral_offsets_m": [
+      -0.18,
+      0.0,
+      0.18
+    ],
+    "outcome": "refused",
+    "reason": "repeated observation or board pose"
+  },
+  "solver_sha256": "e032f509f754ba139f27e9e830d121f3747f7d7cfb58c66d1f0b627189fa244c"
+}

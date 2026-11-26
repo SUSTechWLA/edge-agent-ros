@@ -47,6 +47,7 @@ services:
       - session-socket:/sockets/session
   review-worker:
     <<: *read
+    profiles: [grid-replay]
     networks: [data]
     entrypoint: [python3, -B, -m, perception.review055.server, --role, measure]
     environment:
@@ -54,6 +55,7 @@ services:
     volumes: [./inputs:/inputs:ro]
   review-workflow:
     <<: *read
+    profiles: [grid-replay]
     networks: [data]
     entrypoint: [python3, -B, -m, perception.review055.server, --role, workflow]
     environment:

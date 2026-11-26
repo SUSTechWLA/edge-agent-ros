@@ -7,7 +7,7 @@ from urllib.parse import urlsplit
 
 from edge_contracts.descriptor import binding, normalize_legacy_service, normalize_legacy_tool
 from edge_contracts.errors import Unavailable, failure
-from . import host
+from . import authorization, host, verification
 
 if __package__ == "kernel":
     from derived_tools import load_directory
@@ -206,7 +206,28 @@ def capability_records(legacy, directory, views, admitted, duplicate_tools):
     return {"records":records, "conflicts":conflicts}
 
 
-def capability_view(service_snapshot):
+def goal_motion_options(goal_tool, text, admitted):
+    """Project the current site grant and installed physical roles for an unsubmitted draft."""
+    names = []
+    if os.getenv("EDGE_FEEDBACK_POLICY"):
+        try:
+            grant = authorization.station_motion_grant(text, goal_tool)
+            if not grant:
+                return {"goal_tool":goal_tool, "tools":[]}
+            policy = json.loads(Path(os.environ["EDGE_FEEDBACK_POLICY"]).read_bytes())
+            allowed = set(policy["commissioned_motion_tools"])
+            roles = {key for goal in policy["goals"].values() if goal["tool"] == goal_tool for key in goal["tools"]}
+            for name in sorted(allowed.intersection(roles, grant["tools"], admitted)):
+                cap = admitted[name]
+                pin = cap.get("_physical")
+                if verification.commissioned_motion_binding(name, cap, pin) and "reservation_id" not in pin:
+                    names.append(name)
+        except (OSError, ValueError, KeyError, TypeError, re.error):
+            names = []
+    return {"goal_tool":goal_tool, "tools":names}
+
+
+def capability_view(service_snapshot, *, goal_tool=None, text=None):
     duplicate_tools = set()
     legacy = registry(legacy_only=True, duplicate_tools=duplicate_tools)
     try:
@@ -215,6 +236,8 @@ def capability_view(service_snapshot):
     except host.SoftError as error:
         raise failure(Unavailable, str(error), error.code, error.origin) from error
     result = {"capabilities":catalog(admitted)}
+    if goal_tool and text:
+        result["goal_motion"] = goal_motion_options(goal_tool, text, admitted)
     try:
         directory = service_snapshot(observing=True).public()
     except OSError:

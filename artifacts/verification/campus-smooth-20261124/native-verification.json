@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "scope": "Native Gazebo differential-drive Gateway. Paired observation replay invokes compiled footprint_follow and regulated_pursuit plus yield_crossing in process.",
+  "hardware_motion": false,
+  "source": {
+    "worktree": "D:/project/edge-agent-rover-local",
+    "branch": "feat/sdd-056-rover-local-plan",
+    "baseline_commit": "dece48814d871f0386e1f97e732b4a3099f8cc4c",
+    "source_has_uncommitted_changes": true,
+    "source_sha256_verified_against_image": {
+      "src/edge_gateway/CMakeLists.txt": "b9556f4d95e60713ec46d370ddc66eb7bcb763202eba2ec8b8743d240d0789b5",
+      "src/edge_gateway/src/edge_gateway_node.cpp": "213307fd80b4647aeae510c3160658bbdf4b8400f08edc1af017997b171583c8",
+      "src/edge_gateway/src/footprint_gap_follow.cpp": "695540085070ff3f8f9c12392118b0043fa31e440db7d319eccab09a0ecabcfb",
+      "src/edge_gateway/src/local_planner.hpp": "cd168057c488093c5c149d8e3cda1a543c05bc426af1bb55e0166e566adb77f0",
+      "src/edge_gateway/src/swept_geometry.hpp": "899d9031059a67460d44f38950d97d61edf1e04c8122046d2bb476b265331db0",
+      "src/edge_gateway/src/dynamic_obstacles.cpp": "6655a60d3dddecf8f20b9c95c041a44e55ccc5e946b8b94da3236d6a2c23022b",
+      "src/edge_gateway/src/local_plan_json.hpp": "0b952f42acdf5ab120396ad33d12053e0789b0c2e29d9af55a1a337d4ebbea46",
+      "src/edge_gateway/test/local_planner_test.cpp": "b26e61270a2c09060ef730a0782ffec7546918a74a4d4de24599cc73d682eb35"
+    }
+  },
+  "build": {
+    "image_tag": "edge-rover-local:sdd058-campus-pursuit",
+    "image_id": "sha256:03d8ae30ef6457b472150dbe2faa04a64638027e398e13ef28bb1d17d4d073d6",
+    "revision_label": "sdd058-campus-regulated-pursuit-v4",
+    "build_context": "src/edge_gateway",
+    "dockerfile": "docker/Dockerfile.sdd058-dynamic",
+    "dockerfile_sha256": "f32fe34008d4c5f4c87b6a4c38aa92aa2d2398fdf6e27aade975490acc856185",
+    "build_result": "colcon edge_gateway Release succeeded"
+  },
+  "ctest": {
+    "result": "passed",
+    "names": [
+      "body_authority_contract",
+      "rover_local_planner_contract"
+    ],
+    "executed_cases_in_planner_binary": [
+      "regulated_pursuit_tracking",
+      "crossing_inside_tracking_arc",
+      "campus_facade_recheck"
+    ],
+    "stdout": [
+      "Internal ctest changing into directory: /tmp/sdd058-native-build/edge_gateway",
+      "Test project /tmp/sdd058-native-build/edge_gateway",
+      "    Start 1: body_authority_contract",
+      "1/2 Test #1: body_authority_contract ..........   Passed    0.00 sec",
+      "    Start 2: rover_local_planner_contract",
+      "2/2 Test #2: rover_local_planner_contract .....   Passed    0.04 sec",
+      "",
+      "100% tests passed, 0 tests failed out of 2",
+      "",
+      "Total Test time (real) =   0.05 sec"
+    ]
+  },
+  "replay": {
+    "simulation_task": "campus-dynamic-crossing-03",
+    "input_file": ".ci-results/campus-smooth-20261124/crossing-03/parked-paired.json",
+    "input_sha256": "2941f5c6a19b29b0882d60b66532d32589d959d6d9757fb7bdc7509d4f0b4a76",
+    "sample_count": 12,
+    "start_stamp_ns": 134250000000,
+    "end_stamp_ns": 135626000000,
+    "harness": ".ci-results/campus-smooth-20261124/native-recheck-replay.cpp",
+    "harness_sha256": "c3539a3598e9ee49e38ef44b89583c3fc561bca090a23eab359fb2bceabacf37",
+    "initialization": "Frame 0 initializes TTC. Frame 1 seeds a confirmed crossing hold with a synthetic moving track 20. Subsequent frames use the recorded scans, measured odometry and observed tracks.",
+    "local_goal_m": [
+      0.650000099,
+      -0.049999911
+    ],
+    "clearance_m": 0.55,
+    "ttc_stop_s": 0.8,
+    "track_forecast_s": 2.5,
+    "columns": "frame_index reason phase clear_samples linear_command_mps blocking_region blocking_track_id",
+    "positive": {
+      "change": "Recorded paired observations",
+      "result": "pass",
+      "resume_frame_index": 5,
+      "first_resumed_linear_command_mps": 0.02,
+      "trace": [
+        "0 navigation.ttc_unobserved  0 0",
+        "1 navigation.dynamic_yield yielding 0 0 forecast 20",
+        "2 navigation.dynamic_yield yielding 1 0  0",
+        "3 navigation.dynamic_yield yielding 2 0  0",
+        "4 navigation.dynamic_yield yielding 3 0  0",
+        "5 navigation.proceed cleared 4 0.02  0",
+        "6 navigation.proceed  0 0.02",
+        "7 navigation.proceed  0 0.02",
+        "8 navigation.proceed  0 0.02",
+        "9 navigation.proceed  0 0.02",
+        "10 navigation.proceed  0 0.02",
+        "11 navigation.proceed  0 0.02"
+      ]
+    },
+    "negative": {
+      "change": "Only world y of observed cluster 31 set to -1.27 m, preserving its observed radius and other paired observations",
+      "result": "pass",
+      "all_ten_post_trigger_frames_stopped": true,
+      "blocking_track_id": 31,
+      "trace": [
+        "0 navigation.ttc_unobserved  0 0",
+        "1 navigation.dynamic_yield yielding 0 0 forecast 20",
+        "2 navigation.dynamic_yield yielding 0 0 next 31",
+        "3 navigation.dynamic_yield yielding 0 0 next 31",
+        "4 navigation.dynamic_yield yielding 0 0 next 31",
+        "5 navigation.dynamic_yield yielding 0 0 next 31",
+        "6 navigation.dynamic_yield yielding 0 0 next 31",
+        "7 navigation.dynamic_yield yielding 0 0 next 31",
+        "8 navigation.dynamic_yield yielding 0 0 next 31",
+        "9 navigation.dynamic_yield yielding 0 0 next 31",
+        "10 navigation.dynamic_yield yielding 0 0 next 31",
+        "11 navigation.dynamic_yield yielding 0 0 next 31"
+      ]
+    }
+  }
+}

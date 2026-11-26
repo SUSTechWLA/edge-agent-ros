@@ -13,13 +13,13 @@ import numpy as np
 from calibration.board_provider import Handler
 
 
-def validate_environment(profile):
+def validate_environment(profile, *, require_clock=False):
     if profile["environment"] == "simulation":
         return
     if profile["environment"] != "hardware" or os.getenv("EDGE_CALIBRATION_READONLY_HARDWARE") != "1":
         raise ValueError("hardware recording requires explicit read-only commissioning")
     from calibration.hardware_profile import validate_hardware_profile
-    validate_hardware_profile(profile)
+    validate_hardware_profile(profile, require_clock=require_clock)
 
 
 def point_window(header_ns, xyz, timestamps, config):
@@ -86,7 +86,7 @@ class ClockObserver:
         from rclpy.qos import qos_profile_sensor_data
         from sensor_msgs.msg import CameraInfo, Image, PointCloud2
 
-        validate_environment(profile)
+        validate_environment(profile, require_clock=True)
         cv2.setNumThreads(1)
         self.profile = profile
         self.lidars = {s["id"]: s for s in profile["lidars"]}

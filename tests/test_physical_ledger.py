@@ -1,10 +1,12 @@
 """SDD-045 P2. Actual deployment preflight + role endpoints and persistent controller transactions."""
 from argparse import Namespace
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path
 import sys
 import tempfile
+from threading import Barrier
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,6 +106,25 @@ class CameraLedgerContract(unittest.TestCase):
         self.assertIsNone(self.poll("camera"))
         self.reject("plugin.fence_rejected",self.request,"camera",{"action":"check","lease":lease})
 
+    def test_incremental_reservation_is_atomic_across_retrying_clients(self):
+        pin = self.deploy["pin"]
+        step = {"tool":pin["name"], "version":pin["version"], "binding":pin["binding"], "args":{}, "physical_pin":pin}
+        request = {"action":"freeze_step","task":"frame","index":3,"provider":"test","step":step}
+        other = Controller(self.open("boot1"), self.deploy)
+        for role in ("camera", "verifier"):
+            other.command(role, {"action":"next", "instance_id":getattr(self,role), **pin["sensor"]})
+        start = Barrier(2)
+        def admit(host):
+            start.wait(timeout=5)
+            return host.command("agent", request)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first, retry = pool.map(admit, [self.host, other])
+        self.assertEqual(first, retry)
+        self.assertEqual(first[1]["physical_pin"]["reservation_id"],"frame/step/3")
+        self.assertEqual(self.ledger.db.execute("SELECT COUNT(*) FROM physical_ops").fetchone(),(1,))
+        kinds = [json.loads(event)["kind"] for event, in self.ledger.db.execute("SELECT event FROM module_bus_events")]
+        self.assertEqual(kinds.count("plugin.physical.reserved"),1)
+
     def test_drain_fixed_undispatched_step_stop_release_exit_and_new_version(self):
         pin = self.reserve()
         self.ledger.drain(self.resource)
@@ -169,6 +190,95 @@ class CameraLedgerContract(unittest.TestCase):
         self.assertFalse(self.host.catalog()["tools"])
         self.reject("plugin.fence_rejected",self.request,"camera",{"action":"check","lease":lease})
         self.reject("plugin.verifier_invalid",self.request,"verifier",{"action":"verify","proof":proof})
+
+    def test_reboot_readmits_only_the_identical_kernel_fenced_deployment(self):
+        pin = self.reserve()
+        self.candidate(pin)
+        rebooted = self.open("boot2")
+        fenced = rebooted.device(self.resource)
+        self.assertEqual(fenced["phase"],"DRAINING")
+        newer_site = self.root/"v2"
+        prepare_site(newer_site,self.raw,"b"*40,"2.0.0")
+        self.reject("plugin.physical_hot_reload_forbidden",rebooted.install,load_deployment(newer_site,self.image))
+        # A second reboot before the controller returns keeps the kernel fence.
+        rebooted = self.open("boot3")
+        readmitted = rebooted.install(self.deploy)
+        self.assertEqual((readmitted["phase"],readmitted["camera_instance"],readmitted["verifier_instance"]),("ACTIVE",None,None))
+        self.assertGreater(readmitted["epoch"],fenced["epoch"])
+        self.assertEqual(rebooted.install(self.deploy),readmitted)
+        old = rebooted.status(pin["reservation_id"])
+        self.assertEqual((old["state"],old["reason"]),("RECOVERY_REQUIRED","plugin.boot_changed"))
+        self.host = Controller(rebooted,self.deploy)
+        self.camera, self.verifier = "c"*12, "d"*12
+        self.poll("camera")
+        self.poll("verifier")
+        self.assertTrue(self.host.catalog()["tools"])
+        fresh = self.reserve("after-reboot")
+        lease,proof = self.candidate(fresh)
+        self.assertEqual(lease["epoch"],readmitted["epoch"])
+        self.request("verifier",{"action":"verify","proof":proof})
+        self.assertEqual(self.run_op(fresh)["state"],"SUCCEEDED")
+        self.assertEqual(rebooted.status(pin["reservation_id"])["state"],"RECOVERY_REQUIRED")
+        kinds = [json.loads(event)["kind"] for event, in rebooted.db.execute("SELECT event FROM module_bus_events")]
+        self.assertEqual(kinds.count("plugin.physical.fence.readmitted"),1)
+
+    def test_restarted_process_takes_only_a_silent_idle_slot(self):
+        previous = self.camera
+        self.camera = "e"*12
+        self.reject("plugin.fence_rejected",self.poll,"camera")  # The attached process is still heard.
+        pin = self.reserve()
+        self.camera = previous
+        self.assertEqual(self.run_op(pin)["state"],"RUNNING")
+        job = self.poll("camera")
+        self.host.heartbeat["camera"] -= self.deploy["health_ttl_ms"]/1000 + 1
+        self.camera = "e"*12
+        self.reject("plugin.fence_rejected",self.poll,"camera")  # Claimed work keeps its original owner.
+        self.now = job["lease"]["valid_until_ns"] + 1
+        self.assertIsNone(self.poll("camera"))
+        self.assertEqual(self.ledger.status(pin["reservation_id"])["state"],"RECOVERY_REQUIRED")
+        self.assertEqual(self.ledger.device(self.resource)["camera_instance"],"e"*12)
+        self.reject("plugin.fence_rejected",self.request,"camera",{"action":"check","lease":job["lease"],"instance_id":previous})
+        kinds = [json.loads(event)["kind"] for event, in self.ledger.db.execute("SELECT event FROM module_bus_events")]
+        self.assertEqual(kinds.count("plugin.physical.camera.replaced"),1)
+        self.host.heartbeat["verifier"] -= self.deploy["health_ttl_ms"]/1000 + 1
+        self.verifier = "e"*12
+        self.reject("plugin.verifier_invalid",self.poll,"verifier")
+
+    def test_deployer_drain_survives_reboot(self):
+        self.ledger.drain(self.resource)
+        rebooted = self.open("boot2")
+        self.reject("plugin.physical_hot_reload_forbidden",rebooted.install,self.deploy)
+        self.assertEqual(rebooted.device(self.resource)["phase"],"DRAINING")
+
+    def test_settled_device_accepts_new_approved_version_only_after_reboot(self):
+        newer_site = self.root/"v2"
+        prepare_site(newer_site,self.raw,"b"*40,"2.0.0")
+        newer = load_deployment(newer_site,self.image)
+        self.reject("plugin.physical_hot_reload_forbidden",self.ledger.install,newer)
+        rebooted = self.open("boot2")
+        installed = rebooted.install(newer)
+        self.assertEqual((installed["phase"],installed["deployment"]),("ACTIVE",newer))
+        last = json.loads(rebooted.db.execute("SELECT event FROM module_bus_events ORDER BY seq DESC LIMIT 1").fetchone()[0])
+        self.assertEqual((last["kind"],last["data"]["handoff"],last["data"]["version"],last["data"]["previous_version"]),
+                         ("plugin.physical.installed","boot_fence","2.0.0",self.deploy["pin"]["version"]))
+
+    def test_idle_same_boot_upgrade_requires_code_bound_actors_lock_and_settled_work(self):
+        newer_site = self.root/"v2"
+        prepare_site(newer_site,self.raw,"b"*40,"2.0.0")
+        newer = load_deployment(newer_site,self.image)
+        self.ledger.actors_bind_code = True
+        self.reject("plugin.physical_hot_reload_forbidden",self.ledger.install,newer)  # No deployment lock.
+        pin = self.reserve()
+        self.reject("plugin.physical_hot_reload_forbidden",lambda:self.ledger.install(newer,owner_locked=True))
+        self.request("agent",{"action":"settle","pin":pin})
+        self.ledger.actors_bind_code = False
+        self.reject("plugin.physical_hot_reload_forbidden",lambda:self.ledger.install(newer,owner_locked=True))
+        self.ledger.actors_bind_code = True
+        installed = self.ledger.install(newer,owner_locked=True)
+        self.assertEqual((installed["phase"],installed["camera_instance"],installed["deployment"]),("ACTIVE",None,newer))
+        last = json.loads(self.ledger.db.execute("SELECT event FROM module_bus_events ORDER BY seq DESC LIMIT 1").fetchone()[0])
+        self.assertEqual(last["data"]["handoff"],"idle_upgrade")
+        self.assertEqual(self.ledger.status(pin["reservation_id"])["state"],"CANCELED")
 
     def test_deployment_volume_excludes_live_controllers_and_offline_installer(self):
         with deployment_owner(self.root):

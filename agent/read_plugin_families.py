@@ -39,7 +39,7 @@ def catalog(caps):
         obj = json.loads(raw)
         if (not isinstance(obj, dict) or set(obj) != {"schema_version", "families"}
                 or type(obj["schema_version"]) is not int or obj["schema_version"] != 1
-                or not isinstance(obj["families"], dict) or not 1 <= len(obj["families"]) <= 32):
+                or not isinstance(obj["families"], dict) or len(obj["families"]) > 32):
             raise ValueError("invalid family policy")
         entries, prefixes = [], []
         for name, spec in obj["families"].items():

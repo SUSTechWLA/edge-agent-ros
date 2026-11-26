@@ -46,7 +46,7 @@ GRID_FIELDS = {"channel":{"type":"string", "enum":["depth", "brightness", "red",
                "row_count":{"type":"integer", "minimum":1, "maximum":8},
                "column_count":{"type":"integer", "minimum":1, "maximum":8},
                "statistic":{"type":"string", "enum":["median", "mean", "min", "max", "coverage"]}}
-QUERY_TOOLS["perception.measure_grid"] = (
+LEGACY_GRID_TOOL = (
     "measure_grid", "perception.frame_statistics",
     "Measure equal rectangular regions of ONE live RGB-D image. Returns all region values and the closest/"
     "farthest indices for depth, lowest/highest indices for other channels. row_count divides top-to-bottom; "
@@ -56,7 +56,9 @@ QUERY_TOOLS["perception.measure_grid"] = (
 
 
 def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *,
-            objects=False, queries=False, operator_policy=None):
+            objects=False, queries=False, operator_policy=None, legacy_grid=False):
+    if legacy_grid and not queries:
+        raise ValueError("the historical grid tool requires the queries stage")
     lock, old = verify(original, previous_lock)
     if not GIT.fullmatch(source_commit) or not SHA.fullmatch(backend_digest):
         raise ValueError("invalid source or backend identity")
@@ -77,7 +79,9 @@ def prepare(original, previous_lock, output, source_commit, backend_digest, prof
     if queries:
         if objects:
             raise ValueError("select a single release stage")
-        services, tools = QUERY_SERVICES, QUERY_TOOLS
+        services, tools = QUERY_SERVICES, dict(QUERY_TOOLS)
+        if legacy_grid:
+            tools["perception.measure_grid"] = LEGACY_GRID_TOOL
         stages = (("queries", ["perception-queries"]),)
         peer, service_module = "frame-query", "perception.spatial_facts.frame_query_service"
     if operator_policy is not None:
@@ -189,6 +193,7 @@ if __name__ == "__main__":
     mode = cli.add_mutually_exclusive_group()
     mode.add_argument("--objects", action="store_true", help="add RGB-D object location")
     mode.add_argument("--queries", action="store_true", help="add bounded RGB-D frame queries")
+    cli.add_argument("--legacy-grid", action="store_true", help="include the retired equal-grid tool when recreating a historical queries site")
     mode.add_argument("--operator-policy", type=Path, help="add the pure operator evaluator and its RGB-D input projection")
     for key in ("original", "out", "profile"):
         cli.add_argument("--"+key, type=Path, required=True)
@@ -197,4 +202,4 @@ if __name__ == "__main__":
     args = cli.parse_args()
     print(json.dumps(prepare(args.original, args.previous_lock, args.out, args.source_commit,
                              args.backend_digest, args.profile, args.actor, objects=args.objects, queries=args.queries,
-                             operator_policy=args.operator_policy)))
+                             operator_policy=args.operator_policy, legacy_grid=args.legacy_grid)))

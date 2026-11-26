@@ -55,7 +55,7 @@ def project(o):
                     datetime.fromisoformat(item["utc"].replace("Z","+00:00"))
                 except (KeyError,ValueError):
                     continue
-                if item.get("kind") in ("site.preference","site.drain","site.restored"):
+                if item.get("kind") in ("site.preference","site.drain","site.remove","site.restored"):
                     events.append({k:item[k] for k in ("utc","kind","detail","provider","source_ref","policy_sha256") if k in item})
     frame=file_json(o.frame)
     frame["frame_ref"]="sha256:"+hashlib.sha256(o.frame.read_bytes()).hexdigest()
@@ -87,11 +87,13 @@ def project(o):
                     extra={k:selected[k] for k in ("provider","origin","binding")}
                     skipped=[row["provider"] for row in choices[:choices.index(selected)] if not row.get("eligible")]
                     detail=(("优先实现 "+ "、".join(skipped)+" 当前不可选，自动改选 ") if skipped else "按当前站点优先级选中 ")+selected["provider"]
+                elif choices and not any(row.get("eligible") for row in choices):
+                    detail="当前没有可接收此任务的已授权实现"
             elif kind=="planner.graph_composed":
                 run.update(graph=tr["graph"],graph_model=tr["provider"],graph_event_id=source)
                 extra={"graph":tr["graph"],"provider":tr["provider"]}
                 detail="本地模型生成类型化步骤图，规划器已校验各节点端口"
-            elif kind in ("planner.graph_rejected","tool.error","blocked"):
+            elif kind in ("planner.graph_rejected","tool.error","blocked","retry","retry_exhausted"):
                 detail=tr.get("reason") or event.get("detail") or kind
             elif kind=="tool.request":
                 detail="Agent 已按冻结绑定派发只读工具"

@@ -17,7 +17,8 @@ from module_journal import ModuleJournal
 from prepare_review_site import prepare, sha
 from site_pack import verify
 from soft_host import Host
-from v2_registry import V2Registry
+from soft_runtime import SoftRuntimeError
+from v2_registry import RegistryError, V2Registry
 
 
 class ReviewSite(unittest.TestCase):
@@ -67,6 +68,13 @@ class ReviewSite(unittest.TestCase):
         selection, = [v for k,v in events if k == "planner.implementation_selected"]
         return steps[0], selection
 
+    def admin(self, action, plugin_id, expect, request):
+        args = Namespace(action=action, id=plugin_id, expect=expect, request_id=request)
+        return self.reg.change(args, self.site/"trust")
+
+    def entry(self, plugin_id):
+        return next(row for row in self.reg.entries() if row["descriptor"]["id"] == plugin_id)
+
     def test_native_drain_preserves_old_pin_and_routes_new_request(self):
         caps = self.live()
         self.assertEqual(set(caps), set(self.pack["tools"]))
@@ -95,6 +103,78 @@ class ReviewSite(unittest.TestCase):
         with self.assertRaises(Unavailable) as denied:
             self.plan(caps,"review_builtin")
         self.assertEqual(denied.exception.code,"planner.implementation_unavailable")
+
+    def test_removal_settles_original_step_and_preserves_shared_measure_service(self):
+        caps = self.live()
+        step, _ = self.plan(caps, "review_builtin")
+        preview = {**step, "soft_pin":caps["review_builtin"]["_soft"]}
+        call = self.loop.run_until_complete
+        frozen = call(self.host.freeze_plan({"task":"before", "provider":"test", "steps":[dict(preview)]}))
+        pin = frozen[1][0]["soft_pin"]
+        primary = pin["plugin_id"]
+        revision = self.entry(primary)["revision"]
+        drain = self.admin("drain", primary, revision, "begin-retirement")
+        self.assertEqual(drain, self.admin("drain", primary, revision, "begin-retirement"))
+        self.assertNotIn("review_builtin", self.live())
+        with self.assertRaises(SoftRuntimeError) as stale:
+            call(self.host.freeze_plan({"task":"late", "provider":"test", "steps":[dict(preview)]}))
+        self.assertEqual(stale.exception.code, "tool.binding_unavailable")
+        self.assertIsNone(self.reg.saved_plan("late"))
+        with self.assertRaises(RegistryError) as busy:
+            self.admin("remove", primary, drain["revision"], "remove-too-early")
+        self.assertEqual(busy.exception.code, "plugin.cleanup_incomplete")
+        wire = {"arguments":step["args"], "operation_id":pin["reservation_id"], "version":step["version"]}
+        with self.assertRaises(SoftRuntimeError) as modified:
+            call(self.host.invoke(pin, {**wire, "arguments":{**step["args"], "distance_m":2.0}}))
+        self.assertEqual(modified.exception.code, "tool.binding_unavailable")
+
+        analysis = {"frame_ref":self.frame, "grid":[1,3], "channel":"depth", "unit":"m", "statistic":"p10",
+                    "width":3, "height":1, "regions":[{"bounds_xyxy":[i,0,i+1,1], "pixels":1,
+                    "valid_pixels":1, "value":depth} for i,depth in enumerate((0.7,2.0,0.5))]}
+        with patch("soft_host.http_exchange", return_value=(200, analysis)) as measure:
+            receipt = call(self.host.invoke(pin, wire))
+            self.assertEqual(receipt["state"], "SUCCEEDED", receipt)
+            self.assertEqual(receipt["evidence"]["review"]["review_order"], [3,1])
+            self.assertEqual(call(self.host.invoke(pin, wire)), receipt)
+            measure.assert_called_once()
+        call(self.host.command({"action":"settle", "pin":pin}))
+        self.live()
+        self.assertTrue(self.entry(primary)["disposed"])
+        removed = self.admin("remove", primary, drain["revision"], "finish-retirement")
+        self.assertEqual(removed, self.admin("remove", primary, drain["revision"], "finish-retirement"))
+        self.assertNotIn(primary, {row["descriptor"]["id"] for row in self.reg.entries()})
+
+        self.host = Host(self.reg, self.site, self.journal, self.host.image_digest)
+        live = self.live()
+        self.assertEqual(set(live), {"review_composed","review_workflow"})
+        self.assertEqual(live["review_composed"]["_soft"]["binding"], caps["review_composed"]["_soft"]["binding"])
+        self.assertIn("review055.measure", live["review_composed"]["_soft"]["dependencies"])
+        self.assertEqual(self.reg.saved_plan("before"), frozen)
+        stored, = self.journal.db.execute("SELECT receipt FROM soft_operations WHERE operation=?",
+                                          (pin["reservation_id"],)).fetchone()
+        self.assertEqual(json.loads(stored), receipt)
+
+    def test_last_review_removed_reports_empty_candidates_before_any_dispatch(self):
+        caps = self.live()
+        for cap in caps.values():
+            key = cap["_soft"]["plugin_id"]
+            change = self.admin("drain", key, self.entry(key)["revision"], "drain-" + key)
+            self.live()
+            self.admin("remove", key, change["revision"], "remove-" + key)
+        self.assertEqual(self.live(), {})
+        events = []
+        model = Mock(return_value={"selected":"obstacle_review", "reason":"review nearby surfaces"})
+        with self.assertRaises(Unavailable) as denied:
+            planning.plan("请复核附近障碍候选", self.live(), lambda k,v:events.append((k,v)),
+                          model_profile=self.model, model_request=model)
+        self.assertEqual(denied.exception.code, "planner.implementation_unavailable")
+        decision, = [v for k,v in events if k == "planner.implementation_selected"]
+        self.assertIsNone(decision["tool"])
+        self.assertEqual({row["tool"]:row["eligible"] for row in decision["candidates"]},
+                         {name:False for name in caps})
+        model.assert_called_once()
+        self.assertFalse(self.reg.reservations())
+        self.assertIsNone(self.journal.db.execute("SELECT 1 FROM soft_operations").fetchone())
 
     def test_graph_is_compiled_from_separate_model_reply_on_normal_planner_entry(self):
         caps = self.live()

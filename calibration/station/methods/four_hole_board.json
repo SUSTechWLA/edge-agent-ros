@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "four_hole_board",
+  "label": "四孔 ArUco 板 · Edge 多姿态外参",
+  "target": "four_hole_board",
+  "plane_feature": "board_plane",
+  "geometry_type": "four_holes",
+  "geometry_key": "four_hole_board",
+  "metric_fields": {"marker_size_m":1, "marker_spacing_m":2, "hole_spacing_m":2, "hole_diameter_m":1},
+  "min_fit": 3,
+  "min_holdout": 2,
+  "source_modules":["calibration.board_solver","calibration.targets","calibration.board_metrics"],
+  "clip": {"frames":4,"duration_s":1.0,"max_gap_s":1.5,"max_drift_m":0.018,"max_rotation_deg":1.5},
+  "entrypoints": {
+    "score_view_geometry": "calibration.circle_target:score_view_geometry",
+    "observe_lidar": "calibration.circle_target:observe_lidar",
+    "fit": "calibration.circle_target:fit_extrinsics",
+    "verify": "calibration.circle_target:verify_extrinsics"
+  }
+}

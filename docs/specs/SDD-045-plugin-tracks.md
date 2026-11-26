@@ -130,6 +130,8 @@ physical 仅在部署期安装与升级。按原 op 取得设备租约与单调�
 
 ## 变更记录
 
+2026-11-26，针对物理控制器跨内核重启、单进程重启及内核账本事件膨胀完成三项加固：（1）`agent/physical_ledger.py` 与 `agent/physical_controller.py`：内核重启引发的 `DRAINING`（无部署者显式排空且无在途操作）允许同部署重新准入，并在全部旧操作已结算且 `owner_locked` 绑定代码摘要时允许空闲升级；单个附着执行器/验收器进程静默超过完整健康窗口且设备空闲时，允许新进程接管槽位并记 `plugin.physical.*.replaced` 事件；历史 `RECOVERY_REQUIRED` 操作保留原代次围栏，部署者显式 `drain()` 跨重启仍强制走停稳与退出交接协议；（2）`navigation/view_motion_actors.py`（`navigation.pose_motion` `v1.4.5`）增加有界附着等待，并在 `SIGTERM` 下先于 ROS 上下文关闭发布零速与 `navigation.executor_stopped` 中断回执；（3）`agent/kernel/ledger.py` 在增量 `planned` 事件投影中省略已完成前序步骤的冗余 `evidence`/`verification` 拷贝（权威 `tasks` 表与单步 `verified` 事件保持完整），单次 16 步标定任务的 `planned` 累计负载下降 90.6%。宿主机单测 `tests/test_physical_ledger.py` 16/16、`tests/test_kernel.py` 4/4 通过，并在 `edge-fixed-cal` 容器栈完成端到端验收。
+
 P0 文档门槛实测：SDD 校验通过；仓库契约 5 项、文档契约 3 项通过；六个变更文件均为 Markdown，README 与 SDD 的双轨表逐字一致，AC-1 至 AC-8 都有证据位置。基线差异选测只命中 `repository`。Windows 首轮运行 `20261119T032415Z-ceccb5e0` 在既有 `test_recording_trace_view.py` 因 `task_recorder` 导入失败；在同一工作树显式设置 PowerShell `$env:PYTHONPATH=(Get-Location).Path` 后，全套所选阶段于 `20261119T032557Z-e7440b6d` 通过。两次原始 summary 和日志位于本地 `.ci-results/sdd-045/p0/suite/<运行号>/`。这两次均未启动机器人任务。全量模型、Gazebo、真机台架和部署验证属于后续门槛。
 
 2026-11-19，P0。基于 `8520e43` 核对现有入口，确定以普通 HTTP 取证、Session 服务与数列派生工具验证 soft，以场景导航验证 physical。P0 审核涉及文档，不产生跨模块运行依赖；各实现 PR 必须同步更新 `tests/test_selection.py` 的规则和断言。本阶段结束后等待维护者确认。

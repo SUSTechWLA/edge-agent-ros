@@ -23,7 +23,7 @@ else:
     from kernel.catalog import BASE, binding, catalog, is_series, reference_utterance, registry, valid_utterance, valid_verbatim_manifest
     from tracing import CODE, artifact, contract, exchange
 
-from edge_contracts.descriptor import validate_instance
+from edge_contracts.descriptor import NAME, validate_instance
 from agent import read_capability_index, read_operators, read_plugin_families
 from edge_contracts.errors import OutcomeUnknown, Refused, Unavailable, failure, remote_failure
 
@@ -352,7 +352,7 @@ def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile
     else:
         prompt = (contract("prompts", prompt_key) if prompt_text is None else
                   {"id":prompt_key,"text":prompt_text,"version":{"planner.select_read_family":"family-selection.1",
-                   "planner.station_feedback":"station-feedback.1"}.get(prompt_key,read_operators.numeric.LANGUAGE),
+                   "planner.station_feedback":"station-feedback.2"}.get(prompt_key,read_operators.numeric.LANGUAGE),
                    "sha256":hashlib.sha256(prompt_text.encode()).hexdigest()})
         body = {"model":profile["model"], "stream":False, "format":schema, "options":profile["options"],
                 "messages":[{"role":"system", "content":prompt["text"]},
@@ -364,33 +364,218 @@ def model_proposal(context, schema, prompt_key, diagnostic, trace, model_profile
     return provider, answer
 
 
+def feedback_tool_ids(policy, field):
+    names = policy.get(field, [])
+    if (not isinstance(names, list) or len(names) > 128 or
+            any(not isinstance(name, str) or not NAME.fullmatch(name) for name in names)
+            or len(set(names)) != len(names)):
+        raise failure(Refused, "站点只读观察范围配置无效或动作工具配置无效，机体运动权限不可用",
+                      "planner.observation_policy_invalid", "deployment")
+    return set(names)
+
+
 def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_request=None):
     """Select one installed station capability against persisted tool observations."""
     policy = json.loads(Path(policy_file).read_bytes())
     history = task["steps"]
     goals = dict(policy["goals"])
+    motion_ids = feedback_tool_ids(policy, "commissioned_motion_tools")
+    motion_requested = authorization.explicit_motion_request(task["text"])
+    read_only = policy.get("read_only_request_pattern")
+    read_only_request = read_only and re.search(read_only, task["text"], re.I | re.S)
     if history:
         prior = history[0]["feedback"]["goal"]
         goals = {name:goal for name,goal in goals.items() if goal["tool"] == prior["tool"]}
     else:
+        if read_only_request:
+            goals = {name:g for name,g in goals.items()
+                     if g["tool"] not in motion_ids and all(caps.get(tool,{}).get("effect") == "read"
+                                                           for tool in g["tools"] if tool not in motion_ids)}
         explicit = {name:g for name,g in goals.items() if g.get("required_outcome_pattern")
-                    and re.search(g["required_outcome_pattern"], task["text"], re.I)}
+                    and re.search(g["required_outcome_pattern"], task["text"], re.I | re.S)}
         if explicit:
-            goals = explicit
+            # A named intermediate observation can be a step towards a stronger requested outcome.
+            intermediate = {n for goal in explicit.values() for n in goal.get("supersedes",[])}
+            goals = {name:g for name,g in explicit.items() if name not in intermediate}
+    station_grant = None
+    if len(goals) == 1 and not motion_requested and not read_only_request:
+        station_grant = authorization.station_motion_grant(task["text"],next(iter(goals.values()))["tool"])
+        if station_grant and history and history[0]["feedback"].get("station_grant") != station_grant["digest"]:
+            station_grant = None  # A running task cannot acquire a newly installed movement grant.
+        if station_grant:
+            motion_ids &= set(station_grant["tools"])
+            motion_requested = True
     allowed = {name for goal in goals.values() for name in goal["tools"]}
-    tools = {key:caps[key] for key in allowed if key in caps and caps[key].get("endpoint")
-             and not caps[key].get("_soft") and not caps[key].get("_physical")}
-    if not tools or len(history) >= min(64, policy["max_steps"]):
+    tools = {key:caps[key] for key in allowed - motion_ids if key in caps and caps[key].get("endpoint")
+             and caps[key].get("effect") in ("read", "idempotent")
+             and "_soft" not in caps[key] and "_physical" not in caps[key]}
+    goal_budget = next(iter(goals.values())).get("max_steps", policy["max_steps"]) if len(goals)==1 else policy["max_steps"]
+    step_limit = min(64, goal_budget)
+    unmet = None
+    prior_denial = any(s["feedback"].get("unmet_requirement") == "body.motion" for s in history)
+    motion_tools = {}
+    prior_roles = history[0]["feedback"].get("required_motion_tools") if history else None
+    if motion_requested and not prior_denial and not read_only_request:
+        # Existing tasks cannot silently acquire additional physical roles after a reload.
+        eligible_ids = motion_ids.intersection(prior_roles or ()) if history else motion_ids
+        for name in eligible_ids & allowed & caps.keys():
+            cap = caps[name]
+            pin = cap.get("_physical")
+            if verification.commissioned_motion_binding(name, cap, pin) and "reservation_id" not in pin:
+                motion_tools[name] = cap
+    if motion_tools:
+        goals = {name:g for name,g in goals.items() if motion_tools.keys() & set(g["tools"])}
+        tools.update(motion_tools)
+    elif motion_requested or prior_denial or prior_roles:
+        budget = policy.get("unavailable_motion_observation_budget", 0)
+        if type(budget) is not int or not 1 <= budget <= 8:
+            raise Refused("本站没有机体运动权限")
+        unmet = "body.motion"
+        reads_left = max(0, min(step_limit, budget) - len(history))
+        tools = {key:cap for key,cap in tools.items() if reads_left and cap.get("effect") == "read"}
+        if "unavailable_motion_observation_tools" in policy:
+            permitted = feedback_tool_ids(policy, "unavailable_motion_observation_tools")
+            tools = {key:cap for key,cap in tools.items() if key in permitted}
+    if not unmet and (not tools or len(history) >= step_limit):
         raise Refused("本站没有可调用能力或已用尽决策预算")
-    if authorization.explicit_motion_request(task["text"]):
-        raise Refused("本站没有机体运动权限")
+    by_goal = {name:set(g["tools"]).intersection(tools) for name,g in goals.items()}
+    if motion_tools:
+        for name,g in goals.items():
+            roles = by_goal[name] & motion_tools.keys()
+            if g["tool"] not in roles and not verification.verified_feedback_motion(task["id"], history, roles):
+                by_goal[name].discard(g["tool"])
+        tools = {key:cap for key,cap in tools.items() if any(key in names for names in by_goal.values())}
+    values_by_tool = dict(policy.get("argument_values",{}))
+    unmet_inputs = {}
+    placement_pending = bool(station_grant and motion_tools and not authorization.has_placement_receipt(task,station_grant))
+    if placement_pending:
+        pre = station_grant["requires_evidence"]
+        # This site's automatic-motion grant requires a current task's identified target before use.
+        observations = {pre["tool"], *station_grant.get("diagnostics",[])}
+        tools = {k:v for k,v in tools.items() if k in observations and v["effect"] == "read"}
+        unmet_inputs["placement"] = {"source_tool":pre["tool"],"required_fact":pre["field"]}
+    elif station_grant and motion_tools and station_grant.get("placement_tools_only_before_receipt") is True:
+        for name in (station_grant["requires_evidence"]["tool"], *station_grant.get("diagnostics",[])):
+            tools.pop(name, None)
+    for tool, parameters in policy.get("argument_receipts", {}).items():
+        if tool not in tools:
+            continue
+        for arg, source in parameters.items():
+            choices = []
+            for step in reversed(history):
+                if step.get("physical_pin"):
+                    break  # Body-local references expire as soon as a motion is issued.
+                if step["tool"] == source["tool"]:
+                    result = step.get("evidence") or {}
+                    rows = result.get(source["rows"])
+                    if step.get("status") == "SUCCEEDED" and isinstance(rows,list):
+                        choices = [r[source["field"]] for r in rows[:16] if isinstance(r, dict)
+                                   and isinstance(r.get(source["field"]),str)
+                                   and re.fullmatch(r"[A-Za-z0-9_.-]{1,96}",r[source["field"]])
+                                   and source["requires"] in r]
+                    break
+            if not choices:
+                tools.pop(tool, None)
+                unmet_inputs[tool] = {"argument":arg, "source_tool":source["tool"],
+                                      "reason":"需要当前姿态下由提供者返回的有效引用"}
+                break
+            values_by_tool.setdefault(tool,{})[arg] = choices
+    if motion_tools:
+        for name, rule in policy.get("unchanged_observation_guards", {}).items():
+            if name not in tools:
+                continue
+            superseded = rule.get("skip_when_available")
+            if superseded and superseded in tools:
+                tools.pop(name)
+                unmet_inputs[name] = {"superseded_by":superseded, "observed":True}
+                continue
+            sources = set(rule.get("sources") or [name])
+            for step in reversed(history):
+                if step.get("physical_pin"):
+                    break
+                receipt = step.get("evidence") or {}
+                if step["tool"] == rule.get("recheck") and receipt.get("outcome") in rule.get("changed", []):
+                    break
+                if step["tool"] in sources and receipt.get("outcome") in rule["unchanged"]:
+                    tools.pop(name)
+                    unmet_inputs[name] = {"reason":"原姿态已取得相同观测，待新姿态或新的独立测量"}
+                    break
+    # Some tools can only use an existing intermediate product. The source of that
+    # product owns its readiness and can invalidate it after a new measurement.
+    progress_tools = set()
+    for name, condition in policy.get("receipt_conditions", {}).items():
+        if name not in tools:
+            continue
+        field = condition.get("field")
+        skip_field = condition.get("skip_when_true")
+        latest = None
+        skip = None
+        settled_motion = False
+        for s in reversed(history):
+            if condition.get("invalidate_on_motion") is True and s.get("physical_pin"):
+                settled_motion = s.get("status")=="SUCCEEDED"
+                break
+            if s.get("status")=="SUCCEEDED" and s["tool"] in condition["sources"]:
+                ev = s.get("evidence") or {}
+                if field and latest is None and field in ev:
+                    latest = ev[field]
+                if skip_field and skip is None and skip_field in ev:
+                    skip = ev[skip_field]
+                if (not field or latest is not None) and (not skip_field or skip is not None):
+                    break
+        if skip is True:
+            tools.pop(name)
+            unmet_inputs[name] = {"superseded_by":skip_field, "observed":True}
+        elif field and (latest is False or (condition.get("require_true") is True and latest is not True)):
+            tools.pop(name)
+            unmet_inputs[name] = {"required_fact":field, "observed":False}
+        elif (latest is True and condition.get("confirmed_progress") is True
+              or latest is None and settled_motion and condition.get("confirmed_after_motion") is True):
+            progress_tools.add(name)
+    newest_view = next((s for s in reversed(history) if s["tool"] in policy.get("view_evidence_tools", [])
+                        or s.get("physical_pin")), None)
+    has_spatial_views = any("navigation_context" in (step.get("evidence") or {}) for step in history)
+
     def summary(step):
         evidence = step.get("evidence") or {}
         # Detailed arrays, imagery and transforms belong in the operation archive.
-        # Project bounded scalar facts only, even for third-party tool receipts.
+        # Deployment labels and ROS transport addresses belong to the adapter and the audit UI.
+        transport = {"environment", "robot_id", "clock_domain", "source_host", "endpoint", "mount_reference"}
         facts = {k:(v[:200] if isinstance(v,str) else v) for k,v in evidence.items()
-                 if isinstance(v,(bool,int,float,str)) and not k.endswith("sha256")}
-        return {"tool":step["tool"], "args":step.get("args",{}),"facts":dict(list(facts.items())[:18])}
+                 if isinstance(v,(bool,int,float,str)) and k not in transport
+                 and not k.endswith(("sha256", "_topic"))}
+        row = {"tool":step["tool"], "args":step.get("args",{}),"facts":dict(list(facts.items())[:18])}
+        current_view = not has_spatial_views or step is newest_view
+        if step["tool"] in policy.get("scene_evidence_tools", []) and (not has_spatial_views or step is history[-1]):
+            from edge_contracts.semantic_scene import compact_scene
+            scene = evidence.get("scene_slice") or (evidence.get("observation") or {}).get("scene_slice")
+            if scene is not None:
+                try:
+                    row["scene"] = compact_scene(scene)
+                except (KeyError, TypeError, ValueError):
+                    row["scene_unavailable"] = True
+        if step["tool"] in policy.get("view_evidence_tools", []) and current_view:
+            if "navigation_context" in evidence:
+                from edge_contracts.capture_navigation import compact_context
+                try:
+                    row["navigation"] = compact_context(evidence["navigation_context"])
+                except (KeyError, TypeError, ValueError):
+                    row["navigation_unavailable"] = True
+            options = evidence.get("view_options", [])
+            if isinstance(options, list):
+                fields = ("ref","path","board_view","board_lateral_m","clearance_margin_m","new_rgb_cells",
+                          "fills_missing_side","end_heading_deg","end_xyz_m","path_margin_px",
+                          "camera_pitch_deg","camera_roll_deg","helps_camera_coverage","lidar_view",
+                          "intrinsic_information_gain") if has_spatial_views else (
+                          "ref","target_range_m","obliquity_deg","margin_px","displacement_m","min_marker_module_px",
+                          "anchor_ratio","sample_role","image_offset_px","path_margin_px")
+                row["options"] = [{k:v for k,v in opt.items() if k in fields
+                                   and (isinstance(v,str) and len(v)<=64 or type(v) is bool
+                                        or type(v) in (float,int) and math.isfinite(v)
+                                        or k=="end_xyz_m" and isinstance(v,list) and len(v)==3
+                                        and all(type(x) in (float,int) and math.isfinite(x) for x in v))}
+                                  for opt in options[:6] if isinstance(opt,dict)]
+        return row
     recent = [summary(s) for s in history[-5:]]
     if recent:
         last = recent[-1]
@@ -404,7 +589,15 @@ def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_r
                "tools": {key:{"description":cap["description"],"arguments":cap["parameters"]} for key,cap in tools.items()},
                "observations": recent,
                "prior_calls": len(history)}
-    values_by_tool = dict(policy.get("argument_values",{}))
+    if unmet:
+        context["unmet_requirement"] = {"capability":unmet, "available":False,
+                                        "remaining_observations":reads_left,
+                                        "observation_scope":"只影响动作。仍可用本轮工具核实原任务中可独立观测的部分。"}
+    if motion_tools:
+        context["required_motion"] = {"tools":sorted(motion_tools),
+                                      "verified":verification.verified_feedback_motion(task["id"],history,motion_tools)}
+    if unmet_inputs:
+        context["unmet_inputs"] = unmet_inputs
     for tool, parameters in policy.get("argument_catalogs",{}).items():
         values_by_tool[tool] = {}
         for arg, source in parameters.items():
@@ -413,7 +606,8 @@ def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_r
                 installed.extend(json.loads(path.read_bytes())[source["field"]])
             values_by_tool[tool][arg] = sorted(name for name in set(installed) if installed.count(name)==1)
     branches = []
-    for name in [*sorted(tools),"decline"]:
+    decline_available = unmet or not (progress_tools & tools.keys())
+    for name in [*sorted(tools), *(["decline"] if decline_available else [])]:
         arg_schema = autonomous_argument_schema(tools[name]) if name in tools else {"type":"object","properties":{}}
         for arg,values in values_by_tool.get(name,{}).items():
             arg_schema["properties"][arg]["enum"]=values
@@ -429,25 +623,65 @@ def feedback_plan(task, caps, policy_file, trace, *, model_profile=None, model_r
                     "outcome. Multiple distinct samples require repeated acquisitions until the required count is met. "
                     "Choose decline only for an unsupported "
                     "request. Give a short reason in Chinese based on observable evidence.")
-    provider, answer = model_proposal(context,schema,"planner.station_feedback",{},trace,model_profile,
+    if has_spatial_views and policy.get("view_collection_guidance") is True:
+        instructions += (" If the rover has stopped at a new view or an inspection reports a recordable pose, "
+                         "prefer the goal's stationary sample tool when available. Compare lateral shortfall, "
+                         "new image regions, predicted tilt and margin before selecting another route.")
+    if not decline_available:
+        instructions += (" A provider has confirmed a ready tool: " + ", ".join(sorted(progress_tools & tools.keys())) +
+                         ". Use a listed capability to continue.")
+    if unmet:
+        instructions = ("区分用户原任务中的动作和可独立核实的事实。unmet_requirement 表示动作受限。"
+                        "若目标、传感器或执行条件仍有未知事实，且本轮工具可直接测量、能推进原任务，"
+                        "请选择最有用的一项工具取得证据。根据 observations 判断哪些事实已知。"
+                        "若现有观测已足够、工具无法增加相关证据，或本轮没有工具，请选择 decline，"
+                        "用中文说明实测发现与缺失的能力。采集观察不授予动作权限，保留原任务的完成条件。")
+    diagnostic = {}
+    provider, answer = model_proposal(context,schema,"planner.station_feedback",diagnostic,trace,model_profile,
                                       model_request,prompt_text=instructions)
+    if unmet and (not isinstance(answer, dict) or not isinstance(answer.get("tool"), str)
+                  or answer["tool"] not in tools):
+        message = "本站缺少机体运动权限，原任务受阻"
+        valid_decline = (isinstance(answer, dict) and answer.get("tool") == "decline"
+                         and isinstance(answer.get("goal"), str) and answer["goal"] in goals
+                         and answer.get("args") == {} and isinstance(answer.get("reason"), str)
+                         and answer["reason"].strip())
+        if valid_decline:
+            message += "。" + answer["reason"].strip()[:260]
+        error = failure(Refused, message, "planner.required_capability_unavailable", "deployment",
+                        {"unmet_requirement":unmet,"observations":len(history)})
+        error.diagnostic = diagnostic
+        raise error
     if not isinstance(answer,dict) or not isinstance(answer.get("reason"),str) or answer.get("tool") not in tools:
         raise Refused("模型未选择可用能力: "+str(answer.get("reason",""))[:260] if isinstance(answer,dict)
                       else "模型返回了无效决策")
     cap = tools[answer["tool"]]
     goal=goals.get(answer.get("goal"))
-    if not goal or cap["id"] not in goal["tools"]:
+    if not goal or cap["id"] not in by_goal[answer["goal"]]:
         raise Refused("所选工具超出本次目标的登记权限")
     args=answer.get("args")
     validate_instance(autonomous_argument_schema(cap),args)
     if any(args.get(k) not in vals for k,vals in values_by_tool.get(cap["id"],{}).items()):
         raise Refused("模型参数超出站点登记范围")
     authorization.require_effect_allowed(cap, task["text"])
-    if cap["effect"] != "read" and not any(w in task["text"].lower() for w in goal.get("write_intent",[])):
+    if (cap["id"] not in motion_tools and cap["effect"] != "read"
+            and not any(w in task["text"].lower() for w in goal.get("write_intent",[]))):
         raise Refused("用户任务未授权本工位的写入操作")
     step = {"tool":cap["id"],"args":args,"status":"PENDING","version":cap["version"],"binding":binding(cap),
             "verification":verification_plan(cap,runtime_plugins.load_policy()),
-            "feedback":{"rationale":answer["reason"][:400], "goal":{k:goal[k] for k in ("tool","field","equals")}}}
+            "feedback":{"rationale":answer["reason"][:400], "goal":{k:goal[k] for k in
+                        ("tool","field","equals","operator_pause_field") if k in goal}}}
+    if unmet:
+        step["feedback"]["unmet_requirement"] = unmet
+    if station_grant:
+        step["feedback"]["station_grant"] = station_grant["digest"]
+        if placement_pending:
+            step["feedback"]["placement_required"] = True
+    if motion_tools:
+        step["feedback"]["required_motion_tools"] = sorted(set(goal["tools"]) & motion_tools.keys())
+        if cap["id"] in motion_tools:
+            step["physical_pin"] = cap["_physical"]
+            step["physical_cap"] = {k:v for k,v in cap.items() if k not in ("_physical", "_legacy_contract")}
     return provider, [*history, step]
 
 

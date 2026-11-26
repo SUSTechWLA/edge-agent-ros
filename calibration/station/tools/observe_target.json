@@ -1,7 +1,7 @@
 {
   "id": "observe_target",
   "version": "1",
-  "description": "Observe a requested target from the installed target catalog using the live camera. Wait for visibility and return detections without recording or changing calibration.",
+  "description": "Observe a requested target from the installed target catalog using the live camera. For calibration use the calibration_target reported by station inventory. Wait for visibility and return detections.",
   "effect": "read",
   "parameters": {
     "target": "string"

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "checkerboard",
+  "label": "棋盘格多平面外参",
+  "target": "checkerboard",
+  "plane_feature": "checkerboard_plane",
+  "min_fit": 6,
+  "min_holdout": 2,
+  "source_modules":["calibration.targets"],
+  "clock_supported": true,
+  "entrypoints": {
+    "observe_lidar": "calibration.board_solver:observe_lidar",
+    "fit": "calibration.board_solver:fit_extrinsics",
+    "verify": "calibration.board_solver:verify_extrinsics"
+  }
+}

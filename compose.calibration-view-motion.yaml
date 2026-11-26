@@ -1,0 +1,100 @@
+# Overlay only for edge-fixed-cal. No host devices, host networking or hardware ROS domain.
+x-view: &view
+  image: edge-rover-local:sdd058-campus-lidar-r1
+  pull_policy: never
+  init: true
+  read_only: true
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  tmpfs: [/tmp]
+  environment:
+    ROS_DOMAIN_ID: "197"
+    GZ_PARTITION: edge_fixed_rover_197
+    EDGE_MOTION_SITE: fixed_calibration/lingao
+    RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    PYTHONPATH: /opt/edge:/opt/edge/agent
+    PYTHONDONTWRITEBYTECODE: "1"
+    ROS_HOME: /tmp/ros
+    ROS_LOG_DIR: /tmp/ros/log
+services:
+  view-target-source:
+    <<: *view
+    image: ${EDGE_CALIBRATION_COMPUTE_IMAGE:-edge-agent-ros:board-calibration-1}
+    environment:
+      ROS_DOMAIN_ID: "197"
+      GZ_PARTITION: edge_fixed_rover_197
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      PYTHONPATH: /opt/edge
+      PYTHONDONTWRITEBYTECODE: "1"
+      ROS_LOG_DIR: /tmp/ros
+      OPENBLAS_NUM_THREADS: "1"
+      EDGE_CALIBRATION_PROFILE: /opt/edge/calibration/station/gazebo-fixed-rover.json
+    command: ["python3","-B","-m","calibration.tracking_source"]
+    volumes:
+      - ./calibration:/opt/edge/calibration:ro
+      - ./perception:/opt/edge/perception:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+  view-controller:
+    <<: *view
+    command: ["python3","-B","-m","navigation.view_motion_site","controller"]
+    volumes:
+      - ./navigation:/opt/edge/navigation:ro
+      - ./calibration:/opt/edge/calibration:ro
+      - ./agent:/opt/edge/agent:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./scripts/lingao_control/lingao-chassis-control.json:/opt/edge/scripts/lingao_control/lingao-chassis-control.json:ro
+      - view-controller-tracking-state:/state
+      - view-agent-socket:/sockets/agent
+      - view-executor-socket:/sockets/executor
+      - view-witness-socket:/sockets/verifier
+  view-executor:
+    <<: *view
+    command: ["python3","-B","-m","navigation.view_motion_site","executor"]
+    volumes:
+      - ./navigation:/opt/edge/navigation:ro
+      - ./agent:/opt/edge/agent:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - view-executor-socket:/run/view:ro
+      - ./scripts/lingao_control/lingao-chassis-control.json:/opt/edge/scripts/lingao_control/lingao-chassis-control.json:ro
+      - ./calibration/station/gazebo-fixed-rover.json:/opt/edge/calibration/station/gazebo-fixed-rover.json:ro
+    depends_on: [view-controller, view-guard, view-target-source]
+  view-verifier:
+    <<: *view
+    command: ["python3","-B","-m","navigation.view_motion_site","verifier"]
+    volumes:
+      - ./navigation:/opt/edge/navigation:ro
+      - ./agent:/opt/edge/agent:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - view-witness-socket:/run/view:ro
+      - ./scripts/lingao_control/lingao-chassis-control.json:/opt/edge/scripts/lingao_control/lingao-chassis-control.json:ro
+      - ./calibration/station/gazebo-fixed-rover.json:/opt/edge/calibration/station/gazebo-fixed-rover.json:ro
+    depends_on: [view-controller]
+  view-guard:
+    <<: *view
+    command: ["python3","-B","-m","navigation.view_motion_site","guard"]
+    volumes:
+      - ./navigation:/opt/edge/navigation:ro
+      - ./agent:/opt/edge/agent:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./scripts/lingao_control/lingao-chassis-control.json:/opt/edge/scripts/lingao_control/lingao-chassis-control.json:ro
+      - ./calibration/station/gazebo-fixed-rover.json:/opt/edge/calibration/station/gazebo-fixed-rover.json:ro
+      - view-stop-state:/guard-state
+  agent:
+    environment:
+      EDGE_PHYSICAL_SOCKET: /run/view/physical.sock
+    volumes:
+      - view-agent-socket:/run/view:ro
+  console:
+    environment:
+      EDGE_PHYSICAL_AUDIT: /physical-journal/physical.sqlite
+    volumes:
+      - view-controller-tracking-state:/physical-journal:ro
+    command: ["python3","/opt/edge/console/server/main.py","--ros-args",
+              "-r","/odom:=/lingao/odom","-r","/scan:=/fixed/perimeter_scan",
+              "-r","/ground_truth:=/fixed/truth/odom","-r","/cmd_vel:=/cmd_vel_safe"]
+volumes:
+  view-agent-socket:
+  view-executor-socket:
+  view-witness-socket:
+  view-controller-tracking-state:
+  view-stop-state:

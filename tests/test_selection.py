@@ -22,6 +22,13 @@ RULES = [
     (("tests/test_capability_catalog.py", "tests/test_status_plugin.py"), ("agent-contracts",)),
     (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
+    (("navigation/grid_corridor.py",), ("planner","motion-world","ui","campus-world","rover-commissioning")),
+    (("calibration/intrinsic_*.py", "tests/system/gazebo_joint_calibration.py", "tests/system/intrinsic_board_operator.py",
+      "tests/system/fixed_rover_browser.cjs", "tests/system/fixed_rover_timelapse.cjs"),
+     ("planner","board","observations","ui","motion-world")),
+    (("navigation/target_tracking.py", "navigation/view_motion_*.py", "calibration/tracking_source.py", "calibration/view_coverage.py",
+      "tests/test_view_motion_site.py", "tests/system/fixed_motion_witness.py", "tests/system/fixed_view_coverage.py"),
+     ("planner","motion-world","rover-commissioning")),
     (("navigation/*.py", "perception/spatial_facts/*.py", "scripts/prepare_navigation.py",
       "scripts/prepare_perception_site.py", "examples/stationary-perception/*", "compose.stationary-perception.yaml",
       "examples/object-perception/*", "compose.object-perception.yaml", "scripts/run_object_model_isolated.sh",
@@ -44,6 +51,7 @@ RULES = [
     (("tests/test_reference_utterances.py",), ("planner",)),
     (("tests/system/navigation_recording_check.py",), ("board",)),
     (("tests/test_package_boundaries.py","tests/test_kernel.py"), (R,)),
+    (("agent/kernel/feedback_admission.py",), (*AGENT,"observations","board","plugin-isolation","rover-commissioning")),
     (("agent/kernel/*",), (*AGENT,"observations","board","plugin-isolation")),
     (("agent/site_pack.py","profiles/*.json","capabilities/*/pack.json","scripts/robot-plugins.sh",
       "scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"), ("planner","board","plugin-isolation")),
@@ -87,14 +95,23 @@ RULES = [
       "calibration/station/tools/*", "calibration/station/plugins/*", "calibration/station/feedback.json",
       "perception/target_detection.py", "perception/target_providers.py", "tests/system/calibration_*.py", "tests/system/calibration_board_browser.cjs",
       "calibration/clock_*.py", "calibration/time_*.py", "calibration/hardware_profile.py",
+      "scripts/calibration_station.py", "tests/test_calibration_station_cli.py",
       "calibration/camera_geometry.py", "calibration/station/hardware-clock.example.json",
       "perception/color_marker.py", "tests/test_time_*.py", "tests/test_calibration_ingress.py",
-      "tests/test_board_*.py", "tests/test_feedback_planner.py", "docker/Dockerfile.board-calibration",
+      "tests/test_board_*.py", "tests/test_feedback_planner.py", "tests/test_feedback_admission.py",
+      "tests/test_planar_pose.py", "tests/test_camera_stream_model.py", "tests/test_capture_views.py",
+      "tests/test_semantic_scene.py", "calibration/view_planner.py", "docker/Dockerfile.board-calibration",
       "docker/Dockerfile.calibration-observer", "docker/calibration-entrypoint.sh"),
      ("planner","board","observations","plugin-isolation","ui","rover-commissioning")),
     (("scripts/robot.sh", "calibration/ros_capture.py", "calibration/targets.py", "calibration/station/*",
       "tests/test_factory_targets.py", "tests/system/factory_ros_capture.py"), ("board",)),
     (("calibration/*", "tests/test_factory_calibration.py"), ("board","rover-commissioning")),
+    (("scene/campus_large/navigation/observations.launch.py",), ("observations","motion-world","ui","campus-world","rover-commissioning")),
+    (("exploration/survey_*.py", "exploration/corridor_review.py", "scene/campus_large/navigation/*",
+      "tests/test_survey_*.py", "console/server/exploration_mission.py", "console/web/exploration-mission.*",
+      "console/web/exploration-local.js", "console/web/exploration-campus.js", "console/server/campus_atlas.py",
+      "perception/map3d/web/*.js", "tests/system/campus_navigation_recording.cjs",
+      "tests/system/campus_map_camera.cjs"), ("planner", "ui", "campus-world", "rover-commissioning")),
     (("exploration/*", "tests/test_exploration_frontier.py", "tests/system/commission_exploration.py"),
      ("rover-commissioning",)),
     (("perception/sensor_health/*","compose.sensor-health.yaml","tests/system/sensor_health_acceptance.py",
@@ -103,6 +120,11 @@ RULES = [
     (("tests/test_map_texture_pack.py","tests/system/campus_texture_browser.mjs"),("plugin-isolation","campus-world")),
     (("console/web/campus-mission.*","console/server/campus_planning.py","tests/system/campus_mission_browser.cjs",
       "navigation/local_preview.py","tests/test_local_preview.py"), ("planner","ui","campus-world")),
+    (("compose.campus-dynamic.yaml","scripts/campus-navigation.ps1","compose.campus-core.yaml","scripts/campus-core.ps1",
+      "docker/Dockerfile.campus-lidar",
+      "tests/system/campus_lidar_calibration.py","tests/system/campus_dynamic_*.py",
+      "tests/system/campus_semantic_browser.cjs","tests/system/campus_semantic_witness.py","tests/system/campus_truth_geometry.py",
+      "scene/campus_large/teaching-navigation.json"), ("planner","motion-world","ui","campus-world")),
     (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_*.py","tests/test_campus_*.py",
       "tests/system/field_sensor_task.py","tests/system/field_observation_soak.py"),
      ("campus-world",)),
@@ -226,10 +248,23 @@ class TestSelection(unittest.TestCase):
     def test_guided_calibration_shared_detection(self):
         for path in ("perception/target_detection.py","compose.calibration-board.yaml",
                      "calibration/station/recognizers/checkerboard.json","tests/test_feedback_planner.py",
+                     "tests/test_semantic_scene.py","agent/kernel/feedback_admission.py","calibration/view_planner.py",
                      "calibration/time_offset.py","calibration/time_pairing.py","calibration/clock_observer.py",
                      "docker/Dockerfile.calibration-observer","calibration/hardware_profile.py"):
             self.assertTrue({"planner","board","observations","plugin-isolation","ui","rover-commissioning"}
                             <= set(selection([path])[0]), path)
+
+    def test_indoor_survey_runs_planner_frontend_and_commissioning(self):
+        for path in ("exploration/survey_session.py", "scene/campus_large/navigation/runtime/sdd058.route.json",
+                     "console/server/exploration_mission.py", "tests/system/campus_navigation_recording.cjs",
+                     "tests/system/campus_map_camera.cjs", "console/web/exploration-local.js",
+                     "console/web/exploration-campus.js", "console/server/campus_atlas.py", "perception/map3d/web/spatial.js"):
+            self.assertTrue({R,"planner","ui","campus-world","rover-commissioning"} <= set(selection([path])[0]), path)
+        for path in ("compose.campus-dynamic.yaml", "compose.campus-core.yaml", "scripts/campus-core.ps1",
+                     "scene/campus_large/navigation/observations.launch.py", "tests/system/campus_truth_geometry.py",
+                     "docker/Dockerfile.campus-lidar", "tests/system/campus_lidar_calibration.py",
+                     "tests/system/campus_semantic_browser.cjs", "tests/system/campus_semantic_witness.py"):
+            self.assertTrue({R,"motion-world","ui","campus-world"} <= set(selection([path])[0]), path)
 
     def test_navigation_route_observation_and_body_consumers(self):
         for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
@@ -397,8 +432,13 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["client/hardware_preflight.py"])[0],[R,"board"])
         self.assertEqual(selection(["tests/system/campus_texture_browser.mjs"])[0],[R,"plugin-isolation","campus-world"])
         self.assertEqual(selection(["scene/campus_large/build.py","compose.campus.yaml"])[0],[R,"campus-world"])
-        for name in ("campus_route_geometry","campus_station_probe","campus_forms","campus_round_trip"):
+        for name in ("campus_route_geometry","campus_station_probe","campus_forms","campus_round_trip",
+                     "campus_trajectory_truth"):
             self.assertEqual(selection(["tests/system/"+name+".py"])[0],[R,"campus-world"])
+        self.assertEqual(selection(["scripts/campus-navigation.ps1"])[0],
+                         [R,"planner","motion-world","console-missions","places","ui","campus-world"])
+        self.assertTrue({"planner","motion-world","ui","campus-world"}.issubset(
+            selection(["navigation/grid_corridor.py"])[0]))
         self.assertEqual(selection(["docs/specs/example.md"])[0], [R])
         self.assertEqual(selection(["agent/contracts.json"])[0], [R,"planner","agent-contracts","agent-faults","model"])
         for path in ("src/edge_interfaces/srv/GetMission.srv","unclassified/kernel.rs",

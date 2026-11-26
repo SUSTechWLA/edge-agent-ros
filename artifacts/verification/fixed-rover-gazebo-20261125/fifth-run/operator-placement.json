@@ -1,0 +1,49 @@
+{
+  "task_id": "0888b7c3-573c-4f53-8e9e-239ab61836b2",
+  "original_board": {
+    "id": 10,
+    "position_m": [
+      0.0,
+      4.0,
+      0.5
+    ],
+    "rotation_xyzw": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  },
+  "world_pose": {
+    "world": "fixed_calibration",
+    "model": "lingao",
+    "source": "/world/fixed_calibration/pose/info",
+    "position_m": [
+      1.9349562365512476e-20,
+      3.797428235475538e-17,
+      -9.049070884281641e-10
+    ],
+    "rotation_xyzw": [
+      3.696132971856072e-11,
+      -7.203308756017837e-20,
+      -5.0890170267856895e-20,
+      1.0
+    ],
+    "stamp_ns": 458755000000,
+    "received_unix_ns": 1795601448831717400,
+    "board": {
+      "id": 10,
+      "position_m": [
+        3.1,
+        0.0,
+        0.5
+      ],
+      "rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  }
+}

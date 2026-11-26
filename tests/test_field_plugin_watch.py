@@ -2,6 +2,7 @@
 from argparse import Namespace
 from dataclasses import replace
 import json
+import os
 from pathlib import Path
 import sqlite3
 import sys
@@ -13,6 +14,7 @@ from urllib.parse import parse_qs,urlsplit
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from client import field_plugin_watch as watch
+from agent import read_plugin_families
 from perception.spatial_facts import authored_screen
 
 
@@ -26,7 +28,9 @@ class WatcherTest(unittest.TestCase):
         self.args=Namespace(state=self.root,site=self.root,registry=self.root,policy=self.root/"approved.json",
                             agent_url="http://localhost",ollama_url="http://localhost:11434",
                             model="fixture",model_timeout=10,poll_seconds=1,
-                            family_profile=ROOT/"profiles/field-read-families.json")
+                            family_profile=self.root/"families.json")
+        watch.save(self.args.family_profile, {"schema_version":1, "families":{
+            "depth_column_review":{"description":"Example read-only review", "provider_prefix":"field."}}})
         self.w=watch.Watch(self.args,self.db)
         self.feed=[]
         self.tasks={}
@@ -85,6 +89,13 @@ class WatcherTest(unittest.TestCase):
             self.tasks[child["id"]]=child
             return watch.wire(child)
         return watch.wire(self.tasks[query["id"][0]])
+
+    def test_retired_default_family_denies_authoring_without_disabling_ordinary_planning(self):
+        profile = ROOT / "profiles/field-read-families.json"
+        with patch.dict(os.environ, {"EDGE_READ_PLUGIN_FAMILIES":str(profile)}):
+            self.assertEqual([], read_plugin_families.catalog([]))
+        with self.assertRaisesRegex(ValueError, "not approved"):
+            watch.approved_family(profile, "depth_column_review")
 
     def test_head_filter_model_feedback_pinned_continuation_and_no_replay(self):
         self.add("old")

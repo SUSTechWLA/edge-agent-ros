@@ -325,6 +325,7 @@
     embed('map2',localView(viewConfig.campus_2d),'二维校园地图');
     embed('map3',localView(viewConfig.campus_3d),'三维校园地图');
     if(local3d)embed('local3',localView(viewConfig.campus_3d),'局部三维点云');
+    el('local3-link').hidden=el('local3-hint').hidden=!local3d||!el('local3-link').hasAttribute('href');
   }
   function shareRoutes(){
     const g=globalPlan(), l=currentLocal();

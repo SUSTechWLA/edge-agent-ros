@@ -80,8 +80,19 @@ class Controller:
         self.pin = deployment["pin"]
         self.resource = self.pin["resource_id"]
         self.heartbeat = {}
+        self.started = time.monotonic()
         require(ledger.device(self.resource)["deployment"] == deployment, "tool.binding_unavailable",
                 "deploy the approved site offline before starting the controller")
+
+    def replace_silent(self, role, instance):
+        """A restarted process may take an idle slot once the attached one missed a full health window.
+
+        A live earlier process keeps polling and so keeps its slot; the ledger refuses while work is unresolved."""
+        present = self.ledger.device(self.resource)[role+"_instance"]
+        silent = time.monotonic() - self.heartbeat.get(role, self.started)
+        if present and instance != present and silent >= self.site["health_ttl_ms"]/1000:
+            self.ledger.replace_instance(self.resource, role, present, instance)
+            self.heartbeat.pop(role, None)
 
     def capability(self):
         return {"effect":"read","description":"采集一帧相机图像并独立核验","parameters":{}}
@@ -114,8 +125,20 @@ class Controller:
         if role == "agent":
             if action == "catalog":
                 return self.catalog()
+            if action == "operation_status":
+                pin = data["pin"]
+                row = ledger.status(pin["reservation_id"])
+                require(row["pin"] == pin and pin["resource_id"] == self.resource and
+                        self.pin == {k:v for k,v in pin.items() if k != "reservation_id"},
+                        "tool.binding_unavailable", "original operation and deployment required")
+                return {k:v for k,v in row.items() if k != "lease"} | {
+                    "pending_stop":row["state"] == "RECOVERY_REQUIRED" and self.pending_stop(row),
+                    "failure_code":self.verification_error}
             if action == "reconcile_denial":
                 return ledger.reconcile_denial(data["task"],data["provider"],data["steps"],self.site)
+            if action == "freeze_step":
+                return ledger.freeze_step(data["task"], data["index"], data["provider"], data["step"],
+                                          self.catalog()["tools"])
             if action == "freeze_plan":
                 # Always return an already admitted immutable plan, even while draining.
                 prior = ledger.db.execute("SELECT plan FROM physical_plans WHERE task=?", (data["task"],)).fetchone()
@@ -144,6 +167,7 @@ class Controller:
             expected = self.scope()
             require(all(k in data and type(data[k]) is type(v) and data[k]==v for k,v in expected.items()),
                     "plugin.permission_denied","process scope differs from deployment")
+            self.replace_silent(role, data.get("instance_id"))
             result = ledger.poll(resource, role, data["instance_id"])
             self.heartbeat[role] = time.monotonic()
             return result

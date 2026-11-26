@@ -1,5 +1,8 @@
 """Run in the hardware observer image using generated ROS 2 message types."""
 from array import array
+import base64
+from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 import struct
 import time
 import unittest
@@ -8,7 +11,9 @@ import cv2
 import numpy as np
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
 
-from calibration.board_ros import BoardSource, decode_cloud
+from calibration.board_ros import BoardSource, decode_cloud, lidar_xyz, LIVOX_CUSTOM
+from calibration.board_provider import LiveView
+from calibration.hardware_profile import validate_hardware_profile
 from calibration.camera_geometry import decode_rgb
 from calibration.clock_observer import point_window
 
@@ -42,6 +47,64 @@ def image_info():
 
 
 class CalibrationIngress(unittest.TestCase):
+    def test_live_view_does_not_consume_recorder_or_return_queued_frames_after_disconnect(self):
+        from rclpy.qos import qos_profile_sensor_data
+        profile = dict(robot_id="rig",environment="simulation",
+                       camera=dict(id="color",topic="/finder/rgb",info_topic="/finder/info",
+                                   frame="optical",image_geometry="rectified"),
+                       lidars=[dict(id="front",topic="/finder/cloud",frame="front")],max_skew_ns=25_000_000)
+        camera, info, _ = image_info()
+        for msg in (camera,info):
+            msg.header.frame_id = "optical"
+        with BoardSource(profile) as recorder:
+            live = LiveView(profile,BoardSource)
+            self.addCleanup(live.close)
+            pubs = [recorder.node.create_publisher(type(msg), topic, qos_profile_sensor_data)
+                    for msg,topic in ((camera,"/finder/rgb"),(info,"/finder/info"))]
+            with ThreadPoolExecutor(1) as pool:
+                result = pool.submit(live.read)
+                end = time.monotonic()+1
+                while not all(p.get_subscription_count()>=2 for p in pubs) and time.monotonic()<end:
+                    time.sleep(.02)
+                self.assertTrue(all(p.get_subscription_count()>=2 for p in pubs))
+                for seq in range(8):
+                    for pub,msg in zip(pubs,(camera,info)):
+                        msg.header.stamp.sec = 20
+                        msg.header.stamp.nanosec = seq*50_000_000
+                        pub.publish(msg)
+                    time.sleep(.05)
+                frame = result.result(timeout=3)
+            self.assertTrue(frame["available"])
+            self.assertEqual((frame["source"],frame["camera_id"],frame["frame_id"]),("live_camera","color","optical"))
+            jpg = np.frombuffer(base64.b64decode(frame["jpeg"],validate=True),np.uint8)
+            self.assertEqual(cv2.imdecode(jpg,cv2.IMREAD_COLOR).shape,(24,32,3))
+            self.assertEqual(set(live.source.frames),{"camera","info"})
+            self.assertEqual(set(recorder.last.values()),{-1})
+            self.assertEqual(live.read(),{"available":False})
+
+    def test_custom_message_preserves_native_metric_xyz_and_checks_count(self):
+        msg = SimpleNamespace(point_num=2, points=[SimpleNamespace(x=.25,y=-1.,z=3.),
+                                                   SimpleNamespace(x=1.,y=0.,z=.5)])
+        binding = {"message_type":LIVOX_CUSTOM}
+        np.testing.assert_array_equal(lidar_xyz(msg,binding), [[.25,-1.,3.],[1.,0.,.5]])
+        msg.point_num += 1
+        with self.assertRaisesRegex(ValueError,"point count"):
+            lidar_xyz(msg,binding)
+
+    def test_spatial_only_profile_accepts_custom_xyz_without_granting_temporal_calibration(self):
+        cam = dict(id="rgb",serial="D1",frame="optical",topic="/cam/color",info_topic="/cam/info",
+                   image_geometry="raw")
+        lidar = dict(id="front",serial="L1",frame="lidar",topic="/front/points",message_type=LIVOX_CUSTOM)
+        config = dict(environment="hardware",robot_id="rover",clock_domain="station_unix",
+                      max_skew_ns=25_000_000,camera=cam,lidars=[lidar],
+                      solver=dict(camera_frame="optical",lidar_frames={"front":"lidar"}))
+        validate_hardware_profile(config,require_clock=False)
+        with self.assertRaisesRegex(ValueError,"exposure"):
+            validate_hardware_profile(config,require_clock=True)
+        cam["clock_exposure_bound_ns"] = 10_000_000
+        with self.assertRaisesRegex(ValueError,"temporal calibration"):
+            validate_hardware_profile(config,require_clock=True)
+
     def test_readonly_board_source_receives_mixed_livox_over_dds(self):
         from rclpy.qos import qos_profile_sensor_data
         profile = dict(camera=dict(topic="/ingress/rgb", info_topic="/ingress/info",
@@ -68,6 +131,20 @@ class CalibrationIngress(unittest.TestCase):
             self.assertEqual(frame["frames"], {"camera":"optical", "left":"left"})
             np.testing.assert_array_equal(frame["clouds"]["left"][:,0],[.25,1.25,2.25,3.25])
             np.testing.assert_array_equal(frame["rgb"],expected)
+            # Minor backwards jitter (<1s) is ignored as out-of-order.
+            for pub, (_, msg, _) in zip(pubs, topics):
+                msg.header.stamp.sec = 9
+                msg.header.stamp.nanosec = 800_000_000
+                pub.publish(msg)
+            self.assertIsNone(source.next_frame(timeout_s=.25))
+            # A true clock reset (>1s backwards, e.g. driver or simulator restart) recovers cleanly.
+            for pub, (_, msg, _) in zip(pubs, topics):
+                msg.header.stamp.sec = 2
+                msg.header.stamp.nanosec = 0
+                pub.publish(msg)
+            recovered = source.next_frame(timeout_s=3)
+            self.assertIsNotNone(recovered)
+            self.assertEqual(recovered["stamp_ns"], 2_000_000_000)
 
     def test_mixed_livox_layout_respects_row_padding_field_order_and_float64_time(self):
         for big_endian in (False, True):

@@ -1,0 +1,14 @@
+FROM edge-rover-local:sdd057-container
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+WORKDIR /opt/edge
+COPY edge_interfaces /opt/edge/src/edge_interfaces
+COPY edge_core /opt/edge/src/edge_core
+COPY edge_gateway /opt/edge/src/edge_gateway
+RUN source /opt/ros/jazzy/setup.bash && source /opt/edge/install/setup.bash \
+    && MAKEFLAGS=-j3 colcon build --merge-install --build-base /tmp/campus-native \
+       --packages-select edge_interfaces edge_gateway edge_core --cmake-args -DCMAKE_BUILD_TYPE=Release \
+    && ctest --test-dir /tmp/campus-native/edge_gateway --output-on-failure \
+    && ctest --test-dir /tmp/campus-native/edge_core --output-on-failure
+ARG EDGE_REVISION
+ENV EDGE_REVISION=$EDGE_REVISION
+LABEL org.opencontainers.image.revision=$EDGE_REVISION

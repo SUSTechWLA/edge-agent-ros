@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><title>机器人观测台 · Edge Agent ROS</title>
-<link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/review.css"><link rel="stylesheet" href="/sessions.css"><script src="/view-plugins.js" defer></script><script src="/map.js" defer></script><script src="/review.js" defer></script><script src="/sessions.js" defer></script><script src="/app.js" defer></script>
+<link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/review.css"><link rel="stylesheet" href="/sessions.css"><link rel="stylesheet" href="/calibration.css"><script src="/view-plugins.js" defer></script><script src="/map.js" defer></script><script src="/review.js" defer></script><script src="/sessions.js" defer></script><script src="/calibration-live.js" defer></script><script src="/calibration-preflight.js" defer></script><script src="/calibration-motion.js" defer></script><script src="/calibration.js" defer></script><script src="/app.js" defer></script>
 </head><body>
 <a href="#main" class="skip">跳至工作区</a>
 <header class="topbar"><div class="brand"><svg viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="12" fill="#d6fb80"/><path d="m10 26 12-17 12 17-12 8z" fill="#19352c"/><path d="m16 25 6-9 6 9-6 4z" fill="#d6fb80"/></svg><span>Edge Agent <b>ROS</b></span></div>
@@ -12,11 +12,53 @@
 <div class="heading"><div><p class="context"><span class="env-icon" aria-hidden="true">◈</span><span id="env">ROS 2</span><span class="slash">/</span><span id="robot">Edge</span></p><h1 id="page-title">机器人观测台</h1></div><div class="heading-right"><div class="clock"><span id="clock-label">状态更新时间</span><strong id="clock">—</strong></div><button id="open-task" class="primary">＋ 下发任务</button></div></div>
 <aside id="history-bar" class="history-bar" hidden><span id="history-msg"></span><div><a id="replay-review" class="more" hidden>返回本次复盘</a> <button id="resume">返回实时</button></div></aside>
 <div id="notice" role="status" class="notice" hidden></div>
-<aside id="calibration-panel" class="history-bar" aria-label="传感器标定" hidden>
-  <div aria-live="polite"><strong id="calibration-title"></strong> <span id="calibration-message"></span></div>
-  <button id="calibration-draft" type="button" hidden>填写标定任务</button>
-  <div id="calibration-clock" aria-live="polite"></div>
-  <button id="clock-draft" type="button" hidden>填写时间标定任务</button>
+<aside id="calibration-panel" class="cal-panel" aria-label="传感器标定" hidden>
+  <header class="cal-head"><div aria-live="polite"><strong id="calibration-title"></strong> <span id="calibration-message"></span></div>
+    <button id="calibration-draft" type="button" hidden>填写标定任务</button></header>
+  <section id="cal-station" aria-label="标定采集工位" hidden>
+    <div class="cal-workspace">
+      <figure class="cal-camera"><div class="cal-screen">
+        <img id="cal-preview" alt="当前装配相机的实时取景" hidden>
+        <span id="cal-preview-empty">等待相机新帧</span>
+      </div><figcaption><strong>实时取景</strong><span id="cal-preview-caption"></span></figcaption></figure>
+      <div class="cal-evidence"><small id="cal-method"></small> <a id="cal-active-task" hidden></a><h2 id="cal-instruction"></h2>
+        <p id="cal-guidance" aria-live="polite"></p>
+        <dl id="cal-readings"></dl>
+        <p id="cal-result" aria-live="polite"></p><a id="cal-download" hidden download="calibration-capture.avi">下载最近录制的片段（AVI）</a>
+        <button id="cal-resume" type="button" hidden>板已就位，续办原步骤</button><span id="cal-resume-note" role="status"></span>
+      </div>
+    </div>
+    <details id="cal-board" hidden><summary>实测标定板尺寸 <span id="cal-board-status"></span></summary>
+      <form id="cal-geometry-form"><p>用尺测量，或核对此板对应版本的加工图。横向为左到右，纵向为上到下。尺寸填写毫米。</p>
+        <p id="cal-geometry-source" hidden></p>
+        <button id="cal-fill-reference" type="button" hidden>填入参考规格</button>
+        <div class="cal-fields">
+          <label>标定板编号<input id="cal-board-id" type="text" maxlength="80" required placeholder="填写板上编号或自定名称"></label>
+          <label>方码黑色外框边长（mm）<input name="markerEdge" type="number" min="0.01" step="any" required></label>
+          <label>左、右方码中心距（mm）<input name="markerX" type="number" min="0.01" step="any" required></label>
+          <label>上、下方码中心距（mm）<input name="markerY" type="number" min="0.01" step="any" required></label>
+          <label>单孔直径（mm）<input name="holeDiameter" type="number" min="0.01" step="any" required></label>
+          <label>左、右圆孔中心距（mm）<input name="holeX" type="number" min="0.01" step="any" required></label>
+          <label>上、下圆孔中心距（mm）<input name="holeY" type="number" min="0.01" step="any" required></label>
+        </div>
+        <div class="cal-form-actions"><label><input id="cal-confirm-measure" type="checkbox" required> 我已对照实物或对应加工图，核对尺寸与板编号</label>
+          <button id="cal-save-board" type="submit">保存已核实尺寸</button><span id="cal-form-note" role="status"></span></div>
+      </form>
+    </details>
+    <details id="cal-help"><summary>现场如何举板和录制</summary><ol>
+      <li>将车停稳并保持传感器固定。确认板面平整，光线均匀，避免逆光和反光。</li>
+      <li>把板放在相机与需要标定的雷达共同视野内，手扶板边，整块板入镜，四个圆孔后方留空。</li>
+      <li>举稳板，等工位确认本组已保存。随后向左、右或高低移动并改变俯仰、偏转角度，再次停稳。</li>
+      <li>工位自动从传感器录制数据。按当前提示补拍，直到独立验证通过。</li>
+    </ol></details>
+  </section>
+  <section id="cal-motion" class="cal-motion" aria-label="底盘试动" hidden>
+    <header><h2>底盘试动</h2><strong id="cal-motion-state" role="status"></strong></header>
+    <p id="cal-motion-identity"></p>
+    <ul id="cal-motion-checks" aria-label="已查条件"></ul>
+    <p><b>测试回执</b> <span id="cal-motion-receipt"></span></p>
+  </section>
+  <footer class="cal-clock"><span id="calibration-clock" aria-live="polite"></span><button id="clock-draft" type="button" hidden>填写时间标定任务</button></footer>
 </aside>
 <section id="sessions" aria-label="任务会话" hidden>
   <div class="session-live"><div><span class="session-live-label">实时观测</span><strong id="session-motion">正在连接机器人…</strong><span id="session-live-time"></span></div><a href="#monitor">查看机器人与地图 →</a></div>

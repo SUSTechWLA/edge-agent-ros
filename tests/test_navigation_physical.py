@@ -107,6 +107,72 @@ class FixtureProtocol(unittest.TestCase):
                     measurement={"outcome":"arrival", "route_ref":self.route["route_ref"]})
         self.assertEqual(self.next("verifier")["operation_id"], work["operation_id"])
 
+    def physical_proposal(self):
+        cap, = self.ctrl.catalog()["tools"]
+        return {"tool":cap["id"], "version":cap["version"], "binding":cap["_physical"]["binding"],
+                "args":{"route_ref":self.route["route_ref"]}, "status":"PENDING", "physical_pin":cap["_physical"],
+                "physical_cap":{k:v for k,v in cap.items() if k != "_physical"}}
+
+    def test_incremental_feedback_uses_original_operation_and_waits_for_settlement(self):
+        task, provider = "feedback", "ollama/test"
+        step = self.physical_proposal()
+        def freeze(index, raw=step, planner=provider):
+            return self.invoke("agent","freeze_step",task=task,index=index,provider=planner,step=raw)
+        original = freeze(2)
+        frozen = original[1]
+        self.assertEqual(original[0],provider)
+        self.assertEqual(frozen["physical_pin"]["reservation_id"],task + "/step/2")
+        self.assertNotIn("reservation_id",step["physical_pin"])
+        for raw, identity in ((step,"new-model"), (dict(step,args={"route_ref":"other"}),provider),
+                              (dict(step,feedback={"goal":"changed"}),provider), (frozen,provider)):
+            with self.assertRaises(PhysicalError) as conflict:
+                freeze(2,raw,identity)
+            self.assertEqual(conflict.exception.code,"tool.binding_unavailable")
+        work = self.claim(frozen)
+        with self.assertRaises(PhysicalError) as busy:
+            freeze(5)
+        self.assertEqual(busy.exception.code,"plugin.lease_conflict")
+        self.arrive(work)
+        self.invoke("verifier","verify",proof=self.proof(work,[1,0]))
+        with self.assertRaises(PhysicalError):
+            freeze(5)
+        self.invoke("agent","settle",pin=frozen["physical_pin"])
+        next_receipt = freeze(5)
+        with self.assertRaises(PhysicalError):
+            freeze(3)
+        self.open()  # ACK lost: no heartbeat yet, the same receipt is still available.
+        self.ledger.drain(self.site["pin"]["resource_id"])
+        self.assertEqual(freeze(5),next_receipt)
+        self.assertEqual(freeze(2),original)
+        self.assertEqual(self.ledger.db.execute("SELECT COUNT(*) FROM physical_ops").fetchone(),(2,))
+        self.invoke("agent","settle",pin=next_receipt[1]["physical_pin"])
+        with self.assertRaises(PhysicalError):
+            freeze(6)
+
+    def test_incremental_admission_checks_site_and_never_mixes_with_full_plan(self):
+        step = self.physical_proposal()
+        def admit(task,index=1,raw=step):
+            return self.invoke("agent","freeze_step",task=task,index=index,provider="local",step=raw)
+        for index in (True,0,-1,1.0,2**63):
+            with self.assertRaises(PhysicalError):
+                admit("incremental",index)
+        for invalid in (dict(step,args={"route_ref":"sha256:"+"0"*64}),dict(step,soft_pin={}),dict(step,status="SUCCEEDED"),
+                        dict(step,physical_cap={**step["physical_cap"],"effect":"read"}),
+                        dict(step,physical_pin=dict(step["physical_pin"],resource_id="different"))):
+            with self.assertRaises(PhysicalError):
+                admit("incremental",raw=invalid)
+        self.assertEqual(self.ledger.db.execute("SELECT COUNT(*) FROM physical_ops").fetchone(),(0,))
+        admit("incremental")
+        for action in ("freeze_plan","reconcile_denial"):
+            with self.assertRaises(PhysicalError) as conflict:
+                self.invoke("agent",action,task="incremental",provider="local",steps=[step])
+            self.assertEqual(conflict.exception.code,"tool.binding_unavailable")
+        self.plan("legacy")
+        with self.assertRaises(PhysicalError) as full:
+            admit("legacy",2)
+        self.assertEqual(full.exception.code,"tool.binding_unavailable")
+        self.assertEqual(self.ledger.db.execute("SELECT COUNT(*) FROM physical_ops").fetchone(),(2,))
+
     def test_public_agent_plan_once_only_and_observed_arrival(self):
         step = self.plan("demo")
         work = self.claim(step)
@@ -265,6 +331,7 @@ class SocketAcceptance(unittest.TestCase):
                         route = profile["routes"][0]
                         provider, steps = planning.plan("在仿真中执行路线 " + route["route_ref"], caps)
                         steps[0]["physical_pin"] = caps["nav_execute"]["_physical"]
+                        incremental_proposal = deepcopy(steps[0])
                         _, steps = plugin_tracks.freeze("socket-demo", [provider, steps])
                         pin = steps[0]["physical_pin"]
                         wire = {"operation_id":pin["reservation_id"],"version":pin["version"],"arguments":steps[0]["args"]}
@@ -278,6 +345,12 @@ class SocketAcceptance(unittest.TestCase):
                         self.assertEqual(reply["state"], "SUCCEEDED")
                         self.assertEqual(reply["evidence"]["verification"]["position"], [1,0])
                         self.assertTrue(plugin_tracks.call_for(pin,"settle"))
+                        self.assertIsNone(next_command())
+                        proposal = dict(task="socket-feedback",index=4,provider=provider,step=incremental_proposal)
+                        receipt = request_at(path("agent"),"freeze_step",**proposal)
+                        self.assertEqual(request_at(path("agent"),"freeze_step",**proposal),receipt)
+                        self.assertEqual(receipt[1]["physical_pin"]["reservation_id"],"socket-feedback/step/4")
+                        self.assertTrue(plugin_tracks.call_for(receipt[1]["physical_pin"],"settle"))
                         self.assertIsNone(next_command())
                 finally:
                     if observer.is_alive():

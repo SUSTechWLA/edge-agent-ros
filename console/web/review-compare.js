@@ -22,8 +22,9 @@
     "provider.disabled":"站点停用首选插件","provider.retired":"站点停用首选插件","operator.disable":"站点停用首选插件",
     "operator.preference":"站点调整验证偏好","provider.fallback":"选择可用的备用实现","plugin.fallback":"选择可用的备用实现",
     "comparison.verified":"同帧测量对照已核验","task.failed":"任务未完成","blocked":"任务阻塞",
+    "retry":"等待重新核对可用能力","retry_exhausted":"重试结束，任务阻塞",
     "planner.implementation_selected":"Agent 选定可用实现","planner.graph_composed":"车端模型生成工具组合",
-    "site.preference":"部署方调整验证偏好","site.drain":"部署方停用首选插件"
+    "site.preference":"部署方调整验证偏好","site.drain":"部署方停用首选插件","site.remove":"DSH 已卸载插件"
   };
   const operationTitles={measure_p10:"测量分区第 10 百分位",measure_median:"测量分区中位数",classify_near:"判定近距、远距与未知",rank_nearest:"按距离排列复核顺序",rank_image:"按画面位置排列"};
   let data=null,events=[],cursor=-1,follow=!sealed,playing=0,view="decision",cached="",pending=null,acking=false;
@@ -31,6 +32,14 @@
   const hash=ref=>typeof ref==="string" && /^sha256:[a-f0-9]{64}$/.test(ref);
   const short=ref=>hash(ref)?"sha256:"+ref.slice(7,19)+"…":ref||"";
   const val=n=>typeof n==="number" && Number.isFinite(n)?n.toFixed(3)+" m":"未知";
+  function allProvidersRemoved(){
+    const removed=new Set();
+    for(const e of events){
+      if(e.kind==="site.remove")removed.add(e.provider);
+      if(e.kind==="site.restored")removed.delete(e.provider);
+    }
+    return data?.providers?.length>0 && data.providers.every(p=>!p.available && removed.has(p.id));
+  }
   const fmt=utc=>{const dt=new Date(utc);return Number.isFinite(dt.getTime())?new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).format(dt):"";};
   const time=utc=>Date.parse(utc);
   const origin=r=>originNames[r?.origin]||r?.origin||"来源待核对";
@@ -232,7 +241,7 @@
         else if(previous){const i=events.findIndex(e=>e.kind===previous.kind && e.task_id===previous.task_id && e.utc===previous.utc);cursor=i<0?Math.min(cursor,events.length-1):i;}
         $("open-compose").hidden=!submitAllowed() || !$("composer").hidden;render();void loadFrames();
       }
-      displayError("");status(sealed?"封存回放":"站点记录在线","ok");
+      displayError("");status(sealed?"封存回放":allProvidersRemoved()?"分区插件已卸载 · 可查历史":"站点记录在线","ok");
     } catch(err){displayError(err.message);status("读取失败","fail");}
     finally{loading=false;}
   }

@@ -133,8 +133,6 @@ def run(args, selected, reasons):
                                  "-f","compose.model-provider.yaml","-f","compose.model-provider-hardware.yaml","config","--quiet"]])
         if "planner" in selected:
             stage("planner",[test("planning_contract.py","-v"),test("test_autonomous_read.py","-v"),test("test_read_operators.py","-v"),
-                             test("test_feedback_planner.py","-v"),
-                             [PY,"-m","unittest","discover","-s","tests","-p","test_time_pairing.py","-v"],
                              test("test_numeric_program.py","-v"),test("test_region_operator_service.py","-v"),
                              test("test_derived_tools.py","-v"),
                              test("test_reference_utterances.py","-v"),test("test_spatial_facts.py","-v"),
@@ -144,7 +142,12 @@ def run(args, selected, reasons):
                              test("test_object_site.py","-v"),test("test_direct_target_demo.py","-v"),
                              test("test_spatial_capture_archive.py","-v"),test("test_verify_perception_candidate.py","-v"),
                              [PY,"-m","unittest","discover","-s","tests","-p","test_*review.py","-v"],
+                             [PY,"-m","unittest","discover","-s","tests","-p","test_review055*.py","-v"],
                              test("test_navigation_planner.py","-v"),test("test_local_preview.py","-v"),test("test_navigation_physical.py","-v"),
+                             test("test_feedback_planner.py","-v"), test("test_feedback_admission.py","-v"),
+                             test("test_semantic_scene.py","-v"), test("test_planar_pose.py","-v"),
+                             [PY,"-m","unittest","discover","-s","tests","-p","test_time_pairing.py","-v"],
+                             test("test_survey_providers.py","-v"),test("test_survey_session.py","-v"),test("test_survey_recovery.py","-v"),
                              test("test_navigation_pack.py","-v"),
                              test("test_planner_model_selection.py","-v"),
                              [PY,str(ROOT/"model_provider/test_provider.py"),"-v"],
@@ -315,6 +318,7 @@ def run(args, selected, reasons):
                                               test("test_campus_facilities.py","-v"),
                                               test("test_campus_real_site.py","-v"),
                                               test("test_campus_route_overlay.py","-v"),
+                                              test("test_campus_trajectory_truth.py","-v"),
                                               test("test_campus_robot_assets.py","-v"),
                                               test("test_campus_assets.py","-v"),test("test_campus_deployment.py","-v"),
                                               test("test_campus_capture.py","-v")]

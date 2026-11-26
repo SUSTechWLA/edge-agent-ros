@@ -1,0 +1,2295 @@
+{
+  "trial": "05",
+  "source": "Gazebo ground truth, actuator output, ROS Gateway events and frozen mission receipts",
+  "passed": true,
+  "required_clearance_m": 0.55,
+  "checks": {
+    "same_map": true,
+    "same_controller_image": true,
+    "same_base_campus": true
+  },
+  "cases": {
+    "crossing": {
+      "schema_version": 1,
+      "passed": true,
+      "case": "crossing",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "two_different_independent_pedestrians_crossed": true,
+        "at_least_one_threatened_stop": true,
+        "all_overlapping_moving_pedestrian_samples_stopped": true,
+        "continued_under_same_task_after_last_crossing": true,
+        "agent_rechecked_before_issuing_the_next_native_segment": true,
+        "independent_arrival_and_stop_witness": true,
+        "same_running_gateway_from_submission_through_terminal": true,
+        "correct_campus_and_semantic_task": true,
+        "stationary_if_actor_enters_clearance_margin": true
+      },
+      "task_id": "campus-dynamic-crossing-05",
+      "operation_id": "campus-dynamic-crossing-05/step/1",
+      "map_ref": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+        "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+      },
+      "status": "SUCCEEDED",
+      "phase": "ARRIVED",
+      "source": "Gazebo world odometry, contact sensors and ROS motion commands",
+      "gateway_boot_ids": [
+        "gateway-f04e9048-2af3bb99-78769337-a6c79d26"
+      ],
+      "native_operations": [
+        "campus-dynamic-crossing-05/leg/1/waypoint/1",
+        "campus-dynamic-crossing-05/leg/2/waypoint/1",
+        "campus-dynamic-crossing-05/leg/3/waypoint/1",
+        "campus-dynamic-crossing-05/leg/4/waypoint/1",
+        "campus-dynamic-crossing-05/leg/5/waypoint/1",
+        "campus-dynamic-crossing-05/leg/6/waypoint/1",
+        "campus-dynamic-crossing-05/leg/7/waypoint/1",
+        "campus-dynamic-crossing-05/leg/8/waypoint/1"
+      ],
+      "verified_gateway_stops": 8,
+      "gateway_dynamic_yield_events": 5,
+      "gateway_dynamic_clear_events": 5,
+      "physical_contacts": 0,
+      "fixture_guards": 0,
+      "actors": {
+        "pedestrian_1": {
+          "travel_m": 3.32000000000072,
+          "start_y_m": -1.35,
+          "finish_y_m": 1.97000000000072,
+          "max_position_speed_mps": 0.6200000000000649,
+          "raw_twist_peak": {
+            "mps": 86.61857640124188,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.41706861612673185,
+          "fixture_gate_completed": true
+        },
+        "pedestrian_2": {
+          "travel_m": 3.5900000000001997,
+          "start_y_m": 1.62,
+          "finish_y_m": -1.9700000000001996,
+          "max_position_speed_mps": 0.5800000000000249,
+          "raw_twist_peak": {
+            "mps": 112.66688582051883,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.8620686161267319,
+          "fixture_gate_completed": true
+        }
+      },
+      "threatened_samples": 35,
+      "threatened_and_stopped_samples": 35,
+      "overlap_occupied_by_moving_pedestrians_samples": 31,
+      "overlap_stationary_samples": 31,
+      "world_samples": 742,
+      "final_pose": {
+        "xy": [
+          3.261411353406488,
+          0.8257181948993988
+        ],
+        "yaw": 0.6603336479653202,
+        "linear_mps": 0.0,
+        "angular_radps": 0.0,
+        "stamp_ns": 75616000000,
+        "frame": "world"
+      },
+      "goal_error_m": 0.04559264968021205,
+      "persistent_stop_window": {},
+      "session_events": [
+        {
+          "kind": "task_admitted",
+          "seq": 1,
+          "stamp": 1795502173.4835625,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "destination_resolved",
+          "seq": 2,
+          "stamp": 1795502173.6247332,
+          "data": {
+            "goal": [
+              3.3,
+              0.85
+            ],
+            "marker_id": "teaching-exit-north-wait",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            }
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 3,
+          "stamp": 1795502173.7218695,
+          "data": {
+            "goal": [
+              0.5500000976026058,
+              -0.0499999113380909
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 4,
+          "stamp": 1795502175.084661,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.ttc_insufficient",
+            "stop_evidence": {
+              "accepted_samples": 10,
+              "quiet_samples": 10,
+              "sample_gaps": 0,
+              "wall_elapsed_ms": 350,
+              "quiet_acquisition_ms": 306,
+              "quiet_arrival_ms": 311,
+              "last_odom_age_ms": 11,
+              "last_linear_mps": 0.0,
+              "last_angular_rad_s": 0.0
+            }
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 5,
+          "stamp": 1795502175.439361,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.035140877354658456,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 28126000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 6,
+          "stamp": 1795502179.1194909,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "insufficient_clearance",
+            "clearance_m": 0.3449439547704784,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 30500000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 7,
+          "stamp": 1795502180.975458,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "predicted_track_conflict",
+            "clearance_m": 0.5915234874761959,
+            "clear_samples": 0,
+            "required_samples": 5,
+            "clear_span_ms": 0,
+            "last_stamp_ns": 31750000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 8,
+          "stamp": 1795502182.767703,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.9007521671646421,
+            "clear_samples": 4,
+            "required_samples": 5,
+            "clear_span_ms": 374,
+            "last_stamp_ns": 32750000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 9,
+          "stamp": 1795502183.6755102,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.9007521671646421,
+            "clear_samples": 8,
+            "required_samples": 5,
+            "clear_span_ms": 874,
+            "last_stamp_ns": 33250000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 10,
+          "stamp": 1795502183.89863,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "review_segment_changed"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 11,
+          "stamp": 1795502184.4244273,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.9927219804136982,
+            "clear_samples": 2,
+            "required_samples": 5,
+            "clear_span_ms": 124,
+            "last_stamp_ns": 33500000000
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 12,
+          "stamp": 1795502185.299104,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.9927219330240381,
+            "clear_samples": 7,
+            "required_samples": 5,
+            "clear_span_ms": 750,
+            "last_stamp_ns": 34126000000
+          }
+        },
+        {
+          "kind": "dynamic_resumed",
+          "seq": 13,
+          "stamp": 1795502185.458381,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/1",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "clear_observation",
+            "clearance_m": 0.9927219330240381,
+            "clear_samples": 7,
+            "required_samples": 5,
+            "clear_span_ms": 750,
+            "last_stamp_ns": 34126000000
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 14,
+          "stamp": 1795502185.5159311,
+          "data": {
+            "goal": [
+              0.6500000990927219,
+              -0.0499999113380909
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 15,
+          "stamp": 1795502187.6904702,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.85
+          }
+        },
+        {
+          "kind": "obstacle",
+          "seq": 16,
+          "stamp": 1795502187.7602947,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "code": "navigation.dynamic_yield",
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-67",
+            "clearance_m": null
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 17,
+          "stamp": 1795502187.907766,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.85,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 35750000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-68"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 18,
+          "stamp": 1795502188.638065,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.85,
+            "clear_samples": 1,
+            "required_samples": 3,
+            "last_stamp_ns": 36376000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-84"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 19,
+          "stamp": 1795502188.9400039,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.8415592391864315,
+            "clear_samples": 4,
+            "required_samples": 3,
+            "last_stamp_ns": 36750000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-94"
+          }
+        },
+        {
+          "kind": "dynamic_resumed",
+          "seq": 20,
+          "stamp": 1795502189.019348,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.8415592391864315,
+            "clear_samples": 4,
+            "required_samples": 3,
+            "last_stamp_ns": 36750000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-95"
+          }
+        },
+        {
+          "kind": "obstacle",
+          "seq": 21,
+          "stamp": 1795502189.0580022,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "code": "navigation.dynamic_clear",
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-95",
+            "clearance_m": null
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 22,
+          "stamp": 1795502190.0998137,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.85
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 23,
+          "stamp": 1795502190.1899586,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.85,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 37876000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-124"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 24,
+          "stamp": 1795502190.746958,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.85,
+            "clear_samples": 1,
+            "required_samples": 8,
+            "last_stamp_ns": 38250000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-134"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 25,
+          "stamp": 1795502191.6566837,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.8424743074251693,
+            "clear_samples": 9,
+            "required_samples": 8,
+            "last_stamp_ns": 39250000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-159"
+          }
+        },
+        {
+          "kind": "dynamic_resumed",
+          "seq": 26,
+          "stamp": 1795502191.744645,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.8424743074251693,
+            "clear_samples": 9,
+            "required_samples": 8,
+            "last_stamp_ns": 39250000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-160"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 27,
+          "stamp": 1795502192.808291,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.85
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 28,
+          "stamp": 1795502192.8966572,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.85,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 40376000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-189"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 29,
+          "stamp": 1795502194.0608776,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.85,
+            "clear_samples": 1,
+            "required_samples": 3,
+            "last_stamp_ns": 41376000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-214"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 30,
+          "stamp": 1795502194.3670006,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.8439544815768395,
+            "clear_samples": 4,
+            "required_samples": 3,
+            "last_stamp_ns": 41750000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-224"
+          }
+        },
+        {
+          "kind": "dynamic_resumed",
+          "seq": 31,
+          "stamp": 1795502194.4579759,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.8439544815768395,
+            "clear_samples": 4,
+            "required_samples": 3,
+            "last_stamp_ns": 41750000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-225"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 32,
+          "stamp": 1795502195.8233585,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/2",
+            "xy": [
+              0.5992031398144129,
+              -0.042590203869834864
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 33,
+          "stamp": 1795502196.1857598,
+          "data": {
+            "goal": [
+              1.1500001065433025,
+              -0.0499999113380909
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/3",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 34,
+          "stamp": 1795502200.337102,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/3",
+            "xy": [
+              1.0974241154679587,
+              -0.05528152045899353
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 35,
+          "stamp": 1795502201.3060591,
+          "data": {
+            "goal": [
+              1.6500001139938831,
+              -0.0499999113380909
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/4",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 36,
+          "stamp": 1795502206.9662306,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/4",
+            "xy": [
+              1.5976868731674623,
+              -0.04677612567628162
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 37,
+          "stamp": 1795502207.3586764,
+          "data": {
+            "goal": [
+              2.1500001214444637,
+              -0.0499999113380909
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/5",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 38,
+          "stamp": 1795502215.4188173,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/5",
+            "xy": [
+              2.099156677969199,
+              -0.05193218655362238
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 39,
+          "stamp": 1795502216.383635,
+          "data": {
+            "goal": [
+              2.6500001288950443,
+              0.25000009313225746
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 40,
+          "stamp": 1795502218.4306984,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.7725733488689778
+          }
+        },
+        {
+          "kind": "obstacle",
+          "seq": 41,
+          "stamp": 1795502218.4689915,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "code": "navigation.dynamic_yield",
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-600",
+            "clearance_m": 7.180598735809326
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 42,
+          "stamp": 1795502218.5572364,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.7725733488689778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 60126000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-601"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 43,
+          "stamp": 1795502219.3841093,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.7807787441848113,
+            "clear_samples": 1,
+            "required_samples": 3,
+            "last_stamp_ns": 61000000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-623"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 44,
+          "stamp": 1795502219.689308,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.7689733318181993,
+            "clear_samples": 4,
+            "required_samples": 3,
+            "last_stamp_ns": 61376000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-633"
+          }
+        },
+        {
+          "kind": "dynamic_resumed",
+          "seq": 45,
+          "stamp": 1795502219.7766945,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.7689733318181993,
+            "clear_samples": 4,
+            "required_samples": 3,
+            "last_stamp_ns": 61376000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-634"
+          }
+        },
+        {
+          "kind": "obstacle",
+          "seq": 46,
+          "stamp": 1795502219.814454,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "code": "navigation.dynamic_clear",
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-634",
+            "clearance_m": null
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 47,
+          "stamp": 1795502222.0484443,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.85
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 48,
+          "stamp": 1795502222.1326587,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.85,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 63500000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-687"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 49,
+          "stamp": 1795502223.000528,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.85,
+            "clear_samples": 1,
+            "required_samples": 3,
+            "last_stamp_ns": 64500000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-712"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 50,
+          "stamp": 1795502223.3060546,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.8416620034438212,
+            "clear_samples": 3,
+            "required_samples": 3,
+            "last_stamp_ns": 64750000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-719"
+          }
+        },
+        {
+          "kind": "dynamic_resumed",
+          "seq": 51,
+          "stamp": 1795502223.401671,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "task_operation_id": "campus-dynamic-crossing-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "f04e9048-2af3bb99-78769337-a6c79d26",
+            "result": "clear",
+            "required_clearance_m": 0.55,
+            "reason": "stationary_exterior",
+            "clearance_m": 0.8416620034438212,
+            "clear_samples": 3,
+            "required_samples": 3,
+            "last_stamp_ns": 64750000000,
+            "source": "gateway-f04e9048-2af3bb99-78769337-a6c79d26-720"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 52,
+          "stamp": 1795502224.4544904,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/6",
+            "xy": [
+              2.6203818754653634,
+              0.20999247928777048
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 53,
+          "stamp": 1795502225.4217737,
+          "data": {
+            "goal": [
+              3.050000134855509,
+              0.6500000990927219
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/7",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 54,
+          "stamp": 1795502229.5736678,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/7",
+            "xy": [
+              3.011995314138239,
+              0.6176597272305386
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 55,
+          "stamp": 1795502230.2408347,
+          "data": {
+            "goal": [
+              3.3,
+              0.85
+            ],
+            "operation_id": "campus-dynamic-crossing-05/leg/8",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "motion_verified",
+          "seq": 56,
+          "stamp": 1795502233.799962,
+          "data": {
+            "operation_id": "campus-dynamic-crossing-05/leg/8",
+            "xy": [
+              3.2594228476708267,
+              0.8192042964993987
+            ],
+            "mode": "navigate"
+          }
+        },
+        {
+          "kind": "finished",
+          "seq": 57,
+          "stamp": 1795502234.51533,
+          "data": {
+            "status": "SUCCEEDED",
+            "observed_xy": [
+              3.2595666360317592,
+              0.8184537191357009
+            ],
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "goal": [
+              3.3,
+              0.85
+            ],
+            "initial_pose": {
+              "x": -1.2477089611690977e-09,
+              "y": -5.9437321846089996e-30,
+              "yaw": 1.2514972846657571e-17,
+              "frame": "odom",
+              "speed": -3.067289108923196e-20,
+              "yaw_rate": -5.63804007792222e-20
+            },
+            "final_pose": {
+              "x": 3.2595666360317592,
+              "y": 0.8184537191357009,
+              "yaw": 0.6537129402708128,
+              "frame": "odom",
+              "speed": 0.0,
+              "yaw_rate": 0.0
+            },
+            "bindings": {
+              "map.load": {
+                "plugin_id": "sdd058.map-load",
+                "version": "1.0.0",
+                "binding": "752d193ce2c5c51a7a163cc63d2687b3120fa902f758bfaf704722f26b0cdb06"
+              },
+              "planning.survey_route": {
+                "plugin_id": "sdd058.route",
+                "version": "1.1.0",
+                "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+              },
+              "planning.corridor_review": {
+                "plugin_id": "sdd058.corridor",
+                "version": "1.1.0",
+                "binding": "f40fd61e9f703cfdef7b9fb346aaef19cbdcc590859442e61e9594cefb7af0ae"
+              }
+            }
+          }
+        }
+      ],
+      "recovery_cycles": {
+        "completed": [
+          {
+            "operation": "campus-dynamic-crossing-05/leg/1",
+            "hold": 4,
+            "clear": 12,
+            "resume": 13
+          },
+          {
+            "operation": "campus-dynamic-crossing-05/leg/2",
+            "hold": 15,
+            "clear": 19,
+            "resume": 20
+          },
+          {
+            "operation": "campus-dynamic-crossing-05/leg/2",
+            "hold": 22,
+            "clear": 25,
+            "resume": 26
+          },
+          {
+            "operation": "campus-dynamic-crossing-05/leg/2",
+            "hold": 27,
+            "clear": 30,
+            "resume": 31
+          },
+          {
+            "operation": "campus-dynamic-crossing-05/leg/6",
+            "hold": 40,
+            "clear": 44,
+            "resume": 45
+          },
+          {
+            "operation": "campus-dynamic-crossing-05/leg/6",
+            "hold": 47,
+            "clear": 50,
+            "resume": 51
+          }
+        ],
+        "pending": {},
+        "issues": []
+      },
+      "encounters_within_055m": {
+        "samples": 26,
+        "highest_measured_speed_mps": 1.0455351118256054e-05,
+        "highest_measured_turn_rate_radps": 3.893878460701023e-14
+      },
+      "timeline_sha256": "7f6780b1f9a1fb7ce19d8e2cc5491240ddc9e427824613f08352c2be7b903260",
+      "gateway": {
+        "id": "fda3b19b3b25a7d1cee1cf26019a364c407fb42e33f2cadf9cd621848e7ca301",
+        "image_id": "sha256:03d8ae30ef6457b472150dbe2faa04a64638027e398e13ef28bb1d17d4d073d6",
+        "label": "edge-rover-local:sdd058-campus-pursuit",
+        "started_at": "2026-11-24T06:35:32.905492473Z",
+        "restart_count": 0,
+        "gateway_command": [
+          "ros2",
+          "run",
+          "edge_gateway",
+          "edge_gateway_node",
+          "--ros-args",
+          "-p",
+          "require_scan:=true",
+          "-p",
+          "local_planner:=footprint_follow",
+          "-p",
+          "vehicle_profile:=/fixture-footprint.json",
+          "-p",
+          "scan_source_id:=sdd058.sim.lidar",
+          "-p",
+          "scan_frame_id:=laser_link",
+          "-p",
+          "scan_calibration:=sdd058.sim.fixture",
+          "-p",
+          "scan_origin_x_m:=0.08",
+          "-p",
+          "scan_range_resolution_m:=0.02",
+          "-p",
+          "dynamic_observer:=scan_clusters",
+          "-p",
+          "dynamic_policy:=yield_crossing",
+          "-p",
+          "trajectory_tracker:=regulated_pursuit"
+        ],
+        "running": true
+      },
+      "campus": {
+        "base_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+        "fixture_sha256": "c118e8aee2ae7b196c93655111497eb5a367d1a952a24cf673cae8f0c75de3c9",
+        "layout_id": "campus_large",
+        "layout_revision": "3.4b916e7ae0b95c41",
+        "layout_sha256": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+        "world_name": "edge_lab"
+      }
+    },
+    "blocked": {
+      "schema_version": 1,
+      "passed": true,
+      "case": "blocked",
+      "checks": {
+        "exact_frozen_published_map": true,
+        "one_outer_task_and_operation": true,
+        "unchanged_single_gateway_boot": true,
+        "one_gazebo_clock_epoch": true,
+        "no_physical_contact_or_fixture_guard": true,
+        "existing_gateway_footprint": true,
+        "terminal_independent_rover_stationary": true,
+        "agent_recheck_bound_to_same_map_task_gateway_and_margin": true,
+        "persistent_obstacle_entered_and_held": true,
+        "continuous_independent_parked_stop": true,
+        "terminal_still_blocked_without_arrival": true,
+        "active_hold_resolved_as_blocked": true,
+        "same_running_gateway_from_submission_through_terminal": true,
+        "correct_campus_and_semantic_task": true,
+        "stationary_if_actor_enters_clearance_margin": true
+      },
+      "task_id": "campus-dynamic-blocked-05",
+      "operation_id": "campus-dynamic-blocked-05/step/1",
+      "map_ref": {
+        "id": "campus-teaching-survey",
+        "frame": "odom",
+        "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+        "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+      },
+      "status": "BLOCKED",
+      "phase": "BLOCKED",
+      "source": "Gazebo world odometry, contact sensors and ROS motion commands",
+      "gateway_boot_ids": [
+        "gateway-e9910baf-6094220-2b833573-cd39c593"
+      ],
+      "native_operations": [
+        "campus-dynamic-blocked-05/leg/1/waypoint/1"
+      ],
+      "verified_gateway_stops": 1,
+      "gateway_dynamic_yield_events": 1,
+      "gateway_dynamic_clear_events": 0,
+      "physical_contacts": 0,
+      "fixture_guards": 0,
+      "actors": {
+        "lane_barrier": {
+          "travel_m": 1.6000000000005001,
+          "start_y_m": -1.48,
+          "finish_y_m": 0.12000000000050015,
+          "max_position_speed_mps": 0.5500000000000504,
+          "raw_twist_peak": {
+            "mps": 99.85792376307253,
+            "stamp_ns": 20000000,
+            "is_first_sample": true
+          },
+          "min_rover_clearance_m": 0.7049999870843718,
+          "fixture_gate_completed": true
+        }
+      },
+      "threatened_samples": 270,
+      "threatened_and_stopped_samples": 270,
+      "overlap_occupied_by_moving_pedestrians_samples": null,
+      "overlap_stationary_samples": null,
+      "world_samples": 504,
+      "final_pose": {
+        "xy": [
+          1.29156281137024e-08,
+          7.1961958258103e-19
+        ],
+        "yaw": -3.431677484350987e-19,
+        "linear_mps": 0.0,
+        "angular_radps": 0.0,
+        "stamp_ns": 51340000000,
+        "frame": "world"
+      },
+      "goal_error_m": 3.40771182977036,
+      "persistent_stop_window": {
+        "samples": 239,
+        "wall_seconds": 37.737920878,
+        "gazebo_seconds": 24.276,
+        "max_linear_mps": 0.0,
+        "max_angular_radps": 0.0,
+        "max_output_linear_mps": 0.0,
+        "max_output_angular_radps": 0.0,
+        "max_displacement_m": 0.0
+      },
+      "session_events": [
+        {
+          "kind": "task_admitted",
+          "seq": 1,
+          "stamp": 1795502313.4458337,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/step/1",
+            "tool": "navigate"
+          }
+        },
+        {
+          "kind": "destination_resolved",
+          "seq": 2,
+          "stamp": 1795502313.6294606,
+          "data": {
+            "goal": [
+              3.3,
+              0.85
+            ],
+            "marker_id": "teaching-exit-north-wait",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            }
+          }
+        },
+        {
+          "kind": "route_planned",
+          "seq": 3,
+          "stamp": 1795502313.724823,
+          "data": {
+            "goal": [
+              0.5500000976026058,
+              -0.0499999113380909
+            ],
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "view_yaw_rad": null,
+            "reason": "published_map_route",
+            "covered": 3872,
+            "binding": "7be833697b01d66bca157ee11cb8649207763d982cd251d9117e136dabd739cd"
+          }
+        },
+        {
+          "kind": "dynamic_hold",
+          "seq": 4,
+          "stamp": 1795502314.7798445,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "navigation.dynamic_yield",
+            "clearance_m": 0.6605744710319302
+          }
+        },
+        {
+          "kind": "obstacle",
+          "seq": 5,
+          "stamp": 1795502314.812296,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "code": "navigation.dynamic_yield",
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-21",
+            "clearance_m": null
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 6,
+          "stamp": 1795502314.8941214,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.6605744710319302,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 23750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-22"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 7,
+          "stamp": 1795502316.0327044,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "tracking_in_lane",
+            "clearance_m": 0.6605745898564245,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 24750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-47"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 8,
+          "stamp": 1795502316.9356782,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 25750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-72"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 9,
+          "stamp": 1795502318.13279,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 26750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-97"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 10,
+          "stamp": 1795502319.3501256,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 27750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-122"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 11,
+          "stamp": 1795502321.2178786,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 28750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-147"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 12,
+          "stamp": 1795502323.0371377,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 29750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-172"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 13,
+          "stamp": 1795502325.1366024,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 30750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-197"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 14,
+          "stamp": 1795502327.286464,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 31750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-222"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 15,
+          "stamp": 1795502329.4182134,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 32750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-247"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 16,
+          "stamp": 1795502331.2288966,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 33750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-272"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 17,
+          "stamp": 1795502332.718762,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 34750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-297"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 18,
+          "stamp": 1795502333.9160664,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 35750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-322"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 19,
+          "stamp": 1795502335.1229885,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 36750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-347"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 20,
+          "stamp": 1795502336.0303748,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 37750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-372"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 21,
+          "stamp": 1795502337.2321234,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 38750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-397"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 22,
+          "stamp": 1795502338.4481618,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 39750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-422"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 23,
+          "stamp": 1795502339.6398418,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 40750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-447"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 24,
+          "stamp": 1795502340.8715534,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 41750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-472"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 25,
+          "stamp": 1795502342.0598562,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 42750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-497"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 26,
+          "stamp": 1795502343.2813468,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 43750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-522"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 27,
+          "stamp": 1795502344.4752123,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 44750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-547"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 28,
+          "stamp": 1795502345.3833654,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 45750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-572"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 29,
+          "stamp": 1795502346.9236531,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 46750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-597"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 30,
+          "stamp": 1795502348.7791305,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 47750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-622"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 31,
+          "stamp": 1795502350.8816423,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 48750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-647"
+          }
+        },
+        {
+          "kind": "stop_requested",
+          "seq": 32,
+          "stamp": 1795502352.9094799,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1"
+          }
+        },
+        {
+          "kind": "dynamic_recheck",
+          "seq": 33,
+          "stamp": 1795502353.3406541,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "waiting",
+            "required_clearance_m": 0.55,
+            "reason": "observed_corridor",
+            "clearance_m": 0.7037327502312778,
+            "clear_samples": 0,
+            "required_samples": 8,
+            "last_stamp_ns": 49750000000,
+            "source": "gateway-e9910baf-6094220-2b833573-cd39c593-672"
+          }
+        },
+        {
+          "kind": "dynamic_blocked",
+          "seq": 34,
+          "stamp": 1795502353.8267062,
+          "data": {
+            "operation_id": "campus-dynamic-blocked-05/leg/1",
+            "task_operation_id": "campus-dynamic-blocked-05/step/1",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "gateway_boot_id": "e9910baf-6094220-2b833573-cd39c593",
+            "result": "blocked",
+            "required_clearance_m": 0.55,
+            "reason": "corridor_clearance_unverified"
+          }
+        },
+        {
+          "kind": "finished",
+          "seq": 35,
+          "stamp": 1795502353.9113784,
+          "data": {
+            "status": "BLOCKED",
+            "map_ref": {
+              "id": "campus-teaching-survey",
+              "frame": "odom",
+              "digest": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5",
+              "revision": "7213be4161685bde93928908c130da3624f539db55546e96d7d92701367295f5"
+            },
+            "final_pose": {
+              "x": -1.2477089523130498e-09,
+              "y": -5.943575911412394e-30,
+              "yaw": 2.4041420737529848e-17,
+              "frame": "odom",
+              "speed": 6.966049829827038e-19,
+              "yaw_rate": 2.051436640680556e-18
+            },
+            "operation_id": "campus-dynamic-blocked-05/step/1"
+          }
+        }
+      ],
+      "recovery_cycles": {
+        "completed": [],
+        "pending": {
+          "campus-dynamic-blocked-05/leg/1": {
+            "hold": 4,
+            "clear": null,
+            "blocked": 34
+          }
+        },
+        "issues": []
+      },
+      "encounters_within_055m": {
+        "samples": 0,
+        "highest_measured_speed_mps": null,
+        "highest_measured_turn_rate_radps": null
+      },
+      "timeline_sha256": "f550d94379b95ed30c5c79a6faef2e8592d83fadfe990dd99f132a4f0cca2151",
+      "gateway": {
+        "id": "64a21f9b65cb0acba905af48d3c463336110df8c0534f2cdebf48b1ff7ee26f5",
+        "image_id": "sha256:03d8ae30ef6457b472150dbe2faa04a64638027e398e13ef28bb1d17d4d073d6",
+        "label": "edge-rover-local:sdd058-campus-pursuit-03d8ae30",
+        "started_at": "2026-11-24T06:37:49.9852994Z",
+        "restart_count": 0,
+        "gateway_command": [
+          "ros2",
+          "run",
+          "edge_gateway",
+          "edge_gateway_node",
+          "--ros-args",
+          "-p",
+          "require_scan:=true",
+          "-p",
+          "local_planner:=footprint_follow",
+          "-p",
+          "vehicle_profile:=/fixture-footprint.json",
+          "-p",
+          "scan_source_id:=sdd058.sim.lidar",
+          "-p",
+          "scan_frame_id:=laser_link",
+          "-p",
+          "scan_calibration:=sdd058.sim.fixture",
+          "-p",
+          "scan_origin_x_m:=0.08",
+          "-p",
+          "scan_range_resolution_m:=0.02",
+          "-p",
+          "dynamic_observer:=scan_clusters",
+          "-p",
+          "dynamic_policy:=yield_crossing",
+          "-p",
+          "trajectory_tracker:=regulated_pursuit"
+        ],
+        "running": true
+      },
+      "campus": {
+        "base_sha256": "e7a2772711e484d7a402098e3cb13202d21aea7f61a5865a89f06c889880f5af",
+        "fixture_sha256": "77533ad5178edf08e7e407982bd2b8f485a141249538e9c582fac72e85eff064",
+        "layout_id": "campus_large",
+        "layout_revision": "3.4b916e7ae0b95c41",
+        "layout_sha256": "e18670e1247346a2cf5d1ea3f702787c8af959bd5792b53e3c95ca7900db08f1",
+        "world_name": "edge_lab"
+      }
+    }
+  }
+}

@@ -1,0 +1,178 @@
+# Campus Gazebo navigation station. The launcher allocates the domain, partition and loopback port.
+x-campus-ros: &campus-ros
+  ROS_DOMAIN_ID: ${EDGE_SDD058_DOMAIN:?set isolated domain}
+  GZ_PARTITION: ${EDGE_SDD058_PARTITION:?set isolated partition}
+  EDGE_SDD058_CASE: ${EDGE_SDD058_CASE:?set campus case}
+  RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+  GZ_SIM_SYSTEM_PLUGIN_PATH: /opt/edge/lib/edge_sim
+  ROS_LOG_DIR: /tmp/ros-logs
+
+x-provider-volumes: &provider-volumes
+  - ./exploration:/opt/edge/exploration:ro
+  - ./navigation:/opt/edge/navigation:ro
+  - ./edge_contracts:/opt/edge/edge_contracts:ro
+
+x-provider: &provider
+  image: ${EDGE_IMAGE:-edge-rover-local:sdd058-dynamic-recovery}
+  pull_policy: never
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: [/tmp]
+  working_dir: /opt/edge
+  environment:
+    PYTHONDONTWRITEBYTECODE: "1"
+  volumes: *provider-volumes
+
+services:
+  sim:
+    image: ${EDGE_CAMPUS_SIM_IMAGE:-edge-rover-local:sdd058-campus-lidar-r1}
+    environment:
+      <<: *campus-ros
+      EDGE_SCENE_FILE: ""
+      GZ_SIM_RESOURCE_PATH: /assets/models:/assets:/campus
+      LP_NUM_THREADS: 2
+    volumes:
+      - ./tests/system:/fixture:ro
+      - campus-base:/campus:ro
+      - ${EDGE_CAMPUS_ASSETS_DIR:-./artifacts/sim-assets}:/assets:ro
+    command: ["bash","-ec","python3 /fixture/campus_dynamic_fixture.py /campus/world.sdf /tmp/campus.sdf --case $${EDGE_SDD058_CASE} && exec gz sim -s -r --headless-rendering /tmp/campus.sdf"]
+  bridge:
+    environment: *campus-ros
+  witness:
+    environment: *campus-ros
+    volumes:
+      - ./scene/campus_large/navigation/truth-bridge.yaml:/fixture-truth.yaml:ro
+    command: ["ros2","run","ros_gz_bridge","parameter_bridge","--ros-args","-r","__node:=edge_campus_truth_bridge","-p","config_file:=/fixture-truth.yaml"]
+  campus-camera-bridge:
+    <<: *provider
+    environment: *campus-ros
+    volumes:
+      - ./scene/campus_large/teaching-depth-bridge.yaml:/fixture-rgbd.yaml:ro
+    command: ["ros2","run","ros_gz_bridge","parameter_bridge","--ros-args","-r","__node:=edge_campus_rgbd_bridge","-p","config_file:=/fixture-rgbd.yaml"]
+  core:
+    environment: *campus-ros
+    image: ${EDGE_CAMPUS_GATEWAY_IMAGE:-edge-rover-local:sdd058-campus-continuous-r3}
+  gateway:
+    environment: *campus-ros
+    image: ${EDGE_CAMPUS_GATEWAY_IMAGE:-edge-rover-local:sdd058-campus-continuous-r3}
+    volumes:
+      - ./scene/campus_large/navigation/rover-footprint.json:/fixture-footprint.json:ro
+    command: ["ros2","run","edge_gateway","edge_gateway_node","--ros-args","-p","require_scan:=true","-p","local_planner:=footprint_follow","-p","vehicle_profile:=/fixture-footprint.json","-p","scan_source_id:=sdd058.sim.lidar","-p","scan_frame_id:=laser_link","-p","scan_calibration:=sdd058.sim.fixture","-p","scan_origin_x_m:=0.08","-p","scan_range_resolution_m:=0.02","-p","dynamic_observer:=scan_clusters","-p","dynamic_policy:=yield_crossing","-p","trajectory_tracker:=regulated_pursuit"]
+  perception:
+    environment: *campus-ros
+    volumes:
+      - ./perception/node.py:/opt/edge/perception/node.py:ro
+    command: ["python3","/opt/edge/perception/node.py","--ros-args","-p","map_reset_service:=/sdd058/reset_mapping"]
+  agent:
+    environment:
+      <<: *campus-ros
+      EDGE_EXTRA_PLUGIN_DIR: /campus-tools
+      EDGE_OLLAMA_URL: ""
+      EDGE_PLANNER_URL: ""
+    volumes:
+      - ./agent:/opt/edge/agent:ro
+      - ./scene/campus_large/navigation/tools:/campus-tools:ro
+      - ./scene/campus_large/navigation/runtime:/etc/edge/plugins/runtime:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+  console:
+    environment:
+      <<: *campus-ros
+      EDGE_SURVEY_URL: http://survey-session:8139
+      EDGE_CAMPUS_WORLD_DIR: /campus
+    volumes:
+      - ./console/server:/opt/edge/console/server:ro
+      - ./console/web:/opt/edge/console/web:ro
+      - ./perception/map3d:/opt/edge/perception/map3d:ro
+      - campus-base:/campus:ro
+    ports: !override
+      - "127.0.0.1:${EDGE_SDD058_PORT:?set loopback port}:8080"
+  survey-frontier:
+    <<: *provider
+    command: ["python3","-m","exploration.survey_providers","--bind","0.0.0.0","--port","8138","--role","frontier"]
+  survey-semantics:
+    <<: *provider
+    command: ["python3","-m","exploration.survey_providers","--bind","0.0.0.0","--port","8138","--role","semantic"]
+  survey-route:
+    <<: *provider
+    command: ["python3","-m","exploration.survey_providers","--bind","0.0.0.0","--port","8138","--role","route"]
+  survey-corridor:
+    <<: *provider
+    command: ["python3","-m","exploration.survey_providers","--bind","0.0.0.0","--port","8138","--role","corridor"]
+  survey-maps:
+    <<: *provider
+    volumes:
+      - ./exploration:/opt/edge/exploration:ro
+      - ./navigation:/opt/edge/navigation:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - survey-maps:/var/lib/edge-survey-maps
+      - campus-base:/campus:ro
+      - ./tests/system:/fixture:ro
+      - ./scene/campus_large/teaching-navigation.json:/teaching-navigation.json:ro
+    command: ["python3","-B","/fixture/campus_dynamic_map.py","serve"]
+  survey-session:
+    <<: *provider
+    environment:
+      <<: *campus-ros
+      EDGE_SURVEY_MODE: isolated_gazebo
+      EDGE_SURVEY_CONFIG: /teaching-navigation.json
+      EDGE_SURVEY_VIEW_WORLD: /campus/world.sdf
+      EDGE_SURVEY_STATE: /var/lib/survey/sessions.json
+      EDGE_SURVEY_REGISTRY: /campus-registry
+      EDGE_SURVEY_AGENT: http://agent:8090
+      EDGE_SURVEY_DYNAMIC_RECOVERY: "1"
+      EDGE_SURVEY_CLEARANCE_TIMEOUT_S: "38"
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./exploration:/opt/edge/exploration:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./client:/opt/edge/client:ro
+      - ./agent:/opt/edge/agent:ro
+      - ./navigation:/opt/edge/navigation:ro
+      - ./perception/rgbd:/opt/edge/perception/rgbd:ro
+      - ./scene/campus_large/navigation/runtime:/campus-registry:ro
+      - ./scene/campus_large/teaching-navigation.json:/teaching-navigation.json:ro
+      - survey-state:/var/lib/survey
+      - campus-base:/campus:ro
+    command: ["python3","-m","exploration.survey_service"]
+  campus-check:
+    <<: *provider
+    profiles: [sdd058-check]
+    environment: *campus-ros
+    volumes:
+      - ./tests/system:/fixture:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./navigation:/opt/edge/navigation:ro
+      - ./exploration:/opt/edge/exploration:ro
+      - campus-base:/campus:ro
+      - ./scene/campus_large/teaching-navigation.json:/teaching-navigation.json:ro
+      - ${EDGE_SDD058_WITNESS_DIR:-./.ci-results/campus-smooth}:/evidence
+    entrypoint: ["/usr/local/bin/edge-entrypoint","python3","-B","/fixture/campus_dynamic_check.py"]
+    command: ["--help"]
+  campus-seed:
+    <<: *provider
+    profiles: [sdd058-check]
+    network_mode: none
+    environment:
+      <<: *campus-ros
+      PYTHONPATH: /opt/edge
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./tests/system:/fixture:ro
+      - ./exploration:/opt/edge/exploration:ro
+      - ./edge_contracts:/opt/edge/edge_contracts:ro
+      - ./navigation:/opt/edge/navigation:ro
+      - campus-base:/campus:ro
+      - ./scene/campus_large/teaching-navigation.json:/teaching-navigation.json:ro
+      - survey-state:/session
+      - survey-maps:/maps
+    entrypoint: ["/usr/local/bin/edge-entrypoint","python3","-B","/fixture/campus_dynamic_map.py"]
+    command: ["seed"]
+
+volumes:
+  campus-base:
+    external: true
+    name: ${EDGE_CAMPUS_BASE_VOLUME:-edge-campus-teaching-1124_campus-world}
+  survey-maps:
+  survey-state:

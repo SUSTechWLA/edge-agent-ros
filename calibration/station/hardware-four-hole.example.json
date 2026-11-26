@@ -1,0 +1,19 @@
+{
+  "environment": "hardware",
+  "robot_id": null,
+  "clock_domain": null,
+  "calibration_method": "four_hole_board",
+  "four_hole_board": {},
+  "camera": {
+    "id": "d435_color", "serial": null, "frame": "camera_color_optical_frame",
+    "topic": null, "info_topic": null, "image_geometry": "raw"
+  },
+  "lidars": [
+    {"id": "front", "serial": null, "frame": "front_mid360", "topic": null,
+     "message_type": "sensor_msgs/msg/PointCloud2"}
+  ],
+  "max_skew_ns": 25000000,
+  "solver": {
+    "camera_frame": "camera_color_optical_frame", "lidar_frames": {"front": "front_mid360"}
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "campus-terrace-film-20261124-01",
+  "status": "SUCCEEDED",
+  "phase": "ARRIVED",
+  "initialPose": {
+    "x": 0.05107809715602792,
+    "y": 0.006070821657020983,
+    "yaw": -3.0278894056667314,
+    "frame": "odom",
+    "speed": 0,
+    "yaw_rate": 0
+  },
+  "finalPose": {
+    "x": 11.950988592674776,
+    "y": -12.97101151823162,
+    "yaw": -0.5310305962443729,
+    "frame": "odom",
+    "speed": 0,
+    "yaw_rate": 0
+  },
+  "target": [
+    12,
+    -13
+  ],
+  "map": {
+    "id": "campus-forecourt-walk",
+    "frame": "odom",
+    "digest": "0184bd0cfa77a99f415c81fb8a9db36534c4cab5f8bb01a2afa665085fe0d800",
+    "revision": "0184bd0cfa77a99f415c81fb8a9db36534c4cab5f8bb01a2afa665085fe0d800"
+  },
+  "planMetres": 22.23646015155879,
+  "distanceLabel": "出发规划 22.2 m",
+  "legend": "出发时的全局规划",
+  "planPixels": {
+    "count": 272,
+    "span": 94.92101980067429
+  },
+  "trailPixels": {
+    "count": 76,
+    "span": 92.19544457292886
+  },
+  "trajectoryPoints": 303,
+  "campusBounds": [
+    -420,
+    -171,
+    145,
+    1019
+  ],
+  "underway": {
+    "phase": "NAVIGATING",
+    "status": "RUNNING",
+    "pose": {
+      "x": 5.295183745016958,
+      "y": -0.8633318610010133,
+      "yaw": -0.6321212824637528,
+      "frame": "odom",
+      "speed": 0.2800000000001468,
+      "yaw_rate": -0.0660960425778888
+    },
+    "operation": "campus-terrace-film-20261124-01/leg/2",
+    "edition": {
+      "id": "campus-forecourt-walk",
+      "frame": "odom",
+      "digest": "0184bd0cfa77a99f415c81fb8a9db36534c4cab5f8bb01a2afa665085fe0d800",
+      "revision": "0184bd0cfa77a99f415c81fb8a9db36534c4cab5f8bb01a2afa665085fe0d800"
+    },
+    "firstPlanningPoints": 41,
+    "remainingPlanningPoints": 35,
+    "legPoints": 19,
+    "trajectoryPoints": 74,
+    "inset": "出发规划 22.2 m",
+    "legends": [
+      "全局规划路线",
+      "出发时规划",
+      "当前准入路段"
+    ]
+  },
+  "browserContract": {
+    "current": true,
+    "original": true,
+    "terminal": true,
+    "unrelated": true,
+    "incompatibleMap": true,
+    "incompatibleFrame": true
+  },
+  "focusZoom": 38.80481401581504,
+  "errors": [],
+  "writes": []
+}

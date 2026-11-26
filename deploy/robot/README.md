@@ -67,6 +67,37 @@ sh scripts/robot.sh plugins camera-status
 
 `camera-check` 对照实际 Docker 平台镜像、部署提交、相机和验收器入口、传感器标识、ROS 话题、域、挂载及网络隔离。只有 `camera-bench` 明确下达后才启动相机台架，并再次核对已启动容器。站点须在板端提供正确的设备驱动、时间线和独立见证；缺项会使采集保持未证实。未装驱动时可以执行只读检查并查看台架状态。镜像不一致或活动控制服务占用当前项目时，请先查原部署与未完成租约。回退先执行 `sh scripts/robot.sh plugins camera-drain`，等待 `camera-status` 显示已确认停止，再执行 `sh scripts/robot.sh plugins camera-stop`。该命令依次释放租约、停止原相机进程、登记 Docker 退出证据。原操作保持原绑定。已锁定的 physical 条目只交给 P2 部署通道；soft 管理器不能安装它。
 
+## 传感器外参自动标定（Edge Agent 驱动）
+
+在静止锁死底盘的前提下，可使用四孔 ArUco 标定板由 Edge Agent 自动驱动观测诊断、缺姿提示、样本录制、去重、外参求解与独立留出验证：
+
+```sh
+# 1. 复制硬件配置模板到仓库外工位目录，按实测靶板尺寸（单位：米）与传感器话题填写
+cp calibration/station/hardware-four-hole.example.json "$HOME/edge-sites/installed-sensors.json"
+
+# 2. 设置实机 DDS 域、宿主机网关与本地 Ollama 地址，执行上线前预检
+export EDGE_CAL_HOST_GATEWAY=172.17.0.1
+export EDGE_CAL_ROS_DOMAIN=61
+export EDGE_CAL_OLLAMA_URL="http://172.17.0.1:11434"
+export EDGE_CALIBRATION_CONSOLE_BIND=0.0.0.0
+python3 scripts/calibration_station.py preflight \
+  --mode hardware \
+  --profile "$HOME/edge-sites/installed-sensors.json" \
+  --check-live
+
+# 3. 启动实机标定工位，访问 http://<板端IP>:8911 下发「请帮我标定当前传感器」
+python3 scripts/calibration_station.py up \
+  --mode hardware \
+  --profile "$HOME/edge-sites/installed-sensors.json"
+
+# 4. 标定验收完成后停止工位（标定状态卷保留）
+python3 scripts/calibration_station.py down \
+  --mode hardware \
+  --profile "$HOME/edge-sites/installed-sensors.json"
+```
+
+若现场 Livox MID-360 尚未在宿主机发布原生坐标系点云，可附加 `--passive-livox` 并配置 `EDGE_CAL_HW_OBSERVER_IMAGE`、`EDGE_CAL_LIVOX_IFACE`、`EDGE_CAL_LIVOX_DEST`、`EDGE_CAL_LIVOX_IP`、`EDGE_CAL_LIVOX_ID`、`EDGE_CAL_LIVOX_FRAME` 启动只收点云桥。需要同步标定传感器时间偏移时附加 `--with-clock`。
+
 ## 工厂标定
 
 把 `calibration/station/*.example.json` 复制到独立工位目录，分别命名为 `profile.json` 和 `bindings.json`。用实际测量和实物序列号填写空值，给 `EDGE_FACTORY_DIR` 设置该目录的绝对路径。工装适配器可选提供 `targets.json`，运行 `sh scripts/robot.sh fit-targets` 求一个传感器的安装外参并交由工位核对。随后执行
@@ -105,6 +136,7 @@ sh scripts/record-task.sh hardware export lobby-01 /data/exports/lobby-01
 | 路径 | 现场用途 |
 |---|---|
 | `scripts/robot.sh`、`compose.hardware*.yaml`、`docker/` | 板端入口、服务编排、容器启动环境 |
+| `scripts/calibration_station.py`、`compose.calibration-*.yaml` | 实机传感器自动标定预检与工位编排 |
 | `src/`、`agent/`、`client/` | ROS 接口、任务与执行记录、插件管理 |
 | `calibration/`、`exploration/`、`perception/` | 标定、通用探索算法与传感器处理 |
 | `console/`、`sessions_plugin/`、`evidence/` | 本机工作台、会话与取证 |
