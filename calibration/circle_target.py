@@ -392,4 +392,3 @@ def verify_extrinsics(candidate, validation_obs, profile):
         rotation = np.eye(3)+2*w*skew+2*skew@skew
         tf["validation"] = _residuals(validation_obs, role, rotation, np.array(tf["translation_m"]), spacing)
     return dict(result, max_allowed_hole_error_m=.025)
-

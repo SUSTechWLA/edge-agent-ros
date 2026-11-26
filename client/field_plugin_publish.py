@@ -296,4 +296,3 @@ def publish(site: Path, registry: Path, policy: Path, candidate: dict, agent_url
                    "active_lock":next_hash,"validation":proof,"catalog":row,"pack":pack}
         write(evidence_dir / "published-plugin.json", canonical(receipt)+b"\n")
         return receipt
-

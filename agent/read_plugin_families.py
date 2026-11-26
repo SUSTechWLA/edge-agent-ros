@@ -62,4 +62,3 @@ def catalog(caps):
         return entries
     except (ValueError, TypeError, OSError, RecursionError) as exc:
         raise failure(Refused, "站点允许创作的软件插件范围无效", "planner.plugin_families_invalid", "deployment") from exc
-

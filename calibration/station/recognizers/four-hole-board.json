@@ -6,4 +6,3 @@
   "entrypoint": "calibration.circle_target:recognize",
   "source_modules": ["calibration.board_metrics", "calibration.board_solver", "calibration.targets"]
 }
-

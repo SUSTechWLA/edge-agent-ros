@@ -71,4 +71,3 @@ if ($MyInvocation.ExpectingInput) {
     & $interpreter -E -s @args
 }
 exit $LASTEXITCODE
-

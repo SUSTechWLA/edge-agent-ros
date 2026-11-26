@@ -212,4 +212,3 @@ def apply(ctx):
                 "evidence": wire_times({**facts, "review": {**review, "program_sha256": proof["program_sha256"]}})}
 
     ctx.tools.register(config["profile"]["legacy"]["id"], invoke)
-
