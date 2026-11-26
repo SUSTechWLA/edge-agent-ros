@@ -56,9 +56,11 @@ LEGACY_GRID_TOOL = (
 
 
 def prepare(original, previous_lock, output, source_commit, backend_digest, profile_file, actor, *,
-            objects=False, queries=False, operator_policy=None, legacy_grid=False):
+            objects=False, queries=False, operator_policy=None, legacy_grid=None):
     if legacy_grid and not queries:
         raise ValueError("the historical grid tool requires the queries stage")
+    if legacy_grid is None:
+        legacy_grid = bool(queries)
     lock, old = verify(original, previous_lock)
     if not GIT.fullmatch(source_commit) or not SHA.fullmatch(backend_digest):
         raise ValueError("invalid source or backend identity")
@@ -193,7 +195,7 @@ if __name__ == "__main__":
     mode = cli.add_mutually_exclusive_group()
     mode.add_argument("--objects", action="store_true", help="add RGB-D object location")
     mode.add_argument("--queries", action="store_true", help="add bounded RGB-D frame queries")
-    cli.add_argument("--legacy-grid", action="store_true", help="include the retired equal-grid tool when recreating a historical queries site")
+    cli.add_argument("--legacy-grid", action="store_true", default=None, help="include the retired equal-grid tool when recreating a historical queries site")
     mode.add_argument("--operator-policy", type=Path, help="add the pure operator evaluator and its RGB-D input projection")
     for key in ("original", "out", "profile"):
         cli.add_argument("--"+key, type=Path, required=True)
