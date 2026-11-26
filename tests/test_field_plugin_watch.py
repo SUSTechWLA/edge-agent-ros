@@ -42,6 +42,7 @@ class WatcherTest(unittest.TestCase):
                       "content_digest":"sha256:"+"e"*64,"event_id":"a"*32}
         self.program={"statistic":"p10","unknown_if":["valid_fraction",0.6,"lt"],
                       "near_if":["depth_m","distance_m","le"],"review_order":"nearest_first"}
+        self.first_program_changes={"review_order":"farthest_first"}
         self.author_patch=patch.object(watch,"fetch",self.fetch)
         self.author_patch.start()
         self.addCleanup(self.author_patch.stop)
@@ -79,7 +80,7 @@ class WatcherTest(unittest.TestCase):
                 program[key]=dict(zip(("left","right","op"),program[key]))
             result={"name":self.tool,"description":"检查视区","program":program}
             if len(self.model_calls)==1:
-                result["program"]["review_order"]="farthest_first"
+                result["program"].update(self.first_program_changes)
             return watch.wire({"model":"fixture","done":True,"done_reason":"stop","message":{"content":json.dumps(result)}})
         if data is not None:
             posted=json.loads(data)
@@ -118,11 +119,60 @@ class WatcherTest(unittest.TestCase):
                               ["program"]["unknown_if"],dict)
         feedback=json.loads(self.model_calls[1]["messages"][1]["content"])["previous_attempt"]
         self.assertEqual("independent_validation_failed",feedback["reason"])
+        self.assertEqual(["review_order"],[issue["field"] for issue in feedback["issues"]])
         self.assertNotIn("expected",str(feedback))
         self.assertEqual(1,len(self.posted))
         trigger=self.posted[0]["trigger"]
         self.assertEqual((self.pin,"current"),(trigger["read_only_tool"]["binding"], trigger["parent_task_id"]))
         self.assertEqual("SUCCEEDED",json.loads((self.root/"jobs/current/followup.json").read_bytes())["state"])
+
+    def test_repair_reports_public_field_mismatches_for_both_historical_candidates(self):
+        cases=[
+            ("median",{"statistic":"median","unknown_if":{"left":"valid_fraction","right":0.6,"op":"le"},
+                      "near_if":{"left":"depth_m","right":"distance_m","op":"lt"}},
+             {"statistic","unknown_if","near_if"}),
+            ("operands",{"unknown_if":{"left":"valid_fraction","right":"le","op":"lt"}},{"unknown_if"}),
+        ]
+        for name, changes, fields in cases:
+            with self.subTest(name=name):
+                self.first_program_changes=changes
+                self.model_calls.clear()
+                job=self.root/name
+                job.mkdir()
+                task={"id":name,"trace_id":name}
+                args=(job,task,"depth_column_review","http://localhost:11434","fixture",10)
+                candidate=watch.authored(*args)
+                self.assertEqual(candidate["program"],self.program)
+                self.assertEqual(2,len(self.model_calls))
+                repair=json.loads(self.model_calls[1]["messages"][1]["content"])["previous_attempt"]
+                self.assertEqual(fields,{issue["field"] for issue in repair["issues"]})
+                for field,value in changes.items():
+                    self.assertEqual(value, repair["candidate"]["program"][field])
+                public=json.dumps(self.model_calls)
+                for secret,*_ in authored_screen.CASES:
+                    self.assertNotIn(secret,public)
+                self.assertNotIn("expected_states",public)
+                self.assertFalse((job/"validation-1.json").exists())
+                proof=json.loads((job/"validation-2.json").read_bytes())
+                self.assertEqual(authored_screen.digest(self.program),proof["program_sha256"])
+
+    def test_reopen_original_author_receipts_after_diagnostic_change(self):
+        task={"id":"reopen","trace_id":"reopen"}
+        job=self.root/"reopen"
+        job.mkdir()
+        args=(job,task,"depth_column_review","http://localhost:11434","fixture",10)
+        old=replace(watch.FAMILIES["depth_column_review"],repair_issues=None)
+        with patch.dict(watch.FAMILIES,{"depth_column_review":old}):
+            candidate=watch.authored(*args)
+        stored=job/"author-request-2.json"
+        historical=stored.read_bytes()
+        self.assertNotIn("issues",json.loads(json.loads(historical)["messages"][1]["content"])["previous_attempt"])
+        with patch.object(watch,"fetch",side_effect=AssertionError("duplicate model call")):
+            self.assertEqual(watch.authored(*args),candidate)
+            self.assertEqual(historical,stored.read_bytes())
+            stored.write_bytes(historical+b" ")
+            with self.assertRaisesRegex(watch.Rejected,"differs from its receipt"):
+                watch.authored(*args)
 
     def test_typed_transport_preserves_model_operands_and_rejects_malformed_output(self):
         base=dict(self.program,unknown_if={"left":"valid_fraction","right":0.5,"op":"gt"},

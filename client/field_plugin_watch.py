@@ -30,6 +30,7 @@ class Family:
     qualify: object
     publish: object
     provider_prefix: str = "field."
+    repair_issues: object = None
 
 
 def comparison_schema(left, right):
@@ -69,8 +70,30 @@ def lower_depth(program):
     return result
 
 
+def depth_repair_issues(program):
+    """Explain the public family contract using only the model's own proposal."""
+    if not isinstance(program, dict):
+        return [{"field":"program","requirement":"Return the four named fields in the program schema."}]
+    coverage = program.get("unknown_if")
+    distance = program.get("near_if")
+    clauses = (
+        ("statistic", program.get("statistic") == "p10",
+         "Use the 10th percentile of valid depths. A median measures the 50th percentile."),
+        ("unknown_if", coverage == {"left":"valid_fraction","right":0.6,"op":"lt"},
+         "Use a comparison object. Its left operand is valid_fraction and its right operand is a numeric "
+         "fraction. Coverage strictly below 60 percent is unknown; equality has sufficient coverage."),
+        ("near_if", distance in ({"left":"depth_m","right":"distance_m","op":"le"},
+                                 {"left":"distance_m","right":"depth_m","op":"ge"}),
+         "Compare the measured depth to the caller's distance in a comparison object. A depth exactly "
+         "at the threshold is included, as are closer surfaces."),
+        ("review_order", program.get("review_order") == "nearest_first",
+         "Rank the marked candidates by increasing measured optical depth."),
+    )
+    return [{"field":field,"requirement":requirement} for field, matches, requirement in clauses if not matches]
+
+
 FAMILIES = {"depth_column_review": Family(DEPTH_AUTHOR_CONTRACT, DEPTH_AUTHOR_SCHEMA, lower_depth,
-    authored_screen.validate_program, authored_screen.qualify, deploy.publish)}
+    authored_screen.validate_program, authored_screen.qualify, deploy.publish, repair_issues=depth_repair_issues)}
 TERMINAL = {"SUCCEEDED","BLOCKED","FAILED","CANCELED","RECOVERY_REQUIRED"}
 SAFE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
 CODE = "planner.plugin_design_requested"
@@ -139,14 +162,17 @@ def event(folder, phase, task, *, key=None, **details):
     key = key or phase
     if path.exists():
         with path.open(encoding="utf8") as stream:
-            if any(decode(line)["key"] == key for line in stream):
-                return
+            for line in stream:
+                row = decode(line)
+                if row["key"] == key:
+                    return row
     row = {"phase":phase,"utc":now(),"task_id":task["id"],"trace_id":task["trace_id"],"key":key,**details}
     with path.open("ab") as stream:
         stream.write(wire(row)+b"\n")
         stream.flush()
         os.fsync(stream.fileno())
     print(row["utc"], task["id"], phase, flush=True)
+    return row
 
 
 def model_schema(family):
@@ -184,11 +210,22 @@ def authored(folder, task, family_id, model_url, model, timeout):
         request = {"model":model, "stream":False, "format":model_schema(family),
                    "options":{"temperature":0,"num_predict":384,"num_ctx":2048},
                    "messages":[{"role":"system","content":system},{"role":"user","content":wire(input_data).decode()}]}
-        raw_request = wire(request)
         previous = request_file.exists()
-        deploy.write(request_file, raw_request, immutable=True)
-        event(folder,"author_requested",task,key=f"request-{attempt}",attempt=attempt,model=model,
-              request_sha256=deploy.sha(raw_request))
+        if previous:
+            # A restart or software upgrade must not rewrite the original request or resend it.
+            require(not request_file.is_symlink(), "unexpected symlink: " + request_file.name)
+            raw_request = request_file.read_bytes()
+            saved = decode(raw_request)
+            saved_input = decode(saved["messages"][1]["content"])
+            require(saved.get("model") == model and saved_input.get("family") == family_id,
+                    "saved author request identity mismatch")
+        else:
+            raw_request = wire(request)
+            deploy.write(request_file, raw_request, immutable=True)
+        request_digest = deploy.sha(raw_request)
+        recorded = event(folder,"author_requested",task,key=f"request-{attempt}",attempt=attempt,model=model,
+                         request_sha256=request_digest)
+        require(recorded["request_sha256"] == request_digest, "saved author request differs from its receipt")
         proposal = None
         try:
             if not response_file.exists():
@@ -217,9 +254,11 @@ def authored(folder, task, family_id, model_url, model, timeout):
             return candidate
         except (ValueError, KeyError, TypeError, IndexError, RecursionError, OSError) as exc:
             code = failure_context(exc)
-            event(folder,"candidate_rejected",task,key=f"rejected-{attempt}",attempt=attempt,
-                  code=code,local_reason=str(exc)[:300])
             prior = {"reason":code}
+            if isinstance(proposal, dict) and "program" in proposal and family.repair_issues:
+                prior["issues"] = family.repair_issues(proposal["program"])
+            event(folder,"candidate_rejected",task,key=f"rejected-{attempt}",attempt=attempt,
+                  code=code,local_reason=str(exc)[:300],issues=prior.get("issues",[]))
             if proposal is not None:
                 prior["candidate"] = proposal if len(wire(proposal)) <= 2500 else "oversize"
     raise Rejected("two model attempts exhausted")
