@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "board.camera-model",
+  "version": "1.0.0",
+  "endpoint": "http://calibration-observer:8142/camera-stream-model",
+  "provides": ["calibration.camera_stream_model"],
+  "requires": []
+}

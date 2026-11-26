@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import Odometry
@@ -18,11 +19,11 @@ from edge_interfaces.srv import GetMission, SubmitMission
 from derived_tools import check_id, evaluate
 import runtime_plugins
 import soft_client
-from planning import (OutcomeUnknown, Refused, Unavailable, binding, catalog, is_series,
+from planning import (OutcomeUnknown, Refused, Unavailable, binding, is_series, feedback_plan,
                       failure, http_json, plan, plan_read_only, registry, remote_failure, verification_plan)
 from tracing import artifact, clean_text, diagnosis, exchange, sanitized
-from kernel import host, verification
-from kernel.catalog import plugin_view
+from kernel import feedback_admission, host, read_authority, task_facts, verification
+from kernel.catalog import capability_view, plugin_view
 from kernel.ledger import Journal, project_step, trigger_input, utc
 from kernel.verification import finish_step
 from kernel.worker import event_diagnosis, task_plan as run_task_plan, worker as run_worker
@@ -32,8 +33,9 @@ from edge_contracts.errors import OperationCanceled
 class Robot(Node):
     def __init__(self):
         super().__init__("edge_language_agent")
-        self.submit = self.create_client(SubmitMission,"/edge/submit_mission")
-        self.query = self.create_client(GetMission,"/edge/get_mission")
+        if not os.getenv("EDGE_FEEDBACK_POLICY") and "EDGE_AUTONOMOUS_READ_POLICY" not in os.environ:
+            self.submit = self.create_client(SubmitMission,"/edge/submit_mission")
+            self.query = self.create_client(GetMission,"/edge/get_mission")
         self.sample = None
         self.create_subscription(Odometry,"/odom",self.receive_odom,qos_profile_sensor_data)
 
@@ -72,6 +74,12 @@ class Robot(Node):
                 "yaw":math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z)),"speed":msg.twist.twist.linear.x}
 
     def run(self,step,op,cap,trace=None,context=None):
+        read_authority.authorize_dispatch([step])
+        policy = os.getenv("EDGE_FEEDBACK_POLICY")
+        if "feedback" in step and "physical_pin" in step:
+            return feedback_admission.poll_or_issue(step, op, cap, policy, registry, owner_status=host.call_for,
+                        issue=lambda:host.invoke(step, op, cap, trace, context, http_json))
+        feedback_admission.authorize_dispatch(step, op, cap, policy, registry)
         if step["tool"] == "status" and not cap.get("endpoint"):
             return self.odometry()
         if "derived" in cap and not cap.get("endpoint") and "soft_pin" not in step:
@@ -133,6 +141,16 @@ class Robot(Node):
 
 
 def task_plan(journal, task, trace):
+    feedback = os.getenv("EDGE_FEEDBACK_POLICY")
+    if feedback:
+        if read_authority.load() is not None or (task.get("trigger") or {}).get("read_only_tool"):
+            raise Refused("反馈规划工位与只读续办策略不兼容")
+        return feedback_admission.plan_round(journal, task, trace, feedback, registry=registry,
+                                             planner=feedback_plan, physical_request=host.plugin_tracks.physical_request)
+    if isinstance(journal.soft_intent(task["id"]), dict):
+        raise feedback_admission.hold("原反馈工位已撤下，待核对本轮物理预约")
+    if any("feedback" in step for step in task["steps"]):
+        raise Refused("原反馈规划策略已撤销")
     return run_task_plan(journal, task, trace, registry=registry, planner=plan,
                          read_only_planner=plan_read_only, freeze=host.freeze)
 
@@ -164,12 +182,21 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path=urlsplit(self.path)
+        if path.path in task_facts.ROUTES:
+            return self.send(*task_facts.read_request(path.path, path.query, self.server.task_db, self.server.registry_db))
         if path.path=="/agent/capabilities":
+            query = parse_qs(path.query, keep_blank_values=True)
+            options = {}
+            if "goal_tool" in query or "text" in query:
+                if (set(query) != {"goal_tool","text"} or any(len(row)!=1 for row in query.values())
+                    or not runtime_plugins.NAME.fullmatch(query["goal_tool"][0]) or not 1 <= len(query["text"][0]) <= 512):
+                    return self.send(400, {"code":"catalog.invalid_goal_draft"})
+                options = {k:v[0] for k,v in query.items()}
             try:
-                capabilities = catalog(registry())
+                capabilities = capability_view(runtime_plugins.snapshot, **options)
             except Unavailable as exc:
                 return self.send(503, {"code":exc.code,"origin":exc.origin,"detail":str(exc)})
-            return self.send(200,{"capabilities":capabilities})
+            return self.send(200,capabilities)
         if path.path=="/agent/plugins":
             try:
                 directory = self.server.registry_observer.observe()
@@ -236,18 +263,27 @@ class Handler(BaseHTTPRequestHandler):
             self.send(404,{"detail":"未找到记录"})
 
 
+def _spin_robot(node):
+    try:
+        rclpy.spin(node)
+    except (ExternalShutdownException, KeyboardInterrupt):
+        pass
+
+
 if __name__=="__main__":
     task_dir=Path(os.getenv("EDGE_TASK_DIR","/var/lib/edge-tasks"))
     journal=Journal(task_dir)
     rclpy.init()
     robot=Robot()
-    threading.Thread(target=rclpy.spin,args=(robot,),daemon=True).start()
+    threading.Thread(target=_spin_robot,args=(robot,),daemon=True).start()
     for planning in (True,False):
         threading.Thread(target=worker,args=(journal,robot,planning),daemon=True).start()
     threading.Thread(target=worker,args=(journal,robot,False,True),daemon=True).start()
     server=ThreadingHTTPServer((os.getenv("EDGE_AGENT_BIND","0.0.0.0"),8090),Handler)
+    server.task_db = task_dir / "tasks.db"
+    server.registry_db = task_dir / "module-events.sqlite"
     server.journal=journal
-    server.registry_observer=runtime_plugins.RegistryObserver(task_dir/"module-events.sqlite")
+    server.registry_observer=runtime_plugins.RegistryObserver(server.registry_db)
     stop=threading.Event()
     monitor=threading.Thread(target=server.registry_observer.run,args=(stop,),daemon=True)
     monitor.start()
@@ -258,3 +294,4 @@ if __name__=="__main__":
     finally:
         stop.set()
         monitor.join(timeout=2)
+        rclpy.try_shutdown()

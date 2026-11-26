@@ -1,0 +1,26 @@
+services:
+  agent:
+    group_add: ["${EDGE_OPERATOR_GID:?group that owns the program directory}"]
+    environment:
+      EDGE_READ_OPERATOR_POLICY: /read-policy/numeric.json
+      EDGE_READ_OPERATOR_DIR: /operators
+    volumes:
+      - ${EDGE_READ_OPERATOR_STORE:?dedicated program directory}:/operators:rw
+  operator-evaluator:
+    group_add: ["${EDGE_OPERATOR_GID:?group that owns the program directory}"]
+    image: ${EDGE_OPERATOR_RUNTIME_IMAGE:?pin the numerical evaluator runtime}
+    pull_policy: never
+    profiles: [published]
+    networks: [facts]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    pids_limit: 24
+    mem_limit: 96m
+    environment:
+      EDGE_OPERATOR_RUNTIME_DIGEST: ${EDGE_OPERATOR_RUNTIME_DIGEST:?pin the evaluator image digest}
+    entrypoint: [python3, -B, -m, agent.numeric_server, --operators, /operators, --policy, /policy/numeric.json]
+    volumes:
+      - ${EDGE_READ_OPERATOR_STORE}:/operators:ro
+      - ${EDGE_READ_POLICY_DIR:?approved read policy and numerical contracts}:/policy:ro

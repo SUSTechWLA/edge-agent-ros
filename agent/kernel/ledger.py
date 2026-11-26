@@ -11,11 +11,12 @@ import time
 import uuid
 
 from agent.tracing import artifact
-from edge_contracts.errors import Refused
+from edge_contracts.errors import Refused, failure
 from edge_contracts.soft_transport import SoftError
 from edge_contracts.trace_content import clean_text, sanitized
 from .authorization import check_id
 from . import host
+from .task_facts import read_task, detail_events
 
 
 def utc():
@@ -36,6 +37,12 @@ def trigger_input(data):
         raise ValueError("自主续办需要父任务、发布事件、原 trace 和只读工具绑定")
     if "read_only_tool" in data:
         pin = data["read_only_tool"]
+        if isinstance(pin, dict) and set(pin) == {"id", "binding"}:
+            if (data["source"] != "plugin.supervisor" or not isinstance(pin["id"], str)
+                    or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,63}", pin["id"])
+                    or not isinstance(pin["binding"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", pin["binding"])):
+                raise ValueError("invalid read-only software release binding")
+            return data
         if (not isinstance(pin,dict) or set(pin)!={"id","version"} or not isinstance(pin["version"],str)
                 or not re.fullmatch(r"[0-9a-f]{64}",pin["version"])):
             raise ValueError("trigger.read_only_tool 格式无效")
@@ -76,6 +83,8 @@ class Journal:
             CREATE INDEX IF NOT EXISTS tasks_ready ON tasks(state,due,created);
             CREATE TABLE IF NOT EXISTS soft_settlements(operation TEXT PRIMARY KEY, pin TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS soft_plan_intents(task TEXT PRIMARY KEY, plan TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS read_operator_intents(task TEXT PRIMARY KEY, intent TEXT NOT NULL,
+                author_attempts INTEGER NOT NULL DEFAULT 0, program TEXT, feedback TEXT);
             CREATE TABLE IF NOT EXISTS task_triggers(
               task_id TEXT PRIMARY KEY REFERENCES tasks(id), kind TEXT NOT NULL, source TEXT NOT NULL,
               source_key TEXT NOT NULL, context TEXT NOT NULL, trace_id TEXT NOT NULL,
@@ -89,7 +98,8 @@ class Journal:
         self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS events_by_id ON events(event_id) WHERE event_id IS NOT NULL")
         settlement_fields = {r[1] for r in self.db.execute("PRAGMA table_info(soft_settlements)")}
         for name, declaration in (("next_attempt","REAL NOT NULL DEFAULT 0"),
-                                  ("attempts","INTEGER NOT NULL DEFAULT 0"), ("last_code","TEXT")):
+                                  ("attempts","INTEGER NOT NULL DEFAULT 0"), ("last_code","TEXT"),
+                                  ("unissued","INTEGER NOT NULL DEFAULT 0")):
             if name not in settlement_fields:
                 self.db.execute(f"ALTER TABLE soft_settlements ADD COLUMN {name} {declaration}")
         self.db.execute("CREATE INDEX IF NOT EXISTS soft_settlements_due ON soft_settlements(next_attempt)")
@@ -131,19 +141,7 @@ class Journal:
 
     def get(self, key):
         with self.lock:
-            row = self.db.execute("""SELECT tasks.*,tr.context,tr.trace_id,
-                       (SELECT kind FROM events WHERE task_id=tasks.id
-                        AND kind NOT IN ('settlement_deferred','settlement_recovered') ORDER BY seq DESC LIMIT 1) AS latest_event
-                       FROM tasks LEFT JOIN task_triggers tr ON tr.task_id=tasks.id WHERE tasks.id=?""",(key,)).fetchone()
-        if not row:
-            return None
-        item = dict(row)
-        item["steps"] = json.loads(item["steps"])
-        context=item.pop("context")
-        item["trigger"]=json.loads(context) if context is not None else None
-        item["trace_id"]=item["trace_id"] or key
-        item["can_retry"] = item.pop("latest_event")=="retry_exhausted" and item["state"] in ("BLOCKED","RECOVERY_REQUIRED")
-        return item
+            return read_task(self.db, key)
 
     def create(self,key,text,trigger=None):
         with self.lock, self.db:
@@ -242,19 +240,35 @@ class Journal:
                 raise Refused("仅可续办因暂时故障耗尽重试的任务")
             task["retries"] = 0
             op = None
-            if task["steps"]:
+            pending = task["cursor"] < len(task["steps"])
+            if pending:
                 step = task["steps"][task["cursor"]]
                 op = step.get("operation_id")
+                if task.get("can_reconcile_motion"):
+                    step["reconcile_only"] = True
                 if op:
                     step["resumed_at"] = time.time()
-            self.save(task,"RUNNING" if task["steps"] else "PLANNING","操作员已请求用原步骤继续核对",
+            self.save(task,"RUNNING" if pending else "PLANNING","操作员已请求用原任务继续核对",
                       kind="retry_requested",op=op)
             return self.get(key)
 
-    def save(self,t, state, detail, delay=0, kind=None, op=None, diagnostic=None, tool_response=None):
+    def save(self,t, state, detail, delay=0, kind=None, op=None, diagnostic=None, tool_response=None, unissued_pins=()):
         now=utc()
         with self.lock,self.db:
             prior=self.db.execute("SELECT state FROM tasks WHERE id=?",(t["id"],)).fetchone()[0]
+            if unissued_pins:
+                saved = self.db.execute("SELECT plan FROM soft_plan_intents WHERE task=?", (t["id"],)).fetchone()
+                dispatched = self.db.execute("SELECT 1 FROM events WHERE task_id=? AND kind='dispatch' LIMIT 1",
+                                             (t["id"],)).fetchone()
+                proposal = json.loads(saved[0])[1] if saved else []
+                expected = [dict(step["soft_pin"],reservation_id=f"{t['id']}/step/{index}")
+                            for index,step in enumerate(proposal,1) if "soft_pin" in step]
+                if (prior == "PLANNING" and state == "BLOCKED" and kind == "blocked" and not t["steps"]
+                        and not dispatched and expected == unissued_pins):
+                    self.db.executemany("""INSERT OR IGNORE INTO soft_settlements(operation,pin,next_attempt,unissued)
+                        VALUES(?,?,?,1)""", ((pin["reservation_id"],json.dumps(pin),time.time()) for pin in unissued_pins))
+                else:
+                    self.append(t,"admission_cleanup_withheld","预约与本机原计划不一致，保留原绑定待核对",{},step=None)
             if tool_response is not None:
                 self.append(t, "tool.response", "tool.response", {}, step=t["cursor"], op=op, trace=tool_response)
             if kind is None and prior!=state:
@@ -281,7 +295,9 @@ class Journal:
                     if "proposal" in diagnostic:
                         payload["diagnostic"]["proposal_artifact"]=artifact(diagnostic["proposal"])
                 if kind=="planned":
-                    payload["steps"]=[project_step(s) for s in t["steps"]]
+                    # Prior completed steps already have full evidence in their own verified events
+                    # and in tasks.steps; keep incremental planned events bounded O(N) instead of O(N^2).
+                    payload["steps"]=[project_step(s, include_evidence=i>=t["cursor"]) for i,s in enumerate(t["steps"])]
                 elif op and 0 <= index < len(t["steps"]):
                     payload["step"]=project_step(t["steps"][index])
                 trace={}
@@ -304,11 +320,38 @@ class Journal:
             row = self.db.execute("SELECT plan FROM soft_plan_intents WHERE task=?",(task,)).fetchone()
             return json.loads(row[0]) if row else None
 
+    def operator_intent(self, task, intent=None):
+        with self.lock,self.db:
+            if intent is not None:
+                self.db.execute("INSERT OR IGNORE INTO read_operator_intents(task,intent) VALUES(?,?)",
+                                (task,json.dumps(intent, allow_nan=False)))
+            row = self.db.execute("SELECT intent,program,feedback FROM read_operator_intents WHERE task=?", (task,)).fetchone()
+            return ({"intent":json.loads(row[0]), "program":json.loads(row[1]) if row[1] else None,
+                     "feedback":json.loads(row[2]) if row[2] else None} if row else None)
+
+    def author_attempt(self, task):
+        with self.lock,self.db:
+            cur = self.db.execute("UPDATE read_operator_intents SET author_attempts=author_attempts+1"
+                                  " WHERE task=? AND author_attempts<2 AND program IS NULL", (task,))
+            if cur.rowcount != 1:
+                raise failure(Refused, "本任务的算子创作预算已用尽", "operator.attempts_exhausted", "read-operators")
+            return self.db.execute("SELECT author_attempts FROM read_operator_intents WHERE task=?", (task,)).fetchone()[0]
+
+    def save_operator_program(self, task, program):
+        with self.lock,self.db:
+            self.db.execute("UPDATE read_operator_intents SET program=? WHERE task=? AND program IS NULL",
+                            (json.dumps(program, allow_nan=False), task))
+
+    def operator_feedback(self, task, feedback):
+        with self.lock,self.db:
+            self.db.execute("UPDATE read_operator_intents SET feedback=? WHERE task=? AND program IS NULL",
+                            (json.dumps(feedback, allow_nan=False), task))
+
     def settle_soft_batch(self, stop):
         with self.lock:
-            rows = self.db.execute("""SELECT operation,pin,attempts,last_code FROM soft_settlements
+            rows = self.db.execute("""SELECT operation,pin,attempts,last_code,unissued FROM soft_settlements
                 WHERE next_attempt <= ? ORDER BY next_attempt,rowid LIMIT 64""",(time.time(),)).fetchall()
-        for op, raw, attempts, previous_code in rows:
+        for op, raw, attempts, previous_code, unissued in rows:
             if stop.is_set():
                 break
             code = None
@@ -316,7 +359,7 @@ class Journal:
                 pin = json.loads(raw)
                 if not isinstance(pin,dict) or pin.get("reservation_id") != op:
                     raise ValueError("stored settlement pin mismatch")
-                if host.call_for(pin,"settle") is not True:
+                if host.call_for(pin,"settle_unissued" if unissued else "settle") is not True:
                     code = "plugin.settlement_unconfirmed"
             except SoftError as exc:
                 code = exc.code if isinstance(exc.code,str) and re.fullmatch(r"[a-z][a-z0-9_.-]{0,95}",exc.code) else "plugin.transport"
@@ -341,26 +384,16 @@ class Journal:
         while not stop.wait(.3):
             self.settle_soft_batch(stop)
 
-    def event_page(self,key,after=None,limit=128):
-        if not 1<=limit<=500 or (after is not None and after<0):
-            raise ValueError("事件分页参数无效")
-        rows=[]
-        size=0
+    def event_page(self, key, after=None, limit=128):
         with self.lock:
-            reverse=after is None
-            order="DESC" if reverse else "ASC"
-            stream=self.db.execute("SELECT * FROM events WHERE task_id=? AND seq>? ORDER BY seq "+order+" LIMIT ?",
-                                   (key,after or 0,limit+1))
-            for row in stream:
-                size+=len(row["payload"].encode())
-                if len(rows)==limit or (rows and size>350000):
-                    return (rows[::-1] if reverse else rows),True
-                rows.append(dict(row))
-        return (rows[::-1] if reverse else rows),False
+            return detail_events(self.db, key, after, limit)
 
 
-def project_step(step):
+def project_step(step, *, include_evidence=True):
     result=dict(step)
+    if not include_evidence:
+        for key in ("evidence","verification","physical_cap","soft_cap"):
+            result.pop(key, None)
     for key in ("args","evidence"):
         if key in result:
             captured=artifact(result[key])

@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "vision.metric-checkerboard",
+  "version": "1.0.0",
+  "targets": ["checkerboard"],
+  "entrypoint": "calibration.board_recognizer:recognize",
+  "source_modules": ["calibration.board_solver"]
+}

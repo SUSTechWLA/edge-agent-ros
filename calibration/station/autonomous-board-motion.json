@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "goals": {
+    "verify_camera_intrinsics": {
+      "request_pattern": "(?:请|麻烦)?(?:帮我|给我)?(?:自主|自动)(?:标定|校准)(?:一下)?(?:当前的?)?(?:D435|彩色相机|相机)(?:的)?内参(?:和|与|及)(?:前)?(?:MID360|雷达)(?:的)?外参[。！! ]*",
+      "tools": ["move_to_pose"],
+      "diagnostics": ["sensor_calibration_status"],
+      "placement_tools_only_before_receipt": true,
+      "requires_evidence": {"tool":"inspect_calibration_view","field":"front_placement_confirmed"}
+    },
+    "verify_sensor_extrinsics": {
+      "request_pattern": "(?:请|麻烦)?(?:帮我|给我)?(?:自主|自动)?(?:标定|校准)(?:一下)?(?:(?:当前|本机|车载|这台车)的?)?(?:设备|传感器|前?雷达[和与]相机)[。！! ]*",
+      "tools": ["move_to_pose"],
+      "diagnostics": ["sensor_calibration_status"],
+      "requires_evidence": {"tool":"inspect_calibration_view","field":"front_placement_confirmed"}
+    }
+  }
+}

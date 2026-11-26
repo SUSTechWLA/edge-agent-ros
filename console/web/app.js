@@ -13,7 +13,7 @@ async function api(path,opts={}){
   let data;try{data=await res.json();}catch{throw new Error('服务响应格式异常（HTTP '+res.status+'）');}
   if(!res.ok){
     const error=new Error(typeof data.error==='string'?data.error:data.detail||'服务返回 HTTP '+res.status);
-    error.status=res.status;error.code=data.code;throw error;
+    error.status=res.status;error.code=data.code;error.observeOnly=data.observe_only===true;throw error;
   }
   return data;
 }
@@ -29,6 +29,17 @@ const section=()=>{
   return name==='review'||name==='events'?name:'monitor';
 };
 const displayed=()=>replay||live;
+const taskWritesEnabled=()=>liveOk && !!live && live.task_proxy_mode!=='observe' && !replay;
+async function readTask(id,limit){
+  if(!live)await initialStateRead;
+  const query=new URLSearchParams({id});
+  if(limit!=null)query.set('limit',limit);
+  if(live && live.task_proxy_mode!=='observe'){
+    try{return await api('/agent/tasks?'+query);}
+    catch(error){if(error.status!==403 || error.code!=='console.observe_only')throw error;}
+  }
+  return api('/api/task-detail?'+query);
+}
 function health(out,source){
   if(!replay && live && !liveOk){out.className='badge warn';out.textContent='连接中断';return;}
   if(source?.status==='error'){out.className='badge warn';out.textContent='来源异常';return;}
@@ -97,7 +108,7 @@ function renderRaw(state){
 }
 function render(){
   const s=displayed(),src=s?.sources||{},pose=src.pose?.data,odom=src.odom?.data,grid=src.map?.data,diag=src.perception?.data;
-  el('env').textContent=s?.environment==='simulation'?'Gazebo 仿真':s?.environment==='robot'?'实机':'ROS 2';
+  el('env').textContent=s?.environment==='simulation'?'仿真':['hardware','robot'].includes(s?.environment)?'实机':'ROS 2';
   el('robot').textContent=s?.robot_id||'Edge';
   el('clock').textContent=s?.now?clock(s.now):'—';el('clock-label').textContent=replay?'历史快照时间':'状态更新时间';
   el('conn').textContent=replay?'历史回放':liveOk?'服务已连接':live?'服务连接中断':'等待服务';
@@ -106,7 +117,13 @@ function render(){
   el('metric-yaw').textContent=pose?fmt(pose.yaw*180/Math.PI,1):'—';
   el('metric-speed').textContent=odom?fmt(odom.v,3):'—';
   el('metric-action').textContent=s?(s.active_operation||'无活动动作'):'—';
-  el('history-bar').hidden=!replay;el('open-task').disabled=!!replay;
+  el('history-bar').hidden=!replay;el('open-task').disabled=!taskWritesEnabled();
+  el('open-task').hidden=live?.task_proxy_mode==='observe';
+  el('calibration-panel').hidden=!!replay || !live?.calibration_status_available;
+  if (!el('calibration-panel').hidden && liveOk) refreshCalibration();
+  else CalibrationGuide.offline();
+  const retry=el('task-status').querySelector('button');
+  if(retry)retry.hidden=!taskWritesEnabled();
   if(replay){
     const telemetry=replay.telemetry_at===null?' · 此事件没有同期遥测':Number.isFinite(replay.telemetry_at)?' · 遥测 '+clock(replay.telemetry_at):'';
     el('history-msg').textContent='历史回放　#'+replayRecord.seq+'　'+clock(replayRecord.utc)+'　'+replayRecord.kind+telemetry;
@@ -249,9 +266,10 @@ async function poll(){
   if(requestBusy)return;requestBusy=true;
   try{
     const s=await api('/api/state');live=s;liveOk=true;setNotice('');render();
+    // Task ledger commits can follow the final archived event. Poll the session projection on its own cadence.
+    if(section()==='sessions')SessionView.refresh();
     if(s.cursor!==lastCursor){
       if(section()==='review' && lastCursor!=null)RunReview.refresh();
-      if(section()==='sessions' && lastCursor!=null)SessionView.refresh();
       if(section()==='events' && pageBefore==null && !el('event-modal').open)loadPage();
       lastCursor=s.cursor;
     }
@@ -269,6 +287,7 @@ function renderTask(task){
   const list=node('ol','task-steps');
   for(const step of steps){
     const row=node('li','',typeof step==='string'?step:[step.capability||step.tool,step.status||step.state,step.detail].filter(Boolean).join(' · '));
+    if(step?.feedback?.rationale)row.append(node('p','task-detail',step.feedback.rationale));
     if(step?.tool==='status' && step.evidence?.source && Number.isFinite(step.evidence.x) && Number.isFinite(step.evidence.y)){
       const e=step.evidence;
       row.append(node('p','task-detail',
@@ -278,10 +297,11 @@ function renderTask(task){
     list.append(row);
   }
   el('task-status').replaceChildren(title,node('p','',task.text||''),content,list);
-  if(task.can_retry){
+  if(task.can_retry && live?.task_proxy_mode!=='observe'){
     const retry=node('button','','故障已处理，续办原步骤');
+    retry.hidden=!taskWritesEnabled();
     retry.onclick=async()=>{
-      if(replay || taskRecord?.id!==task.id)return;
+      if(!taskWritesEnabled() || taskRecord?.id!==task.id)return;
       retry.disabled=true;
       try{
         renderTask(await api('/agent/retry',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -296,11 +316,91 @@ async function capabilities(){
     el('cap-list').textContent='可用能力　'+(r.capabilities||[]).map(x=>x.id).join(' · ');
   }catch(e){el('cap-list').textContent='能力目录暂不可用 · '+e.message;}
 }
-el('open-task').onclick=()=>{if(replay)return;el('task-modal').showModal();el('task-text').focus();capabilities();};
+el('open-task').onclick=()=>{if(!taskWritesEnabled() || el('task-modal').open)return;el('task-modal').showModal();el('task-text').focus();capabilities();};
 el('close-task').onclick=()=>el('task-modal').close();
+const calibrationDraft='请帮我标定当前传感器';
+el('calibration-draft').onclick=()=>{
+  if(!taskWritesEnabled())return;
+  el('task-text').value=calibrationDraft;
+  el('open-task').click();
+};
+el('clock-draft').onclick=()=>{
+  if(!taskWritesEnabled())return;
+  el('task-text').value='请帮我标定当前雷达和相机的软件时间偏移';
+  el('open-task').click();
+};
+
+let calibrationNextRead=0, calibrationReading=false;
+async function refreshCalibration(force=false){
+  if(calibrationReading || (!force && Date.now()<calibrationNextRead))return;
+  calibrationReading=true;
+  const labels={NEEDS_CALIBRATION:'传感器尚待标定', CALIBRATING:'正在标定',
+    VERIFIED:'已验证标定结果', RECOVERY_REQUIRED:'标定需要复核', PAUSED_FOR_OPERATOR:'标定正在等待现场配合'};
+  let title, message, canStart=false;
+  try{
+    const status=await api('/api/calibration-status');
+    if (replay || !liveOk || !live?.calibration_status_available) return;
+    const selected = SessionView.selectedTaskId() || status.task_id;
+    let motion = null, resultRows=[];
+    if (selected && status.method) {
+      try {
+        const facts=await api('/api/task-context?'+new URLSearchParams({task_id:selected,limit:'0'}),
+                              {signal:AbortSignal.timeout(1600)});
+        if (facts.task?.id===selected && selected===(SessionView.selectedTaskId() || status.task_id)) {
+          SessionView.observeTask(facts.task);
+          motion=calibrationMotion(facts.task,status,live?.sources?.odom);
+          resultRows=calibrationResultRows(facts.task,status);
+        }
+      } catch { /* Station observations remain accessible independently of the task ledger. */ }
+    }
+    if (replay || !liveOk || !live?.calibration_status_available) return;
+    title=motion ? (motion.active ? 'Agent 自主标定' : '自主标定任务结果') : labels[status.state];
+    CalibrationGuide.render(status, taskWritesEnabled(), live, motion, resultRows);
+    message=motion ? motion.id : status.message;
+    if((!motion || motion.same) && status.samples>0)message+=' 已保存 '+status.samples+' 组板姿。';
+    const clockText=el('calibration-clock'), clockButton=el('clock-draft');
+    if(status.method?.clock_supported === false){
+      clockText.textContent='本方法标定相机与各雷达的空间外参。时间偏移和 IMU 外参需要单独标定。';
+      clockButton.hidden=true;
+    }else try{
+      const clock=await api('/api/calibration-clock');
+      const rows=Object.entries(clock.sources||{}).map(([id,s])=>
+        id+' '+(s.offset_ns/1e6).toFixed(1)+' ms（估计不确定度 '+(s.uncertainty_ns/1e6).toFixed(1)+' ms）');
+      clockText.textContent=clock.state==='VERIFIED'&&rows.length
+        ?'时间标定已验证，仅适用于本次采样窗口。'+rows.join(' · ')
+        :'时间标定待验证。'+(clock.message||clock.reason||'');
+      clockButton.hidden=status.state!=='VERIFIED'||!taskWritesEnabled();
+    }catch(_){
+      clockText.textContent='当前无法读取时间标定状态。';
+      clockButton.hidden=true;
+    }
+    canStart=['NEEDS_CALIBRATION','VERIFIED'].includes(status.state) && !status.active_operation && !motion?.active;
+    if (canStart && taskWritesEnabled()) {
+      let enabled=false;
+      try {
+        const query=new URLSearchParams({goal_tool:'verify_sensor_extrinsics',text:calibrationDraft});
+        const catalog=await api('/agent/capabilities?'+query,{signal:AbortSignal.timeout(1600)});
+        enabled=catalog.goal_motion?.goal_tool==='verify_sensor_extrinsics' && catalog.goal_motion.tools?.length>0;
+      } catch { /* The neutral calibration draft is available even when the directory is offline. */ }
+      el('calibration-draft').textContent=enabled ? '填写自主换位标定任务' : '填写标定任务';
+    }
+  }catch(error){
+    CalibrationGuide.offline();
+    title='标定状态未知';
+    message=error.message;
+    el('clock-draft').hidden=true;
+    el('calibration-clock').textContent='';
+  }finally{
+    calibrationReading=false;
+    calibrationNextRead=Date.now()+1500;
+  }
+  if(el('calibration-title').textContent!==title)el('calibration-title').textContent=title;
+  if(el('calibration-message').textContent!==message)el('calibration-message').textContent=message;
+  el('calibration-draft').hidden=!canStart || !taskWritesEnabled();
+}
 el('task-example').onclick=()=>{el('task-text').value='依次巡检 (0.8,0) 和 (0.8,0.7)，然后报告状态';el('task-text').focus();};
 el('task-form').onsubmit=async e=>{
-  e.preventDefault();if(submitBusy||replay)return;const text=el('task-text').value.trim();if(!text)return;
+  e.preventDefault();if(submitBusy||!taskWritesEnabled())return;const text=el('task-text').value.trim();if(!text)return;
   if(!taskDraft||taskDraft.text!==text)taskDraft={text,id:taskId()};
   submitBusy=true;el('task-submit').disabled=true;el('task-feedback').textContent='正在提交…';
   try{
@@ -314,11 +414,23 @@ el('task-form').onsubmit=async e=>{
 let refreshingTask=false;
 async function refreshTask(id,silent=false){
   if(!id||refreshingTask)return;refreshingTask=true;
-  try{const r=await api('/agent/tasks?id='+encodeURIComponent(id));renderTask(r);}
+  try{const r=await readTask(id);renderTask(r);}
   catch(e){if(!silent)setNotice('无法查询任务 · '+e.message);}finally{refreshingTask=false;}
 }
 el('refresh-task').onclick=()=>refreshTask(taskRecord?.id);
 el('trace-task').onclick=()=>{if(!taskRecord)return;clearFilterInputs();el('task-filter').value=taskRecord.id;pageBefore=null;applyFilter();location.hash='events';};
-route();poll();refreshTask(localStorage.getItem('edge-last-task'),true);
+const initialStateRead=poll();
+initialStateRead.then(async()=>{
+  if(live?.environment!=='simulation')return;
+  try{const views=await api('/api/campus-mission/views');el('nav-campus').hidden=!views.campus_2d;}
+  catch{/* This deployment can serve the console without a campus map. */}
+});
+const draft = new URLSearchParams(location.search).get('task_draft')?.trim();
+if(draft && draft.length<=2048)initialStateRead.then(()=>{
+  if(!taskWritesEnabled())return;
+  el('task-text').value=draft;
+  el('open-task').click();
+});
+route();refreshTask(localStorage.getItem('edge-last-task'),true);
 setInterval(()=>{if(!document.hidden)poll();},1000);
 setInterval(()=>{if(!document.hidden && !replay && taskRecord && !['SUCCEEDED','CANCELED','FAILED','REJECTED','BLOCKED','RECOVERY_REQUIRED'].includes(taskRecord.state))refreshTask(taskRecord.id,true);},1800);

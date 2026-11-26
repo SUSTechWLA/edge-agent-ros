@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "id": "perception-operators",
+  "plugins": [
+    {"id": "computation.numeric", "version": "1.0.0", "config": {}},
+    {"id": "perception.analyze_regions", "version": "1.0.0", "config": {}}
+  ],
+  "policy": {"classes": ["soft"], "effects": ["read"], "site_approval": false}
+}

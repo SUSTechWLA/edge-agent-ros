@@ -1,0 +1,15 @@
+[Unit]
+Description=Restore the authenticated Edge Agent Console after LAN startup
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/edge-agent/console-online.env
+ExecStart=/bin/sh ${EDGE_CONSOLE_HELPER} ${EDGE_CONSOLE_GATEWAY} ${EDGE_CONSOLE_NETWORK} ${EDGE_CONSOLE_LOGIN_URL}
+Restart=on-failure
+RestartSec=12
+RemainAfterExit=yes
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,9 @@
+{
+  "id": "verify_camera_intrinsics",
+  "version": "1",
+  "effect": "idempotent",
+  "description": "Check the fitted camera model and requested LiDAR extrinsics using independent held-out poses. Requires camera_candidate_ready.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/camera-verify"
+}

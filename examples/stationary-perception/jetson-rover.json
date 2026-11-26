@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "actor_ref": "rover",
+  "body_frame": "base_foot",
+  "witness_frame": "odom",
+  "witness_source": "wheel.odometry",
+  "sources": {
+    "mid360.front": {
+      "kind": "livox",
+      "frame_id": "front_mid360",
+      "joint": "front_lidar_joint",
+      "translation_m": [
+        0.215,
+        0,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0,
+        0.3418173023326381,
+        0,
+        0.9397664240788973
+      ],
+      "extrinsic_basis": "nominal_urdf",
+      "extrinsic_ref": "sha256:43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8"
+    },
+    "mid360.rear": {
+      "kind": "livox",
+      "frame_id": "rear_mid360",
+      "joint": "rear_lidar_joint",
+      "translation_m": [
+        -0.17,
+        0.11,
+        0.25
+      ],
+      "quaternion_xyzw": [
+        0,
+        0,
+        1,
+        1.7948965149208059e-9
+      ],
+      "extrinsic_basis": "nominal_urdf",
+      "extrinsic_ref": "sha256:43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8"
+    }
+  },
+  "mounts": {
+    "mid360.front": {
+      "root": "lidar/mid360.front",
+      "format": "livox"
+    },
+    "mid360.rear": {
+      "root": "lidar/mid360.rear",
+      "format": "livox"
+    },
+    "d435.color.image": {
+      "root": "color",
+      "format": "image"
+    },
+    "d435.aligned.depth": {
+      "root": "depth",
+      "format": "image"
+    },
+    "d435.color.info": {
+      "root": "calibration",
+      "format": "calibration"
+    }
+  },
+  "grounding": {
+    "rgb_source": "d435.color.image",
+    "depth_source": "d435.aligned.depth",
+    "calibration_source": "d435.color.info",
+    "max_skew_ns": 40000000,
+    "depth_profile": {
+      "kind": "depth16",
+      "frame_id": "camera_color_optical_frame",
+      "depth_scale_m": 0.001,
+      "depth_scale_ref": "realsense-ros/4.58.4/fix_depth_scale"
+    }
+  },
+  "model_evidence": {
+    "basis": "nominal_urdf",
+    "file": "/home/cas/humble_ws/install/casdog_urdf/share/casdog_urdf/urdf/lingao_mid360.urdf.xacro",
+    "digest": "sha256:43479a4b2c5fc0915b0648aa951ae079d6cffe1943311a4d44c1b5c9debf9ec8",
+    "joint_type": "fixed"
+  },
+  "depth_scale_evidence": {
+    "driver": "realsense2_camera",
+    "version": "4.58.4",
+    "function": "fix_depth_scale",
+    "source": "https://raw.githubusercontent.com/realsenseai/realsense-ros/4.58.4/realsense2_camera/src/base_realsense_node.cpp"
+  }
+}

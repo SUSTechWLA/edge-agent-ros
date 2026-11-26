@@ -2,24 +2,12 @@
 from collections import OrderedDict
 import math
 import struct
+from edge_contracts.spatial_facts import rotation
 
 MAX_BYTES = 32 * 1024 * 1024
 SAMPLE_LIMIT = 4096
 MAX_VOXELS = 8192
 VOXEL_M = 0.1
-
-
-def rotation(translation, quaternion):
-    if not all(math.isfinite(v) for v in (*translation, *quaternion)):
-        raise ValueError("transform_invalid")
-    x, y, z, w = quaternion
-    norm = math.sqrt(x*x + y*y + z*z + w*w)
-    if abs(norm - 1) > .01:
-        raise ValueError("transform_invalid")
-    x, y, z, w = (v/norm for v in quaternion)
-    return ((1-2*(y*y+z*z), 2*(x*y-z*w), 2*(x*z+y*w), translation[0]),
-            (2*(x*y+z*w), 1-2*(x*x+z*z), 2*(y*z-x*w), translation[1]),
-            (2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x*x+y*y), translation[2]))
 
 
 IDENTITY = rotation((0, 0, 0), (0, 0, 0, 1))

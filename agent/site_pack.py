@@ -140,7 +140,10 @@ def build_lock(packs_dir, profile_path, site, override, output, physical=None):
                 config={**spec["config"],**settings.get(key,{}),**overrides.get(key,{})}
                 require(item["class"]=="soft" or not config,"device settings require explicit deployment handoff")
                 role_extra=pack_policy["site_approval"] or site_policy["site_approval"]
-                save(result/"config"/(key+".json"),config)
+                config_path = result/"config"/(key+".json")
+                save(config_path,config)
+                # Hash the persisted JSON. Canonical storage writes integral floats as integers.
+                config = _read(config_path)
                 if deployment_hash is None:
                     save(result/"releases"/(key+".plugin.json"),item)
                     settings_for(item,result)

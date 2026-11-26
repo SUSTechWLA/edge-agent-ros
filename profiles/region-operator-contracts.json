@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "runner": "analyze_regions",
+  "contracts": {
+    "regional_range": {
+      "description": "极差（range, spread），最大区域测量值减去最小区域测量值，单位与输入一致。",
+      "cases": [
+        {"sample": [2, 8, 4], "expected": 6},
+        {"sample": [-9, -3, -7], "expected": 6},
+        {"sample": [0, 0, 0, 0], "expected": 0},
+        {"sample": [-0.5, 1.75, -0.25, 0], "expected": 2.25},
+        {"sample": [6.5], "expected": 0}
+      ]
+    },
+    "regional_midrange": {
+      "description": "极值中点（midrange），最小区域值和最大区域值的算术平均，单位与输入一致。",
+      "cases": [
+        {"sample": [2, 8, 4], "expected": 5},
+        {"sample": [-9, -3, -7], "expected": -6},
+        {"sample": [0, 0, 0, 0], "expected": 0},
+        {"sample": [-0.5, 1.75, -0.25, 0], "expected": 0.625},
+        {"sample": [6.5], "expected": 6.5}
+      ]
+    },
+    "ordered_change": {
+      "description": "区域序列的有向变化量（signed change），最后一个区域的值减去第一个区域的值，保留方向及原始单位。",
+      "cases": [
+        {"sample": [2, 8, 4], "expected": 2},
+        {"sample": [-3, -3, -7], "expected": -4},
+        {"sample": [0, 0, 0], "expected": 0},
+        {"sample": [-0.5, 1.75, -0.25, 0], "expected": 0.5},
+        {"sample": [6.5], "expected": 0}
+      ]
+    }
+  }
+}

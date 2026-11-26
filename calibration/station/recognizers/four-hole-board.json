@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "vision.aruco-four-hole-board",
+  "version": "1.0.0",
+  "targets": ["four_hole_board"],
+  "entrypoint": "calibration.circle_target:recognize",
+  "source_modules": ["calibration.board_metrics", "calibration.board_solver", "calibration.targets"]
+}

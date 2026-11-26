@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "board.live-rgb",
+  "version": "1.0.0",
+  "endpoint": "http://calibration-observer:8142/live-frame",
+  "provides": ["calibration.live_rgb_preview"],
+  "requires": []
+}

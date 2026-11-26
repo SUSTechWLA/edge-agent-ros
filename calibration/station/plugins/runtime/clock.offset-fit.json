@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "clock.offset-fit",
+  "version": "1.0.0",
+  "endpoint": "http://calibration-algorithms:8142/fit-clock",
+  "provides": [
+    "calibration.clock_offset_fit"
+  ],
+  "requires": []
+}

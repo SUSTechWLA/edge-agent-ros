@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "actor_ref": "rover",
+  "mounts": {
+    "d435.color.image": {
+      "root": "color",
+      "format": "image"
+    },
+    "d435.aligned.depth": {
+      "root": "depth",
+      "format": "image"
+    },
+    "d435.color.info": {
+      "root": "calibration",
+      "format": "calibration"
+    }
+  },
+  "grounding": {
+    "rgb_source": "d435.color.image",
+    "depth_source": "d435.aligned.depth",
+    "calibration_source": "d435.color.info",
+    "object_model_ref": "sha256:9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+    "max_skew_ns": 40000000,
+    "depth_profile": {
+      "kind": "depth16",
+      "frame_id": "camera_color_optical_frame",
+      "depth_scale_m": 0.001,
+      "depth_scale_ref": "realsense-ros/4.58.4/fix_depth_scale"
+    }
+  }
+}

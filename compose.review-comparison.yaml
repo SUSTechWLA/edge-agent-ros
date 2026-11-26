@@ -1,0 +1,103 @@
+# Independent read site. No ROS network, host devices, controller or Docker socket.
+name: edge-review055
+x-read: &read
+  image: ${REVIEW_IMAGE:?pinned arm64 image}
+  pull_policy: never
+  restart: unless-stopped
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 40
+  mem_limit: 256m
+  tmpfs: [/tmp]
+services:
+  agent:
+    <<: *read
+    entrypoint: [/usr/local/bin/edge-entrypoint]
+    command: [python3, -B, /opt/edge/agent/service.py]
+    networks: [api, model]
+    environment:
+      EDGE_AGENT_BIND: 0.0.0.0
+      EDGE_SOFT_SOCKET: /soft/agent.sock
+      EDGE_AUTONOMOUS_READ_POLICY: /read-site/approved.json
+      EDGE_READ_CAPABILITY_INDEX: /read-site/implementations.json
+      EDGE_CONTRACT_DIR: /planner-profile
+      EDGE_TRACE_CONTENT: redacted
+      EDGE_ACTOR_REF: ${REVIEW_ACTOR:?}
+      ROS_LOCALHOST_ONLY: "1"
+      ROS_DOMAIN_ID: "216"
+      ROS_LOG_DIR: /tmp/ros
+    volumes:
+      - task-state:/var/lib/edge-tasks
+      - agent-socket:/soft:ro
+      - ./setup/planner:/planner-profile:ro
+      - ./release/config:/read-site:ro
+  soft-host:
+    <<: *read
+    networks: [data]
+    entrypoint: [python3, -B, /opt/edge/agent/soft_host.py]
+    environment:
+      EDGE_SOFT_PLATFORM_DIGEST: ${REVIEW_IMAGE:?}
+    volumes:
+      - ./release/site:/site:ro
+      - registry:/registry
+      - journal:/journal
+      - agent-socket:/sockets/agent
+      - session-socket:/sockets/session
+  review-worker:
+    <<: *read
+    profiles: [grid-replay]
+    networks: [data]
+    entrypoint: [python3, -B, -m, perception.review055.server, --role, measure]
+    environment:
+      EDGE_REVIEW_FRAME_REF: ${REVIEW_FRAME:?}
+    volumes: [./inputs:/inputs:ro]
+  review-workflow:
+    <<: *read
+    profiles: [grid-replay]
+    networks: [data]
+    entrypoint: [python3, -B, -m, perception.review055.server, --role, workflow]
+    environment:
+      EDGE_REVIEW_FRAME_REF: ${REVIEW_FRAME:?}
+      EDGE_REVIEW_WORKFLOW_DIGEST: ${REVIEW_WORKFLOW_SHA:?}
+    volumes: [./inputs:/inputs:ro]
+  review-console:
+    <<: *read
+    networks: [api]
+    entrypoint: [python3, -B, /review_site.py, --web, /web, --history, /history/ops.jsonl, --frame, /inputs/frame.json, --config, /config]
+    volumes:
+      - ./setup/review_site.py:/review_site.py:ro
+      - ./public:/web:ro
+      - ./history:/history:ro
+      - ./inputs:/inputs:ro
+      - ./release/config:/config:ro
+  gateway:
+    <<: *read
+    image: ${REVIEW_ACCESS_IMAGE:?site authentication gateway image}
+    networks: [api, front]
+    entrypoint: [python3, -B, /gateway.py]
+    volumes:
+      - ./setup/gateway.py:/gateway.py:ro
+      - ${REVIEW_ACCESS_DIR:?site account directory}:/access:ro
+    ports: ["${REVIEW_LAN:?}:8771:8089"]
+  admin:
+    <<: *read
+    network_mode: none
+    restart: "no"
+    profiles: [ops]
+    entrypoint: [python3, -B, /opt/edge/agent/plugin_manager.py]
+    environment:
+      EDGE_PLUGIN_TRUST_ROOT: /site/trust
+    volumes: [./release/site:/site:ro, registry:/registry]
+networks:
+  api: {internal: true}
+  data: {internal: true}
+  front: {}
+  model: {external: true, name: edge-review055-model}
+volumes:
+  task-state: {}
+  registry: {}
+  journal: {}
+  agent-socket: {}
+  session-socket: {}

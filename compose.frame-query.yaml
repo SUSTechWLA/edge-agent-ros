@@ -1,0 +1,21 @@
+services:
+  frame-query:
+    image: ${EDGE_FRAME_QUERY_IMAGE:?pin the frame statistics runtime}
+    pull_policy: never
+    profiles: [published]
+    networks: [facts]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    tmpfs: [/tmp]
+    pids_limit: 32
+    mem_limit: 128m
+    environment:
+      EDGE_FRAME_QUERY_DIGEST: ${EDGE_FRAME_QUERY_DIGEST:?pin release digest}
+    entrypoint: [python3, -B, -m, perception.spatial_facts.frame_query_server, --profile, /config/frame.json]
+    volumes:
+      - ${EDGE_OBJECT_PROFILE:?approved RGB-D calibration profile}:/config/frame.json:ro
+      - image-facts:/inputs/color:ro
+      - depth-facts:/inputs/depth:ro
+      - camera-facts:/inputs/calibration:ro

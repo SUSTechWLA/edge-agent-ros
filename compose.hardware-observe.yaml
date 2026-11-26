@@ -3,3 +3,4 @@ services:
   console:
     environment:
       EDGE_CONSOLE_OBSERVE_ONLY: "1"
+      EDGE_FACTS_URL: http://127.0.0.1:${EDGE_FACTS_PORT:-8091}

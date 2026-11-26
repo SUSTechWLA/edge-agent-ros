@@ -19,7 +19,9 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Imu, LaserScan
 from std_msgs.msg import String
 
-from history import EventConflict, History, ledger_batch, task_batch
+from history import EventConflict, History
+from legacy_ledger import LegacyLedgerReader
+from task_data import AgentFacts, FactsUnavailable
 from journal_ingress import JournalIngress
 from module_events import parse_event
 from observations import Observations
@@ -87,18 +89,10 @@ class Observer(Node):
         self.scan_frame = os.environ.get("EDGE_SCAN_FRAME", "laser_link")
         self.base_frame = os.environ.get("EDGE_BASE_FRAME", "base_link")
         self.history = History(Path(os.environ.get("EDGE_CONSOLE_DIR","/var/lib/edge-console")) / "history.db")
-        self.ledger = Path(os.environ.get("EDGE_LEDGER_PATH","/var/lib/edge-agent/edge.db")).absolute()
-        self.tasks = Path(os.environ.get("EDGE_TASK_DB","/var/lib/edge-tasks/tasks.db")).absolute()
-        journals = {
-            "runtime.registry":self.tasks.parent / "module-events.sqlite",
-            "plugin.author":Path("/var/lib/edge-author-events/module-events.sqlite"),
-            "plugin.publisher":Path("/etc/edge/plugins/derived/.history/module-events.sqlite"),
-            "plugin.manager":Path("/etc/edge/plugins/runtime/.history/module-events.sqlite"),
-            "plugin.supervisor":Path("/var/lib/edge-supervisor/module-events.sqlite"),
-        }
-        if os.getenv("EDGE_PHYSICAL_AUDIT"):
-            journals["physical.controller"] = Path(os.environ["EDGE_PHYSICAL_AUDIT"])
-        self.journals = JournalIngress(journals, "/var/lib/edge-module-sources")
+        self.ledger = LegacyLedgerReader()
+        self.facts = AgentFacts()
+        self.journals = JournalIngress.from_deployment()
+        self.registry_journal = JournalIngress({}, None, agent=self.facts)
         self.sources = {}
         self.health = {}
         self.health_event = {}
@@ -108,9 +102,8 @@ class Observer(Node):
         self.source_id = None
         self.ledger_error = None
         self.task_error = None
-        self.task_source_id = None
+        self.task_source_id, self.paired_core = self.history.fact_sources()
         self.last_baseline = 0
-        self.last_ledger = 0
         self.moving = None
         self.mode = None
         self.sim_clock = None
@@ -359,18 +352,12 @@ class Observer(Node):
             self.mission_data.pop(next(reversed(self.mission_data)))
         snapshot = self.at_source_time(row["utc"])
         level = "error" if row["state"] in ("FAILED","RECOVERY_REQUIRED") else "info"
-        parent = self.history.dispatch_origin(self.task_source_id,mid)
-        if parent and kind=="mission.created":
-            data["parent_task_id"]=parent["mission_id"]
-            data["agent_dispatch_seq"]=parent["seq"]
         self.history.record(snapshot,kind=kind,source="edge_core/ledger",detail=row["detail"],level=level,
                             mission_id=mid,operation_id=op,data=data,event_utc=row["utc"],
                             source_id=self.source_id,source_seq=row["seq"],source_cause=row["cause_seq"],
-                            cause=parent["seq"] if parent and kind=="mission.created" else None,
+                            peer_source=self.task_source_id or "",
                             trace={"module":"edge.core","layer":"core","code":row.get("code") or kind,
-                                   "trace_id":parent["trace_id"] if parent else mid,
-                                   "task_id":parent["mission_id"] if parent else None,
-                                   "trigger":{k:parent["trigger_"+k] for k in ("kind","id","source")} if parent else {}})
+                                   "trace_id":mid})
 
     def at_source_time(self, event_utc):
         when = datetime.fromisoformat(event_utc.replace("Z","+00:00")).timestamp()
@@ -389,10 +376,10 @@ class Observer(Node):
             snapshot.update(extra_sources={},trail=[],trail_frame=None,active_operation=None,telemetry_at=None)
         return snapshot
 
-    def poll_tasks(self):
+    def poll_tasks(self, core_source, core_online=True):
         try:
-            source_id,rows=task_batch(self.tasks,self.history)
-        except (OSError,sqlite3.Error) as exc:
+            page = self.facts.event_batch("task-events", self.history)
+        except FactsUnavailable as exc:
             if self.task_error != str(exc):
                 self.task_error=str(exc)
                 self.event("agent.journal_unavailable","mission_agent/tasks",str(exc),"warn")
@@ -400,8 +387,13 @@ class Observer(Node):
         if self.task_error:
             self.task_error=None
             self.event("agent.journal_available","mission_agent/tasks","任务日志已连接")
-        self.task_source_id=source_id
-        for row in rows:
+        source_id = page["source_id"]
+        if self.task_source_id != source_id:
+            # A first source may be paired immediately. A replacement must drain its
+            # old dispatches before we know which ones were witnessed with this core.
+            self.remember_sources(source_id, "" if self.task_source_id else None)
+        dispatch_core = core_source if self.paired_core in (None, core_source) else None
+        for row in page["events"]:
             kind=row["kind"]
             data={"source_seq":row["seq"],"task_id":row["task_id"],"journal_step":row["step"],
                   "delegated_operation_id":row["operation_id"]}
@@ -420,8 +412,15 @@ class Observer(Node):
             self.history.record(frame,kind="agent."+kind,source="mission_agent/tasks",level=level,
                                 mission_id=row["task_id"],operation_id=row["operation_id"],detail=row["detail"],
                                 data=data,event_utc=row["utc"],source_id=source_id,source_seq=row["seq"],
+                                peer_source=(dispatch_core or "") if kind=="dispatch" else None,
                                 trace={**trace,"task_id":row["task_id"]},
                                 cause=self.history.previous_task_event(source_id,row["task_id"]))
+        if core_online and core_source and not page["events_has_more"] and self.paired_core != core_source:
+            self.remember_sources(source_id, core_source)
+
+    def remember_sources(self, task_source, core_source):
+        self.history.remember_sources(task_source, core_source)
+        self.task_source_id, self.paired_core = task_source, core_source
 
     def observed_frame(self, event_utc):
         with self.lock:
@@ -430,12 +429,38 @@ class Observer(Node):
             frame["missions"]=prior["missions"] if prior and frame["telemetry_at"] is not None else []
             return frame
 
-    def watch_journals(self, stop):
+    def poll_facts(self):
+        try:
+            batch = self.ledger.batch(self.history)
+        except (OSError,sqlite3.Error) as ex:
+            if self.ledger_error != str(ex):
+                self.ledger_error=str(ex)
+                self.event("ledger.unavailable","edge_core/ledger",str(ex),"warn")
+            self.poll_tasks(self.source_id, core_online=False)
+            return
+        if self.task_source_id and self.source_id and self.source_id != batch[0] and self.paired_core != "":
+            # Persist a witnessed replacement even if the Agent is currently unreachable.
+            self.remember_sources(self.task_source_id, "")
+        self.poll_tasks(batch[0])
+        with self.lock:
+            self.poll_ledger(batch)
+
+    def journal_workers(self, stop):
+        # Local SQLite ingress must progress even while the owner is unreachable or DNS is slow.
+        return (
+            threading.Thread(target=self.watch_journals, args=(stop, self.journals), name="module-journals"),
+            threading.Thread(target=self.watch_journals, args=(stop, self.registry_journal),
+                             kwargs={"include_facts":True}, name="owner-journals"),
+        )
+
+    def watch_journals(self, stop, reader, *, include_facts=False):
         # Source locks, backlog import and snapshot compression must not occupy the ROS executor.
         unavailable = False
         while not stop.is_set():
             try:
-                self.journals.poll(self.history, lambda at: self.observed_frame(at) if at else self.snapshot())
+                if include_facts:
+                    self.poll_facts()
+                reader.poll(self.history, lambda at: self.observed_frame(at) if at else self.snapshot())
                 if unavailable:
                     self.event("module.ingress_restored","edge_console","持久模块事件归档恢复")
                     unavailable = False
@@ -446,14 +471,8 @@ class Observer(Node):
                     unavailable = True
             stop.wait(0.5)
 
-    def poll_ledger(self):
-        try:
-            identity, missions, events, steps = ledger_batch(self.ledger,self.history)
-        except (OSError,sqlite3.Error) as ex:
-            if self.ledger_error != str(ex):
-                self.ledger_error=str(ex)
-                self.event("ledger.unavailable","edge_core/ledger",str(ex),"warn")
-            return
+    def poll_ledger(self, batch):
+        identity, missions, events, steps = batch
         if self.source_id != identity:
             self.source_id = identity
             self.mission_data = {}
@@ -473,10 +492,6 @@ class Observer(Node):
         with self.lock:
             now = time.monotonic()
             self.extra.tick(now)
-            if now-self.last_ledger >= 0.5:
-                self.poll_tasks()
-                self.poll_ledger()
-                self.last_ledger=now
             frame = self.snapshot()
             self.historical.append(frame)
             for key,s in frame["sources"].items():

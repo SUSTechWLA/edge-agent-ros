@@ -9,6 +9,8 @@
 !client/**
 !perception
 !perception/**
+!navigation
+!navigation/**
 !calibration
 !calibration/**
 !exploration

@@ -16,8 +16,8 @@ def enabled():
     return soft_client.enabled() or plugin_tracks.physical_enabled()
 
 
-def catalog(legacy):
-    return plugin_tracks.catalog(legacy)
+def catalog(legacy, track_views=None):
+    return plugin_tracks.catalog(legacy, track_views)
 
 
 def views():

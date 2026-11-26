@@ -1,0 +1,31 @@
+# Optional two-source MID-360 published-facts provider. Each source keeps its own frame and timestamps.
+services:
+  spatial-facts:
+    image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the image with source discovery}
+    environment:
+      EDGE_SPATIAL_INPUT_LIVOX: '[{"source_id":"mid360.front","file":"/lidar-facts/mid360.front/observations.json"},{"source_id":"mid360.rear","file":"/lidar-facts/mid360.rear/observations.json"}]'
+    volumes: [livox-facts:/lidar-facts:ro]
+  livox-reader:
+    image: ${EDGE_NAV_IMAGE_READER_IMAGE}
+    pull_policy: never
+    profiles: [published]
+    network_mode: host
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    tmpfs: [/tmp]
+    pids_limit: 32
+    mem_limit: 192m
+    entrypoint: [python3, -B, -m, perception.spatial_facts.livox_capture]
+    command: [--continuous, --interface, "${EDGE_NAV_LIVOX_INTERFACE:?dedicated sensor interface}",
+              --destination, "${EDGE_NAV_LIVOX_DEST:?approved local IPv4}",
+              --source, "${EDGE_NAV_FRONT_IP:?approved front sensor IPv4}", mid360.front, "${EDGE_NAV_FRONT_FRAME:?front native sensor frame}",
+              --source, "${EDGE_NAV_REAR_IP:?approved rear sensor IPv4}", mid360.rear, "${EDGE_NAV_REAR_FRAME:?rear native sensor frame}",
+              --actor-ref, "${EDGE_NAV_ACTOR:?approved actor}", --output, /lidar-facts]
+    volumes: [livox-facts:/lidar-facts]
+volumes:
+  livox-facts:
+    driver: local
+    driver_opts: {type: tmpfs, device: tmpfs, o: "size=64m,mode=0755"}

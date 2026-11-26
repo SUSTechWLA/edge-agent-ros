@@ -1,0 +1,14 @@
+ARG BASE_IMAGE=edge-rover-local:sdd058-dynamic-recovery
+FROM ${BASE_IMAGE}
+# The ROS base provides NumPy and the C++ runtime. Install only the headless
+# OpenCV bindings used for checkerboard detection and calibrated pose estimation.
+ARG TARGETARCH
+ARG WHEEL_MIRROR=https://files.pythonhosted.org/packages
+RUN set -eu; case "$TARGETARCH" in \
+      amd64) arch=x86_64; path=d1/09/248f86a404567303cdf120e4a301f389b68e3b18e5c0cc428de327da609c; sha=377d08a7e48a1405b5e84afcbe4798464ce7ee17081c1c23619c8b398ff18295 ;; \
+      arm64) arch=aarch64; path=91/61/f838ce2046f3ec3591ea59ea3549085e399525d3b4558c4ed60b55ed88c0; sha=46071015ff9ab40fccd8a163da0ee14ce9846349f06c6c8c0f2870856ffa45db ;; \
+      *) exit 1 ;; esac; \
+    curl -fsSL --retry 3 --connect-timeout 15 --max-time 480 "$WHEEL_MIRROR/$path/opencv_python_headless-4.10.0.84-cp37-abi3-manylinux_2_17_${arch}.manylinux2014_${arch}.whl" -o /tmp/cv.whl; \
+    echo "$sha  /tmp/cv.whl" | sha256sum -c -; \
+    python3 -c "import sysconfig, zipfile; zipfile.ZipFile('/tmp/cv.whl').extractall(sysconfig.get_path('purelib'))"; \
+    python3 -c "import cv2; assert cv2.__version__ == '4.10.0'"; rm /tmp/cv.whl

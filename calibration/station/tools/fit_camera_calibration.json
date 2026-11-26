@@ -1,0 +1,9 @@
+{
+  "id": "fit_camera_calibration",
+  "version": "2",
+  "effect": "idempotent",
+  "description": "Fit a pinhole camera model and, for a joint task, sensor extrinsics. Requires camera_fit_ready.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/camera-fit"
+}

@@ -1,0 +1,36 @@
+# Optional overlay for the complete published, read-only field site.
+# Wheel capture opens a new continuity epoch on restart. Previously pinned routes retain their epoch.
+services:
+  agent: {restart: unless-stopped}
+  soft-host: {restart: unless-stopped}
+  spatial-facts:
+    image: ${EDGE_FIELD_SPATIAL_IMAGE:?pin the approved gateway image}
+    restart: unless-stopped
+    environment:
+      EDGE_SPATIAL_PRIMARY_SOURCE_ID: ${EDGE_SPATIAL_PRIMARY_SOURCE_ID:-wheel.odometry}
+    volumes:
+      - type: bind
+        source: ${EDGE_FIELD_FACTS_MODULE:-./perception/spatial_facts/gateway.py}
+        target: /opt/edge/perception/spatial_facts/gateway.py
+        read_only: true
+        bind: {create_host_path: false}
+  frame-query: {restart: unless-stopped}
+  stationary-perception: {restart: unless-stopped}
+  operator-evaluator: {restart: unless-stopped}
+  object-perception: {restart: unless-stopped}
+  camera-info-reader: {restart: unless-stopped}
+  image-reader: {restart: unless-stopped}
+  depth-reader: {restart: unless-stopped}
+  livox-reader:
+    image: ${EDGE_FIELD_LIVOX_IMAGE:?pin the approved packet reader image}
+    restart: unless-stopped
+  wheel-witness: {restart: unless-stopped}
+  odom-reader:
+    restart: unless-stopped
+    command: [python3, -B, -m, perception.spatial_facts.odom_capture, --config, /config/odometry.json, --output, /facts, --new-epoch-on-start]
+    volumes:
+      - type: bind
+        source: ${EDGE_FIELD_ODOM_MODULE:-./perception/spatial_facts/odom_capture.py}
+        target: /opt/edge/perception/spatial_facts/odom_capture.py
+        read_only: true
+        bind: {create_host_path: false}

@@ -1,0 +1,9 @@
+{
+  "id": "record_camera_calibration_pose",
+  "version": "2",
+  "effect": "idempotent",
+  "description": "Record one stable, distinct pose from the current stopped viewpoint. In a stationary-only installation this tool obtains the needed pose with an operator prompt. On a mobile station use the current view before selecting another safe viewpoint.",
+  "parameters": {},
+  "accepts_trace": true,
+  "endpoint": "http://calibration-session:8141/camera-record"
+}

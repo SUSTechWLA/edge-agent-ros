@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "perception-static",
+  "plugins": [
+    {
+      "id": "perception.fused_scene",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "perception.target_location",
+      "version": "1.0.0",
+      "config": {}
+    },
+    {
+      "id": "perception.read_stationary",
+      "version": "1.0.0",
+      "config": {}
+    }
+  ],
+  "policy": {
+    "classes": [
+      "soft"
+    ],
+    "effects": [
+      "read"
+    ],
+    "site_approval": false
+  }
+}

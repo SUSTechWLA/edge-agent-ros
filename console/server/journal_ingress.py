@@ -1,4 +1,7 @@
 """Import trusted, local producer journals into the existing read-only event archive."""
+import base64
+import json
+import os
 import re
 import sqlite3
 import time
@@ -9,6 +12,7 @@ from pathlib import Path
 
 from history import EventConflict
 from module_events import parse_event
+from task_data import FactsUnavailable
 
 
 MODULE = re.compile(r"[a-z][a-z0-9_.-]{0,95}\Z")
@@ -39,13 +43,28 @@ class Lease:
 
 
 class JournalIngress:
-    def __init__(self, builtin, extensions, clock=time.monotonic):
+    def __init__(self, builtin, extensions, clock=time.monotonic, *, agent=None, reserved=()):
         self.builtin = builtin
-        self.extensions = Path(extensions)
+        self.extensions = Path(extensions) if extensions is not None else None
+        self.reserved = frozenset(reserved)
+        self.agent = agent
         self.health = {}
         self.archive_id = None
         self.clock = clock
         self.leases = {}
+
+    @classmethod
+    def from_deployment(cls):
+        mapping = json.loads(os.getenv("EDGE_JOURNAL_SOURCES", "{}"))
+        if not isinstance(mapping, dict) or any(
+                not MODULE.fullmatch(name) or name == "runtime.registry" or
+                not isinstance(path, str) or not Path(path).is_absolute() for name, path in mapping.items()):
+            raise ValueError("EDGE_JOURNAL_SOURCES must map module names to absolute journal paths")
+        paths = {name:Path(path) for name, path in mapping.items()}
+        if os.getenv("EDGE_PHYSICAL_AUDIT"):
+            paths["physical.controller"] = Path(os.environ["EDGE_PHYSICAL_AUDIT"])
+        return cls(paths, os.getenv("EDGE_MODULE_SOURCES", "/var/lib/edge-module-sources"),
+                   reserved={"runtime.registry"})
 
     def poll(self, history, frame):
         if self.archive_id != history.archive_id:
@@ -53,10 +72,27 @@ class JournalIngress:
             self.leases.clear()
             self.archive_id = history.archive_id
         sources = dict(self.builtin)
+        if self.agent is not None:
+            sources["runtime.registry"] = None
+        if self.extensions is not None:
+            self.discover(history, frame, sources)
+        for module, path in sources.items():
+            try:
+                if path is None:
+                    self.read_registry(history, frame)
+                else:
+                    self.read(history, frame, module, path)
+            except SourceReadError as error:
+                self.status(history, frame, module, str(error))
+            else:
+                self.status(history, frame, module, "available")
+
+    def discover(self, history, frame, sources):
         listing_complete = True
         try:
             for path in self.extensions.iterdir():
-                if MODULE.fullmatch(path.name) and path.name not in sources and path.is_dir() and not path.is_symlink():
+                if (MODULE.fullmatch(path.name) and path.name not in sources and path.name not in self.reserved
+                        and path.is_dir() and not path.is_symlink()):
                     sources[path.name] = path / "module-events.sqlite"
         except FileNotFoundError:
             self.status(history, frame, "@sources", "absent")
@@ -66,15 +102,8 @@ class JournalIngress:
         else:
             self.status(history, frame, "@sources", "available")
         if listing_complete:
-            for module in self.health.keys() - sources.keys() - {"@sources"}:
+            for module in self.health.keys() - sources.keys() - self.reserved - {"@sources"}:
                 self.status(history, frame, module, "absent")
-        for module, path in sources.items():
-            try:
-                self.read(history, frame, module, path)
-            except SourceReadError as error:
-                self.status(history, frame, module, str(error))
-            else:
-                self.status(history, frame, module, "available")
 
     def status(self, history, frame, module, state):
         previous, parent = self.health.get(module, (None, None))
@@ -114,6 +143,32 @@ class JournalIngress:
                 heartbeat = None
                 if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='module_bus_heartbeat'").fetchone():
                     heartbeat = db.execute("SELECT pulse,ttl_s FROM module_bus_heartbeat WHERE singleton=1").fetchone()
+        self.archive(history, frame, module, source_id, cursor, rows, heartbeat)
+
+    def read_registry(self, history, frame):
+        try:
+            page = self.agent.event_batch("registry-events", history)
+        except FactsUnavailable as exc:
+            raise SourceReadError(str(exc)) from exc
+        source_id = page["source_id"]
+        prefix = "journal:runtime.registry:"
+        if not source_id.startswith(prefix) or not IDENTITY.fullmatch(source_id[len(prefix):]):
+            raise SourceReadError("invalid_source")
+        rows = []
+        for row in page["events"]:
+            value = row.get("raw_b64")
+            try:
+                raw = base64.b64decode(value, validate=True) if isinstance(value, str) else None
+            except ValueError:
+                raw = None
+            rows.append((row["seq"], raw))
+        heartbeat = page.get("heartbeat")
+        if heartbeat is not None and (not isinstance(heartbeat, list) or len(heartbeat) != 2):
+            raise SourceReadError("invalid_heartbeat")
+        self.archive(history, frame, "runtime.registry", source_id, history.source_cursor(source_id), rows, heartbeat)
+
+    def archive(self, history, frame, module, source_id, cursor, rows, heartbeat):
+        source = "journal:" + module
         for seq, raw in rows:
             if type(seq) is not int or seq <= cursor:
                 raise SourceReadError("invalid_sequence")
