@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "board.view-plan",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "endpoint": "http://calibration-algorithms:8142/plan-views",
   "provides": ["calibration.capture_view_plan"],
   "requires": []

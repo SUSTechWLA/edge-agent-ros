@@ -10,10 +10,12 @@ import numpy as np
 from calibration import board_solver, checks, intrinsic_collection, intrinsic_information, view_coverage
 from calibration.targets import rotation_xyzw
 from edge_contracts import capture_navigation as nav
+from edge_contracts.semantic_costmap import corridor_semantic_score
+from edge_contracts.semantic_scene import compact_scene
 from edge_contracts.spatial_facts import rotation
 
 
-VERSION = "5"
+VERSION = "6"
 SOURCE_SHA = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
@@ -204,6 +206,23 @@ def plan_views(task_id, operation_id, obs, camera, prior, profile, *, method=Non
         result["captured_lateral_right_m"] = round(observed_coverage["right_m"],3)
         result["captured_rgb_cells"] = ", ".join(observed_coverage["cells"])
         rejected["outside_observed_clearance"] = 0
+        prior_scene = obs.get("scene_slice")
+        if isinstance(prior_scene, dict) and len(prior_scene.get("nodes", [])) < 12 and len(prior_scene.get("edges", [])) < 16:
+            try:
+                enriched = dict(
+                    prior_scene,
+                    nodes=[*prior_scene["nodes"], {
+                        "id": "capture_zone",
+                        "label": "active_capture_corridor",
+                        "kind": "region",
+                        "state": "observed",
+                        "position_m": [round(float(v), 3) for v in center.tolist()],
+                    }],
+                    edges=[*prior_scene["edges"], ["target", "guards", "capture_zone"]],
+                )
+                result["scene_slice"] = compact_scene(enriched)
+            except ValueError:
+                pass
     if collection:
         result.update(camera_operator_needed=False, camera_view_recordable=False)
         plane_points = plane.get("corners_px", [])
@@ -331,10 +350,21 @@ def plan_views(task_id, operation_id, obs, camera, prior, profile, *, method=Non
                 continue
             cells = view_coverage.image_cells(uv,[width,height])
             identified = "left" if side >= limit else "right" if side <= -limit else "center"
+            fills_missing = (identified != "center" and observed_coverage[identified+"_m"] < limit)
+            new_cells = len(cells-set(observed_coverage["cells"]))
+            sem_score = corridor_semantic_score(
+                clearance_margin_m=clear,
+                path_margin_px=path_px if tracking else float(margin),
+                lidar_gap=gap,
+                fills_missing_side=fills_missing,
+                new_rgb_cells=new_cells,
+                robot_on_preferred=view_coverage.ready(observed_coverage, limit),
+            )
             predicted.update(lateral_m=round(side,3),board_view=identified,
-                             new_rgb_cells=len(cells-set(observed_coverage["cells"])),
+                             new_rgb_cells=new_cells,
                              clearance_margin_m=round(clear,3),
-                             fills_missing_side=(identified != "center" and observed_coverage[identified+"_m"] < limit))
+                             fills_missing_side=fills_missing,
+                             **sem_score)
         if collection:
             axis = points[1]-points[0]
             angles = [math.degrees(math.atan2(n[1], n[2])), math.degrees(math.atan2(axis[1], axis[0]))]
@@ -399,7 +429,7 @@ def plan_views(task_id, operation_id, obs, camera, prior, profile, *, method=Non
             paired_progress = -p["lidar_view_gap"] if collection and collection["needs_pair"] else 0.
             return (p.get("helps_camera_coverage",False), paired_progress, p["fills_missing_side"], progress, p["new_rgb_cells"],
                     round(p.get("intrinsic_information_gain",0.),3), round(margin/12),
-                    p.get("geometry_score",0), abs(p["lateral_m"]))
+                    -round(p.get("semantic_cost",1.),2), p.get("geometry_score",0), abs(p["lateral_m"]))
 
         # Retain alternatives on different sides so the model can choose against the
         # same evidence, while favouring the unobserved coverage.
@@ -452,6 +482,8 @@ def plan_views(task_id, operation_id, obs, camera, prior, profile, *, method=Non
             direction = "left" if goal["y_m"] > .065 else "right" if goal["y_m"] < -.065 else "straight"
             option.update(path=f"{motion}_{direction}", board_view=target["board_view"],
                           board_lateral_m=target["lateral_m"], clearance_margin_m=target["clearance_margin_m"],
+                          corridor_risk=target["corridor_risk"], preferred_zone=target["preferred_zone"],
+                          semantic_cost=target["semantic_cost"],
                           new_rgb_cells=target["new_rgb_cells"], fills_missing_side=target["fills_missing_side"],
                           end_xyz_m=[round(v,3) for v in nav.world_position(robot,[goal["x_m"],goal["y_m"],0.])],
                           end_heading_deg=round(math.degrees(math.remainder(robot["yaw_rad"]+goal["yaw_rad"],math.tau)),1))
