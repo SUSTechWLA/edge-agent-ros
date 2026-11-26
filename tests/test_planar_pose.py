@@ -4,16 +4,18 @@ import json
 import math
 from pathlib import Path
 import random
+import sys
 from threading import Thread
 import unittest
 from urllib.request import Request, urlopen
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from edge_contracts.invoke import candidate, request
 from navigation.planar_pose import plan_pose
 from navigation.pose_provider import Handler, invoke
-
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def goal(x,y,yaw):

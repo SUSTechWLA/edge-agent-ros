@@ -11,6 +11,7 @@ PLUGIN_ROOTS = {"calibration", "evidence", "exploration", "model_provider",
                 "scene", "sessions_plugin", "task_recorder"}
 GROUPS = {"examples", "perception", "plugins"}
 LAYERS = {"agent", "console", "edge_contracts", "analysis"}
+SHARED_CODECS = {"perception.spatial_facts", "perception.rgbd"}
 
 
 def owner(parts):
@@ -27,12 +28,14 @@ def owner(parts):
 
 
 def forbidden(source, target):
-    if not target or source == target:
+    if not source or not target or source == target:
         return False
     if source in {"edge_contracts", "analysis"}:
         return True
     if source in {"agent", "console"}:
         return target != "edge_contracts"
+    if target in SHARED_CODECS:
+        return False
     return target not in {"agent", "edge_contracts"}
 
 

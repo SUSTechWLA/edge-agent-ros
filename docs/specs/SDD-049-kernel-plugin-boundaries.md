@@ -168,3 +168,7 @@ AC-5/6 在 Linux/amd64 隔离 ROS 域用 `python3 -B tests/test_plugin_conforman
 重启 core 后，以原任务和操作号重查及重投，四项的状态、步骤回执和已验位置与原账本一致，每个操作只派发一次。现场的驱动与标定、定位和 TF、底盘导航适配器、独立急停与失联停车、台架制动距离均需另行验收。未在真机或原生 ARM64 上验证。[首测预检与第一条只读任务](../testing/hardware-first-run.md)
 
 包含本工作包的全量运行号为 `20261120T013422Z-747a6dd9`。原始报告位于 `.ci-results/r/20261120T013422Z-747a6dd9/summary.json`，同目录 `navigation-contract.json` 包含四项操作的 ROS 与 SQLite 回执。提交与镜像的完整 revision、镜像 ID 及阶段计数由报告生成，另汇于 `.ci-results/k2/wp7/verification.md`。
+
+### 2026-11-26 纹理包契约下沉与导入边界修复
+
+将纯标准库实现的只读地图纹理与三维网格校验器 `TexturePack` 从 `perception/map3d/texture.py` 下沉至 `edge_contracts/texture_pack.py`（原路径保留同名重导出兼容既有调用方），使 `console/server/campus_atlas.py` 恢复严格仅依赖 `edge_contracts`。同时修正 `tests/test_package_boundaries.py` 对 `perception/` 顶层共享适配器及无状态传感解码库（`perception.spatial_facts`、`perception.rgbd`）的边界判定，`tests/test_package_boundaries.py` 全部通过。

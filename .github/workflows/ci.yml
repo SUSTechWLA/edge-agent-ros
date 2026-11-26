@@ -8,6 +8,12 @@ on:
     branches: [main]
     tags: ['v*.*.*']
   workflow_dispatch:
+    inputs:
+      full_gazebo:
+        description: 'Run full 3D Gazebo and multi-container simulation suite (requires high-CPU/GPU runner)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -28,10 +34,12 @@ jobs:
           persist-credentials: false
       - name: Validate specification and PR linkage
         run: python3 scripts/check_sdd.py --github-event "$GITHUB_EVENT_PATH"
-      - name: Check contracts and deployment descriptors
+      - name: Check contracts, boundaries and deployment descriptors
         run: |
-          python3 tests/repository_contract.py -v
-          python3 tests/planning_contract.py -v
+          PYTHONPATH="$PWD" python3 tests/repository_contract.py -v
+          PYTHONPATH="$PWD" python3 tests/document_contract.py -v
+          PYTHONPATH="$PWD" python3 tests/test_package_boundaries.py -v
+          PYTHONPATH="$PWD" python3 tests/planning_contract.py -v
           docker compose -f compose.yaml config --quiet
           docker compose -f compose.hardware.yaml config --quiet
 
@@ -49,14 +57,42 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Run affected suites on PRs and the full simulation on main, tags and manual runs
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      - name: Run deterministic verification on cloud runners or full Gazebo when requested
         run: |
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-            python3 tests/system_suite.py --changed-since "$BASE_SHA"
-          else
+          python3 -c "import numpy" 2>/dev/null || (sudo apt-get update -o Acquire::Retries=5 && sudo apt-get install -y --no-install-recommends python3-numpy)
+          if [ "${{ github.event.inputs.full_gazebo }}" = "true" ]; then
             python3 tests/system_suite.py
+          else
+            python3 tests/system_suite.py --stages repository planner
+            node --test tests/map_planar.test.mjs tests/map_spatial.test.mjs
+            PYTHONPATH="$PWD" python3 - <<'PY'
+          import os, subprocess, tempfile
+          from pathlib import Path
+          from scripts import release_robot
+          proj = release_robot.projection("HEAD")
+          assert [p for p in proj if p.endswith(".md")] == ["README.md"]
+          with tempfile.TemporaryDirectory(prefix="edge-ci-deploy-") as tmp:
+              root = Path(tmp)
+              for rel, (_, oid) in proj.items():
+                  dest = root / rel
+                  dest.parent.mkdir(parents=True, exist_ok=True)
+                  dest.write_bytes(subprocess.check_output(["git", "cat-file", "blob", oid]))
+              (root / "installed-sensors.json").write_text("{}", encoding="utf-8")
+              env = dict(os.environ,
+                         EDGE_CAL_HW_PROFILE=str(root / "installed-sensors.json"),
+                         EDGE_CAL_HOST_GATEWAY="172.17.0.1",
+                         EDGE_CAL_ROS_DOMAIN="61",
+                         EDGE_CAL_OLLAMA_URL="http://172.17.0.1:11434",
+                         EDGE_CAL_ROBOT_ID="jetson-ci")
+              subprocess.check_call(["docker", "compose", "-f", "compose.hardware.yaml", "config", "--quiet"], cwd=root, env=env)
+              subprocess.check_call([
+                  "docker", "compose",
+                  "-f", "compose.calibration-board.yaml",
+                  "-f", "compose.calibration-console.yaml",
+                  "-f", "compose.calibration-hardware.yaml",
+                  "config", "--quiet",
+              ], cwd=root, env=env)
+          PY
           fi
       - name: Preserve this run's new evidence
         if: always()

@@ -41,6 +41,7 @@ def run(args, selected, reasons):
     run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
     directory = args.out_root.resolve() / run_id
     directory.mkdir(parents=True)
+    directory.chmod(0o777)
     report_file = directory / "summary.json"
     env = dict(os.environ)
     revision = output(["git","rev-parse","HEAD"], env)
@@ -51,7 +52,8 @@ def run(args, selected, reasons):
     env.update(COMPOSE_DISABLE_ENV_FILE="1", EDGE_IMAGE=image, EDGE_ROS_DOMAIN_ID="103",
                EDGE_CONSOLE_PORT="0", EDGE_EVIDENCE_PORT="0", EDGE_REVISION=revision+("-dirty" if dirty else ""),
                EDGE_EVIDENCE_DIR=str(directory), EDGE_VERIFY_ROOT=str(directory/"core"),
-               EDGE_RESILIENCE_REPORT=str(directory/"resilience.json"), PYTHONUTF8="1")
+               EDGE_RESILIENCE_REPORT=str(directory/"resilience.json"), PYTHONUTF8="1",
+               PYTHONPATH=str(ROOT))
     if args.base_image:
         env["EDGE_BASE_IMAGE"] = args.base_image
     # The operator's active planner can route work to a billed external API.
@@ -113,6 +115,7 @@ def run(args, selected, reasons):
                                 test("test_kernel.py","-v"),test("test_offline_analysis.py","-v"),
                                 test("test_conformance.py","-v"),
                                 test("test_selection.py","-v"),test("test_robot_release.py","-v"),
+                                test("test_calibration_station_cli.py","-v"),
                                 test("test_mission_recording.py","-v"),
                                 test("test_task_recorder.py","-v"),test("test_recorder_cli.py","-v"),
                                 test("test_task_recording_source.py","-v"),test("test_recording_trace_view.py","-v"),
@@ -367,6 +370,7 @@ def run(args, selected, reasons):
                     # Public plugin tests write only to this run's capability directory.
                     plugin_dir=directory/"plugins"
                     plugin_dir.mkdir()
+                    plugin_dir.chmod(0o777)
                     env["EDGE_PLUGINS_DIR"]=str(plugin_dir)
                     stage("session-register",[[*compose,"run","--rm","-T","--no-deps","session-admin"]])
                     started_sim=True
@@ -418,7 +422,8 @@ def run(args, selected, reasons):
                     else:
                         for name in public:
                             skip(name,"simulator did not become ready","blocked")
-        if {"places","resilience","agent-faults"} <= set(selected):
+        passed_stages = {row["name"] for row in report["stages"] if row["status"] == "passed"}
+        if {"places","resilience","agent-faults"} <= set(selected) and {"places","resilience","agent-faults"} <= passed_stages:
             stage("plugin-frozen-missions",[test("system/plugin_tracks_metrics.py","--run",directory,
                                                 "--out",directory/"plugin-frozen-missions.json")])
     except BaseException as ex:
@@ -454,8 +459,13 @@ if __name__=="__main__":
     parser.add_argument("--base-image",help="preinstalled ROS/Gazebo SDK image")
     parser.add_argument("--campus-assets",type=Path,help="installed Gazebo Fuel campus cache for the offline world test")
     parser.add_argument("--ollama-cache-volume",help="existing Ollama home volume; mounts the model cache read-only in the isolated project")
+    parser.add_argument("--stages",nargs="+",choices=STAGES,help="run only the listed stages (e.g. repository planner)")
     args=parser.parse_args()
-    stages,why=selection(changed_paths(args.changed_since,ROOT) if args.changed_since else None)
+    if args.stages:
+        stages = [s for s in STAGES if s in set(args.stages)]
+        why = {s: ["explicit --stages"] for s in stages}
+    else:
+        stages,why=selection(changed_paths(args.changed_since,ROOT) if args.changed_since else None)
     if args.plan:
         print(json.dumps({"selected":stages,"selection":why},ensure_ascii=False,indent=2))
     else:

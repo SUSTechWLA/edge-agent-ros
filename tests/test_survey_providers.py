@@ -6,17 +6,27 @@ from copy import deepcopy
 import math
 from pathlib import Path
 import struct
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from edge_contracts.occupancy import Grid, clearance_mask
 from exploration.survey_providers import MapStore, serve
 from edge_contracts.preview_http import PreviewHTTP
 from exploration.survey_route import adjacent_cells, route, through_points
 from exploration.survey_semantic import assess_semantics, resolve_place
-from exploration.survey_signs import detect, interpolation
+try:
+    from exploration.survey_signs import detect, interpolation
+except ModuleNotFoundError as exc:
+    if exc.name != "numpy":
+        raise
+    detect = interpolation = None
 from exploration.survey_strategy import frontier
 
 
@@ -276,6 +286,7 @@ class SurveyProvidersTest(unittest.TestCase):
                 self.assertTrue(clear_published[index] and clear_live[index], position)
             origin = end
 
+    @unittest.skipIf(detect is None, "numpy required for fiducial projection check")
     def test_fiducial_projection_rejects_invalid_timing_frame_and_depth(self):
         config = {"camera_frame": "fixture", "source_id": "camera", "marker": "教学楼门厅", "mount": [.1, 0, 0]}
         valid = detect(samples(), config, [2, 3, 0], "odom")
@@ -287,6 +298,7 @@ class SurveyProvidersTest(unittest.TestCase):
         self.assertIsNone(detect(samples(depth_value=float("inf")), config, [2, 3, 0], "odom"))
         self.assertIsNone(detect(samples(ns_depth=30_000_001), config, [2, 3, 0], "odom"))
 
+    @unittest.skipIf(interpolation is None, "numpy required for survey_signs import")
     def test_capture_pose_requires_a_fresh_time_bracket(self):
         poses = deque([(0, [1, 2, 3.12]), (100_000_000, [3, 4, -3.12])])
         x, y, orientation = interpolation(poses, 50_000_000)

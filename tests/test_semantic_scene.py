@@ -1,7 +1,12 @@
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from agent import planning
 from edge_contracts.semantic_scene import compact_scene, target_scene
