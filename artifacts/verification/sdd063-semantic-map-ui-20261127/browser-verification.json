@@ -1,0 +1,51 @@
+{
+  "browserEngine": "headless-chromium-cdp",
+  "checks": {
+    "consoleAndCalibration": {
+      "stepperCount": 6,
+      "rgbCovered": 4,
+      "guardsPill": true,
+      "inspectText": "首选建议 · 候选 #1 (goal-right-1) · 位姿 (0.24, -0.38) m · 15° · 走廊风险 0.11 · 偏好度 0.91 · 条件代价 1.41 · 净距余量 0.31 m · 横向视差 +0.36 m · 补新格 +3 · 补缺侧基线",
+      "calMotionInputs": 0,
+      "freshnessPills": [
+        "融合位姿 · 0.1s",
+        "占据地图 · 0.2s",
+        "激光扫描 · 0.1s",
+        "轮式里程计 · 0.1s",
+        "惯导 IMU · 等待",
+        "场景先验 · 0.4s"
+      ],
+      "scrollWidth1440": 1425,
+      "monitorInspect": "(0.00, -0.00) m · 栅格 (12, 8) · 自由通行 (0) · 障碍净距 0.00 m · 语义区 · 一楼门厅",
+      "mobileConsole": {
+        "docOverflow": true,
+        "calOverflow": true
+      }
+    },
+    "exploration": {
+      "localHashes": {
+        "occupancy": "24b1ecb4",
+        "risk": "4441cb8e",
+        "preferred": "8141440c",
+        "admitted": "a050fa29"
+      },
+      "globalAdmittedFresh": "a0b755db",
+      "globalAdmittedStale": "201c5416",
+      "expFresh": {
+        "ttlText": "语义先验生效 · TTL 12.4s",
+        "badgeText": "ROAM 先验生效",
+        "cellInspect": "(0.45, -0.08) m · 栅格 (14, 8) · 语义高危禁入 · Risk 0.88 · Trav 0.22 · Pref 0.88 · 代价倍率 ×4.82",
+        "relations": [
+          "当前机体 — 位于 → 一楼门厅",
+          "当前机体 — 导航接近 → 北侧步道口",
+          "北侧步道口 — 三维附着 → 北侧步道",
+          "施工高危带 — 守护隔离 → 北侧步道"
+        ]
+      },
+      "mobileExpOverflow": true
+    }
+  },
+  "writes": [],
+  "consoleErrors": [],
+  "passed": true
+}

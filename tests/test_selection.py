@@ -141,6 +141,8 @@ RULES = [
     (("tests/map_planar.test.mjs", "tests/map_spatial.test.mjs", "tests/system/map_model_isolation.py", "tests/system/map3d_browser.mjs", "tests/system/camera_acceptance.py",
       "tests/system/sensor_plugin_isolation.py", "tests/system/rgbd_acceptance.py", "tests/system/rgbd_browser.mjs"),
      ("plugin-isolation",)),
+    (("console/web/calibration-map.js", "tests/test_semantic_map_workbench.py", "tests/map_semantic_workbench.test.mjs"),
+     ("planner", "ui", "campus-world", "rover-commissioning", "plugin-isolation")),
     (("console/web/view-plugins.js","console/web/view-plugins/*"), ("ui","plugin-isolation")),
     (("agent/series_tools.py",), (*AGENT,"observations","board")),
     (("agent/numeric_*", "agent/read_operators.py", "profiles/region-operator-contracts.json",
@@ -420,6 +422,10 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["model_provider/provider.py"])[0],[R,"planner","model","plugin-isolation"])
         self.assertEqual(selection(["tests/system/map_model_isolation.py"])[0],[R,"plugin-isolation"])
         self.assertEqual(selection(["tests/map_planar.test.mjs","tests/map_spatial.test.mjs"])[0],[R,"plugin-isolation"])
+        for path in ("console/web/calibration-map.js", "tests/test_semantic_map_workbench.py",
+                     "tests/map_semantic_workbench.test.mjs"):
+            self.assertTrue({R, "planner", "ui", "campus-world", "rover-commissioning", "plugin-isolation"}
+                            <= set(selection([path])[0]), path)
         for plugin in ("compose/rgbd-hardware.yaml","perception/rgbd/pairs.py","map-inputs/points.json","perception/camera/frames.py"):
             self.assertEqual(selection([plugin])[0],[R,"planner","observations","board","plugin-isolation"])
 

@@ -42,6 +42,14 @@
     <section class="panel map-panel">
       <div class="section-head"><div><h2>实时探索地图</h2><p id="map-source">等待观测帧</p></div><span id="coverage" class="map-metric">—</span></div>
       <div class="map-controls"><button id="view-global" type="button" aria-pressed="false">全局地图</button><button id="view-campus-3d" type="button" aria-pressed="false" hidden>校园三维</button><button id="view-local" type="button" aria-pressed="true">局部三维</button><button id="view-task" type="button" hidden>聚焦任务</button><button id="view-rotate" type="button" aria-pressed="false" title="开启后，单指或鼠标左键拖动可旋转视角">旋转模式</button><button id="view-reset" type="button">复位视角</button></div>
+      <div id="semantic-layer-bar" class="semantic-layer-bar" role="group" aria-label="地图语义图层切换">
+        <span class="layer-bar-label">地图表达</span>
+        <button id="layer-mode-occupancy" type="button" data-layer-mode="occupancy" aria-pressed="true">占据几何图</button>
+        <button id="layer-mode-risk" type="button" data-layer-mode="risk" aria-pressed="false">语义风险图</button>
+        <button id="layer-mode-preferred" type="button" data-layer-mode="preferred" aria-pressed="false">通行偏好图</button>
+        <button id="layer-mode-admitted" type="button" data-layer-mode="admitted" aria-pressed="false">单调安全准入图</button>
+        <span id="semantic-ttl-pill" class="badge semantic-ttl-pill" data-tone="neutral" hidden>仅几何观测</span>
+      </div>
       <div class="map-viewport">
         <canvas id="map" tabindex="0" role="img" aria-label="交互地图、现场观测与执行路线。拖动或方向键平移，滚轮、双指或加减键缩放。局部视图用右键拖动、Shift 加拖动或旋转模式转动，Home 复位。"></canvas>
         <canvas id="campus-model" hidden tabindex="0" role="img" aria-label="完整校园三维场景，拖动旋转，右键拖动平移，滚轮缩放"></canvas>
@@ -49,6 +57,7 @@
         <span id="local-hint" hidden></span>
         <p id="map-empty">等待探索任务开始</p>
       </div>
+      <p id="map-cell-inspect" class="cell-inspect" aria-live="polite">移动光标或点击地图检视栅格坐标、几何占据与 ROAM 三通道语义代价</p>
       <div id="campus-caption" hidden><span id="campus-extent"></span><span id="campus-credits"></span></div>
       <div class="speed-strip" id="speed-strip" hidden><span>里程计速度<br><b id="speed-window"></b></span><canvas id="speed-trace" role="img" aria-label="当前任务最近实测线速度随仿真时间的变化"></canvas></div>
       <div class="legend" aria-label="地图图例">
@@ -58,6 +67,15 @@
       <div id="tracking-facts" class="facts-strip" hidden><div><span>局部跟踪</span><strong id="tracking-mode"></strong></div><div><span>指令线速度</span><strong id="tracking-v"></strong></div><div><span>指令角速度</span><strong id="tracking-w"></strong></div><div><span>里程计角速度</span><strong id="measured-w"></strong></div></div>
     </section>
     <aside class="side">
+      <section id="semantic-scene-panel" class="panel semantic-panel" hidden aria-labelledby="semantic-panel-title">
+        <div class="section-head"><h2 id="semantic-panel-title">语义代价与场景拓扑</h2><span id="semantic-prior-badge" class="badge"></span></div>
+        <div class="semantic-content">
+          <p id="semantic-prior-summary" class="subdued"></p>
+          <dl id="semantic-metrics" class="recovery-facts"></dl>
+          <div id="semantic-vocab" class="semantic-chips"></div>
+          <div id="semantic-relations" class="semantic-relations"></div>
+        </div>
+      </section>
       <section id="destination-panel" class="panel" hidden aria-labelledby="destination-title">
         <div class="section-head"><h2 id="destination-title">导航目的地</h2><span id="destination-state" class="badge"></span></div>
         <div class="destination-content"><strong id="destination-name"></strong><p id="destination-detail"></p><ul id="destination-choices" hidden></ul></div>

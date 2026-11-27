@@ -64,7 +64,7 @@ jobs:
             python3 tests/system_suite.py
           else
             python3 tests/system_suite.py --stages repository planner
-            node --test tests/map_planar.test.mjs tests/map_spatial.test.mjs
+            node --test tests/map_planar.test.mjs tests/map_spatial.test.mjs tests/map_semantic_workbench.test.mjs
             PYTHONPATH="$PWD" python3 - <<'PY'
           import os, subprocess, tempfile
           from pathlib import Path
