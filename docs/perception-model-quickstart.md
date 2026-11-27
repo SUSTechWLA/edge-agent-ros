@@ -9,8 +9,8 @@
 从仓库根目录执行。先完成仓库[快速运行](../README.md#快速运行)，用本次代码构建 Edge 镜像并启动已有工作台。以下 PowerShell 数组让所有命令使用同一工程和同一组 Compose 定义；在已有现场保留原工程名与 `EDGE_IMAGE`。如需运行本地 Qwen，先检查 Compose 的 model 是否已缓存权重。
 
 ```powershell
-$edgeStack = @('-f','compose.yaml','-f','compose.camera.yaml','-f','compose.model-provider.yaml',
-               '-f','compose.rgbd.yaml','-f','compose.rgbd-sensor.yaml')
+$edgeStack = @('-f','compose.yaml','-f','compose/camera.yaml','-f','compose/model-provider.yaml',
+               '-f','compose/rgbd.yaml','-f','compose/rgbd-sensor.yaml')
 docker compose @edgeStack --profile model up -d model
 docker compose @edgeStack exec -T model ollama list
 # 此镜像首次使用 Qwen 时执行一次
@@ -36,7 +36,7 @@ docker compose @edgeStack ps -a
 
 ```powershell
 $env:EDGE_DEEPSEEK_KEY_FILE = Join-Path $env:LOCALAPPDATA 'edge-agent-ros/secrets/deepseek-api-key'
-$cloudStack = $edgeStack + @('-f','compose.model-provider-cloud.yaml')
+$cloudStack = $edgeStack + @('-f','compose/model-provider-cloud.yaml')
 docker compose @cloudStack up -d model-provider
 
 # 在默认 contracts 目录运行；若部署指定了 EDGE_CONTRACTS_DIR，显式传 --contracts-dir 该目录。
@@ -56,7 +56,7 @@ RealSense D435i / D455 可直接使用随仓库提供的 D4xx 配置。先在持
 | 插件 / 规格 | 需要准备的真机输入 | 可单独改动、启停的部分 |
 |---|---|---|
 | [3D 地图 · SDD-020](specs/SDD-020-3d-map-plugin.md) | 已有标准 PointCloud2、有效的固定坐标系与采样时刻 TF | 只替换地图的视角、采样或可视化时改 map3d。只有二维激光时，真实高度观测还需新增数据源。 |
-| [模型 · SDD-021](specs/SDD-021-model-provider.md) | 本机 Ollama 权重或已授权的 DeepSeek API。真实 Linux 板端另加 compose.model-provider-hardware.yaml | 规划器每次读取 profile。已有作者第一次切换接入地址时按其配置重建该作者进程。 |
+| [模型 · SDD-021](specs/SDD-021-model-provider.md) | 本机 Ollama 权重或已授权的 DeepSeek API。真实 Linux 板端另加 compose/model-provider-hardware.yaml | 规划器每次读取 profile。已有作者第一次切换接入地址时按其配置重建该作者进程。 |
 | [相机 · SDD-022](specs/SDD-022-camera-plugin.md) | ROS 2 Image/CompressedImage、可选 CameraInfo 与同步时间 | 同目录原子替换 sources.json 可增删多路相机，每路独立 TTL 与状态。原始预览和语义识别属于不同任务。[相机操作](../perception/camera/README.md) |
 | [多雷达 · SDD-023](specs/SDD-023-lidar-input-plugins.md) | 如 Livox MID-360，通过厂商驱动发布标准 PointCloud2、真实 frame 和外参 | 按机型把清单加入 map-inputs，移除该清单即退订。点云的厂商 CustomMsg 或逐点运动去畸变需另接转换与验收。[MID-360 接线与对账](../perception/map3d/profiles/README.md) |
 | [RGB-D · SDD-024](specs/SDD-024-realsense-rgbd.md) | RealSense D435i/D455 的彩色、对齐到彩色的深度、CameraInfo、有效内参和一致的光学 frame | 在 rgbd 的配置中选择真实话题、时钟和配准来源；Gazebo RGB-D 服务可单独撤下。RGB、深度伪彩与数值测距可来自同一对已确认帧。 |

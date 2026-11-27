@@ -28,8 +28,8 @@ class CampusDeployment(unittest.TestCase):
         def compose(files):
             return json.loads(subprocess.check_output([*base,*files,"config","--format","json"],cwd=ROOT,env=env))
         cls.normal = compose([])
-        cls.campus = compose(["-f","compose.campus.yaml"])
-        cls.map_services = compose(["-f","compose.campus.yaml","--profile","map3d"])["services"]
+        cls.campus = compose(["-f","compose/campus.yaml"])
+        cls.map_services = compose(["-f","compose/campus.yaml","--profile","map3d"])["services"]
 
     def test_existing_project_and_world_have_separate_identity(self):
         self.assertEqual((self.normal["name"],self.campus["name"]), ("edge-agent-ros","edge-agent-campus"))

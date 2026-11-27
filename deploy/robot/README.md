@@ -75,7 +75,7 @@ sh scripts/robot.sh plugins camera-status
 # 1. 复制硬件配置模板到仓库外工位目录，按实测靶板尺寸（单位：米）与传感器话题填写
 cp calibration/station/hardware-four-hole.example.json "$HOME/edge-sites/installed-sensors.json"
 
-# 2. 设置实机 DDS 域、宿主机网关与本地 Ollama 地址，执行上线前预检
+# 2. 设置实机 DDS 域、宿主机网关与本地 Ollama 地址（Jetson Ollama 服务端建议开启 OLLAMA_FLASH_ATTENTION=1 与 OLLAMA_KV_CACHE_TYPE=q8_0），执行上线前预检
 export EDGE_CAL_HOST_GATEWAY=172.17.0.1
 export EDGE_CAL_ROS_DOMAIN=61
 export EDGE_CAL_OLLAMA_URL="http://172.17.0.1:11434"
@@ -83,12 +83,14 @@ export EDGE_CALIBRATION_CONSOLE_BIND=0.0.0.0
 python3 scripts/calibration_station.py preflight \
   --mode hardware \
   --profile "$HOME/edge-sites/installed-sensors.json" \
+  --ollama-model qwen3:4b-instruct \
   --check-live
 
 # 3. 启动实机标定工位，访问 http://<板端IP>:8911 下发「请帮我标定当前传感器」
 python3 scripts/calibration_station.py up \
   --mode hardware \
-  --profile "$HOME/edge-sites/installed-sensors.json"
+  --profile "$HOME/edge-sites/installed-sensors.json" \
+  --ollama-model qwen3:4b-instruct
 
 # 4. 标定验收完成后停止工位（标定状态卷保留）
 python3 scripts/calibration_station.py down \
@@ -135,13 +137,13 @@ sh scripts/record-task.sh hardware export lobby-01 /data/exports/lobby-01
 
 | 路径 | 现场用途 |
 |---|---|
-| `scripts/robot.sh`、`compose.hardware*.yaml`、`docker/` | 板端入口、服务编排、容器启动环境 |
-| `scripts/calibration_station.py`、`compose.calibration-*.yaml` | 实机传感器自动标定预检与工位编排 |
-| `src/`、`agent/`、`client/` | ROS 接口、任务与执行记录、插件管理 |
-| `calibration/`、`exploration/`、`perception/` | 标定、通用探索算法与传感器处理 |
+| `scripts/robot.sh`、`compose.hardware.yaml`、`compose/`、`docker/` | 板端主入口、分层 Compose 覆盖文件、容器启动环境 |
+| `scripts/calibration_station.py`、`compose/calibration-*.yaml` | 实机传感器自动标定预检与工位编排 |
+| `src/`、`edge_contracts/`、`agent/`、`client/` | ROS 接口、零依赖公共契约、任务内核与插件管理 |
+| `navigation/`、`calibration/`、`exploration/`、`perception/` | 走廊与路线规划、标定、探索算法与传感器处理 |
 | `console/`、`sessions_plugin/`、`evidence/` | 本机工作台、会话与取证 |
-| `task_recorder/`、`scripts/record-task.sh`、`compose.task-recorder.yaml` | 可选的按任务录制、独立采集、实时累计地图与归档 |
-| `contracts/`、`policies/`、`model_provider/` | 运行契约、恢复策略和模型适配 |
+| `task_recorder/`、`scripts/record-task.sh`、`compose/task-recorder.yaml` | 可选的按任务录制、独立采集、实时累计地图与归档 |
+| `capabilities/`、`profiles/`、`contracts/`、`policies/`、`model_provider/` | 站点能力包与锁、运行契约、恢复策略和模型适配 |
 
 要在一次现场探索中看地图，先运行 `sh scripts/record-task.sh hardware start survey-01 take-01`，随后按正常授权入口提交同名任务。终端会显示实时地图地址；只读访问即可看到新发现、已知格修订与定位重置。没有外部相机时使用相同命令。车载图像可用 `--camera /现场图像话题` 选取，已授权的场地相机可用 `--external-overview` 单独加入。导出录制到工作站后，选择 `--layout map` 生成回放和各段地图。这些步骤不授予运动控制权限。
 

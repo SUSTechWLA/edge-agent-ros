@@ -1,6 +1,6 @@
 # 从 Cordis 到 Edge Agent ROS 的插件运行时
 
-**P1 实现**将 Python Context 和 Fiber 放在独立的 soft-host 中。Agent 持有原任务，soft-admin 管理发布和持久预约，soft-host 执行受信软件。未启用 overlay 的部署继续使用 v1。下表用 `8520e434b66102b593eb8714f02b425f47187a79` 对照迁移前的入口；P2 的相机部署控制器与 P3 的板端 pack 各有独立的现场入口。[Context 与 Fiber](../agent/soft_runtime.py) · [宿主与调用边界](../agent/soft_host.py) · [SQLite 发布目录](../agent/v2_registry.py) · [隔离部署](../compose.soft-runtime.yaml)
+**P1 实现**将 Python Context 和 Fiber 放在独立的 soft-host 中。Agent 持有原任务，soft-admin 管理发布和持久预约，soft-host 执行受信软件。未启用 overlay 的部署继续使用 v1。下表用 `8520e434b66102b593eb8714f02b425f47187a79` 对照迁移前的入口；P2 的相机部署控制器与 P3 的板端 pack 各有独立的现场入口。[Context 与 Fiber](../agent/soft_runtime.py) · [宿主与调用边界](../agent/soft_host.py) · [SQLite 发布目录](../agent/v2_registry.py) · [隔离部署](../compose/soft-runtime.yaml)
 
 假设两项任务同时查询本机的数据，任务 A 采用工具 v1 的输入单位，任务 B 在升级后才制定计划。系统应当能说明 A 到底按哪个单位计算，B 从什么时候开始看到 v2，失败的回执该去哪个版本对账。即使两个版本都只有十行纯 Python，直接覆盖同名函数也回答不了这些问题。运行时负责登记和撤销每一份能力，并让一次已绑定的调用始终找到自己的来源。
 

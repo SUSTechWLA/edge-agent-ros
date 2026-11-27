@@ -1,4 +1,4 @@
-# Apply after compose.navigation-readonly.yaml and compose.navigation-camera-info.yaml.
+# Apply after compose/navigation-readonly.yaml and compose/navigation-camera-info.yaml.
 services:
   spatial-facts:
     image: ${EDGE_NAV_IMAGE_READER_IMAGE:?pin the approved image reader and facts gateway}

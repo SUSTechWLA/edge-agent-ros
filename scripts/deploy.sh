@@ -13,7 +13,7 @@ case "$mode" in
 esac
 compose() {
   if [ "$mode:$action" = hardware:observe ]; then
-    docker compose -f "$config" -f compose.hardware-observe.yaml "$@"
+    docker compose -f "$config" -f compose/hardware-observe.yaml "$@"
   else
     docker compose -f "$config" "$@"
   fi

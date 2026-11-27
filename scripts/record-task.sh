@@ -52,9 +52,9 @@ case "$mode" in
 esac
 dc() {
   if [ "$mode" = campus ]; then
-    docker compose -f "$base" -f compose.task-recorder.yaml -f compose.task-recorder-campus.yaml "$@"
+    docker compose -f "$base" -f compose/task-recorder.yaml -f compose/task-recorder-campus.yaml "$@"
   else
-    docker compose -f "$base" -f compose.task-recorder.yaml "$@"
+    docker compose -f "$base" -f compose/task-recorder.yaml "$@"
   fi
 }
 cmd() { dc exec -T task-recorder python3 -B -m task_recorder.cli "$@"; }

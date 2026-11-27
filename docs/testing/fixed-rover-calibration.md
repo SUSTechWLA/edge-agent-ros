@@ -27,7 +27,7 @@
 
 ## 复现
 
-联合内外参验收使用 `compose.calibration-board.yaml`、`compose.calibration-console.yaml`、`compose.calibration-model.yaml` 和 `compose.calibration-fixed-rover.yaml` 启动空取景的 `edge-fixed-cal`。将 `tests/system/intrinsic_board_operator.py` 复制到 `edge-fixed-cal-fixed-sim-1:/tmp/intrinsic_board_operator.py`。先在本机启动只读任务见证与标定板操作员仿真，再用浏览器脚本打开表单和提交原文。仿真操作员只有在同一任务的工位发出取样提示时才调整 Gazebo 里的板。
+联合内外参验收使用 `compose/calibration-board.yaml`、`compose/calibration-console.yaml`、`compose/calibration-model.yaml` 和 `compose/calibration-fixed-rover.yaml` 启动空取景的 `edge-fixed-cal`。将 `tests/system/intrinsic_board_operator.py` 复制到 `edge-fixed-cal-fixed-sim-1:/tmp/intrinsic_board_operator.py`。先在本机启动只读任务见证与标定板操作员仿真，再用浏览器脚本打开表单和提交原文。仿真操作员只有在同一任务的工位发出取样提示时才调整 Gazebo 里的板。
 
 ```powershell
 $out = 'artifacts/verification/fixed-rover-gazebo-20261125/joint-replay'
@@ -37,14 +37,14 @@ pwsh -NoProfile -File scripts/project-python.ps1 tests/system/gazebo_joint_calib
 node tests/system/fixed_rover_browser.cjs --submit "$out/frames" http://127.0.0.1:8916 $out $goal
 ```
 
-自主换位与按需补角的联合验收还加载 `compose.calibration-view-motion.yaml`。工位从板在视野外、车体静止的 Gazebo 实例启动。沿用上述见证与工作台命令，把任务原文改为「请帮我自主标定当前D435的内参和前MID360的外参」，在 Python 命令增加 `--mobile`。见证只响应首次摆板及有可达性证据的补角请求，所有底盘目标由 Agent 从取景插件输出选择。用 `node tests/system/fixed_rover_timelapse.cjs "$out/frames" "$out/workbench-joint-calibration.mp4" joint` 生成录像。
+自主换位与按需补角的联合验收还加载 `compose/calibration-view-motion.yaml`。工位从板在视野外、车体静止的 Gazebo 实例启动。沿用上述见证与工作台命令，把任务原文改为「请帮我自主标定当前D435的内参和前MID360的外参」，在 Python 命令增加 `--mobile`。见证只响应首次摆板及有可达性证据的补角请求，所有底盘目标由 Agent 从取景插件输出选择。用 `node tests/system/fixed_rover_timelapse.cjs "$out/frames" "$out/workbench-joint-calibration.mp4" joint` 生成录像。
 
-在具备本项目 Gazebo、标定计算镜像及 `qwen3:4b-instruct` 模型缓存的工作站，从仓库根目录运行以下命令。模型卷由 `EDGE_CAL_MODEL_VOLUME` 指定，默认值见 `compose.calibration-model.yaml`。
+在具备本项目 Gazebo、标定计算镜像及 `qwen3:4b-instruct` 模型缓存的工作站，从仓库根目录运行以下命令。模型卷由 `EDGE_CAL_MODEL_VOLUME` 指定，默认值见 `compose/calibration-model.yaml`。
 
 ```powershell
 pwsh scripts/project-python.ps1 scripts/calibration_station.py up --mode sim-mobile
 # 等价的底层五文件命令：
-# docker compose -p edge-fixed-cal -f compose.calibration-board.yaml -f compose.calibration-console.yaml -f compose.calibration-model.yaml -f compose.calibration-fixed-rover.yaml -f compose.calibration-view-motion.yaml up -d
+# docker compose --project-directory . -p edge-fixed-cal -f compose/calibration-board.yaml -f compose/calibration-console.yaml -f compose/calibration-model.yaml -f compose/calibration-fixed-rover.yaml -f compose/calibration-view-motion.yaml up -d
 ```
 
 打开[工作台](http://127.0.0.1:8916/#sessions)，提交「请帮我标定当前传感器」。页面提示摆板后，在本机另一个终端执行下面的命令一次，模拟人将唯一的实体板放到车头正前方，板面朝向车头，底边触地。车和板保持静止，直到相机和前雷达分别取得两次完整观测。工位将摆板回执交给模型。每次换位后，旧视点引用失效，模型可依据新观测选择下一步。

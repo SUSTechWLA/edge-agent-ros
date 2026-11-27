@@ -34,7 +34,7 @@ def recording_smoke(tree, image, arch, env):
         override.write_text(json.dumps({"services":{"recorder-hardware-source":{"network_mode":"none"}}}),"utf8")
         container="edge-camera-smoke-"+uuid.uuid4().hex[:10]
         compose=["docker","compose","--project-name",container,
-                 "-f","compose.hardware.yaml","-f","compose.task-recorder.yaml","-f",str(override)]
+                 "-f","compose.hardware.yaml","-f","compose/task-recorder.yaml","-f",str(override)]
         spec=ROOT/"tests/system/recording_board_smoke.py"
         invocation=compose+["run","--rm","--name",container,"--no-deps","-T","-v",f"{spec}:/opt/edge/recording_board_smoke.py:ro",
                             "recorder-hardware-source","python3","-B","/opt/edge/recording_board_smoke.py"]

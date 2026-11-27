@@ -29,7 +29,7 @@ try {
         $previous[$key] = [Environment]::GetEnvironmentVariable($key)
         [Environment]::SetEnvironmentVariable($key, $settings[$key])
     }
-    $layers = @('-f', 'compose.yaml', '-f', 'compose.campus-dynamic.yaml')
+    $layers = @('-f', 'compose.yaml', '-f', 'compose/campus-dynamic.yaml')
     docker compose -p $project @layers @ComposeArgs
     exit $LASTEXITCODE
 } finally {

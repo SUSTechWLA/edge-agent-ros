@@ -67,8 +67,8 @@ Windows 也可直接传入带引号的绝对路径，例如 `"D:\robot-data\sim-
 在校园 Compose 项目中用由当前源码构建的 `EDGE_IMAGE` 启用只读候选。用插件管理器按 CAS 收据管理注册。若已安装其他提供者，通过站点配置选择相应版本。
 
 ```sh
-docker compose -p edge-agent-campus -f compose.yaml -f compose.campus.yaml up -d --no-deps campus-local-preview
-docker compose -p edge-agent-campus -f compose.yaml -f compose.campus.yaml run --rm -T --no-deps \
+docker compose -p edge-agent-campus -f compose.yaml -f compose/campus.yaml up -d --no-deps campus-local-preview
+docker compose -p edge-agent-campus -f compose.yaml -f compose/campus.yaml run --rm -T --no-deps \
   -v "$PWD/scene/campus_large/campus.local_preview.json:/release/campus.local_preview.json:ro" \
   plugin-admin publish --kind runtime --root /plugins --expect absent /release/campus.local_preview.json
 ```
@@ -103,7 +103,7 @@ python scene/campus_large/run.py down
 - 通过首次检查后，命令暂停接收新任务，再次核对任务和停车证据。若这时收到新工作，会恢复校园 Agent，原世界继续运行。确认空闲后，校园仿真、网关、任务内核、感知、工作台等进程及该工程正在运行的附加插件一起重启，建立新的仿真时钟基线。历史卷、已完成任务和照片缓存保留。ROS 就绪探针会核查 `/odom` 和 `/ground_truth` 的时间戳在推进、导航 Action 和底盘任务服务在线，之后可再次提交“前往教学楼门外”。业务入口无法读取或时钟已停时，先检查 `status` 和 `logs`；部分服务意外退出时用 `start` 恢复校园栈再执行检查。
 - 页面可访问但暂时缺图时，运行 `logs` 查看 `campus-capture` 是否收到对应 Gazebo 话题。构建失败时检查 `campus-build` 的退出信息，并用下载器的 `--offline` 核对缓存。位姿或扫描未更新时在工作台核查 `/clock`、`/odom`、`/scan` 三路。图像来自渲染，导航终态应由 ROS 回执验证。
 
-Compose 覆盖文件、截图回归和部署隔离检查均可独立阅读。[部署定义](../../compose.campus.yaml) · [截图时序与缓存回归](../../tests/test_campus_capture.py) · [部署隔离回归](../../tests/test_campus_deployment.py) · [SDD-025](../../docs/specs/SDD-025-large-campus-world.md)
+Compose 覆盖文件、截图回归和部署隔离检查均可独立阅读。[部署定义](../../compose/campus.yaml) · [截图时序与缓存回归](../../tests/test_campus_capture.py) · [部署隔离回归](../../tests/test_campus_deployment.py) · [SDD-025](../../docs/specs/SDD-025-large-campus-world.md)
 
 要单独检验重载与再次派发，可在仓库根目录运行以下命令。测试创建名称随机的校园工程，在同一工程两次提交独立 ID 的穿门任务，两次之间调用日常 `reload` 的实现。报告记录新旧会话、旧回执能否继续读取、第二次任务的验收点数及独立真值和里程计。运行结束回收临时工程。[隔离 Gazebo 验收](../../tests/system/campus_acceptance.py)
 

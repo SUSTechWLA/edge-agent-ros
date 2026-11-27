@@ -86,10 +86,10 @@ jobs:
                          EDGE_CAL_ROBOT_ID="jetson-ci")
               subprocess.check_call(["docker", "compose", "-f", "compose.hardware.yaml", "config", "--quiet"], cwd=root, env=env)
               subprocess.check_call([
-                  "docker", "compose",
-                  "-f", "compose.calibration-board.yaml",
-                  "-f", "compose.calibration-console.yaml",
-                  "-f", "compose.calibration-hardware.yaml",
+                  "docker", "compose", "--project-directory", ".",
+                  "-f", "compose/calibration-board.yaml",
+                  "-f", "compose/calibration-console.yaml",
+                  "-f", "compose/calibration-hardware.yaml",
                   "config", "--quiet",
               ], cwd=root, env=env)
           PY

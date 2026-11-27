@@ -191,7 +191,7 @@ def run(image, output):
     output.parent.mkdir(parents=True, exist_ok=True)
     root = SCRIPT.parents[2]
     project = "edge-test-body-" + uuid.uuid4().hex[:12]
-    compose = ["docker", "compose", "-p", project, "-f", "compose.yaml", "-f", "compose.body-runtime.yaml"]
+    compose = ["docker", "compose", "-p", project, "-f", "compose.yaml", "-f", "compose/body-runtime.yaml"]
     report = {"passed": False, "project": project, "image": image, "scope": "isolated Gazebo simulation"}
     with tempfile.TemporaryDirectory(prefix=project) as temp:
         work = Path(temp)

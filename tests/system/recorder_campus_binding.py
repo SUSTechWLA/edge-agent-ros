@@ -46,7 +46,7 @@ def run(image, out):
                 if status==code: return details
                 time.sleep(.25)
             raise RuntimeError(f"Agent service lookup returned {status}, expected {code}")
-        rec=["docker","compose","-p",project,"-f","compose.yaml","-f","compose.task-recorder.yaml","--profile","recording"]
+        rec=["docker","compose","-p",project,"-f","compose.yaml","-f","compose/task-recorder.yaml","--profile","recording"]
         try:
             call(base+["up","-d","--no-build","agent"])
             hub=call(base+["ps","-q","agent"])

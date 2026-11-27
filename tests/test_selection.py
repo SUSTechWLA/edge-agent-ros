@@ -23,7 +23,7 @@ RULES = [
     (("agent/facts_server.py",), ("observations","board","ui")),
     (("tests/test_console_facts.py",), ("observations",)),
     (("tests/test_capability_catalog.py", "tests/test_status_plugin.py"), ("agent-contracts",)),
-    (("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
+    (("compose/body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime*.py"), ("motion-world",)),
     (("edge_contracts/*",), STAGES),
     (("navigation/grid_corridor.py", "tests/test_semantic_costmap.py"), ("planner","motion-world","ui","campus-world","rover-commissioning")),
     (("calibration/intrinsic_*.py", "tests/system/gazebo_joint_calibration.py", "tests/system/intrinsic_board_operator.py",
@@ -33,9 +33,9 @@ RULES = [
       "tests/test_view_motion_site.py", "tests/system/fixed_motion_witness.py", "tests/system/fixed_view_coverage.py"),
      ("planner","motion-world","rover-commissioning")),
     (("navigation/*.py", "perception/spatial_facts/*.py", "scripts/prepare_navigation.py",
-      "scripts/prepare_perception_site.py", "examples/stationary-perception/*", "compose.stationary-perception.yaml",
-      "examples/object-perception/*", "compose.object-perception.yaml", "scripts/run_object_model_isolated.sh",
-      "scripts/navigation_odometry_bench.py", "compose.navigation-*.yaml",
+      "scripts/prepare_perception_site.py", "examples/stationary-perception/*", "compose/stationary-perception.yaml",
+      "examples/object-perception/*", "compose/object-perception.yaml", "scripts/run_object_model_isolated.sh",
+      "scripts/navigation_odometry_bench.py", "compose/navigation-*.yaml",
       "tests/test_navigation_pack.py"), ("planner", "observations", "board", "plugin-isolation")),
     (("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
       "tests/test_spatial_gateway.py"),
@@ -57,17 +57,17 @@ RULES = [
     (("agent/kernel/feedback_admission.py",), (*AGENT,"observations","board","plugin-isolation","rover-commissioning")),
     (("agent/kernel/*",), (*AGENT,"observations","board","plugin-isolation")),
     (("agent/site_pack.py","profiles/*.json","capabilities/*/pack.json","scripts/robot-plugins.sh",
-      "scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"), ("planner","board","plugin-isolation")),
+      "scripts/check_board_plugins.py","compose/soft-runtime-hardware.yaml"), ("planner","board","plugin-isolation")),
     (("tests/test_site_pack.py","tests/test_board_plugins.py","tests/system/board_pack_acceptance.py",
       "tests/system/deploy_projection.py"), ("board",)),
     (("agent/physical_*.py","agent/plugin_tracks.py","scripts/prepare_physical_camera.py","perception/camera/physical*.py",
-      "compose.physical-camera*.yaml","tests/system/physical_camera*.py"), (*AGENT,"observations","board","plugin-isolation")),
+      "compose/physical-camera*.yaml","tests/system/physical_camera*.py"), (*AGENT,"observations","board","plugin-isolation")),
     (("tests/test_physical_*.py","tests/test_plugin_tracks.py"), ("planner","plugin-isolation")),
     (("tests/system/model_readiness.py","tests/test_model_readiness.py"), ("planner","agent-faults")),
     (("tests/test_plugin_tracks_metrics.py",), ("planner","places","resilience","agent-faults")),
     (("tests/system/plugin_tracks_metrics.py","tests/fixtures/plugin-tracks/frozen-missions.json"),
      ("places","resilience","agent-faults")),
-    (("agent/soft_*.py","agent/v2_registry.py","agent/plugin_descriptor.py","compose.soft-runtime.yaml",
+    (("agent/soft_*.py","agent/v2_registry.py","agent/plugin_descriptor.py","compose/soft-runtime.yaml",
       "scripts/prepare_soft_pilots.py","console/server/session_service.py"), (*AGENT,"observations","board","plugin-isolation")),
     (("tests/test_soft_*.py","tests/test_v2_registry.py","tests/test_plugin_descriptor.py",
       "tests/fixtures/plugin-tracks/*"), ("planner",)),
@@ -79,12 +79,12 @@ RULES = [
     (("task_recorder/map_view.py","task_recorder/map-view.html","tests/test_recording_map_view.py",
       "tests/system/recording_map_acceptance.py","tests/system/recording_map_browser.py",
       "tests/system/recorder_campus_binding.py","tests/system/recording_camera_fixture.py"), ("campus-world",)),
-    (("task_recorder/collect.py","task_recorder/ros_source.py","compose.task-recorder.yaml",
+    (("task_recorder/collect.py","task_recorder/ros_source.py","compose/task-recorder.yaml",
       "scripts/record-task.*","tests/test_task_recording_source.py","tests/test_recorder_cli.py"), ("board","campus-world")),
     (("task_recorder/render.py","task_recorder/showcase.py",
-      "compose.task-recorder-campus.yaml","tests/test_recording_trace_view.py"), ("campus-world",)),
+      "compose/task-recorder-campus.yaml","tests/test_recording_trace_view.py"), ("campus-world",)),
     (("task_recorder/*",), ("board",)),
-    (("compose.task-recorder*.yaml","tests/test_recorder*.py",
+    (("compose/task-recorder*.yaml","tests/test_recorder*.py",
       "tests/test_task_record*.py","tests/test_recording_trace_view.py","tests/system/recorder*","tests/system/task_recorder*"),(R,)),
     (("tests/system/record_unknown_campus.py","tests/system/unknown_campus*",
       "tests/system/campus_survey*","tests/system/campus_revisit.py",
@@ -94,7 +94,7 @@ RULES = [
       "tests/system/record_long_mission.py", "tests/system/render_rover_video.py", "tests/system/mission_watch_page.py"),
      (R,)),
     (("scripts/release_robot.py", "tests/test_robot_release.py"), (R,"board")),
-    (("compose.calibration-*.yaml", "calibration/board_*.py", "calibration/station/recognizers/*",
+    (("compose/calibration-*.yaml", "calibration/board_*.py", "calibration/station/recognizers/*",
       "calibration/station/tools/*", "calibration/station/plugins/*", "calibration/station/feedback.json",
       "perception/target_detection.py", "perception/target_providers.py", "tests/system/calibration_*.py", "tests/system/calibration_board_browser.cjs",
       "calibration/clock_*.py", "calibration/time_*.py", "calibration/hardware_profile.py",
@@ -117,26 +117,26 @@ RULES = [
       "tests/system/campus_map_camera.cjs"), ("planner", "ui", "campus-world", "rover-commissioning")),
     (("exploration/*", "tests/test_exploration_frontier.py", "tests/system/commission_exploration.py"),
      ("rover-commissioning",)),
-    (("perception/sensor_health/*","compose.sensor-health.yaml","tests/system/sensor_health_acceptance.py",
+    (("perception/sensor_health/*","compose/sensor-health.yaml","tests/system/sensor_health_acceptance.py",
       "tests/system/sensor_health_restart.py","tests/test_sensor_incidents.py"),
      ("plugin-isolation",)),
     (("tests/test_map_texture_pack.py","tests/system/campus_texture_browser.mjs"),("plugin-isolation","campus-world")),
     (("console/web/campus-mission.*","console/server/campus_planning.py","tests/system/campus_mission_browser.cjs",
       "navigation/local_preview.py","tests/test_local_preview.py"), ("planner","ui","campus-world")),
-    (("compose.campus-dynamic.yaml","scripts/campus-navigation.ps1","compose.campus-core.yaml","scripts/campus-core.ps1",
+    (("compose/campus-dynamic.yaml","scripts/campus-navigation.ps1","compose/campus-core.yaml","scripts/campus-core.ps1",
       "docker/Dockerfile.campus-lidar",
       "tests/system/campus_lidar_calibration.py","tests/system/campus_dynamic_*.py",
       "tests/system/campus_semantic_browser.cjs","tests/system/campus_semantic_witness.py","tests/system/campus_truth_geometry.py",
       "scene/campus_large/teaching-navigation.json"), ("planner","motion-world","ui","campus-world")),
-    (("scene/campus_large/*","compose.campus.yaml","tests/system/campus_*.py","tests/test_campus_*.py",
+    (("scene/campus_large/*","compose/campus.yaml","tests/system/campus_*.py","tests/test_campus_*.py",
       "tests/system/field_sensor_task.py","tests/system/field_observation_soak.py"),
      ("campus-world",)),
     (("perception/map3d/web/*","perception/map3d/texture.py","perception/map3d/provider.py"),
      ("planner","observations","board","plugin-isolation","campus-world")),
     (("perception/map3d/*", "perception/sim_station.py", "map-inputs/*", "tests/test_map3d_ros.py", "tests/test_map3d.py", "tests/test_lidar_inputs_ros.py",
-      "perception/camera/*", "compose.camera*.yaml", "perception/rgbd/*", "compose.rgbd*.yaml", "tests/test_rgbd.py"),
+      "perception/camera/*", "compose/camera*.yaml", "perception/rgbd/*", "compose/rgbd*.yaml", "tests/test_rgbd.py"),
      ("planner", "observations", "board", "plugin-isolation")),
-    (("model_provider/*", "compose.model-provider*.yaml", "tests/test_planner_model_selection.py"),
+    (("model_provider/*", "compose/model-provider*.yaml", "tests/test_planner_model_selection.py"),
      ("planner", "model", "plugin-isolation")),
     (("tests/map_planar.test.mjs", "tests/map_spatial.test.mjs", "tests/system/map_model_isolation.py", "tests/system/map3d_browser.mjs", "tests/system/camera_acceptance.py",
       "tests/system/sensor_plugin_isolation.py", "tests/system/rgbd_acceptance.py", "tests/system/rgbd_browser.mjs"),
@@ -144,8 +144,8 @@ RULES = [
     (("console/web/view-plugins.js","console/web/view-plugins/*"), ("ui","plugin-isolation")),
     (("agent/series_tools.py",), (*AGENT,"observations","board")),
     (("agent/numeric_*", "agent/read_operators.py", "profiles/region-operator-contracts.json",
-      "compose.perception-operators.yaml", "compose.autonomous-read.yaml", "capabilities/perception-operators/*",
-      "compose.frame-query.yaml", "capabilities/perception-queries/*"), ("planner","agent-contracts","board")),
+      "compose/perception-operators.yaml", "compose/autonomous-read.yaml", "capabilities/perception-operators/*",
+      "compose/frame-query.yaml", "capabilities/perception-queries/*"), ("planner","agent-contracts","board")),
     (("tests/test_numeric_program.py", "tests/test_region_operator_service.py", "tests/test_frame_query.py"), ("planner",)),
     (("client/plugin_design_watch.py","client/design_contracts.py","client/plugin_design.py",
       "client/software_author_watch.py","client/bounded_http.py","contracts/design/*"),
@@ -202,7 +202,7 @@ RULES = [
     (("src/edge_core/*",), (*MOTION,"board","rover-commissioning")),
     (("src/edge_gateway/*",), (*MOTION,"rover-commissioning")),
     (("sim/*",), MOTION),
-    (("compose.hardware.yaml","compose.hardware-observe.yaml","client/hardware_preflight.py","tests/test_board_preflight.py",
+    (("compose.hardware.yaml","compose/hardware-observe.yaml","client/hardware_preflight.py","tests/test_board_preflight.py",
       "tests/system/board_smoke.py","tests/system/realsense_board.py","tests/system/navigation_contract.py"), ("board",)),
     (("tests/planning_contract.py","tests/test_autonomous_read.py","tests/test_read_operators.py"), ("planner",)),
     (("tests/test_scene*","tests/semantic_acceptance.py","tests/scene_*acceptance.py","tests/system/scene_binding_acceptance.py"), SCENE),
@@ -232,7 +232,7 @@ def selection(files=None):
     reasons = {}
     for name in files:
         # Documentation data and archive samples have their own evidence check.
-        if (name.startswith(("docs/", "artifacts/")) or name in ("README.md","CONTRIBUTING.md","AGENTS.md")
+        if (name.startswith(("docs/", "artifacts/")) or name in ("README.md","CONTRIBUTING.md","AGENTS.md","CHANGELOG.md")
             or name.endswith("/README.md")):
             reasons[name] = [R]
             continue
@@ -249,7 +249,7 @@ def selection(files=None):
 
 class TestSelection(unittest.TestCase):
     def test_guided_calibration_shared_detection(self):
-        for path in ("perception/target_detection.py","compose.calibration-board.yaml",
+        for path in ("perception/target_detection.py","compose/calibration-board.yaml",
                      "calibration/station/recognizers/checkerboard.json","tests/test_feedback_planner.py",
                      "scripts/calibration_station.py","tests/test_calibration_station_cli.py",
                      "tests/test_semantic_scene.py","agent/kernel/feedback_admission.py","calibration/view_planner.py",
@@ -264,7 +264,7 @@ class TestSelection(unittest.TestCase):
                      "tests/system/campus_map_camera.cjs", "console/web/exploration-local.js",
                      "console/web/exploration-campus.js", "console/server/campus_atlas.py", "perception/map3d/web/spatial.js"):
             self.assertTrue({R,"planner","ui","campus-world","rover-commissioning"} <= set(selection([path])[0]), path)
-        for path in ("compose.campus-dynamic.yaml", "compose.campus-core.yaml", "scripts/campus-core.ps1",
+        for path in ("compose/campus-dynamic.yaml", "compose/campus-core.yaml", "scripts/campus-core.ps1",
                      "scene/campus_large/navigation/observations.launch.py", "tests/system/campus_truth_geometry.py",
                      "docker/Dockerfile.campus-lidar", "tests/system/campus_lidar_calibration.py",
                      "tests/system/campus_semantic_browser.cjs", "tests/system/campus_semantic_witness.py"):
@@ -277,10 +277,10 @@ class TestSelection(unittest.TestCase):
     def test_navigation_route_observation_and_body_consumers(self):
         for path in ("navigation/planner.py", "navigation/route_service.py", "perception/spatial_facts/gateway.py",
                      "scripts/prepare_navigation.py", "scripts/navigation_odometry_bench.py",
-                     "compose.navigation-camera-info.yaml", "compose.navigation-readonly.yaml", "tests/test_navigation_pack.py",
+                     "compose/navigation-camera-info.yaml", "compose/navigation-readonly.yaml", "tests/test_navigation_pack.py",
                      "scripts/prepare_perception_site.py", "examples/stationary-perception/jetson-rover.json",
-                     "compose.stationary-perception.yaml", "examples/object-perception/jetson-rover.json",
-                     "compose.object-perception.yaml", "scripts/run_object_model_isolated.sh"):
+                     "compose/stationary-perception.yaml", "examples/object-perception/jetson-rover.json",
+                     "compose/object-perception.yaml", "scripts/run_object_model_isolated.sh"):
             self.assertEqual(selection([path])[0], [R, "planner", "observations", "board", "plugin-isolation"], path)
         for path in ("tests/test_navigation_planner.py", "tests/test_navigation_physical.py", "tests/test_spatial_facts.py",
                      "tests/test_spatial_gateway.py"):
@@ -314,7 +314,7 @@ class TestSelection(unittest.TestCase):
             self.assertIn("agent-contracts", selection([path])[0])
 
     def test_body_runtime_exercises_the_motion_world(self):
-        for path in ("compose.body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime_acceptance.py"):
+        for path in ("compose/body-runtime.yaml", "sim/body-bridge.yaml", "tests/system/body_runtime_acceptance.py"):
             self.assertEqual(selection([path])[0], [R, "motion-world"], path)
 
     def test_contract_package_runs_all_consumers(self):
@@ -341,7 +341,7 @@ class TestSelection(unittest.TestCase):
     def test_packs_run_their_board_consumers(self):
         for path in ("agent/site_pack.py","profiles/bench-camera.json","capabilities/camera/pack.json",
                      "capabilities/perception-objects/pack.json",
-                     "scripts/robot-plugins.sh","scripts/check_board_plugins.py","compose.soft-runtime-hardware.yaml"):
+                     "scripts/robot-plugins.sh","scripts/check_board_plugins.py","compose/soft-runtime-hardware.yaml"):
             self.assertEqual(selection([path])[0], [R,"planner","board","plugin-isolation"], path)
         for name in ("tests/system/board_pack_acceptance.py","tests/system/deploy_projection.py"):
             self.assertEqual(selection([name])[0], [R,"board"], name)
@@ -358,13 +358,13 @@ class TestSelection(unittest.TestCase):
 
     def test_physical_capture_consumers(self):
         for path in ("agent/physical_controller.py","agent/plugin_tracks.py","perception/camera/physical.py",
-                     "compose.physical-camera.yaml","tests/system/physical_camera_acceptance.py"):
+                     "compose/physical-camera.yaml","tests/system/physical_camera_acceptance.py"):
             self.assertIn("board", selection([path])[0])
             self.assertIn("plugin-isolation", selection([path])[0])
 
     def test_soft_release_consumers(self):
         for path in ("agent/soft_host.py","agent/plugin_descriptor.py","agent/soft_client.py",
-                     "agent/v2_registry.py","compose.soft-runtime.yaml","scripts/prepare_soft_pilots.py",
+                     "agent/v2_registry.py","compose/soft-runtime.yaml","scripts/prepare_soft_pilots.py",
                      "console/server/session_service.py"):
             for consumer in ("planner","observations","agent-contracts","agent-faults","ui","board","plugin-isolation"):
                 self.assertIn(consumer,selection([path])[0],path)
@@ -372,7 +372,7 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["tests/system/soft_runtime_acceptance.py"])[0],[R,"plugin-isolation"])
 
     def test_optional_recorder_and_campus_consumers(self):
-        for path in ("task_recorder/ros_source.py","task_recorder/collect.py","compose.task-recorder.yaml",
+        for path in ("task_recorder/ros_source.py","task_recorder/collect.py","compose/task-recorder.yaml",
                      "scripts/record-task.sh","scripts/record-task.ps1","tests/test_task_recording_source.py"):
             self.assertEqual(selection([path])[0], [R,"board","campus-world"], path)
         for path in ("scripts/package_robot.py","tests/system/recording_board_smoke.py"):
@@ -420,7 +420,7 @@ class TestSelection(unittest.TestCase):
         self.assertEqual(selection(["model_provider/provider.py"])[0],[R,"planner","model","plugin-isolation"])
         self.assertEqual(selection(["tests/system/map_model_isolation.py"])[0],[R,"plugin-isolation"])
         self.assertEqual(selection(["tests/map_planar.test.mjs","tests/map_spatial.test.mjs"])[0],[R,"plugin-isolation"])
-        for plugin in ("compose.rgbd-hardware.yaml","perception/rgbd/pairs.py","map-inputs/points.json","perception/camera/frames.py"):
+        for plugin in ("compose/rgbd-hardware.yaml","perception/rgbd/pairs.py","map-inputs/points.json","perception/camera/frames.py"):
             self.assertEqual(selection([plugin])[0],[R,"planner","observations","board","plugin-isolation"])
 
     def test_evolution_consumers(self):
@@ -439,7 +439,7 @@ class TestSelection(unittest.TestCase):
     def test_examples(self):
         self.assertEqual(selection(["client/hardware_preflight.py"])[0],[R,"board"])
         self.assertEqual(selection(["tests/system/campus_texture_browser.mjs"])[0],[R,"plugin-isolation","campus-world"])
-        self.assertEqual(selection(["scene/campus_large/build.py","compose.campus.yaml"])[0],[R,"campus-world"])
+        self.assertEqual(selection(["scene/campus_large/build.py","compose/campus.yaml"])[0],[R,"campus-world"])
         for name in ("campus_route_geometry","campus_station_probe","campus_forms","campus_round_trip",
                      "campus_trajectory_truth"):
             self.assertEqual(selection(["tests/system/"+name+".py"])[0],[R,"campus-world"])
@@ -448,6 +448,7 @@ class TestSelection(unittest.TestCase):
         self.assertTrue({"planner","motion-world","ui","campus-world"}.issubset(
             selection(["navigation/grid_corridor.py"])[0]))
         self.assertEqual(selection(["docs/specs/example.md"])[0], [R])
+        self.assertEqual(selection(["CHANGELOG.md", "compose/README.md"])[0], [R])
         self.assertEqual(selection(["agent/contracts.json"])[0], [R,"planner","agent-contracts","agent-faults","model"])
         for path in ("src/edge_interfaces/srv/GetMission.srv","unclassified/kernel.rs",
                      ".github/workflows/ci.yml","tests/system_suite.py","compose.yaml"):

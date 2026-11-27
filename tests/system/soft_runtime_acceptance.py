@@ -152,7 +152,7 @@ def run(image, out):
         fixture = Path(work)/"planner.json"
         write(fixture,{"services":{"ac-planner":{"image":image,"pull_policy":"never","read_only":True,
                                       "cap_drop":["ALL"],"entrypoint":["python3","-Bc",PLANNER]}}})
-        compose = ["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.soft-runtime.yaml"),
+        compose = ["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose/soft-runtime.yaml"),
                    "-f",str(fixture)]
         env = {k:v for k,v in os.environ.items() if not k.startswith(("EDGE_","COMPOSE_"))}
         started = False

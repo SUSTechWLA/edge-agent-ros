@@ -143,8 +143,8 @@ def run(image, output):
     domain = 150+secrets.randbelow(40)
     project = "edge-d4xx-board-"+uuid.uuid4().hex[:9]
     proof = dict(image=image, image_id=digest, image_architecture=f"{platform}/{arch}", baked_import=True,
-                 ROS_DOMAIN_ID=domain, wall_clock=True, no_usb=True, overlays=["compose.hardware.yaml","compose.rgbd.yaml",
-                 "compose.rgbd-hardware.yaml"], tested_at=datetime.now(timezone.utc).isoformat())
+                 ROS_DOMAIN_ID=domain, wall_clock=True, no_usb=True, overlays=["compose.hardware.yaml","compose/rgbd.yaml",
+                 "compose/rgbd-hardware.yaml"], tested_at=datetime.now(timezone.utc).isoformat())
     with tempfile.TemporaryDirectory() as tmp:
         directory = Path(tmp)
         aux = json.loads((ROOT/"perception/rgbd/config/realsense.json").read_text(encoding="utf-8"))

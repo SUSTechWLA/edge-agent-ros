@@ -20,7 +20,7 @@
 3. **切换规划算法**。内置 `algorithm_ref` 可选 `astar` 或 `dijkstra`。其他算法可以独立提供 `navigation.route_planner/call@1`。该服务接收 `actor_ref`、`destination_ref` 和已绑定的 `localization`，返回通过 v1 校验的路线。关联版本、来源、镜像摘要并更新站点 pack，按软插件协议冻结、排空和替换旧 Provider。每次同名服务只有一个发布所有者。算法内部需要更多地图层或模型时，声明自己的服务依赖和配置。 [规划服务入口](route_service.py) · [公开路线契约](../edge_contracts/navigation.py)
 4. **接入控制器**。把要执行的路线交给获得该机体授权的物理适配器。它独立核对路线摘要、主体、地图、坐标系、定位代次、profile 摘要及资源占用情况，按原操作号提交、查询和取消。当前仓库的 `nav_execute` 验收使用单独的地面回放执行器。新机体需要提供可独立判定的到达和交接条件。 [physical 回放适配器](../agent/physical_navigation.py)
 
-栅格规划仅通过值为零的单元。足迹半径按分辨率向上取整，用方形窗口保守膨胀障碍、未知与边界，再沿四邻接搜索。有向图只通过已登记且标签获准的边，起点和终点需落在已登记节点。图上某条三维边能否在飞行器动力学、空域或实时避障条件下执行，由具体提供者和站点验收决定。两种表示都限制单条路线最多 256 个路点，超限返回 `navigation.route_too_long`。
+栅格规划仅通过占据值为零的空闲单元。足迹半径按分辨率向上取整，用方形窗口保守膨胀障碍、未知与边界，再沿四邻接或八邻接走廊（`grid_corridor.py`）搜索。在此基础上，走廊搜索器（供校园路线 `exploration/survey_route.py` 与标定视点规划 `calibration/view_planner.py` v6 共用）支持叠加可选的有界语义空间代价层 `semantic_layers`（`risk`、`traversable`、`preferred`，契约见 [`edge_contracts/semantic_costmap.py`](../edge_contracts/semantic_costmap.py) 与 [SDD-061](../docs/specs/SDD-061-semantic-costmap-corridor.md)）：物理占据/膨胀障碍与 `risk >= 0.85` 始终保持单调硬否决，语义偏好仅在安全空闲单元上产生有界虚拟边权奖励（有效步代价下限 `0.35 * step_len`，保证 A\* 启发式可采纳），一旦语义层超过 TTL 自动退回纯几何规划并标记 `semantic_prior_stale`。有向图只通过已登记且标签获准的边，起点和终点需落在已登记节点。图上某条三维边能否在飞行器动力学、空域或实时避障条件下执行，由具体提供者和站点验收决定。两种表示都限制单条路线最多 256 个路点，超限返回 `navigation.route_too_long`。
 
 路线摘要绑定地图、主体、定位代次、profile 内容、算法与几何。线上的 `localization_stamp_ns` 为十进制字符串，保留纳秒精度。接收端传入独立获得的当前机体绑定，由 `validate_route` 核对上下文、摘要、维数、边界和总长。执行方还需比较当前 profile 摘要并检查独立授权。基准中的四种机体共享同一个地点 ID，各自走本 profile 批准的路线。 [配置示例](bench.py)
 
@@ -30,6 +30,7 @@
 
 ```sh
 python tests/test_navigation_planner.py -v
+python tests/test_semantic_costmap.py -v
 python tests/test_spatial_facts.py -v
 python tests/test_navigation_pack.py -v
 python tests/test_navigation_physical.py -v

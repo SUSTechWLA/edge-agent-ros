@@ -19,7 +19,7 @@ export EDGE_HARDWARE_IMAGE="edge-agent-ros/hardware:robot-$(cut -c1-12 ROBOT_SOU
 test "$(uname -m)" = aarch64
 test "$(docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{.Os}}/{{.Architecture}}')" = linux/arm64
 test "$(docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$source_revision"
-docker compose -f compose.hardware.yaml -f compose.hardware-observe.yaml config --services | grep -Fx task-facts
+docker compose -f compose.hardware.yaml -f compose/hardware-observe.yaml config --services | grep -Fx task-facts
 ```
 
 ## 1. 在 observe 模式核对机体

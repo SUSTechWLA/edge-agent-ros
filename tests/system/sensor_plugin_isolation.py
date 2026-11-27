@@ -209,7 +209,7 @@ def run(args):
             "-f",
             str(ROOT / "compose.yaml"),
             "-f",
-            str(ROOT / "compose.camera.yaml"),
+            str(ROOT / "compose/camera.yaml"),
             "-f",
             str(work / "test.json"),
         ]
