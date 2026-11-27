@@ -26,13 +26,13 @@ config() {
   runner=$1
   shift
   if [ "$action" = camera-start ]; then
-    "$runner" -f compose.hardware.yaml -f compose.soft-runtime.yaml -f compose.soft-runtime-hardware.yaml -f compose.physical-camera.yaml "$@"
+    "$runner" -f compose.hardware.yaml -f compose/soft-runtime.yaml -f compose/soft-runtime-hardware.yaml -f compose/physical-camera.yaml "$@"
   elif [ "$action" = start ]; then
-    "$runner" -f compose.hardware.yaml -f compose.soft-runtime.yaml -f compose.soft-runtime-hardware.yaml "$@"
+    "$runner" -f compose.hardware.yaml -f compose/soft-runtime.yaml -f compose/soft-runtime-hardware.yaml "$@"
   elif [ "$track" = physical ]; then
-    "$runner" -f compose.hardware.yaml -f compose.physical-camera.yaml "$@"
+    "$runner" -f compose.hardware.yaml -f compose/physical-camera.yaml "$@"
   else
-    "$runner" -f compose.hardware.yaml -f compose.soft-runtime.yaml -f compose.soft-runtime-hardware.yaml -f compose.hardware-observe.yaml "$@"
+    "$runner" -f compose.hardware.yaml -f compose/soft-runtime.yaml -f compose/soft-runtime-hardware.yaml -f compose/hardware-observe.yaml "$@"
   fi
 }
 docker_compose() { docker compose "$@"; }

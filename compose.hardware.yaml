@@ -16,10 +16,10 @@ x-runtime: &runtime
   environment: *environment
 services:
   sensor-health-init:
-    extends: {file: compose.sensor-health.yaml, service: sensor-health-init}
+    extends: {file: compose/sensor-health.yaml, service: sensor-health-init}
     image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
   sensor-health:
-    extends: {file: compose.sensor-health.yaml, service: sensor-health}
+    extends: {file: compose/sensor-health.yaml, service: sensor-health}
     image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}
     network_mode: host
     ports: !reset []

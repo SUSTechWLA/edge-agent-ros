@@ -19,10 +19,10 @@ MODES = {
     "sim-stationary": {
         "project": "edge-board-cal",
         "compose": [
-            "compose.calibration-gazebo.yaml",
-            "compose.calibration-board.yaml",
-            "compose.calibration-model.yaml",
-            "compose.calibration-console.yaml",
+            "compose/calibration-gazebo.yaml",
+            "compose/calibration-board.yaml",
+            "compose/calibration-model.yaml",
+            "compose/calibration-console.yaml",
         ],
         "default_profile": "calibration/station/gazebo-board.json",
         "port_env": "EDGE_CALIBRATION_CONSOLE_PORT",
@@ -32,11 +32,11 @@ MODES = {
     "sim-mobile": {
         "project": "edge-fixed-cal",
         "compose": [
-            "compose.calibration-board.yaml",
-            "compose.calibration-console.yaml",
-            "compose.calibration-model.yaml",
-            "compose.calibration-fixed-rover.yaml",
-            "compose.calibration-view-motion.yaml",
+            "compose/calibration-board.yaml",
+            "compose/calibration-console.yaml",
+            "compose/calibration-model.yaml",
+            "compose/calibration-fixed-rover.yaml",
+            "compose/calibration-view-motion.yaml",
         ],
         "default_profile": "calibration/station/gazebo-fixed-rover.json",
         "port_env": "EDGE_FIXED_CAL_CONSOLE_PORT",
@@ -46,9 +46,9 @@ MODES = {
     "hardware": {
         "project": "edge-hw-cal",
         "compose": [
-            "compose.calibration-board.yaml",
-            "compose.calibration-console.yaml",
-            "compose.calibration-hardware.yaml",
+            "compose/calibration-board.yaml",
+            "compose/calibration-console.yaml",
+            "compose/calibration-hardware.yaml",
         ],
         "default_profile": None,
         "port_env": "EDGE_CALIBRATION_CONSOLE_PORT",
@@ -69,7 +69,7 @@ def build_plan(mode: str, *, project: str | None = None, profile_path: Path | No
     environ = dict(os.environ if env is None else env)
     compose_files = list(spec["compose"])
     if passive_livox:
-        compose_files.append("compose.calibration-passive-livox.yaml")
+        compose_files.append("compose/calibration-passive-livox.yaml")
     compose_profiles = ["time-calibration"] if with_clock and mode in ("sim-mobile", "hardware") else []
     resolved_profile = profile_path
     if resolved_profile is None:
@@ -82,7 +82,7 @@ def build_plan(mode: str, *, project: str | None = None, profile_path: Path | No
     bind = environ.get("EDGE_CALIBRATION_CONSOLE_BIND", "127.0.0.1")
     port = int(environ.get(spec["port_env"], str(spec["default_port"])))
     proj = project or spec["project"]
-    cmd = ["docker", "compose", "-p", proj]
+    cmd = ["docker", "compose", "--project-directory", ".", "-p", proj]
     for cf in compose_files:
         cmd.extend(["-f", cf])
     for cp in compose_profiles:
@@ -147,7 +147,7 @@ def preflight(plan: dict, *, env: dict | None = None, check_live: bool = False) 
         for required in ("EDGE_CAL_HOST_GATEWAY", "EDGE_CAL_ROS_DOMAIN", "EDGE_CAL_OLLAMA_URL", "EDGE_CAL_ROBOT_ID"):
             if not str(merged.get(required, "")).strip():
                 issues.append(f"missing required hardware environment variable: {required}")
-        if "compose.calibration-passive-livox.yaml" in plan["compose_files"]:
+        if "compose/calibration-passive-livox.yaml" in plan["compose_files"]:
             for required in ("EDGE_CAL_HW_OBSERVER_IMAGE", "EDGE_CAL_LIVOX_IFACE", "EDGE_CAL_LIVOX_DEST",
                              "EDGE_CAL_LIVOX_IP", "EDGE_CAL_LIVOX_ID", "EDGE_CAL_LIVOX_FRAME"):
                 if not str(merged.get(required, "")).strip():

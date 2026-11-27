@@ -3,7 +3,7 @@
 services:
   passive-source:
     extends:
-      file: compose.calibration-passive-livox.yaml
+      file: compose/calibration-passive-livox.yaml
       service: calibration-passive-livox
     restart: unless-stopped
     environment:
