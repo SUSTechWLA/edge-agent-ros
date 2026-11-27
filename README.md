@@ -4,9 +4,9 @@
 
 项目面向部署在机器人计算单元上的单机 Agent。用户目标转成工具调用，由 ROS 2 执行和验收，遇到故障保留原因、执行状态与恢复依据。默认 Docker 场景提供单台轮式机器人，另有大型校园可复测轮式车、无人机、四足和双足的机载观测及各自支持的动作。
 
-架构借鉴 **dsh 的 Plugin / Service / Tool**，保留未来与 **SuperAgent 的 Router / Worker 角色**协作的空间。当前实现并非 dsh SDK，也尚未实现跨机器人调度。执行内核和网关使用 C++20，Agent 内核、零依赖公共契约（`edge_contracts/`）与多数独立服务使用 Python，观测台使用浏览器前端；插件按协议接入，可选择自己的实现语言。
+不同于多数将大模型 Prompt 直连 ROS 话题或把所有职责塞进单一 Tool 列表的 Agentic Robot，本系统以 **dsh（DeepSeek Harness）与 Cordis 的工程范式**为骨架，针对物理机器人安全约束落地了**三元能力解耦（`Plugin / Service / Tool`）、软硬件双轨宿主（`Context/Fiber` vs `Physical Lease`）、后置独立见证（`Post-Execute Witness`）以及事实流与运动控制权正交分离**，并保留未来与 **SuperAgent 的 `Router / Worker` 角色**跨机协作的演进空间（当前实现为 Python 与 C++20/ROS 2 原生工程落地，并非上游 TypeScript SDK 兼容层，也尚未实现跨机器人调度）。
 
-[系统核心架构](#系统核心架构) · [快速运行](#快速运行) · [插件双轨与装卸边界](#插件升级的两条轨道) · [开发一个插件](docs/plugin-development.md) · [Coding Agent 入口](AGENTS.md) · [部署与平台](docs/deployment.md) · [Compose 分层索引](compose/README.md)
+[系统核心架构与 DSH 优势](#系统核心架构) · [快速运行](#快速运行) · [插件双轨与装卸边界](#插件升级的两条轨道) · [开发一个插件](docs/plugin-development.md) · [Coding Agent 入口](AGENTS.md) · [部署与平台](docs/deployment.md) · [Compose 分层索引](compose/README.md)
 
 ## 现在可以做什么
 
@@ -30,7 +30,7 @@
 |---|---|---|
 | 自然语言执行 | “去庭院巡检”解析地点、经过门口、到达并核实停稳；“去维修区巡检”返回限制通行原因 | [任务与观测台](docs/console.md) |
 | 闭环反馈规划 | 传感器自标定与语义探索按步消费有界观测摘要与 `semantic_scene`，在受限目标授权下闭环推进 | [标定规格](docs/specs/SDD-059-guided-sensor-calibration.md) · [语义空间代价](docs/specs/SDD-061-semantic-costmap-corridor.md) |
-| 观测与复盘 | 查看激光、融合地图、机器人状态；以可读 Session 查看目标、计划、反馈和结果，再按引用追查原始事件 | [Session 与取证](docs/sessions.md) |
+| 观测与复盘 | 实时渲染标定 6 阶段空间走廊、探索二维/三维四模式语义代价地图（占据/风险/偏好/单调准入）及净空热力；以可读 Session 按引用追查原始事件 | [Session 与取证](docs/sessions.md) · [实时地图工作台](docs/specs/SDD-063-semantic-map-live-workbench.md) |
 | 插件扩展 | 注册 HTTP Tool；添加不暴露 Tool 的共享 Service，例如独立结果验收器或 Session 提供者 | [插件开发规范](docs/plugin-development.md) |
 | 有界恢复 | 暂态错误退避重试；候选结果已保存时可续办验收；对未知物理结果保留待核查状态 | [任务账本与恢复](agent/README.md) |
 | 模型与能力演进 | 管理器可从里程计或用户数列任务的缺口自动发布受限只读工具并续办。需要新算法时，设计插件生成草案，编码 Agent 或本地 Ollama 可为纯文本 Tool 生成受限表达式，经独立样本验收与部署者批准后热装。 | [插件作者](docs/plugin-authoring.md) · [插件管理](docs/plugin-manager.md) · [源码候选的验收和发布](docs/specs/SDD-014-authored-software-provider.md) |
@@ -87,69 +87,79 @@ docker compose start
 
 ## 系统核心架构
 
-下图按仓库当前源码绘制，展示单机任务从外部触发、Agent 内核与模型推理、双轨插件治理、ROS 2 执行与感知，到持久证据归档及受管能力演进的完整边界：
+当前开源与学术界的多数 Agentic Robot 采用「LLM Prompt 直连 ROS 节点 / 万物皆 Tool」的扁平脚本结构，一旦进入真实物理闭环，极易出现上下文膨胀、运行期升级串扰、“接口返回 200 误判为物理到位”以及告警风暴越权驱动底盘等问题。本系统将 **dsh（DeepSeek Harness）** 的可组合运行时哲学引入具身机器人，形成了如下源码级核心架构：
 
-![Edge Agent ROS 当前核心架构](docs/architecture/core-architecture.svg)
+![Edge Agent ROS 基于 DSH 范式的具身智能核心架构](docs/architecture/core-architecture.svg)
 
-各层状态所有者与调用/事实流向如下（`edge_contracts/` 提供零外部依赖的公共事件、描述符、空间事实、语义子图与代价图契约）：
+### 为什么采用 DSH（DeepSeek Harness）具身架构？
+
+| 架构维度 | 传统 Agentic Robot 常见痛点 | 本系统的 DSH 具身工程设计 | 源码落点与可验证不变量 |
+|---|---|---|---|
+| **① 能力模型解耦** | 把日志查询、结果校验、代码修复全部塞进 LLM Tool 列表，上下文迅速膨胀且依赖模型“自觉调用” | **`Plugin ≠ Tool` 三元解耦**：`Plugin` 是装卸单元；模型只看精简 `Tool`；模块间共享 `Service`（`Definition / Provider / Consumer`）；独立验收与能力演进对模型暴露 **0 个 Tool** | [`edge_contracts/`](edge_contracts/) · [`examples/result-verifiers/`](examples/result-verifiers/README.md) · [`docs/harness-extensions.md`](docs/harness-extensions.md) |
+| **② 生命周期与热插拔** | 直接覆盖 Python 函数或整机重启，升级时在途任务参数错位、订阅与连接句柄泄漏 | **Cordis 风格 `Context + Fiber` 双轨分治**：纯软件走 `SoftRuntime`（`apply(ctx)` 六原语、版本冻结预约、`draining` 排空、逆序 `await dispose`）；物理设备与运动走 `physical-controller`（独占租约、`epoch` 围栏、停稳交接，严禁热换代码） | [`agent/soft_runtime.py`](agent/soft_runtime.py) · [`agent/physical_controller.py`](agent/physical_controller.py) · [`SDD-045`](docs/specs/SDD-045-plugin-tracks.md) |
+| **③ 副作用幂等与结果确认** | 把 HTTP 200 或模型文本当成物理完成；网络超时直接重发导致重复移动或二次采样 | **唯一 `operation_id` 账本 + 后置独立见证（`tools/post-execute` 映射）**：跨重试与重启复用原 `operation_id` 对账；提供者回执仅落为 `candidate`，须经 0-Tool `verify.*` 或 C++20 `edge_core`（`0.12 m` 到点 + `3` 帧静止）独立核验才写 `SUCCEEDED` | [`agent/kernel/verification.py`](agent/kernel/verification.py) · [`src/edge_core/`](src/edge_core/) · [`SDD-006`](docs/specs/SDD-006-runtime-plugins.md) |
+| **④ 事实流与控制权边界** | 监听到话题告警即直接下发 `/cmd_vel`；跨任务共享全量对话历史导致幻觉污染 | **持久事实（`SessionEvent / EventBus`）与控制权严格正交**：仅幂等 `Source / Trigger` 三元组可建单；源端 `ModuleJournal` 先落盘再投递、消费方按游标续读；**发布事件绝不授予运动控制权**，`session.read` 按需提供带引用低噪投影 | [`agent/module_journal.py`](agent/module_journal.py) · [`sessions_plugin/`](sessions_plugin/README.md) · [`SDD-010`](docs/specs/SDD-010-session-evidence.md) |
+| **⑤ 能力缺口自演进** | 遇到未知算子直接失败停摆，或允许大模型无隔离修改宿主代码破坏系统安全 | **证据驱动的受管能力演进闭环**：`capability_missing` 受阻事实唤醒 0-Tool `plugin-author / design / software-author` → 独立样本沙箱核验 → CAS 策略批准后热装至 `soft` 轨 → 凭 `parent_event_id` 续办原任务 | [`client/plugin_manager_watch.py`](client/plugin_manager_watch.py) · [`client/software_provider.py`](client/software_provider.py) · [`SDD-014`](docs/specs/SDD-014-authored-software-provider.md) |
+
+### 控制流、双轨 Harness 与事实流拓扑
 
 ```mermaid
 flowchart TB
-    subgraph L1["1. 入口、观测与独立巡检层"]
-        U["用户 / 外部客户端 / Task Recorder"]
-        W["Watchdog 独立巡检 · 持久游标与补收"]
-        O["Console 工作台 (:8765) · 实时观测 / 会话 / 复盘 / 回放"]
+    subgraph S1["1. DSH 触发源、模型适配与 0-Tool 巡检层"]
+        TR["Source / Trigger 入口 · 三元组幂等受理"]
+        MA["Model Adapter · 本地 Ollama Qwen3 / 云端 DeepSeek"]
+        WD["Watchdog 独立消费者 (0-Tool) · 持久游标与断流补收"]
     end
 
-    subgraph L2["2. Agent 任务内核与推理路由层 (agent/ + model_provider/)"]
-        K["Agent Kernel (tasks.db) · 状态机 / 授权准入 / 原 operation_id 对账"]
-        PL["Planner (planning.py) · 固定句式 / 步级冻结计划 / feedback_plan 闭环规划"]
-        V["独立验收线程 · verify.* 服务绑定与候选结果核验"]
-        M["Model Adapter (:8134 / :11434) · 本地 Ollama (Qwen3 think=false) / 云端 DeepSeek"]
+    subgraph S2["2. DSH 任务内核 (agent/kernel/ · 语言任务终态唯一所有者)"]
+        TK["Task / Ticket 事务账本 (tasks.db · SQLite WAL)"]
+        PL["有界规划器 (planning.py) · 步级冻结计划 + feedback_plan 闭环"]
+        AU["授权与绑定冻结 (catalog / authorization) · ServiceSnapshot.pin"]
+        PV["Post-Execute 独立验收拦截 (verification.py) · 映射 dsh tools/post-execute"]
     end
 
-    subgraph L3["3. 双轨插件运行时与能力供给层 (SDD-045)"]
-        SR["Soft 轨 (soft-host · Context/Fiber · v2_registry) · 排空热换版"]
-        PR["Physical 轨 (physical-controller) · 设备租约 / epoch 围栏 / 停稳交接"]
-        SP["只读与规划能力 · navigation / calibration (view_plan v6) / exploration / sessions / evidence"]
+    subgraph S3["3. Cordis 风格双轨插件 Harness (SDD-045 · edge_contracts/ 零依赖契约)"]
+        SH["Soft 轨 (SoftRuntime · Context 六原语 + Fiber 逆序清理) · 预约排空热换版"]
+        PH["Physical 轨 (physical_controller · PhysicalLedger) · 独占租约 / epoch 围栏 / 停稳交接"]
+        SV["三元供给面 · Tool (模型动作) / Service (session.read・verify.*・route) / 0-Tool Consumer"]
     end
 
-    subgraph L4["4. ROS 2 执行内核、多模态感知与机体层 (C++20 / ROS 2 Jazzy)"]
-        EC["edge_core · 运动账本 / 策略准入 / 0.12m 到点确认"]
-        EG["edge_gateway · 单一底盘控制权 / 扫掠净距与 TTC 制动 / 3帧静止确认"]
-        PC["感知与语义空间 · perception 位姿栅格 / spatial_facts / semantic_scene / semantic_costmap"]
-        RB["Gazebo Harmonic 多机体仿真 / Jetson・RK3588 实机传感器与底盘驱动"]
+    subgraph S4["4. C++20 物理运动权威与多模态感知层 (ROS 2 Jazzy)"]
+        EC["edge_core + edge_gateway (C++20) · 单一底盘控制权 / TTC 制动 / 0.12m + 3帧停稳证明"]
+        PC["感知与 ROAM 语义代价层 (SDD-060/061) · 位姿栅格 / semantic_scene / 几何障碍单调否决"]
+        RB["Gazebo 多机体仿真 (差速・四足・双足・无人机) / Jetson・RK3588 实机驱动"]
     end
 
-    subgraph L5["5. 持久事实归档与受管演进闭环"]
-        EB["EventBus / ModuleJournal + Console history.db · 按源去重与游标续读"]
-        EV["受管能力演进 · 受阻事实 → 作者/设计草案 → 独立样本验收 → 受管发布续办"]
+    subgraph S5["5. DSH 持久事实脊柱、实时语义工作台与受管演进闭环"]
+        EB["ModuleJournal + Console history.db · 源端先落盘后投递 / 逐源游标去重"]
+        WB["实时工作台 (:8765 / :8910 · SDD-063) · 标定走廊画布 / 2D・3D 四模式语义地图 / Session"]
+        EV["受管能力演进 (0-Tool Consumers) · 受阻事实 → 草案与受限代码 → 独立样本核验 → CAS 批准"]
     end
 
-    U -->|"POST /agent/tasks (text + trigger)"| K
-    O -->|"反向代理任务请求"| K
-    W -->|"只读巡检 / 触发恢复"| K
-    K <-->|"目录快照 + 语义子图 / 冻结步骤"| PL
-    PL <-->|"结构化 JSON 规划"| M
-    K -->|"冻结 binding 调用"| SR
-    K -->|"租约与动作委托"| PR
-    SR --> SP
-    PR -->|"NavigateTo / submit_path"| EC
-    EC -->|"运动控制权"| EG
-    EG <-->|"cmd_vel / odom / scan"| RB
+    TR -->|"POST /agent/tasks"| TK
+    WB -->|"只读渲染 + 任务反向代理"| TR
+    WD -->|"只读游标巡检"| TK
+    TK <-->|"目录快照 + 语义子图 / 冻结步骤"| PL
+    PL <-->|"结构化 JSON"| MA
+    TK --> AU
+    AU -->|"freeze_plan + 原 operation_id"| SH
+    AU -->|"设备租约 + 原 operation_id"| PH
+    SH --> SV
+    PH -->|"NavigateTo / 物理采样"| EC
+    EC <-->|"cmd_vel / odom / scan"| RB
     RB -->|"Image / Depth / PointCloud2 / IMU"| PC
-    PC -->|"有来源观测与语义代价层"| SP
-    PC -->|"实时状态流"| O
-    SP -.->|"候选结果"| V
-    EC -.->|"停稳与到点回执"| V
-    V -->|"verified / RECOVERY_REQUIRED"| K
-    K & EC & SP & PR -->|"先持久化再投递"| EB
-    EB -->|"session.read / query_evidence"| O
-    EB -->|"capability_missing"| EV
-    EV -.->|"批准后热装只读能力"| SR
+    PC -->|"有来源空间事实与语义走廊"| SV
+    PC -->|"只读语义地图与走廊投影"| WB
+    SV -.->|"candidate 候选回执"| PV
+    EC -.->|"独立到点与停稳见证"| PV
+    PV -->|"verified 或 RECOVERY_REQUIRED"| TK
+    TK & SH & PH & EC -->|"持久事件信封 (不授执行权)"| EB
+    EB -->|"session.read / query_evidence"| WB
+    EB -->|"capability_missing 游标触发"| EV
+    EV -.->|"批准后热装至 Soft 轨并沿因果链续办"| SH
 ```
 
-- **四个互不越权的状态所有者**：`Agent Kernel` 持有语言任务与步骤终态；`edge_core` + `edge_gateway` 持有物理运动控制权与停稳确认；`soft-host` / `physical-controller` 分别持有软件实例引用计数与硬件独占租约；`EventBus / history.db` 与 `Session` 只记录和投影已发生的事实，**发布事件不授予执行权，观测摘要也不改写任务终态**。[事件通路](docs/module-eventbus.md) · [上下文与术语](docs/harness-extensions.md)
+- **四个互不越权的状态所有者**：`Agent Kernel` 持有语言任务与步骤终态；`edge_core` + `edge_gateway` 持有物理运动控制权与停稳确认；`soft-host` / `physical-controller` 分别持有软件 `Fiber` 引用计数与硬件独占租约；`EventBus / history.db`、`Session` 与前端地图工作台只记录和投影已发生的事实，**发布事件不授予执行权，观测摘要也不改写任务终态**。[事件通路](docs/module-eventbus.md) · [DSH 术语与上下文映射](docs/harness-extensions.md) · [Cordis 运行时映射](docs/plugin-runtime-mapping.md)
 
 ### 插件升级的两条轨道
 
@@ -209,7 +219,7 @@ P1 的三个试点可用一个实验理解。给 Agent 下发“求输入数列�
 | [model_provider/](model_provider/README.md)、[sessions_plugin/](sessions_plugin/README.md)、[evidence/](evidence/README.md)、[task_recorder/](task_recorder/README.md)、[console/](console/)、[analysis/](analysis/README.md) | 本地 Qwen3 / 云端 DeepSeek 模型路由、可读 Session、按需取证、按任务录制回放、工作台与离线分析各自承担什么？ |
 | [observations/](observations/README.md)、[examples/](examples/)、[client/](client/) | 如何接入额外 ROS 观测、独立 HTTP 提供者、插件管理器与 Watchdog 消费者？ |
 | [scripts/](scripts/)、[docker/](docker/)、[compose.yaml](compose.yaml)、[compose.hardware.yaml](compose.hardware.yaml)、[compose/](compose/README.md) | 仿真主栈、板端主栈、43 个分层 Compose overlay、`deploy/robot` 纯净投影与运维脚本如何组织？ |
-| [文档总目录](docs/README.md) | 按任务查部署、使用、架构、规格（`SDD-001`–`SDD-062`）、验收报告及精选证据。 |
+| [文档总目录](docs/README.md) | 按任务查部署、使用、架构、规格（`SDD-001`–`SDD-063`）、验收报告及精选证据。 |
 | [tests/](tests/) | 复跑契约、包边界与隔离仿真。系统套件写入 `.ci-results/system/runs/`；独立验收原件按运行号保存在 [artifacts/verification/](artifacts/verification/README.md)。 |
 
 [贡献与发布流程](CONTRIBUTING.md)说明分支、提交、SDD 和发布；[目标架构教材](docs/architecture/index.html)用于学习后续方向。判断当前能力时，以实现、相应 SDD 的验收记录及其版本为准，不能把目标图当作已交付能力。
