@@ -71,10 +71,12 @@ let reading = false;
 let local = new URL(location.href).searchParams.get('view') !== 'global';
 let campus3d = false;
 let viewChosen = new URL(location.href).searchParams.has('view');
+let mapLayerMode = 'occupancy';
 const campus = createCampusAtlas(() => paintMap(displayed));
 let renderKey = '';
 let anomalyKey = '';
 let recoveryKey = '';
+let semanticKey = '';
 let agentState = null;
 const trails = new Map();
 
@@ -523,7 +525,8 @@ function paintMap(mission) {
     return;
   }
   if (local) {
-    renderLocalMap(ctx, width, height, mission, transform, gridTiles(grid));
+    canvas.dataset.layerMode = mapLayerMode;
+    renderLocalMap(ctx, width, height, mission, transform, gridTiles(grid, mission?.semantic_costmap, mapLayerMode));
     return;
   }
   const bounds = mission.bounds || mission.roi;
@@ -559,20 +562,21 @@ function paintMap(mission) {
   ctx.fillText(`${scaleMeters} m`, 31 + scale * scaleMeters, height - 12);
 }
 
-function drawTaskGrid(ctx,grid,transform,project,opacity) {
+function drawTaskGrid(ctx,grid,transform,project,opacity,mission=displayed) {
   const p0=project(transform.toWorld(0,0)),pu=project(transform.toWorld(1,0)),pv=project(transform.toWorld(0,1));
+  ctx.canvas.dataset.layerMode = mapLayerMode;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha=opacity;
   ctx.transform(pu[0] - p0[0], pu[1] - p0[1], pv[0] - p0[0], pv[1] - p0[1], p0[0], p0[1]);
-  ctx.drawImage(gridTiles(grid), 0, 0);
+  ctx.drawImage(gridTiles(grid, mission?.semantic_costmap, mapLayerMode), 0, 0);
   ctx.restore();
 }
 
 function paintTaskOverlay(ctx,mission,transform,project,scale,rightEdge,gridOpacity=1) {
   const grid=mission.grid;
   const position=mission.pose?.frame===grid.frame ? xy(mission.pose) : null;
-  drawTaskGrid(ctx,grid,transform,project,gridOpacity);
+  drawTaskGrid(ctx,grid,transform,project,gridOpacity,mission);
   const storedTrail = Array.isArray(mission.trajectory) ? mission.trajectory.filter(point) : [];
   paintReferenceLine(ctx, mission, project, true);
   pathLine(ctx, storedTrail.length ? storedTrail : drawTrail(mission), project, '#69d4e3', 2, [5, 4]);
@@ -595,6 +599,95 @@ function paintTaskOverlay(ctx,mission,transform,project,scale,rightEdge,gridOpac
   }
   marker(ctx, issue, project, {color: '#f2a16a', label: '待复核', dashed: true, radius: 12, rightEdge});
   marker(ctx, position, project, {color: '#85d9ee', radius: 8, yaw: mission.pose?.yaw-cameras.global.yaw});
+}
+
+const vocabLabels = {
+  clear_floor: '畅通地面', indoor_corridor: '室内走廊', doorway_transition: '门洞过渡区',
+  paved_walkway: '室外步道', caution_barrier: '围栏缓冲带', verified_entrance: '已核验入口',
+  deferred_hazard: '避让高危区', pending_review_zone: '待复核区'
+};
+const sceneRelationNames = {
+  guards: '守护隔离', attached_to: '三维附着', inside: '位于', approach_to: '导航接近',
+  observed_by: '已观测', adjacent: '邻接'
+};
+
+function paintSemanticWorkbench(mission) {
+  const sem = mission?.semantic_costmap;
+  const scene = mission?.semantic_scene;
+  const ttlPill = el('semantic-ttl-pill');
+  const panel = el('semantic-scene-panel');
+  const freeLegend = document.querySelector('.legend [data-key="free"]');
+  if (freeLegend) {
+    freeLegend.textContent = {
+      occupancy: '自由区',
+      risk: '低→高语义风险',
+      preferred: '通行偏好走廊',
+      admitted: '单调安全准入'
+    }[mapLayerMode] || '自由区';
+  }
+  if (!sem) {
+    ttlPill.hidden = !mission?.grid;
+    if (!ttlPill.hidden) {
+      ttlPill.dataset.tone = 'neutral';
+      ttlPill.textContent = '仅几何观测';
+    }
+    panel.hidden = true;
+    semanticKey = '';
+    return;
+  }
+  ttlPill.hidden = false;
+  const stateLabel = sem.stale ? '先验已过期 · 纯几何保底'
+    : sem.archived ? '任务归档语义层'
+    : `语义先验生效 · TTL ${number(sem.ttl_remaining_s, 1)}s`;
+  const tone = sem.stale ? 'warning' : 'good';
+  ttlPill.dataset.tone = tone;
+  ttlPill.textContent = stateLabel;
+
+  panel.hidden = false;
+  const sig = JSON.stringify([mission?.id, sem.source_ref, sem.stale, sem.archived, Math.floor(sem.ttl_remaining_s || 0), sem.summary, scene?.edges]);
+  if (sig === semanticKey) return;
+  semanticKey = sig;
+  const badge = el('semantic-prior-badge');
+  badge.dataset.tone = tone;
+  badge.textContent = sem.stale ? '纯几何降级' : sem.archived ? '已冻结快照' : 'ROAM 先验生效';
+  const s = sem.summary || {};
+  show('semantic-prior-summary', sem.stale
+    ? '语义层超过有效时间窗，已自动解除语义软禁区并回退到纯激光几何避障。'
+    : (s.robot_on_preferred
+      ? '机体位于优选通行区，虚拟路肩生效以抑制偏离主走廊；遇障绕行时将条件性解除惩罚。'
+      : '机体当前处于一般/绕行区域，已自动解除非优选区虚拟路肩以防死锁。'));
+  const rows = [
+    ['单调准入栅格', Number.isInteger(s.admitted_cells) ? `${s.admitted_cells} / ${s.known_free_cells || 0} 自由格` : ''],
+    ['几何一票否决', Number.isInteger(s.geometric_blocked_cells) ? `${s.geometric_blocked_cells} 格` : ''],
+    ['语义高危禁入', Number.isInteger(s.semantic_vetoed_cells) ? `${s.semantic_vetoed_cells} 格` : ''],
+    ['优选通行走廊', Number.isInteger(s.preferred_cells) ? `${s.preferred_cells} 格` : ''],
+    ['当前条件倍率', Number.isFinite(s.robot_cost_multiplier) ? `×${number(s.robot_cost_multiplier, 2)}` : ''],
+    ['来源摘要', typeof sem.source_ref === 'string' ? sem.source_ref.slice(0, 12) : ''],
+  ];
+  el('semantic-metrics').replaceChildren(...rows.filter(([, v]) => v).map(([k, v]) => {
+    const div = document.createElement('div');
+    const dt = document.createElement('dt'); dt.textContent = k;
+    const dd = document.createElement('dd'); dd.textContent = v;
+    div.append(dt, dd);
+    return div;
+  }));
+  el('semantic-vocab').replaceChildren(...(sem.vocabulary || []).map(tag => {
+    const chip = document.createElement('span');
+    chip.className = 'semantic-chip';
+    chip.textContent = vocabLabels[tag] || tag;
+    return chip;
+  }));
+  const nodesById = new Map((scene?.nodes || []).map(n => [n.id, n]));
+  const edges = Array.isArray(scene?.edges) ? scene.edges : [];
+  el('semantic-relations').replaceChildren(...edges.slice(0, 8).map(([a, rel, b]) => {
+    const item = document.createElement('div');
+    item.className = 'semantic-rel-row';
+    item.dataset.relation = rel;
+    const left = nodesById.get(a)?.label || a;
+    const right = nodesById.get(b)?.label || b;
+    item.textContent = `${left} — ${sceneRelationNames[rel] || rel} → ${right}`;
+    return item;
+  }));
 }
 
 function paint(mission) {
@@ -649,6 +742,7 @@ function paint(mission) {
   const names = (Array.isArray(mission?.markers) ? mission.markers : []).map(landmark => landmark.label || landmark.name).filter(Boolean);
   show('landmarks', [...new Set(names)].join('、') || '—');
   paintMap(mission);
+  paintSemanticWorkbench(mission);
   paintEvents(mission);
   paintDestination(mission);
   paintDynamicRecovery(mission);
@@ -761,6 +855,26 @@ for (const [button, localView] of [['view-global', false], ['view-local', true]]
   };
 }
 const endMapGesture=bindMapCamera(el('map'), () => paintMap(displayed));
+document.querySelectorAll('[data-layer-mode]').forEach(btn => {
+  btn.onclick = () => {
+    mapLayerMode = btn.dataset.layerMode || 'occupancy';
+    document.querySelectorAll('[data-layer-mode]').forEach(other => {
+      other.setAttribute('aria-pressed', String(other === btn));
+    });
+    paintMap(displayed);
+    paintSemanticWorkbench(displayed);
+  };
+});
+const updateCellInspect = event => {
+  const canvas = el('map');
+  if (canvas.classList.contains('dragging') || !displayed?.grid) return;
+  const transform = mapGeometry(displayed.grid);
+  const world = pickWorldOnCanvas(canvas, event.clientX, event.clientY);
+  const info = world && transform ? inspectSemanticCell(world, displayed, transform) : null;
+  if (info) show('map-cell-inspect', info.text);
+};
+el('map').addEventListener('pointermove', updateCellInspect);
+el('map').addEventListener('click', updateCellInspect);
 el('view-campus-3d').onclick=()=>{
   endMapGesture();viewChosen=true;local=false;campus3d=true;paintMap(displayed);
 };

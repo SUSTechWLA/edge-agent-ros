@@ -106,6 +106,28 @@ function renderRaw(state){
   fields(el('raw-fields'),pairs);
   if(document.querySelector('.payload').open)el('raw-json').textContent=d?JSON.stringify({topic:item.topic,stamp_s:item.stamp_s,data:d},null,2):'等待采样';
 }
+function renderSourceFreshness(s){
+  const strip=el('source-freshness-strip');
+  if(!strip)return;
+  const src=s?.sources||{};
+  const specs=[
+    ['pose','融合位姿'],['map','占据地图'],['scan','激光扫描'],
+    ['odom','轮式里程计'],['imu','惯导 IMU'],['semantics','场景先验']
+  ];
+  const pills=[];
+  for(const [key,label] of specs){
+    const item=src[key];
+    if(key==='semantics' && !item?.available)continue;
+    const pill=node('span','fresh-pill');
+    const ok=replay ? Boolean(item?.available) : (liveOk && item?.available && item?.fresh);
+    const warn=!ok && Boolean(item?.available || item?.status==='stale' || item?.status==='error');
+    pill.dataset.state=replay && item?.available ? 'replay' : ok ? 'fresh' : warn ? 'stale' : 'idle';
+    const age=Number.isFinite(item?.age_s)?fmt(item.age_s,1)+'s':(item?.available?(item.fresh?'实时':'过期'):'等待');
+    pill.textContent=label+' · '+(replay ? (item?.available?'快照':'无') : age);
+    pills.push(pill);
+  }
+  strip.replaceChildren(...pills);
+}
 function render(){
   const s=displayed(),src=s?.sources||{},pose=src.pose?.data,odom=src.odom?.data,grid=src.map?.data,diag=src.perception?.data;
   el('env').textContent=s?.environment==='simulation'?'仿真':['hardware','robot'].includes(s?.environment)?'实机':'ROS 2';
@@ -133,6 +155,7 @@ function render(){
   if(section()==='review')RunReview.liveStatus(live,liveOk);
   if(section()==='sessions')SessionView.liveStatus(live,liveOk);
   if(section()!=='monitor')return;
+  renderSourceFreshness(s);
   EdgeMap.update(s);renderRaw(s);
   health(el('fusion-health'),src.pose);
   el('fusion-desc').textContent=!pose?'等待融合位姿与建图数据':diag?.mode==='wheel_only'?'当前采用轮式里程计推进位姿，激光观测用于建图。':'轮速估计平移，惯导与轮式航向共同估计朝向。激光观测用于建图。';
@@ -341,7 +364,7 @@ async function refreshCalibration(force=false){
     const status=await api('/api/calibration-status');
     if (replay || !liveOk || !live?.calibration_status_available) return;
     const selected = SessionView.selectedTaskId() || status.task_id;
-    let motion = null, resultRows=[];
+    let motion = null, resultRows=[], corridor=null;
     if (selected && status.method) {
       try {
         const facts=await api('/api/task-context?'+new URLSearchParams({task_id:selected,limit:'0'}),
@@ -350,12 +373,18 @@ async function refreshCalibration(force=false){
           SessionView.observeTask(facts.task);
           motion=calibrationMotion(facts.task,status,live?.sources?.odom);
           resultRows=calibrationResultRows(facts.task,status);
+          if (typeof calibrationMotion.corridorState === 'function') {
+            corridor=calibrationMotion.corridorState(facts.task,status,live);
+          }
         }
       } catch { /* Station observations remain accessible independently of the task ledger. */ }
     }
+    if (!corridor && typeof calibrationMotion.corridorState === 'function') {
+      corridor=calibrationMotion.corridorState(null,status,live);
+    }
     if (replay || !liveOk || !live?.calibration_status_available) return;
     title=motion ? (motion.active ? 'Agent 自主标定' : '自主标定任务结果') : labels[status.state];
-    CalibrationGuide.render(status, taskWritesEnabled(), live, motion, resultRows);
+    CalibrationGuide.render(status, taskWritesEnabled(), live, motion, resultRows, corridor);
     message=motion ? motion.id : status.message;
     if((!motion || motion.same) && status.samples>0)message+=' 已保存 '+status.samples+' 组板姿。';
     const clockText=el('calibration-clock'), clockButton=el('clock-draft');

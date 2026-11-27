@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><title>机器人观测台 · Edge Agent ROS</title>
-<link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/review.css"><link rel="stylesheet" href="/sessions.css"><link rel="stylesheet" href="/calibration.css"><script src="/view-plugins.js" defer></script><script src="/map.js" defer></script><script src="/review.js" defer></script><script src="/sessions.js" defer></script><script src="/calibration-live.js" defer></script><script src="/calibration-preflight.js" defer></script><script src="/calibration-motion.js" defer></script><script src="/calibration.js" defer></script><script src="/app.js" defer></script>
+<link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/review.css"><link rel="stylesheet" href="/sessions.css"><link rel="stylesheet" href="/calibration.css"><script src="/view-plugins.js" defer></script><script src="/map.js" defer></script><script src="/review.js" defer></script><script src="/sessions.js" defer></script><script src="/calibration-live.js" defer></script><script src="/calibration-preflight.js" defer></script><script src="/calibration-motion.js" defer></script><script src="/calibration-map.js" defer></script><script src="/calibration.js" defer></script><script src="/app.js" defer></script>
 </head><body>
 <a href="#main" class="skip">跳至工作区</a>
 <header class="topbar"><div class="brand"><svg viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="12" fill="#d6fb80"/><path d="m10 26 12-17 12 17-12 8z" fill="#19352c"/><path d="m16 25 6-9 6 9-6 4z" fill="#d6fb80"/></svg><span>Edge Agent <b>ROS</b></span></div>
@@ -26,6 +26,34 @@
         <dl id="cal-readings"></dl>
         <p id="cal-result" aria-live="polite"></p><a id="cal-download" hidden download="calibration-capture.avi">下载最近录制的片段（AVI）</a>
         <button id="cal-resume" type="button" hidden>板已就位，续办原步骤</button><span id="cal-resume-note" role="status"></span>
+      </div>
+    </div>
+    <div id="cal-live-workbench" class="cal-workbench" hidden>
+      <ol id="cal-phase-stepper" class="cal-stepper" aria-label="自主标定闭环阶段"></ol>
+      <div class="cal-visual-grid">
+        <div id="cal-corridor-card" class="cal-subcard">
+          <div class="cal-subhead">
+            <div><strong id="cal-corridor-title">空间走廊与语义取景图</strong><span id="cal-corridor-meta" class="cal-submeta"></span></div>
+            <div class="cal-mode-tabs" role="group" aria-label="走廊图层">
+              <button type="button" data-cal-layer="semantic" aria-pressed="true">语义风险走廊</button>
+              <button type="button" data-cal-layer="clearance" aria-pressed="false">周界净空</button>
+              <button type="button" data-cal-layer="geometry" aria-pressed="false">基线视点</button>
+            </div>
+          </div>
+          <div class="cal-canvas-wrap">
+            <canvas id="cal-corridor-map" tabindex="0" role="img" aria-label="标定空间走廊、激光周界净空、靶板法向与候选视点语义风险分布"></canvas>
+            <span id="cal-corridor-empty" class="cal-canvas-empty">等待首次靶板与周界观测</span>
+          </div>
+          <p id="cal-corridor-inspect" class="cal-inspect-bar">悬停或点选候选视点查看 ROAM 风险、偏好与净距评分</p>
+        </div>
+        <div id="cal-coverage-card" class="cal-subcard">
+          <div class="cal-subhead"><strong>覆盖度与语义场景</strong><span id="cal-coverage-summary" class="cal-submeta"></span></div>
+          <div class="cal-coverage-body">
+            <div class="cal-rgb-wrap"><span class="cal-mini-label">RGB 九宫格覆盖</span><div id="cal-rgb-grid" class="cal-rgb-grid" aria-label="RGB 九宫格采样覆盖"></div></div>
+            <div class="cal-baseline-wrap"><span class="cal-mini-label">左右横向视差基线</span><div id="cal-baseline-meter" class="cal-baseline-meter"></div><p id="cal-baseline-caption" class="cal-mini-note"></p></div>
+          </div>
+          <div class="cal-scene-wrap"><span class="cal-mini-label">语义场景关系（semantic_scene）</span><div id="cal-scene-graph" class="cal-scene-pills"></div></div>
+        </div>
       </div>
     </div>
     <details id="cal-board" hidden><summary>实测标定板尺寸 <span id="cal-board-status"></span></summary>
@@ -89,10 +117,12 @@
 </section>
 <section id="monitor" aria-label="实时监控">
 <div class="metrics"><div class="metric"><span>融合位置 <small>m</small></span><strong id="metric-pos">—</strong></div><div class="metric"><span>航向角 <small>°</small></span><strong id="metric-yaw">—</strong></div><div class="metric"><span>轮式里程计速度 <small>m/s</small></span><strong id="metric-speed">—</strong></div><div class="metric"><span>当前动作</span><strong class="op" id="metric-action">—</strong></div></div>
+<div id="source-freshness-strip" class="freshness-strip" aria-label="多传感器实时新鲜度"></div>
 <div class="workspace">
 <section class="panel map-panel"><div class="panel-header"><div class="panel-label"><i class="glyph" data-icon="map"></i><h2>环境地图</h2></div><span id="map-frame" class="tag mono">—</span></div>
 <div class="map-stage" id="map-stage"><canvas id="map" aria-label="机器人位置、轨迹、激光命中点与占据栅格地图"></canvas><div id="map-empty" class="canvas-empty">等待位置或地图数据</div><div class="map-tools"><button id="zoom-in" aria-label="放大地图" title="放大地图">+</button><button id="zoom-out" aria-label="缩小地图" title="缩小地图">−</button><button id="fit" aria-label="适应地图" title="适应地图">⌖</button></div><div class="scale"><i id="scale-line"></i><span id="scale-text">1 m</span></div></div>
-<div id="scene-info" class="scene-info" hidden><span id="scene-zone"></span><span id="scene-source"></span></div><div class="layer-list" id="layer-list"><label id="semantics-label" hidden><input type="checkbox" data-layer="semantics" checked><i class="sym zone"></i>先验分区与地标</label><label><input type="checkbox" data-layer="grid" checked><i class="sym grid"></i>实测占据栅格</label><label><input type="checkbox" data-layer="scan" checked><i class="sym hit"></i>实测激光点</label><label><input type="checkbox" data-layer="trail" checked><i class="sym path"></i>融合轨迹</label><label id="truth-label"><input type="checkbox" data-layer="truth"><i class="sym truth"></i>仿真真值</label></div><p id="map-notes" class="panel-note"></p></section>
+<p id="map-inspect" class="map-inspect">移动光标或点击地图拾取世界坐标、占据值与最近障碍净距</p>
+<div id="scene-info" class="scene-info" hidden><span id="scene-zone"></span><span id="scene-source"></span></div><div class="layer-list" id="layer-list"><label id="semantics-label" hidden><input type="checkbox" data-layer="semantics" checked><i class="sym zone"></i>先验分区与地标</label><label><input type="checkbox" data-layer="grid" checked><i class="sym grid"></i>实测占据栅格</label><label><input type="checkbox" data-layer="clearance"><i class="sym clearance"></i>安全净空热力层</label><label><input type="checkbox" data-layer="scan" checked><i class="sym hit"></i>实测激光点</label><label><input type="checkbox" data-layer="trail" checked><i class="sym path"></i>融合轨迹</label><label id="truth-label"><input type="checkbox" data-layer="truth"><i class="sym truth"></i>仿真真值</label></div><p id="map-notes" class="panel-note"></p></section>
 <div class="side">
 <section class="panel sensor-panel"><div class="panel-header"><div class="panel-label"><i class="glyph" data-icon="scan"></i><h2>传感器原始输入</h2></div></div>
 <div class="segments" aria-label="选择原始输入"><button data-sensor="scan" aria-pressed="true">激光雷达</button><button data-sensor="imu" aria-pressed="false">IMU</button><button data-sensor="odom" aria-pressed="false">里程计</button></div>

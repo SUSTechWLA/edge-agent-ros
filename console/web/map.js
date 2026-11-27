@@ -1,16 +1,121 @@
 /* Render in metres in the published map frame; sensor rays are first transformed
    from the calibrated laser mount and the closest timestamped body pose. */
-window.EdgeMap = (() => {
-  const byId = id => document.getElementById(id);
+(function initEdgeMap(root) {
+  const byId = id => typeof document !== 'undefined' ? document.getElementById(id) : null;
   const finite = Number.isFinite;
   let state = null, scaleFactor = 1, panX = 0, panY = 0, drag = null;
   let mapPixels = null, pixelGrid = null;
-  const layers = {semantics:true, grid:true, scan:true, trail:true, truth:false};
+  let clearanceCache = null, clearanceGrid = null;
+  let lastView = null;
+  const layers = {semantics:true, grid:true, clearance:false, scan:true, trail:true, truth:false};
+
+  function computeClearanceMeters(grid) {
+    const {width, height, cells, resolution} = grid || {};
+    if (!width || !height || !finite(resolution) || resolution <= 0 || cells?.length !== width * height || width * height > 2097152) {
+      return null;
+    }
+    const stride = width + 2;
+    const cap = Math.min(Math.max(width, height) + 1, Math.ceil(2.4 / resolution) + 2);
+    const field = new Int32Array(stride * (height + 2)).fill(cap);
+    let hasObstacle = false;
+    for (let i = 0; i < cells.length; i++) {
+      if (cells[i] > 49) {
+        field[(Math.floor(i / width) + 1) * stride + (i % width) + 1] = 0;
+        hasObstacle = true;
+      }
+    }
+    if (!hasObstacle) return new Float32Array(cells.length).fill(cap * resolution);
+    for (let y = 1; y <= height; y++) {
+      for (let i = y * stride + 1; i < (y + 1) * stride - 1; i++) {
+        const best = Math.min(field[i - 1], field[i - stride - 1], field[i - stride], field[i - stride + 1]);
+        if (best + 1 < field[i]) field[i] = best + 1;
+      }
+    }
+    for (let y = height; y >= 1; y--) {
+      for (let i = (y + 1) * stride - 2; i > y * stride; i--) {
+        const best = Math.min(field[i + 1], field[i + stride - 1], field[i + stride], field[i + stride + 1]);
+        if (best + 1 < field[i]) field[i] = best + 1;
+      }
+    }
+    const distances = new Float32Array(cells.length);
+    for (let i = 0; i < cells.length; i++) {
+      const steps = field[(Math.floor(i / width) + 1) * stride + (i % width) + 1];
+      distances[i] = Math.max(0, steps - 1) * resolution;
+    }
+    return distances;
+  }
+
+  function clearanceData(grid) {
+    if (clearanceGrid === grid && clearanceCache) return clearanceCache;
+    const distances = computeClearanceMeters(grid);
+    if (!distances) return null;
+    let img = null;
+    if (typeof document !== 'undefined') {
+      img = document.createElement('canvas');
+      img.width = grid.width; img.height = grid.height;
+      const ctx = img.getContext('2d'), out = ctx.createImageData(grid.width, grid.height);
+      const warnRadius = 0.85;
+      for (let i = 0; i < grid.cells.length; i++) {
+        const val = grid.cells[i];
+        if (val < 0 || val > 49) continue;
+        const d = distances[i];
+        if (d >= warnRadius) continue;
+        const t = Math.max(0, Math.min(1, 1 - d / warnRadius));
+        const p = i * 4;
+        out.data[p] = Math.round(70 + 175 * t);
+        out.data[p + 1] = Math.round(190 - 92 * t);
+        out.data[p + 2] = Math.round(135 - 88 * t);
+        out.data[p + 3] = Math.round(45 + 145 * t);
+      }
+      ctx.putImageData(out, 0, 0);
+    }
+    clearanceGrid = grid;
+    clearanceCache = {distances, img};
+    return clearanceCache;
+  }
+
+  function inspectWorldPoint(wx, wy, snapshot) {
+    if (!finite(wx) || !finite(wy)) return null;
+    const src = snapshot?.sources || {};
+    const grid = src.map?.data;
+    const sem = src.semantics?.data;
+    const frame = grid?.frame || src.pose?.data?.frame || src.odom?.data?.frame || sem?.frame || '—';
+    const parts = [`(${wx.toFixed(2)}, ${wy.toFixed(2)}) m`];
+    let cellInfo = null;
+    if (grid && grid.width > 0 && grid.height > 0 && grid.resolution > 0 && grid.frame === frame &&
+        Array.isArray(grid.cells) && grid.cells.length === grid.width * grid.height) {
+      const dx = wx - grid.origin_x, dy = wy - grid.origin_y;
+      const c = Math.cos(grid.origin_yaw || 0), s = Math.sin(grid.origin_yaw || 0);
+      const u = Math.floor((c * dx + s * dy) / grid.resolution);
+      const v = Math.floor((-s * dx + c * dy) / grid.resolution);
+      if (u >= 0 && u < grid.width && v >= 0 && v < grid.height) {
+        const idx = v * grid.width + u;
+        const occ = grid.cells[idx];
+        const stateLabel = occ < 0 ? '未知' : occ > 49 ? '障碍占据' : '自由通行';
+        const cd = clearanceData(grid);
+        const clearanceM = cd ? cd.distances[idx] : null;
+        parts.push(`栅格 (${u}, ${v})`, `${stateLabel} (${occ})`);
+        if (finite(clearanceM) && occ >= 0 && occ <= 49) {
+          parts.push(`障碍净距 ${clearanceM.toFixed(2)} m`);
+        }
+        cellInfo = {u, v, occ, clearanceM};
+      } else {
+        parts.push('栅格范围外');
+      }
+    }
+    if (sem && sem.frame === frame && Array.isArray(sem.zones)) {
+      const zone = sem.zones.find(z => Array.isArray(z?.bounds) && z.bounds.length === 4 &&
+        wx >= z.bounds[0] && wy >= z.bounds[1] && wx <= z.bounds[2] && wy <= z.bounds[3]);
+      if (zone?.label) parts.push(`语义区 · ${zone.label}`);
+    }
+    return {wx, wy, frame, cell: cellInfo, text: parts.join(' · ')};
+  }
 
   function surface(canvas) {
+    if (!canvas) return null;
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return null;
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, 2);
     if (canvas.width !== Math.round(w*dpr) || canvas.height !== Math.round(h*dpr)) {
       canvas.width = Math.round(w*dpr); canvas.height = Math.round(h*dpr);
     }
@@ -119,6 +224,7 @@ window.EdgeMap = (() => {
     const pp=Math.min((w-35)/Math.max(4.5,right-left),(h-32)/Math.max(4.5,top-bottom))*scaleFactor;
     const ox=w/2-(left+right)*pp/2+panX, oy=h/2+(bottom+top)*pp/2+panY;
     const screen=(x,y)=>[ox+x*pp,oy-y*pp];
+    lastView={ox, oy, pp, frame};
     byId('semantics-label').hidden=!hasSem;
     byId('scene-info').hidden=!hasSem;
     if(hasSem){
@@ -131,6 +237,14 @@ window.EdgeMap = (() => {
         const [x,y]=screen(grid.origin_x,grid.origin_y);
         ctx.save();ctx.translate(x,y);ctx.scale(pp,-pp);ctx.rotate(grid.origin_yaw);ctx.imageSmoothingEnabled=false;
         ctx.drawImage(img,0,0,grid.width*grid.resolution,grid.height*grid.resolution);ctx.restore();
+      }
+    }
+    if(gOK && layers.clearance){
+      const cdata=clearanceData(grid);
+      if(cdata?.img){
+        const [x,y]=screen(grid.origin_x,grid.origin_y);
+        ctx.save();ctx.translate(x,y);ctx.scale(pp,-pp);ctx.rotate(grid.origin_yaw);ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(cdata.img,0,0,grid.width*grid.resolution,grid.height*grid.resolution);ctx.restore();
       }
     }
     if(hasSem&&layers.semantics)drawScene(ctx,sem,screen,pp);
@@ -194,13 +308,32 @@ window.EdgeMap = (() => {
     ctx.font='10px Consolas, monospace';ctx.fillText(max+' m',cx+radius+5,cy+4);
   }
   const map=byId('map');
-  map.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag=[e.clientX,e.clientY,panX,panY];map.setPointerCapture(e.pointerId);});
-  map.addEventListener('pointermove',e=>{if(!drag)return;panX=drag[2]+e.clientX-drag[0];panY=drag[3]+e.clientY-drag[1];draw();});
-  map.addEventListener('lostpointercapture',()=>{drag=null;});
-  byId('zoom-in').onclick=()=>{scaleFactor=Math.min(12,scaleFactor*1.4);draw();};
-  byId('zoom-out').onclick=()=>{scaleFactor=Math.max(.35,scaleFactor/1.4);draw();};
-  byId('fit').onclick=()=>{scaleFactor=1;panX=panY=0;draw();};
-  document.querySelectorAll('[data-layer]').forEach(input=>{input.onchange=()=>{layers[input.dataset.layer]=input.checked;draw();};});
-  new ResizeObserver(()=>{draw();polar(state?.sources?.scan?.data);}).observe(byId('map-stage'));
-  return {update(next){state=next;draw();},polar};
-})();
+  if(map){
+    const updateInspect=e=>{
+      const out=byId('map-inspect');
+      if(!out || !lastView || !lastView.pp)return;
+      const rect=map.getBoundingClientRect();
+      const wx=(e.clientX-rect.left-lastView.ox)/lastView.pp;
+      const wy=(lastView.oy-(e.clientY-rect.top))/lastView.pp;
+      const info=inspectWorldPoint(wx,wy,state);
+      if(info)out.textContent=info.text;
+    };
+    map.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag=[e.clientX,e.clientY,panX,panY];map.setPointerCapture(e.pointerId);});
+    map.addEventListener('pointermove',e=>{
+      if(drag){panX=drag[2]+e.clientX-drag[0];panY=drag[3]+e.clientY-drag[1];draw();return;}
+      updateInspect(e);
+    });
+    map.addEventListener('click',updateInspect);
+    map.addEventListener('lostpointercapture',()=>{drag=null;});
+    byId('zoom-in').onclick=()=>{scaleFactor=Math.min(12,scaleFactor*1.4);draw();};
+    byId('zoom-out').onclick=()=>{scaleFactor=Math.max(.35,scaleFactor/1.4);draw();};
+    byId('fit').onclick=()=>{scaleFactor=1;panX=panY=0;draw();};
+    document.querySelectorAll('[data-layer]').forEach(input=>{input.onchange=()=>{layers[input.dataset.layer]=input.checked;draw();};});
+    if(typeof ResizeObserver !== 'undefined'){
+      new ResizeObserver(()=>{draw();polar(state?.sources?.scan?.data);}).observe(byId('map-stage'));
+    }
+  }
+  const exported = {update(next){state=next;draw();},polar,computeClearanceMeters,inspectWorldPoint};
+  if (root) root.EdgeMap = exported;
+  if (typeof module !== 'undefined' && module.exports) module.exports = exported;
+})(typeof window !== 'undefined' ? window : globalThis);
