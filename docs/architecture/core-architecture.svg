@@ -1,0 +1,295 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1780" height="1470" viewBox="0 0 1780 1470" font-family='"Microsoft YaHei","PingFang SC","Noto Sans CJK SC","Source Han Sans SC",sans-serif' role="img" aria-label="Edge Agent ROS 当前核心架构">
+<defs>
+<marker id="a-cmd" viewBox="0 0 10 8" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#0E7165"/></marker>
+<marker id="a-sense" viewBox="0 0 10 8" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#915F24"/></marker>
+<marker id="a-sync" viewBox="0 0 10 8" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#385CAB"/></marker>
+<marker id="a-store" viewBox="0 0 10 8" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#687A80"/></marker>
+<marker id="a-rose" viewBox="0 0 10 8" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 10 4 0 8Z" fill="#8F4B5C"/></marker>
+</defs>
+<rect width="1780" height="1470" fill="#F4F7F6"/>
+<rect x="0" y="0" width="1780" height="150" fill="#163645"/>
+<text x="48" y="60" font-size="36" fill="#F7FBFC" font-weight="700">Edge Agent ROS · 当前核心架构</text>
+<text x="48" y="98" font-size="15.4" fill="#D8E9EB">单机、一条任务入口：自然语言目标 → 受管插件调用 → ROS 2 执行与感知 → 独立验收 → 可按游标追查的证据；能力缺口回到演进闭环</text>
+<rect x="1352" y="30" width="380" height="60" rx="12" fill="#1E4757" stroke="#2E5D6D" stroke-width="1.2"/>
+<text x="1372" y="54" font-size="13.6" fill="#E8F3F5" font-weight="700">main · SDD-001 ~ SDD-062</text>
+<text x="1372" y="76" font-size="11.6" fill="#AFC9CE">双主栈入口 + compose/ 43 层叠加 · deploy/robot 纯净投影</text>
+<path d="M48 130 h34" stroke="#0E7165" stroke-width="2.6" stroke-linecap="round" marker-end="url(#a-cmd)"/>
+<text x="90" y="134" font-size="12.2" fill="#D8E9EB">命令 / 任务提交</text>
+<path d="M205.39999999999998 130 h34" stroke="#915F24" stroke-width="2.6" stroke-dasharray="9 3 2 3" stroke-linecap="round" marker-end="url(#a-sense)"/>
+<text x="247.39999999999998" y="134" font-size="12.2" fill="#D8E9EB">观测 / 事实</text>
+<path d="M338.4 130 h34" stroke="#385CAB" stroke-width="2.6" stroke-dasharray="7 5" stroke-linecap="round" marker-end="url(#a-sync)"/>
+<text x="380.4" y="134" font-size="12.2" fill="#D8E9EB">事件 / 订阅</text>
+<path d="M471.4 130 h34" stroke="#687A80" stroke-width="1.9" stroke-linecap="round" marker-end="url(#a-store)"/>
+<text x="513.4" y="134" font-size="12.2" fill="#D8E9EB">存储 / 读写</text>
+<path d="M604.4 130 h34" stroke="#8F4B5C" stroke-width="2.6" stroke-dasharray="4 4" stroke-linecap="round" marker-end="url(#a-rose)"/>
+<text x="646.4" y="134" font-size="12.2" fill="#D8E9EB">受管发布 / 返回</text>
+<text x="1732" y="134" font-size="11.4" fill="#9FBAC0" text-anchor="end">箭头指向接收方；节点取自仓库源码</text>
+<rect x="40" y="170" width="1140" height="162" rx="18" fill="#F1F3F4" stroke="#D5DBDD" stroke-width="1.4"/>
+<path d="M58,171 H1162 A17,17 0 0 1 1179,188 V208 H41 V188 A17,17 0 0 1 58,171Z" fill="#4A5F66" opacity="0.10"/>
+<text x="60" y="195" font-size="15.5" fill="#4A5F66" font-weight="700">外部与入口</text>
+<text x="1160" y="194" font-size="11.2" fill="#6B7D83" text-anchor="end">Agent 进程之外：谁要求、模型提供什么、谁独立巡检</text>
+<rect x="40" y="356" width="1140" height="286" rx="18" fill="#E9F3F1" stroke="#B7D2CD" stroke-width="1.4"/>
+<path d="M58,357 H1162 A17,17 0 0 1 1179,374 V394 H41 V374 A17,17 0 0 1 58,357Z" fill="#0E7165" opacity="0.10"/>
+<text x="60" y="381" font-size="15.5" fill="#0E7165" font-weight="700">Agent 任务内核</text>
+<text x="1160" y="380" font-size="11.2" fill="#6B7D83" text-anchor="end">agent 容器 :8090 · Python / SQLite · 任务终态由 Agent 持有</text>
+<rect x="40" y="668" width="1140" height="222" rx="18" fill="#F5F1E7" stroke="#DBCFB5" stroke-width="1.4"/>
+<path d="M58,669 H1162 A17,17 0 0 1 1179,686 V706 H41 V686 A17,17 0 0 1 58,669Z" fill="#8A6420" opacity="0.10"/>
+<text x="60" y="693" font-size="15.5" fill="#8A6420" font-weight="700">扩展层 · 插件两轨</text>
+<text x="1160" y="692" font-size="11.2" fill="#6B7D83" text-anchor="end">Definition / Provider / Consumer · 描述符 v2 · 排空与换版</text>
+<rect x="40" y="916" width="1140" height="318" rx="18" fill="#EDEFF4" stroke="#C7CEDC" stroke-width="1.4"/>
+<path d="M58,917 H1162 A17,17 0 0 1 1179,934 V954 H41 V934 A17,17 0 0 1 58,917Z" fill="#38506B" opacity="0.10"/>
+<text x="60" y="941" font-size="15.5" fill="#38506B" font-weight="700">提供者、执行内核与机体</text>
+<text x="1160" y="940" font-size="11.2" fill="#6B7D83" text-anchor="end">ROS 2 Jazzy · C++20 · Gazebo Harmonic · 物理状态归内核</text>
+<rect x="40" y="1260" width="1700" height="122" rx="18" fill="#F6EEF0" stroke="#DCC3C9" stroke-width="1.4"/>
+<path d="M58,1261 H1722 A17,17 0 0 1 1739,1278 V1298 H41 V1278 A17,17 0 0 1 58,1261Z" fill="#8F4B5C" opacity="0.10"/>
+<text x="60" y="1285" font-size="15.5" fill="#8F4B5C" font-weight="700">演进闭环 · 受管自主</text>
+<text x="1720" y="1284" font-size="11.2" fill="#6B7D83" text-anchor="end">证据驱动：受阻事实 → 新能力 → 续办原任务</text>
+<rect x="1300" y="170" width="440" height="1064" rx="18" fill="#ECF1F8" stroke="#C4D2E6" stroke-width="1.4"/>
+<path d="M1318,171 H1722 A17,17 0 0 1 1739,188 V208 H1301 V188 A17,17 0 0 1 1318,171Z" fill="#2F57A6" opacity="0.10"/>
+<text x="1320" y="195" font-size="15.5" fill="#2F57A6" font-weight="700">事实与证据</text>
+<text x="1720" y="194" font-size="11.2" fill="#6B7D83" text-anchor="end">可按游标追查</text>
+<rect x="56" y="214" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="57" y="215" width="356" height="5" rx="2.5" fill="#4A5F66"/>
+<text x="71" y="245" font-size="16.4" fill="#142F38" font-weight="700">客户端与外部 Trigger</text>
+<text x="71" y="266" font-size="12.3" fill="#4D666C">POST /agent/tasks：文本 + trigger 三元组</text>
+<text x="71" y="283" font-size="12.3" fill="#4D666C">超时不取消任务；同源重投返回原任务</text>
+<text x="71" y="300" font-size="12.3" fill="#4D666C">子任务带 parent_task_id / trace_id</text>
+<rect x="430" y="214" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="431" y="215" width="356" height="5" rx="2.5" fill="#5B6B70"/>
+<text x="445" y="245" font-size="16.4" fill="#142F38" font-weight="700">模型提供者（可替换）</text>
+<rect x="741.6" y="230" width="34.4" height="18" rx="9" fill="#F0EDE6" stroke="#DFD6C4" stroke-width="0.8"/>
+<text x="758.8000000000001" y="242.5" font-size="10.2" fill="#8A6420" text-anchor="middle">外部</text>
+<text x="445" y="266" font-size="12.3" fill="#4D666C">Ollama (Qwen3 think=false + keep_alive) / DeepSeek</text>
+<text x="445" y="283" font-size="12.3" fill="#4D666C">model_provider 路由适配 · planner-profile.json</text>
+<text x="445" y="300" font-size="12.3" fill="#4D666C">无效 profile → planner.profile_invalid</text>
+<rect x="804" y="214" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="805" y="215" width="356" height="5" rx="2.5" fill="#4A5F66"/>
+<text x="819" y="245" font-size="16.4" fill="#142F38" font-weight="700">Watchdog（独立进程）</text>
+<text x="819" y="266" font-size="12.3" fill="#4D666C">只读固定 GET：/agent/*、/api/*</text>
+<text x="819" y="283" font-size="12.3" fill="#4D666C">自有持久游标与事故链</text>
+<text x="819" y="300" font-size="12.3" fill="#4D666C">重试预算耗尽 → 人工步骤与原因</text>
+<rect x="56" y="400" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="57" y="401" width="356" height="5" rx="2.5" fill="#0E7165"/>
+<text x="71" y="431" font-size="16.4" fill="#142F38" font-weight="700">HTTP 任务入口</text>
+<text x="71" y="452" font-size="12.3" fill="#4D666C">POST /agent/tasks（202）、/agent/retry</text>
+<text x="71" y="469" font-size="12.3" fill="#4D666C">读：capabilities · plugins · services · tasks</text>
+<text x="71" y="486" font-size="12.3" fill="#4D666C">task-context / task-events / registry-events</text>
+<rect x="430" y="400" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="431" y="401" width="356" height="5" rx="2.5" fill="#0E7165"/>
+<text x="445" y="431" font-size="16.4" fill="#142F38" font-weight="700">任务账本 tasks.db</text>
+<text x="445" y="452" font-size="12.3" fill="#4D666C">PLANNING → RUNNING → WAITING / BLOCKED</text>
+<text x="445" y="469" font-size="12.3" fill="#4D666C">RECOVERY_REQUIRED / CANCELED / SUCCEEDED</text>
+<text x="445" y="486" font-size="12.3" fill="#4D666C">状态与事件同事务提交（WAL, FULL）</text>
+<rect x="804" y="400" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="805" y="401" width="356" height="5" rx="2.5" fill="#0E7165"/>
+<text x="819" y="431" font-size="16.4" fill="#142F38" font-weight="700">规划器 planning.py</text>
+<text x="819" y="452" font-size="12.3" fill="#4D666C">步级冻结计划 + feedback_plan 闭环反馈规划</text>
+<text x="819" y="469" font-size="12.3" fill="#4D666C">只接受已注册工具；受限运动需显式目标授权</text>
+<text x="819" y="486" font-size="12.3" fill="#4D666C">planner.context 保存本次目录、子图与绑定</text>
+<rect x="56" y="524" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="57" y="525" width="356" height="5" rx="2.5" fill="#0E7165"/>
+<text x="71" y="555" font-size="16.4" fill="#142F38" font-weight="700">执行与恢复</text>
+<text x="71" y="576" font-size="12.3" fill="#4D666C">2 规划线程 + 1 独立验收线程</text>
+<text x="71" y="593" font-size="12.3" fill="#4D666C">retry 7 · 单步 1800 s · 退避重试</text>
+<text x="71" y="610" font-size="12.3" fill="#4D666C">沿用原 operation_id 对账，不重复副作用</text>
+<rect x="430" y="524" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="431" y="525" width="356" height="5" rx="2.5" fill="#0E7165"/>
+<text x="445" y="555" font-size="16.4" fill="#142F38" font-weight="700">独立验收</text>
+<text x="445" y="576" font-size="12.3" fill="#4D666C">verify pins / decisions / verification_passed</text>
+<text x="445" y="593" font-size="12.3" fill="#4D666C">候选先落账；动作需停稳证据</text>
+<text x="445" y="610" font-size="12.3" fill="#4D666C">失败即 RECOVERY_REQUIRED，回原操作账本</text>
+<rect x="804" y="524" width="358" height="110" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="805" y="525" width="356" height="5" rx="2.5" fill="#0E7165"/>
+<text x="819" y="555" font-size="16.4" fill="#142F38" font-weight="700">授权与准入</text>
+<text x="819" y="576" font-size="12.3" fill="#4D666C">只读批准绑定 · verbatim 原文摘要</text>
+<text x="819" y="593" font-size="12.3" fill="#4D666C">effect 允许 · 版本 pin · 主体校验</text>
+<text x="819" y="610" font-size="12.3" fill="#4D666C">策略读失败 → 阻塞原因，不放行</text>
+<rect x="56" y="712" width="358" height="134" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="57" y="713" width="356" height="5" rx="2.5" fill="#8A6420"/>
+<text x="71" y="743" font-size="16.4" fill="#142F38" font-weight="700">soft 轨 · 软件插件</text>
+<text x="71" y="764" font-size="12.3" fill="#4D666C">soft_host.Host + SoftRuntime / Fiber</text>
+<text x="71" y="781" font-size="12.3" fill="#4D666C">V2Registry：provides / requires · 依赖感知</text>
+<text x="71" y="798" font-size="12.3" fill="#4D666C">unix socket：catalog / freeze_plan / call / settle</text>
+<text x="71" y="815" font-size="12.3" fill="#4D666C">换版：关闭准入 → 排空 → dispose → 新版</text>
+<text x="71" y="832" font-size="12.3" fill="#4D666C">受信可 inproc；第三方走 HTTP sidecar</text>
+<rect x="430" y="712" width="358" height="134" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="431" y="713" width="356" height="5" rx="2.5" fill="#8A6420"/>
+<text x="445" y="743" font-size="16.4" fill="#142F38" font-weight="700">physical 轨 · 设备与物理</text>
+<text x="445" y="764" font-size="12.3" fill="#4D666C">physical_controller + PhysicalLedger</text>
+<text x="445" y="781" font-size="12.3" fill="#4D666C">设备租约 + epoch / boot_id 围栏</text>
+<text x="445" y="798" font-size="12.3" fill="#4D666C">ACTIVE → DRAINING → QUIESCENT → RELEASED</text>
+<text x="445" y="815" font-size="12.3" fill="#4D666C">禁止运行时热换代码；交接需停稳证据</text>
+<text x="445" y="832" font-size="12.3" fill="#4D666C">未证实结果 → RECOVERY_REQUIRED</text>
+<rect x="804" y="712" width="358" height="134" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="805" y="713" width="356" height="5" rx="2.5" fill="#8A6420"/>
+<text x="819" y="743" font-size="16.4" fill="#142F38" font-weight="700">供给面：Tool / Service / Consumer</text>
+<text x="819" y="764" font-size="12.3" fill="#4D666C">Tool：navigate_place · nav_plan · calibration.* · perception.*</text>
+<text x="819" y="781" font-size="12.3" fill="#4D666C">Service：session.read · verify.* · route_planner · view_plan</text>
+<text x="819" y="798" font-size="12.3" fill="#4D666C">Consumer：plugin-author · design · manager · watchdog</text>
+<text x="819" y="815" font-size="12.3" fill="#4D666C">零 Tool 的插件同样合法（只提供服务或消费事件）</text>
+<text x="819" y="832" font-size="12.3" fill="#4D666C">edge_contracts/ 提供零外部依赖跨模块公共契约</text>
+<rect x="56" y="856" width="1106" height="26" rx="7" fill="#FBF8F1" stroke="#E2D8C2" stroke-width="1"/>
+<text x="68" y="873.5" font-size="11.4" fill="#7A5B1E">现状：日常根清单保留 v1 兼容（plugins/*.json）；站点能力包（capabilities/*/pack.json + profiles/*.json）按 v2 描述符与站点锁准入两轨运行时。</text>
+<text x="56" y="962" font-size="11.6" fill="#38506B" font-weight="700">能力提供者：只读事实与受限动作，经插件契约调用</text>
+<text x="56" y="1102" font-size="11.6" fill="#38506B" font-weight="700">ROS 执行内核与机体：谁能让底盘动，谁证明它停了</text>
+<rect x="56" y="974" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="57" y="975" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="71" y="1005" font-size="15.2" fill="#142F38" font-weight="700">scene 语义场景</text>
+<text x="71" y="1026" font-size="12.3" fill="#4D666C">地点 / 通路子图 · /edge/semantic_map</text>
+<text x="71" y="1043" font-size="12.3" fill="#4D666C">describe-scene · navigate-place</text>
+<text x="71" y="1060" font-size="12.3" fill="#4D666C">地标与通行连接由人工标注</text>
+<rect x="337" y="974" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="338" y="975" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="352" y="1005" font-size="15.2" fill="#142F38" font-weight="700">navigation 只读规划</text>
+<text x="352" y="1026" font-size="12.3" fill="#4D666C">route_planner · catalog · pose</text>
+<text x="352" y="1043" font-size="12.3" fill="#4D666C">栅格 A* + 净空膨胀；只读受限</text>
+<text x="352" y="1060" font-size="12.3" fill="#4D666C">路线产物带摘要，可复核</text>
+<rect x="618" y="974" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="619" y="975" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="633" y="1005" font-size="15.2" fill="#142F38" font-weight="700">perception</text>
+<text x="633" y="1026" font-size="12.3" fill="#4D666C">轮速+陀螺融合位姿、占据栅格</text>
+<text x="633" y="1043" font-size="12.3" fill="#4D666C">/edge/perception/{pose,map,status}</text>
+<text x="633" y="1060" font-size="12.3" fill="#4D666C">目标检测按清单选中检测器</text>
+<rect x="899" y="974" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="900" y="975" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="914" y="1005" font-size="15.2" fill="#142F38" font-weight="700">semantic costmap · SDD-061</text>
+<text x="914" y="1026" font-size="12.3" fill="#4D666C">risk / traversable / preferred</text>
+<text x="914" y="1043" font-size="12.3" fill="#4D666C">3 帧记忆 + TTL；几何占据一票否决</text>
+<text x="914" y="1060" font-size="12.3" fill="#4D666C">消费：走廊准入 / 巡检路线 / 取景 v6</text>
+<text x="914" y="1077" font-size="12.3" fill="#4D666C">标定取景已实装生产；开放场景视觉分割待接入</text>
+<rect x="56" y="1110" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="57" y="1111" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="71" y="1141" font-size="15.2" fill="#142F38" font-weight="700">edge_core</text>
+<text x="71" y="1162" font-size="12.3" fill="#4D666C">任务账本 + 策略 + 审计触发器</text>
+<text x="71" y="1179" font-size="12.3" fill="#4D666C">唯一写 SUCCEEDED；0.12 m 到点核对</text>
+<text x="71" y="1196" font-size="12.3" fill="#4D666C">/edge/submit|get|cancel_mission</text>
+<rect x="337" y="1110" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="338" y="1111" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="352" y="1141" font-size="15.2" fill="#142F38" font-weight="700">edge_gateway</text>
+<text x="352" y="1162" font-size="12.3" fill="#4D666C">单一在途目标 · body authority</text>
+<text x="352" y="1179" font-size="12.3" fill="#4D666C">停车需 3 帧静止 + 300 ms 稳定</text>
+<text x="352" y="1196" font-size="12.3" fill="#4D666C">未证实即 RECOVERY_REQUIRED</text>
+<rect x="618" y="1110" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="619" y="1111" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="633" y="1141" font-size="15.2" fill="#142F38" font-weight="700">ros_gz bridge ×2</text>
+<text x="633" y="1162" font-size="12.3" fill="#4D666C">控制桥 /cmd_vel /odom /scan /imu</text>
+<text x="633" y="1179" font-size="12.3" fill="#4D666C">witness 真值桥 /ground_truth 独立</text>
+<text x="633" y="1196" font-size="12.3" fill="#4D666C">验证与控制链路分离</text>
+<rect x="899" y="1110" width="265" height="116" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="900" y="1111" width="263" height="5" rx="2.5" fill="#38506B"/>
+<text x="914" y="1141" font-size="15.2" fill="#142F38" font-weight="700">Gazebo / 实机机体</text>
+<text x="914" y="1162" font-size="12.3" fill="#4D666C">DiffDrive + VelocityWatchdog 300 ms</text>
+<text x="914" y="1179" font-size="12.3" fill="#4D666C">失控即撤权，状态流回报网关</text>
+<text x="914" y="1196" font-size="12.3" fill="#4D666C">真值仅供见证，不进控制</text>
+<path d="M321 1168 h16" stroke="#0E7165" stroke-width="2.2" marker-end="url(#a-cmd)"/>
+<path d="M602 1168 h16" stroke="#0E7165" stroke-width="2.2" marker-end="url(#a-cmd)"/>
+<path d="M883 1168 h16" stroke="#0E7165" stroke-width="2.2" marker-end="url(#a-cmd)"/>
+<rect x="1316" y="216" width="408" height="216" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="1317" y="217" width="406" height="5" rx="2.5" fill="#2F57A6"/>
+<text x="1331" y="247" font-size="16.4" fill="#142F38" font-weight="700">事件来源与信封</text>
+<text x="1331" y="270" font-size="12.2" fill="#4D666C">Agent 事件：tasks.db.events.payload.trace</text>
+<text x="1331" y="290.6" font-size="12.2" fill="#4D666C">kind：accepted · planned · dispatch · verified</text>
+<text x="1331" y="311.20000000000005" font-size="12.2" fill="#4D666C">tool / adapter / verification / ros 请求与回执</text>
+<text x="1331" y="331.80000000000007" font-size="12.2" fill="#4D666C">模块 ModuleJournal：每模块一个 SQLite 日志</text>
+<text x="1331" y="352.4000000000001" font-size="12.2" fill="#4D666C">ROS /edge/events（v1 JSON）+ 内核 mission_events</text>
+<text x="1331" y="373.0000000000001" font-size="12.2" fill="#4D666C">信封：event_id、trace_id、parent_event_id、code</text>
+<text x="1331" y="393.60000000000014" font-size="12.2" fill="#4D666C">每条 ≤64 KiB；敏感字段脱敏（redacted 默认）</text>
+<text x="1331" y="414.20000000000016" font-size="12.2" fill="#4D666C">来源先持久化再投递，消费方按游标续读</text>
+<rect x="1316" y="446" width="408" height="216" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="1317" y="447" width="406" height="5" rx="2.5" fill="#2F57A6"/>
+<text x="1331" y="477" font-size="16.4" fill="#142F38" font-weight="700">Console 归档（history.db）</text>
+<text x="1331" y="500" font-size="12.2" fill="#4D666C">127.0.0.1:8765 → 容器 8080；页面 + 反向代理</text>
+<text x="1331" y="520.6" font-size="12.2" fill="#4D666C">单写 SQLite（WAL, FULL），按源去重导入</text>
+<text x="1331" y="541.2" font-size="12.2" fill="#4D666C">逐源游标 source_id / source_seq（UNIQUE）</text>
+<text x="1331" y="561.8000000000001" font-size="12.2" fill="#4D666C">缺口 module.journal_gap；无效行按原位置标注</text>
+<text x="1331" y="582.4000000000001" font-size="12.2" fill="#4D666C">遥测保留 7 天 / 最多 10080 样本</text>
+<text x="1331" y="603.0000000000001" font-size="12.2" fill="#4D666C">archive_id 与 pruned_through 作为公开水位</text>
+<text x="1331" y="623.6000000000001" font-size="12.2" fill="#4D666C">回放取时点快照；导出 NDJSON 含任务/操作关联</text>
+<text x="1331" y="644.2000000000002" font-size="12.2" fill="#4D666C">归档只记录发生过的事实，不改写任务终态</text>
+<rect x="1316" y="676" width="408" height="196" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="1317" y="677" width="406" height="5" rx="2.5" fill="#2F57A6"/>
+<text x="1331" y="707" font-size="16.4" fill="#142F38" font-weight="700">覆盖与缺口（可诊断）</text>
+<text x="1331" y="730" font-size="12.2" fill="#4D666C">module.journal_unavailable / available</text>
+<text x="1331" y="750.6" font-size="12.2" fill="#4D666C">module.journal_gap：已观察到的序号区间</text>
+<text x="1331" y="771.2" font-size="12.2" fill="#4D666C">module.event_invalid / event_conflict</text>
+<text x="1331" y="791.8000000000001" font-size="12.2" fill="#4D666C">module.heartbeat_overdue / restored：心跳 TTL</text>
+<text x="1331" y="812.4000000000001" font-size="12.2" fill="#4D666C">watchdog.detected → intervention_required</text>
+<text x="1331" y="833.0000000000001" font-size="12.2" fill="#4D666C">人工介入事件带原因与操作步骤</text>
+<text x="1331" y="853.6000000000001" font-size="12.2" fill="#4D666C">源外缺口显式标注，不静默补齐</text>
+<rect x="1316" y="886" width="408" height="216" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="1317" y="887" width="406" height="5" rx="2.5" fill="#2F57A6"/>
+<text x="1331" y="917" font-size="16.4" fill="#142F38" font-weight="700">阅读服务（Service / Tool）</text>
+<text x="1331" y="940" font-size="12.2" fill="#4D666C">session.read：目标、步骤、诊断与引用（6 s）</text>
+<text x="1331" y="960.6" font-size="12.2" fill="#4D666C">预算 16 KiB 请求 / 128 KiB 响应、2 并发</text>
+<text x="1331" y="981.2" font-size="12.2" fill="#4D666C">文档含 headline、messages、coverage、links</text>
+<text x="1331" y="1001.8000000000001" font-size="12.2" fill="#4D666C">Evidence：read_session / query_evidence / evidence_schema</text>
+<text x="1331" y="1022.4000000000001" font-size="12.2" fill="#4D666C">有界查询 50 行 / 4 s / 500 源事件</text>
+<text x="1331" y="1043" font-size="12.2" fill="#4D666C">返回 columns、rows、refs、覆盖窗口与截断</text>
+<text x="1331" y="1063.6" font-size="12.2" fill="#4D666C">同 operation_id + 摘要重放原回执</text>
+<text x="1331" y="1084.1999999999998" font-size="12.2" fill="#4D666C">读取期间遇 draining 会拒绝本次结果</text>
+<rect x="1316" y="1116" width="408" height="104" rx="12" fill="#FFFFFF" stroke="#D6DEDF" stroke-width="1.2"/>
+<rect x="1317" y="1117" width="406" height="5" rx="2.5" fill="#2F57A6"/>
+<text x="1331" y="1147" font-size="16.4" fill="#142F38" font-weight="700">观测台（浏览器）</text>
+<text x="1331" y="1170" font-size="12.2" fill="#4D666C">实时观测 · 任务会话 · 运行复盘 · 回放</text>
+<text x="1331" y="1190.6" font-size="12.2" fill="#4D666C">任务提交经 Console 反向代理到 Agent</text>
+<text x="1331" y="1211.1999999999998" font-size="12.2" fill="#4D666C">只读渲染；不持有任务终态与执行授权</text>
+<path d="M56,1306 H314 L329,1341 L314,1376 H56 L71,1341 Z" fill="#FFFFFF" stroke="#8F4B5C" stroke-width="1.3" opacity="0.96"/>
+<path d="M71,1341 L56,1306 M71,1341 L56,1376" stroke="#8F4B5C" stroke-width="1.3" fill="none" opacity="0.5"/>
+<text x="84" y="1321" font-size="9.4" fill="#8F4B5C" font-weight="700" letter-spacing="0.8">STEP 01</text>
+<text x="84" y="1339" font-size="14.4" fill="#142F38" font-weight="700">受阻事实</text>
+<text x="84" y="1356" font-size="11.1" fill="#4D666C">agent.blocked · planner.capability_missing</text>
+<text x="84" y="1370" font-size="11.1" fill="#4D666C">原任务保留原生终态</text>
+<path d="M335,1306 H593 L608,1341 L593,1376 H335 L350,1341 Z" fill="#FFFFFF" stroke="#8F4B5C" stroke-width="1.3" opacity="0.96"/>
+<path d="M350,1341 L335,1306 M350,1341 L335,1376" stroke="#8F4B5C" stroke-width="1.3" fill="none" opacity="0.5"/>
+<text x="363" y="1321" font-size="9.4" fill="#8F4B5C" font-weight="700" letter-spacing="0.8">STEP 02</text>
+<text x="363" y="1339" font-size="14.4" fill="#142F38" font-weight="700">作者草案</text>
+<text x="363" y="1356" font-size="11.1" fill="#4D666C">plugin-author：只读定义与拒绝决定</text>
+<text x="363" y="1370" font-size="11.1" fill="#4D666C">未派发即失败也可进入</text>
+<path d="M614,1306 H872 L887,1341 L872,1376 H614 L629,1341 Z" fill="#FFFFFF" stroke="#8F4B5C" stroke-width="1.3" opacity="0.96"/>
+<path d="M629,1341 L614,1306 M629,1341 L614,1376" stroke="#8F4B5C" stroke-width="1.3" fill="none" opacity="0.5"/>
+<text x="642" y="1321" font-size="9.4" fill="#8F4B5C" font-weight="700" letter-spacing="0.8">STEP 03</text>
+<text x="642" y="1339" font-size="14.4" fill="#142F38" font-weight="700">设计草案</text>
+<text x="642" y="1356" font-size="11.1" fill="#4D666C">plugin-design：接口快照 + 私有草案</text>
+<text x="642" y="1370" font-size="11.1" fill="#4D666C">公开完成事件只给摘要</text>
+<path d="M893,1306 H1151 L1166,1341 L1151,1376 H893 L908,1341 Z" fill="#FFFFFF" stroke="#8F4B5C" stroke-width="1.3" opacity="0.96"/>
+<path d="M908,1341 L893,1306 M908,1341 L893,1376" stroke="#8F4B5C" stroke-width="1.3" fill="none" opacity="0.5"/>
+<text x="921" y="1321" font-size="9.4" fill="#8F4B5C" font-weight="700" letter-spacing="0.8">STEP 04</text>
+<text x="921" y="1339" font-size="14.4" fill="#142F38" font-weight="700">编码候选</text>
+<text x="921" y="1356" font-size="11.1" fill="#4D666C">software-author：受限表达式</text>
+<text x="921" y="1370" font-size="11.1" fill="#4D666C">自检 + 反馈重试 + 来源摘要</text>
+<path d="M1172,1306 H1430 L1445,1341 L1430,1376 H1172 L1187,1341 Z" fill="#FFFFFF" stroke="#8F4B5C" stroke-width="1.3" opacity="0.96"/>
+<path d="M1187,1341 L1172,1306 M1187,1341 L1172,1376" stroke="#8F4B5C" stroke-width="1.3" fill="none" opacity="0.5"/>
+<text x="1200" y="1321" font-size="9.4" fill="#8F4B5C" font-weight="700" letter-spacing="0.8">STEP 05</text>
+<text x="1200" y="1339" font-size="14.4" fill="#142F38" font-weight="700">独立验收与批准</text>
+<text x="1200" y="1356" font-size="11.1" fill="#4D666C">software_release --approve</text>
+<text x="1200" y="1370" font-size="11.1" fill="#4D666C">或预授权 policies/plugin-recovery.json</text>
+<path d="M1451,1306 H1709 L1724,1341 L1709,1376 H1451 L1466,1341 Z" fill="#FFFFFF" stroke="#8F4B5C" stroke-width="1.3" opacity="0.96"/>
+<path d="M1466,1341 L1451,1306 M1466,1341 L1451,1376" stroke="#8F4B5C" stroke-width="1.3" fill="none" opacity="0.5"/>
+<text x="1479" y="1321" font-size="9.4" fill="#8F4B5C" font-weight="700" letter-spacing="0.8">STEP 06</text>
+<text x="1479" y="1339" font-size="14.4" fill="#142F38" font-weight="700">受管发布与续办</text>
+<text x="1479" y="1356" font-size="11.1" fill="#4D666C">plugins/derived 热装；新任务带 parent trace</text>
+<text x="1479" y="1370" font-size="11.1" fill="#4D666C">核对原输入与操作身份</text>
+<path d="M235 326 V394" fill="none" stroke="#0E7165" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-cmd)"/>
+<path d="M609 326 V394" fill="none" stroke="#0E7165" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-cmd)" marker-start="url(#a-cmd)"/>
+<path d="M235 634 V664" fill="none" stroke="#0E7165" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-cmd)"/>
+<path d="M235 890 V922" fill="none" stroke="#0E7165" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-cmd)"/>
+<path d="M1180 517 H1250 V372 H1310" fill="none" stroke="#385CAB" stroke-width="2.4" stroke-dasharray="7 5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-sync)"/>
+<path d="M1180 1104 H1286 V410 H1310" fill="none" stroke="#915F24" stroke-width="2.4" stroke-dasharray="9 3 2 3" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-sense)"/>
+<path d="M1162 250 H1230 V300 H1310" fill="none" stroke="#385CAB" stroke-width="1.9" stroke-dasharray="7 5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-sync)"/>
+<path d="M1520 432 V442" fill="none" stroke="#687A80" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-store)"/>
+<path d="M1520 662 V672" fill="none" stroke="#687A80" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-store)"/>
+<path d="M1520 872 V882" fill="none" stroke="#687A80" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-store)"/>
+<path d="M1520 1102 V1112" fill="none" stroke="#687A80" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-store)"/>
+<path d="M1520 1234 V1254" fill="none" stroke="#385CAB" stroke-width="2.2" stroke-dasharray="7 5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-sync)"/>
+<path d="M52 1345 H22 V800 H58" fill="none" stroke="#8F4B5C" stroke-width="2.2" stroke-dasharray="4 4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a-rose)"/>
+<text x="250" y="348" font-size="11.8" fill="#5A6E74" font-weight="600">任务提交：文本 + trigger 三元组</text>
+<text x="624" y="348" font-size="11.8" fill="#5A6E74" font-weight="600">规划：能力目录 → 冻结计划 → 校验</text>
+<text x="250" y="655" font-size="11.8" fill="#5A6E74" font-weight="600">按绑定冻结并调用 Tool / Service</text>
+<text x="250" y="911" font-size="11.8" fill="#5A6E74" font-weight="600">宿主装载并调用提供者</text>
+<text x="250" y="1252" font-size="11.8" fill="#5A6E74" font-weight="600">受阻事实进入作者 / 设计 → 独立验收 → 受管发布</text>
+<text x="1534" y="1252" font-size="11.8" fill="#5A6E74" font-weight="600">证据与受阻事实</text>
+<path d="M48 1394 H1732" stroke="#DCE3E3" stroke-width="1"/>
+<text x="48" y="1408" font-size="11.8" fill="#4D666C">核心演进：SDD-045 插件两轨 · SDD-049 内核与契约分层 · SDD-050 机体运行时 · SDD-058 校园连续导航 · SDD-059/060 自主标定与语义子图 · SDD-061 语义代价走廊 · SDD-062 Compose 分层</text>
+<text x="48" y="1430" font-size="11.8" fill="#4D666C">按需叠加（compose/*.yaml）：model-provider · camera/rgbd · calibration-* · campus-* · soft-runtime · navigation-* · task-recorder · sensor-health · watchdog</text>
+<text x="48" y="1452" font-size="11.8" fill="#6B7D83">待验边界：开放场景视觉语义分割 · 跨场地实机制动距离 · 跨机 Brain/Edge 派工 · 有状态插件在线热迁移　|　本图按仓库当前源码绘制，不含远期目标架构</text>
+</svg>

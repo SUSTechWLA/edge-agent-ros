@@ -6,7 +6,7 @@
 
 架构借鉴 **dsh 的 Plugin / Service / Tool**，保留未来与 **SuperAgent 的 Router / Worker 角色**协作的空间。当前实现并非 dsh SDK，也尚未实现跨机器人调度。执行内核和网关使用 C++20，Agent 内核、零依赖公共契约（`edge_contracts/`）与多数独立服务使用 Python，观测台使用浏览器前端；插件按协议接入，可选择自己的实现语言。
 
-[快速运行](#快速运行) · [架构与插件边界](#架构与插件边界) · [开发一个插件](docs/plugin-development.md) · [Coding Agent 入口](AGENTS.md) · [部署与平台](docs/deployment.md) · [Compose 分层索引](compose/README.md)
+[系统核心架构](#系统核心架构) · [快速运行](#快速运行) · [插件双轨与装卸边界](#插件升级的两条轨道) · [开发一个插件](docs/plugin-development.md) · [Coding Agent 入口](AGENTS.md) · [部署与平台](docs/deployment.md) · [Compose 分层索引](compose/README.md)
 
 ## 现在可以做什么
 
@@ -85,7 +85,71 @@ docker compose start
 
 </details>
 
-## 架构与插件边界
+## 系统核心架构
+
+下图按仓库当前源码绘制，展示单机任务从外部触发、Agent 内核与模型推理、双轨插件治理、ROS 2 执行与感知，到持久证据归档及受管能力演进的完整边界：
+
+![Edge Agent ROS 当前核心架构](docs/architecture/core-architecture.svg)
+
+各层状态所有者与调用/事实流向如下（`edge_contracts/` 提供零外部依赖的公共事件、描述符、空间事实、语义子图与代价图契约）：
+
+```mermaid
+flowchart TB
+    subgraph L1["1. 入口、观测与独立巡检层"]
+        U["用户 / 外部客户端 / Task Recorder"]
+        W["Watchdog 独立巡检 · 持久游标与补收"]
+        O["Console 工作台 (:8765) · 实时观测 / 会话 / 复盘 / 回放"]
+    end
+
+    subgraph L2["2. Agent 任务内核与推理路由层 (agent/ + model_provider/)"]
+        K["Agent Kernel (tasks.db) · 状态机 / 授权准入 / 原 operation_id 对账"]
+        PL["Planner (planning.py) · 固定句式 / 步级冻结计划 / feedback_plan 闭环规划"]
+        V["独立验收线程 · verify.* 服务绑定与候选结果核验"]
+        M["Model Adapter (:8134 / :11434) · 本地 Ollama (Qwen3 think=false) / 云端 DeepSeek"]
+    end
+
+    subgraph L3["3. 双轨插件运行时与能力供给层 (SDD-045)"]
+        SR["Soft 轨 (soft-host · Context/Fiber · v2_registry) · 排空热换版"]
+        PR["Physical 轨 (physical-controller) · 设备租约 / epoch 围栏 / 停稳交接"]
+        SP["只读与规划能力 · navigation / calibration (view_plan v6) / exploration / sessions / evidence"]
+    end
+
+    subgraph L4["4. ROS 2 执行内核、多模态感知与机体层 (C++20 / ROS 2 Jazzy)"]
+        EC["edge_core · 运动账本 / 策略准入 / 0.12m 到点确认"]
+        EG["edge_gateway · 单一底盘控制权 / 扫掠净距与 TTC 制动 / 3帧静止确认"]
+        PC["感知与语义空间 · perception 位姿栅格 / spatial_facts / semantic_scene / semantic_costmap"]
+        RB["Gazebo Harmonic 多机体仿真 / Jetson・RK3588 实机传感器与底盘驱动"]
+    end
+
+    subgraph L5["5. 持久事实归档与受管演进闭环"]
+        EB["EventBus / ModuleJournal + Console history.db · 按源去重与游标续读"]
+        EV["受管能力演进 · 受阻事实 → 作者/设计草案 → 独立样本验收 → 受管发布续办"]
+    end
+
+    U -->|"POST /agent/tasks (text + trigger)"| K
+    O -->|"反向代理任务请求"| K
+    W -->|"只读巡检 / 触发恢复"| K
+    K <-->|"目录快照 + 语义子图 / 冻结步骤"| PL
+    PL <-->|"结构化 JSON 规划"| M
+    K -->|"冻结 binding 调用"| SR
+    K -->|"租约与动作委托"| PR
+    SR --> SP
+    PR -->|"NavigateTo / submit_path"| EC
+    EC -->|"运动控制权"| EG
+    EG <-->|"cmd_vel / odom / scan"| RB
+    RB -->|"Image / Depth / PointCloud2 / IMU"| PC
+    PC -->|"有来源观测与语义代价层"| SP
+    PC -->|"实时状态流"| O
+    SP -.->|"候选结果"| V
+    EC -.->|"停稳与到点回执"| V
+    V -->|"verified / RECOVERY_REQUIRED"| K
+    K & EC & SP & PR -->|"先持久化再投递"| EB
+    EB -->|"session.read / query_evidence"| O
+    EB -->|"capability_missing"| EV
+    EV -.->|"批准后热装只读能力"| SR
+```
+
+- **四个互不越权的状态所有者**：`Agent Kernel` 持有语言任务与步骤终态；`edge_core` + `edge_gateway` 持有物理运动控制权与停稳确认；`soft-host` / `physical-controller` 分别持有软件实例引用计数与硬件独占租约；`EventBus / history.db` 与 `Session` 只记录和投影已发生的事实，**发布事件不授予执行权，观测摘要也不改写任务终态**。[事件通路](docs/module-eventbus.md) · [上下文与术语](docs/harness-extensions.md)
 
 ### 插件升级的两条轨道
 
@@ -112,32 +176,7 @@ P1 的三个试点可用一个实验理解。给 Agent 下发“求输入数列�
 
 一次用户请求引出的功能缺口可以触发独立设计插件。它校验作者收据，再让模型按当时已安装的接口设计 Tool、Service 或事件消费者。对于可用受限文本操作表示的目标，独立编码作者能继续交付代码和工具清单。设备动作、新软件依赖、正式发布分别需要它们自己的验收与授权。[运行手册](docs/plugin-evolution-operations.md) · [模块间事件和授权](docs/module-eventbus.md) · [实测能力、瓶颈与迭代计划](docs/architecture/plugin-evolution.md)
 
-**Plugin 是扩展单元，Tool 是供模型选择的操作，Service 是模块间使用的接口。** 一个插件可以提供多个 Tool / Service，也可以只消费事件。增加 Session、诊断或验收能力，不需要把它伪装成模型每次都要调用的工具。
-
-```mermaid
-flowchart TB
-    U["用户 / 外部客户端 / Watchdog"] -->|"任务请求 + trigger"| A["Agent · 规划、步骤账本、恢复"]
-    A <-->|"规划协议"| M["模型提供者 · Ollama / HTTP"]
-    A -->|"已绑定的工具操作"| T["Tool 提供者 · 地点导航 / 查询 / 扩展能力"]
-    D["插件目录 · Tool 清单 / Service 依赖与版本"] -.-> A
-    D -.-> V["Service 提供者 · 独立结果验收"]
-    A <-->|"候选结果 / 验收证据"| V
-    T -->|"ROS 委托"| C["C++ 内核 → 网关 → Gazebo / 实机"]
-    C -->|"传感器与状态"| P["感知节点 · 位姿 / 占用图"]
-    P --> T
-    A -->|"任务事件"| E["EventBus / 归档 · 来源、因果、游标"]
-    C -->|"执行事件"| E
-    T -->|"模块事件"| E
-    E -->|"公开读取接口"| S["Session / Evidence / 日志消费者"]
-    A -->|"公开任务接口"| S
-    D -.-> S
-    S --> O["观测台 · 可读会话、实时观测、证据"]
-    P --> O
-```
-
-Agent 拥有任务与步骤状态，运动内核拥有物理执行状态。EventBus 传递可关联的事实，Session 将事实整理成阅读视图；二者都不替代执行授权，也不凭摘要改写任务终态。这里的 EventBus 由持久账本、模块事件源、ROS 事件与 HTTP 游标读取协作实现，**不是单一的进程内发布订阅对象**。[事件通路](docs/module-eventbus.md) · [上下文与术语](docs/harness-extensions.md)
-
-“一切皆插件”是扩展原则：新业务优先使用已有接口，必要时才新增最小的通用扩展点。保持接口、状态归属和资源交接可检验，比把所有类改名为 Plugin 更重要。
+**Plugin 是扩展单元，Tool 是供模型选择的操作，Service 是模块间使用的接口。** 一个插件可以提供多个 Tool / Service，也可以只消费事件。增加 Session、诊断或验收能力，不需要把它伪装成模型每次都要调用的工具。“一切皆插件”是扩展原则：新业务优先使用已有接口，必要时才新增最小的通用扩展点。保持接口、状态归属和资源交接可检验，比把所有类改名为 Plugin 更重要。
 
 | 扩展对象 | 当前装卸边界 |
 |---|---|
