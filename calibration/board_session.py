@@ -40,6 +40,45 @@ CAMERA_TOOLS = {"camera-coverage","camera-record","camera-adjust","camera-fit","
 PASSIVE_TOOLS = ("inspect", "status", "plan-views")
 TOOL_VERSIONS = {"plan-views": ("1", "2", "3", "4", "5", "6"), "camera-record":("1","2"),
                  "camera-fit":("1","2")}
+VIEW_OPTION_FIELDS = (
+    "ref", "path", "board_view", "board_lateral_m", "clearance_margin_m",
+    "corridor_risk", "preferred_zone", "semantic_cost", "new_rgb_cells",
+    "fills_missing_side", "end_xyz_m", "end_heading_deg", "target_range_m",
+    "obliquity_deg", "base_xy_yaw", "geometry_score", "intrinsic_information_gain",
+)
+
+
+def _compact_view_plan(result, op=None, minimum_lateral_m=None):
+    if not isinstance(result, dict):
+        return None
+    nav = result.get("navigation_context")
+    clean_nav = ({k: nav[k] for k in ("stamp_ns", "robot", "nearest_observed_m", "target") if k in nav}
+                 if isinstance(nav, dict) else None)
+    options = [
+        {k: item[k] for k in VIEW_OPTION_FIELDS if k in item}
+        for item in (result.get("view_options") or [])[:6]
+        if isinstance(item, dict)
+    ]
+    stamp = result.get("stamp_ns") or (clean_nav.get("stamp_ns") if clean_nav else None)
+    plan = dict(
+        operation_id=op,
+        planner_version=result.get("planner_version"),
+        outcome=result.get("outcome"),
+        stamp_ns=str(stamp) if stamp is not None else None,
+        reachability_checked=bool(result.get("reachability_checked")),
+        base_goal_available=bool(result.get("base_goal_available")),
+        navigation_context=clean_nav,
+        view_options=options,
+        rejected={k: int(v) for k, v in (result.get("rejected") or {}).items() if type(v) is int},
+    )
+    for key in ("captured_lateral_left_m", "captured_lateral_right_m", "captured_rgb_cells"):
+        if key in result:
+            plan[key] = result[key]
+    if minimum_lateral_m is not None:
+        plan["minimum_lateral_each_m"] = minimum_lateral_m
+    if isinstance(result.get("scene_slice"), dict):
+        plan["scene_slice"] = result["scene_slice"]
+    return plan
 
 
 def encoded(value):
@@ -235,11 +274,28 @@ class Station:
             if task.get("phase")=="PAUSED_FOR_OPERATOR":
                 state, msg = "PAUSED_FOR_OPERATOR",task["message"]
             feedback = task.get("capture_feedback")
-            if feedback is not None:
-                preview = self.task_preview(last_cal,task)
+            view_plan = task.get("last_view_plan")
+            scene_slice = task.get("last_scene_slice") or (
+                view_plan.get("scene_slice") if isinstance(view_plan, dict) else None)
+            if feedback is not None or view_plan is not None or scene_slice is not None:
+                preview = self.task_preview(last_cal,task) if feedback is not None else {}
                 seen = preview.get("received")
-                feedback = {**feedback,"preview_age_s":round(time.monotonic()-seen,3) if seen else None,
-                            "preview_stamp_ns":preview.get("stamp_ns"),"preview_source":preview.get("source")}
+                merged = dict(feedback) if isinstance(feedback, dict) else {}
+                if feedback is not None:
+                    merged.update(
+                        preview_age_s=round(time.monotonic()-seen,3) if seen else None,
+                        preview_stamp_ns=preview.get("stamp_ns"),
+                        preview_source=preview.get("source"),
+                    )
+                if isinstance(view_plan, dict):
+                    merged["view_plan"] = view_plan
+                    merged.setdefault("capture_view_options", view_plan.get("view_options", []))
+                if isinstance(scene_slice, dict):
+                    merged.setdefault("scene_slice", scene_slice)
+                cov_data, _ = self.capture_coverage(task)
+                for key, val in cov_data.items():
+                    merged.setdefault(key, val)
+                feedback = merged
             catalog=installed()
             current_method=catalog.get(self.method.spec["id"])
             method = self.method.public()
@@ -514,6 +570,9 @@ class Station:
                 return self.wait_front_placement(task_id,task,op)
             camera = {} if kind == "plan-views" else None
             result = self.inspect_view(task, camera)
+            if isinstance(result.get("scene_slice"), dict):
+                with self.lock:
+                    task["last_scene_slice"] = result["scene_slice"]
             if camera is not None:
                 prior = [p["obs"] for p in task["poses"]]
                 collection = None
@@ -535,6 +594,13 @@ class Station:
                                       samples=[{name:row[name] for name in ("points","tilt_deg")} for row in samples])
                 result = self.service(task,"views",dict(task_id=task_id,operation_id=op,observation=result,
                                                        camera=camera,prior=prior,collection=collection))
+                min_lat = (self.profile.get("capture_navigation") or {}).get("minimum_lateral_m")
+                compact_plan = _compact_view_plan(result, op=op, minimum_lateral_m=min_lat)
+                with self.lock:
+                    if compact_plan is not None:
+                        task["last_view_plan"] = compact_plan
+                    if isinstance(result.get("scene_slice"), dict):
+                        task["last_scene_slice"] = result["scene_slice"]
                 if collection:
                     self.note_camera_view_plan(task,result,progress,stop)
             if task["profile"] != self.fingerprint:
@@ -638,6 +704,8 @@ class Station:
                                                       for obs in (previous,sample)])
                 with self.lock:
                     task["placement_receipt"]={"operation_id":op,"observations":result["placement_observations"]}
+                    if isinstance(result.get("scene_slice"), dict):
+                        task["last_scene_slice"] = result["scene_slice"]
                     task["capture_feedback"]=dict(condition="front_placement_confirmed",front_placement_confirmed=True,
                                                   camera={"marker_ids":result["camera_marker_ids"]},lidars=result["lidar_measurements"])
                     self.note(task,"FRONT_BOARD_CONFIRMED","已在两次独立观测中确认标定板正对车头，前雷达和相机均看全板。请保持板位固定。")

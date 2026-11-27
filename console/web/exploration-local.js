@@ -6,17 +6,112 @@ const cameras = {local: initialCamera(true), global: initialCamera(false)};
 let cameraView = null;
 let lastTiles;
 
-function gridTiles(grid) {
-  if (grid === lastTiles?.grid) return lastTiles.canvas;
+function semanticCellColor(cell, index, semantic, mode) {
+  const unknown = !Number.isFinite(cell) || cell < 0;
+  const occupied = Number.isFinite(cell) && cell > 49;
+  const validSem = semantic && Array.isArray(semantic.risk) && semantic.risk.length > index &&
+    Array.isArray(semantic.traversable) && semantic.traversable.length > index &&
+    Array.isArray(semantic.preferred) && semantic.preferred.length > index;
+  if (!validSem || !mode || mode === 'occupancy') {
+    return unknown ? [34, 52, 46, 255] : occupied ? [191, 202, 182, 255] : [100, 127, 110, 255];
+  }
+  // Monotonic obstacle veto: geometric occupancy always dominates visual semantic channels.
+  if (occupied) {
+    return mode === 'admitted' ? [198, 112, 98, 255] : [191, 202, 182, 255];
+  }
+  const r = Math.max(0, Math.min(1, Number(semantic.risk[index]) || 0));
+  const t = Math.max(0, Math.min(1, Number(semantic.traversable[index]) ?? 1));
+  const p = Math.max(0, Math.min(1, Number(semantic.preferred[index]) ?? 0.5));
+  const dim = unknown ? 0.52 : 1.0;
+  if (mode === 'risk') {
+    const red = r < 0.5 ? 36 + r * 2 * 178 : 214 + (r - 0.5) * 2 * 6;
+    const green = r < 0.5 ? 112 + r * 2 * 42 : 154 - (r - 0.5) * 2 * 82;
+    const blue = r < 0.5 ? 92 - r * 2 * 26 : 66 - (r - 0.5) * 2 * 6;
+    return [Math.round(red * dim), Math.round(green * dim), Math.round(blue * dim), 255];
+  }
+  if (mode === 'preferred') {
+    const red = 58 + p * 12;
+    const green = 74 + p * 116;
+    const blue = 84 + p * 48;
+    return [Math.round(red * dim), Math.round(green * dim), Math.round(blue * dim), 255];
+  }
+  if (mode === 'admitted') {
+    if (unknown) return [34, 52, 46, 255];
+    const riskBlock = Number.isFinite(semantic.risk_block) ? semantic.risk_block : 0.80;
+    const minTrav = Number.isFinite(semantic.min_traversable) ? semantic.min_traversable : 0.35;
+    const semBlocked = r >= riskBlock || t < minTrav;
+    if (!semantic.stale && semBlocked) return [222, 146, 62, 255];
+    if (semantic.stale && semBlocked) return [118, 148, 136, 255];
+    return p >= 0.65 ? [74, 178, 128, 255] : [96, 132, 116, 255];
+  }
+  return unknown ? [34, 52, 46, 255] : [100, 127, 110, 255];
+}
+
+function inspectSemanticCell(worldXY, mission, gridSpace) {
+  const grid = mission?.grid;
+  if (!Array.isArray(worldXY) || worldXY.length < 2 || !worldXY.slice(0, 2).every(Number.isFinite) || !grid || !gridSpace) {
+    return null;
+  }
+  const [fu, fv] = gridSpace.toGrid(worldXY);
+  const u = Math.floor(fu), v = Math.floor(fv);
+  const coords = `(${worldXY[0].toFixed(2)}, ${worldXY[1].toFixed(2)}) m`;
+  if (u < 0 || u >= grid.width || v < 0 || v >= grid.height) {
+    return {inBounds: false, text: `${coords} · 栅格范围外`};
+  }
+  const idx = v * grid.width + u;
+  const occ = grid.cells[idx];
+  const geomState = !Number.isFinite(occ) || occ < 0 ? '未知' : occ > 49 ? '几何占据' : '几何自由';
+  const sem = mission?.semantic_costmap;
+  if (!sem || !Array.isArray(sem.risk) || sem.risk.length !== grid.cells.length) {
+    return {inBounds: true, u, v, occ, text: `${coords} · 栅格 (${u}, ${v}) · ${geomState} (${occ})`};
+  }
+  const r = Number(sem.risk[idx]) || 0;
+  const t = Number(sem.traversable?.[idx]) ?? 1;
+  const p = Number(sem.preferred?.[idx]) ?? 0.5;
+  const riskBlock = Number.isFinite(sem.risk_block) ? sem.risk_block : 0.80;
+  const minTrav = Number.isFinite(sem.min_traversable) ? sem.min_traversable : 0.35;
+  const geomClear = Number.isFinite(occ) && occ >= 0 && occ <= 49;
+  const admitted = geomClear && (sem.stale || (t >= minTrav && r < riskBlock));
+  const onPref = !sem.stale && sem.summary?.robot_on_preferred ? 1 : 0;
+  const rWeight = Number.isFinite(sem.risk_weight) ? sem.risk_weight : 4.0;
+  const pWeight = Number.isFinite(sem.pref_weight) ? sem.pref_weight : 2.5;
+  const mult = sem.stale ? 1.0 : 1.0 + rWeight * r + onPref * pWeight * (1.0 - p);
+  const verdict = occ > 49 ? '几何一票否决' : occ < 0 ? '待观测' : admitted
+    ? (sem.stale && (r >= riskBlock || t < minTrav) ? '先验过期降级放行' : (p >= 0.65 ? '优选走廊准入' : '普通自由准入'))
+    : '语义高危禁入';
+  return {
+    inBounds: true, u, v, occ, risk: r, traversable: t, preferred: p, admitted, multiplier: mult, verdict,
+    text: `${coords} · 栅格 (${u}, ${v}) · ${verdict} · Risk ${r.toFixed(2)} · Trav ${t.toFixed(2)} · Pref ${p.toFixed(2)} · 代价倍率 ×${mult.toFixed(2)}`,
+  };
+}
+
+function pickWorldOnCanvas(canvas, clientX, clientY) {
+  if (!cameraView || !canvas) return null;
+  const rect = canvas.getBoundingClientRect();
+  const center = cameraView.camera.center || cameraView.follow;
+  if (!Array.isArray(center) || center.length < 2) return null;
+  const [dx, dy] = cameraView.groundOffset(clientX - rect.left - cameraView.ox, clientY - rect.top - cameraView.oy);
+  return [center[0] + dx, center[1] + dy];
+}
+
+function gridTiles(grid, semantic = null, mode = 'occupancy') {
+  const effectiveMode = semantic && Array.isArray(semantic.risk) && semantic.risk.length === grid.cells.length ? mode : 'occupancy';
+  const sourceRef = effectiveMode === 'occupancy' ? '' : (semantic?.source_ref || '');
+  const stale = effectiveMode === 'occupancy' ? false : Boolean(semantic?.stale);
+  if (grid === lastTiles?.grid && effectiveMode === lastTiles?.mode &&
+      sourceRef === lastTiles?.sourceRef && stale === lastTiles?.stale) {
+    return lastTiles.canvas;
+  }
   const canvas = document.createElement('canvas');
   canvas.width = grid.width;
   canvas.height = grid.height;
   const ctx = canvas.getContext('2d');
   const pixels = ctx.createImageData(grid.width, grid.height);
-  const colors = [[34,52,46,255], [100,127,110,255], [191,202,182,255]];
-  grid.cells.forEach((cell, i) => pixels.data.set(colors[!Number.isFinite(cell) || cell < 0 ? 0 : cell > 49 ? 2 : 1], 4*i));
+  for (let i = 0; i < grid.cells.length; i++) {
+    pixels.data.set(semanticCellColor(grid.cells[i], i, semantic, effectiveMode), 4 * i);
+  }
   ctx.putImageData(pixels, 0, 0);
-  lastTiles = {grid, canvas};
+  lastTiles = {grid, mode: effectiveMode, sourceRef, stale, canvas};
   return canvas;
 }
 
@@ -268,4 +363,8 @@ function paintSpeedTrace(samples) {
   pathLine(ctx,part,toScreen,'#70d2d9',2);
   canvas.dataset.samples=String(visible.length);
   show('speed-window',`近 ${(span/1e9).toFixed(1)} s · m/s`);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {semanticCellColor, inspectSemanticCell, gridTiles};
 }

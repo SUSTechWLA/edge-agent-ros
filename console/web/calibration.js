@@ -127,7 +127,7 @@ const CalibrationGuide = (() => {
     board_geometry_required:'等待登记板的实测尺寸', board_moved:'检测到板姿变化，需重新举稳',
     hold_still:'正在采集稳态数据', target_visible:'已检测到标定板'
   };
-  function render(status, canWrite, station, motion=null, resultRows=[]) {
+  function render(status, canWrite, station, motion=null, resultRows=[], corridor=null) {
     if (motion && !motion.same) status={...status,task_id:motion.id,samples:0,capture_feedback:null,revision:null,
       state:'NEEDS_CALIBRATION',phase:'STARTUP'};
     const method = status.method;
@@ -142,7 +142,12 @@ const CalibrationGuide = (() => {
     if (pausedTask !== (nextPaused ? status.task_id : null)) text('cal-resume-note','');
     pausedTask = nextPaused ? status.task_id : null;
     byId('cal-resume').hidden = !(pausedTask && writable);
-    if (!guided) { CalibrationCamera.stop(); SessionView.preferCalibration(null); return; }
+    if (!guided) {
+      CalibrationCamera.stop();
+      if (typeof CalibrationCorridorMap !== 'undefined') CalibrationCorridorMap.clear();
+      SessionView.preferCalibration(null);
+      return;
+    }
     CalibrationCamera.connect(station);
     renderGeometry(fourHoles ? status.board_geometry : null);
     text('cal-method', method.label || method.id);
@@ -191,9 +196,15 @@ const CalibrationGuide = (() => {
     if (Number.isInteger(reachability?.useful_safe_views)) {
       info.push(['安全取景候选', reachability.evaluated_safe_views + ' 个 · 可补当前缺项 ' + reachability.useful_safe_views + ' 个']);
     }
-    const bestView = feedback.capture_view_options?.[0];
+    const bestView = feedback.capture_view_options?.[0] || feedback.view_plan?.view_options?.[0];
     if (Number.isFinite(bestView?.intrinsic_information_gain)) {
       info.push(['首选候选的内参信息增益', bestView.intrinsic_information_gain.toFixed(3)]);
+    }
+    if (Number.isFinite(bestView?.corridor_risk) && Number.isFinite(bestView?.semantic_cost)) {
+      info.push(['首选走廊风险 / 条件代价', bestView.corridor_risk.toFixed(2) + ' / ' + bestView.semantic_cost.toFixed(2)]);
+    }
+    if (Number.isFinite(feedback.captured_lateral_left_m) && Number.isFinite(feedback.captured_lateral_right_m)) {
+      info.push(['左右视差覆盖', '左 ' + feedback.captured_lateral_left_m.toFixed(2) + ' m · 右 ' + feedback.captured_lateral_right_m.toFixed(2) + ' m']);
     }
     const fitted = status.camera_result;
     if (fitted?.k && fitted?.holdout_rms_px !== undefined) {
@@ -249,9 +260,15 @@ const CalibrationGuide = (() => {
     download.hidden = !(status.task_id && feedback.video_available);
     if (download.hidden) download.removeAttribute('href');
     else download.href = '/api/calibration-capture.avi?' + new URLSearchParams({task_id:status.task_id});
+    if (typeof CalibrationCorridorMap !== 'undefined') {
+      const resolvedCorridor = corridor || (typeof window.calibrationCorridorState === 'function'
+        ? window.calibrationCorridorState(null, status, station) : null);
+      CalibrationCorridorMap.render(resolvedCorridor);
+    }
   }
   function offline() {
     CalibrationPreflight.stop();
+    if (typeof CalibrationCorridorMap !== 'undefined') CalibrationCorridorMap.clear();
     writable = false;
     pausedTask = null;
     byId('cal-station').hidden = true;

@@ -1,5 +1,10 @@
 # Edge Agent ROS 变更记录
 
+## SDD-063 · 实时状态感知与多层语义代价地图前端工作台
+
+- **标定空间走廊工作台。** `calibration/board_session.py` 向 `/status` 输出有界 `view_plan` 与 `scene_slice`；`console/web/calibration-map.js` 实时绘制 6 阶段闭环进度、8 扇区激光周界净空、靶板法向、`guards` 安全走廊、ROAM 候选视点评分、RGB 九宫格与左右视差基线仪表。[规格与验收](docs/specs/SDD-063-semantic-map-live-workbench.md) · [标定与主监控画面](artifacts/verification/sdd063-semantic-map-ui-20261127/console-calibration-and-monitor.png)
+- **探索四模式语义地图与主监控净空层。** `exploration/survey_session.py` 输出经校验的 `semantic_costmap` 与 `semantic_scene`；探索观测台支持二维/三维切换「占据几何 / 语义风险 / 通行偏好 / 单调安全准入」四类地图、TTL 过期自动降级提示及游标栅格拾取；主观测台新增安全净空热力层、世界坐标净距拾取与多源新鲜度横条。[探索准入画面](artifacts/verification/sdd063-semantic-map-ui-20261127/exploration-semantic-admitted.png) · [浏览器核验记录](artifacts/verification/sdd063-semantic-map-ui-20261127/browser-verification.json)
+
 ## SDD-062 · 仓库根目录收敛、Compose 分层与全仓文档同步
 
 - **Compose 拓扑收敛。** 仓库根目录仅保留 `compose.yaml`（仿真默认主栈）与 `compose.hardware.yaml`（板端硬件主栈），其余 43 个特性与实验台站覆盖配置统一归入 [`compose/`](compose/README.md)，根目录受管文件由 52 个精简为 9 个；`scripts/release_robot.py`、`scripts/calibration_station.py`、`tests/test_selection.py` 与 CI 同步更新。[规格与回退契约](docs/specs/SDD-062-repo-layout-and-doc-sync.md)

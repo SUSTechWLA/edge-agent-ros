@@ -1,5 +1,6 @@
 """Durable task-level exploration. Planning providers have no motion authority."""
 from copy import deepcopy
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -11,6 +12,12 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from edge_contracts.occupancy import Grid, clearance_mask, finite
+from edge_contracts.semantic_costmap import (
+    conditional_preference_cost,
+    monotonic_cell_admitted,
+    validate_semantic_layers,
+)
+from edge_contracts.semantic_scene import attach_sign_entities, compact_scene
 from edge_contracts.service_directory import PluginUnavailable, ServiceSnapshot
 from exploration.ros_sim import checkpoint
 from navigation.grid_corridor import route_admission, segment_admitted
@@ -72,6 +79,256 @@ def unknown_point(raw, bounds, pose, avoid):
     return min(options, default=(0, None))[1]
 
 
+def _normalize_yaw(angle):
+    if type(angle) not in (int, float) or not math.isfinite(angle):
+        return None
+    wrapped = (float(angle) + math.pi) % (2.0 * math.pi) - math.pi
+    return round(wrapped, 6)
+
+
+def _synthesize_semantic_base(row, grid, config):
+    raw_grid = row["grid"]
+    cell_count = len(grid.cells)
+    ttl_ns = max(1_000_000_000, int(float(config.get("semantic_ttl_s", 15.0)) * 1_000_000_000))
+    stamp_ns = max(1, int(float(row.get("updated") or time.time()) * 1_000_000_000))
+    explicit = row.get("semantic_layers")
+    if isinstance(explicit, dict):
+        validated = validate_semantic_layers(explicit, cell_count, now_ns=explicit.get("stamp_ns", stamp_ns))
+        return {
+            "source_ref": validated["source_ref"],
+            "stamp_ns": validated["stamp_ns"],
+            "valid_until_ns": validated["valid_until_ns"],
+            "risk": [round(v, 3) for v in validated["risk"]],
+            "traversable": [round(v, 3) for v in validated["traversable"]],
+            "preferred": [round(v, 3) for v in validated["preferred"]],
+            "risk_block": validated["risk_block"],
+            "min_traversable": validated["min_traversable"],
+            "risk_weight": validated["risk_weight"],
+            "pref_weight": validated["pref_weight"],
+            "origin_mode": "explicit_prior",
+            "vocabulary_labels": sorted(k for k in (explicit.get("vocabulary") or {}) if k != "other"),
+        }
+    seed = json.dumps(
+        [row.get("id"), row.get("map_ref"), cell_count, row.get("markers", []),
+         row.get("avoid", []), (row.get("anomaly") or {}).get("xy")],
+        ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    ).encode("utf-8")
+    source_ref = hashlib.sha256(seed).hexdigest()
+    scene = row.get("scene_geometry")
+    same_scene = isinstance(scene, dict) and scene.get("frame") == grid.frame
+    zones = []
+    barriers = []
+    if same_scene:
+        for z in (scene.get("zones") or []):
+            b = z.get("bounds") if isinstance(z, dict) else None
+            if isinstance(b, list) and len(b) == 4 and all(finite(v) for v in b):
+                zones.append((b[0], b[1], b[2], b[3], z.get("kind", "indoor")))
+        for f in (scene.get("features") or []):
+            pos = f.get("xy") if isinstance(f, dict) else None
+            sz = f.get("size") if isinstance(f, dict) else None
+            if (isinstance(pos, list) and len(pos) >= 2 and all(finite(v) for v in pos[:2])
+                    and isinstance(sz, list) and len(sz) >= 2 and all(finite(v) for v in sz[:2])
+                    and f.get("kind") in ("barrier", "wall")):
+                pad = 0.24 if f.get("kind") == "barrier" else 0.12
+                barriers.append((pos[0] - sz[0] * 0.5 - pad, pos[1] - sz[1] * 0.5 - pad,
+                                 pos[0] + sz[0] * 0.5 + pad, pos[1] + sz[1] * 0.5 + pad, f.get("kind")))
+    avoids = []
+    for item in (row.get("avoid") or []):
+        c = item.get("center") if isinstance(item, dict) else None
+        rad = item.get("radius") if isinstance(item, dict) else None
+        if isinstance(c, list) and len(c) >= 2 and all(finite(v) for v in c[:2]) and finite(rad) and rad > 0:
+            avoids.append((c[0], c[1], float(rad)))
+    anomaly = row.get("anomaly") if isinstance(row.get("anomaly"), dict) else None
+    anomaly_xy = anomaly.get("xy") if anomaly and isinstance(anomaly.get("xy"), list) and len(anomaly["xy"]) >= 2 else None
+    approaches = []
+    for mark in (row.get("markers") or []):
+        if not isinstance(mark, dict) or mark.get("status") != "confirmed":
+            continue
+        ent = mark.get("entrance")
+        if isinstance(ent, list) and len(ent) >= 2 and all(finite(v) for v in ent[:2]):
+            approaches.append((ent[0], ent[1]))
+        elif finite(mark.get("x")) and finite(mark.get("y")):
+            approaches.append((mark["x"], mark["y"]))
+    risk, trav, pref = [0.0] * cell_count, [1.0] * cell_count, [0.5] * cell_count
+    width, res = grid.width, grid.resolution
+    ox, oy, c_yaw, s_yaw = grid.ox, grid.oy, grid.c, grid.s
+    vocab = set()
+    for idx, val in enumerate(grid.cells):
+        lx = ((idx % width) + 0.5) * res
+        ly = ((idx // width) + 0.5) * res
+        wx = ox + c_yaw * lx - s_yaw * ly
+        wy = oy + s_yaw * lx + c_yaw * ly
+        if val > 49:
+            risk[idx], trav[idx], pref[idx] = 1.0, 0.0, 0.0
+            continue
+        if val < 0:
+            r, t, p = 0.34, 0.65, 0.35
+        else:
+            r, t, p = 0.08 + 0.005 * val, 0.96 - 0.004 * val, 0.56
+            vocab.add("clear_floor")
+        for x0, y0, x1, y1, zkind in zones:
+            if x0 <= wx <= x1 and y0 <= wy <= y1:
+                if zkind == "indoor" and val >= 0:
+                    p = max(p, 0.84)
+                    r = min(r, 0.06)
+                    vocab.add("indoor_corridor")
+                elif zkind == "transition":
+                    p = max(p, 0.72)
+                    r = max(r, 0.22)
+                    vocab.add("doorway_transition")
+                elif zkind == "outdoor" and val >= 0:
+                    p = max(p, 0.68)
+                    r = max(r, 0.12)
+                    vocab.add("paved_walkway")
+        for bx0, by0, bx1, by1, fkind in barriers:
+            if bx0 <= wx <= bx1 and by0 <= wy <= by1:
+                if fkind == "barrier":
+                    r = max(r, 0.64)
+                    t = min(t, 0.52)
+                    p = min(p, 0.22)
+                    vocab.add("caution_barrier")
+                else:
+                    r = max(r, 0.28)
+                    p = min(p, 0.38)
+        for ax, ay in approaches:
+            if math.hypot(wx - ax, wy - ay) <= 0.45 and val >= 0:
+                p = max(p, 0.92)
+                r = min(r, 0.05)
+                vocab.add("verified_entrance")
+        for cx, cy, rad in avoids:
+            dist = math.hypot(wx - cx, wy - cy)
+            if dist <= rad:
+                r = max(r, 0.86)
+                t = min(t, 0.22)
+                p = min(p, 0.08)
+                vocab.add("deferred_hazard")
+            elif dist <= rad * 1.8:
+                r = max(r, 0.54)
+                p = min(p, 0.25)
+        if anomaly_xy and all(finite(v) for v in anomaly_xy[:2]):
+            if math.hypot(wx - anomaly_xy[0], wy - anomaly_xy[1]) <= 0.35:
+                r = max(r, 0.68)
+                p = min(p, 0.20)
+                vocab.add("pending_review_zone")
+        risk[idx] = round(min(1.0, max(0.0, r)), 3)
+        trav[idx] = round(min(1.0, max(0.0, t)), 3)
+        pref[idx] = round(min(1.0, max(0.0, p)), 3)
+    raw_layers = {
+        "stamp_ns": stamp_ns,
+        "valid_until_ns": stamp_ns + ttl_ns,
+        "source_ref": source_ref,
+        "risk": risk,
+        "traversable": trav,
+        "preferred": pref,
+    }
+    validated = validate_semantic_layers(raw_layers, cell_count, now_ns=stamp_ns)
+    return {
+        "source_ref": validated["source_ref"],
+        "stamp_ns": validated["stamp_ns"],
+        "valid_until_ns": validated["valid_until_ns"],
+        "risk": risk,
+        "traversable": trav,
+        "preferred": pref,
+        "risk_block": validated["risk_block"],
+        "min_traversable": validated["min_traversable"],
+        "risk_weight": validated["risk_weight"],
+        "pref_weight": validated["pref_weight"],
+        "origin_mode": "map_semantic_synthesis",
+        "vocabulary_labels": sorted(vocab) or ["clear_floor"],
+    }
+
+
+def _build_mission_scene(row, grid, source_ref, stamp_ns):
+    nodes, edges = [], []
+    pose = row.get("pose") if isinstance(row.get("pose"), dict) else None
+    scene = row.get("scene_geometry") if isinstance(row.get("scene_geometry"), dict) else None
+    same_scene = bool(scene and scene.get("frame") == grid.frame)
+    regions = []
+    current_region_id = None
+    if same_scene:
+        for idx, z in enumerate((scene.get("zones") or [])[:3]):
+            b = z.get("bounds") if isinstance(z, dict) else None
+            if not (isinstance(b, list) and len(b) == 4 and all(finite(v) for v in b)):
+                continue
+            rid = f"zone.{z.get('id') or idx}"[:48]
+            label = str(z.get("label") or z.get("kind") or rid)[:64]
+            node = {"id": rid, "label": label, "kind": "region", "state": "confirmed",
+                    "position_m": [round((b[0] + b[2]) * 0.5, 3), round((b[1] + b[3]) * 0.5, 3)]}
+            nodes.append(node)
+            regions.append(node)
+            if (pose and pose.get("frame") == grid.frame and finite(pose.get("x")) and finite(pose.get("y"))
+                    and b[0] <= pose["x"] <= b[2] and b[1] <= pose["y"] <= b[3] and current_region_id is None):
+                current_region_id = rid
+    if not regions:
+        area = row.get("area")
+        center = ([(area[0] + area[2]) * 0.5, (area[1] + area[3]) * 0.5]
+                  if isinstance(area, list) and len(area) == 4 and all(finite(v) for v in area)
+                  else grid.center(len(grid.cells) // 2))
+        node = {"id": "zone.survey", "label": "任务作业区", "kind": "region", "state": "observed",
+                "position_m": [round(center[0], 3), round(center[1], 3)]}
+        nodes.append(node)
+        regions.append(node)
+        current_region_id = "zone.survey"
+    if pose and pose.get("frame") == grid.frame and finite(pose.get("x")) and finite(pose.get("y")):
+        robot_node = {"id": "robot", "label": "当前机体", "kind": "viewpoint", "state": "observed",
+                      "position_m": [round(pose["x"], 3), round(pose["y"], 3)]}
+        yaw = _normalize_yaw(pose.get("yaw"))
+        if yaw is not None:
+            robot_node["yaw_rad"] = yaw
+        nodes.append(robot_node)
+        if current_region_id:
+            edges.append(["robot", "inside", current_region_id])
+    place_nodes = []
+    dest_entity = (row.get("destination") or {}).get("entity_id") if isinstance(row.get("destination"), dict) else None
+    for idx, mark in enumerate((row.get("markers") or [])[:4]):
+        if not isinstance(mark, dict) or not finite(mark.get("x")) or not finite(mark.get("y")) or len(nodes) >= 10:
+            continue
+        pid = f"place.{mark.get('id') or idx}"[:48]
+        state = "confirmed" if mark.get("status") == "confirmed" else "proposed"
+        pnode = {"id": pid, "label": str(mark.get("label") or mark.get("id") or pid)[:64],
+                 "kind": "place", "state": state,
+                 "position_m": [round(mark["x"], 3), round(mark["y"], 3)]}
+        nodes.append(pnode)
+        place_nodes.append((mark.get("id"), pnode))
+        _, attached_edges = attach_sign_entities(pnode, regions, max_distance_m=18.0, relation="attached_to", max_links=1)
+        edges.extend(attached_edges)
+        if dest_entity and mark.get("id") == dest_entity and any(n["id"] == "robot" for n in nodes):
+            edges.append(["robot", "approach_to", pid])
+    hazards = []
+    anomaly = row.get("anomaly") if isinstance(row.get("anomaly"), dict) else None
+    if anomaly and isinstance(anomaly.get("xy"), list) and len(anomaly["xy"]) >= 2 and all(finite(v) for v in anomaly["xy"][:2]):
+        hazards.append(("hazard.anomaly", str(anomaly.get("label") or "待复核区域")[:64], anomaly["xy"][:2]))
+    for idx, item in enumerate((row.get("avoid") or [])[:2]):
+        c = item.get("center") if isinstance(item, dict) else None
+        if isinstance(c, list) and len(c) >= 2 and all(finite(v) for v in c[:2]):
+            hazards.append((f"hazard.avoid_{idx + 1}", f"避让高危区 #{idx + 1}", c[:2]))
+    anchor_targets = [*regions, *(p for _, p in place_nodes)]
+    for hid, hlabel, hpos in hazards:
+        if len(nodes) >= 12:
+            break
+        hnode = {"id": hid, "label": hlabel, "kind": "object", "state": "observed",
+                 "position_m": [round(hpos[0], 3), round(hpos[1], 3)]}
+        nodes.append(hnode)
+        _, guard_edges = attach_sign_entities(hnode, anchor_targets, max_distance_m=8.0, relation="guards", max_links=2)
+        edges.extend(guard_edges)
+    valid_ids = {n["id"] for n in nodes[:12]}
+    bounded_edges = [e for e in edges if e[0] in valid_ids and e[2] in valid_ids][:16]
+    try:
+        return compact_scene({
+            "version": 1,
+            "scope": "sensor_snapshot",
+            "frame": grid.frame,
+            "source_ref": source_ref,
+            "stamp_ns": str(max(1, int(stamp_ns))),
+            "map_ref": None,
+            "nodes": nodes[:12],
+            "edges": bounded_edges,
+            "omitted": max(0, len(row.get("markers") or []) - 4),
+        })
+    except ValueError:
+        return None
+
+
 class Survey:
     def __init__(self, rover, config, state, directory, agent):
         self.rover, self.config, self.path, self.directory, self.agent = rover, config, Path(state), directory, agent
@@ -79,6 +336,7 @@ class Survey:
         self.lock = RLock()
         self.rows = json.loads(self.path.read_text(encoding="utf-8")) if self.path.is_file() else {}
         self.next_tick = self.missing_since = 0.0
+        self._semantic_cache = {}
 
     def save(self):
         checkpoint(self.path, self.rows)
@@ -100,17 +358,124 @@ class Survey:
                                   "binding": pin["binding"]}
         return reply
 
+    def _semantic_projection(self, selected):
+        raw_grid = selected.get("grid")
+        if not isinstance(raw_grid, dict) or "origin" not in raw_grid:
+            return None, None
+        try:
+            grid = Grid(raw_grid)
+        except (KeyError, TypeError, ValueError):
+            return None, None
+        cell_count = len(grid.cells)
+        if not 1 <= cell_count <= 65536:
+            return None, None
+        sig = (
+            selected.get("id"),
+            id(raw_grid),
+            selected.get("updated"),
+            len(selected.get("markers") or []),
+            len(selected.get("avoid") or []),
+            (selected.get("anomaly") or {}).get("id") if isinstance(selected.get("anomaly"), dict) else None,
+            id(selected.get("semantic_layers")),
+        )
+        cached = self._semantic_cache.get(selected.get("id"))
+        if cached and cached["sig"] == sig:
+            base = cached["base"]
+        else:
+            try:
+                base = _synthesize_semantic_base(selected, grid, self.config)
+            except ValueError:
+                return None, None
+            if len(self._semantic_cache) >= 16:
+                self._semantic_cache.pop(next(iter(self._semantic_cache)), None)
+            self._semantic_cache[selected.get("id")] = {"sig": sig, "base": base}
+        archived = selected.get("status") in TERMINAL or selected.get("kind") == "map_import"
+        now_ns = base["stamp_ns"] if archived else max(base["stamp_ns"], int(time.time() * 1_000_000_000))
+        route_sem = selected.get("last_route_semantic") or {}
+        stale = bool(
+            route_sem.get("stale") is True
+            or (not archived and (now_ns > base["valid_until_ns"] or now_ns < base["stamp_ns"]))
+        )
+        ttl_remaining_s = (0.0 if stale else round(max(0.0, (base["valid_until_ns"] - now_ns) / 1_000_000_000), 1))
+        admitted_cells = geom_blocked = sem_vetoed = preferred_cells = known_free = 0
+        risk_arr, trav_arr, pref_arr = base["risk"], base["traversable"], base["preferred"]
+        r_block, min_trav = base["risk_block"], base["min_traversable"]
+        for idx, val in enumerate(grid.cells):
+            if val > 49:
+                geom_blocked += 1
+                continue
+            if val < 0:
+                continue
+            known_free += 1
+            ok = monotonic_cell_admitted(
+                True, risk=risk_arr[idx], traversable=trav_arr[idx],
+                stale=stale, risk_block=r_block, min_traversable=min_trav,
+            )
+            if ok:
+                admitted_cells += 1
+                if pref_arr[idx] >= 0.65:
+                    preferred_cells += 1
+            else:
+                sem_vetoed += 1
+        pose = selected.get("pose") if isinstance(selected.get("pose"), dict) else None
+        robot_idx = (grid.index([pose["x"], pose["y"]])
+                     if pose and pose.get("frame") == grid.frame and finite(pose.get("x")) and finite(pose.get("y"))
+                     else -1)
+        robot_pref = pref_arr[robot_idx] if 0 <= robot_idx < cell_count else 0.0
+        robot_risk = risk_arr[robot_idx] if 0 <= robot_idx < cell_count else 0.0
+        robot_mult = round(conditional_preference_cost(
+            risk=robot_risk, preferred=robot_pref,
+            robot_preferred=robot_pref if not stale else 0.0,
+            risk_weight=base["risk_weight"], pref_weight=base["pref_weight"],
+        ), 2) if not stale else 1.0
+        costmap = {
+            "frame": grid.frame,
+            "source_ref": base["source_ref"],
+            "stamp_ns": str(base["stamp_ns"]),
+            "valid_until_ns": str(base["valid_until_ns"]),
+            "stale": stale,
+            "archived": archived,
+            "ttl_remaining_s": ttl_remaining_s,
+            "origin_mode": base["origin_mode"],
+            "vocabulary": base["vocabulary_labels"],
+            "risk_block": r_block,
+            "min_traversable": min_trav,
+            "risk_weight": base["risk_weight"],
+            "pref_weight": base["pref_weight"],
+            "risk": risk_arr,
+            "traversable": trav_arr,
+            "preferred": pref_arr,
+            "summary": {
+                "known_free_cells": known_free,
+                "admitted_cells": admitted_cells,
+                "geometric_blocked_cells": geom_blocked,
+                "semantic_vetoed_cells": sem_vetoed,
+                "preferred_cells": preferred_cells,
+                "robot_on_preferred": bool(not stale and robot_pref >= 0.5),
+                "robot_preferred": round(robot_pref, 3),
+                "robot_cost_multiplier": robot_mult,
+            },
+        }
+        scene = _build_mission_scene(selected, grid, base["source_ref"], base["stamp_ns"])
+        return costmap, scene
+
     def show(self, key=None):
         private = {"observations", "candidates", "resume_after", "area", "active", "visited", "avoid",
-                   "last_plan", "pending_seen", "retries", "loaded", "publish_input"}
+                   "last_plan", "pending_seen", "retries", "loaded", "publish_input",
+                   "semantic_layers", "last_route_semantic"}
         with self.lock:
             selected = self.rows.get(key) if key else (
                 next((row for row in self.rows.values() if row["status"] not in TERMINAL), None)
                 or next(iter(reversed(self.rows.values())), None))
             mission = None
             if selected:
+                sem_costmap, sem_scene = self._semantic_projection(selected)
                 mission = deepcopy({k: v for k, v in selected.items() if k not in private})
                 mission["bounds"] = selected.get("area")
+                if sem_costmap is not None:
+                    mission["semantic_costmap"] = sem_costmap
+                if sem_scene is not None:
+                    mission["semantic_scene"] = sem_scene
                 tracking = (selected.get("active") or {}).get("tracking")
                 if tracking and selected["phase"] == "NAVIGATING" and 0 <= time.time() - tracking["received"] < 1.5:
                     mission["tracking"] = dict(tracking)
@@ -494,14 +859,26 @@ class Survey:
             self.finish(row, "BLOCKED", "BLOCKED", "发布地图与当前观测之间没有可通行的局部路线")
 
     def navigation_plan(self, row, snap):
-        return self.service(row, ROUTE, dict(published_grid=row["loaded"], live_grid=snap["grid"], pose=xy(snap["pose"]),
-                            observed_prefix=self.config.get("observed_prefix",False),
-                            goal=row["goal"], bounds=row["area"], footprint_radius=self.config["radius"],
-                            clearance_margin_m=self.config.get("clearance_margin_m",0.),
-                            departure_lookahead_m=(row.get("recovery") or {}).get("departure_lookahead_m",0.),
-                            max_step=self.config["max_step"], avoid=row["avoid"],
-                            execution_mode=self.config.get("execution_mode", "waypoint"),
-                            rejected=[*row.get("rejected_nav", []),*(row.get("recovery") or {}).get("rejected_departures",[])][-12:]))
+        body = dict(published_grid=row["loaded"], live_grid=snap["grid"], pose=xy(snap["pose"]),
+                    observed_prefix=self.config.get("observed_prefix",False),
+                    goal=row["goal"], bounds=row["area"], footprint_radius=self.config["radius"],
+                    clearance_margin_m=self.config.get("clearance_margin_m",0.),
+                    departure_lookahead_m=(row.get("recovery") or {}).get("departure_lookahead_m",0.),
+                    max_step=self.config["max_step"], avoid=row["avoid"],
+                    execution_mode=self.config.get("execution_mode", "waypoint"),
+                    rejected=[*row.get("rejected_nav", []),*(row.get("recovery") or {}).get("rejected_departures",[])][-12:])
+        sem_layers = row.get("semantic_layers") or self.config.get("semantic_layers")
+        if isinstance(sem_layers, dict):
+            body["semantic_layers"] = sem_layers
+            if type(snap.get("stamp")) is int:
+                body["stamp_ns"] = snap["stamp"]
+        plan = self.service(row, ROUTE, body)
+        if "semantic_prior_stale" in plan or "semantic_source_ref" in plan:
+            row["last_route_semantic"] = {
+                "stale": plan.get("semantic_prior_stale"),
+                "source_ref": plan.get("semantic_source_ref"),
+            }
+        return plan
 
     def resolve_navigation_goal(self, row, snap, source):
         ref = source["map_ref"]
