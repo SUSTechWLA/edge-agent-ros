@@ -6,7 +6,7 @@
 
 2026-11-20 实车直接任务 `jetson-find-plant-20261120-01` 中，整株盆栽位于 640×480 实拍的左侧。模型框为 `[21,0,304,404)`，测距像素为 `(154,42)`，光轴深度 1.439 m，斜距 1.573 m。从客户端 POST 到步骤 verified 历时 2.192 s，任务成功。回放在原始提交、工具派发、读取 RGB-D、二维标注和三维测量各阶段停留，保留车端实际时刻。主片长 21 秒。对应的摘要见[实测记录](../../artifacts/verification/navigation-plugins/jetson-perception.json)。
 
-部署以 `scripts/prepare_perception_site.py --objects` 增加独立站点包，复用原站点锁。`compose.object-perception.yaml` 将计算服务接入事实网络并只读挂载已发布采样；站点 CPU 模型进程通过 `scripts/run_object_model_isolated.sh` 在私有网络、设备和文件命名空间中运行，双方仅以 Unix socket 交换单帧 PNG 和带摘要的识别结果。重建录像时将 `submit.json`、`task.json`、`recording/`、`artifacts/` 和 `sensor-timeline.jsonl` 保存在同一导出目录，运行 `python -m task_recorder.direct_target_demo --source 导出目录 --out 新目录 --font 中文字体文件`。
+部署以 `scripts/prepare_perception_site.py --objects` 增加独立站点包，复用原站点锁。`compose/object-perception.yaml` 将计算服务接入事实网络并只读挂载已发布采样；站点 CPU 模型进程通过 `scripts/run_object_model_isolated.sh` 在私有网络、设备和文件命名空间中运行，双方仅以 Unix socket 交换单帧 PNG 和带摘要的识别结果。重建录像时将 `submit.json`、`task.json`、`recording/`、`artifacts/` 和 `sensor-timeline.jsonl` 保存在同一导出目录，运行 `python -m task_recorder.direct_target_demo --source 导出目录 --out 新目录 --font 中文字体文件`。
 
 ### 静止融合与自然语言目标定位
 
@@ -14,7 +14,7 @@
 
 输入 `在二维和三维标注画面右侧的大块浅灰色平面` 可调用 `mark_target`。它分别返回彩色像素框、区域掩膜、选中像素的原始深度、相机光学坐标及三份输入摘要。当前算法支持位置、浅灰色和大面积平面描述，拒绝未知目标。D435 彩色和对齐深度以 ROS 时间选帧，检查两者时间差，CameraInfo 通过标定摘要、尺寸、时效和坐标系绑定。米制比例来自已部署 RealSense ROS 驱动。未接入相机到车体的经验证外参。RTK 无有效发布源，其驱动的默认串口已由底盘占用。实测数据和任务摘要见[板端记录](../../artifacts/verification/navigation-plugins/jetson-perception.json)。
 
-**部署及续办。** `scripts/prepare_perception_site.py` 校验原站点锁，构建仅新增只读 Service 的初始站点和包含可选 Tool 的候选站点。初始站点同时提供融合 Tool。使用 `compose.stationary-perception.yaml` 启动独立计算服务与里程计见证；软宿主持有预置候选的只读信任目录。原任务未派发且确实受阻后，`scripts/evolve_read_projection.sh` 从已有 Service 和部署者预授权的工具模板产生发布提案。在独立感知网络验收真实图像、测点、负例及摘要，通过后事务接纳并绑定原文续办。父任务保留原终态。录制器在父任务保存用户原文，在子任务保存带发布事件的 Agent 受理记录。使用 `python -m task_recorder.target_review --help` 或 `fusion_review --help` 从原始任务、录制和采样导出重建回放。
+**部署及续办。** `scripts/prepare_perception_site.py` 校验原站点锁，构建仅新增只读 Service 的初始站点和包含可选 Tool 的候选站点。初始站点同时提供融合 Tool。使用 `compose/stationary-perception.yaml` 启动独立计算服务与里程计见证；软宿主持有预置候选的只读信任目录。原任务未派发且确实受阻后，`scripts/evolve_read_projection.sh` 从已有 Service 和部署者预授权的工具模板产生发布提案。在独立感知网络验收真实图像、测点、负例及摘要，通过后事务接纳并绑定原文续办。父任务保留原终态。录制器在父任务保存用户原文，在子任务保存带发布事件的 Agent 受理记录。使用 `python -m task_recorder.target_review --help` 或 `fusion_review --help` 从原始任务、录制和采样导出重建回放。
 
 **回退。** 对需要撤回的单个工具使用现有软件注册表的 drain、待原调用结束、remove 路径。卸载消费者后再处理仅由该消费者使用的 Service，按保留的站点锁重新接纳其余版本。Agent 的任务卷与注册事件卷分别保留父任务、续办和发布来源。仅需故障隔离时，可停止独立的 stationary-perception 软件计算服务，原传感器采集仍可供其他插件读取。
 
@@ -33,7 +33,7 @@ export EDGE_NAV_SITE="$PWD/nav-site" EDGE_NAV_CAPTURE_CONFIG="$PWD/nav-bindings/
 export EDGE_NAV_DIGEST="$(docker image inspect --platform linux/arm64 --format '{{.Descriptor.digest}}' "$IMAGE")"
 export EDGE_NAV_IMAGE="$EDGE_NAV_DIGEST" EDGE_NAV_MIRROR_DOMAIN=140
 export EDGE_NAV_LOCK="$(python3 -c 'import json;print(json.load(open("nav-lock.json"))["lock"])')"
-docker compose -f compose.navigation-readonly.yaml --profile published up -d
+docker compose --project-directory . -f compose/navigation-readonly.yaml --profile published up -d
 curl -fsS http://127.0.0.1:8794/agent/capabilities
 curl -fsS -H 'Content-Type: application/json' http://127.0.0.1:8794/agent/tasks \
   -d '{"id":"nav-smoke-01","text":"为 rover 试算到 bench-marker 的路线"}'
@@ -42,7 +42,7 @@ curl -fsS 'http://127.0.0.1:8794/agent/tasks?id=nav-smoke-01'
 
 `nav-smoke-01/step/1` 的回执含发布定位、原采集时间、时效窗口、机体与地图摘要、路径及算法。请求“读取 rover 的空间观测”或“查询 rover 的定位”可独立验证前两项能力。回放站点省略 `--live-settings`，并以 Compose 默认 profile 启动，地图与输入来自四种机体的基准样本。现场地点的可达性需要在真实地图、有效 TF 和相应机体 profile 上另行验收。随包内嵌的地图受站点 JSON 大小上限约束，大地图服务可实现相同的目录与路线契约。
 
-第二路校准观测使用可选的 [CameraInfo 部署](../../compose.navigation-camera-info.yaml)。它按站点指定的域、话题、光学帧和主体订阅 ROS 发布的相机内参，把校准文件按内容摘要保存。事实网关可提供带不同原始帧的观测，定位仍只消费策略允许的位置来源。部署可单独撤下该读者，网关将记录缺样。它的状态与航迹控制权各由自己的进程持有。
+第二路校准观测使用可选的 [CameraInfo 部署](../../compose/navigation-camera-info.yaml)。它按站点指定的域、话题、光学帧和主体订阅 ROS 发布的相机内参，把校准文件按内容摘要保存。事实网关可提供带不同原始帧的观测，定位仍只消费策略允许的位置来源。部署可单独撤下该读者，网关将记录缺样。它的状态与航迹控制权各由自己的进程持有。
 
 ## 验收与回退
 

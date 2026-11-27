@@ -1,5 +1,5 @@
 # Local spatial calibration from the repository root (Compose >=2.24.4, cached Gazebo/Ollama images):
-# docker compose -p edge-fixed-cal -f compose.calibration-board.yaml -f compose.calibration-console.yaml -f compose.calibration-model.yaml -f compose.calibration-fixed-rover.yaml -f compose.calibration-view-motion.yaml up -d
+# docker compose --project-directory . -p edge-fixed-cal -f compose/calibration-board.yaml -f compose/calibration-console.yaml -f compose/calibration-model.yaml -f compose/calibration-fixed-rover.yaml -f compose/calibration-view-motion.yaml up -d
 # The Console is http://127.0.0.1:8916/. Stop the same project with "down"; named task and evidence volumes persist.
 # By default the target starts outside the common field of view. After the Agent asks,
 # run in fixed-sim: python3 /fixture/fixed_rover_world.py place-front /tmp/fixed-calibration/world.sdf --profile /fixture/profile.json

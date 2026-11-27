@@ -271,7 +271,7 @@ def run(args):
                        {"type":"bind","source":str(args.assets.resolve()),"target":"/assets","read_only":True},
                        {"type":"volume","source":"campus-world","target":"/campus","read_only":True}]}
         write(tmp/"isolate.json",{"services":overrides})
-        compose=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.campus.yaml"),"-f",str(tmp/"isolate.json")]
+        compose=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose/campus.yaml"),"-f",str(tmp/"isolate.json")]
         def dc(*params,timeout=140):
             return cmd([*compose,*params],env=env,timeout=timeout)
         def serve_witness():

@@ -181,7 +181,7 @@ def run(out,image,assets,*,no_cameras=False,continuous=False):
     with tempfile.TemporaryDirectory(prefix=project) as temp:
         override=Path(temp)/"experiment.json"
         store(override,{"services":items})
-        base=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.task-recorder.yaml"),
+        base=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose/task-recorder.yaml"),
               "-f",str(override),"--profile","recording"]
         def dc(*args,check=True):
             p=subprocess.run(base+list(args),env=env,cwd=ROOT,capture_output=True,encoding="utf8",errors="replace",timeout=100)

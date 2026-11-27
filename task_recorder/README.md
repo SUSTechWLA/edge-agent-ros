@@ -108,11 +108,11 @@ print(folder)
 
 ## 插件怎样接入系统
 
-`compose.task-recorder.yaml` 将服务放在 `recording` profile。可在仓库根目录比较默认配置和启用录制后的服务清单。
+`compose/task-recorder.yaml` 将服务放在 `recording` profile。可在仓库根目录比较默认配置和启用录制后的服务清单。
 
 ```sh
-docker compose -f compose.yaml -f compose.task-recorder.yaml config --services
-docker compose -f compose.yaml -f compose.task-recorder.yaml --profile recording config --services
+docker compose -f compose.yaml -f compose/task-recorder.yaml config --services
+docker compose -f compose.yaml -f compose/task-recorder.yaml --profile recording config --services
 ```
 
 契约验收在网络隔离的 Linux ROS 容器内运行，需要空闲的回环端口 8090、可写的临时目录和已加载的项目 ROS 环境。在板端镜像内，按仓库结构将 `tests/` 和 `task_recorder/` 只读挂入 `/opt/edge/`，运行以下命令。

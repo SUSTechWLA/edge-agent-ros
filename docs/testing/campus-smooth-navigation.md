@@ -23,7 +23,7 @@
 | `survey-readonly` | 为地点解析、路线、前沿和通道复核提供只读计算，保留各自的插件端点 |
 | `survey-maps` | 读取和发布有版本的导航地图，单独持有地图写入卷 |
 
-运行 `./scripts/campus-core.ps1 ps` 查看以上十项，`./scripts/campus-core.ps1 up` 启动已建站点。默认复用 `campus-smooth-phase1-r08` 的原任务卷、地图卷与 `edge-campus-teaching-1124_campus-world` 场景卷。要操作另一个已建站点，可设置 `EDGE_CAMPUS_RUN`。[日用入口](../../scripts/campus-core.ps1) · [精简部署配置](../../compose.campus-core.yaml)
+运行 `./scripts/campus-core.ps1 ps` 查看以上十项，`./scripts/campus-core.ps1 up` 启动已建站点。默认复用 `campus-smooth-phase1-r08` 的原任务卷、地图卷与 `edge-campus-teaching-1124_campus-world` 场景卷。要操作另一个已建站点，可设置 `EDGE_CAMPUS_RUN`。[日用入口](../../scripts/campus-core.ps1) · [精简部署配置](../../compose/campus-core.yaml)
 
 日用站扩展至校园前广场南侧露台。场地导入器从同一份校园世界、步道路网和地点标注生成版本化地图 `campus-forecourt-walk`。路线插件在已发布地图上作全局规划，用当前激光占用数据逐段核验；运行时保存首份全程规划供回看。Core 与 Gateway 在各自的入口检查校园场地范围。其他部署默认仍用原点四周 4 米的范围。[场地与地点标注](../../scene/campus_large/navigation/forecourt.json) · [校园运动范围](../../scene/campus_large/navigation/forecourt-site.yaml)
 
@@ -32,7 +32,7 @@
 ```powershell
 ./scripts/campus-native-image.ps1 site
 $env:EDGE_CAMPUS_RUN = 'r08'
-./scripts/campus-navigation.ps1 phase1 -f compose.campus-core.yaml run --rm --no-deps campus-seed
+./scripts/campus-navigation.ps1 phase1 -f compose/campus-core.yaml run --rm --no-deps campus-seed
 ./scripts/campus-core.ps1 up
 ```
 

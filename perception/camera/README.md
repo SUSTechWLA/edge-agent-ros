@@ -11,15 +11,15 @@
 在项目根目录运行：
 
 ```powershell
-docker compose -f compose.yaml -f compose.camera.yaml --profile camera-sensor up -d sim bridge camera camera-sensor
+docker compose -f compose.yaml -f compose/camera.yaml --profile camera-sensor up -d sim bridge camera camera-sensor
 ```
 
-打开 [相机预览](http://127.0.0.1:8771/) 或 [传感器目录](http://127.0.0.1:8771/api/cameras)。如果指定过另一个端口，用 `EDGE_CAMERA_PORT` 对应的端口访问。仿真中的 bridge 提供 ROS /clock，camera-sensor 为世界中的固定 RGB 相机桥接 Image / CameraInfo。使用 `docker compose -f compose.yaml -f compose.camera.yaml --profile camera-sensor stop camera-sensor` 可停止 ROS 桥。缺样超过默认 3 秒后读取目录应显示断流，图片接口返回 HTTP 503。快照在读取时同时检查 ROS 和单调时钟，回拨会撤下旧时间段的图像。Gazebo 世界保留相机实体，重新 start 该服务将复用相机并发布新时间戳。单独停止 camera 会关闭预览页面及其 ROS 订阅。
+打开 [相机预览](http://127.0.0.1:8771/) 或 [传感器目录](http://127.0.0.1:8771/api/cameras)。如果指定过另一个端口，用 `EDGE_CAMERA_PORT` 对应的端口访问。仿真中的 bridge 提供 ROS /clock，camera-sensor 为世界中的固定 RGB 相机桥接 Image / CameraInfo。使用 `docker compose -f compose.yaml -f compose/camera.yaml --profile camera-sensor stop camera-sensor` 可停止 ROS 桥。缺样超过默认 3 秒后读取目录应显示断流，图片接口返回 HTTP 503。快照在读取时同时检查 ROS 和单调时钟，回拨会撤下旧时间段的图像。Gazebo 世界保留相机实体，重新 start 该服务将复用相机并发布新时间戳。单独停止 camera 会关闭预览页面及其 ROS 订阅。
 
 在原生 Linux 上可用下列组合接入已运行的 ROS 2 驱动。选择目标板架构镜像和正确的 ROS Domain，默认网络端口仅绑定宿主回环。
 
 ```sh
-docker compose -f compose.hardware.yaml -f compose.camera.yaml -f compose.camera-hardware.yaml up -d camera
+docker compose -f compose.hardware.yaml -f compose/camera.yaml -f compose/camera-hardware.yaml up -d camera
 ```
 
 ## 在运行中添加相机

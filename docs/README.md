@@ -4,6 +4,9 @@
 
 | 我想做什么 | 从这里读 |
 |---|---|
+| 让机器人在静止或自主换位工位完成相机与雷达标定、时间偏移估计 | [移动四孔板自标定](testing/fixed-rover-calibration.md) · [四孔板与实车采集](testing/four-hole-calibration.md) · [静止棋盘工位](testing/guided-calibration.md) · [软件时间标定](testing/sensor-time-calibration.md) |
+| 看教学楼连续轨迹跟踪、行人动态让行与 ROAM 语义空间代价规划 | [校园平滑导航与日用十服务站](testing/campus-smooth-navigation.md) · [语义场景子图契约](specs/SDD-060-semantic-scene-queries.md) · [ROAM 语义空间代价层](specs/SDD-061-semantic-costmap-corridor.md) |
+| 查看主栈与 43 个分层 Compose 覆盖文件、内核与公共契约边界 | [Docker Compose 分层索引](../compose/README.md) · [内核与契约边界规格](specs/SDD-049-kernel-plugin-boundaries.md) · [仓库结构与文档同步](specs/SDD-062-repo-layout-and-doc-sync.md) |
 | 看机器人第一次进入陌生环境怎样选点、在哪儿复查、出故障怎样恢复 | [校园录像与逐步核验](testing/unknown-campus.md) |
 | 给仿真、真机或软件任务按需打开和关闭录制，导出时间线与视频 | [通用录制插件](../task_recorder/README.md) |
 | 看一条真实仿真任务如何下发、运动、遇错、恢复与停车 | [完整任务录像与可点击章节](../artifacts/verification/rover-long-mission/continuous-02/video/index.html) · [原始观测与复现方法](testing/rover-mission-video.md) |

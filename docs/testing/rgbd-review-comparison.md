@@ -31,7 +31,7 @@ python3 scripts/prepare_review_site.py --site release/site --policy-dir release/
   --workflow-digest "$REVIEW_WORKFLOW_SHA"
 ```
 
-4. 使用仓库的 `compose.review-comparison.yaml`。部署外部工作流时可在站点的 Compose override 中为 `review-workflow` 加入以下字段。基础 Compose 保留 `./inputs:/inputs:ro` 及 `EDGE_REVIEW_WORKFLOW_DIGEST` 的绑定，服务在装载时检查实际字节，摘要不符则启动失败。
+4. 使用仓库的 `compose/review-comparison.yaml`（在独立站点目录通过 `--project-directory <站点目录>` 调用，或复制入站点目录）。部署外部工作流时可在站点的 Compose override 中为 `review-workflow` 加入以下字段。基础 Compose 保留 `./inputs:/inputs:ro` 及 `EDGE_REVIEW_WORKFLOW_DIGEST` 的绑定，服务在装载时检查实际字节，摘要不符则启动失败。
 
 ```yaml
 services:

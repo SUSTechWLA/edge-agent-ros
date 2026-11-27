@@ -50,7 +50,7 @@ services:
     command: ["ros2", "launch", "/opt/edge/observations.launch.py"]
 
   survey-readonly:
-    extends: {file: compose.campus-dynamic.yaml, service: survey-route}
+    extends: {file: compose/campus-dynamic.yaml, service: survey-route}
     restart: unless-stopped
     command: ["python3", "-m", "exploration.survey_providers", "--bind", "0.0.0.0",
               "--port", "8138", "--role", "readonly"]

@@ -17,7 +17,7 @@ def run(image,out):
     project="edge-review-"+uuid.uuid4().hex[:12]
     env={k:v for k,v in os.environ.items() if not k.upper().startswith(("COMPOSE_","EDGE_","DEEPSEEK_"))}
     env.update(EDGE_IMAGE=image,EDGE_CAMPUS_CONSOLE_PORT="0",EDGE_ROS_DOMAIN_ID="149",COMPOSE_DISABLE_ENV_FILE="1")
-    prefix=["docker","compose","-p",project,"-f","compose.yaml","-f","compose.campus.yaml"]
+    prefix=["docker","compose","-p",project,"-f","compose.yaml","-f","compose/campus.yaml"]
     def compose(*args):
         return subprocess.check_output(prefix+list(args),cwd=ROOT,env=env,timeout=90,text=True,encoding="utf-8").strip()
     def get(path,body=None):

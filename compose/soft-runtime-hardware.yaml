@@ -1,4 +1,4 @@
-# Third file after compose.hardware.yaml and compose.soft-runtime.yaml.
+# Third file after compose.hardware.yaml and compose/soft-runtime.yaml.
 # Hardware Console listens on board loopback. A fixed GET-only gateway serves its public facts over a Unix socket.
 services:
   soft-facts:

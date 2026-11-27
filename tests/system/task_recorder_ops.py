@@ -100,7 +100,7 @@ def main():
     def mark(name,value=True):
         cases[name]=value
         print(name,flush=True)
-    compose=["docker","compose","-f","compose.yaml","-f","compose.task-recorder.yaml"]
+    compose=["docker","compose","-f","compose.yaml","-f","compose/task-recorder.yaml"]
     try:
         default=run(compose+["config","--services"]).splitlines()
         assert not any("recorder" in s for s in default)

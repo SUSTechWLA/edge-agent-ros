@@ -270,7 +270,7 @@ def run(args):
             "-f",
             str(ROOT / "compose.yaml"),
             "-f",
-            str(ROOT / "compose.model-provider.yaml"),
+            str(ROOT / "compose/model-provider.yaml"),
             "-f",
             str(work / "test.json"),
         ]

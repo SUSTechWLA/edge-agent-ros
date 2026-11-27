@@ -105,11 +105,11 @@ def run(image,base,out):
         def files(track):
             files=["compose.hardware.yaml"]
             if track in ("soft","combined"):
-                files+=["compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml"]
+                files+=["compose/soft-runtime.yaml","compose/soft-runtime-hardware.yaml"]
             if track=="soft":
-                files.append("compose.hardware-observe.yaml")
+                files.append("compose/hardware-observe.yaml")
             if track in ("physical","combined"):
-                files.append("compose.physical-camera.yaml")
+                files.append("compose/physical-camera.yaml")
             return [v for file in [*files,str(safe)] for v in ("-f",file)]
         def dc(track,*args):
             return call("docker","compose",*files(track),*args)
@@ -186,8 +186,8 @@ def run(image,base,out):
             report["error"]=str(exc)
             raise
         finally:
-            filelist=["compose.hardware.yaml","compose.soft-runtime.yaml","compose.soft-runtime-hardware.yaml",
-                      "compose.hardware-observe.yaml","compose.physical-camera.yaml",str(safe)]
+            filelist=["compose.hardware.yaml","compose/soft-runtime.yaml","compose/soft-runtime-hardware.yaml",
+                      "compose/hardware-observe.yaml","compose/physical-camera.yaml",str(safe)]
             if started:
                 try:
                     call("docker","compose",*(v for f in filelist for v in ("-f",f)),"down","-v","--remove-orphans","--timeout","2")

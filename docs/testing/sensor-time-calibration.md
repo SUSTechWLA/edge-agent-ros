@@ -25,7 +25,7 @@ export EDGE_CALIBRATION_COMPUTE_IMAGE="$EDGE_CALIBRATION_IMAGE"
 export EDGE_CAL_OLLAMA_URL=http://host.docker.internal:11435
 docker build -f docker/Dockerfile.calibration-observer --target observer --build-arg ROS_DISTRO="${ROS_DISTRO:-humble}" -t edge-agent-ros:hardware-calibration-observer .
 docker build -f docker/Dockerfile.calibration-observer --target station --build-arg ROS_DISTRO=jazzy -t "$EDGE_CALIBRATION_IMAGE" .
-docker compose -p edge-cal-hardware -f compose.calibration-board.yaml -f compose.calibration-console.yaml -f compose.calibration-hardware.yaml up -d
+docker compose --project-directory . -p edge-cal-hardware -f compose/calibration-board.yaml -f compose/calibration-console.yaml -f compose/calibration-hardware.yaml up -d
 ```
 
 模型地址示例使用 Jetson 的本机服务。运行前核对服务端口、模型名和从 Docker 网桥的可达性。监听传感器的两个容器使用 Linux 主机 DDS 和现场 ROS 域，两个只读 HTTP 入口只绑定配置中的 Docker 网桥地址。Agent 与工作台在私有 Compose 网络中运行。默认页面位于工位机器的 `127.0.0.1:8911`，可用 SSH 本地转发查看。合成单测与 Gazebo 验收运行在 amd64；现场的 Jetson ROS、驱动配置、板面密度和时间误差需独立实测。
@@ -49,7 +49,7 @@ docker compose -p edge-cal-hardware -f compose.calibration-board.yaml -f compose
 使用带 NumPy/OpenCV 的环境执行 `PYTHONPATH=. python3 tests/system/calibration_clock_replay.py` 可从归档重新求解。复测在线工位，先按[空间标定操作](guided-calibration.md)得到当前工位的空间版本。保留其卷，在原 PowerShell 的 Compose 参数数组追加下列测试工装。它改变测试板姿和观测时间标签，Agent 只能订阅传感器数据。
 
 ```powershell
-$clockBench = $station + @('-f','compose.calibration-clock-fixture.yaml')
+$clockBench = $station + @('-f','compose/calibration-clock-fixture.yaml')
 $env:EDGE_CAL_BOARD_MOTION = 'moving'
 docker @clockBench up -d
 # 通过页面提交上述时间标定任务；完成后再进行静止对照。

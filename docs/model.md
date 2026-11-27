@@ -52,5 +52,5 @@
 ## 换设备或模型时怎样验证
 
 - 本次使用 Gazebo、Docker Desktop、CPU 推理、Qwen2.5 1.5B 的 Q4_K_M 权重，Agent 给模型的上下文上限是 4096 tokens。这个耗时不能直接作为 RK3588 或 Jetson 的性能指标。在目标板单独测首次加载、热启动延迟、内存、温度，以及满负荷推理期间 ROS 数据是否仍新鲜。
-- 在硬件版 Compose 中，Agent 使用 host 网络。板上单独启动了 Ollama 时，地址可设为 `http://127.0.0.1:11434`。应以该设备上已安装的模型设置 `EDGE_OLLAMA_MODEL`。如果换成其他规划器，可按项目的 HTTP 适配器契约接入。[硬件部署](deployment.md)
+- 在硬件版 Compose 中，Agent 使用 host 网络。板上单独启动了 Ollama 时，地址可设为 `http://127.0.0.1:11434`。应以该设备上已安装的模型设置 `EDGE_OLLAMA_MODEL`（如 `qwen3:4b-instruct` 或 `qwen3:8b`）。针对 Qwen3 混合模型，Agent 默认发送 `"think": false` 并可通过 `EDGE_OLLAMA_KEEP_ALIVE=30m` 保持显存常驻；在 Jetson / GPU 服务端建议同时开启 `OLLAMA_FLASH_ATTENTION=1` 与 `OLLAMA_KV_CACHE_TYPE=q8_0`。如果换成其他规划器，可按项目的 HTTP 适配器契约接入。[硬件部署](deployment.md)
 - 看任务的成功率，同时核查**结果是否匹配要求**。状态查询需要实际里程计证据。拍照需要相机图像回执，只读坐标不能证明拍到了照片。给每个模型固定一组口语改写、缺失能力、复合目标与歧义用例，统计错误成功、错误拒绝和额外调用次数，再决定模型是否足以接管相应任务。

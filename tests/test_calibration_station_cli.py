@@ -57,7 +57,7 @@ class CalibrationStationCliTest(unittest.TestCase):
             prof_path.write_text(json.dumps(prof), encoding="utf-8")
 
             plan = station.build_plan("hardware", profile_path=prof_path, passive_livox=True, env={})
-            self.assertIn("compose.calibration-passive-livox.yaml", plan["compose_files"])
+            self.assertIn("compose/calibration-passive-livox.yaml", plan["compose_files"])
             self.assertEqual(plan["compose_profiles"], [])
 
             missing = station.preflight(plan, env={})
@@ -98,7 +98,7 @@ class CalibrationStationCliTest(unittest.TestCase):
                 validate_board_metrics(bad_method)
 
     def test_hardware_compose_gates_clock_observer_behind_profile(self):
-        raw = (ROOT / "compose.calibration-hardware.yaml").read_text(encoding="utf-8")
+        raw = (ROOT / "compose/calibration-hardware.yaml").read_text(encoding="utf-8")
         self.assertIn('profiles: ["time-calibration"]', raw)
         self.assertIn("EDGE_CALIBRATION_PROFILE: /etc/edge/installed-sensors.json", raw)
 

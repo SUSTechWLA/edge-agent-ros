@@ -15,7 +15,7 @@ export EDGE_SOFT_IMAGE=$(docker image inspect --format '{{.Id}}' "$IMAGE")
 export EDGE_SOFT_PLATFORM_DIGEST=$(docker image inspect --platform "$PLATFORM" --format '{{.Descriptor.digest}}' "$IMAGE")
 export EDGE_IMAGE="$IMAGE"
 python scripts/prepare_soft_pilots.py --site "$EDGE_SOFT_SITE" --image "$IMAGE" --source-commit "$SOURCE"
-dc() { docker compose -p edge-soft-p1 -f compose.yaml -f compose.soft-runtime.yaml "$@"; }
+dc() { docker compose -p edge-soft-p1 -f compose.yaml -f compose/soft-runtime.yaml "$@"; }
 dc up -d --no-build agent console soft-host soft-gateway evidence session
 admin() { dc run --rm -T --no-deps soft-admin "$@"; }
 file=/site/releases/derived.series_mean.plugin.json

@@ -1,4 +1,4 @@
-# Use with compose.hardware.yaml and compose.camera.yaml on native Linux.
+# Use with compose.hardware.yaml and compose/camera.yaml on native Linux.
 services:
   camera-init:
     image: ${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}

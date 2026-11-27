@@ -25,8 +25,8 @@ def run(image, output):
     with tempfile.TemporaryDirectory(prefix=project) as temp:
         work = Path(temp)
         site,second = work/"site",work/"site2"
-        base = ["docker","compose","-p",project,"-f","compose.yaml","-f","compose.physical-camera.yaml",
-                "-f","compose.physical-camera-test.yaml"]
+        base = ["docker","compose","-p",project,"-f","compose.yaml","-f","compose/physical-camera.yaml",
+                "-f","compose/physical-camera-test.yaml"]
         env = {k:v for k,v in os.environ.items() if not k.startswith(("EDGE_","COMPOSE_"))}
         started = False
         try:

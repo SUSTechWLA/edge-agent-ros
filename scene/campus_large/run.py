@@ -207,9 +207,9 @@ def main():
     env.update(COMPOSE_DISABLE_ENV_FILE="1", EDGE_IMAGE=args.image, EDGE_ROS_DOMAIN_ID="73",
                EDGE_CAMPUS_ASSETS_DIR=str(assets), EDGE_CAMPUS_CONSOLE_PORT=str(args.console_port),
                EDGE_CAMPUS_OVERVIEW_PORT=str(args.overview_port), EDGE_CAMPUS_MAP_PORT=str(args.map_port))
-    compose = ["docker", "compose", "-p", PROJECT, "-f", "compose.yaml", "-f", "compose.campus.yaml"]
+    compose = ["docker", "compose", "-p", PROJECT, "-f", "compose.yaml", "-f", "compose/campus.yaml"]
     if args.action in ("sensors", "status", "stop", "down"):
-        compose.extend(["-f","compose.camera.yaml","-f","compose.rgbd.yaml"])
+        compose.extend(["-f","compose/camera.yaml","-f","compose/rgbd.yaml"])
         config = ROOT / "scene/campus_large/sensor_views"
         env.update(EDGE_CAMERA_PORT=str(args.camera_port), EDGE_RGBD_PORT=str(args.rgbd_port),
                    EDGE_CAMERA_CONFIG_DIR=str(config/"camera"), EDGE_RGBD_CONFIG_DIR=str(config/"rgbd"))

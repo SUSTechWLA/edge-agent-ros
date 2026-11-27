@@ -28,7 +28,7 @@ docker build -f docker/Dockerfile.campus-lidar -t edge-rover-local:sdd058-campus
 
 ```powershell
 docker build -f docker/Dockerfile.board-calibration -t edge-agent-ros:board-calibration-1 .
-$station = @('compose', '-p', 'edge-board-cal', '-f', 'compose.calibration-gazebo.yaml', '-f', 'compose.calibration-board.yaml', '-f', 'compose.calibration-model.yaml', '-f', 'compose.calibration-console.yaml')
+$station = @('compose', '--project-directory', '.', '-p', 'edge-board-cal', '-f', 'compose/calibration-gazebo.yaml', '-f', 'compose/calibration-board.yaml', '-f', 'compose/calibration-model.yaml', '-f', 'compose/calibration-console.yaml')
 docker @station up -d
 ```
 

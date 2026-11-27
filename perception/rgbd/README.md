@@ -8,14 +8,14 @@
 
 ```sh
 docker compose up -d sim bridge
-docker compose -f compose.yaml -f compose.rgbd.yaml -f compose.rgbd-sensor.yaml --profile rgbd-sensor up -d rgbd rgbd-sensor
+docker compose -f compose.yaml -f compose/rgbd.yaml -f compose/rgbd-sensor.yaml --profile rgbd-sensor up -d rgbd rgbd-sensor
 ```
 
 台站固定在场地的 (-1.4, -1.0, 1.1) m，朝向世界 +X，以 3 Hz 生成 320 × 240 的彩色、深度和内参。机器人自身移动时台站仍保持原位。彩色、深度、内参在彩色光学坐标系 `camera_color_optical_frame`，右、下、前分别为 +X、+Y、+Z。Gazebo 原生注册点云 `/edge/rgbd/points` 在机体坐标系 `edge_rgbd_link`，其前三轴是前、左、上。点云经采样时刻的 TF 进入三维地图。要添加这个图层，从仓库根目录把 `perception/rgbd/profiles/gazebo-rgbd-points.json` 复制到 `map-inputs/` 并启用 map3d。仿真插件通过单传感器共投影生成已对齐的数据，可校验系统契约和像素几何；D4xx 的 USB 带宽、主动红外性能和测距精度需上机测量。
 
 ```sh
-docker compose -f compose.yaml -f compose.rgbd.yaml -f compose.rgbd-sensor.yaml --profile rgbd-sensor stop rgbd-sensor
-docker compose -f compose.yaml -f compose.rgbd.yaml -f compose.rgbd-sensor.yaml --profile rgbd-sensor start rgbd-sensor
+docker compose -f compose.yaml -f compose/rgbd.yaml -f compose/rgbd-sensor.yaml --profile rgbd-sensor stop rgbd-sensor
+docker compose -f compose.yaml -f compose/rgbd.yaml -f compose/rgbd-sensor.yaml --profile rgbd-sensor start rgbd-sensor
 ```
 
 停止现场 ROS 桥后，超过 2 s 没有新帧会关闭测量。停止 `rgbd` 仅撤下页面与读侧订阅。Gazebo 保留台站实体，恢复桥时复用，避免热删除渲染传感器导致世界退出。重启 rgbd 服务读取新的接入配置。仅需复用现有传感器时可以单独部署 `rgbd`；对外提供远程调试通过 SSH 转发本机 8772。发布到其他端口可设置 `EDGE_RGBD_PORT`。
@@ -32,7 +32,7 @@ ros2 launch realsense2_camera rs_launch.py enable_color:=true enable_depth:=true
 ```
 
 ```sh
-docker compose -f compose.hardware.yaml -f compose.rgbd.yaml -f compose.rgbd-hardware.yaml up -d rgbd
+docker compose -f compose.hardware.yaml -f compose/rgbd.yaml -f compose/rgbd-hardware.yaml up -d rgbd
 ```
 
 在另一终端核对实际 topic、frame 和内参。D4xx 模板按当前驱动的默认 camera/camera 命名空间；采用自定义 namespace 时复制 `config/realsense.json`，修改三个绝对 topic，设置 `EDGE_RGBD_CONFIG_DIR` 为该目录、`EDGE_RGBD_PROFILE` 为文件名（去掉 .json），再更新单个 rgbd 容器。

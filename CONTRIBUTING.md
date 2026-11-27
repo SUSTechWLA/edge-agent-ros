@@ -22,7 +22,7 @@ git diff --check
 git diff --stat main...HEAD
 ```
 
-Windows PowerShell 可将 `python3` 换为可用的 Python 3 解释器。提交前运行 `python3 tests/system_suite.py --changed-since origin/main --plan`，将所改文件、选中的消费者和验收条件逐一对照。去掉 `--plan` 即可执行同一组测试。在新增跨模块依赖的同一条 PR 里补上选择规则和对应断言。CI 在 PR 上按影响范围测试，在主分支、发布分支和手动运行时做全套确定性回归。需要真实模型时，在本机显式传入模型缓存卷并保留报告。[选测实例与故障矩阵](docs/testing/single-edge.md) · [工作流](.github/workflows/ci.yml)
+Windows PowerShell 可通过 `scripts/project-python.ps1` 或已核验的本地 Python 3 解释器运行上述命令。提交前运行 `python3 tests/system_suite.py --changed-since origin/main --plan`，将所改文件、选中的消费者和验收条件逐一对照。去掉 `--plan` 即可在本机执行选中的隔离容器测试。在新增跨模块依赖或调整 [`compose/`](compose/README.md) 覆盖层时，同一条 PR 里同步更新 [`tests/test_selection.py`](tests/test_selection.py) 的选择规则和断言。云端 GitHub Actions 在每次 PR 与主分支推送时运行确定性契约、包边界、前端地图单测、`deploy/robot` 投影及 `--stages repository planner` 校验；完整 3D Gazebo 多容器仿真套件可在本机执行，或在 Actions 页面通过 `workflow_dispatch` 勾选 `full_gazebo=true` 在高配运行器上触发。需要真实模型时，在本机显式传入模型缓存卷并保留报告。[选测实例与故障矩阵](docs/testing/single-edge.md) · [工作流](.github/workflows/ci.yml)
 
 ```powershell
 # 使用独立 Compose 项目，在临时机器人上测试停车、重启与控制链路故障
@@ -82,7 +82,7 @@ gh api 'repos/{owner}/{repo}/rules/branches/main'
 
 [分支保护配置](.github/rulesets/branches.json)固定两个来自 GitHub Actions 应用的检查，限制删除及强推。[标签保护配置](.github/rulesets/tags.json)限制修改和删除发布标签。公开发布前由项目所有者确定适用的许可证与数据分发范围。机器人现场消息、真实运行卷和密钥均应留在部署环境。
 
-2026-11-17 核验时，`SUSTechWLA/edge-agent-ros` 为私有仓库，Actions 已启用，规则集 API 因当前套餐返回 HTTP 403。当前维护者通过 PR 查看并等待两个检查完成后合并。拥有受支持套餐时，可应用上面两份配置启用服务器强制约束。
+主代码仓位于 `ChaosOrderAI/dsh-edge-agent-ros`（保留 `main` 与纯净边缘端分支 `deploy/robot`）。若所在组织或私有仓套餐暂不支持规则集 API 或云端账单运行器受限，维护者应在本地及镜像验证仓完成 `SDD and contracts` 与 `ROS and Gazebo` 两项检查后再合并；拥有受支持套餐时，可应用上面两份配置启用服务器强制约束。
 
 ## 发布一个版本
 

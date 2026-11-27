@@ -21,7 +21,7 @@ try {
     } else {
         $command = @($Action)
     }
-    $overlay = Join-Path $PSScriptRoot '../compose.campus-core.yaml'
+    $overlay = Join-Path $PSScriptRoot '../compose/campus-core.yaml'
     & (Join-Path $PSScriptRoot 'campus-navigation.ps1') phase1 -f $overlay @command @args @services
     exit $LASTEXITCODE
 } finally {

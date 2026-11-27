@@ -76,7 +76,7 @@ def run(image,out):
         install(base)
         env={**os.environ,"EDGE_IMAGE":image,"EDGE_CAMERA_PORT":"0","EDGE_CAMERA_CONFIG_DIR":str(folder),
              "EDGE_ROS_DOMAIN_ID":"155","COMPOSE_DISABLE_ENV_FILE":"1"}
-        dc=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.camera.yaml"),
+        dc=["docker","compose","-p",project,"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose/camera.yaml"),
             "--profile","camera-sensor"]
         def stack(*args):
             return subprocess.check_output([*dc,*args],cwd=ROOT,env=env,text=True,encoding="utf-8",errors="replace").strip()

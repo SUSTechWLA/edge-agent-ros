@@ -1,4 +1,4 @@
-# Optional published CameraInfo artifact. Apply together with compose.navigation-readonly.yaml.
+# Optional published CameraInfo artifact. Apply together with compose/navigation-readonly.yaml.
 services:
   spatial-facts:
     image: ${EDGE_NAV_SENSOR_IMAGE:?pin the approved facts gateway and CameraInfo reader image}

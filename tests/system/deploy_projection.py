@@ -30,9 +30,9 @@ def verify(ref, directory, platform, ros_base):
     legacy = legacy_format(revision, source)
     if actual != projection(source, fmt=fmt):
         raise ValueError("deployment differs from the original source projection")
-    required = {"scripts/robot.sh", "compose.hardware.yaml", "compose.hardware-observe.yaml"}
+    required = {"scripts/robot.sh", "compose.hardware.yaml", "compose/hardware-observe.yaml"}
     if not legacy:
-        required.update({"scripts/check_board_plugins.py", "compose.physical-camera.yaml",
+        required.update({"scripts/check_board_plugins.py", "compose/physical-camera.yaml",
                          "profiles/bench-camera.json", "capabilities/camera/pack.json"})
         allowed_docs = {"README.md"} if fmt == "v3" else set()
         if any(p not in allowed_docs and Path(p).suffix.lower() in {".md", ".mdx", ".markdown", ".rst", ".adoc", ".pdf", ".docx"}
@@ -80,7 +80,7 @@ def verify(ref, directory, platform, ros_base):
                 confines["task-facts"] = {"network_mode":"none"}
                 confines["console"]["network_mode"] = "service:task-facts"
             isolated.write_text(json.dumps({"services":confines}),encoding="utf-8")
-            observe = [*compose,"-f","compose.hardware-observe.yaml","-f",str(isolated)]
+            observe = [*compose,"-f","compose/hardware-observe.yaml","-f",str(isolated)]
             run("compose",[*observe,"config","--quiet"],folder)
             started=time.monotonic()
             try:

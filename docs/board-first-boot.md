@@ -16,7 +16,7 @@ test "$(docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{.Os}}/{{.Archite
 test "$(docker image inspect "$EDGE_HARDWARE_IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$expected_revision"
 tar -xzf edge-agent-ros-source.tar.gz
 cd edge-agent-ros
-docker compose -f compose.hardware.yaml -f compose.hardware-observe.yaml config --quiet
+docker compose -f compose.hardware.yaml -f compose/hardware-observe.yaml config --quiet
 ```
 
 校验、镜像检查或 Compose 解析任何一项失败，先修复后再继续。源码包是固定提交的快照，离线模式直接使用 `IMAGE` 中的标签即可。后续命令都在刚解压的 `edge-agent-ros/` 下执行；新开 shell 时重新导出上面的镜像标签和下面的现场配置。

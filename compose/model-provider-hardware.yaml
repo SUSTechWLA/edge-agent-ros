@@ -1,4 +1,4 @@
-# Add after compose.hardware.yaml and compose.model-provider.yaml for native Linux boards.
+# Add after compose.hardware.yaml and compose/model-provider.yaml for native Linux boards.
 services:
   model-provider-init:
     image: ${EDGE_MODEL_ADAPTER_IMAGE:-${EDGE_HARDWARE_IMAGE:-edge-agent-ros/hardware:v0.1}}
