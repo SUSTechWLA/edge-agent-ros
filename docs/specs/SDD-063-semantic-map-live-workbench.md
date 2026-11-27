@@ -52,6 +52,8 @@
 
 ## 变更记录
 
+2026-11-27 同步更新 `README.md` 与 `docs/architecture/core-architecture.svg` 核心架构蓝图至 `SDD-063`，显式提炼本系统遵循 `dsh`（DeepSeek Harness / Cordis）相对传统 Agentic Robot 的五大具身架构优势（`Plugin ≠ Tool` 三元解耦、`Context/Fiber` 与 `Physical Lease` 双轨分治、唯一 `operation_id` 与后置独立见证、持久事实流与控制权正交、0-Tool 消费者驱动的受管能力演进），并纳入 `SDD-063` 实时语义地图与走廊工作台节点。
+
 2026-11-27 完成 `SDD-063`（AC-1 至 AC-4）全部前后端实现与验收：（1）`calibration/board_session.py` 为空间外参与内参标定统一持久化有界 `view_plan` 与 `scene_slice` 只读投影（`< 64 KiB`）；`exploration/survey_session.py` 输出经 `validate_semantic_layers` 与 `compact_scene` 校验的 `semantic_costmap` 和 `semantic_scene`（含 `guards` / `attached_to` / `inside` / `approach_to` 关系与实时 TTL 状态）；（2）升级 `console/web/calibration-map.js`、`calibration-motion.js`、`calibration.js`、`exploration-local.js`、`exploration-mission.js`、`map.js`、`app.js` 与配套 HTML/CSS，交付标定闭环阶段步进条与空间走廊图、探索二维/三维四模式语义地图与栅格拾取器、主监控安全净空热力层与多源新鲜度横条；（3）通过宿主机 `tests/system_suite.py --stages repository planner`（运行号 `20261127T034052Z-6eafd802`）、`node --test tests/map_planar.test.mjs tests/map_spatial.test.mjs tests/map_semantic_workbench.test.mjs`（11/11）、标定与观测台容器内单测（`test_semantic_map_workbench.py` 3/3、`test_capture_views.py` 10/10、`test_calibration_station.py` 5/5）及无头 Chromium/Edge 浏览器桌面（`1440px`）与窄屏（`390px`）实测。物理实车室外开放词汇分割叠加仍待后续实机阶段联调。[浏览器核验记录](../../artifacts/verification/sdd063-semantic-map-ui-20261127/browser-verification.json) · [标定与主监控实测画面](../../artifacts/verification/sdd063-semantic-map-ui-20261127/console-calibration-and-monitor.png) · [探索语义准入实测画面](../../artifacts/verification/sdd063-semantic-map-ui-20261127/exploration-semantic-admitted.png)
 
 2026-11-27 基于 `179f07c45d9f6b1467e1682dc15f4c6f39137df8` 立项登记 `SDD-063`（AC-1 至 AC-4），同步打通 `SDD-060`/`SDD-061` 后端语义场景子图、多通道语义代价地图、单调安全走廊与主动标定视点评分的只读状态投影及三大前端工作台实时可视化。
